@@ -1,0 +1,46 @@
+---
+description: Prevent Cursor from building demo/prototype code. Enforce production-grade minimal vertical slices.
+alwaysApply: true
+---
+
+# Production Quality Rule: No Demo Code
+
+Build minimal production-grade vertical slices, not fake demos. Prefer smaller complete functionality over broad incomplete scaffolding.
+
+## Definition of done for any feature
+
+A feature is complete only when it includes:
+
+- typed frontend and backend contracts
+- persisted state in PostgreSQL, Redis, Meilisearch, or object storage as appropriate
+- validation at API boundaries
+- meaningful error handling and user-safe error messages
+- RBAC/auth checks when user/admin access differs
+- audit logs for admin mutations and sensitive operations
+- i18n keys for user-facing text
+- tests for critical domain logic
+- seed/dev data through real schemas, not hard-coded arrays
+
+## Forbidden implementation shortcuts
+
+- Do not use in-memory arrays as the source of truth for domain data.
+- Do not create UI-only pages that are not connected to real API contracts.
+- Do not fake analytics dashboards with static chart numbers.
+- Do not import raw JSON directly into canonical tables. Use staging, profiling, validation, and transform.
+- Do not hard-code user-facing copy outside i18n resources.
+- Do not implement RBAC only in the frontend. Backend must enforce permissions.
+- Do not hide errors with empty catch blocks.
+- Do not leave required workflows as TODO placeholders.
+- Do not skip Prisma migrations for persistent data.
+- Do not use localStorage for data that must survive across devices or be audited.
+
+## Allowed temporary implementations
+
+- Mock providers are allowed only behind explicit provider interfaces.
+- External APIs may use local providers in development when keys are unavailable.
+- Seed/demo data is allowed only through real schema + clear seed labels.
+- A minimal screen is allowed if it performs the real workflow end-to-end.
+
+## When scope is too large
+
+Implement a smaller vertical slice that is real. Do not make broad fake coverage. Example: one real flashcard deck with SRS persistence is better than ten static flashcard screens.

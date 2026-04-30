@@ -1,0 +1,41 @@
+<cursor_task>
+  <title>Phase 12 - Social Login, SNS Sharing, Postcards, and Referral Growth</title>
+
+  <context>
+    Read AGENTS.md, .cursor/rules/*.mdc, docs/spec/nihongo_bjt_cursor_master_spec_v14.md and docs/spec/nihongo_bjt_cursor_master_spec_v14_1_final.md before editing.
+    The project must support low-friction login and organic growth through privacy-safe shareable learning achievements.
+  </context>
+
+  <goal>
+    Implement production-grade foundations for social login, account linking, shareable SNS postcards, public share pages, referral tracking, and admin growth management.
+  </goal>
+
+  <must_follow>
+    <item>Implement Google OAuth provider abstraction first; Apple/Facebook/LINE must be architecture-ready.</item>
+    <item>Use an identity provider account table, not one provider column on users.</item>
+    <item>Do not create fake social login buttons without backend flow.</item>
+    <item>Public share pages must be privacy-safe and contain only user-approved summary data.</item>
+    <item>Create reusable share image/postcard generation service.</item>
+    <item>Support Web Share API, copy link, and download image as baseline.</item>
+    <item>Add admin management for share templates, campaigns, referrals, and share analytics.</item>
+    <item>Track share/referral analytics events.</item>
+    <item>All referral rewards affecting limits must go through entitlement/quota services with audit trail.</item>
+  </must_follow>
+
+  <deliverables>
+    <item>Database schema/migrations for identity_provider_account, login_event, share_item, share_card_asset, referral_code, referral_event.</item>
+    <item>Backend modules/services: AuthProvider, OAuthProvider, ShareImageRenderer, ShareService, ReferralService.</item>
+    <item>Frontend connected accounts settings UI.</item>
+    <item>Share flows for streak, BJT quiz result, and daily phrase.</item>
+    <item>Public share pages with Open Graph metadata.</item>
+    <item>Admin pages for share template preview, referrals, and share analytics.</item>
+    <item>Tests for provider linking, share privacy, referral attribution, and permission checks.</item>
+  </deliverables>
+
+  <quality_gate>
+    <item>Run lint, typecheck, tests, and migrations.</item>
+    <item>Verify no private learning data is exposed in public share pages.</item>
+    <item>Verify share image generation works with local/default renderer.</item>
+    <item>Verify admin growth pages are protected by RBAC.</item>
+  </quality_gate>
+</cursor_task>

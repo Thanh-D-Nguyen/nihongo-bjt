@@ -1,0 +1,25 @@
+---
+description: Frontend UI/UX and i18n rules
+alwaysApply: true
+---
+
+# Frontend and UX rules
+
+## UI/UX direction
+- Premium Japanese minimalism.
+- Calm, motivating, habit-forming, but no dark patterns.
+- Make study feel achievable, especially for busy learners in Japan.
+- Support daily-life learning from weather, news, calendar, phrases, and situations.
+
+## i18n
+- UI language must support at least Vietnamese and Japanese from the start.
+- Do not hard-code visible text in components.
+- Use i18n keys and locale files.
+- Design for future English or other languages.
+
+## Accessibility
+- Use semantic HTML.
+- Keyboard navigation must work for core flows.
+- Provide visible focus states.
+- Respect reduced motion where animation exists.
+- Furigana/romaji toggles should be supported where specified.

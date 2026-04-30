@@ -1,0 +1,30 @@
+---
+alwaysApply: true
+---
+
+# Admin Monetization Console Rule
+
+Monetization admin is a revenue operations console, not a simple plan list.
+
+Required:
+- tabs: Overview, Plans, Entitlements, Quotas, Subscriptions, Trials & Coupons, Ads, Analytics, Audit
+- KPI cards
+- plan management
+- entitlement assignment
+- quota policy and quota override management
+- subscription lifecycle visibility
+- coupon/trial configuration
+- ad placement management
+- monetization analytics
+- audit log
+- RBAC-aware actions
+- confirmation + audit reason for sensitive mutations
+
+Forbidden:
+- hard-coded premium/free checks
+- fake revenue numbers
+- single generic status chart as the whole page
+- mutation without permission check
+- mutation without audit log
+- exposing provider secrets
+- ads inside active learning sessions

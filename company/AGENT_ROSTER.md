@@ -1,0 +1,29 @@
+# Agent Roster
+
+Read `company/OPERATING_MODE.md`, `company/model-routing.md`, `company/ONE_TASK_ONE_PR.md`, and `company/DO_NOT_TOUCH.md` before selecting agents. Read `docs/spec/index.md` before selecting spec context.
+
+| Agent | File | Default tier | Digest/context | Main responsibility |
+|---|---|---|---|---|
+| Human Proxy | `.github/agents/bjt.human-proxy.agent.md` | deep-reasoning | `company/HUMAN_PROXY_MODE.md` + operating state | Program Director that selects next safe Boss prompt/action |
+| Boss | `.github/agents/bjt.boss.agent.md` | deep-reasoning | `docs/spec/digests/boss_digest.md` | Coordinate all agents |
+| PM | `.github/agents/bjt.pm.agent.md` | balanced | `docs/spec/digests/boss_digest.md` + MVP compact | Scope/backlog/MVP cutline |
+| Architect | `.github/agents/bjt.architect.agent.md` | deep-reasoning | architecture/DB/API compact | Architecture/contracts/schema |
+| Backend | `.github/agents/bjt.backend.agent.md` | code-heavy | `docs/spec/digests/backend_digest.md` | API/Prisma/OpenAPI/RBAC |
+| Admin UI | `.github/agents/bjt.admin-ui.agent.md` | balanced | `docs/spec/digests/admin_ui_digest.md` | Admin production pages |
+| Learner UI | `.github/agents/bjt.learner-ui.agent.md` | balanced | `docs/spec/digests/learner_ui_digest.md` | Learner UX |
+| Learning Science | `.github/agents/bjt.learning-science.agent.md` | balanced | `docs/spec/digests/learning_science_digest.md` | Focus, motivation, cognitive load, learner wellbeing |
+| Media Experience | `.github/agents/bjt.media-experience.agent.md` | balanced | `docs/spec/digests/media_experience_digest.md` | Audio, image, video, color, motion, postcards |
+| Growth Social | `.github/agents/bjt.growth-social.agent.md` | balanced | `docs/spec/digests/growth_social_digest.md` | Sharing, referrals, battle motivation, healthy competition |
+| Assessment Psychometrics | `.github/agents/bjt.assessment-psychometrics.agent.md` | deep-reasoning | `docs/spec/digests/assessment_psychometrics_digest.md` | Exam blueprint, scoring, difficulty, remediation |
+| Content Quality | `.github/agents/bjt.content-quality.agent.md` | balanced | `docs/spec/digests/content_quality_digest.md` | Japanese content correctness and quality |
+| Japan-Vietnam Localization | `.github/agents/bjt.localization-japan-vietnam.agent.md` | balanced | `docs/spec/digests/localization_japan_vietnam_digest.md` | Vietnamese/Japanese tone and i18n |
+| Customer Success | `.github/agents/bjt.customer-success.agent.md` | balanced | `docs/spec/digests/customer_success_digest.md` | Support, onboarding, help, learner recovery |
+| Life in Japan | `.github/agents/bjt.life-in-japan.agent.md` | balanced | `docs/spec/digests/life_in_japan_digest.md` | Housing, tax, banking, lottery/probability, investment-risk Japanese |
+| Data Import | `.github/agents/bjt.data-import.agent.md` | code-heavy | backend digest + DB/ops compact | Import/outbox/search sync |
+| Security | `.github/agents/bjt.security.agent.md` | review-security | security/RBAC/testing compact | Security/privacy/legal |
+| Red Team | `.github/agents/bjt.red-team.agent.md` | review-security | `docs/spec/digests/red_team_digest.md` | Abuse, bypass, leak, injection review |
+| QA | `.github/agents/bjt.qa.agent.md` | code-heavy | `docs/spec/digests/qa_digest.md` | Test/CI/release gates |
+| Browser QA | `.github/agents/bjt.browser-qa.agent.md` | code-heavy | `company/BROWSER_PHASE_REVIEW_POLICY.md` | Browser/runtime visual review and screenshots |
+| Release Director | `.github/agents/bjt.release-director.agent.md` | deep-reasoning | `docs/spec/digests/release_director_digest.md` | Ship/no-ship production gate |
+| DevOps | `.github/agents/bjt.devops.agent.md` | code-heavy | `docs/spec/digests/devops_digest.md` | Docker/CI/env/observability |
+| Docs | `.github/agents/bjt.docs.agent.md` | cheap-fast | relevant digest/compact only | Docs/handoff |

@@ -1,0 +1,29 @@
+# Backlog
+
+Production backlog generated from takeover audit cycle `BJT-CYCLE-TAKEOVER-AUDIT-001`.
+
+| ID | title | area | priority | owner agent | reviewer agent | required spec files | definition of done | risk | status |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| BJT-101 | Converge API truth docs | Backend Governance | P0 | bjt-backend | bjt-release-director | docs/spec/index.md; docs/spec/compact/03_backend_api_registry.md; docs/spec/compact/10_testing_acceptance.md | `docs/API_REGISTRY.md`, `docs/BACKEND_API_REGISTRY.md`, and `docs/BACKEND_API_PRODUCTION_AUDIT.md` are reconciled to current implementation, with explicit endpoint status and gate evidence links. | Drift can cause wrong prioritization and fake readiness signals. | done |
+| BJT-102 | Enforce runtime feature gates | Security + Operations | P0 | bjt-backend | bjt-security | docs/spec/index.md; docs/spec/compact/03_backend_api_registry.md; docs/spec/compact/10_testing_acceptance.md | High-risk flows (upload/import/external fetch/paid actions) are guarded by backend feature flags/kill switches with denial behavior and tests. | Missing runtime enforcement can bypass safety controls. | done |
+| BJT-103 | Monetization quota enforcement audit | Monetization | P0 | bjt-backend | bjt-red-team | docs/spec/index.md; docs/spec/compact/00_product_mvp_cutline.md; docs/spec/compact/03_backend_api_registry.md; docs/spec/compact/10_testing_acceptance.md | Route-by-route entitlement/quota matrix exists and all premium/quota actions are enforced server-side with negative tests. | Revenue leakage and premium bypass risk. | done |
+| BJT-104 | Legal consent API baseline | Compliance | P1 | bjt-backend | bjt-security | docs/spec/index.md; docs/spec/compact/00_product_mvp_cutline.md; docs/spec/compact/10_testing_acceptance.md | Minimal `legal/consent/privacy` contracts and persistence are production-usable, auditable where needed, and integrated into signup/payment prerequisites. | Release/compliance blocker if deferred too long. | done |
+| BJT-105 | Security hardening for media and fetch | Security | P1 | bjt-backend | bjt-red-team | docs/spec/index.md; docs/spec/compact/03_backend_api_registry.md; docs/spec/compact/10_testing_acceptance.md | MIME sniffing + extension allowlist + sanitization + malware provider interface + SSRF-safe fetch policy are implemented and tested for critical paths. | Abuse and malware ingestion risk. | todo |
+| BJT-106 | Critical controller integration tests | Quality | P1 | bjt-qa | bjt-backend | docs/spec/index.md; docs/spec/compact/10_testing_acceptance.md | Integration/controller tests cover auth/profile, bookmarks, admin operations audit writes, and key denial paths (auth/RBAC/quota/flag). | Regression risk and low confidence in release gate. | todo |
+| BJT-107 | Admin module contract parity | Admin | P1 | bjt-admin-ui | bjt-backend | docs/spec/index.md; docs/spec/compact/05_admin_ui_modules.md; docs/spec/compact/03_backend_api_registry.md | Admin route shells for operations/import/legal/privacy show only real states/contracts and avoid fake metrics/actions; missing modules clearly flagged. | Admin UI can misrepresent operational readiness. | todo |
+| BJT-111 | Admin 100% workspace completion | Admin | P0 | bjt-boss | bjt-release-director | company/ADMIN_COMPLETION_PROGRAM.md; company/admin-module-inventory.md; company/gates/admin-100-completion-gate.md; docs/spec/compact/05_admin_ui_modules.md | Every enabled admin nav item is inventoried and production-ready; zero enabled scaffold nav items and zero `renderAdminScaffoldForId` routes remain before final launch. | Phase release gates can falsely imply production readiness while the admin workspace still contains honest scaffolds. | todo |
+| BJT-112 | BJT UI/UX production standard review | UI/UX | P1 | bjt-learner-ui | bjt-learning-science | docs/design/bjt-ui-ux-production-standard.md; company/skills/bjt-ui-ux/; company/gates/bjt-ui-ux-production-gate.md | Major learner/study/assessment/reading/media/social flows are reviewed against BJT-specific UI/UX standards with evidence and blockers. | Generic UI polish can reduce learning focus, Japanese readability, exam trust, or privacy. | todo |
+| BJT-108 | Deck/review canonical completion | Learning API | P1 | bjt-backend | bjt-qa | docs/spec/index.md; docs/spec/compact/03_backend_api_registry.md; docs/spec/compact/00_product_mvp_cutline.md | Remaining canonical deck/review endpoints (update/delete/remove-card/presets/clone/idempotent review submit) are completed with OpenAPI + tests. | Learner workflow fragmentation and migration debt. | todo |
+| BJT-109 | Import and DLQ operational closure | Data Operations | P2 | bjt-data-import | bjt-devops | docs/spec/index.md; docs/spec/compact/03_backend_api_registry.md; docs/spec/compact/10_testing_acceptance.md | Admin import API contracts, DLQ retry path, and operational evidence are connected to real queue/worker flow. | Data freshness and recovery delays under failure conditions. | todo |
+| BJT-110 | Learner/admin E2E expansion | Release Quality | P2 | bjt-qa | bjt-release-director | docs/spec/index.md; docs/spec/compact/10_testing_acceptance.md; docs/spec/compact/05_admin_ui_modules.md | E2E coverage includes auth session, dictionary/bookmarks, flashcard review, quiz result, one admin audited mutation, and privacy settings path. | Smoke-only E2E may miss high-impact regressions. | todo |
+
+## Phase Batch Execution Tracker
+
+- phase_id: PHASE-10
+- status: admin_completion_needed
+- approved_at: 2026-04-30
+- approval_token: HUMAN_APPROVE_PHASE10_REMEDIATION_2026_04_30
+- latest_completed_task: PH10-T06 passed
+- release_director: ship_with_risks (phase scope only, no-launch)
+- next_phase: Reopen admin product-depth completion — Admin 100 scaffold-count pass is superseded by human manual review blockers
+- updated_at: 2026-04-30

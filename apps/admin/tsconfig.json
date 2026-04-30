@@ -1,0 +1,27 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "allowJs": false,
+    "incremental": true,
+    "isolatedModules": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "noEmit": true,
+    "baseUrl": "../..",
+    "paths": {
+      "@/*": ["apps/admin/*"],
+      "@nihongo-bjt/config": ["packages/config/src/index.ts"],
+      "@nihongo-bjt/keycloak-oidc": ["packages/keycloak-oidc/src/index.ts"],
+      "@nihongo-bjt/shared": ["packages/shared/src/index.ts"],
+      "@nihongo-bjt/ui": ["packages/ui/src/index.ts"],
+      "@nihongo-bjt/ui/admin-shell": ["packages/ui/src/admin-shell.tsx"]
+    },
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
+  },
+  "include": ["next-env.d.ts", "app/**/*.ts", "app/**/*.tsx", "lib/**/*.ts", "lib/**/*.tsx", "messages/**/*.json"],
+  "exclude": ["node_modules"]
+}

@@ -1,0 +1,46 @@
+{
+  "name": "@nihongo-bjt/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "admin:seed": "tsx scripts/seed-admin.ts",
+    "seed:foundation": "tsx scripts/seed-foundation.ts && tsx scripts/seed-admin.ts && tsx scripts/seed-monetization.ts",
+    "monetization:seed": "tsx scripts/seed-monetization.ts",
+    "growth:seed": "tsx scripts/seed-growth.ts",
+    "analytics:rollup": "tsx scripts/rollup-analytics.ts",
+    "build": "tsc --noEmit",
+    "daily:seed": "tsx scripts/seed-daily.ts",
+    "quiz:seed": "tsx scripts/seed-quiz.ts",
+    "search:index": "tsx scripts/index-search.ts",
+    "typecheck": "tsc --noEmit",
+    "openapi:generate": "tsx scripts/generate-openapi.ts"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.1.19",
+    "@nestjs/config": "^4.0.4",
+    "@nestjs/core": "^11.1.19",
+    "@nestjs/platform-express": "^11.1.19",
+    "@nestjs/platform-socket.io": "^11.1.19",
+    "@nestjs/swagger": "^11.4.1",
+    "@nestjs/websockets": "^11.1.19",
+    "@nihongo-bjt/config": "workspace:*",
+    "@nihongo-bjt/database": "workspace:*",
+    "@nihongo-bjt/shared": "workspace:*",
+    "dotenv": "^17.4.2",
+    "helmet": "^8.1.0",
+    "jose": "^6.2.2",
+    "kuromoji": "^0.1.2",
+    "meilisearch": "^0.57.0",
+    "minio": "^8.0.7",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "sharp": "^0.33.5",
+    "socket.io": "^4.8.3",
+    "tsx": "^4.21.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.25"
+  }
+}

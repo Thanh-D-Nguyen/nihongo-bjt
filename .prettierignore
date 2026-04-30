@@ -1,0 +1,12 @@
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+
+# Builds and caches
+.turbo/
+**/.next/
+node_modules/
+archive/
+packages/database/generated/
+pnpm-lock.yaml

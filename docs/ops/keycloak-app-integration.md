@@ -1,0 +1,40 @@
+# Keycloak integration (web, admin, API)
+
+## Environment variables
+
+Use separate OIDC clients for learner and admin. The API validates both access-token audiences.
+
+| Variable | Role |
+|----------|------|
+| `KEYCLOAK_ISSUER_URL` | API: OIDC issuer (`/realms/{realm}`) |
+| `KEYCLOAK_JWKS_URL` | Optional JWKS override |
+| `KEYCLOAK_EXPECTED_AUDIENCE` | API JWT `aud`, e.g. `nihongo-web,nihongo-admin` |
+| `WEB_KEYCLOAK_CLIENT_ID` / `WEB_KEYCLOAK_CLIENT_SECRET` | Learner Next.js token exchange |
+| `ADMIN_KEYCLOAK_CLIENT_ID` / `ADMIN_KEYCLOAK_CLIENT_SECRET` | Admin Next.js token exchange |
+| `KEYCLOAK_ADMIN_REALM_ROLES` | Comma-separated realm or resource role names that may use the **admin** app shell; default `admin` |
+| `NEXT_PUBLIC_WEB_KEYCLOAK_*` | Learner browser OIDC metadata |
+| `NEXT_PUBLIC_ADMIN_KEYCLOAK_*` | Admin browser OIDC metadata |
+
+See root `.env.example` for placeholders.
+
+## Browser flow
+
+1. User opens `/[locale]/login` (web) or admin login; clicks through to `/api/auth/keycloak/authorize`.
+2. Keycloak authenticates the user; redirect returns to **`/auth/callback`** with `code` (PKCE).
+3. Next.js exchanges the code server-side, sets **httpOnly** session cookies, then redirects to the app.
+4. Authenticated API calls from the browser use **`/api/auth/keycloak/session`** to read a short-lived access token and send `Authorization: Bearer …` to the API (`learnerApiFetch` / `adminApiFetch`).
+5. Logout uses **`/auth/logout`**, which clears cookies and redirects to Keycloak logout.
+
+## Admin gate
+
+After OIDC session exists, the admin app calls **`GET /api/admin/session`** (with Bearer). **403** means the user lacks a configured Keycloak admin role or has no linked `admin_actor.keycloak_subject` — the UI sends them to **`/[locale]/access-denied`**. Internal RBAC still applies on each admin API route.
+
+## Manual Keycloak configuration
+
+- **Valid redirect URIs** for the public client must include the Next.js callback URLs, e.g. `http://localhost:3000/auth/callback` (learner) and `http://localhost:3001/auth/callback` (admin), plus production URLs.
+- Assign at least one role listed in `KEYCLOAK_ADMIN_REALM_ROLES` to users who should pass the admin portal gate.
+- Link each admin user to a row in `authz.admin_actor` with `keycloak_subject` equal to the Keycloak user `sub`.
+
+## Legacy dev (Keycloak off)
+
+If `NEXT_PUBLIC_KEYCLOAK_ISSUER_URL` (and URL+realm fallback) are unset, the UIs skip OIDC and the API may accept legacy dev headers where implemented (e.g. `x-admin-actor-id`). This is for local development only.

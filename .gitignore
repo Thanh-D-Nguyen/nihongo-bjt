@@ -1,0 +1,82 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+!.env.template
+!.env.sample
+apps/*/.env
+apps/*/.env.*
+!apps/*/.env.example
+!apps/*/.env.template
+!apps/*/.env.sample
+
+# Build outputs
+.next/
+**/.next/
+dist/
+**/dist/
+build/
+**/build/
+out/
+**/out/
+.turbo/
+**/.turbo/
+coverage/
+**/coverage/
+
+# Test and browser artifacts
+test-results/
+playwright-report/
+blob-report/
+**/test-results/
+**/playwright-report/
+**/blob-report/
+company/reviews/browser-phase-review/artifacts/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# OS/editor noise
+.DS_Store
+**/.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Local databases and generated data dumps
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.bak
+*.tar
+*.tar.gz
+*.tgz
+*.zip
+*.zst
+
+# Local/import archives
+archive/
+
+# Runtime temp files
+tmp/
+temp/
+.cache/
+**/.cache/
+
+# Keep project docs/config tracked intentionally:
+# - .github/
+# - .cursor/rules/
+# - company/
+# - docs/

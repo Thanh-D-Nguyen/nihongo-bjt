@@ -1,0 +1,20 @@
+---
+description: Learning, SRS, BJT and battle rules
+alwaysApply: true
+---
+
+# Learning rules
+
+## Flashcards/SRS
+- Cards may include text, furigana, examples, tags, audio/media references, and images.
+- Image cards must support upload and provider-sourced candidate selection via abstraction.
+- SRS logic must be deterministic and tested.
+
+## BJT
+- BJT quiz/exam content must support sections, skills, business scenarios, distractors, explanations, and analytics.
+- Results should coach users, not shame them.
+
+## Battle
+- Battle must be realtime-ready via Socket.IO.
+- Bot battles may come before full user-vs-user PvP.
+- Fairness, abandonment, and bot tuning must be measurable.

@@ -1,0 +1,35 @@
+<cursor_task phase="08" name="battle-realtime">
+
+  <no_demo_contract>
+    <item>Implement a real, minimal vertical slice rather than a static demo.</item>
+    <item>Use real schema/API/contracts for all persisted workflows.</item>
+    <item>Do not use fake static arrays or frontend-only state as source of truth.</item>
+    <item>Include validation, error handling, i18n keys, and tests for critical logic.</item>
+  </no_demo_contract>
+
+  <context>
+    Read AGENTS.md, .cursor/rules/*.mdc, docs/spec/nihongo_bjt_cursor_master_spec_v14.md and docs/spec/nihongo_bjt_cursor_master_spec_v14_1_final.md before implementation.
+  </context>
+  <objective>
+    Implement battle and bot-based realtime learning flows.
+  </objective>
+  <must_do>
+    <item>Create battle models and Socket.IO gateway.</item>
+    <item>Implement bot battle first.</item>
+    <item>Implement matchmaking-ready abstractions.</item>
+    <item>Track fairness, abandon, completion metrics.</item>
+  </must_do>
+  <must_not_do>
+    <item>Do not use MongoDB or Mongoose.</item>
+    <item>Do not hard-code user-facing text outside i18n.</item>
+    <item>Do not mark unimplemented features as complete.</item>
+  </must_not_do>
+  <verification>
+    <item>Run relevant format, lint, typecheck, and tests.</item>
+    <item>Run Prisma generate/migration validation when database changes are made.</item>
+    <item>Summarize changed files, commands run, completed criteria, and remaining risks.</item>
+  </verification>
+  <stop_condition>
+    Stop after this phase and wait for review before starting the next phase.
+  </stop_condition>
+</cursor_task>

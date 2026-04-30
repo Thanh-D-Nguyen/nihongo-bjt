@@ -1,0 +1,48 @@
+---
+description: Open Design adapted workflow for BJT/admin UI
+alwaysApply: true
+---
+
+# Open Design BJT UI Workflow
+
+Use this rule for admin and learner UI work.
+
+## Pre-Flight
+
+- Read the relevant route/component before changing layout.
+- Load the relevant `company/skills/ui-production/` files and UI gates.
+- For learner or learning-operation UI, also load `company/skills/bjt-ui-ux/`.
+- Use `company/skills/open-design-bjt/00-open-design-bjt-adaptation.md` and `company/gates/open-design-bjt-ui-gate.md` for production UI review.
+
+## Design System First
+
+- Reuse existing tokens, components, table/form/page patterns, and nav behavior.
+- Do not invent one-off colors, shadows, radii, or chart treatments.
+- New UI patterns must be justified and documented.
+
+## Admin Posture
+
+- Admin is operational software, not a landing page.
+- Use compact hierarchy, one primary action, real filters/tables/workflows, and state coverage.
+- Nav visibility, active state, feature flags, and direct URL behavior must agree.
+
+## Learner Posture
+
+- Learner UI must reduce cognitive load and support reading, remediation, progress, and focus.
+- Media, motion, social pressure, and competition must serve learning and pass BJT-specific gates.
+
+## Anti AI-Slop
+
+Avoid decorative gradients, generic emoji feature icons, fake metrics, filler copy, stock-like decoration, and card-heavy layouts that do not advance the workflow.
+
+## Critique Before Done
+
+Run the five-dimension critique:
+
+1. Philosophy
+2. Hierarchy
+3. Execution
+4. Functionality
+5. Specificity and restraint
+
+Any score below `3/5` blocks production-ready status.

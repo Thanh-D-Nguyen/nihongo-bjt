@@ -1,0 +1,52 @@
+---
+description: Japanese Reading Assist Layer, furigana, word meaning popups, and site-wide learning from Japanese text
+globs:
+  - "**/*.ts"
+  - "**/*.tsx"
+  - "**/*.prisma"
+  - "**/*.sql"
+  - "docs/**/*.md"
+alwaysApply: true
+---
+
+# Japanese Reading Assist Layer Rules
+
+The product serves BJT learners at many Japanese levels. The app must help users read Japanese text without turning the UI into a noisy beginner-only interface.
+
+## Required architecture
+
+- Implement a reusable Japanese text rendering layer, not one-off tooltips per page.
+- Use a provider abstraction: `ReadingAssistProvider`, `JapaneseTextAnalyzer`, `DictionaryLookupService`, and user preference policy.
+- Persist user reading assist preferences.
+- Cache analyzed text by normalized text hash to avoid repeated tokenization.
+- Connect selected words/sentences to flashcard creation.
+- Support desktop hover/click and mobile tap/bottom-sheet behavior.
+- Support accessibility: keyboard focus, screen reader labels, visible focus state.
+
+## Required UX behavior
+
+- Default mode should be clean: hover/tap only, not full furigana everywhere.
+- Allow user preference modes: off, hover/tap only, difficult words only, full furigana, beginner mode.
+- Do not reveal vocabulary meanings during active timed BJT exam mode unless the mode is practice/help or after the answer is submitted.
+- Avoid noisy underlines on every word. Use subtle visual cues.
+
+## Forbidden shortcuts
+
+- Do not implement reading assist as a hard-coded demo tooltip.
+- Do not use frontend-only fake dictionary data as source of truth.
+- Do not wrap every single kanji character as a word without tokenization.
+- Do not analyze the same text on every React render.
+- Do not log full private user text into analytics.
+- Do not make basic reading support a paid-only feature.
+
+## Production baseline
+
+A valid implementation must include:
+
+- backend analyzer endpoint with typed DTOs
+- persistence for preferences and cache
+- reusable frontend components
+- add-to-flashcard flow
+- analytics events
+- at least basic admin report view for dictionary gaps / failed tokenization
+- tests for analyzer and preference behavior

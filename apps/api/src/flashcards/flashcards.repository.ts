@@ -1,0 +1,472 @@
+import { createPrismaClient, type Prisma } from "@nihongo-bjt/database";
+import { scheduleSrsReview, type SrsRating } from "@nihongo-bjt/shared";
+import { randomUUID } from "node:crypto";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+
+function parseAccessibilityMetadata(value: Prisma.JsonValue | null | undefined): {
+  altText?: string;
+  reducedMotionSafe?: boolean;
+} {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return {};
+  }
+  const record = value as Record<string, unknown>;
+  return {
+    altText: typeof record.altText === "string" ? record.altText.trim() : undefined,
+    reducedMotionSafe:
+      typeof record.reducedMotionSafe === "boolean" ? record.reducedMotionSafe : undefined
+  };
+}
+
+@Injectable()
+export class FlashcardsRepository {
+  private readonly prisma = createPrismaClient();
+
+  decks(userId: string, limit: number) {
+    return this.prisma.deck.findMany({
+      include: { _count: { select: { cards: true } } },
+      orderBy: { createdAt: "desc" },
+      take: limit,
+      where: {
+        status: "active",
+        OR: [{ ownerUserId: userId }, { visibility: "public" }]
+      }
+    });
+  }
+
+  deckDetail(userId: string, deckId: string) {
+    return this.prisma.deck.findFirstOrThrow({
+      include: {
+        cards: {
+          include: { card: { include: { mediaLinks: { include: { asset: true } } } } },
+          orderBy: { position: "asc" }
+        }
+      },
+      where: {
+        id: deckId,
+        status: "active",
+        OR: [{ ownerUserId: userId }, { visibility: "public" }]
+      }
+    });
+  }
+
+  deckCards(userId: string, deckId: string, limit: number) {
+    return this.prisma.deckCard.findMany({
+      include: { card: { include: { mediaLinks: { include: { asset: true } } } } },
+      orderBy: { position: "asc" },
+      take: limit,
+      where: {
+        deckId,
+        deck: {
+          status: "active",
+          OR: [{ ownerUserId: userId }, { visibility: "public" }]
+        }
+      }
+    });
+  }
+
+  reviewSummary(userId: string) {
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    return this.prisma.reviewEvent.groupBy({
+      _count: { id: true },
+      by: ["rating"],
+      where: { reviewedAt: { gte: start }, userId }
+    });
+  }
+
+  createDeck(input: {
+    descriptionJa?: string;
+    descriptionVi?: string;
+    titleJa?: string;
+    titleVi: string;
+    userId: string;
+  }) {
+    return this.prisma.deck.create({
+      data: {
+        descriptionJa: input.descriptionJa,
+        descriptionVi: input.descriptionVi,
+        ownerUserId: input.userId,
+        titleJa: input.titleJa,
+        titleVi: input.titleVi
+      }
+    });
+  }
+
+  async createCardFromContent(input: {
+    backText: string;
+    deckId: string;
+    frontText: string;
+    reading?: string;
+    sourceId: string;
+    sourceType: "lexeme" | "kanji" | "grammar";
+    userId: string;
+  }) {
+    const deck = await this.prisma.deck.findFirst({
+      where: {
+        id: input.deckId,
+        ownerUserId: input.userId,
+        status: "active"
+      }
+    });
+
+    if (!deck) {
+      throw new NotFoundException("Deck not found");
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const position = await tx.deckCard.count({ where: { deckId: input.deckId } });
+      const card = await tx.flashcardVariant.create({
+        data: {
+          backText: input.backText,
+          frontText: input.frontText,
+          reading: input.reading,
+          sourceId: input.sourceId,
+          sourceType: input.sourceType
+        }
+      });
+
+      await tx.deckCard.create({
+        data: {
+          cardId: card.id,
+          deckId: input.deckId,
+          position
+        }
+      });
+
+      await tx.userFlashcard.create({
+        data: {
+          cardId: card.id,
+          userId: input.userId
+        }
+      });
+
+      return card;
+    });
+  }
+
+  async createCardFromReadingAssist(input: {
+    backText: string;
+    deckId: string;
+    frontText: string;
+    reading?: string;
+    userId: string;
+  }) {
+    const deck = await this.prisma.deck.findFirst({
+      where: {
+        id: input.deckId,
+        ownerUserId: input.userId,
+        status: "active"
+      }
+    });
+
+    if (!deck) {
+      throw new NotFoundException("Deck not found");
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const position = await tx.deckCard.count({ where: { deckId: input.deckId } });
+      const card = await tx.flashcardVariant.create({
+        data: {
+          backText: input.backText,
+          frontText: input.frontText,
+          reading: input.reading,
+          sourceId: randomUUID(),
+          sourceType: "reading_assist"
+        }
+      });
+
+      await tx.deckCard.create({
+        data: {
+          cardId: card.id,
+          deckId: input.deckId,
+          position
+        }
+      });
+
+      await tx.userFlashcard.create({
+        data: {
+          cardId: card.id,
+          userId: input.userId
+        }
+      });
+
+      return card;
+    });
+  }
+
+  dueReviews(userId: string, limit: number) {
+    return this.prisma.userFlashcard.findMany({
+      include: { card: { include: { mediaLinks: { include: { asset: true } } } } },
+      orderBy: { dueAt: "asc" },
+      take: limit,
+      where: {
+        dueAt: { lte: new Date() },
+        state: { in: ["new", "learning", "review", "lapsed"] },
+        userId
+      }
+    });
+  }
+
+  async comebackSummary(userId: string, days: number) {
+    const now = new Date();
+    const since = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+
+    const [activeComebackCards, dueComebackCards, leechedCards, recentComebackReviews] =
+      await Promise.all([
+        this.prisma.userFlashcard.count({
+          where: {
+            comebackMode: true,
+            userId
+          }
+        }),
+        this.prisma.userFlashcard.count({
+          where: {
+            comebackMode: true,
+            dueAt: { lte: now },
+            state: { in: ["new", "learning", "review", "lapsed"] },
+            userId
+          }
+        }),
+        this.prisma.userFlashcard.count({
+          where: {
+            leeched: true,
+            userId
+          }
+        }),
+        this.prisma.reviewEvent.findMany({
+          include: {
+            userFlashcard: {
+              include: {
+                card: {
+                  select: {
+                    frontText: true,
+                    id: true,
+                    sourceType: true
+                  }
+                }
+              }
+            }
+          },
+          orderBy: { reviewedAt: "desc" },
+          take: 5,
+          where: {
+            reviewedAt: { gte: since },
+            userId,
+            userFlashcard: {
+              comebackMode: true
+            }
+          }
+        })
+      ]);
+
+    return {
+      activeComebackCards,
+      dueComebackCards,
+      leechedCards,
+      range: {
+        days,
+        since,
+        until: now
+      },
+      recentComebackReviews: recentComebackReviews.map((event) => ({
+        cardId: event.userFlashcard.cardId,
+        cardPreview: event.userFlashcard.card.frontText,
+        nextDueAt: event.nextDueAt,
+        rating: event.rating,
+        reviewedAt: event.reviewedAt,
+        sourceType: event.userFlashcard.card.sourceType,
+        userFlashcardId: event.userFlashcardId
+      }))
+    };
+  }
+
+  /**
+   * Writes the next SRS state + append-only `review_event`. Must run **inside** the caller's transaction
+   * after quota consumption so `usage_counter` and card state stay aligned.
+   *
+   * **Leech detection:**
+   * - When lapses >= 8, card is marked as leeched
+   * - API response includes `leechDetected` flag for UI feedback
+   */
+  async applySubmitReview(
+    tx: Prisma.TransactionClient,
+    input: {
+      elapsedMs?: number;
+      rating: SrsRating;
+      reviewedAt: Date;
+      userFlashcardId: string;
+      userId: string;
+    }
+  ) {
+    const current = await tx.userFlashcard.findFirst({
+      include: {
+        card: {
+          select: {
+            sourceId: true,
+            sourceType: true
+          }
+        }
+      },
+      where: { id: input.userFlashcardId, userId: input.userId }
+    });
+
+    if (!current) {
+      throw new NotFoundException("User flashcard not found");
+    }
+
+    const next = scheduleSrsReview(
+      {
+        dueAt: current.dueAt,
+        easeFactor: current.easeFactor,
+        intervalDays: current.intervalDays,
+        lapses: current.lapses,
+        repetitions: current.repetitions,
+        state: current.state as "new" | "learning" | "review" | "lapsed",
+        leeched: current.leeched ?? false,
+        comebackMode: current.comebackMode ?? false
+      },
+      input.rating,
+      input.reviewedAt,
+      current.comebackMode ?? false
+    );
+
+    // Detect if card just became leeched
+    const leechDetected = !current.leeched && next.leeched;
+
+    const updated = await tx.userFlashcard.update({
+      data: {
+        dueAt: next.dueAt,
+        easeFactor: next.easeFactor,
+        intervalDays: next.intervalDays,
+        lapses: next.lapses,
+        repetitions: next.repetitions,
+        state: next.state,
+        leeched: next.leeched,
+        comebackMode: next.comebackMode
+      },
+      where: { id: current.id }
+    });
+
+    const reviewEvent = await tx.reviewEvent.create({
+      data: {
+        elapsedMs: input.elapsedMs,
+        nextDueAt: next.dueAt,
+        previousDueAt: current.dueAt,
+        rating: input.rating,
+        reviewedAt: input.reviewedAt,
+        userFlashcardId: current.id,
+        userId: input.userId
+      }
+    });
+
+    const sourceIdKind = current.card.sourceType === "reading_assist" ? "opaque_ref" : "canonical_id";
+
+    return {
+      cardId: updated.cardId,
+      dueAt: updated.dueAt,
+      easeFactor: updated.easeFactor,
+      intervalDays: updated.intervalDays,
+      lapses: updated.lapses,
+      leechDetected,
+      leeched: updated.leeched,
+      comebackMode: updated.comebackMode,
+      nextDueAt: reviewEvent.nextDueAt,
+      previousDueAt: reviewEvent.previousDueAt,
+      rating: reviewEvent.rating,
+      remediation: {
+        sourceId: current.card.sourceId,
+        sourceIdKind,
+        sourceType: current.card.sourceType
+      },
+      remediationPolicy: {
+        availability: "after_answer" as const,
+        note: "Remediation metadata is returned only after a review answer is submitted."
+      },
+      repetitions: updated.repetitions,
+      reviewEventId: reviewEvent.id,
+      reviewedAt: reviewEvent.reviewedAt,
+      state: updated.state,
+      userFlashcardId: updated.id
+    };
+  }
+
+  async linkCardToMedia(input: { assetId: string; cardId: string; role: string; userId: string }) {
+    const owned = await this.prisma.userFlashcard.findFirst({
+      where: { cardId: input.cardId, userId: input.userId }
+    });
+    if (!owned) {
+      throw new NotFoundException("Flashcard not found for user");
+    }
+
+    const asset = await this.prisma.mediaAsset.findFirst({
+      where: { id: input.assetId, ownerUserId: input.userId, status: "active" }
+    });
+    if (!asset) {
+      throw new NotFoundException("Media asset not found");
+    }
+
+    if (asset.byteSize === null || asset.byteSize < 1) {
+      throw new BadRequestException(
+        "Call POST /api/media/complete-upload after uploading to the presigned URL, then link the card"
+      );
+    }
+
+    const hasRequiredRightsMetadata = asset.license?.trim().length && (asset.provider === "local" || asset.sourceUrl);
+    if (!hasRequiredRightsMetadata || asset.rightsStatus !== "cleared") {
+      throw new BadRequestException(
+        "Call POST /api/media/assets/:assetId/rights-metadata and provide required provenance/license metadata before linking the card"
+      );
+    }
+
+    const accessibility = parseAccessibilityMetadata(asset.accessibility);
+    if (!accessibility.altText) {
+      throw new BadRequestException(
+        "Media accessibility metadata missing: accessibility.altText must be set before linking the card"
+      );
+    }
+    if (asset.mimeType === "image/gif" && accessibility.reducedMotionSafe !== true) {
+      throw new BadRequestException(
+        "Animated GIF media must set accessibility.reducedMotionSafe before linking the card"
+      );
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const exact = await tx.cardMediaLink.findFirst({
+        where: { assetId: input.assetId, cardId: input.cardId, role: input.role }
+      });
+      if (exact) {
+        return tx.cardMediaLink.findFirstOrThrow({
+          include: { asset: true },
+          where: { id: exact.id }
+        });
+      }
+
+      if (input.role === "primary_image") {
+        await tx.cardMediaLink.deleteMany({
+          where: { cardId: input.cardId, role: "primary_image" }
+        });
+      }
+
+      const link = await tx.cardMediaLink.create({
+        data: { assetId: input.assetId, cardId: input.cardId, role: input.role },
+        include: { asset: true }
+      });
+
+      await tx.analyticsEvent.create({
+        data: {
+          eventName: "flashcard_image_linked",
+          payload: {
+            assetId: input.assetId,
+            cardId: input.cardId,
+            role: input.role
+          } as Prisma.InputJsonValue,
+          source: "api",
+          userId: input.userId
+        }
+      });
+
+      return link;
+    });
+  }
+}

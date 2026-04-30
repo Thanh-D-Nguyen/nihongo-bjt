@@ -1,0 +1,22 @@
+---
+description: PostgreSQL and Prisma rules
+alwaysApply: true
+---
+
+# Database rules
+
+PostgreSQL is mandatory.
+
+## Required principles
+- Use schemas such as `app`, `content`, `learning`, `analytics`, `admin`, `media`, `daily`, `authz` when useful.
+- Use UUID primary keys unless a natural key is explicitly justified.
+- Use `created_at`, `updated_at`, and soft-delete/status fields where needed.
+- Use migrations, not manual DB changes.
+- Use raw SQL migrations for extensions, partitions, advanced indexes, and schema creation.
+- Keep analytics event log partition-friendly.
+- Keep search tables/projections rebuildable from source-of-truth tables.
+
+## Forbidden
+- No MongoDB collections.
+- No schema-less core content storage.
+- No destructive migration without backup note and explicit comment.

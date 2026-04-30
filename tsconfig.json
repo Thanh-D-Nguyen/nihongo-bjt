@@ -1,0 +1,38 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "ignoreDeprecations": "6.0",
+    "strict": true,
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "types": ["node"],
+    "baseUrl": ".",
+    "paths": {
+      "@nihongo-bjt/config": ["packages/config/src/index.ts"],
+      "@nihongo-bjt/shared": ["packages/shared/src/index.ts"],
+      "@nihongo-bjt/ui": ["packages/ui/src/index.ts"],
+      "@nihongo-bjt/ui/admin-shell": ["packages/ui/src/admin-shell.tsx"],
+      "@nihongo-bjt/keycloak-oidc": ["packages/keycloak-oidc/src/index.ts"]
+    }
+  },
+  "include": [
+    "apps/**/*.ts",
+    "apps/**/*.tsx",
+    "e2e/**/*.ts",
+    "packages/**/*.ts",
+    "packages/**/*.tsx",
+    "playwright.config.ts",
+    "vitest.config.ts",
+    "prisma.config.ts",
+    "eslint.config.mjs"
+  ],
+  "exclude": ["archive/**", "node_modules/**", "packages/database/generated/**"]
+}

@@ -1,0 +1,44 @@
+---
+description: UI Production Grade Rule
+alwaysApply: true
+---
+# UI Production Grade Rule
+
+## Layout
+
+- All app pages MUST use a dashboard layout, not a landing hero.
+- Max 2 primary columns.
+- Use 8pt spacing system.
+- No section without clear purpose.
+
+## Typography
+
+- H1 only used for landing pages.
+- Dashboard uses:
+  - H2 (section title)
+  - H3 (card title)
+  - body (description)
+
+## Hierarchy
+
+Every page MUST define:
+
+1. Primary action (1 only)
+2. Secondary actions (max 4)
+3. Supporting info
+
+## Components
+
+- Must use reusable components:
+  - Card
+  - StatCard
+  - ActionCard
+  - EmptyState
+  - SectionHeader
+
+## Forbidden
+
+- Hero-only layout in app pages
+- Oversized typography
+- Random pill button groups
+- Empty placeholder without UX meaning

@@ -1,0 +1,84 @@
+---
+alwaysApply: true
+---
+# Auth UI and Session UX Rule
+
+## Keycloak Identity
+
+The app uses Keycloak as the identity provider.
+
+Never ask normal users to manually type UUID, user_id, keycloak_id, or internal identifiers.
+
+User identity must come from the authenticated session/JWT.
+
+## Login UX
+
+Login page must be a real branded auth page, not a giant hero or redirect placeholder.
+
+Required:
+- brand
+- short value proposition
+- one clear primary login CTA
+- secondary return-home link
+- loading state
+- error state
+- accessible contrast
+
+Forbidden:
+- invisible button text
+- disabled-looking CTA when clickable
+- manual UUID input
+- custom password auth unless explicitly requested
+- local fake auth in production UI
+
+## Layout
+
+Learner routes must use shared AppShell.
+
+Admin routes must use AdminShell.
+
+Header/nav must not disappear between pages.
+
+## Button Accessibility
+
+All button variants must pass contrast.
+
+Primary buttons must have clearly visible text in normal, hover, focus, active, and disabled states.
+
+Focus rings must not obscure labels.
+
+## Auth-aware UI
+
+Unauthenticated:
+- show login CTA
+- explain benefits of login
+- allow limited public browsing if supported
+
+Authenticated:
+- show display name/avatar
+- show personalized Today Plan
+- use session user ID internally
+
+Never show internal technical identifiers in normal learner UI.
+
+## Implementation Detail Hiding
+
+Never expose infrastructure names to end users.
+
+Forbidden user-facing words:
+- Keycloak
+- OIDC
+- OAuth
+- realm
+- client_id
+- access_token
+- refresh_token
+- UUID
+- JWT
+
+Use product language instead:
+- Đăng nhập
+- Tạo tài khoản
+- Đồng bộ tiến độ
+- Tiếp tục học
+- Phiên đăng nhập đã hết hạn

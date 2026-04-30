@@ -1,0 +1,111 @@
+<cursor_one_click_task>
+  <identity>
+    <role>Senior full-stack product engineer, product architect, database architect, UI/UX designer, and QA lead.</role>
+    <mode>Autonomous phased implementation with strict quality gates.</mode>
+  </identity>
+
+  <context_files>
+    <file>AGENTS.md</file>
+    <file>.cursor/rules/*.mdc</file>
+    <file>docs/spec/nihongo_bjt_cursor_master_spec_v14.md</file>
+    <file>docs/spec/nihongo_bjt_cursor_master_spec_v14_1_final.md</file>
+    <file>docs/cursor-prompts/phase-01-foundation.xml</file>
+    <file>docs/cursor-prompts/phase-02-core-content-search.xml</file>
+    <file>docs/cursor-prompts/phase-03-flashcards-srs.xml</file>
+    <file>docs/cursor-prompts/phase-04-bjt-quiz-study.xml</file>
+    <file>docs/cursor-prompts/phase-05-admin-cms-rbac.xml</file>
+    <file>docs/cursor-prompts/phase-06-analytics.xml</file>
+    <file>docs/cursor-prompts/phase-07-daily-life-hub.xml</file>
+    <file>docs/cursor-prompts/phase-08-battle-realtime.xml</file>
+    <file>docs/cursor-prompts/phase-09-product-readiness.xml</file>
+    <file>docs/cursor-prompts/phase-10-polish-qa.xml</file>
+    <file>docs/cursor-prompts/phase-11-monetization-ads-billing.xml</file>
+    <file>docs/cursor-prompts/phase-12-social-auth-sharing-growth.xml</file>
+    <file>docs/cursor-prompts/phase-13-japanese-reading-assist.xml</file>
+  </context_files>
+
+  <primary_goal>
+    Build the NihonGo BJT web application as a production-ready monorepo according to the master specification. Execute all phases from 01 to 13 in order without requiring the user to paste each phase manually.
+  </primary_goal>
+
+  <non_negotiable_stack>
+    <frontend>Next.js App Router, TypeScript, Tailwind CSS, shadcn/ui, i18n-first UI</frontend>
+    <backend>NestJS, TypeScript, Prisma</backend>
+    <database>PostgreSQL as source of truth</database>
+    <search>Meilisearch projection from PostgreSQL</search>
+    <jobs>Redis and BullMQ</jobs>
+    <realtime>Socket.IO for battle/realtime features</realtime>
+    <auth>Keycloak-ready auth boundary and RBAC design</auth>
+  </non_negotiable_stack>
+
+
+  <production_grade_baseline>
+    <rule>Build minimal production-grade vertical slices, not prototype/demo screens.</rule>
+    <rule>No feature is considered done until it has real persistence, typed API contracts, validation, error handling, and relevant tests.</rule>
+    <rule>Do not use static arrays, fake charts, frontend-only RBAC, or TODO placeholders as implementation substitutes.</rule>
+    <rule>When data is not ready, create staging/import/profiling pipelines and seed through the real schema.</rule>
+    <rule>When external services are unavailable, create provider interfaces with local/mock providers instead of hard-coding fake behavior.</rule>
+    <rule>If the scope is too large, reduce scope to a real vertical slice instead of creating many incomplete screens.</rule>
+  </production_grade_baseline>
+
+
+  <monetization_baseline>
+    <rule>Implement monetization as plans, entitlements, quotas, subscriptions, usage tracking, and provider abstractions.</rule>
+    <rule>All paid/free restrictions must be enforced on the backend.</rule>
+    <rule>Use local/dev billing and ad providers when real provider credentials are unavailable.</rule>
+    <rule>Admin must be able to manage plans, entitlements, quotas, ad placements, and audit monetization actions.</rule>
+    <rule>Ads must be placement/config driven and must not interrupt core learning flows.</rule>
+  </monetization_baseline>
+
+  <global_constraints>
+    <constraint>Do not replace PostgreSQL with MongoDB.</constraint>
+    <constraint>Do not hard-code UI text. Use i18n keys from the beginning.</constraint>
+    <constraint>Do not skip RBAC, admin analytics, learner analytics, media rights, or privacy architecture.</constraint>
+    <constraint>Do not implement placeholder-only dashboards. Dashboards must have real contracts, schema, API, and seeded/demo data when production data is unavailable.</constraint>
+    <constraint>Do not silently remove features from the spec to make implementation easier.</constraint>
+    <constraint>Prefer correct, maintainable code over superficial UI.</constraint>
+    <constraint>For large features, implement minimal production-grade vertical slices rather than fake screens.</constraint>
+  </global_constraints>
+
+  <execution_plan>
+    <phase order="01" name="foundation">Create monorepo, tooling, base app shell, backend shell, Prisma/PostgreSQL setup, i18n base, health endpoints.</phase>
+    <phase order="02" name="core-content-search">Implement dictionary, kanji, grammar, examples, unified search, Meilisearch projection.</phase>
+    <phase order="03" name="flashcards-srs">Implement decks, cards, images/media, SRS scheduling, review flow.</phase>
+    <phase order="04" name="bjt-quiz-study">Implement BJT quiz, study sessions, mistake notebook, results.</phase>
+    <phase order="05" name="admin-cms-rbac">Implement admin shell, CMS, RBAC, user/profile/media/i18n management.</phase>
+    <phase order="06" name="analytics">Implement learner analytics, admin analytics, event tracking, rollups, dashboards.</phase>
+    <phase order="07" name="daily-life-hub">Implement daily home hub: NHK/news learning, weather-ready cards, seasonal word, business phrase, life situations.</phase>
+    <phase order="08" name="battle-realtime">Implement battle architecture, bot battle, Socket.IO realtime foundation, scoring.</phase>
+    <phase order="09" name="product-readiness">Implement onboarding, placement test, PWA/offline, notification center, privacy/export/delete, rights/provenance, backup/health docs.</phase>
+    <phase order="10" name="polish-qa">Run full QA, refine UI/UX, accessibility basics, seed data, docs, final report.</phase>
+    <phase order="11" name="monetization-ads-billing">Implement monetization foundation: plans, entitlements, quotas, local billing provider, ad placement abstraction, admin monetization management, and monetization analytics.</phase>
+    <phase order="12" name="social-auth-sharing-growth">Implement social auth provider architecture, privacy-safe sharing, share postcards, referrals, and growth analytics.</phase>
+    <phase order="13" name="japanese-reading-assist">Implement reusable Japanese reading assist architecture, preferences, analyzer API, cache, UI components, flashcard handoff, and analytics/admin gap reporting.</phase>
+  </execution_plan>
+
+  <quality_gate after_each_phase="true">
+    <command>install dependencies when needed</command>
+    <command>format or lint relevant code</command>
+    <command>typecheck relevant packages</command>
+    <command>run relevant unit tests</command>
+    <command>validate Prisma schema and migrations when database changes exist</command>
+    <command>verify app routes compile when frontend changes exist</command>
+  </quality_gate>
+
+  <failure_policy>
+    <step>If a quality gate fails, inspect the error and fix it within the current phase.</step>
+    <step>If the same gate fails twice, stop and report the blocker clearly.</step>
+    <step>Do not continue to the next phase with broken typecheck, broken migrations, or broken app boot.</step>
+    <step>If an external dependency or API key is unavailable, create a provider abstraction and local/mock provider, then continue.</step>
+  </failure_policy>
+
+  <reporting>
+    <before_work>Print a concise implementation plan and confirm the phase order.</before_work>
+    <after_each_phase>Report completed items, changed files, commands run, and any risk/gap.</after_each_phase>
+    <final_report>Summarize implemented features, how to run locally, test status, remaining TODOs, and recommended next manual review points.</final_report>
+  </reporting>
+
+  <start_now>
+    Execute phase 01 immediately, then continue through phase 13 according to this orchestration contract.
+  </start_now>
+</cursor_one_click_task>

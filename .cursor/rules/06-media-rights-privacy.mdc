@@ -1,0 +1,18 @@
+---
+description: Media rights, provenance, privacy rules
+alwaysApply: true
+---
+
+# Media, rights, and privacy
+
+## Media
+- Store images in object storage, not as base64 in DB.
+- Do not hotlink external images as final card images.
+- Save provider/source/license/provenance metadata.
+- Admin must be able to review media rights status.
+
+## Privacy
+- Support privacy settings.
+- Support data export request and deletion/anonymization flow skeleton.
+- Protect user-level analytics drill-down with RBAC and audit reason.
+- Avoid exposing personal information in public leaderboard/battle views by default.

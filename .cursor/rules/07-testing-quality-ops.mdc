@@ -1,0 +1,28 @@
+---
+description: Testing, quality, observability and ops rules
+alwaysApply: true
+---
+
+# Testing and quality
+
+## Minimum checks
+Run relevant commands after edits:
+- format
+- lint
+- typecheck
+- unit tests
+- Prisma generate/migration validation
+- e2e tests when UI flows are implemented
+
+## Test focus
+- SRS scheduling
+- quiz scoring
+- permissions/RBAC
+- i18n fallback
+- analytics event ingestion/rollups
+- media provenance validation
+
+## Ops
+- Provide health endpoints: live, ready, version.
+- Include setup and troubleshooting in README.
+- Document backup/restore for PostgreSQL and object storage.

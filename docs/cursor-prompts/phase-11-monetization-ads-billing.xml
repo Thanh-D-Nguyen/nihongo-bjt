@@ -1,0 +1,41 @@
+<cursor_task>
+  <title>Phase 11 - Monetization, subscriptions, entitlements, quotas, and ads</title>
+
+  <context>
+    Read AGENTS.md, .cursor/rules/*.mdc, docs/spec/nihongo_bjt_cursor_master_spec_v14.md and docs/spec/nihongo_bjt_cursor_master_spec_v14_1_final.md before editing.
+    The app must be monetization-ready without becoming a demo or over-integrating external providers too early.
+  </context>
+
+  <goal>
+    Implement the internal monetization foundation: plans, entitlements, quotas, local billing provider, ad placement abstraction, admin monetization management, and analytics events.
+  </goal>
+
+  <must_follow>
+    <item>Do not implement frontend-only paywalls.</item>
+    <item>Do not scatter hard-coded premium checks through the app.</item>
+    <item>All restricted features must be enforced by backend entitlement/quota checks.</item>
+    <item>Use provider interfaces for billing and ads.</item>
+    <item>Use a local/dev provider if real Stripe/ad provider credentials are unavailable.</item>
+    <item>Admin monetization actions must require RBAC and audit logs.</item>
+    <item>Ads must be placement-driven and must not interrupt core learning flows.</item>
+  </must_follow>
+
+  <deliverables>
+    <item>PostgreSQL/Prisma models for plans, entitlements, quotas, subscriptions, usage counters/events, ad placements, and monetization audit records.</item>
+    <item>Backend MonetizationModule with EntitlementService and QuotaService.</item>
+    <item>BillingProvider interface and LocalBillingProvider.</item>
+    <item>AdProvider interface and LocalAdProvider or config-driven placeholder provider.</item>
+    <item>Backend guards/helpers for entitlement and quota enforcement.</item>
+    <item>Frontend hooks/components for entitlement status, quota meters, and respectful upgrade prompts.</item>
+    <item>Admin routes for plans, entitlements, quotas, subscriptions, ad placements, and monetization analytics.</item>
+    <item>Analytics events for paywall, quota limit, upgrade, subscription, and ad impressions/clicks.</item>
+    <item>Tests for entitlement resolution, quota consumption, quota reset periods, and admin permission enforcement.</item>
+  </deliverables>
+
+  <quality_gate>
+    <item>Run lint, typecheck, tests, and Prisma validation.</item>
+    <item>Verify free and paid plan behavior with seeded/dev data.</item>
+    <item>Verify backend rejects restricted actions when entitlement/quota is missing.</item>
+    <item>Verify admin monetization routes are RBAC-protected.</item>
+  </quality_gate>
+</cursor_task>

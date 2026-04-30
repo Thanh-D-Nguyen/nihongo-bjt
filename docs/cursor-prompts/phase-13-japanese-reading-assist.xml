@@ -1,0 +1,41 @@
+<cursor_task>
+  <title>Phase 13 - Japanese Reading Assist Layer</title>
+
+  <context>
+    NihonGo BJT serves learners at many Japanese levels. Users may not know how to read kanji or business vocabulary shown anywhere in the web app. Build a site-wide Japanese Reading Assist Layer so users can hover, click, or tap Japanese words to see reading, meaning, and learning actions.
+    Read AGENTS.md, .cursor/rules/*.mdc, docs/spec/nihongo_bjt_cursor_master_spec_v14.md and docs/spec/nihongo_bjt_cursor_master_spec_v14_1_final.md before editing.
+  </context>
+
+  <goal>
+    Implement a production-grade vertical slice for Japanese reading assistance across the app: reusable annotated text components, analyzer endpoint, preference persistence, cache, word card UI, add-to-flashcard action, and basic admin reports.
+  </goal>
+
+  <must_follow>
+    <item>Do not implement hard-coded demo tooltips.</item>
+    <item>Do not use frontend-only fake dictionary data as source of truth.</item>
+    <item>Use existing dictionary/content tables where possible.</item>
+    <item>Use provider abstraction for tokenization and dictionary lookup.</item>
+    <item>Cache analyzed text by normalized text hash.</item>
+    <item>Support desktop hover/click and mobile tap/bottom-sheet behavior.</item>
+    <item>Respect exam mode: do not reveal answer-help during active timed BJT exam unless configured as practice mode or after answering.</item>
+    <item>Do not log full private user text into analytics.</item>
+    <item>Basic reading support must be available to free users; only advanced AI explanations or high-volume batch annotation may be quota-limited.</item>
+  </must_follow>
+
+  <deliverables>
+    <item>Prisma models or SQL migrations for reading assist cache and user preferences.</item>
+    <item>Backend module: ReadingAssistModule with analyze endpoint and preference endpoints.</item>
+    <item>Frontend components: JapaneseText, AnnotatedJapaneseText, ReadingAssistTooltip, ReadingAssistBottomSheet, WordCardPopover, ReadingAssistPreferencePanel.</item>
+    <item>Add-to-flashcard from selected token/sentence.</item>
+    <item>Analytics events for word card open, furigana toggle, add-to-flashcard, report incorrect meaning, and cache miss.</item>
+    <item>Admin reading assist report page for unknown terms, missing readings, failed tokenization, and reported meanings.</item>
+    <item>Tests for analyzer, cache, preferences, exam-mode guard, and add-to-flashcard integration.</item>
+  </deliverables>
+
+  <quality_gate>
+    <item>Run lint, typecheck, tests, and Prisma validation.</item>
+    <item>Verify a sample phrase such as 念のため確認させてください。 displays reading assist correctly.</item>
+    <item>Verify mobile bottom sheet and desktop tooltip behavior.</item>
+    <item>Verify timed BJT exam mode does not reveal meaning before answer submission.</item>
+  </quality_gate>
+</cursor_task>

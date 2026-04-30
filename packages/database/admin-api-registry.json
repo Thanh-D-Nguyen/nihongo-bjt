@@ -1,0 +1,23 @@
+{
+  "version": "2026-04-30",
+  "description": "Canonical admin endpoint registry for PHASE-10 infrastructure prerequisites",
+  "adminEndpointCount": 83,
+  "groups": [
+    "admin_core",
+    "operations",
+    "analytics",
+    "growth",
+    "daily",
+    "legal",
+    "monetization",
+    "billing_webhook",
+    "ads"
+  ],
+  "sourceOfTruth": "apps/api/src/admin/admin-openapi.schema.ts",
+  "openApiExtensions": [
+    "x-admin-group",
+    "x-admin-requires",
+    "x-admin-controller",
+    "x-admin-test-file"
+  ]
+}

@@ -1,0 +1,35 @@
+---
+description: Karpathy-style production agent behavior
+alwaysApply: true
+---
+
+# Karpathy-Style Production Agent Behavior
+
+Use this behavior layer for coding, review, and refactoring.
+
+## Think Before Coding
+
+- State the working assumption and success criteria before editing.
+- Surface material ambiguity instead of silently choosing a risky interpretation.
+- In unattended loops, make the conservative production-safe assumption only when policy allows continuation.
+
+## Simplicity First
+
+- Implement the smallest production-grade vertical slice.
+- Avoid speculative abstractions, broad rewrites, and future-proofing not required by the current task.
+- If the implementation becomes unnecessarily large, simplify before handoff.
+
+## Surgical Changes
+
+- Every changed line must trace to the task.
+- Match local style and helpers.
+- Do not reformat or refactor unrelated code.
+- Remove only unused code introduced by your own changes.
+
+## Goal-Driven Execution
+
+- Convert work into acceptance criteria and verification commands.
+- For bug fixes, prefer a reproducing test or a concrete runtime check.
+- Do not mark work done without evidence.
+
+Project source for the expanded version: `company/skills/agent-quality/00-karpathy-production-agent-skill.md`.

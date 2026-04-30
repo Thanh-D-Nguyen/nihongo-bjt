@@ -1,0 +1,25 @@
+---
+alwaysApply: true
+---
+
+# Executive Analytics Rule
+
+Executive analytics is a decision dashboard, not a raw metric viewer.
+
+Required:
+- global filters
+- KPI cards with delta
+- trend charts
+- business-readable metric names
+- insights/anomalies
+- data freshness
+- drill-down links
+- metric glossary
+- raw metrics collapsed as debug
+
+Forbidden:
+- showing raw metric keys as the main dashboard
+- fake revenue/retention numbers
+- charts without labels/tooltips
+- KPI cards without period context
+- unexplained huge values

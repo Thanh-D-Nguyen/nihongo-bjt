@@ -1,0 +1,29 @@
+---
+alwaysApply: true
+---
+# Admin User Management Rule
+
+Admin user management is a production operations console, not a simple profile CRUD page.
+
+Required:
+- KPI cards
+- search/filter bar
+- professional user table
+- status badges
+- plan/subscription badges
+- role summary
+- learning summary
+- quota warning
+- user detail drawer/page
+- tabs: Overview, Learning, Plan & Quota, Roles & Permissions, Sessions, Support Notes, Audit
+- confirmation + reason for sensitive actions
+- audit log for sensitive actions
+
+Forbidden:
+- large inline create-user form as main content
+- only showing name/email/locale
+- only active status
+- frontend-only permission checks
+- hard-coded premium/free logic
+- showing internal UUID/keycloak_id as normal UX
+- destructive delete without soft-delete/anonymization flow

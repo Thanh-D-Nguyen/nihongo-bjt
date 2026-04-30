@@ -1,0 +1,26 @@
+import type { HTMLAttributes, ReactNode } from "react";
+
+import { Card, CardContent } from "./card";
+import { cn } from "./cn";
+
+export function StatCard({
+  className,
+  hint,
+  label,
+  value,
+  ...props
+}: HTMLAttributes<HTMLDivElement> & {
+  hint?: ReactNode;
+  label: string;
+  value: ReactNode;
+}) {
+  return (
+    <Card className={cn("overflow-hidden", className)} {...props}>
+      <CardContent className="space-y-1 pt-5">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted">{label}</p>
+        <p className="text-2xl font-semibold tabular-nums tracking-tight text-ink">{value}</p>
+        {hint ? <p className="text-xs text-muted">{hint}</p> : null}
+      </CardContent>
+    </Card>
+  );
+}

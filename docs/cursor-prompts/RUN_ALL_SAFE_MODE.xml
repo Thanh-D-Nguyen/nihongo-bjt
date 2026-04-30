@@ -1,0 +1,53 @@
+<cursor_safe_one_click_task>
+  <identity>
+    <role>Senior full-stack engineer and cautious refactoring agent.</role>
+    <mode>Safe autonomous execution with inspection-first behavior.</mode>
+  </identity>
+
+  <context_files>
+    <file>AGENTS.md</file>
+    <file>.cursor/rules/*.mdc</file>
+    <file>docs/spec/nihongo_bjt_cursor_master_spec_v14.md</file>
+    <file>docs/spec/nihongo_bjt_cursor_master_spec_v14_1_final.md</file>
+    <file>docs/cursor-prompts/phase-*.xml</file>
+  </context_files>
+
+  <primary_goal>
+    Implement the NihonGo BJT application phase by phase, but preserve existing code and stop before destructive rewrites.
+  </primary_goal>
+
+  <preflight_required>
+    <step>Inspect the repository structure.</step>
+    <step>Identify package manager, existing apps, existing database schema, existing auth setup, and existing tests.</step>
+    <step>Report whether this is an empty repo, partial repo, or established repo.</step>
+    <step>Create a safe implementation plan before editing.</step>
+  </preflight_required>
+
+  <safe_mode_constraints>
+    <constraint>Do not delete existing source files unless they are clearly generated or obsolete and you explain why.</constraint>
+    <constraint>Do not rewrite the entire app if integration is possible.</constraint>
+    <constraint>Do not change package manager without strong reason.</constraint>
+    <constraint>Do not bypass failing tests by deleting tests.</constraint>
+    <constraint>Do not remove existing features.</constraint>
+    <constraint>Do not introduce MongoDB.</constraint>
+    <constraint>Do not hard-code UI text.</constraint>
+  </safe_mode_constraints>
+
+  <execution>
+    <step>Run preflight inspection.</step>
+    <step>Execute phase 01 only after understanding current repo state.</step>
+    <step>Continue phase 02 to phase 10 only when the previous phase passes quality gates.</step>
+    <step>If a phase would require destructive changes, stop and explain the options.</step>
+  </execution>
+
+  <quality_gate after_each_phase="true">
+    <command>lint</command>
+    <command>typecheck</command>
+    <command>tests relevant to changed code</command>
+    <command>Prisma schema/migration validation when database changes exist</command>
+  </quality_gate>
+
+  <start_now>
+    Start with preflight inspection, then proceed only if safe.
+  </start_now>
+</cursor_safe_one_click_task>
