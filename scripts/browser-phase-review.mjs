@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
-const phaseId = process.env.PHASE_ID || "UNKNOWN_PHASE";
+const phaseId = process.env.PHASE_ID || process.env.BROWSER_REVIEW_PHASE_ID || "UNKNOWN_PHASE";
 const app = process.env.BROWSER_REVIEW_APP || "web";
 const baseURL = process.env.PLAYWRIGHT_BASE_URL || (app === "admin" ? "http://127.0.0.1:3001" : "http://127.0.0.1:3000");
 const rawRoutes = process.env.BROWSER_REVIEW_ROUTES || "/vi";
@@ -18,6 +18,11 @@ const stamp = new Date().toISOString().replace(/[:.]/g, "-");
 const outDir = join(outRoot, "artifacts", `${phaseId}-${stamp}`);
 const reportPath = join(outRoot, `${phaseId.toLowerCase()}-${stamp}.md`);
 const appPort = Number(new URL(baseURL).port || (baseURL.startsWith("https:") ? 443 : 80));
+const reviewLocale = process.env.BROWSER_REVIEW_LOCALE || "vi";
+const adminReviewUsername = process.env.BROWSER_REVIEW_ADMIN_USERNAME;
+const adminReviewPassword = process.env.BROWSER_REVIEW_ADMIN_PASSWORD;
+const settleMs = Number(process.env.BROWSER_REVIEW_SETTLE_MS || 1_000);
+const loadingTimeoutMs = Number(process.env.BROWSER_REVIEW_LOADING_TIMEOUT_MS || 15_000);
 
 let serverProcess;
 let status = "pass";
@@ -26,12 +31,11 @@ const evidence = [];
 const runtimeEvents = [];
 
 function adminNavRoutes() {
-  const locale = process.env.BROWSER_REVIEW_LOCALE || "vi";
   const source = readFileSync("apps/admin/lib/admin-nav-data.ts", "utf8");
   const hrefs = [...source.matchAll(/href:\s*"([^"]+)"/g)].map((match) => match[1]);
   return [...new Set(hrefs)].map((href) => {
     const path = href === "/" ? "" : href.startsWith("/") ? href : `/${href}`;
-    return `/${locale}${path}`;
+    return `/${reviewLocale}${path}`;
   });
 }
 
@@ -54,6 +58,24 @@ const timeout = (ms, label) =>
       reject(new Error(`${label} timed out after ${ms}ms`));
     }, ms);
   });
+
+function adminAuthMode() {
+  if (app !== "admin") return "not_applicable";
+  if (adminReviewUsername && adminReviewPassword) return "password_login";
+  if (process.env.NEXT_PUBLIC_ADMIN_TEST_BYPASS === "1" || process.env.ADMIN_TEST_BYPASS === "1") {
+    return "local_test_bypass";
+  }
+  return "existing_session_or_unauthenticated";
+}
+
+function worseStatus(current, next) {
+  const rank = { pass: 0, pass_with_risks: 1, blocked_environment: 2, block: 3 };
+  return rank[next] > rank[current] ? next : current;
+}
+
+function loadingTextPattern() {
+  return /Đang tải|Loading|読み込み|読み込み中|loading/i;
+}
 
 async function fetchOk(url) {
   try {
@@ -159,6 +181,68 @@ async function ensureServer({ forceRestart = false } = {}) {
   return ready;
 }
 
+async function loginAdmin(page, attempt, viewportName) {
+  if (!(app === "admin" && adminReviewUsername && adminReviewPassword)) return true;
+
+  const loginUrl = new URL(`/${reviewLocale}/login`, baseURL);
+  loginUrl.searchParams.set("returnTo", `/${reviewLocale}`);
+  await page.goto(loginUrl.toString(), { waitUntil: "domcontentloaded", timeout: 20_000 });
+  await page.fill("#admin-login-username", adminReviewUsername);
+  await page.fill("#admin-login-password", adminReviewPassword);
+  await Promise.all([
+    page.waitForURL((url) => !url.pathname.includes("/login"), { timeout: 30_000 }),
+    page.click('button[type="submit"]')
+  ]);
+
+  const landedPath = new URL(page.url()).pathname;
+  if (landedPath.includes("/login")) {
+    throw new Error("admin password login stayed on login page");
+  }
+
+  runtimeEvents.push(`attempt ${attempt}: ${viewportName} authenticated through admin password login`);
+  return true;
+}
+
+async function classifyAdminPage(page, url) {
+  if (app !== "admin") return [];
+  const bodyText = await page.locator("body").innerText({ timeout: 4_000 }).catch(() => "");
+  const blockers = [];
+  if (
+    /Đang xác thực phiên quản trị|Verifying admin session|管理セッション|authenticating admin session/i.test(
+      bodyText
+    )
+  ) {
+    blockers.push(`${url} is still showing the admin auth gate`);
+  }
+  if (/Đăng nhập quản trị|Admin sign in|管理者ログイン/i.test(bodyText)) {
+    blockers.push(`${url} redirected to admin login instead of authenticated UI`);
+  }
+  if (/planned notice|coming soon|under construction|will be implemented|Phase 11/i.test(bodyText)) {
+    blockers.push(`${url} still contains placeholder/planned-copy text`);
+  }
+  if (loadingTextPattern().test(bodyText)) {
+    blockers.push(`${url} still shows loading text after ${loadingTimeoutMs}ms`);
+  }
+  return blockers;
+}
+
+async function waitForPageSettled(page, url) {
+  await page.waitForLoadState("networkidle", { timeout: 5_000 }).catch(() => undefined);
+  if (settleMs > 0) await page.waitForTimeout(settleMs);
+
+  if (app !== "admin") return;
+
+  const start = Date.now();
+  while (Date.now() - start < loadingTimeoutMs) {
+    const bodyText = await page.locator("body").innerText({ timeout: 2_000 }).catch(() => "");
+    if (!loadingTextPattern().test(bodyText)) {
+      return;
+    }
+    await page.waitForTimeout(500);
+  }
+  runtimeEvents.push(`${url} still contained loading text after ${loadingTimeoutMs}ms wait`);
+}
+
 async function withTotalTimeout(fn) {
   return Promise.race([fn(), timeout(totalTimeoutMs, "browser phase review")]);
 }
@@ -179,6 +263,16 @@ async function reviewOnce(attempt) {
       });
       const page = await context.newPage();
       page.setDefaultTimeout(15_000);
+      try {
+        await loginAdmin(page, attempt, viewport.name);
+      } catch (error) {
+        attemptStatus = worseStatus(attemptStatus, "blocked_environment");
+        attemptFindings.push(
+          `attempt ${attempt}: ${viewport.name} admin password login failed: ${error.message}`
+        );
+        await context.close();
+        continue;
+      }
       for (const route of routes) {
         const url = new URL(route, baseURL).toString();
         const safeRoute = route.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "") || "root";
@@ -188,16 +282,22 @@ async function reviewOnce(attempt) {
           const responseStatus = response?.status();
           if (responseStatus === 404) {
             saw404 = true;
-            attemptStatus = "pass_with_risks";
+            attemptStatus = worseStatus(attemptStatus, "pass_with_risks");
             attemptFindings.push(`attempt ${attempt}: ${viewport.name} ${url} returned 404`);
           } else if (!response || responseStatus >= 400) {
-            attemptStatus = "pass_with_risks";
+            attemptStatus = worseStatus(attemptStatus, "pass_with_risks");
             attemptFindings.push(`attempt ${attempt}: ${viewport.name} ${url} returned ${responseStatus ?? "no response"}`);
+          }
+          await waitForPageSettled(page, url);
+          const adminBlockers = await classifyAdminPage(page, url);
+          if (adminBlockers.length) {
+            attemptStatus = worseStatus(attemptStatus, "block");
+            attemptFindings.push(...adminBlockers.map((blocker) => `attempt ${attempt}: ${viewport.name} ${blocker}`));
           }
           await page.screenshot({ path: screenshotPath, fullPage: true });
           attemptEvidence.push(screenshotPath);
         } catch (error) {
-          attemptStatus = "blocked_environment";
+          attemptStatus = worseStatus(attemptStatus, "blocked_environment");
           attemptFindings.push(`attempt ${attempt}: ${viewport.name} ${url}: ${error.message}`);
         }
       }
@@ -253,6 +353,10 @@ Reviewer agent: bjt-browser-qa
 - app: ${app}
 - baseURL: ${baseURL}
 - routes: ${routes.join(", ") || "none"}
+- admin_auth_mode: ${adminAuthMode()}
+- admin_password_login: ${app === "admin" && adminReviewUsername && adminReviewPassword ? "enabled" : "disabled"}
+- settle_ms: ${settleMs}
+- loading_timeout_ms: ${loadingTimeoutMs}
 - timeout_ms: ${totalTimeoutMs}
 - restart_on_404: ${restartOn404 ? "yes" : "no"}
 - max_attempts: ${maxAttempts}
@@ -284,6 +388,7 @@ ${runtimeEvents.length ? runtimeEvents.map((item) => `- ${item.replace(/\n/g, "\
           app,
           baseURL,
           routes,
+          admin_auth_mode: adminAuthMode(),
           evidence: [reportPath, ...evidence],
           findings,
           runtime_events: runtimeEvents

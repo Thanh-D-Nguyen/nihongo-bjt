@@ -1,29 +1,35 @@
+import en from "../../../messages/en.json";
 import ja from "../../../messages/ja.json";
 import vi from "../../../messages/vi.json";
-import { AdminResourceTableClient } from "../_components/admin-resource-table-client";
+import { ImportOverviewClient } from "./import-overview-client";
 
-const messages = { ja, vi };
+const messages = { en, ja, vi };
 
 export default async function Page({ params }: { params: Promise<{ locale: keyof typeof messages }> }) {
   const { locale } = await params;
   const t = messages[locale] ?? messages.vi;
+  const isVi = locale === "vi";
   return (
-    <AdminResourceTableClient
-      columns={[
-        { key: "sourceType", label: "Source type" },
-        { key: "sourceDir", label: "Source dir" },
-        { key: "status", label: "Status" },
-        { key: "fileCount", label: "Files" },
-        { key: "itemCount", label: "Items" },
-        { key: "errorCount", label: "Errors" },
-        { key: "startedAt", label: "Started" },
-        { key: "completedAt", label: "Completed" },
-        { key: "createdAt", label: "Created" }
-      ]}
-      common={t.adminConsole.common}
-      description={t.adminConsole.import.subtitle}
-      endpoint="/api/admin/operations/import-batches?limit=100"
-      title={t.adminConsole.import.title}
+    <ImportOverviewClient
+      locale={locale}
+      labels={{
+        title: t.adminConsole.import.title,
+        description: t.adminConsole.import.subtitle,
+        refresh: isVi ? "Làm mới" : "Refresh",
+        loading: t.adminConsole.common.loading,
+        error: t.adminConsole.common.error,
+        pending: isVi ? "Đang chờ" : "Pending",
+        inProgress: isVi ? "Đang xử lý" : "In progress",
+        succeeded24h: isVi ? "Thành công 24h" : "Succeeded 24h",
+        failed24h: isVi ? "Thất bại 24h" : "Failed 24h",
+        errors24h: isVi ? "Lỗi 24h" : "Errors 24h",
+        manifestsActive: isVi ? "Manifest active" : "Active manifests",
+        failedQueueLink: isVi ? "Hàng đợi lỗi" : "Failed queue",
+        manifestsLink: isVi ? "Manifest import" : "Import manifests",
+        goToFailedQueue: isVi ? "Mở hàng đợi lỗi" : "Open failed queue",
+        goToManifests: isVi ? "Mở manifest import" : "Open import manifests"
+      }}
     />
   );
 }
+

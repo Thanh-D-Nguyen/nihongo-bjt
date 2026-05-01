@@ -102,14 +102,67 @@ If there is no next incomplete admin slice, run the admin closeout verification 
 </no-manual-checkpoint-question-rule>
 
 <no-agent-handoff-stop-rule>
-When `DELEGATE_UNATTENDED_UNTIL_PRODUCTION_READY` is active and policy conditions pass, do not stop with:
+When `DELEGATE_UNATTENDED_UNTIL_PRODUCTION_READY` is active and the next task needs a specialist owner, Human Proxy must not stop with a handoff-only response.
+
+Forbidden unless a hard stop exists:
+
 - "Stopping for agent handoff"
 - "Handoff ready to Boss"
 - "requires bjt-learner-ui owner"
 - "awaiting owner selection"
 
-Instead, select the required owner agent and execute or inline the owner pass. If impossible, output `boss_action_executed: no` with the exact platform limitation.
+Instead, choose the owner agent and execute or inline that agent's pass using its `.github/agents/*.agent.md` file and the selected task/prompt.
 </no-agent-handoff-stop-rule>
+
+<anti-scope-too-big-stop-rule>
+While admin production readiness is incomplete and no hard stop exists, do not stop with reasoning equivalent to "remaining work is too large for one cycle".
+
+Forbidden stop reasons:
+
+- "scope exceeds single cycle"
+- "multi-cycle work, cannot finish in single proxy turn"
+- "30-75 cycles of focused work"
+- "stopping to let the human pick the next domain"
+- "needs proper specialist design+build cycles before continuing"
+
+Required behavior:
+
+- pick the smallest production-grade slice that fits the current turn budget;
+- ship that slice end-to-end with typecheck and live-runtime evidence when API/UI changed;
+- continue to the next slice in the same turn until a real hard stop or end-of-turn token budget is reached;
+- if end-of-turn token budget is the only blocker, output the next slice with concrete file paths and the exact next prompt, but do not classify it as a project-level hard stop.
+
+The size of the remaining admin backlog is not a hard stop. Each turn must close at least one slice with green typecheck whenever code changed, and at least one live-runtime check whenever an API or admin UI changed.
+</anti-scope-too-big-stop-rule>
+
+<per-screen-visit-and-inline-fix-rule>
+For admin production work, do not mark a slice complete based only on typecheck or HTTP 200. Each visible route changed by a slice must be opened in a real authenticated browser session (real Keycloak login, real cookies, real `/api/admin/*` data — not the bypass).
+
+For every visited route, compare the rendered state against `company/ADMIN_MANAGEMENT_WORKFLOW_STANDARD.md` and the BJT UI/UX standard, and fix UI/UX regressions inline in the same turn:
+
+- generic shell where the domain requires a workflow;
+- infinite loading caused by API base URL, RBAC mismatch, or data shape;
+- duplicate visual experience across two distinct nav items;
+- shallow/temporary copy or layout that looks unfinished;
+- missing search/filter/sort/pagination/detail/action affordances expected by the domain;
+- desktop or mobile layout broken (overflow, contrast, unreadable text);
+- i18n keys rendering instead of translated copy;
+- login/auth redirect loop, refresh-token failure, or auth-gate flash that ejects an authenticated admin back to `/login`.
+
+Record the per-route observation and the concrete fix in `company/admin-module-inventory.md` before advancing.
+</per-screen-visit-and-inline-fix-rule>
+
+<known-auth-regression-priority-rule>
+At the start of each turn, check `company/admin-module-inventory.md` for any open auth/session regression that ejects authenticated admins back to `/login`. Such regressions are top-priority — they must be reproduced and fixed before per-domain workflow slices resume, because every admin slice depends on stable session state.
+
+Candidates to inspect first when investigating a login-loop bug:
+
+- `apps/admin/app/_components/admin-keycloak-session-gate.tsx`
+- `apps/admin/app/api/auth/keycloak/session/route.ts`
+- `apps/admin/app/[locale]/layout.tsx`
+- middleware/redirect on 401 from `/api/admin/me`
+- token refresh path returning `refresh_failed` while access token is still valid
+</known-auth-regression-priority-rule>
 
 <prompt-routing>
 - phase review: `.github/prompts/42_phase_review_and_close.prompt.md`
@@ -151,6 +204,8 @@ These are not hard stops under unattended admin production readiness:
 - "Hard human-review boundary reached" when browser visual evidence is the only missing artifact
 - need to run Release Director admin sign-off/diff gate
 - human-reported admin product-depth gaps; these reopen the admin loop and should be routed to the next admin slice, not treated as a launch approval stop
+- the remaining admin backlog being multi-slice; that is the expected shape of the loop, not a hard stop
+- end-of-turn token budget; output the next concrete slice and stop only at the turn boundary, do not classify as project hard stop
 
 These should continue automatically unless they request final public launch/go-live or expose a real hard stop.
 </not-a-hard-stop>

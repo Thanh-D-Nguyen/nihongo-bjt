@@ -25,3 +25,7 @@ export function publicKeycloakIssuerUrlFromEnv(): string | undefined {
 export function isAdminKeycloakEnabled(): boolean {
   return Boolean(publicKeycloakIssuerUrlFromEnv());
 }
+
+export function isAdminTestBypassEnabled(): boolean {
+  return process.env.NODE_ENV !== "production" && process.env.NEXT_PUBLIC_ADMIN_TEST_BYPASS === "1";
+}

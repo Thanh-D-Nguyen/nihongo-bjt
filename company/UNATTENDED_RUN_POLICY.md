@@ -124,6 +124,42 @@ Only a later explicit human instruction can change the target from full implemen
 
 If the chosen action is feature-flagging only, record it as `blocked_requires_real_implementation` and keep the gate `block`. Continue to the next slice.
 
+## Anti Scope-Too-Big Stop Rule
+
+While admin production readiness is incomplete and no hard stop exists, the proxy must never stop with reasoning equivalent to "remaining work is too large for one cycle".
+
+Forbidden stop reasons under unattended/admin delegation:
+
+- "scope exceeds single cycle"
+- "multi-cycle work, cannot finish in single proxy turn"
+- "30-75 cycles of focused work"
+- "stopping to let the human pick the next domain"
+- "needs proper specialist design+build cycles before continuing"
+
+Required behavior instead:
+
+- pick the smallest production-grade slice that fits the current turn budget (one route or one tightly-scoped backend extension is allowed and expected);
+- ship that slice end-to-end with typecheck and live-runtime evidence when API/UI changed;
+- update inventory with concrete progress;
+- continue to the next slice in the same turn until a real hard stop or end-of-turn token budget is reached;
+- if end-of-turn token budget is the only blocker, hand off the next slice with concrete file paths and the exact next prompt — but do not classify that as a project-level hard stop.
+
+The proxy may not use the size of the remaining backlog as a reason to stop. Each turn must close at least one slice with green typecheck whenever the slice changed code, and at least one live-runtime check whenever an API or admin UI changed.
+
+## Per-Screen Visit + Inline Fix Rule
+
+For admin production work, no slice may be marked complete based only on typecheck or HTTP 200. Each visible route changed by a slice must be opened in a real authenticated browser session (real Keycloak login, real cookies, real `/api/admin/*` data). The proxy or owner agent must:
+
+- compare the rendered state against `company/ADMIN_MANAGEMENT_WORKFLOW_STANDARD.md` and the BJT UI/UX standard;
+- fix UI/UX regressions inline in the same turn — generic shell where domain requires a workflow, infinite loading, duplicate experience, missing primary affordances, broken responsive layout, unkeyed i18n strings, login redirect loop, auth-gate flash;
+- record the per-route observation and concrete fix in inventory before moving on.
+
+A route is not "visited" by a 200 status code or a single bypass screenshot.
+
+## Known Hard-Block Tracking
+
+The proxy must check `company/admin-module-inventory.md` for "known auth regression" and similar foundation regressions at the start of each turn. Any open auth/session regression that ejects authenticated admins back to `/login` is a top-priority slice — it must be reproduced and fixed before resuming per-domain workflow slices, because every admin route depends on stable session state.
+
 ## 100% Admin Completion Loop
 
 When the human asks for admin 100% production-ready, the unattended loop must not stop until:

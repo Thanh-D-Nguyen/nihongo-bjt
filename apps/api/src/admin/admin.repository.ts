@@ -1,4 +1,4 @@
-import { createPrismaClient, type Prisma } from "@nihongo-bjt/database";
+import { createPrismaClient, Prisma } from "@nihongo-bjt/database";
 import {
   adminCreateContentSchema,
   adminPatchContentBodySchema,
@@ -167,6 +167,14 @@ export class AdminRepository {
       orderBy: { code: "asc" }
     });
 
+    const adminCounts = await this.prisma.adminActorRole.groupBy({
+      by: ["roleId"],
+      _count: { roleId: true }
+    });
+    const adminCountByRoleId = new Map<string, number>(
+      adminCounts.map((row) => [row.roleId, row._count.roleId])
+    );
+
     return roles.map((role) => ({
       code: role.code,
       createdAt: role.createdAt,
@@ -174,73 +182,409 @@ export class AdminRepository {
       id: role.id,
       name: role.name,
       permissionCount: role.permissions.length,
+      adminCount: adminCountByRoleId.get(role.id) ?? 0,
       status: role.status
     }));
+  }
+
+  async iamRoleDetail(code: string) {
+    const role = await this.prisma.adminRole.findUnique({
+      where: { code },
+      include: {
+        permissions: { include: { permission: true } },
+        actors: {
+          include: {
+            actor: {
+              select: {
+                id: true,
+                displayName: true,
+                email: true,
+                status: true,
+                updatedAt: true
+              }
+            }
+          }
+        }
+      }
+    });
+    if (!role) {
+      return null;
+    }
+    return {
+      id: role.id,
+      code: role.code,
+      name: role.name,
+      description: role.description,
+      status: role.status,
+      createdAt: role.createdAt,
+      permissions: role.permissions.map((link) => ({
+        code: link.permission.code,
+        description: link.permission.description
+      })),
+      admins: role.actors.map((link) => ({
+        id: link.actor.id,
+        displayName: link.actor.displayName,
+        email: link.actor.email,
+        status: link.actor.status,
+        updatedAt: link.actor.updatedAt
+      }))
+    };
   }
 
   async iamPermissions() {
     const permissions = await this.prisma.adminPermission.findMany({
       include: {
         roles: {
-          include: { role: true }
+          include: {
+            role: {
+              include: {
+                actors: { select: { actorId: true } }
+              }
+            }
+          }
         }
       },
       orderBy: { code: "asc" }
     });
 
-    return permissions.map((permission) => ({
-      code: permission.code,
-      createdAt: permission.createdAt,
-      description: permission.description,
-      id: permission.id,
-      roleCount: permission.roles.length
-    }));
+    return permissions.map((permission) => {
+      const roleCodes: string[] = [];
+      const adminIds = new Set<string>();
+      for (const link of permission.roles) {
+        roleCodes.push(link.role.code);
+        for (const ar of link.role.actors) {
+          adminIds.add(ar.actorId);
+        }
+      }
+      const idx = permission.code.indexOf(".");
+      const group = idx === -1 ? "(misc)" : permission.code.slice(0, idx);
+      return {
+        adminCount: adminIds.size,
+        code: permission.code,
+        createdAt: permission.createdAt,
+        description: permission.description,
+        group,
+        id: permission.id,
+        roleCodes: roleCodes.sort(),
+        roleCount: roleCodes.length
+      };
+    });
   }
 
-  async iamAdmins() {
-    const admins = await this.prisma.adminActor.findMany({
+  async iamPermissionDetail(code: string) {
+    const permission = await this.prisma.adminPermission.findUnique({
       include: {
         roles: {
           include: {
-            role: true
+            role: {
+              include: {
+                actors: {
+                  include: {
+                    actor: {
+                      select: { displayName: true, email: true, id: true, status: true }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       },
-      orderBy: [{ status: "asc" }, { updatedAt: "desc" }]
+      where: { code }
     });
+    if (!permission) {
+      return null;
+    }
+    const roles = permission.roles.map((link) => ({
+      code: link.role.code,
+      description: link.role.description,
+      id: link.role.id,
+      name: link.role.name,
+      status: link.role.status
+    }));
 
-    return admins.map((admin) => ({
+    // Aggregate admins via role; one admin may inherit through multiple roles → keep first/highest viaRole
+    const ADMIN_LIMIT = 100;
+    const adminsMap = new Map<
+      string,
+      { displayName: string; email: string; id: string; status: string; viaRoleCodes: string[] }
+    >();
+    for (const link of permission.roles) {
+      for (const ar of link.role.actors) {
+        const existing = adminsMap.get(ar.actor.id);
+        if (existing) {
+          if (!existing.viaRoleCodes.includes(link.role.code)) {
+            existing.viaRoleCodes.push(link.role.code);
+          }
+          continue;
+        }
+        adminsMap.set(ar.actor.id, {
+          displayName: ar.actor.displayName,
+          email: ar.actor.email,
+          id: ar.actor.id,
+          status: ar.actor.status,
+          viaRoleCodes: [link.role.code]
+        });
+      }
+    }
+    const adminsAll = [...adminsMap.values()].sort((a, b) =>
+      a.displayName.localeCompare(b.displayName)
+    );
+    const truncated = adminsAll.length > ADMIN_LIMIT;
+    const admins = truncated ? adminsAll.slice(0, ADMIN_LIMIT) : adminsAll;
+
+    const idx = permission.code.indexOf(".");
+    const group = idx === -1 ? "(misc)" : permission.code.slice(0, idx);
+
+    return {
+      adminCount: adminsAll.length,
+      admins,
+      adminsTruncated: truncated,
+      code: permission.code,
+      createdAt: permission.createdAt,
+      description: permission.description,
+      group,
+      id: permission.id,
+      roleCount: roles.length,
+      roles
+    };
+  }
+
+  async iamAdmins(params: {
+    q?: string;
+    role?: string;
+    status?: string;
+    page?: number;
+    pageSize?: number;
+  } = {}) {
+    const page = Math.max(1, params.page ?? 1);
+    const pageSize = Math.min(100, Math.max(1, params.pageSize ?? 25));
+    const where: Prisma.AdminActorWhereInput = {};
+    if (params.status) {
+      where.status = params.status;
+    }
+    if (params.q) {
+      where.OR = [
+        { displayName: { contains: params.q, mode: "insensitive" } },
+        { email: { contains: params.q, mode: "insensitive" } }
+      ];
+    }
+    if (params.role) {
+      where.roles = { some: { role: { code: params.role } } };
+    }
+
+    const [total, admins] = await Promise.all([
+      this.prisma.adminActor.count({ where }),
+      this.prisma.adminActor.findMany({
+        include: {
+          roles: { include: { role: true } }
+        },
+        orderBy: [{ status: "asc" }, { updatedAt: "desc" }],
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+        where
+      })
+    ]);
+
+    const items = admins.map((admin) => ({
+      createdAt: admin.createdAt,
       displayName: admin.displayName,
       email: admin.email,
       id: admin.id,
+      keycloakSubject: admin.keycloakSubject,
       roleCodes: admin.roles.map((link) => link.role.code),
       status: admin.status,
       updatedAt: admin.updatedAt
     }));
+
+    return { items, page, pageSize, total };
   }
 
-  async iamRoleAudit(limit: number) {
-    return this.prisma.adminAuditLog.findMany({
+  async iamAdminDetail(id: string) {
+    const actor = await this.prisma.adminActor.findUnique({
       include: {
-        actor: {
-          select: {
-            displayName: true,
-            email: true,
-            id: true
+        roles: {
+          include: {
+            role: { include: { permissions: { include: { permission: true } } } }
           }
         }
       },
-      orderBy: { createdAt: "desc" },
-      take: Math.min(Math.max(limit, 1), 200),
-      where: {
-        OR: [
-          { action: { contains: "role" } },
-          { targetType: { contains: "authz" } },
-          { targetType: { contains: "admin.role" } },
-          { targetType: { contains: "admin.permission" } }
-        ]
-      }
+      where: { id }
     });
+    if (!actor) {
+      return null;
+    }
+    const audit = await this.prisma.adminAuditLog.findMany({
+      include: {
+        actor: { select: { displayName: true, email: true, id: true } }
+      },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+      where: { targetId: id }
+    });
+    return {
+      audit,
+      createdAt: actor.createdAt,
+      displayName: actor.displayName,
+      email: actor.email,
+      id: actor.id,
+      keycloakSubject: actor.keycloakSubject,
+      roles: actor.roles.map((link) => ({
+        code: link.role.code,
+        description: link.role.description,
+        grantedAt: link.grantedAt,
+        id: link.role.id,
+        name: link.role.name,
+        permissionCount: link.role.permissions.length,
+        status: link.role.status
+      })),
+      status: actor.status,
+      updatedAt: actor.updatedAt
+    };
+  }
+
+  async iamAdminAssignRole(actorId: string, targetId: string, roleCode: string, reason: string) {
+    const target = await this.prisma.adminActor.findUnique({ where: { id: targetId } });
+    if (!target) {
+      throw new NotFoundException("Admin actor not found");
+    }
+    const role = await this.prisma.adminRole.findUnique({ where: { code: roleCode } });
+    if (!role) {
+      throw new NotFoundException("Role not found");
+    }
+    const existing = await this.prisma.adminActorRole.findUnique({
+      where: { actorId_roleId: { actorId: targetId, roleId: role.id } }
+    });
+    if (existing) {
+      throw new ConflictException({ code: "role_already_assigned", roleCode });
+    }
+    const link = await this.prisma.adminActorRole.create({
+      data: { actorId: targetId, roleId: role.id }
+    });
+    await this.writeAudit({
+      action: "admin.iam.role_assigned",
+      actorId,
+      after: { actorId: targetId, grantedAt: link.grantedAt, roleCode, roleId: role.id },
+      before: null,
+      reason,
+      targetId,
+      targetType: "authz.admin_actor_role"
+    });
+    return this.iamAdminDetail(targetId);
+  }
+
+  async iamAdminRevokeRole(actorId: string, targetId: string, roleCode: string, reason: string) {
+    const target = await this.prisma.adminActor.findUnique({ where: { id: targetId } });
+    if (!target) {
+      throw new NotFoundException("Admin actor not found");
+    }
+    const role = await this.prisma.adminRole.findUnique({ where: { code: roleCode } });
+    if (!role) {
+      throw new NotFoundException("Role not found");
+    }
+    const existing = await this.prisma.adminActorRole.findUnique({
+      where: { actorId_roleId: { actorId: targetId, roleId: role.id } }
+    });
+    if (!existing) {
+      throw new NotFoundException("Role is not assigned to this admin");
+    }
+    await this.prisma.adminActorRole.delete({ where: { id: existing.id } });
+    await this.writeAudit({
+      action: "admin.iam.role_revoked",
+      actorId,
+      after: null,
+      before: { actorId: targetId, grantedAt: existing.grantedAt, roleCode, roleId: role.id },
+      reason,
+      targetId,
+      targetType: "authz.admin_actor_role"
+    });
+    return this.iamAdminDetail(targetId);
+  }
+
+  async iamAdminPatchStatus(actorId: string, targetId: string, status: "active" | "disabled", reason: string) {
+    const target = await this.prisma.adminActor.findUnique({ where: { id: targetId } });
+    if (!target) {
+      throw new NotFoundException("Admin actor not found");
+    }
+    if (target.status === status) {
+      return this.iamAdminDetail(targetId);
+    }
+    const before = { status: target.status };
+    const updated = await this.prisma.adminActor.update({
+      data: { status },
+      where: { id: targetId }
+    });
+    await this.writeAudit({
+      action: "admin.iam.actor_status_changed",
+      actorId,
+      after: { status: updated.status },
+      before,
+      reason,
+      targetId,
+      targetType: "authz.admin_actor"
+    });
+    return this.iamAdminDetail(targetId);
+  }
+
+  /**
+   * Filterable IAM/admin-actor audit timeline. Replaces the older simple `limit`-only signature.
+   * Returns `{ items, total, page, pageSize }`. Item shape preserved for legacy consumers (still
+   * exposes `actor`, `targetType`, `action`, etc.) so the existing roles client keeps working when
+   * it reads `data.items ?? data`.
+   */
+  async iamRoleAudit(params: {
+    actorId?: string;
+    targetActorId?: string;
+    action?: string;
+    from?: string;
+    to?: string;
+    q?: string;
+    page?: number;
+    pageSize?: number;
+  } = {}) {
+    const page = Math.max(1, params.page ?? 1);
+    const pageSize = Math.min(100, Math.max(1, params.pageSize ?? 50));
+
+    // Scope: IAM / admin-actor mutations. Same semantic envelope as before.
+    const scopeOR: Prisma.AdminAuditLogWhereInput[] = [
+      { action: { contains: "role" } },
+      { targetType: { contains: "authz" } },
+      { targetType: { contains: "admin.role" } },
+      { targetType: { contains: "admin.permission" } }
+    ];
+
+    const where: Prisma.AdminAuditLogWhereInput = { OR: scopeOR };
+    const ANDs: Prisma.AdminAuditLogWhereInput[] = [];
+    if (params.actorId) ANDs.push({ actorId: params.actorId });
+    if (params.targetActorId) ANDs.push({ targetId: params.targetActorId });
+    if (params.action) ANDs.push({ action: { contains: params.action, mode: "insensitive" } });
+    if (params.from) ANDs.push({ createdAt: { gte: new Date(params.from) } });
+    if (params.to) ANDs.push({ createdAt: { lte: new Date(params.to) } });
+    if (params.q) {
+      ANDs.push({
+        OR: [
+          { reason: { contains: params.q, mode: "insensitive" } },
+          { action: { contains: params.q, mode: "insensitive" } },
+          { targetType: { contains: params.q, mode: "insensitive" } }
+        ]
+      });
+    }
+    if (ANDs.length > 0) where.AND = ANDs;
+
+    const [total, items] = await Promise.all([
+      this.prisma.adminAuditLog.count({ where }),
+      this.prisma.adminAuditLog.findMany({
+        include: {
+          actor: { select: { displayName: true, email: true, id: true } }
+        },
+        orderBy: { createdAt: "desc" },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+        where
+      })
+    ]);
+
+    return { items, page, pageSize, total };
   }
 
   async content(
@@ -980,16 +1324,29 @@ export class AdminRepository {
     return applyUserDetailPrivacyBoundary(detail, options?.includeSensitive === true);
   }
 
-  async recordUserDetailAccess(actorId: string, userId: string, includeSensitive: boolean) {
+  async recordUserDetailAccess(
+    actorId: string,
+    userId: string,
+    includeSensitive: boolean,
+    access?: { category?: string; reason?: string }
+  ) {
+    const reasonText =
+      access && access.reason && access.reason.trim().length > 0
+        ? access.reason.trim()
+        : includeSensitive
+          ? "support_user_detail_read_sensitive"
+          : "support_user_detail_read_redacted";
     await this.writeAudit({
       action: "admin.user.detail_viewed",
       actorId,
       after: {
+        accessReasonCategory: access?.category ?? null,
+        accessReasonText: access?.reason?.trim() ?? null,
         includeSensitive,
         viewedAt: new Date().toISOString()
       },
       before: null,
-      reason: includeSensitive ? "support_user_detail_read_sensitive" : "support_user_detail_read_redacted",
+      reason: reasonText,
       targetId: userId,
       targetType: "user_profile"
     });
@@ -1074,22 +1431,29 @@ export class AdminRepository {
     return after;
   }
 
-  async addUserSupportNote(actorId: string, userId: string, input: { body: string; reason: string }) {
+  async addUserSupportNote(
+    actorId: string,
+    userId: string,
+    input: { body: string; reason: string; visibility?: "private" | "team" | "audit_only" }
+  ) {
     const user = await this.prisma.userProfile.findUnique({ where: { id: userId } });
     if (!user) {
       throw new NotFoundException("User not found");
     }
-    const payload = { body: input.body, kind: "support_note" as const };
+    const visibility = input.visibility ?? "team";
+    const payload = { body: input.body, kind: "support_note" as const, visibility };
     await this.writeAudit({
       action: "admin.user.support_note",
       actorId,
       after: payload,
-      before: null,
+      // The visibility metadata is duplicated into `before` to make it server-filterable
+      // without parsing JSON every read (Prisma JSON path filters are limited).
+      before: { visibility },
       reason: input.reason,
       targetId: userId,
       targetType: "user_profile"
     });
-    return { ok: true as const };
+    return { ok: true as const, visibility };
   }
 
   userAuditForTarget(userId: string, limit: number) {
@@ -1198,19 +1562,79 @@ export class AdminRepository {
     });
   }
 
-  supportNotes(input: { limit: number; offset: number; userId?: string }) {
-    return this.prisma.adminAuditLog.findMany({
-      include: {
-        actor: { select: { displayName: true, id: true } }
-      },
-      orderBy: { createdAt: "desc" },
-      skip: input.offset,
-      take: input.limit,
-      where: {
-        action: "admin.user.support_note",
-        ...(input.userId ? { targetId: input.userId } : {})
+  /**
+   * Lists support notes from admin_audit_log. Privacy-hardened:
+   *  - actorScope === "self": include team/audit_only + own-private only.
+   *  - actorScope === "audit_only": include all visibilities (compliance read).
+   *  - actorScope === "team_only" (default): include team + audit_only + viewer's own-private.
+   */
+  async supportNotes(input: {
+    limit: number;
+    offset: number;
+    userId?: string;
+    createdBy?: string;
+    q?: string;
+    visibility?: "private" | "team" | "audit_only";
+    dateFrom?: string;
+    dateTo?: string;
+    viewerActorId?: string;
+    actorScope?: "self" | "team_only" | "audit_only";
+  }) {
+    const scope = input.actorScope ?? "team_only";
+    const where: Prisma.AdminAuditLogWhereInput = {
+      action: "admin.user.support_note",
+      ...(input.userId ? { targetId: input.userId } : {}),
+      ...(input.createdBy ? { actorId: input.createdBy } : {}),
+      ...(input.dateFrom || input.dateTo
+        ? {
+            createdAt: {
+              ...(input.dateFrom ? { gte: new Date(input.dateFrom) } : {}),
+              ...(input.dateTo ? { lte: new Date(input.dateTo) } : {})
+            }
+          }
+        : {})
+    };
+    const extraClauses: Prisma.AdminAuditLogWhereInput[] = [];
+    if (input.visibility) {
+      extraClauses.push({ before: { path: ["visibility"], equals: input.visibility } });
+    } else if (scope === "team_only" || scope === "self") {
+      const allowed: Prisma.AdminAuditLogWhereInput[] = [
+        { before: { path: ["visibility"], equals: "team" } },
+        { before: { path: ["visibility"], equals: "audit_only" } },
+        // legacy notes (no visibility key) treated as team
+        { before: { equals: Prisma.JsonNull } }
+      ];
+      if (input.viewerActorId) {
+        allowed.push({
+          AND: [
+            { before: { path: ["visibility"], equals: "private" } },
+            { actorId: input.viewerActorId }
+          ]
+        });
       }
-    });
+      extraClauses.push({ OR: allowed });
+    }
+    if (input.q) {
+      extraClauses.push({
+        OR: [
+          { reason: { contains: input.q, mode: "insensitive" } },
+          { targetId: { contains: input.q } }
+        ]
+      });
+    }
+    const finalWhere: Prisma.AdminAuditLogWhereInput =
+      extraClauses.length > 0 ? { AND: [where, ...extraClauses] } : where;
+    const [items, total] = await Promise.all([
+      this.prisma.adminAuditLog.findMany({
+        include: { actor: { select: { displayName: true, email: true, id: true } } },
+        orderBy: { createdAt: "desc" },
+        skip: input.offset,
+        take: input.limit,
+        where: finalWhere
+      }),
+      this.prisma.adminAuditLog.count({ where: finalWhere })
+    ]);
+    return { items, total };
   }
 
   readingAssistReports(input: { kind: string | undefined; limit: number }) {

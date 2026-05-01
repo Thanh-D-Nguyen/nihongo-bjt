@@ -1,28 +1,28 @@
+import en from "../../../../messages/en.json";
 import ja from "../../../../messages/ja.json";
 import vi from "../../../../messages/vi.json";
-import { AdminResourceTableClient } from "../../_components/admin-resource-table-client";
+import { PrivacyDataRequestsClient } from "./privacy-data-requests-client";
 
-const messages = { ja, vi };
+const messages = { en, ja, vi };
+type Locale = keyof typeof messages;
 
-export default async function Page({ params }: { params: Promise<{ locale: keyof typeof messages }> }) {
+function pickLabels(t: unknown, key: string): Record<string, string> {
+  const root = t as Record<string, unknown>;
+  const fromAdminConsole = (root.adminConsole as Record<string, unknown> | undefined)?.[key] as
+    | Record<string, string>
+    | undefined;
+  const fromTopLevel = root[key] as Record<string, string> | undefined;
+  return { ...(fromTopLevel ?? {}), ...(fromAdminConsole ?? {}) };
+}
+
+export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  const t = messages[locale] ?? messages.vi;
-  const p = t.privacyAdmin ?? {} as Record<string, string>;
+  const t = messages[locale as Locale] ?? messages.vi;
+  const labels = pickLabels(t, "privacyDataRequests");
   return (
-    <AdminResourceTableClient
-      columns={[
-        { key: "userId", label: p.colUser ?? "User ID" },
-        { key: "kind", label: p.colKind ?? "Kind" },
-        { key: "status", label: p.colStatus ?? "Status" },
-        { key: "lastError", label: p.colLastError ?? "Last error" },
-        { key: "createdAt", label: p.colCreated ?? "Created" },
-        { key: "completedAt", label: p.colCompleted ?? "Completed" }
-      ]}
+    <PrivacyDataRequestsClient
       common={t.adminConsole.common}
-      description={p.exportDescription ?? "Account export and deletion requests."}
-      endpoint="/api/admin/privacy/requests?kind=export&limit=100"
-      statusKeys={["status", "kind"]}
-      title={t.shell.navItems.dataRequests}
+      labels={labels}
     />
   );
 }

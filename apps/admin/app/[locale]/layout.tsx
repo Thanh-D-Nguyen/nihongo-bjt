@@ -1,5 +1,6 @@
 import { isSupportedLocale, type SupportedLocale } from "@nihongo-bjt/config";
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import ja from "../../messages/ja.json";
 import vi from "../../messages/vi.json";
@@ -9,13 +10,34 @@ import "../globals.css";
 
 const messages = { ja, vi };
 
+// Force dynamic rendering so server-side cookie reads (kc_access_token) reflect
+// the freshly-set Set-Cookie from POST /api/auth/keycloak/password-login on the
+// very next navigation. Without this, Next.js can serve a cached RSC payload
+// where initialAuthed=false even though the browser already has the cookie,
+// which contributed to the post-login redirect loop.
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "NihonGo BJT Admin",
   description: "NihonGo BJT administration shell"
 };
 
 export function generateStaticParams() {
+  // Only vi/ja are first-class admin locales. `en` is accepted at runtime as a
+  // login-screen-only fallback (see below); we deliberately do not pre-render
+  // English admin shells.
   return [{ locale: "vi" }, { locale: "ja" }];
+}
+
+// Locales accepted at runtime. `en` is permitted so that the unauthenticated
+// /en/login route can serve an English login screen; the shell strings on
+// non-public /en/* routes will fall back to vi labels (the gate redirects
+// unauthenticated visitors to /en/login before they ever see the shell).
+const RUNTIME_LOCALES = ["vi", "ja", "en"] as const;
+type RuntimeLocale = (typeof RUNTIME_LOCALES)[number];
+
+function isRuntimeLocale(value: string): value is RuntimeLocale {
+  return (RUNTIME_LOCALES as readonly string[]).includes(value);
 }
 
 export default async function AdminLayout({
@@ -26,12 +48,15 @@ export default async function AdminLayout({
   params: Promise<{ locale: string }>;
 }>) {
   const { locale } = await params;
-  if (!isSupportedLocale(locale)) {
+  if (!isRuntimeLocale(locale)) {
     notFound();
   }
 
-  const loc = locale as "ja" | "vi";
-  const t = messages[loc] ?? messages.vi;
+  // Shell chrome strings only exist for vi/ja. For `en` (login-only), fall back
+  // to vi so the shared session-gate busy label still renders sensibly if the
+  // gate ever runs on /en/* during transitions.
+  const shellLoc: SupportedLocale = isSupportedLocale(locale) ? (locale as SupportedLocale) : "vi";
+  const t = messages[shellLoc] ?? messages.vi;
 
   const chrome = {
     brand: t.shell.brand,
@@ -40,17 +65,32 @@ export default async function AdminLayout({
     operationConsole: t.shell.operationConsole,
     rbacActive: t.shell.rbacActive,
     signOut: t.shell.signOut,
-    workspace: t.shell.workspace
+    workspace: t.shell.workspace,
+    searchPlaceholder: t.shell.searchPlaceholder,
+    searchClear: t.shell.searchClear,
+    searchNoResults: t.shell.searchNoResults
   };
   const navLabelMaps = {
     navGroups: t.shell.navGroups,
     navItems: t.shell.navItems
   };
 
+  // Optimistic gate: if KC cookies are present server-side, render the shell immediately
+  // and let the gate validate asynchronously. This avoids the auth-gate flash for already
+  // authenticated admins (and keeps the redirect-on-401 path intact).
+  const cookieStore = await cookies();
+  const initialAuthed = Boolean(
+    cookieStore.get("kc_access_token")?.value || cookieStore.get("kc_refresh_token")?.value
+  );
+
   return (
-    <html lang={locale as SupportedLocale} suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <body className="min-h-screen bg-paper text-ink antialiased" suppressHydrationWarning>
-        <AdminKeycloakSessionGate busyLabel={t.shell.sessionChecking} locale={locale}>
+        <AdminKeycloakSessionGate
+          busyLabel={t.shell.sessionChecking}
+          initialAuthed={initialAuthed}
+          locale={locale}
+        >
           <AdminShellClient chrome={chrome} locale={locale} navLabelMaps={navLabelMaps}>
             {children}
           </AdminShellClient>

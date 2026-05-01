@@ -207,6 +207,110 @@ export class MediaService {
     return { items, total };
   }
 
+  async adminSearchAssets(params: {
+    limit: number;
+    mimeType?: string;
+    offset: number;
+    rightsStatus?: string;
+    status?: string;
+    q: string;
+  }) {
+    const where = {
+      ...(params.rightsStatus ? { rightsStatus: params.rightsStatus } : {}),
+      ...(params.mimeType ? { mimeType: { startsWith: params.mimeType } } : {}),
+      ...(params.status ? { status: params.status } : {}),
+      OR: [
+        { objectKey: { contains: params.q, mode: "insensitive" as const } },
+        { license: { contains: params.q, mode: "insensitive" as const } }
+      ]
+    };
+    const items = await this.prisma.mediaAsset.findMany({
+      orderBy: { createdAt: "desc" },
+      skip: params.offset,
+      take: params.limit,
+      where
+    });
+    return { items, total: items.length };
+  }
+
+  async adminGetAssetDetail(id: string) {
+    const asset = await this.prisma.mediaAsset.findUnique({ where: { id } });
+    if (!asset) {
+      throw new NotFoundException("Media asset not found");
+    }
+    const [cardLinkCount, audit] = await Promise.all([
+      this.prisma.cardMediaLink.count({ where: { assetId: id } }),
+      this.prisma.adminAuditLog.findMany({
+        include: { actor: { select: { id: true, displayName: true, email: true } } },
+        orderBy: { createdAt: "desc" },
+        take: 100,
+        where: { targetId: id, targetType: "media.asset" }
+      })
+    ]);
+    return { ...asset, cardLinkCount, audit };
+  }
+
+  async adminUpdateMetadata(input: {
+    actorId: string;
+    id: string;
+    license?: string;
+    rightsStatus?: "pending_review" | "cleared" | "blocked";
+    sourceUrl?: string | null;
+    provenance?: Record<string, unknown> | null;
+    accessibility?: Record<string, unknown> | null;
+    reason: string;
+  }) {
+    const before = await this.prisma.mediaAsset.findUnique({ where: { id: input.id } });
+    if (!before) throw new NotFoundException("Media asset not found");
+    const data: Record<string, unknown> = {};
+    if (input.license !== undefined) data.license = input.license;
+    if (input.rightsStatus !== undefined) data.rightsStatus = input.rightsStatus;
+    if (input.sourceUrl !== undefined) data.sourceUrl = input.sourceUrl;
+    if (input.provenance !== undefined) data.provenance = input.provenance;
+    if (input.accessibility !== undefined) data.accessibility = input.accessibility;
+    return this.prisma.$transaction(async (tx) => {
+      const next = await tx.mediaAsset.update({ data, where: { id: input.id } });
+      await tx.adminAuditLog.create({
+        data: {
+          action: "media.metadata.update",
+          actorId: input.actorId,
+          after: next as unknown as object as never,
+          before: before as unknown as object as never,
+          reason: input.reason,
+          targetId: input.id,
+          targetType: "media.asset"
+        }
+      });
+      return next;
+    });
+  }
+
+  async adminSoftDeleteAsset(input: { actorId: string; id: string; reason: string }) {
+    const before = await this.prisma.mediaAsset.findUnique({ where: { id: input.id } });
+    if (!before) throw new NotFoundException("Media asset not found");
+    if (before.status === "deleted") {
+      return { ...before, alreadyDeleted: true };
+    }
+    return this.prisma.$transaction(async (tx) => {
+      const next = await tx.mediaAsset.update({
+        data: { status: "deleted" },
+        where: { id: input.id }
+      });
+      await tx.adminAuditLog.create({
+        data: {
+          action: "media.asset.soft_delete",
+          actorId: input.actorId,
+          after: next as unknown as object as never,
+          before: before as unknown as object as never,
+          reason: input.reason,
+          targetId: input.id,
+          targetType: "media.asset"
+        }
+      });
+      return next;
+    });
+  }
+
   private async ensureBucket() {
     const bucket = this.env.MINIO_BUCKET;
     const exists = await this.minio.bucketExists(bucket);

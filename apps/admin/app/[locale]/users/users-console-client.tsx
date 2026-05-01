@@ -22,6 +22,7 @@ import {
   AdminStatusBadge,
   cn
 } from "@nihongo-bjt/ui";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
@@ -81,69 +82,6 @@ type Kpis = {
 };
 
 type ListResponse = { items: ListItem[]; page: number; pageSize: number; total: number };
-
-type UserDetail = {
-  learning: {
-    bjtBandEstimate: string | null;
-    dueFlashcards: number;
-    onboarding: { currentStep: string | null; onboardedAt: string | null } | null;
-    reviewEvents7d: number;
-    streak: null;
-  };
-  loginEvents: Array<{
-    createdAt: string;
-    eventType: string;
-    id: string;
-    metadata: unknown;
-    provider: string;
-  }>;
-  plan: {
-    entitlements: string[];
-    periodEnd: string | null;
-    planNameKey: string;
-    planSlug: string;
-    quotas: Array<{ key: string; limit: number | null; used: number; window: string }>;
-    source: string;
-    status: string;
-  };
-  profile: {
-    accountType?: string;
-    authSyncStatus?: string;
-    createdAt: string;
-    displayName: string;
-    email: string | null;
-    explanationLocale: string;
-    id: string;
-    keycloakSubjectMasked: string | null;
-    privacyLevel: string;
-    status: string;
-    targetBjtBand: string | null;
-    timezone: string;
-    uiLocale: string;
-    updatedAt: string;
-  };
-  providerAccounts: Array<{
-    createdAt: string;
-    emailAtLink: string | null;
-    id: string;
-    provider: string;
-    providerSubject: string;
-  }>;
-  supportNotesCapability: { appendViaAudit: true };
-  usageCounters: Array<{ id: string; quotaKey: string; value: number; windowKey: string }>;
-};
-
-type AuditEntry = {
-  action: string;
-  actorId: string;
-  after: unknown;
-  before: unknown;
-  createdAt: string;
-  id: string;
-  reason: string | null;
-  targetId: string;
-  targetType: string;
-};
 
 type PlanRow = {
   id: string;
@@ -219,12 +157,6 @@ function formatWhen(iso: string, locale: string) {
   }
 }
 
-function maskId(id: string) {
-  if (id.length <= 10) {
-    return id;
-  }
-  return `${id.slice(0, 4)}…${id.slice(-4)}`;
-}
 
 function buildListQuery(
   p: {
@@ -293,18 +225,6 @@ type ModalState =
   | { kind: "note"; id: string; name: string }
   | { kind: "bulkStatus" };
 
-const DETAIL_TABS = [
-  "overview",
-  "learning",
-  "plan",
-  "roles",
-  "sessions",
-  "support",
-  "audit"
-] as const;
-
-type DetailTab = (typeof DETAIL_TABS)[number];
-
 export function UsersConsoleClient({
   common,
   form,
@@ -318,6 +238,7 @@ export function UsersConsoleClient({
 }) {
   const t = (k: keyof UserManagementLabels | string) =>
     (um as Record<string, string>)[k] ?? k;
+  const router = useRouter();
 
   const accTypeLabel = (v: string | undefined) => {
     const k = `accType_${(v ?? "learner")}`;
@@ -358,13 +279,6 @@ export function UsersConsoleClient({
   const [noteRef, setNoteRef] = useState("");
   const [modalBusy, setModalBusy] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
-
-  const [detailId, setDetailId] = useState<string | null>(null);
-  const [detail, setDetail] = useState<UserDetail | null>(null);
-  const [detailErr, setDetailErr] = useState(false);
-  const [detailTab, setDetailTab] = useState<DetailTab>("overview");
-  const [detailAudit, setDetailAudit] = useState<AuditEntry[]>([]);
-  const [detailLoading, setDetailLoading] = useState(false);
 
   const [plans, setPlans] = useState<PlanRow[]>([]);
   const [bulkWorking, setBulkWorking] = useState(false);
@@ -527,44 +441,6 @@ export function UsersConsoleClient({
     setSelected(new Set());
   }, [listMeta.page, listMeta.pageSize, applied]);
 
-  const loadDetail = useCallback(
-    async (id: string) => {
-      setDetailLoading(true);
-      setDetailErr(false);
-      setDetail(null);
-      setDetailAudit([]);
-      try {
-        const [rUser, rAudit] = await Promise.all([
-          adminApiFetch(`/api/admin/users/${id}`),
-          adminApiFetch(`/api/admin/users/${id}/audit?limit=80`)
-        ]);
-        if (!rUser.ok) {
-          setDetailErr(true);
-          return;
-        }
-        setDetail((await rUser.json()) as UserDetail);
-        if (rAudit.ok) {
-          setDetailAudit((await rAudit.json()) as AuditEntry[]);
-        } else {
-          setDetailAudit([]);
-        }
-      } catch {
-        setDetailErr(true);
-      } finally {
-        setDetailLoading(false);
-      }
-    },
-    []
-  );
-
-  useEffect(() => {
-    if (!detailId) {
-      return;
-    }
-    setDetailTab("overview");
-    void loadDetail(detailId);
-  }, [detailId, loadDetail]);
-
   const planOptions = useMemo(() => {
     const slugs = new Set(
       (plans as PlanRow[]).map((p) => p.slug)
@@ -684,9 +560,6 @@ export function UsersConsoleClient({
     setReason("");
     await loadList();
     await loadKpis();
-    if (detailId === userId) {
-      void loadDetail(userId);
-    }
   };
 
   const submitPlan = async (userId: string) => {
@@ -710,9 +583,6 @@ export function UsersConsoleClient({
     setReason("");
     void loadList();
     void loadKpis();
-    if (detailId === userId) {
-      void loadDetail(userId);
-    }
   };
 
   const submitNote = async (userId: string) => {
@@ -739,9 +609,6 @@ export function UsersConsoleClient({
     setModal({ kind: "closed" });
     setNoteBody("");
     setNoteRef("");
-    if (detailId === userId) {
-      void loadDetail(userId);
-    }
   };
 
   if (permsLoading) {
@@ -1068,7 +935,7 @@ export function UsersConsoleClient({
                     <button
                       className="text-left font-medium text-indigo-800 hover:underline"
                       onClick={() => {
-                        setDetailId(u.id);
+                        router.push(`/${locale}/users/360?id=${u.id}`);
                       }}
                       type="button"
                     >
@@ -1158,7 +1025,7 @@ export function UsersConsoleClient({
                       <button
                         className="text-xs font-medium text-indigo-800"
                         onClick={() => {
-                          setDetailId(u.id);
+                          router.push(`/${locale}/users/360?id=${u.id}`);
                         }}
                         type="button"
                       >
@@ -1569,295 +1436,6 @@ export function UsersConsoleClient({
         </div>
       ) : null}
 
-      {detailId ? (
-        <div
-          className="fixed inset-0 z-40 flex justify-end bg-slate-900/40"
-          onClick={() => {
-            setDetailId(null);
-          }}
-          role="presentation"
-        >
-          <div
-            className="h-full w-full max-w-xl overflow-y-auto border-l border-slate-200 bg-surface p-5 shadow-2xl"
-            onClick={(e) => {
-              e.stopPropagation();
-            }}
-            role="dialog"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <h2 className="text-lg font-semibold text-ink">
-                {t("detailTitle")}
-              </h2>
-              <button
-                className="rounded border border-slate-200 px-2 py-0.5 text-sm"
-                onClick={() => {
-                  setDetailId(null);
-                }}
-                type="button"
-              >
-                {t("close")}
-              </button>
-            </div>
-            {detailLoading ? (
-              <p className="mt-4 text-sm text-slate-600">{common.loading}</p>
-            ) : null}
-            {detailErr || !detail ? (
-              <p className="mt-4 text-sm text-red-800">
-                {t("emptyDetail")}
-              </p>
-            ) : null}
-            {detail && !detailErr ? (
-              <div className="mt-4 space-y-4">
-                <div className="flex flex-wrap gap-1">
-                  {DETAIL_TABS.map((tab) => (
-                    <button
-                      className={cn(
-                        "rounded-full px-2 py-0.5 text-xs font-medium",
-                        detailTab === tab
-                          ? "bg-indigo-600 text-white"
-                          : "border border-slate-200 bg-white text-slate-800"
-                      )}
-                      key={tab}
-                      onClick={() => {
-                        setDetailTab(tab);
-                      }}
-                      type="button"
-                    >
-                      {tab === "overview"
-                        ? t("overviewTab")
-                        : tab === "learning"
-                          ? t("learningTab")
-                          : tab === "plan"
-                            ? t("planTab")
-                            : tab === "roles"
-                              ? t("rolesTab")
-                              : tab === "sessions"
-                                ? t("sessionsTab")
-                                : tab === "support"
-                                  ? t("supportTab")
-                                  : t("auditTab")}
-                    </button>
-                  ))}
-                </div>
-                {detailTab === "overview" ? (
-                  <div className="space-y-2 text-sm">
-                    <p>
-                      <span className="text-slate-500">{t("overviewName")}</span>{" "}
-                      {detail.profile.displayName}
-                    </p>
-                    <p>
-                      <span className="text-slate-500">{t("overviewAccountType")}</span>{" "}
-                      {accTypeLabel(detail.profile.accountType)}
-                    </p>
-                    <p>
-                      <span className="text-slate-500">{t("overviewAuthSync")}</span>{" "}
-                      {authSyncLabel(detail.profile.authSyncStatus)}
-                    </p>
-                    <p>
-                      <span className="text-slate-500">{t("overviewEmail")}</span>{" "}
-                      {detail.profile.email ?? "—"}
-                    </p>
-                    <p>
-                      <span className="text-slate-500">{t("overviewKeycloak")}</span>{" "}
-                      {detail.profile.keycloakSubjectMasked ?? "—"}
-                    </p>
-                    <p>
-                      <span className="text-slate-500">{t("overviewLocale")}</span>{" "}
-                      {detail.profile.uiLocale} / {detail.profile.explanationLocale}
-                    </p>
-                    <p>
-                      <span className="text-slate-500">{t("overviewTimezone")}</span>{" "}
-                      {detail.profile.timezone}
-                    </p>
-                    <p>
-                      <span className="text-slate-500">{t("overviewStatus")}</span>{" "}
-                      <AdminStatusBadge
-                        tone={accountStatusTone(detail.profile.status)}
-                      >
-                        {detail.profile.status}
-                      </AdminStatusBadge>
-                    </p>
-                    <p>
-                      <span className="text-slate-500">{t("overviewPlan")}</span>{" "}
-                      {detail.plan.planSlug} ({detail.plan.status})
-                    </p>
-                    <p>
-                      <span className="text-slate-500">{t("overviewLast")}</span>{" "}
-                      {formatWhen(detail.profile.updatedAt, locale)}
-                    </p>
-                  </div>
-                ) : null}
-                {detailTab === "learning" ? (
-                  <div className="space-y-2 text-sm text-ink">
-                    <p>
-                      {t("dueFlashcards")}: {detail.learning.dueFlashcards}
-                    </p>
-                    <p>
-                      {t("reviews7d")}: {detail.learning.reviewEvents7d}
-                    </p>
-                    <p>
-                      {t("onboardingStep")}:{" "}
-                      {detail.learning.onboarding
-                        ? detail.learning.onboarding.onboardedAt
-                          ? t("onboardingDone")
-                          : String(detail.learning.onboarding.currentStep)
-                        : "—"}
-                    </p>
-                    <p>
-                      {t("targetBand")}:{" "}
-                      {detail.learning.bjtBandEstimate ?? detail.profile.targetBjtBand ?? "—"}
-                    </p>
-                    <p className="text-slate-600">{t("learningLessonsN/A")}</p>
-                  </div>
-                ) : null}
-                {detailTab === "plan" ? (
-                  <div className="space-y-3 text-sm">
-                    <p>
-                      {t("periodEnd")}:{" "}
-                      {detail.plan.periodEnd
-                        ? formatWhen(detail.plan.periodEnd, locale)
-                        : "—"}
-                    </p>
-                    <p className="text-xs text-slate-600">
-                      {t("entitlements")}: {detail.plan.entitlements.join(", ")}
-                    </p>
-                    <div className="space-y-2">
-                      {detail.plan.quotas.map((q) => (
-                        <div className="rounded-lg border border-slate-200 p-2" key={q.key}>
-                          <div className="text-xs font-medium text-slate-800">
-                            {q.key} ({q.window})
-                          </div>
-                          <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-100">
-                            <div
-                              className="h-1.5 rounded-full bg-emerald-500"
-                              style={{
-                                width: `${Math.min(
-                                  100,
-                                  (q.limit ?? 0) > 0
-                                    ? (q.used / (q.limit ?? 1)) * 100
-                                    : 0
-                                )}%`
-                              }}
-                            />
-                          </div>
-                          <div className="text-[10px] text-slate-500">
-                            {t("quotaUsed")} {q.used} / {t("quotaLimit")}{" "}
-                            {q.limit ?? "—"}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <p className="text-xs text-amber-900">{t("quotaResetUnavailable")}</p>
-                  </div>
-                ) : null}
-                {detailTab === "roles" ? (
-                  <div className="space-y-2 text-sm">
-                    <p className="text-xs text-slate-600">{t("rolesTabHint")}</p>
-                    <ul className="list-inside list-disc space-y-1">
-                      {detail.providerAccounts.map((a) => (
-                        <li key={a.id}>
-                          {a.provider} — {maskId(a.providerSubject)}
-                        </li>
-                      ))}
-                    </ul>
-                    <p className="text-xs text-slate-500">
-                      {t("roleAssignUnavailable")}
-                    </p>
-                  </div>
-                ) : null}
-                {detailTab === "sessions" ? (
-                  <div className="space-y-2 text-sm">
-                    <p className="text-xs text-slate-600">{t("emptySessions")}</p>
-                    {detail.loginEvents.length === 0 ? (
-                      <AdminEmptyState title={t("emptyList")} />
-                    ) : (
-                      <ul className="space-y-2">
-                        {detail.loginEvents.map((e) => (
-                          <li
-                            className="rounded border border-slate-200 p-2 text-xs"
-                            key={e.id}
-                          >
-                            <div>
-                              {t("loginAt")} {formatWhen(e.createdAt, locale)}
-                            </div>
-                            <div>
-                              {t("loginProvider")} {e.provider} · {t("sessionEvent")}{" "}
-                              {e.eventType}
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                ) : null}
-                {detailTab === "support" ? (
-                  <div className="space-y-2 text-sm">
-                    {detailAudit.filter((a) => a.action === "admin.user.support_note")
-                      .length === 0 ? (
-                      <AdminEmptyState title={t("emptyNotes")} />
-                    ) : (
-                      <ul className="space-y-2">
-                        {detailAudit
-                          .filter((a) => a.action === "admin.user.support_note")
-                          .map((a) => (
-                            <li
-                              className="rounded border border-amber-100 bg-amber-50/50 p-2 text-xs"
-                              key={a.id}
-                            >
-                              {formatWhen(a.createdAt, locale)} —{" "}
-                              {JSON.stringify(a.after)}
-                            </li>
-                          ))}
-                      </ul>
-                    )}
-                    {canWrite ? (
-                      <button
-                        className="text-xs text-indigo-800"
-                        onClick={() => {
-                          setNoteBody("");
-                          setNoteRef("");
-                          setModalError(null);
-                          setModal({
-                            id: detail.profile.id,
-                            kind: "note",
-                            name: detail.profile.displayName
-                          });
-                        }}
-                        type="button"
-                      >
-                        {t("addSupportNote")}
-                      </button>
-                    ) : null}
-                  </div>
-                ) : null}
-                {detailTab === "audit" ? (
-                  <div className="space-y-2 text-sm">
-                    {detailAudit.length === 0 ? (
-                      <AdminEmptyState title={t("emptyAudit")} />
-                    ) : (
-                      <ul className="max-h-80 space-y-2 overflow-y-auto pr-1">
-                        {detailAudit.map((a) => (
-                          <li
-                            className="rounded border border-slate-200 p-2 text-xs"
-                            key={a.id}
-                          >
-                            <div className="font-mono text-[11px] text-slate-500">
-                              {a.action}
-                            </div>
-                            <div className="text-slate-700">
-                              {formatWhen(a.createdAt, locale)} · {a.reason ?? "—"}
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }

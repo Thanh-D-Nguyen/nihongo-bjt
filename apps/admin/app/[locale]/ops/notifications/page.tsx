@@ -1,25 +1,23 @@
+import en from "../../../../messages/en.json";
 import ja from "../../../../messages/ja.json";
 import vi from "../../../../messages/vi.json";
-import { AdminResourceTableClient } from "../../_components/admin-resource-table-client";
+import { OpsNotificationsClient } from "./ops-notifications-client";
 
-const messages = { ja, vi };
+const messages = { en, ja, vi };
+type Locale = keyof typeof messages;
 
-export default async function Page({ params }: { params: Promise<{ locale: keyof typeof messages }> }) {
+function pickLabels(t: unknown, key: string): Record<string, string> {
+  const root = t as Record<string, unknown>;
+  const fromAdminConsole = (root.adminConsole as Record<string, unknown> | undefined)?.[key] as
+    | Record<string, string>
+    | undefined;
+  const fromTopLevel = root[key] as Record<string, string> | undefined;
+  return { ...(fromTopLevel ?? {}), ...(fromAdminConsole ?? {}) };
+}
+
+export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  const t = messages[locale] ?? messages.vi;
-  return (
-    <AdminResourceTableClient
-      columns={[
-        { key: "status", label: t.adminConsole.common.status },
-        { key: "openDeadLetters", label: "Open DLQ" },
-        { key: "failedDeadLetters", label: "Failed DLQ" },
-        { key: "importErrorsHighSeverity", label: "High/Critical Import Errors" },
-        { key: "generatedAt", label: t.adminConsole.common.updatedAt }
-      ]}
-      common={t.adminConsole.common}
-      description={t.overview.subtitle}
-      endpoint="/api/admin/operations/notifications"
-      title={t.shell.navItems.notifications}
-    />
-  );
+  const t = messages[locale as Locale] ?? messages.vi;
+  const labels = pickLabels(t, "opsNotifications");
+  return <OpsNotificationsClient common={t.adminConsole.common} labels={labels} />;
 }

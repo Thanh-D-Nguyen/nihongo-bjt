@@ -435,6 +435,28 @@ exports.Prisma.BookmarkScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.BattleConfigScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  description: 'description',
+  level: 'level',
+  questionPoolKey: 'questionPoolKey',
+  questionCount: 'questionCount',
+  timePerQuestionSec: 'timePerQuestionSec',
+  maxParticipants: 'maxParticipants',
+  botDifficulties: 'botDifficulties',
+  scoringRules: 'scoringRules',
+  status: 'status',
+  scheduleStart: 'scheduleStart',
+  scheduleEnd: 'scheduleEnd',
+  publishedAt: 'publishedAt',
+  archivedAt: 'archivedAt',
+  createdById: 'createdById',
+  updatedById: 'updatedById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.BattleSessionScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
@@ -466,6 +488,41 @@ exports.Prisma.BattleRoundScalarFieldEnum = {
   decidedAt: 'decidedAt'
 };
 
+exports.Prisma.BattleBotScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  difficulty: 'difficulty',
+  persona: 'persona',
+  accuracyPct: 'accuracyPct',
+  minDelayMs: 'minDelayMs',
+  maxDelayMs: 'maxDelayMs',
+  vocabularyLevel: 'vocabularyLevel',
+  status: 'status',
+  createdById: 'createdById',
+  updatedById: 'updatedById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.BattleAbuseReportScalarFieldEnum = {
+  id: 'id',
+  reporterId: 'reporterId',
+  subjectId: 'subjectId',
+  matchId: 'matchId',
+  severity: 'severity',
+  kind: 'kind',
+  description: 'description',
+  evidence: 'evidence',
+  status: 'status',
+  actionTaken: 'actionTaken',
+  resolutionNotes: 'resolutionNotes',
+  resolvedById: 'resolvedById',
+  resolvedAt: 'resolvedAt',
+  escalatedAt: 'escalatedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.ReadingTextAnalysisScalarFieldEnum = {
   id: 'id',
   textHash: 'textHash',
@@ -491,6 +548,7 @@ exports.Prisma.BjtMockTestScalarFieldEnum = {
   titleJa: 'titleJa',
   type: 'type',
   status: 'status',
+  level: 'level',
   timeLimitSeconds: 'timeLimitSeconds',
   blueprintMeta: 'blueprintMeta',
   description: 'description',
@@ -521,6 +579,7 @@ exports.Prisma.BjtQuestionScalarFieldEnum = {
   remediationCardId: 'remediationCardId',
   qualityFlags: 'qualityFlags',
   status: 'status',
+  tags: 'tags',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -555,6 +614,35 @@ exports.Prisma.QuizAnswerScalarFieldEnum = {
   selectedOption: 'selectedOption',
   isCorrect: 'isCorrect',
   answeredAt: 'answeredAt'
+};
+
+exports.Prisma.AssessmentRemediationRuleScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  description: 'description',
+  topicSkillTag: 'topicSkillTag',
+  level: 'level',
+  thresholdFailedCount: 'thresholdFailedCount',
+  thresholdWindowQuestions: 'thresholdWindowQuestions',
+  recommendedContentType: 'recommendedContentType',
+  recommendedContentId: 'recommendedContentId',
+  active: 'active',
+  createdById: 'createdById',
+  updatedById: 'updatedById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.AssessmentRemediationTriggerScalarFieldEnum = {
+  id: 'id',
+  ruleId: 'ruleId',
+  userId: 'userId',
+  sessionId: 'sessionId',
+  failedQuestionIds: 'failedQuestionIds',
+  recommendedContentType: 'recommendedContentType',
+  recommendedContentId: 'recommendedContentId',
+  context: 'context',
+  createdAt: 'createdAt'
 };
 
 exports.Prisma.AnalyticsEventScalarFieldEnum = {
@@ -1023,6 +1111,24 @@ exports.Prisma.AuthLinkCodeScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.GrowthCampaignScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  description: 'description',
+  status: 'status',
+  channel: 'channel',
+  audience: 'audience',
+  cta: 'cta',
+  contentBody: 'contentBody',
+  trackingUtm: 'trackingUtm',
+  scheduleStart: 'scheduleStart',
+  scheduleEnd: 'scheduleEnd',
+  createdById: 'createdById',
+  updatedById: 'updatedById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.ShareTemplateScalarFieldEnum = {
   id: 'id',
   slug: 'slug',
@@ -1194,6 +1300,8 @@ exports.Prisma.ContentVersionScalarFieldEnum = {
   snapshot: 'snapshot',
   authorUserId: 'authorUserId',
   status: 'status',
+  publishedAt: 'publishedAt',
+  revertedFromVersionId: 'revertedFromVersionId',
   createdAt: 'createdAt'
 };
 
@@ -1206,6 +1314,14 @@ exports.Prisma.ContentEnrichmentScalarFieldEnum = {
   status: 'status',
   result: 'result',
   errorMessage: 'errorMessage',
+  inputSnapshot: 'inputSnapshot',
+  provider: 'provider',
+  providerLicense: 'providerLicense',
+  providerSource: 'providerSource',
+  attempts: 'attempts',
+  lastAttemptedAt: 'lastAttemptedAt',
+  cancelReason: 'cancelReason',
+  retryHistory: 'retryHistory',
   processedAt: 'processedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -1269,8 +1385,11 @@ exports.Prisma.ModelName = {
   ReviewEvent: 'ReviewEvent',
   CardMediaLink: 'CardMediaLink',
   Bookmark: 'Bookmark',
+  BattleConfig: 'BattleConfig',
   BattleSession: 'BattleSession',
   BattleRound: 'BattleRound',
+  BattleBot: 'BattleBot',
+  BattleAbuseReport: 'BattleAbuseReport',
   ReadingTextAnalysis: 'ReadingTextAnalysis',
   ReadingAssistReport: 'ReadingAssistReport',
   BjtMockTest: 'BjtMockTest',
@@ -1279,6 +1398,8 @@ exports.Prisma.ModelName = {
   BjtQuestionOption: 'BjtQuestionOption',
   QuizSession: 'QuizSession',
   QuizAnswer: 'QuizAnswer',
+  AssessmentRemediationRule: 'AssessmentRemediationRule',
+  AssessmentRemediationTrigger: 'AssessmentRemediationTrigger',
   AnalyticsEvent: 'AnalyticsEvent',
   AnalyticsDailyMetric: 'AnalyticsDailyMetric',
   AnalyticsRollupRun: 'AnalyticsRollupRun',
@@ -1322,6 +1443,7 @@ exports.Prisma.ModelName = {
   IdentityProviderAccount: 'IdentityProviderAccount',
   LoginEvent: 'LoginEvent',
   AuthLinkCode: 'AuthLinkCode',
+  GrowthCampaign: 'GrowthCampaign',
   ShareTemplate: 'ShareTemplate',
   ShareItem: 'ShareItem',
   ShareCardAsset: 'ShareCardAsset',

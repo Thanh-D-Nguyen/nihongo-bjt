@@ -14,6 +14,7 @@ export {
   type DailyGreeting,
   type DailyWidgetKind
 } from "./daily.js";
+export * from "./learning-admin.js";
 export {
   BATTLE_BOT_PROFILES,
   DEFAULT_BATTLE_BOT_KEY,
@@ -419,7 +420,708 @@ export const adminAssignUserPlanBodySchema = z.object({
 
 export const adminUserSupportNoteBodySchema = z.object({
   body: z.string().trim().min(1).max(4000),
-  reason: z.string().trim().min(3).max(200)
+  reason: z.string().trim().min(3).max(200),
+  visibility: z.enum(["private", "team", "audit_only"]).optional().default("team")
+});
+
+/** Filters for the global Support Notes admin list (privacy-hardened: private notes only visible to author or audit-only readers). */
+export const adminSupportNotesListQuerySchema = z.object({
+  userId: z
+    .string()
+    .trim()
+    .max(64)
+    .optional()
+    .transform((s) => (s === "" ? undefined : s)),
+  createdBy: z
+    .string()
+    .trim()
+    .max(64)
+    .optional()
+    .transform((s) => (s === "" ? undefined : s)),
+  q: z
+    .string()
+    .trim()
+    .max(200)
+    .optional()
+    .transform((s) => (s === "" ? undefined : s)),
+  visibility: z.enum(["private", "team", "audit_only"]).optional(),
+  dateFrom: z
+    .string()
+    .datetime()
+    .optional(),
+  dateTo: z
+    .string()
+    .datetime()
+    .optional(),
+  limit: z.coerce.number().int().min(1).max(200).optional().default(50),
+  offset: z.coerce.number().int().min(0).optional().default(0)
+});
+
+/** Body for the global "create support note for any user" admin endpoint. */
+export const adminSupportNoteCreateBodySchema = z.object({
+  userId: z.string().uuid(),
+  body: z.string().trim().min(1).max(4000),
+  reason: z.string().trim().min(3).max(200),
+  visibility: z.enum(["private", "team", "audit_only"]).default("team")
+});
+
+/** IAM admin actor management — list, assign role, revoke role, change status. RBAC: `iam.manage` (writes) or `viewer.audit` (read). */
+export const adminIamAdminListQuerySchema = z.object({
+  q: z
+    .string()
+    .trim()
+    .max(200)
+    .optional()
+    .transform((s) => (s === "" ? undefined : s)),
+  role: z
+    .string()
+    .trim()
+    .max(80)
+    .optional()
+    .transform((s) => (s === "" || s === "all" ? undefined : s)),
+  status: z
+    .enum(["active", "disabled", "all"])
+    .optional()
+    .transform((s) => (s === "all" ? undefined : s)),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(25)
+});
+
+export const adminIamAdminAssignRoleBodySchema = z.object({
+  roleCode: z.string().trim().min(1).max(80),
+  reason: z.string().trim().min(3).max(500)
+});
+
+export const adminIamAdminRevokeRoleBodySchema = z.object({
+  reason: z.string().trim().min(3).max(500)
+});
+
+export const adminIamAdminPatchStatusBodySchema = z.object({
+  status: z.enum(["active", "disabled"]),
+  reason: z.string().trim().min(3).max(500)
+});
+
+/**
+ * Managed Battle Config entity (admin Battle Configs surface). Distinct from `BATTLE_BOT_PROFILES`
+ * (code-defined bot personality matrix) and from `BattleSession` (live runtime). Lifecycle:
+ * `draft` → `published` → `archived`. All mutations require `battle.manage` and an audit `reason`.
+ *
+ * `level` accepts BJT and JLPT bands plus generic "business" tiers; kept open-typed via VarChar so
+ * we can add new pools without migrations. `botDifficulties` is a stable enum subset.
+ * `scoringRules` is a free JSON object — front-end renders it as form fields per known keys
+ * (`correctPoints`, `wrongPenalty`, `speedBonusPerSec`, etc.) and stores unknown keys as JSON.
+ */
+export const BATTLE_CONFIG_LEVELS = [
+  "jlpt_n5",
+  "jlpt_n4",
+  "jlpt_n3",
+  "jlpt_n2",
+  "jlpt_n1",
+  "bjt_basic",
+  "bjt_intermediate",
+  "bjt_advanced",
+  "business_starter",
+  "business_pro"
+] as const;
+
+export const BATTLE_CONFIG_BOT_DIFFICULTIES = ["easy", "medium", "hard"] as const;
+
+export const BATTLE_CONFIG_QUESTION_POOLS = [
+  "bjt_questions_active",
+  "jlpt_grammar_active",
+  "kanji_reading_active",
+  "vocab_high_freq",
+  "business_phrase_pack"
+] as const;
+
+const battleConfigScoringRulesSchema = z
+  .object({
+    correctPoints: z.coerce.number().int().min(0).max(1000).optional(),
+    wrongPenalty: z.coerce.number().int().min(0).max(1000).optional(),
+    speedBonusPerSec: z.coerce.number().min(0).max(100).optional(),
+    streakMultiplier: z.coerce.number().min(1).max(5).optional()
+  })
+  .passthrough();
+
+const adminBattleConfigBaseShape = {
+  name: z.string().trim().min(2).max(120),
+  description: z.string().trim().max(2000).optional(),
+  level: z.string().trim().min(1).max(32),
+  questionPoolKey: z.string().trim().min(1).max(64),
+  questionCount: z.coerce.number().int().min(5).max(30),
+  timePerQuestionSec: z.coerce.number().int().min(10).max(120),
+  maxParticipants: z.coerce.number().int().min(2).max(8),
+  botDifficulties: z.array(z.enum(BATTLE_CONFIG_BOT_DIFFICULTIES)).min(1).max(3),
+  scoringRules: battleConfigScoringRulesSchema.optional(),
+  scheduleStart: z.coerce.date().optional().nullable(),
+  scheduleEnd: z.coerce.date().optional().nullable()
+};
+
+export const adminBattleConfigCreateSchema = z
+  .object({
+    ...adminBattleConfigBaseShape,
+    reason: z.string().trim().min(3).max(500)
+  })
+  .superRefine((value, ctx) => {
+    if (value.scheduleStart && value.scheduleEnd && value.scheduleEnd <= value.scheduleStart) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "scheduleEnd must be after scheduleStart",
+        path: ["scheduleEnd"]
+      });
+    }
+  });
+
+export const adminBattleConfigPatchSchema = z
+  .object({
+    name: adminBattleConfigBaseShape.name.optional(),
+    description: adminBattleConfigBaseShape.description.optional(),
+    level: adminBattleConfigBaseShape.level.optional(),
+    questionPoolKey: adminBattleConfigBaseShape.questionPoolKey.optional(),
+    questionCount: adminBattleConfigBaseShape.questionCount.optional(),
+    timePerQuestionSec: adminBattleConfigBaseShape.timePerQuestionSec.optional(),
+    maxParticipants: adminBattleConfigBaseShape.maxParticipants.optional(),
+    botDifficulties: adminBattleConfigBaseShape.botDifficulties.optional(),
+    scoringRules: adminBattleConfigBaseShape.scoringRules,
+    scheduleStart: adminBattleConfigBaseShape.scheduleStart,
+    scheduleEnd: adminBattleConfigBaseShape.scheduleEnd,
+    reason: z.string().trim().min(3).max(500)
+  })
+  .superRefine((value, ctx) => {
+    if (value.scheduleStart && value.scheduleEnd && value.scheduleEnd <= value.scheduleStart) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "scheduleEnd must be after scheduleStart",
+        path: ["scheduleEnd"]
+      });
+    }
+  });
+
+export const adminBattleConfigListQuerySchema = z.object({
+  q: z
+    .string()
+    .trim()
+    .max(200)
+    .optional()
+    .transform((s) => (s === "" ? undefined : s)),
+  status: z
+    .enum(["draft", "published", "archived", "all"])
+    .optional()
+    .transform((s) => (s === "all" ? undefined : s)),
+  level: z
+    .string()
+    .trim()
+    .max(32)
+    .optional()
+    .transform((s) => (s === "" || s === "all" ? undefined : s)),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(25)
+});
+
+export const adminBattleConfigReasonOnlyBodySchema = z.object({
+  reason: z.string().trim().min(3).max(500)
+});
+
+/**
+ * ----- Growth admin: campaigns / postcards / referrals / social -----
+ *
+ * Schemas for in-product growth pushes (`GrowthCampaign`), postcard + social share templates
+ * (`ShareTemplate` with `config.surface` discriminator), referral codes (read + revoke), and the
+ * share-event log (`ShareItem` with moderation via expiry). Privacy class is enforced server-side:
+ * publishing a `public` template requires `noPiiVerified=true`.
+ */
+export const GROWTH_CAMPAIGN_STATUSES = [
+  "draft",
+  "scheduled",
+  "active",
+  "ended",
+  "archived"
+] as const;
+export const GROWTH_CAMPAIGN_CHANNELS = ["email", "push", "in_app"] as const;
+export const GROWTH_TEMPLATE_PRIVACY_CLASSES = [
+  "public",
+  "learner_private",
+  "anonymized"
+] as const;
+export const GROWTH_POSTCARD_EVENT_KINDS = [
+  "streak",
+  "level_up",
+  "bjt_pass",
+  "battle_win",
+  "daily_phrase",
+  "bjt_result"
+] as const;
+export const GROWTH_SOCIAL_TEMPLATE_KINDS = [
+  "social_link",
+  "social_quote",
+  "social_progress",
+  "social_invite"
+] as const;
+
+const growthAudienceSchema = z
+  .object({
+    locale: z.string().trim().max(16).optional(),
+    plan: z.string().trim().max(64).optional(),
+    level: z.string().trim().max(32).optional(),
+    country: z.string().trim().max(8).optional()
+  })
+  .strict()
+  .partial();
+
+const growthCtaSchema = z
+  .object({
+    label: z.string().trim().min(1).max(120).optional(),
+    url: z.string().trim().url().max(2000).optional()
+  })
+  .strict()
+  .partial();
+
+const growthUtmSchema = z
+  .object({
+    source: z.string().trim().max(64).optional(),
+    medium: z.string().trim().max(64).optional(),
+    campaign: z.string().trim().max(120).optional(),
+    term: z.string().trim().max(120).optional(),
+    content: z.string().trim().max(120).optional()
+  })
+  .strict()
+  .partial();
+
+const growthCampaignBaseShape = {
+  name: z.string().trim().min(2).max(200),
+  description: z.string().trim().max(2000).optional(),
+  channel: z.enum(GROWTH_CAMPAIGN_CHANNELS),
+  audience: growthAudienceSchema.optional(),
+  cta: growthCtaSchema.optional(),
+  contentBody: z.string().trim().max(20000).optional(),
+  trackingUtm: growthUtmSchema.optional(),
+  scheduleStart: z.coerce.date().optional().nullable(),
+  scheduleEnd: z.coerce.date().optional().nullable()
+};
+
+export const adminGrowthCampaignCreateSchema = z
+  .object({
+    ...growthCampaignBaseShape,
+    reason: z.string().trim().min(3).max(500)
+  })
+  .superRefine((v, ctx) => {
+    if (v.scheduleStart && v.scheduleEnd && v.scheduleEnd <= v.scheduleStart) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "scheduleEnd must be after scheduleStart",
+        path: ["scheduleEnd"]
+      });
+    }
+  });
+
+export const adminGrowthCampaignPatchSchema = z
+  .object({
+    name: growthCampaignBaseShape.name.optional(),
+    description: growthCampaignBaseShape.description.optional(),
+    channel: growthCampaignBaseShape.channel.optional(),
+    audience: growthCampaignBaseShape.audience,
+    cta: growthCampaignBaseShape.cta,
+    contentBody: growthCampaignBaseShape.contentBody,
+    trackingUtm: growthCampaignBaseShape.trackingUtm,
+    scheduleStart: growthCampaignBaseShape.scheduleStart,
+    scheduleEnd: growthCampaignBaseShape.scheduleEnd,
+    reason: z.string().trim().min(3).max(500)
+  })
+  .superRefine((v, ctx) => {
+    if (v.scheduleStart && v.scheduleEnd && v.scheduleEnd <= v.scheduleStart) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "scheduleEnd must be after scheduleStart",
+        path: ["scheduleEnd"]
+      });
+    }
+  });
+
+export const adminGrowthCampaignListQuerySchema = z.object({
+  q: z
+    .string()
+    .trim()
+    .max(200)
+    .optional()
+    .transform((s) => (s === "" ? undefined : s)),
+  status: z
+    .enum([...GROWTH_CAMPAIGN_STATUSES, "all"] as [string, ...string[]])
+    .optional()
+    .transform((s) => (s === "all" ? undefined : s)),
+  channel: z
+    .enum([...GROWTH_CAMPAIGN_CHANNELS, "all"] as [string, ...string[]])
+    .optional()
+    .transform((s) => (s === "all" ? undefined : s)),
+  level: z
+    .string()
+    .trim()
+    .max(32)
+    .optional()
+    .transform((s) => (s === "" || s === "all" ? undefined : s)),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(25)
+});
+
+export const adminGrowthReasonOnlyBodySchema = z.object({
+  reason: z.string().trim().min(3).max(500)
+});
+
+/* Postcard / Social templates share the same ShareTemplate table; `surface` discriminator in
+ * config separates postcard vs social. Body template + variables + privacy class live in config. */
+
+const shareTemplateConfigSchema = z
+  .object({
+    surface: z.enum(["postcard", "social"]),
+    name: z.string().trim().min(2).max(200),
+    description: z.string().trim().max(2000).optional(),
+    bodyTemplate: z.string().trim().min(1).max(20000),
+    variables: z.array(z.string().trim().min(1).max(64)).max(32).optional(),
+    thumbnailKey: z.string().trim().max(255).optional(),
+    privacyClass: z.enum(GROWTH_TEMPLATE_PRIVACY_CLASSES),
+    noPiiVerified: z.boolean().optional(),
+    brandBg: z.string().trim().max(32).optional(),
+    brandFg: z.string().trim().max(32).optional(),
+    brandAccent: z.string().trim().max(32).optional(),
+    badgeKey: z.string().trim().max(64).optional()
+  })
+  .passthrough();
+
+export const adminGrowthPostcardCreateSchema = z.object({
+  slug: z
+    .string()
+    .trim()
+    .min(2)
+    .max(64)
+    .regex(/^[a-z0-9_-]+$/i, "slug must be alphanumeric/underscore/dash"),
+  kind: z.enum(GROWTH_POSTCARD_EVENT_KINDS),
+  config: shareTemplateConfigSchema.refine((c) => c.surface === "postcard", {
+    message: "config.surface must be 'postcard'",
+    path: ["surface"]
+  }),
+  reason: z.string().trim().min(3).max(500)
+});
+
+export const adminGrowthPostcardPatchSchema = z.object({
+  slug: adminGrowthPostcardCreateSchema.shape.slug.optional(),
+  kind: z.enum(GROWTH_POSTCARD_EVENT_KINDS).optional(),
+  config: shareTemplateConfigSchema.optional(),
+  reason: z.string().trim().min(3).max(500)
+});
+
+export const adminGrowthPostcardListQuerySchema = z.object({
+  q: z.string().trim().max(200).optional().transform((s) => (s === "" ? undefined : s)),
+  kind: z
+    .enum([...GROWTH_POSTCARD_EVENT_KINDS, "all"] as [string, ...string[]])
+    .optional()
+    .transform((s) => (s === "all" ? undefined : s)),
+  status: z
+    .enum(["all", "draft", "published", "archived"])
+    .optional()
+    .transform((s) => (s === "all" ? undefined : s)),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(25)
+});
+
+export const adminGrowthSocialTemplateCreateSchema = z.object({
+  slug: adminGrowthPostcardCreateSchema.shape.slug,
+  kind: z.enum(GROWTH_SOCIAL_TEMPLATE_KINDS),
+  config: shareTemplateConfigSchema.refine((c) => c.surface === "social", {
+    message: "config.surface must be 'social'",
+    path: ["surface"]
+  }),
+  reason: z.string().trim().min(3).max(500)
+});
+
+export const adminGrowthSocialTemplatePatchSchema = z.object({
+  slug: adminGrowthPostcardCreateSchema.shape.slug.optional(),
+  kind: z.enum(GROWTH_SOCIAL_TEMPLATE_KINDS).optional(),
+  config: shareTemplateConfigSchema.optional(),
+  reason: z.string().trim().min(3).max(500)
+});
+
+export const adminGrowthSocialTemplateListQuerySchema = z.object({
+  q: z.string().trim().max(200).optional().transform((s) => (s === "" ? undefined : s)),
+  kind: z
+    .enum([...GROWTH_SOCIAL_TEMPLATE_KINDS, "all"] as [string, ...string[]])
+    .optional()
+    .transform((s) => (s === "all" ? undefined : s)),
+  status: z
+    .enum(["all", "draft", "published", "archived"])
+    .optional()
+    .transform((s) => (s === "all" ? undefined : s)),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(25)
+});
+
+/* Referral admin: list user-owned codes with abuse heuristics; revoke = delete + audit. */
+export const adminGrowthReferralListQuerySchema = z.object({
+  q: z.string().trim().max(200).optional().transform((s) => (s === "" ? undefined : s)),
+  flagged: z.coerce.boolean().optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(25)
+});
+
+/* Share-event admin: read-only paginated log + moderation (hide via expiry). */
+export const adminGrowthShareEventListQuerySchema = z.object({
+  q: z.string().trim().max(200).optional().transform((s) => (s === "" ? undefined : s)),
+  templateId: z.string().uuid().optional(),
+  userId: z.string().uuid().optional(),
+  hidden: z
+    .enum(["all", "active", "hidden"])
+    .optional()
+    .transform((s) => (s === "all" ? undefined : s)),
+  fromDate: z.coerce.date().optional(),
+  toDate: z.coerce.date().optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(25)
+});
+
+export const adminGrowthShareModerateBodySchema = z.object({
+  action: z.enum(["dismiss", "hide_from_public", "report_to_legal"]),
+  reason: z.string().trim().min(3).max(500)
+});
+
+/**
+ * ----- Battle Matches admin (read + abort/rerun) -----
+ *
+ * Matches are surfaced from `learning.battle_session`. Admin actions abort an `in_progress` session
+ * (sets `abandonedReason='admin_abort'`) or rerun a completed/aborted session by cloning its config
+ * (mode, botKey, maxRounds) into a fresh session for the same user. Both actions audit with reason.
+ */
+export const BATTLE_MATCH_STATUSES = ["in_progress", "completed", "abandoned"] as const;
+
+export const adminBattleMatchListQuerySchema = z.object({
+  q: z
+    .string()
+    .trim()
+    .max(64)
+    .optional()
+    .transform((s) => (s === "" ? undefined : s)),
+  status: z
+    .enum([...BATTLE_MATCH_STATUSES, "all"])
+    .optional()
+    .transform((s) => (s === "all" ? undefined : s)),
+  userId: z
+    .string()
+    .trim()
+    .optional()
+    .transform((s) => (s && s.length > 0 ? s : undefined))
+    .pipe(z.string().uuid().optional()),
+  mode: z.string().trim().min(1).max(32).optional(),
+  from: z.coerce.date().optional(),
+  to: z.coerce.date().optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(25)
+});
+
+export const adminBattleMatchActionBodySchema = z.object({
+  reason: z.string().trim().min(3).max(500)
+});
+
+/**
+ * ----- Battle Leaderboard admin (read-only, window-based) -----
+ *
+ * Window-based aggregation from `battle_session` (no `BattleSeason` model yet — season management
+ * tracked as `partial_schema_pending`). `window` selects the time slice for ranking.
+ */
+export const BATTLE_LEADERBOARD_WINDOWS = ["all", "30d", "90d"] as const;
+
+export const adminBattleLeaderboardQuerySchema = z.object({
+  window: z.enum(BATTLE_LEADERBOARD_WINDOWS).optional().default("all"),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(25)
+});
+
+/**
+ * ----- Battle Bots admin (CRUD on `learning.battle_bot`) -----
+ *
+ * Editorial bot personas. `accuracyPct` is the target answer-correctness rate (0–100). Delay range
+ * gates the bot's response time so matches feel natural. `vocabularyLevel` references BJT/JLPT
+ * bands, kept open-typed so we can add bands without migrations.
+ */
+export const BATTLE_BOT_DIFFICULTIES = ["easy", "medium", "hard"] as const;
+export const BATTLE_BOT_STATUSES = ["active", "disabled", "archived"] as const;
+export const BATTLE_BOT_VOCAB_LEVELS = [
+  "jlpt_n5",
+  "jlpt_n4",
+  "jlpt_n3",
+  "jlpt_n2",
+  "jlpt_n1",
+  "bjt_basic",
+  "bjt_intermediate",
+  "bjt_advanced"
+] as const;
+
+const adminBattleBotBaseShape = {
+  name: z.string().trim().min(2).max(80),
+  difficulty: z.enum(BATTLE_BOT_DIFFICULTIES),
+  persona: z.string().trim().max(2000).optional().nullable(),
+  accuracyPct: z.coerce.number().int().min(0).max(100),
+  minDelayMs: z.coerce.number().int().min(0).max(60000),
+  maxDelayMs: z.coerce.number().int().min(0).max(60000),
+  vocabularyLevel: z.string().trim().min(1).max(32)
+};
+
+export const adminBattleBotCreateSchema = z
+  .object({
+    ...adminBattleBotBaseShape,
+    reason: z.string().trim().min(3).max(500)
+  })
+  .superRefine((value, ctx) => {
+    if (value.maxDelayMs < value.minDelayMs) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "maxDelayMs must be >= minDelayMs",
+        path: ["maxDelayMs"]
+      });
+    }
+  });
+
+export const adminBattleBotPatchSchema = z
+  .object({
+    name: adminBattleBotBaseShape.name.optional(),
+    difficulty: adminBattleBotBaseShape.difficulty.optional(),
+    persona: adminBattleBotBaseShape.persona,
+    accuracyPct: adminBattleBotBaseShape.accuracyPct.optional(),
+    minDelayMs: adminBattleBotBaseShape.minDelayMs.optional(),
+    maxDelayMs: adminBattleBotBaseShape.maxDelayMs.optional(),
+    vocabularyLevel: adminBattleBotBaseShape.vocabularyLevel.optional(),
+    reason: z.string().trim().min(3).max(500)
+  })
+  .superRefine((value, ctx) => {
+    if (value.minDelayMs != null && value.maxDelayMs != null && value.maxDelayMs < value.minDelayMs) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "maxDelayMs must be >= minDelayMs",
+        path: ["maxDelayMs"]
+      });
+    }
+  });
+
+export const adminBattleBotListQuerySchema = z.object({
+  q: z
+    .string()
+    .trim()
+    .max(80)
+    .optional()
+    .transform((s) => (s === "" ? undefined : s)),
+  difficulty: z
+    .enum([...BATTLE_BOT_DIFFICULTIES, "all"])
+    .optional()
+    .transform((s) => (s === "all" ? undefined : s)),
+  status: z
+    .enum([...BATTLE_BOT_STATUSES, "all"])
+    .optional()
+    .transform((s) => (s === "all" ? undefined : s)),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(25)
+});
+
+export const adminBattleBotReasonOnlyBodySchema = z.object({
+  reason: z.string().trim().min(3).max(500)
+});
+
+/**
+ * ----- Battle Abuse admin (moderation queue on `learning.battle_abuse_report`) -----
+ *
+ * Resolution actions: `warning`, `temp_ban`, `perm_ban`, `dismissed`. Escalation marks a report for
+ * higher review (e.g. legal). Both audit. RBAC requires `battle.manage` (no `battle.moderate` yet).
+ */
+export const BATTLE_ABUSE_KINDS = ["cheating", "harassment", "inappropriate", "afk", "other"] as const;
+export const BATTLE_ABUSE_SEVERITIES = ["low", "medium", "high", "critical"] as const;
+export const BATTLE_ABUSE_STATUSES = ["open", "triaged", "resolved", "dismissed", "escalated"] as const;
+export const BATTLE_ABUSE_ACTIONS = ["warning", "temp_ban", "perm_ban", "dismissed"] as const;
+
+export const adminBattleAbuseListQuerySchema = z.object({
+  status: z
+    .enum([...BATTLE_ABUSE_STATUSES, "all"])
+    .optional()
+    .transform((s) => (s === "all" ? undefined : s)),
+  severity: z
+    .enum([...BATTLE_ABUSE_SEVERITIES, "all"])
+    .optional()
+    .transform((s) => (s === "all" ? undefined : s)),
+  kind: z
+    .enum([...BATTLE_ABUSE_KINDS, "all"])
+    .optional()
+    .transform((s) => (s === "all" ? undefined : s)),
+  reporterId: z
+    .string()
+    .trim()
+    .optional()
+    .transform((s) => (s && s.length > 0 ? s : undefined))
+    .pipe(z.string().uuid().optional()),
+  subjectId: z
+    .string()
+    .trim()
+    .optional()
+    .transform((s) => (s && s.length > 0 ? s : undefined))
+    .pipe(z.string().uuid().optional()),
+  from: z.coerce.date().optional(),
+  to: z.coerce.date().optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(25)
+});
+
+export const adminBattleAbuseResolveSchema = z.object({
+  action: z.enum(BATTLE_ABUSE_ACTIONS),
+  notes: z.string().trim().min(3).max(2000),
+  reason: z.string().trim().min(3).max(500)
+});
+
+export const adminBattleAbuseEscalateSchema = z.object({
+  reason: z.string().trim().min(3).max(500)
+});
+
+/**
+ * IAM role-audit timeline filter query.
+ *
+ * - `actorId`: admin who performed the action.
+ * - `targetActorId`: target admin actor id (matched against `target_id` for `authz.*` rows).
+ * - `action`: substring match against `action` (e.g. `role_assigned`, `role_revoked`, `actor_status_changed`).
+ * - `from`/`to`: ISO timestamps; both optional.
+ * - `q`: free-text search applied to `reason` (best effort).
+ * - `page` + `pageSize`: bounded pagination so SaaS audit timeline can scroll without unbounded scans.
+ */
+export const adminIamRoleAuditQuerySchema = z.object({
+  actorId: z
+    .string()
+    .trim()
+    .optional()
+    .transform((s) => (s && s.length > 0 ? s : undefined))
+    .pipe(z.string().uuid().optional()),
+  targetActorId: z
+    .string()
+    .trim()
+    .optional()
+    .transform((s) => (s && s.length > 0 ? s : undefined))
+    .pipe(z.string().uuid().optional()),
+  action: z
+    .string()
+    .trim()
+    .max(120)
+    .optional()
+    .transform((s) => (s === "" || s === "all" || s === undefined ? undefined : s)),
+  from: z
+    .string()
+    .trim()
+    .optional()
+    .transform((s) => (s && s.length > 0 ? s : undefined))
+    .pipe(z.string().datetime().optional()),
+  to: z
+    .string()
+    .trim()
+    .optional()
+    .transform((s) => (s && s.length > 0 ? s : undefined))
+    .pipe(z.string().datetime().optional()),
+  q: z
+    .string()
+    .trim()
+    .max(200)
+    .optional()
+    .transform((s) => (s === "" ? undefined : s)),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(50)
 });
 
 const adminUserInviteLocale = z.enum(["vi", "ja", "en"]);
@@ -878,3 +1580,641 @@ export {
   type AdminSystemRole,
   type AdminSupportUserPermissionCode
 } from "./admin-permissions.js";
+
+/**
+ * ----- Content Enrichment + Versions admin -----
+ *
+ * Enrichment jobs augment canonical content (furigana / translation / audio / scoring / level-tag).
+ * Provider provenance + license metadata MUST be surfaced to operators (AGENTS.md non-negotiable).
+ * Versions track per-entity drafts with publish + revert lifecycle.
+ */
+export const CONTENT_ENRICHMENT_STATUSES = [
+  "queued",
+  "running",
+  "succeeded",
+  "failed",
+  "cancelled"
+] as const;
+
+export const CONTENT_ENRICHMENT_TYPES = [
+  "furigana",
+  "translate",
+  "audio",
+  "examples",
+  "scoring",
+  "bjt_level"
+] as const;
+
+export const CONTENT_VERSION_STATUSES = [
+  "draft",
+  "published",
+  "superseded"
+] as const;
+
+const optionalUuid = z
+  .string()
+  .trim()
+  .optional()
+  .transform((s) => (s && s.length > 0 ? s : undefined))
+  .pipe(z.string().uuid().optional());
+
+const optionalIsoDate = z
+  .string()
+  .trim()
+  .optional()
+  .transform((s) => (s && s.length > 0 ? s : undefined))
+  .pipe(z.string().datetime().optional());
+
+export const adminContentEnrichmentListQuerySchema = z.object({
+  q: z
+    .string()
+    .trim()
+    .max(200)
+    .optional()
+    .transform((s) => (s === "" ? undefined : s)),
+  status: z
+    .enum([...CONTENT_ENRICHMENT_STATUSES, "all"] as [string, ...string[]])
+    .optional()
+    .transform((s) => (s === "all" ? undefined : s)),
+  type: z
+    .enum([...CONTENT_ENRICHMENT_TYPES, "all"] as [string, ...string[]])
+    .optional()
+    .transform((s) => (s === "all" ? undefined : s)),
+  entityType: z
+    .string()
+    .trim()
+    .max(64)
+    .optional()
+    .transform((s) => (s === "" || s === "all" ? undefined : s)),
+  entityId: optionalUuid,
+  provider: z
+    .string()
+    .trim()
+    .max(64)
+    .optional()
+    .transform((s) => (s === "" || s === "all" ? undefined : s)),
+  from: optionalIsoDate,
+  to: optionalIsoDate,
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(25)
+});
+
+export const adminContentEnrichmentReasonBodySchema = z.object({
+  reason: z.string().trim().min(3).max(500)
+});
+
+export const adminContentEnrichmentBulkRetrySchema = z.object({
+  jobIds: z.array(z.string().uuid()).min(1).max(100),
+  reason: z.string().trim().min(3).max(500)
+});
+
+export const adminContentVersionListQuerySchema = z.object({
+  q: z
+    .string()
+    .trim()
+    .max(200)
+    .optional()
+    .transform((s) => (s === "" ? undefined : s)),
+  entityType: z
+    .string()
+    .trim()
+    .max(64)
+    .optional()
+    .transform((s) => (s === "" || s === "all" ? undefined : s)),
+  entityId: optionalUuid,
+  authorUserId: optionalUuid,
+  status: z
+    .enum([...CONTENT_VERSION_STATUSES, "all"] as [string, ...string[]])
+    .optional()
+    .transform((s) => (s === "all" ? undefined : s)),
+  from: optionalIsoDate,
+  to: optionalIsoDate,
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(25)
+});
+
+export const adminContentVersionDiffQuerySchema = z.object({
+  from: z.string().uuid(),
+  to: z.string().uuid()
+});
+
+export const adminContentVersionRevertBodySchema = z.object({
+  reason: z.string().trim().min(3).max(500)
+});
+
+/**
+ * ----- Assessment admin: mock exams / question bank / quiz sessions / quiz templates / remediation -----
+ *
+ * Schemas for the assessment admin slice. Mock exams and quiz templates share `BjtMockTest` storage
+ * with `type` discriminator: `type === "mock"` are exams; `type IN {practice, daily, weekly,
+ * topic_mastery, diagnostic}` are templates. Question bank is `BjtQuestion`. Sessions are
+ * `QuizSession`. Remediation has dedicated rule + trigger tables. RBAC: `assessment.manage` for
+ * writes, `assessment.review` for read+suggest, `viewer.audit` for read.
+ */
+export const ASSESSMENT_BJT_LEVELS = [
+  "BJT-J5",
+  "BJT-J4",
+  "BJT-J3",
+  "BJT-J2",
+  "BJT-J1",
+  "BJT-J1+"
+] as const;
+
+export const ASSESSMENT_MOCK_EXAM_STATUSES = ["draft", "published", "archived"] as const;
+export const ASSESSMENT_QUIZ_TEMPLATE_TYPES = [
+  "practice",
+  "daily",
+  "weekly",
+  "topic_mastery",
+  "diagnostic"
+] as const;
+export const ASSESSMENT_QUESTION_STATUSES = ["draft", "published", "archived"] as const;
+export const ASSESSMENT_QUIZ_SESSION_STATUSES = [
+  "in_progress",
+  "completed",
+  "abandoned",
+  "timed_out"
+] as const;
+export const ASSESSMENT_QUESTION_DIFFICULTIES = [
+  "easy",
+  "standard",
+  "hard",
+  "elite"
+] as const;
+
+const assessmentReasonField = z.string().trim().min(3).max(500);
+
+const mockExamSectionSchema = z.object({
+  code: z.string().trim().min(1).max(64),
+  titleVi: z.string().trim().min(1).max(200),
+  titleJa: z.string().trim().max(200).optional().nullable(),
+  type: z.string().trim().min(1).max(32),
+  questionCount: z.number().int().min(1).max(200),
+  timeLimitSec: z.number().int().min(0).max(60 * 60 * 4),
+  sourcePool: z.string().trim().max(120).optional().nullable()
+});
+
+const mockExamScoringRubricSchema = z
+  .object({
+    passingScore: z.number().int().min(0).max(1000).optional(),
+    perCorrectPoints: z.number().min(0).max(1000).optional(),
+    bandThresholds: z
+      .array(
+        z.object({
+          band: z.string().trim().min(1).max(16),
+          min: z.number().int().min(0).max(1000)
+        })
+      )
+      .max(20)
+      .optional()
+  })
+  .partial();
+
+const mockExamBlueprintMetaSchema = z.object({
+  sections: z.array(mockExamSectionSchema).min(1).max(20),
+  totalTimeMin: z.number().int().min(1).max(360),
+  scoringRubric: mockExamScoringRubricSchema.optional().default({})
+});
+
+export type AdminMockExamSection = z.infer<typeof mockExamSectionSchema>;
+export type AdminMockExamBlueprintMeta = z.infer<typeof mockExamBlueprintMetaSchema>;
+
+const mockExamBaseShape = {
+  slug: z
+    .string()
+    .trim()
+    .min(3)
+    .max(120)
+    .regex(/^[a-z0-9][a-z0-9_-]*$/i, "slug must be alnum/dash/underscore"),
+  titleVi: z.string().trim().min(1).max(200),
+  titleJa: z.string().trim().max(200).optional().nullable(),
+  description: z.string().trim().max(2000).optional().nullable(),
+  level: z.enum(ASSESSMENT_BJT_LEVELS),
+  timeLimitSeconds: z.number().int().min(60).max(60 * 60 * 4),
+  blueprintMeta: mockExamBlueprintMetaSchema
+};
+
+export const adminMockExamCreateSchema = z
+  .object({ ...mockExamBaseShape, reason: assessmentReasonField })
+  .superRefine((value, ctx) => {
+    const declared = value.blueprintMeta.totalTimeMin * 60;
+    if (Math.abs(declared - value.timeLimitSeconds) > 60) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "timeLimitSeconds must match blueprintMeta.totalTimeMin within 60s",
+        path: ["timeLimitSeconds"]
+      });
+    }
+  });
+
+export const adminMockExamPatchSchema = z.object({
+  slug: mockExamBaseShape.slug.optional(),
+  titleVi: mockExamBaseShape.titleVi.optional(),
+  titleJa: mockExamBaseShape.titleJa,
+  description: mockExamBaseShape.description,
+  level: mockExamBaseShape.level.optional(),
+  timeLimitSeconds: mockExamBaseShape.timeLimitSeconds.optional(),
+  blueprintMeta: mockExamBlueprintMetaSchema.optional(),
+  reason: assessmentReasonField
+});
+
+export const adminMockExamListQuerySchema = z.object({
+  q: z.string().trim().max(200).optional().transform((s) => (s === "" ? undefined : s)),
+  status: z
+    .enum([...ASSESSMENT_MOCK_EXAM_STATUSES, "all"] as [string, ...string[]])
+    .optional()
+    .transform((s) => (s === "all" ? undefined : s)),
+  level: z
+    .string()
+    .trim()
+    .max(16)
+    .optional()
+    .transform((s) => (s === "" || s === "all" ? undefined : s)),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(25)
+});
+
+export const adminMockExamReasonOnlyBodySchema = z.object({ reason: assessmentReasonField });
+
+/** Quiz templates (BjtMockTest with type IN ASSESSMENT_QUIZ_TEMPLATE_TYPES). */
+const quizTemplateGenerationRulesSchema = z.object({
+  questionCount: z.number().int().min(1).max(200),
+  timeLimitSec: z.number().int().min(60).max(60 * 60 * 4),
+  difficultyMix: z
+    .array(
+      z.object({
+        difficulty: z.enum(ASSESSMENT_QUESTION_DIFFICULTIES),
+        weight: z.number().min(0).max(1)
+      })
+    )
+    .min(1)
+    .max(8),
+  topicMix: z
+    .array(
+      z.object({
+        topic: z.string().trim().min(1).max(64),
+        weight: z.number().min(0).max(1)
+      })
+    )
+    .max(20)
+    .optional()
+    .default([])
+});
+
+const quizTemplateBaseShape = {
+  slug: mockExamBaseShape.slug,
+  titleVi: mockExamBaseShape.titleVi,
+  titleJa: mockExamBaseShape.titleJa,
+  description: mockExamBaseShape.description,
+  level: mockExamBaseShape.level,
+  type: z.enum(ASSESSMENT_QUIZ_TEMPLATE_TYPES),
+  generationRules: quizTemplateGenerationRulesSchema
+};
+
+export const adminQuizTemplateCreateSchema = z.object({
+  ...quizTemplateBaseShape,
+  reason: assessmentReasonField
+});
+
+export const adminQuizTemplatePatchSchema = z.object({
+  slug: quizTemplateBaseShape.slug.optional(),
+  titleVi: quizTemplateBaseShape.titleVi.optional(),
+  titleJa: quizTemplateBaseShape.titleJa,
+  description: quizTemplateBaseShape.description,
+  level: quizTemplateBaseShape.level.optional(),
+  type: quizTemplateBaseShape.type.optional(),
+  generationRules: quizTemplateGenerationRulesSchema.optional(),
+  reason: assessmentReasonField
+});
+
+export const adminQuizTemplateListQuerySchema = z.object({
+  q: z.string().trim().max(200).optional().transform((s) => (s === "" ? undefined : s)),
+  status: z
+    .enum([...ASSESSMENT_MOCK_EXAM_STATUSES, "all"] as [string, ...string[]])
+    .optional()
+    .transform((s) => (s === "all" ? undefined : s)),
+  level: z
+    .string()
+    .trim()
+    .max(16)
+    .optional()
+    .transform((s) => (s === "" || s === "all" ? undefined : s)),
+  type: z
+    .enum([...ASSESSMENT_QUIZ_TEMPLATE_TYPES, "all"] as [string, ...string[]])
+    .optional()
+    .transform((s) => (s === "all" ? undefined : s)),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(25)
+});
+
+export const adminQuizTemplateReasonOnlyBodySchema = adminMockExamReasonOnlyBodySchema;
+
+/** Question bank. */
+const questionOptionSchema = z.object({
+  optionKey: z.string().trim().min(1).max(8),
+  text: z.string().trim().min(1).max(2000),
+  isCorrect: z.boolean()
+});
+
+const questionBaseShape = {
+  sectionId: z.string().uuid(),
+  prompt: z.string().trim().min(1).max(4000),
+  scenario: z.string().trim().max(4000).optional().nullable(),
+  explanationVi: z.string().trim().min(1).max(4000),
+  skillTag: z.string().trim().min(1).max(64),
+  difficulty: z.enum(ASSESSMENT_QUESTION_DIFFICULTIES),
+  tags: z.array(z.string().trim().min(1).max(48)).max(20).default([]),
+  sourceType: z.string().trim().max(64).optional().nullable(),
+  sourceId: optionalUuid,
+  options: z.array(questionOptionSchema).min(2).max(8)
+};
+
+const enforceSingleCorrectQuestionOptions = (
+  options: { optionKey: string; isCorrect: boolean }[],
+  ctx: z.RefinementCtx
+) => {
+  const correct = options.filter((o) => o.isCorrect).length;
+  if (correct !== 1) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: `exactly one option must be marked correct (got ${correct})`,
+      path: ["options"]
+    });
+  }
+  const seen = new Set<string>();
+  for (const o of options) {
+    if (seen.has(o.optionKey)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `duplicate optionKey ${o.optionKey}`,
+        path: ["options"]
+      });
+    }
+    seen.add(o.optionKey);
+  }
+};
+
+export const adminQuestionBankCreateSchema = z
+  .object({ ...questionBaseShape, reason: assessmentReasonField })
+  .superRefine((value, ctx) => enforceSingleCorrectQuestionOptions(value.options, ctx));
+
+export const adminQuestionBankPatchSchema = z
+  .object({
+    sectionId: questionBaseShape.sectionId.optional(),
+    prompt: questionBaseShape.prompt.optional(),
+    scenario: questionBaseShape.scenario,
+    explanationVi: questionBaseShape.explanationVi.optional(),
+    skillTag: questionBaseShape.skillTag.optional(),
+    difficulty: questionBaseShape.difficulty.optional(),
+    tags: questionBaseShape.tags.optional(),
+    sourceType: questionBaseShape.sourceType,
+    sourceId: questionBaseShape.sourceId,
+    options: z.array(questionOptionSchema).min(2).max(8).optional(),
+    reason: assessmentReasonField
+  })
+  .superRefine((value, ctx) => {
+    if (value.options) enforceSingleCorrectQuestionOptions(value.options, ctx);
+  });
+
+export const adminQuestionBankListQuerySchema = z.object({
+  q: z.string().trim().max(200).optional().transform((s) => (s === "" ? undefined : s)),
+  status: z
+    .enum([...ASSESSMENT_QUESTION_STATUSES, "all"] as [string, ...string[]])
+    .optional()
+    .transform((s) => (s === "all" ? undefined : s)),
+  level: z
+    .string()
+    .trim()
+    .max(16)
+    .optional()
+    .transform((s) => (s === "" || s === "all" ? undefined : s)),
+  topic: z
+    .string()
+    .trim()
+    .max(64)
+    .optional()
+    .transform((s) => (s === "" || s === "all" ? undefined : s)),
+  difficulty: z
+    .enum([...ASSESSMENT_QUESTION_DIFFICULTIES, "all"] as [string, ...string[]])
+    .optional()
+    .transform((s) => (s === "all" ? undefined : s)),
+  tags: z
+    .union([z.string(), z.array(z.string())])
+    .optional()
+    .transform((v) => {
+      if (!v) return undefined;
+      const arr = Array.isArray(v) ? v : v.split(",");
+      const cleaned = arr.map((s) => s.trim()).filter((s) => s.length > 0);
+      return cleaned.length > 0 ? cleaned : undefined;
+    }),
+  sectionId: optionalUuid,
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(25)
+});
+
+export const adminQuestionBankBulkActionSchema = z.object({
+  action: z.enum(["publish", "archive", "tag", "untag"]),
+  ids: z.array(z.string().uuid()).min(1).max(200),
+  tags: z.array(z.string().trim().min(1).max(48)).max(20).optional(),
+  reason: assessmentReasonField
+});
+
+export const adminQuestionBankSuggestEditSchema = z.object({
+  field: z.enum(["prompt", "explanationVi", "tags", "options", "skillTag", "difficulty"]),
+  proposedValue: z.unknown(),
+  rationale: z.string().trim().min(8).max(2000),
+  reason: assessmentReasonField
+});
+
+/** Quiz sessions (read + abort + extend). */
+export const adminQuizSessionListQuerySchema = z.object({
+  q: z.string().trim().max(200).optional().transform((s) => (s === "" ? undefined : s)),
+  status: z
+    .enum([...ASSESSMENT_QUIZ_SESSION_STATUSES, "all"] as [string, ...string[]])
+    .optional()
+    .transform((s) => (s === "all" ? undefined : s)),
+  userId: optionalUuid,
+  testId: optionalUuid,
+  from: optionalIsoDate,
+  to: optionalIsoDate,
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(25)
+});
+
+export const adminQuizSessionAbortBodySchema = z.object({ reason: assessmentReasonField });
+export const adminQuizSessionExtendTimeBodySchema = z.object({
+  addSeconds: z.coerce.number().int().min(15).max(60 * 60),
+  reason: assessmentReasonField
+});
+
+/** Remediation rules + triggers. */
+const remediationContentTypeEnum = z.enum([
+  "lesson",
+  "flashcard_deck",
+  "flashcard_variant",
+  "kanji",
+  "lexeme",
+  "grammar",
+  "reading_passage",
+  "video"
+]);
+
+const remediationRuleBaseShape = {
+  name: z.string().trim().min(1).max(200),
+  description: z.string().trim().max(2000).optional().nullable(),
+  topicSkillTag: z.string().trim().min(1).max(64),
+  level: z.enum(ASSESSMENT_BJT_LEVELS),
+  thresholdFailedCount: z.number().int().min(1).max(50),
+  thresholdWindowQuestions: z.number().int().min(1).max(200),
+  recommendedContentType: remediationContentTypeEnum,
+  recommendedContentId: z.string().uuid()
+};
+
+export const adminRemediationRuleCreateSchema = z
+  .object({ ...remediationRuleBaseShape, reason: assessmentReasonField })
+  .superRefine((value, ctx) => {
+    if (value.thresholdFailedCount > value.thresholdWindowQuestions) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "thresholdFailedCount cannot exceed thresholdWindowQuestions",
+        path: ["thresholdFailedCount"]
+      });
+    }
+  });
+
+export const adminRemediationRulePatchSchema = z
+  .object({
+    name: remediationRuleBaseShape.name.optional(),
+    description: remediationRuleBaseShape.description,
+    topicSkillTag: remediationRuleBaseShape.topicSkillTag.optional(),
+    level: remediationRuleBaseShape.level.optional(),
+    thresholdFailedCount: remediationRuleBaseShape.thresholdFailedCount.optional(),
+    thresholdWindowQuestions: remediationRuleBaseShape.thresholdWindowQuestions.optional(),
+    recommendedContentType: remediationRuleBaseShape.recommendedContentType.optional(),
+    recommendedContentId: remediationRuleBaseShape.recommendedContentId.optional(),
+    reason: assessmentReasonField
+  })
+  .superRefine((value, ctx) => {
+    if (
+      value.thresholdFailedCount !== undefined &&
+      value.thresholdWindowQuestions !== undefined &&
+      value.thresholdFailedCount > value.thresholdWindowQuestions
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "thresholdFailedCount cannot exceed thresholdWindowQuestions",
+        path: ["thresholdFailedCount"]
+      });
+    }
+  });
+
+export const adminRemediationRuleListQuerySchema = z.object({
+  q: z.string().trim().max(200).optional().transform((s) => (s === "" ? undefined : s)),
+  topicSkillTag: z
+    .string()
+    .trim()
+    .max(64)
+    .optional()
+    .transform((s) => (s === "" || s === "all" ? undefined : s)),
+  level: z
+    .string()
+    .trim()
+    .max(16)
+    .optional()
+    .transform((s) => (s === "" || s === "all" ? undefined : s)),
+  active: z
+    .enum(["true", "false", "all"])
+    .optional()
+    .transform((s) => (s === undefined || s === "all" ? undefined : s === "true")),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(25)
+});
+
+export const adminRemediationToggleBodySchema = z.object({ reason: assessmentReasonField });
+
+export const adminRemediationTriggerListQuerySchema = z.object({
+  ruleId: optionalUuid,
+  userId: optionalUuid,
+  from: optionalIsoDate,
+  to: optionalIsoDate,
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(25)
+});
+
+/* ============================================================================
+ * Analytics admin (per-domain) — battle, bjt, flashcards, growth, system.
+ * Read-only with audited export + refresh. No PII surfaced in series; learner-level
+ * drill-downs reuse User 360 access-reason gate at the controller layer.
+ * ========================================================================== */
+
+export const ANALYTICS_DOMAIN_KEYS = [
+  "battle",
+  "bjt",
+  "flashcards",
+  "growth",
+  "system",
+  "learning",
+  "content",
+  "search"
+] as const;
+export type AnalyticsDomainKey = (typeof ANALYTICS_DOMAIN_KEYS)[number];
+
+export const ANALYTICS_GRANULARITIES = ["day", "hour"] as const;
+
+const isoDateField = z
+  .string()
+  .trim()
+  .min(1)
+  .max(40)
+  .optional()
+  .transform((s) => (s === "" ? undefined : s));
+
+const optionalEnumLike = (max = 64) =>
+  z
+    .string()
+    .trim()
+    .max(max)
+    .optional()
+    .transform((s) => (s === "" || s === "all" ? undefined : s));
+
+/** Filters applied to all per-domain analytics endpoints (summary, timeseries, breakdown, export). */
+export const adminAnalyticsCommonFilterSchema = z.object({
+  from: isoDateField,
+  to: isoDateField,
+  /** 7d|30d|90d|custom — when custom, `from` and `to` must be present. */
+  range: z.enum(["7d", "30d", "90d", "custom"]).default("30d"),
+  level: optionalEnumLike(32),
+  locale: optionalEnumLike(8),
+  segment: optionalEnumLike(32),
+  configId: z.uuid().optional(),
+  deckId: z.uuid().optional(),
+  topic: optionalEnumLike(64),
+  source: optionalEnumLike(32),
+  campaign: optionalEnumLike(64),
+  service: optionalEnumLike(32),
+  endpointPattern: optionalEnumLike(120)
+});
+
+export const adminAnalyticsTimeseriesQuerySchema = adminAnalyticsCommonFilterSchema.extend({
+  metric: z.string().trim().min(1).max(64),
+  granularity: z.enum(ANALYTICS_GRANULARITIES).default("day")
+});
+
+export const adminAnalyticsBreakdownQuerySchema = adminAnalyticsCommonFilterSchema.extend({
+  dimension: z.string().trim().min(1).max(64).default("default"),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(200).default(50)
+});
+
+export const adminAnalyticsExportQuerySchema = adminAnalyticsCommonFilterSchema.extend({
+  view: z.enum(["summary", "timeseries", "breakdown"]).default("breakdown"),
+  metric: z.string().trim().min(1).max(64).optional(),
+  dimension: z.string().trim().min(1).max(64).optional(),
+  granularity: z.enum(ANALYTICS_GRANULARITIES).default("day"),
+  format: z.enum(["csv"]).default("csv"),
+  reason: z.string().trim().min(3).max(500)
+});
+
+export const adminAnalyticsRefreshBodySchema = z.object({
+  reason: z.string().trim().min(3).max(500)
+});

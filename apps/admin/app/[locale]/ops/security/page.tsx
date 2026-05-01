@@ -1,27 +1,23 @@
+import en from "../../../../messages/en.json";
 import ja from "../../../../messages/ja.json";
 import vi from "../../../../messages/vi.json";
-import { AdminResourceTableClient } from "../../_components/admin-resource-table-client";
+import { OpsSecurityClient } from "./ops-security-client";
 
-const messages = { ja, vi };
+const messages = { en, ja, vi };
+type Locale = keyof typeof messages;
 
-export default async function Page({ params }: { params: Promise<{ locale: keyof typeof messages }> }) {
+function pickLabels(t: unknown, key: string): Record<string, string> {
+  const root = t as Record<string, unknown>;
+  const fromAdminConsole = (root.adminConsole as Record<string, unknown> | undefined)?.[key] as
+    | Record<string, string>
+    | undefined;
+  const fromTopLevel = root[key] as Record<string, string> | undefined;
+  return { ...(fromTopLevel ?? {}), ...(fromAdminConsole ?? {}) };
+}
+
+export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  const t = messages[locale] ?? messages.vi;
-  return (
-    <AdminResourceTableClient
-      columns={[
-        { key: "status", label: t.adminConsole.common.status },
-        { key: "inactiveAdminActors", label: "Inactive Admin Actors" },
-        { key: "roles", label: t.shell.navItems.iamRoles },
-        { key: "permissions", label: t.shell.navItems.iamPermissions },
-        { key: "recentAuditEvents7d", label: "Audit Events (7d)" },
-        { key: "criticalOpsActions7d", label: "Critical Ops Actions (7d)" },
-        { key: "generatedAt", label: t.adminConsole.common.updatedAt }
-      ]}
-      common={t.adminConsole.common}
-      description={t.overview.subtitle}
-      endpoint="/api/admin/operations/security"
-      title={t.shell.navItems.securityAudit}
-    />
-  );
+  const t = messages[locale as Locale] ?? messages.vi;
+  const labels = pickLabels(t, "opsSecurity");
+  return <OpsSecurityClient common={t.adminConsole.common} labels={labels} />;
 }

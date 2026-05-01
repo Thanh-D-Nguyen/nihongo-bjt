@@ -30,8 +30,9 @@ Act as `bjt-boss`. Run admin UI work with production UI/UX skills and gates.
 19. `company/ADMIN_COMPLETION_PROGRAM.md`
 20. `company/admin-module-inventory.md`
 21. `company/gates/admin-100-completion-gate.md`
-22. `docs/design/bjt-ui-ux-production-standard.md` when the admin page controls learner content, assessment, reading assist, media, growth, or learning operations
-23. `company/gates/bjt-ui-ux-production-gate.md` when applicable
+22. `company/ADMIN_MANAGEMENT_WORKFLOW_STANDARD.md`
+23. `docs/design/bjt-ui-ux-production-standard.md` when the admin page controls learner content, assessment, reading assist, media, growth, or learning operations
+24. `company/gates/bjt-ui-ux-production-gate.md` when applicable
 </required-reading>
 
 <conditional-reading>
@@ -49,6 +50,8 @@ Before each admin UI task:
 2. Use the fewest agents needed.
 3. Keep page scope small and reviewable.
 4. State assumptions, design direction, acceptance criteria, and verification path before editing.
+   - Include the route's admin decision and required management actions.
+   - A page that only renders information/table data does not pass unless the domain is intentionally immutable/read-only and the inventory records the reason.
 5. Require permission-aware actions, feature-flag states, i18n labels, loading/empty/error/degraded states, responsive layout, accessibility, no fake success, and no raw technical labels.
 6. Apply `company/gates/admin-page-production-gate.md` and `company/gates/open-design-bjt-ui-gate.md`.
 7. Record the Open Design BJT five-dimension critique in the handoff.
@@ -60,6 +63,7 @@ Before each admin UI task:
 <stop-conditions>
 - admin write lacks backend RBAC or audit path
 - page needs fake data to look complete
+- management route would remain a read-only generic table without a documented immutable/read-only exception
 - UI cannot represent required data states
 - visual QA cannot be completed and no manual blocker is recorded
 - Open Design BJT P0 gate fails or any five-dimension critique score is below `3/5`

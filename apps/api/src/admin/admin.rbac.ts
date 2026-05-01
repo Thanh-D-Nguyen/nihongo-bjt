@@ -15,14 +15,25 @@ const ADMIN_ROUTE_GROUP_PERMISSIONS = {
     "viewer.audit"
   ],
   operations: ["iam.manage", "viewer.audit"],
-  analytics: ["viewer.analytics", "admin.analytics.view", "analytics.view"],
-  growth: ["admin.growth.read"],
-  daily: ["admin.content.read", "admin.content.write"],
+  analytics: [
+    "viewer.analytics",
+    "admin.analytics.view",
+    "analytics.view",
+    "viewer.audit",
+    "analytics.export",
+    "analytics.manage"
+  ],
+  growth: ["admin.growth.read", "growth.manage", "viewer.audit"],
+  daily: ["admin.content.read", "admin.content.write", "viewer.audit"],
+  learning: ["admin.content.read", "admin.content.write", "viewer.audit"],
   legal: ["admin.legal.read", "admin.legal.write", "legal.admin"],
   monetization: ["admin.monetization.read", "admin.monetization.write", "billing.overview.view"],
   billing_webhook: ["admin.monetization.read", "admin.monetization.write", "billing.webhook.read", "billing.webhook.manage"],
   ads: ["admin.monetization.read", "admin.monetization.write", "ads.manage", "ads.read", "viewer.audit"],
-  media: ["admin.content.read", "admin.content.write", "iam.manage"]
+  battle: ["battle.manage", "viewer.audit", "iam.manage"],
+  media: ["admin.content.read", "admin.content.write", "iam.manage", "viewer.audit"],
+  content: ["admin.content.read", "admin.content.write", "viewer.audit"],
+  assessment: ["assessment.manage", "assessment.review", "viewer.audit"]
 } as const;
 
 export const ADMIN_RBAC_METADATA_KEY = "admin:rbac:require";
@@ -52,10 +63,13 @@ export const ADMIN_RBAC_TEST_FIXTURES: Record<AdminFixturePrincipal["role"], Adm
       "support.user.write",
       "admin.users.create",
       "admin.growth.read",
+      "growth.manage",
       "admin.monetization.write",
       "admin.legal.write",
       "admin.analytics.view",
-      "viewer.audit"
+      "viewer.audit",
+      "assessment.manage",
+      "assessment.review"
     ],
     role: "admin"
   },

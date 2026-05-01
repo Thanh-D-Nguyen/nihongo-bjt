@@ -106,7 +106,8 @@ export const ADMIN_NAV_DATA: AdminNavGroupDefinition[] = [
       item({ href: "/flashcards/generated", icon: "book", id: "ln.generated", labelKey: "shell.navItems.generatedCards", permissions: ["admin.content.read"], status: "implemented" }),
       item({ href: "/reading-assist", icon: "search", id: "ln.reading", labelKey: "shell.navItems.readingAssist", permissions: ["admin.content.read"], status: "implemented" }),
       item({ href: "/learning/paths", icon: "academic", id: "ln.paths", labelKey: "shell.navItems.learningPaths", permissions: ["admin.content.read"], status: "implemented" }),
-      item({ href: "/learning/competencies", icon: "academic", id: "ln.competencies", labelKey: "shell.navItems.competencies", permissions: ["admin.content.read"], status: "implemented" })
+      item({ href: "/learning/competencies", icon: "academic", id: "ln.competencies", labelKey: "shell.navItems.competencies", permissions: ["admin.content.read"], status: "implemented" }),
+      item({ href: "/learning/review", icon: "academic", id: "ln.review", labelKey: "shell.navItems.learningReview", permissions: ["admin.content.read"], status: "implemented" })
     ],
     labelKey: "shell.navGroups.learning",
     sectionCollapsible: true
@@ -133,6 +134,7 @@ export const ADMIN_NAV_DATA: AdminNavGroupDefinition[] = [
         href: "/battle/configs",
         icon: "bolt",
         id: "bt.configs",
+        featureFlag: "adminNav.battle",
         labelKey: "shell.navItems.battleConfigs",
         permissions: ["admin.content.read"],
         status: "implemented"
@@ -141,6 +143,7 @@ export const ADMIN_NAV_DATA: AdminNavGroupDefinition[] = [
         href: "/battle/bots",
         icon: "cog",
         id: "bt.bots",
+        featureFlag: "adminNav.battle",
         labelKey: "shell.navItems.battleBots",
         permissions: ["admin.content.read"],
         status: "implemented"
@@ -149,6 +152,7 @@ export const ADMIN_NAV_DATA: AdminNavGroupDefinition[] = [
         href: "/battle/matches",
         icon: "chart",
         id: "bt.matches",
+        featureFlag: "adminNav.battle",
         labelKey: "shell.navItems.battleMatches",
         permissions: ["admin.content.read", "admin.analytics.view", "viewer.analytics"],
         status: "implemented"
@@ -157,6 +161,7 @@ export const ADMIN_NAV_DATA: AdminNavGroupDefinition[] = [
         href: "/battle/leaderboard",
         icon: "chart",
         id: "bt.leader",
+        featureFlag: "adminNav.battle",
         labelKey: "shell.navItems.battleLeaderboard",
         permissions: ["admin.content.read", "admin.analytics.view", "viewer.analytics"],
         status: "implemented"
@@ -165,6 +170,7 @@ export const ADMIN_NAV_DATA: AdminNavGroupDefinition[] = [
         href: "/battle/abuse",
         icon: "shield",
         id: "bt.abuse",
+        featureFlag: "adminNav.battle",
         labelKey: "shell.navItems.battleAbuse",
         permissions: ["iam.manage", "support.user.read"],
         status: "implemented"

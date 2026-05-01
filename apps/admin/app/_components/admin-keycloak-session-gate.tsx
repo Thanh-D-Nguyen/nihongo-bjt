@@ -4,7 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
-import { isAdminKeycloakEnabled } from "@/lib/public-keycloak";
+import { isAdminKeycloakEnabled, isAdminTestBypassEnabled } from "@/lib/public-keycloak";
 
 function isAdminPublicPath(pathname: string): boolean {
   const segments = pathname.split("/").filter(Boolean);
@@ -15,17 +15,20 @@ function isAdminPublicPath(pathname: string): boolean {
 export function AdminKeycloakSessionGate({
   busyLabel,
   children,
+  initialAuthed = false,
   locale
 }: {
   busyLabel: string;
   children: ReactNode;
+  initialAuthed?: boolean;
   locale: string;
 }) {
   const pathname = usePathname() ?? "";
   const router = useRouter();
   const publicPath = isAdminPublicPath(pathname);
-  const kc = isAdminKeycloakEnabled();
-  const [ready, setReady] = useState(!kc || publicPath);
+  const kc = isAdminKeycloakEnabled() && !isAdminTestBypassEnabled();
+  // If KC cookies are present server-side, render optimistically and validate in background.
+  const [ready, setReady] = useState(!kc || publicPath || initialAuthed);
 
   useEffect(() => {
     if (!kc) {
@@ -38,7 +41,11 @@ export function AdminKeycloakSessionGate({
     }
 
     let cancelled = false;
-    setReady(false);
+    // Do not flip ready→false when we already rendered optimistically; validate in the background
+    // and only redirect on a real 401/403.
+    if (!initialAuthed) {
+      setReady(false);
+    }
 
     void (async () => {
       try {
@@ -90,7 +97,7 @@ export function AdminKeycloakSessionGate({
     return () => {
       cancelled = true;
     };
-  }, [kc, locale, pathname, publicPath, router]);
+  }, [initialAuthed, kc, locale, pathname, publicPath, router]);
 
   if (!ready) {
     return (

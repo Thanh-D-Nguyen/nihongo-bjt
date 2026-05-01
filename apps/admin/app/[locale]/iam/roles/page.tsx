@@ -1,6 +1,6 @@
 import ja from "../../../../messages/ja.json";
 import vi from "../../../../messages/vi.json";
-import { AdminResourceTableClient } from "../../_components/admin-resource-table-client";
+import { IamRolesClient } from "./iam-roles-client";
 
 const messages = { ja, vi };
 
@@ -8,18 +8,10 @@ export default async function Page({ params }: { params: Promise<{ locale: keyof
   const { locale } = await params;
   const t = messages[locale] ?? messages.vi;
   return (
-    <AdminResourceTableClient
-      columns={[
-        { key: "code", label: "Code" },
-        { key: "name", label: "Name" },
-        { key: "status", label: t.adminConsole.common.status },
-        { key: "permissionCount", label: t.shell.navItems.iamPermissions },
-        { key: "createdAt", label: t.adminConsole.common.createdAt }
-      ]}
+    <IamRolesClient
       common={t.adminConsole.common}
-      description={t.shell.navItems.iamDescription}
-      endpoint="/api/admin/iam/roles"
-      title={t.shell.navItems.iamRoles}
+      labels={t.iam.roleManagement as unknown as Record<string, string>}
+      locale={locale}
     />
   );
 }

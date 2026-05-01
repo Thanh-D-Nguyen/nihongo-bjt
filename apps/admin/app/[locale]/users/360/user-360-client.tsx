@@ -4,10 +4,12 @@ import {
   AdminEmptyState,
   AdminPageHeader,
   AdminSection,
+  AdminSelect,
   AdminStatusBadge,
   cn
 } from "@nihongo-bjt/ui";
-import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
 
@@ -116,6 +118,48 @@ function statusTone(s: string): "danger" | "good" | "neutral" | "warning" {
   }
 }
 
+const ACCESS_REASON_TTL_MS = 30 * 60 * 1000;
+const ACCESS_REASON_MIN = 8;
+const ACCESS_REASON_CATEGORIES = ["compliance", "support", "abuse", "billing", "other"] as const;
+
+type AccessReasonCategory = (typeof ACCESS_REASON_CATEGORIES)[number];
+
+type AccessGrant = {
+  category: AccessReasonCategory;
+  expiresAt: number;
+  reason: string;
+};
+
+function readGrant(userId: string): AccessGrant | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.sessionStorage.getItem(`bjt-user360-grant:${userId}`);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as AccessGrant;
+    if (!parsed.reason || parsed.expiresAt < Date.now()) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function writeGrant(userId: string, grant: AccessGrant) {
+  if (typeof window === "undefined") return;
+  window.sessionStorage.setItem(`bjt-user360-grant:${userId}`, JSON.stringify(grant));
+}
+
+function clearGrant(userId: string) {
+  if (typeof window === "undefined") return;
+  window.sessionStorage.removeItem(`bjt-user360-grant:${userId}`);
+}
+
+function reasonHeaders(grant: AccessGrant): HeadersInit {
+  return {
+    "x-admin-access-reason": grant.reason,
+    "x-admin-access-reason-category": grant.category
+  };
+}
+
 export function User360Client({
   common,
   locale,
@@ -126,10 +170,17 @@ export function User360Client({
   um: Labels;
 }) {
   const t = (k: string) => um[k] ?? k;
+  const searchParams = useSearchParams();
+  const initialId = (searchParams?.get("id") ?? "").trim();
 
-  const [query, setQuery] = useState("");
-  const [accessReason, setAccessReason] = useState("");
-  const [submitted, setSubmitted] = useState(false);
+  const [query, setQuery] = useState(initialId);
+  const [targetId, setTargetId] = useState<string | null>(initialId.length > 0 ? initialId : null);
+  const [grant, setGrant] = useState<AccessGrant | null>(null);
+  const [reasonModalOpen, setReasonModalOpen] = useState(false);
+  const [reasonText, setReasonText] = useState("");
+  const [reasonCategory, setReasonCategory] = useState<AccessReasonCategory>("support");
+  const [reasonError, setReasonError] = useState<string | null>(null);
+
   const [detail, setDetail] = useState<UserDetail | null>(null);
   const [audit, setAudit] = useState<AuditEntry[]>([]);
   const [loading, setLoading] = useState(false);
@@ -137,7 +188,7 @@ export function User360Client({
   const [tab, setTab] = useState<Tab>("overview");
 
   const lookupUser = useCallback(
-    async (userId: string) => {
+    async (userId: string, activeGrant: AccessGrant) => {
       setLoading(true);
       setError(null);
       setDetail(null);
@@ -145,15 +196,24 @@ export function User360Client({
       setTab("overview");
       try {
         const [rUser, rAudit] = await Promise.all([
-          adminApiFetch(`/api/admin/users/${encodeURIComponent(userId)}`),
-          adminApiFetch(`/api/admin/users/${encodeURIComponent(userId)}/audit?limit=80`)
+          adminApiFetch(`/api/admin/users/${encodeURIComponent(userId)}`, {
+            headers: reasonHeaders(activeGrant)
+          }),
+          adminApiFetch(
+            `/api/admin/users/${encodeURIComponent(userId)}/audit?limit=80`,
+            { headers: reasonHeaders(activeGrant) }
+          )
         ]);
         if (rUser.status === 404) {
           setError(t("user360NotFound"));
           return;
         }
         if (rUser.status === 403) {
-          setError(t("forbidden"));
+          // Either privacy gate rejected or perms missing — invalidate grant and re-prompt.
+          clearGrant(userId);
+          setGrant(null);
+          setReasonModalOpen(true);
+          setError(t("user360AccessReasonExpired"));
           return;
         }
         if (!rUser.ok) {
@@ -173,26 +233,68 @@ export function User360Client({
     [common.error, t]
   );
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Bootstrap: if URL has ?id= or last targetId, hydrate grant or open modal.
+  useEffect(() => {
+    if (!targetId) return;
+    const existing = readGrant(targetId);
+    if (existing) {
+      setGrant(existing);
+      void lookupUser(targetId, existing);
+    } else {
+      setReasonModalOpen(true);
+    }
+    // react-hooks not configured for this app, intentional dep list
+  }, [targetId]);
+
+  const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = query.trim();
     if (!trimmed) return;
-    if (accessReason.trim().length < 3) {
-      setError(t("user360ReasonRequired"));
-      return;
-    }
-    setSubmitted(true);
-    void lookupUser(trimmed);
+    setTargetId(trimmed);
+    setError(null);
   };
 
   const handleReset = () => {
-    setSubmitted(false);
+    if (targetId) clearGrant(targetId);
+    setTargetId(null);
+    setGrant(null);
     setDetail(null);
     setAudit([]);
     setError(null);
     setQuery("");
-    setAccessReason("");
+    setReasonModalOpen(false);
+    setReasonText("");
+    setReasonCategory("support");
+    setReasonError(null);
   };
+
+  const submitAccessReason = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!targetId) return;
+    const trimmed = reasonText.trim();
+    if (trimmed.length < ACCESS_REASON_MIN) {
+      setReasonError(t("user360ReasonRequired"));
+      return;
+    }
+    const newGrant: AccessGrant = {
+      category: reasonCategory,
+      expiresAt: Date.now() + ACCESS_REASON_TTL_MS,
+      reason: trimmed
+    };
+    writeGrant(targetId, newGrant);
+    setGrant(newGrant);
+    setReasonModalOpen(false);
+    setReasonText("");
+    setReasonError(null);
+    void lookupUser(targetId, newGrant);
+  };
+
+  const grantTimeLeft = useMemo(() => {
+    if (!grant) return null;
+    const ms = grant.expiresAt - Date.now();
+    if (ms <= 0) return null;
+    return Math.ceil(ms / 60000);
+  }, [grant, detail]);
 
   // Support note modal state
   const [noteOpen, setNoteOpen] = useState(false);
@@ -202,7 +304,7 @@ export function User360Client({
   const [noteError, setNoteError] = useState<string | null>(null);
 
   const submitNote = async () => {
-    if (!detail) return;
+    if (!detail || !grant) return;
     if (noteRef.trim().length < 3) {
       setNoteError(t("reasonMin"));
       return;
@@ -217,7 +319,7 @@ export function User360Client({
       `/api/admin/users/${encodeURIComponent(detail.profile.id)}/support-notes`,
       {
         body: JSON.stringify({ body: noteBody.trim(), reason: noteRef.trim() }),
-        headers: { "content-type": "application/json" },
+        headers: { "content-type": "application/json", ...reasonHeaders(grant) },
         method: "POST"
       }
     );
@@ -229,7 +331,7 @@ export function User360Client({
     setNoteOpen(false);
     setNoteBody("");
     setNoteRef("");
-    void lookupUser(detail.profile.id);
+    void lookupUser(detail.profile.id, grant);
   };
 
   return (
@@ -238,7 +340,7 @@ export function User360Client({
         description={t("user360Subtitle")}
         title={t("user360Title")}
         actions={
-          submitted ? (
+          targetId ? (
             <button
               className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 shadow-sm hover:bg-slate-50"
               onClick={handleReset}
@@ -250,9 +352,12 @@ export function User360Client({
         }
       />
 
-      {!submitted ? (
+      {!targetId ? (
         <AdminSection title={t("user360SearchTitle")}>
-          <form className="space-y-4" onSubmit={handleSubmit}>
+          <p className="mb-3 text-xs text-slate-600">
+            {t("user360SearchHint")}
+          </p>
+          <form className="space-y-4" onSubmit={handleSearch}>
             <label className="block text-sm font-medium text-slate-700">
               {t("user360SearchLabel")}
               <input
@@ -263,24 +368,9 @@ export function User360Client({
                 value={query}
               />
             </label>
-            <label className="block text-sm font-medium text-slate-700">
-              {t("user360AccessReason")}
-              <textarea
-                className={cn(fieldClass, "min-h-[64px]")}
-                onChange={(e) => setAccessReason(e.target.value)}
-                placeholder={t("user360AccessReasonPlaceholder")}
-                value={accessReason}
-              />
-              <span className="mt-1 block text-xs text-slate-500">
-                {t("user360AccessReasonHint")}
-              </span>
-            </label>
-            {error && !submitted ? (
-              <p className="text-sm text-red-700">{error}</p>
-            ) : null}
             <button
               className="inline-flex h-9 items-center justify-center rounded-lg bg-indigo-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 disabled:opacity-50"
-              disabled={!query.trim() || accessReason.trim().length < 3}
+              disabled={!query.trim()}
               type="submit"
             >
               {t("user360Lookup")}
@@ -289,23 +379,45 @@ export function User360Client({
         </AdminSection>
       ) : null}
 
-      {submitted && loading ? (
+      {targetId && loading ? (
         <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm">
           {common.loading}
         </div>
       ) : null}
 
-      {submitted && error ? (
+      {targetId && error && !reasonModalOpen ? (
         <div className="rounded-2xl border border-red-200/90 bg-red-50/90 px-4 py-3 text-sm text-red-900 shadow-sm">
           {error}
         </div>
       ) : null}
 
-      {submitted && detail ? (
+      {targetId && detail && grant ? (
         <>
           <AdminSection title={`${detail.profile.displayName} — ${detail.profile.email ?? detail.profile.id}`}>
-            <div className="mb-3 rounded-lg border border-amber-100 bg-amber-50/50 px-3 py-2 text-xs text-amber-900">
-              {t("user360AccessReasonLabel")}: {accessReason}
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-100 bg-amber-50/50 px-3 py-2 text-xs text-amber-900">
+              <div>
+                <span className="font-semibold">{t("user360AccessReasonLabel")}:</span>{" "}
+                <span className="font-mono">[{t(`user360AccessReasonCategory_${grant.category}`)}]</span>{" "}
+                {grant.reason}
+                {grantTimeLeft != null ? (
+                  <span className="ml-2 text-amber-700">
+                    {t("user360AccessReasonTimeLeft").replace("{{minutes}}", String(grantTimeLeft))}
+                  </span>
+                ) : null}
+              </div>
+              <button
+                className="rounded border border-amber-200 bg-white px-2 py-0.5 text-[11px] text-amber-900 hover:bg-amber-50"
+                onClick={() => {
+                  if (targetId) clearGrant(targetId);
+                  setGrant(null);
+                  setReasonText("");
+                  setReasonError(null);
+                  setReasonModalOpen(true);
+                }}
+                type="button"
+              >
+                {t("user360AccessReasonChange")}
+              </button>
             </div>
             <div className="flex flex-wrap gap-1">
               {TABS.map((tb) => (
@@ -598,6 +710,76 @@ export function User360Client({
               </button>
             </div>
           </div>
+        </div>
+      ) : null}
+
+      {reasonModalOpen && targetId ? (
+        <div
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4"
+          role="dialog"
+        >
+          <form
+            className="w-full max-w-lg rounded-2xl border border-ink/10 bg-white p-5 shadow-xl"
+            onSubmit={submitAccessReason}
+          >
+            <h3 className="text-base font-semibold text-ink">
+              {t("user360AccessReasonModalTitle")}
+            </h3>
+            <p className="mt-1 text-xs text-slate-600">
+              {t("user360AccessReasonModalDesc").replace("{{id}}", targetId)}
+            </p>
+            <label className="mt-3 block text-sm font-medium text-slate-700">
+              {t("user360AccessReasonCategory")}
+              <AdminSelect
+                className="mt-1 w-full"
+                onChange={(e) =>
+                  setReasonCategory(e.target.value as AccessReasonCategory)
+                }
+                value={reasonCategory}
+              >
+                {ACCESS_REASON_CATEGORIES.map((c) => (
+                  <option key={c} value={c}>
+                    {t(`user360AccessReasonCategory_${c}`)}
+                  </option>
+                ))}
+              </AdminSelect>
+            </label>
+            <label className="mt-3 block text-sm font-medium text-slate-700">
+              {t("user360AccessReason")}
+              <textarea
+                autoFocus
+                className={cn(fieldClass, "min-h-[88px]")}
+                onChange={(e) => setReasonText(e.target.value)}
+                placeholder={t("user360AccessReasonPlaceholder")}
+                value={reasonText}
+              />
+              <span className="mt-1 block text-xs text-slate-500">
+                {t("user360AccessReasonHint")}
+              </span>
+            </label>
+            {reasonError ? (
+              <p className="mt-2 text-sm text-red-700" role="alert">
+                {reasonError}
+              </p>
+            ) : null}
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-800"
+                onClick={handleReset}
+                type="button"
+              >
+                {t("cancel")}
+              </button>
+              <button
+                className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm text-white disabled:opacity-50"
+                disabled={reasonText.trim().length < ACCESS_REASON_MIN}
+                type="submit"
+              >
+                {t("user360AccessReasonSubmit")}
+              </button>
+            </div>
+          </form>
         </div>
       ) : null}
     </div>

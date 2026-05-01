@@ -74,6 +74,10 @@ When `company/admin-module-inventory.md` reports 81 implemented admin routes and
 
 Required behavior:
 
+- Prefer real local admin login for full admin closeout. Provide credentials only through runtime env vars (`BROWSER_REVIEW_ADMIN_USERNAME`, `BROWSER_REVIEW_ADMIN_PASSWORD`) or a local secret manager; never write credentials into tracked files, reports, prompts, or screenshots.
+- If Keycloak blocks headless access and no real test credential is available, use the local/test-only `ADMIN_TEST_BYPASS=1` + `NEXT_PUBLIC_ADMIN_TEST_BYPASS=1` path with a seeded `NEXT_PUBLIC_LOCAL_ADMIN_ACTOR_ID`. This is executable smoke QA setup, not a human approval boundary.
+- The bypass must never be used in production, only accepts local API requests, and still relies on backend RBAC through the seeded `authz.admin_actor`.
+- Bypass screenshots are route-render smoke evidence only. They cannot be used as final admin functional sign-off because they do not prove real login/session behavior or screen-specific workflows.
 - Use `BROWSER_REVIEW_APP=admin`.
 - Use `BROWSER_REVIEW_ROUTES=__ADMIN_ALL__` to expand every visible `href` in `apps/admin/lib/admin-nav-data.ts`, prefixed with `BROWSER_REVIEW_LOCALE` such as `/vi`.
 - Include desktop and mobile evidence through the bounded runner.
@@ -97,6 +101,25 @@ Check states that are reachable for changed routes:
 - permission denied
 - feature disabled
 - happy path
+
+## Required Interaction Coverage
+
+For admin production readiness, browser/runtime review must verify workflows, not only screenshots.
+
+For every visible admin route in the full-admin audit:
+
+- identify the route's intended management workflow from nav label, page UI, inventory, and API contract;
+- verify the route satisfies `company/ADMIN_MANAGEMENT_WORKFLOW_STANDARD.md`: read-only display is not enough for a management domain unless a documented immutable/read-only exception exists;
+- exercise safe primary interactions such as filters, search, pagination, tabs, detail links, drawers, modals, refresh, export, preview, and navigation state;
+- for write workflows, verify the control is present and properly gated; execute only safe/local-dev writes or use dry-run/confirmation flows when available;
+- verify destructive actions require explicit confirmation, RBAC/audit reason where required, and do not silently report fake success;
+- verify create/edit/archive/publish/retry/cancel/delete/moderate actions exist when the domain requires them, or record the documented domain reason they are intentionally omitted;
+- record a blocker when a page merely renders data but lacks the expected end-to-end workflow.
+- record a blocker when `AdminResourceTableClient` or an equivalent generic read-only table is the primary UI for a management domain.
+
+For full-admin closeout, a route cannot pass with screenshot evidence alone when its primary workflow is untested or absent.
+
+If the runner reports `local_test_bypass`, the result can close only a visual smoke blocker. Human Proxy must continue with authenticated workflow QA or targeted implementation slices until the route interaction matrix is complete.
 
 ## Stop Rule
 

@@ -1,7 +1,10 @@
 import { Module } from "@nestjs/common";
 
 import { AdminModule } from "../admin/admin.module.js";
-import { ContentAdminController } from "./content-admin.controller.js";
+import { ContentEnrichmentAdminController } from "./content-enrichment-admin.controller.js";
+import { ContentEnrichmentAdminRepository } from "./content-enrichment-admin.repository.js";
+import { ContentVersionsAdminController } from "./content-versions-admin.controller.js";
+import { ContentVersionsAdminRepository } from "./content-versions-admin.repository.js";
 import { ContentController } from "./content.controller.js";
 import { ContentRepository } from "./content.repository.js";
 import {
@@ -15,7 +18,8 @@ import {
 @Module({
   controllers: [
     ContentController,
-    ContentAdminController,
+    ContentEnrichmentAdminController,
+    ContentVersionsAdminController,
     DictionaryController,
     KanjiController,
     GrammarController,
@@ -23,7 +27,7 @@ import {
     VijaController
   ],
   imports: [AdminModule],
-  providers: [ContentRepository],
+  providers: [ContentRepository, ContentEnrichmentAdminRepository, ContentVersionsAdminRepository],
   exports: [ContentRepository]
 })
 export class ContentModule {}

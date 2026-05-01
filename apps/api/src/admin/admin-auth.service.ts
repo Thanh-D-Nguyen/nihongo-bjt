@@ -52,7 +52,7 @@ export class AdminAuthService {
    * Resolves admin actor: Keycloak JWT + realm role gate when configured, else legacy header (local only).
    */
   private async resolveAdminActor(req: Request): Promise<{ actorId: string; displayName: string }> {
-    if (this.keycloakTokens.isEnabled()) {
+    if (this.keycloakTokens.isEnabled() && !this.isAdminTestBypassEnabled(req)) {
       const auth = req.headers.authorization;
       if (typeof auth !== "string" || !auth.startsWith("Bearer ")) {
         throw new UnauthorizedException("Authorization Bearer token required for admin API");
@@ -102,6 +102,20 @@ export class AdminAuthService {
       throw new UnauthorizedException("Admin actor is not active");
     }
     return { actorId: actor.id, displayName: actor.displayName };
+  }
+
+  /**
+   * Local/test-only browser QA bypass for authenticated admin UI audits.
+   *
+   * This does not bypass internal RBAC: callers still need a real `authz.admin_actor`
+   * row, and all permission checks continue through PostgreSQL role bindings.
+   */
+  private isAdminTestBypassEnabled(req: Request): boolean {
+    if (process.env.NODE_ENV === "production" || process.env.ADMIN_TEST_BYPASS !== "1") {
+      return false;
+    }
+    const host = (req.hostname || req.headers.host || "").split(":")[0]?.toLowerCase();
+    return host === "localhost" || host === "127.0.0.1" || host === "::1" || host === "[::1]";
   }
 
   /** Loads the actor and expands role → permission codes from PostgreSQL (not from JWT claims alone). */

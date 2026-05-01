@@ -173,7 +173,7 @@ export class PrivacyRequestService {
     };
   }
 
-  /* ── Admin listing ── */
+  /* ── Admin listing & lifecycle ── */
 
   async adminListRequests(params: {
     kind?: string;
@@ -205,5 +205,143 @@ export class PrivacyRequestService {
     ]);
 
     return { items, total };
+  }
+
+  async adminGetRequest(id: string) {
+    const req = await this.prisma.privacyRequest.findUnique({
+      select: {
+        completedAt: true,
+        createdAt: true,
+        id: true,
+        kind: true,
+        lastError: true,
+        resultPayload: true,
+        status: true,
+        userId: true
+      },
+      where: { id }
+    });
+    if (!req) return null;
+    const audit = await this.prisma.adminAuditEvent.findMany({
+      include: { actor: { select: { displayName: true, email: true, id: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+      where: { resourceId: id, resourceType: "admin.privacy_request" }
+    });
+    return { ...req, audit };
+  }
+
+  async adminTransition(input: {
+    actorId: string;
+    from: string[];
+    id: string;
+    reason: string;
+    to: "processing" | "completed" | "failed";
+  }) {
+    const before = await this.prisma.privacyRequest.findUnique({ where: { id: input.id } });
+    if (!before) {
+      throw new NotFoundException({ code: "PRIVACY_REQUEST_NOT_FOUND" });
+    }
+    if (!input.from.includes(before.status)) {
+      throw new ConflictException({
+        code: "PRIVACY_REQUEST_INVALID_TRANSITION",
+        currentStatus: before.status,
+        message: `Cannot transition request in status ${before.status} → ${input.to}`
+      });
+    }
+    return this.prisma.privacyRequest.update({
+      data: { status: input.to },
+      where: { id: input.id }
+    });
+  }
+
+  async adminFulfill(input: {
+    actorId: string;
+    downloadUrl: string | null;
+    id: string;
+    notes: string | null;
+    reason: string;
+  }) {
+    const before = await this.prisma.privacyRequest.findUnique({ where: { id: input.id } });
+    if (!before) {
+      throw new NotFoundException({ code: "PRIVACY_REQUEST_NOT_FOUND" });
+    }
+    if (before.status === "completed" || before.status === "failed") {
+      throw new ConflictException({
+        code: "PRIVACY_REQUEST_ALREADY_TERMINAL",
+        currentStatus: before.status
+      });
+    }
+    if (before.kind !== "export") {
+      throw new BadRequestException({
+        code: "PRIVACY_REQUEST_NOT_EXPORT",
+        message: "fulfill is only valid for export requests; use erasure-confirm for delete"
+      });
+    }
+    const payload: Record<string, unknown> = { fulfilledBy: input.actorId };
+    if (input.downloadUrl) payload.downloadUrl = input.downloadUrl;
+    if (input.notes) payload.notes = input.notes;
+    return this.prisma.privacyRequest.update({
+      data: {
+        completedAt: new Date(),
+        lastError: null,
+        resultPayload: payload as never,
+        status: "completed"
+      },
+      where: { id: input.id }
+    });
+  }
+
+  async adminReject(input: { actorId: string; id: string; reason: string }) {
+    const before = await this.prisma.privacyRequest.findUnique({ where: { id: input.id } });
+    if (!before) {
+      throw new NotFoundException({ code: "PRIVACY_REQUEST_NOT_FOUND" });
+    }
+    if (before.status === "completed" || before.status === "failed") {
+      throw new ConflictException({
+        code: "PRIVACY_REQUEST_ALREADY_TERMINAL",
+        currentStatus: before.status
+      });
+    }
+    return this.prisma.privacyRequest.update({
+      data: {
+        completedAt: new Date(),
+        lastError: input.reason,
+        status: "failed"
+      },
+      where: { id: input.id }
+    });
+  }
+
+  async adminEraseConfirm(input: { actorId: string; id: string; reason: string }) {
+    const before = await this.prisma.privacyRequest.findUnique({ where: { id: input.id } });
+    if (!before) {
+      throw new NotFoundException({ code: "PRIVACY_REQUEST_NOT_FOUND" });
+    }
+    if (before.kind !== "delete") {
+      throw new BadRequestException({
+        code: "PRIVACY_REQUEST_NOT_ERASURE",
+        message: "erasure-confirm only valid for delete requests"
+      });
+    }
+    if (before.status === "completed" || before.status === "failed") {
+      throw new ConflictException({
+        code: "PRIVACY_REQUEST_ALREADY_TERMINAL",
+        currentStatus: before.status
+      });
+    }
+    // Note: actual user record anonymization is handled by the async erasure processor.
+    // This endpoint marks the request irreversibly fulfilled and audits the operator decision.
+    this.logger.warn(
+      `[Privacy] Erasure confirmed by admin actorId=${input.actorId} requestId=${input.id}`
+    );
+    return this.prisma.privacyRequest.update({
+      data: {
+        completedAt: new Date(),
+        resultPayload: { erasureConfirmedBy: input.actorId } as never,
+        status: "completed"
+      },
+      where: { id: input.id }
+    });
   }
 }

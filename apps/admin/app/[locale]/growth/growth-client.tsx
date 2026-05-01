@@ -71,9 +71,9 @@ export function GrowthClient({ labels }: { labels: GrowthLabels }) {
       try {
         const [tplRes, refRes, camRes, shareRes] = await Promise.all([
           adminApiFetch("/api/admin/growth/share-templates"),
-          adminApiFetch("/api/admin/growth/referrals?limit=10"),
-          adminApiFetch("/api/admin/growth/campaigns?limit=10"),
-          adminApiFetch("/api/admin/growth/share-items?limit=10")
+          adminApiFetch("/api/admin/growth/referrals?pageSize=10"),
+          adminApiFetch("/api/admin/growth/campaigns?pageSize=10"),
+          adminApiFetch("/api/admin/growth/social/events?pageSize=10")
         ]);
         const tplData = tplRes.ok ? await tplRes.json() : [];
         const refData = refRes.ok ? await refRes.json() : [];

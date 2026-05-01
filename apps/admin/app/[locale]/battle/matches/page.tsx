@@ -1,30 +1,23 @@
+import en from "../../../../messages/en.json";
 import ja from "../../../../messages/ja.json";
 import vi from "../../../../messages/vi.json";
-import { AdminResourceTableClient } from "../../_components/admin-resource-table-client";
+import { BattleMatchesClient } from "./battle-matches-client";
 
-const messages = { ja, vi };
+const messages = { en, ja, vi };
 
 export default async function Page({ params }: { params: Promise<{ locale: keyof typeof messages }> }) {
   const { locale } = await params;
   const t = messages[locale] ?? messages.vi;
-  const sec = (t as Record<string, unknown>)["battleMatches"] as Record<string, string> | undefined;
+  const sec =
+    ((t.adminConsole as Record<string, unknown> | undefined)?.["battleMatches"] as
+      | Record<string, string>
+      | undefined) ?? {};
   return (
-    <AdminResourceTableClient
-      columns={[
-        { key: "userId", label: sec?.colUser ?? "User" },
-        { key: "mode", label: sec?.colMode ?? "Mode" },
-        { key: "roomCode", label: sec?.colRoom ?? "Room" },
-        { key: "status", label: sec?.colStatus ?? "Status" },
-        { key: "userScore", label: sec?.colUserScore ?? "User score" },
-        { key: "opponentScore", label: sec?.colOpponentScore ?? "Opp. score" },
-        { key: "_count.rounds", label: sec?.colRounds ?? "Rounds" },
-        { key: "startedAt", label: sec?.colStarted ?? "Started" }
-      ]}
+    <BattleMatchesClient
       common={t.adminConsole.common}
-      description={sec?.subtitle}
-      endpoint="/api/admin/battle/sessions?limit=100"
-      statusKeys={["status"]}
-      title={sec?.title ?? "Battle Matches"}
+      labels={sec as unknown as Record<string, string>}
+      locale={locale}
     />
   );
 }
+

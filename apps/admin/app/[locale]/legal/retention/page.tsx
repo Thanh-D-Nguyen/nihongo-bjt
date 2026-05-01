@@ -1,24 +1,28 @@
+import en from "../../../../messages/en.json";
 import ja from "../../../../messages/ja.json";
 import vi from "../../../../messages/vi.json";
-import { AdminResourceTableClient } from "../../_components/admin-resource-table-client";
+import { LegalRetentionAdminClient } from "./legal-retention-admin-client";
 
-const messages = { ja, vi };
+const messages = { en, ja, vi };
+type Locale = keyof typeof messages;
 
-export default async function Page({ params }: { params: Promise<{ locale: keyof typeof messages }> }) {
+function pickLabels(t: unknown, key: string): Record<string, string> {
+  const root = t as Record<string, unknown>;
+  const fromAdminConsole = (root.adminConsole as Record<string, unknown> | undefined)?.[key] as
+    | Record<string, string>
+    | undefined;
+  const fromTopLevel = root[key] as Record<string, string> | undefined;
+  return { ...(fromTopLevel ?? {}), ...(fromAdminConsole ?? {}) };
+}
+
+export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  const t = messages[locale] ?? messages.vi;
+  const t = messages[locale as Locale] ?? messages.vi;
+  const labels = pickLabels(t, "legalRetentionAdmin");
   return (
-    <AdminResourceTableClient
-      columns={[
-        { key: "policyKey", label: "Policy" },
-        { key: "version", label: "Version" },
-        { key: "status", label: t.adminConsole.common.status },
-        { key: "effectiveAt", label: "Effective At" }
-      ]}
+    <LegalRetentionAdminClient
       common={t.adminConsole.common}
-      description={t.overview.subtitle}
-      endpoint="/api/admin/legal/policies"
-      title={t.shell.navItems.retention}
+      labels={labels}
     />
   );
 }

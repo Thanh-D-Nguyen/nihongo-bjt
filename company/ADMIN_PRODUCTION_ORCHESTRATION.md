@@ -8,6 +8,8 @@ The target is world-class admin readiness: every enabled admin route must be use
 
 Admin production readiness is not the same as "no scaffold renderer remains". A route can still block admin production when it is shallow, duplicated from another route, missing the expected workflow, showing planned-notice content, or exposing only a read-only overview where the spec requires management operations.
 
+For the current full-admin directive, "management" means route-specific operator workflows. A screen that only shows information is not enough unless the domain is intentionally immutable/read-only and the inventory records the reason plus search/filter/detail/export/audit evidence. Generic `AdminResourceTableClient` pages are blockers until upgraded into domain workflow components or accepted under the read-only exception in `company/ADMIN_MANAGEMENT_WORKFLOW_STANDARD.md`.
+
 Admin closeout is not allowed on `pass_with_risks` when the risks are unresolved admin feature depth, planned-notice pages, duplicated/shallow workflows, missing dedicated APIs, or Admin Shell navigation UX. Those risks mean "continue the admin loop", not "go to Release Director sign-off".
 
 Admin closeout is also not allowed merely because the gate status changed. `admin_100_completion_gate status change requires human verification` and `Human review of admin product-depth resolution` are not hard stops while unattended delegation is active. They are prompts to run browser/source verification and continue unresolved slices.
@@ -18,6 +20,7 @@ Admin closeout is also not allowed merely because the gate status changed. `admi
 - Admin nav: `apps/admin/lib/admin-nav-data.ts`.
 - Admin API registry: `apps/api/src/admin/admin-openapi.schema.ts`.
 - Admin inventory: `company/admin-module-inventory.md`.
+- Admin management workflow standard: `company/ADMIN_MANAGEMENT_WORKFLOW_STANDARD.md`.
 - Admin gates:
   - `company/gates/admin-100-completion-gate.md`
   - `company/gates/admin-page-production-gate.md`
@@ -75,6 +78,7 @@ When the human asks for admin production readiness, `bjt-human-proxy` must prior
    - run or inline `.github/prompts/49_admin_100_completion_audit.prompt.md`;
    - reconcile nav, routes, API registry, inventory, feature flags, and direct URL behavior.
 2. Select one admin production slice from the priority queue below.
+   - Use `company/ADMIN_MANAGEMENT_WORKFLOW_STANDARD.md` to decide whether the slice needs create/edit/enable-disable/publish/archive/retry/cancel/delete/moderate/assign/export workflows, or whether it is a justified read-only exception.
 3. If backend/API is missing, route first to `bjt-backend`.
 4. Route UI implementation to `bjt-admin-ui`.
 5. Require the admin UI owner to apply the Karpathy production-agent skill, Open Design BJT adaptation, and Open Design BJT UI gate.
@@ -118,14 +122,17 @@ When the admin loop reports that all admin routes are production-wired:
 Closeout verification cannot pass while any of these are true:
 
 - Admin Shell/sidebar navigation is too long, lacks clear information architecture, or has confusing active/focus behavior;
+- any visible route only shows data in a generic table when the domain requires management actions;
+- `AdminResourceTableClient` remains the primary experience for a management domain without a documented immutable/read-only exception;
 - any visible admin route lacks browser/source evidence that the current UI is route-specific, polished, and not an old untouched screen;
 - any route is a planned-notice, static header/back-link page, or information-only page for a spec-required management workflow;
 - two nav items intentionally or accidentally render the same generic page without route-specific initial state or workflow;
 - a route is marked implemented but lacks its route-specific API/client contract;
 - admin areas named by the human as incomplete remain untriaged in the inventory;
 - Open Design BJT five-dimension critique for a changed or questioned page has any score below `3/5`;
-- browser QA has not produced visual/workflow evidence for the questioned routes.
-- browser QA has not produced visual/workflow evidence across all 81 routes when full-admin closeout is pending.
+- browser QA has not produced visual/workflow/interaction evidence for the questioned routes.
+- browser QA has not produced visual/workflow/interaction evidence across all 81 routes when full-admin closeout is pending.
+- browser QA only verifies screenshots/rendering but does not exercise safe primary interactions and expected route-specific workflows.
 
 Forbidden stop reason:
 
@@ -192,6 +199,7 @@ Do not stop to ask the human to approve this next slice when unattended delegati
 
 One admin slice is production-ready only when:
 
+- the route's intended admin decision and operational actions are documented;
 - nav item status and feature flag state match reality;
 - direct URL behavior matches nav state;
 - page uses i18n copy, loading/error/empty/degraded/permission-denied states;
@@ -201,6 +209,8 @@ One admin slice is production-ready only when:
 - no fake charts, fake arrays, fake success states, or frontend-only enforcement;
 - tests cover critical business/RBAC/error paths;
 - browser or visual review evidence exists for changed admin UI;
+- browser QA interaction evidence exists for the route's primary workflow: filters/search, tabs, detail links, modals/drawers, safe writes/dry-runs, confirmation/audit/RBAC states where applicable;
+- create/edit/enable-disable/publish/archive/retry/cancel/delete/moderate/assign/export actions exist where the domain lifecycle requires them, or the inventory documents a valid immutable/read-only exception from `company/ADMIN_MANAGEMENT_WORKFLOW_STANDARD.md`;
 - Open Design BJT UI gate passes, including a five-dimension critique with no score below `3/5`;
 - the page has route-specific purpose and workflow; it is not a duplicated generic console unless route-specific initial state, filters, tabs, copy, and actions make the workflow distinct;
 - required management operations are present or intentionally omitted with documented domain reason, RBAC/audit behavior, and Release Director acceptance;
@@ -233,3 +243,82 @@ Expected behavior:
 - after a slice passes, auto-continue to the next incomplete slice under unattended delegation;
 - after all admin slices pass, auto-run full admin browser visual audit, admin closeout verification, and Release Director admin sign-off;
 - do not stop with `next_agent` / `next_action` only unless a hard stop exists.
+
+## Per-Screen Visit + Inline UI/UX Fix Rule
+
+For every visible admin route, Human Proxy and admin owner agents must:
+
+1. Open the route in a real authenticated browser session (Keycloak login flow, real cookies, real `/api/admin/*` data — not the bypass).
+2. Capture or record actual rendered state: header, sidebar active item, primary content, loading→loaded transition, empty state, error state, RBAC-denied state where applicable.
+3. Compare the rendered state against `company/ADMIN_MANAGEMENT_WORKFLOW_STANDARD.md` and the BJT UI/UX standard.
+4. If the rendered state has any of the following, fix it inline in the same loop before moving on:
+   - generic `AdminResourceTableClient` shell where the domain requires a management workflow;
+   - infinite loading because of API base URL, RBAC mismatch, or data shape;
+   - duplicate visual experience across two distinct nav items;
+   - shallow/temporary copy or layout that looks unfinished;
+   - missing search/filter/sort/pagination/detail/action affordances expected by the domain;
+   - layout broken on desktop or mobile (overflow, unreadable text, contrast issues);
+   - i18n copy missing or rendering as keys;
+   - login/auth redirect loop, token refresh failure, or auth-gate flash that ejects an authenticated admin back to `/login`.
+5. Record the per-route observation and fix in `company/admin-module-inventory.md` and the active phase report. Do not advance to the next slice without the inline fix or an explicit blocker classification with owner and concrete next action.
+
+A route is not "visited" by passing a 200 status check or a single screenshot. Visiting means: real session + interaction with the primary workflow + UI/UX comparison + inline fix on regression.
+
+## Anti Scope-Too-Big Stop Rule
+
+A turn must never stop with reasoning equivalent to "the remaining work is too large for one cycle" while admin production readiness is incomplete and no hard stop exists.
+
+Forbidden stop reasons under unattended/admin delegation:
+
+- "scope exceeds single cycle"
+- "multi-cycle work, cannot finish in single proxy turn"
+- "30-75 cycles of focused work"
+- "stopping to let the human pick the next domain"
+
+Required behavior instead:
+
+- pick exactly one slice that fits the current turn budget (one route or one tightly-scoped backend extension per turn is allowed and expected);
+- ship that slice end-to-end (typecheck/test/live API verify);
+- update inventory with concrete progress;
+- continue to the next slice in the same loop until a real hard stop or end-of-turn token budget is reached;
+- if end-of-turn token budget is the only blocker, hand off the next slice with concrete file paths and the exact next prompt — but do not classify that as a project-level hard stop.
+
+The fact that admin production readiness needs many slices is acknowledged. That is exactly why the loop must keep running. Each turn must close at least one slice with green typecheck and at least one piece of live-runtime evidence whenever an API or UI changed.
+
+## Known Auth Regression: Admin Login Redirect Loop
+
+Open known issue (top priority for the next admin loop turn):
+
+- after a successful Keycloak login, the admin app sometimes redirects the just-authenticated admin back to `/login`.
+- symptoms reported by the human: `login admin xong vào trang admin sau đó lại bị quay lại trang login`.
+- likely candidates to investigate first:
+  - `apps/admin/app/_components/admin-keycloak-session-gate.tsx` (initialAuthed handling, cookie names, refresh path);
+  - `apps/admin/app/api/auth/keycloak/session/route.ts` (refresh_failed branch deleting cookies);
+  - `apps/admin/app/[locale]/layout.tsx` (server cookie read for `kc_access_token`/`kc_refresh_token`);
+  - any middleware/redirect rewriting the path on 401 from `/api/admin/me`;
+  - `tryRefreshAccessToken` returning `refresh_failed` when the access token is still valid but expired soon (over-eager refresh).
+- this regression must be reproduced and fixed before broader per-domain workflow slices resume, because every admin slice depends on a stable authenticated session.
+
+## Admin Login Screen UI/UX
+
+The admin login screen (`apps/admin/app/[locale]/login/page.tsx` + `apps/admin/app/[locale]/login/_components/admin-login-form-client.tsx`) is part of the admin production surface and must pass the same UI/UX gates as the rest of the admin shell:
+
+- `company/gates/admin-page-production-gate.md`
+- `company/gates/bjt-ui-ux-production-gate.md`
+- `company/gates/open-design-bjt-ui-gate.md`
+
+Required for production-ready login:
+
+- visual language and tokens consistent with the admin shell (paper/ink/accent, spacing, typography);
+- brand header, eyebrow, title, subtitle, and locale switcher;
+- accessible form: labelled inputs, `aria-describedby` for error messages, focus ring, keyboard navigation, password visibility toggle with screen-reader label, capslock detection hint;
+- submit button busy state with spinner and disabled guard while the password-login POST is in flight;
+- inline server-side error rendering with no flash before hydration; auth-error query param mapping must remain;
+- `returnTo` validation already present — add a unit test for malicious returnTo rejection (`//evil.example`, scheme-relative, absolute external);
+- social provider buttons (Google/Apple) only when `NEXT_PUBLIC_AUTH_*_IDP_HINT` is configured; consistent button styling and accessible names;
+- locale parity across vi/ja/en for every visible string, including provider button labels and error messages;
+- responsive layout from 360px to desktop; no horizontal scroll;
+- works without JavaScript (form-encoded POST already in place) and remains polished after hydration;
+- after a successful login, the just-authenticated admin lands on `returnTo` or `/{locale}` and stays there; the auth gate must not eject back to `/login` (see "Known Auth Regression" above — fix in the same slice).
+
+The login screen slice and the login redirect-loop slice should ship together when possible, because both require the same authenticated browser test path.

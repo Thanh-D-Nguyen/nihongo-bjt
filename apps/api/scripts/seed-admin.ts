@@ -51,7 +51,10 @@ const permissions = [
   "analytics.view",
   "viewer.analytics",
   "viewer.audit",
-  "iam.manage"
+  "iam.manage",
+  "battle.manage",
+  "assessment.manage",
+  "assessment.review"
 ] as const;
 
 async function main() {

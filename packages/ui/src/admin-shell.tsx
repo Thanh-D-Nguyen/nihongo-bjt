@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import type { AdminNavGroupResolved, AdminNavItemResolved } from "./admin-nav-types.js";
 import { cn } from "./cn";
@@ -44,6 +44,9 @@ export type AdminShellChromeLabels = {
   rbacActive: string;
   signOut: string;
   workspace: string;
+  searchPlaceholder?: string;
+  searchClear?: string;
+  searchNoResults?: string;
 };
 
 function normalizePath(p: string) {
@@ -163,26 +166,25 @@ export function AdminShell({
     return null;
   })();
 
+  // SSR-safe deterministic default; localStorage is hydrated after mount to avoid SSR/CSR mismatch.
   const [expandedSections, setExpandedSections] = useState<Set<string>>(() => {
-    // Try to restore from localStorage
-    if (typeof window !== "undefined") {
-      try {
-        const stored = localStorage.getItem("admin-nav-expanded");
-        if (stored) {
-          const parsed = JSON.parse(stored) as string[];
-          const s = new Set(parsed);
-          // Always include the active group
-          if (activeGroupId) s.add(activeGroupId);
-          return s;
-        }
-      } catch { /* ignore */ }
-    }
-    // Default: only overview and active group expanded
     const s = new Set<string>();
     s.add("overview");
     if (activeGroupId) s.add(activeGroupId);
     return s;
   });
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("admin-nav-expanded");
+      if (!stored) return;
+      const parsed = JSON.parse(stored) as string[];
+      const s = new Set(parsed);
+      if (activeGroupId) s.add(activeGroupId);
+      setExpandedSections(s);
+    } catch { /* ignore */ }
+    // activeGroupId only changes on route change; safe to depend on it
+  }, [activeGroupId]);
 
   const toggleSection = (sectionId: string) => {
     setExpandedSections((prev) => {
@@ -220,6 +222,29 @@ export function AdminShell({
     }
   };
 
+  // Sidebar quick filter: case-insensitive substring match across item labels and group labels.
+  // When the query is non-empty, all groups with matches are force-expanded and non-matching items are hidden.
+  const [searchQuery, setSearchQuery] = useState("");
+  const trimmedQuery = searchQuery.trim().toLowerCase();
+  const filtering = trimmedQuery.length > 0;
+
+  const filteredGroups = navGroups
+    .map((group) => {
+      if (!filtering) return { group, items: group.items.filter((i) => i.status !== "hidden") };
+      const groupLabelMatches = group.label.toLowerCase().includes(trimmedQuery);
+      const items = group.items.filter((i) => {
+        if (i.status === "hidden") return false;
+        if (groupLabelMatches) return true;
+        return i.label.toLowerCase().includes(trimmedQuery);
+      });
+      return { group, items };
+    })
+    .filter((entry) => entry.items.length > 0);
+
+  const totalMatches = filtering
+    ? filteredGroups.reduce((acc, entry) => acc + entry.items.length, 0)
+    : 0;
+
   return (
     <div className="flex min-h-screen bg-[#f4f6f8] text-ink">
       <aside
@@ -243,29 +268,57 @@ export function AdminShell({
         >
           <div className="mb-1 flex items-center justify-end gap-1 px-1">
             <button
-              className="rounded px-1.5 py-0.5 text-[10px] font-medium text-slate-500 hover:bg-white/10 hover:text-slate-300"
+              className="rounded px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-500 hover:bg-white/10 hover:text-slate-300"
               onClick={expandAll}
-              title="Expand all"
+              title="Mở tất cả nhóm"
               type="button"
             >
-              ▼
+              <span aria-hidden="true">▼</span>
+              <span className="ml-1">Mở rộng</span>
             </button>
             <button
-              className="rounded px-1.5 py-0.5 text-[10px] font-medium text-slate-500 hover:bg-white/10 hover:text-slate-300"
+              className="rounded px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-500 hover:bg-white/10 hover:text-slate-300"
               onClick={collapseAll}
-              title="Collapse all"
+              title="Thu gọn tất cả nhóm"
               type="button"
             >
-              ▶
+              <span aria-hidden="true">▶</span>
+              <span className="ml-1">Thu gọn</span>
             </button>
           </div>
-          {navGroups.map((section) => {
-            const shown = section.items.filter((i) => i.status !== "hidden");
-            if (shown.length === 0) {
-              return null;
-            }
+          <div className="relative mb-2 px-1">
+            <input
+              aria-label={chrome.searchPlaceholder ?? "Tìm trong menu"}
+              autoComplete="off"
+              className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-1.5 pr-7 text-[12px] text-slate-200 placeholder:text-slate-500 outline-none focus:border-accent/60 focus:bg-white/10 focus:ring-2 focus:ring-accent/40"
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={chrome.searchPlaceholder ?? "Tìm trong menu"}
+              type="search"
+              value={searchQuery}
+            />
+            {searchQuery ? (
+              <button
+                aria-label={chrome.searchClear ?? "Xoá tìm kiếm"}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded px-1 text-[12px] text-slate-400 hover:bg-white/10 hover:text-white"
+                onClick={() => setSearchQuery("")}
+                type="button"
+              >
+                ×
+              </button>
+            ) : null}
+          </div>
+          {filtering && totalMatches === 0 ? (
+            <p className="px-3 py-2 text-[11px] text-slate-500">
+              {chrome.searchNoResults ?? "Không có mục phù hợp."}
+            </p>
+          ) : null}
+          {filteredGroups.map(({ group: section, items: shown }) => {
             const isCollapsible = section.sectionCollapsible && section.id !== "overview";
-            const isExpanded = isCollapsible ? expandedSections.has(section.id) : true;
+            const isExpanded = filtering
+              ? true
+              : isCollapsible
+                ? expandedSections.has(section.id)
+                : true;
             return (
               <div key={section.id}>
                 {isCollapsible ? (

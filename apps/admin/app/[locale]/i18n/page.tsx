@@ -1,27 +1,23 @@
+import en from "../../../messages/en.json";
 import ja from "../../../messages/ja.json";
 import vi from "../../../messages/vi.json";
-import { AdminResourceTableClient } from "../_components/admin-resource-table-client";
+import { I18nAdminClient } from "./i18n-admin-client";
 
-const messages = { ja, vi };
+const messages = { en, ja, vi };
 
-export default async function Page({ params }: { params: Promise<{ locale: keyof typeof messages }> }) {
+export default async function Page({
+  params
+}: {
+  params: Promise<{ locale: keyof typeof messages }>;
+}) {
   const { locale } = await params;
   const t = messages[locale] ?? messages.vi;
-  const sec = (t as Record<string, unknown>)["i18nCenter"] as Record<string, string> | undefined;
-  return (
-    <AdminResourceTableClient
-      columns={[
-        { key: "namespace", label: sec?.colNamespace ?? "Namespace" },
-        { key: "key", label: sec?.colKey ?? "Key" },
-        { key: "description", label: sec?.colDescription ?? "Description" },
-        { key: "_count.translations", label: sec?.colTranslations ?? "Translations" },
-        { key: "createdAt", label: t.adminConsole.common.createdAt }
-      ]}
-      common={t.adminConsole.common}
-      description={sec?.subtitle}
-      endpoint="/api/admin/i18n/keys?limit=100"
-      title={sec?.title ?? "i18n Center"}
-    />
-  );
+  const sec =
+    (((t as Record<string, unknown>)["adminConsole"] as Record<string, unknown> | undefined)?.[
+      "i18nManagement"
+    ] as Record<string, string> | undefined) ??
+    ((t as Record<string, unknown>)["i18nManagement"] as Record<string, string> | undefined) ??
+    ((t as Record<string, unknown>)["i18nCenter"] as Record<string, string> | undefined) ??
+    {};
+  return <I18nAdminClient common={t.adminConsole.common} labels={sec as Record<string, string>} />;
 }
-

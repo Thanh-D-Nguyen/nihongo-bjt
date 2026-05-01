@@ -1,29 +1,23 @@
+import en from "../../../../messages/en.json";
 import ja from "../../../../messages/ja.json";
 import vi from "../../../../messages/vi.json";
-import { AdminResourceTableClient } from "../../_components/admin-resource-table-client";
+import { FlashcardDecksAdminClient } from "./flashcard-decks-admin-client";
 
-const messages = { ja, vi };
+const messages = { en, ja, vi };
 
-export default async function Page({ params }: { params: Promise<{ locale: keyof typeof messages }> }) {
+export default async function Page({
+  params
+}: {
+  params: Promise<{ locale: keyof typeof messages }>;
+}) {
   const { locale } = await params;
   const t = messages[locale] ?? messages.vi;
-  const sec = (t as Record<string, unknown>)["flashcardDecks"] as Record<string, string> | undefined;
-  return (
-    <AdminResourceTableClient
-      columns={[
-        { key: "titleVi", label: sec?.colTitle ?? "Title (VI)" },
-        { key: "titleJa", label: "Title (JA)" },
-        { key: "visibility", label: sec?.colVisibility ?? "Visibility" },
-        { key: "status", label: sec?.colStatus ?? "Status" },
-        { key: "_count.cards", label: sec?.colCards ?? "Cards" },
-        { key: "createdAt", label: t.adminConsole.common.createdAt }
-      ]}
-      common={t.adminConsole.common}
-      description={sec?.subtitle}
-      endpoint="/api/admin/flashcards/decks?limit=100"
-      statusKeys={["status", "visibility"]}
-      title={sec?.title ?? "Generated Decks"}
-    />
-  );
+  const sec =
+    (((t as Record<string, unknown>)["adminConsole"] as Record<string, unknown> | undefined)?.[
+      "flashcardDecksManagement"
+    ] as Record<string, string> | undefined) ??
+    ((t as Record<string, unknown>)["flashcardDecksManagement"] as Record<string, string> | undefined) ??
+    ((t as Record<string, unknown>)["flashcardDecks"] as Record<string, string> | undefined) ??
+    {};
+  return <FlashcardDecksAdminClient common={t.adminConsole.common} labels={sec} />;
 }
-

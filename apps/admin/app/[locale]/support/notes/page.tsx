@@ -1,25 +1,23 @@
+import en from "../../../../messages/en.json";
 import ja from "../../../../messages/ja.json";
 import vi from "../../../../messages/vi.json";
-import { AdminResourceTableClient } from "../../_components/admin-resource-table-client";
+import { SupportNotesClient } from "./support-notes-client";
 
-const messages = { ja, vi };
+const messages = { en, ja, vi };
+type Locale = keyof typeof messages;
 
-export default async function Page({ params }: { params: Promise<{ locale: keyof typeof messages }> }) {
+function pickLabels(t: unknown, key: string): Record<string, string> {
+  const root = t as Record<string, unknown>;
+  const fromAdminConsole = (root.adminConsole as Record<string, unknown> | undefined)?.[key] as
+    | Record<string, string>
+    | undefined;
+  const fromTopLevel = root[key] as Record<string, string> | undefined;
+  return { ...(fromTopLevel ?? {}), ...(fromAdminConsole ?? {}) };
+}
+
+export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  const t = messages[locale] ?? messages.vi;
-  return (
-    <AdminResourceTableClient
-      columns={[
-        { key: "targetId", label: t.supportNotes?.colUser ?? "User ID" },
-        { key: "reason", label: t.supportNotes?.colReason ?? "Reason" },
-        { key: "after", label: t.supportNotes?.colBody ?? "Note content" },
-        { key: "actorId", label: t.supportNotes?.colActor ?? "Admin actor" },
-        { key: "createdAt", label: t.supportNotes?.colCreated ?? "Created" }
-      ]}
-      common={t.adminConsole.common}
-      description={t.supportNotes?.description ?? "Support notes added by admin staff for users."}
-      endpoint="/api/admin/support/notes?limit=100"
-      title={t.shell.navItems.supportNotes}
-    />
-  );
+  const t = messages[locale as Locale] ?? messages.vi;
+  const labels = pickLabels(t, "supportNotesAdmin");
+  return <SupportNotesClient common={t.adminConsole.common} labels={labels} locale={locale} />;
 }

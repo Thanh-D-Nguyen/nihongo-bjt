@@ -501,6 +501,36 @@ model Bookmark {
   @@schema("learning")
 }
 
+/// Managed battle mode/arena configuration: name, level, question pool, scoring rules, lifecycle.
+/// Distinct from `BattleSession` (live runtime sessions) and from the code-defined `BATTLE_BOT_PROFILES`
+/// (bot personality matrix). Created/published/archived/duplicated via the admin Battle Configs surface.
+model BattleConfig {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                String    @db.VarChar(120)
+  description         String?
+  level               String    @db.VarChar(32)
+  questionPoolKey     String    @map("question_pool_key") @db.VarChar(64)
+  questionCount       Int       @map("question_count")
+  timePerQuestionSec  Int       @map("time_per_question_sec")
+  maxParticipants     Int       @map("max_participants")
+  botDifficulties     String[]  @default([]) @map("bot_difficulties")
+  scoringRules        Json      @default("{}") @map("scoring_rules")
+  status              String    @default("draft") @db.VarChar(16)
+  scheduleStart       DateTime? @map("schedule_start") @db.Timestamptz(6)
+  scheduleEnd         DateTime? @map("schedule_end") @db.Timestamptz(6)
+  publishedAt         DateTime? @map("published_at") @db.Timestamptz(6)
+  archivedAt          DateTime? @map("archived_at") @db.Timestamptz(6)
+  createdById         String?   @map("created_by_id") @db.Uuid
+  updatedById         String?   @map("updated_by_id") @db.Uuid
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([status, level], map: "idx_battle_config_status_level")
+  @@index([updatedAt], map: "idx_battle_config_updated_at")
+  @@map("battle_config")
+  @@schema("learning")
+}
+
 model BattleSession {
   id                String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId            String        @map("user_id") @db.Uuid
@@ -545,6 +575,62 @@ model BattleRound {
   @@schema("learning")
 }
 
+/// Admin-managed Battle bot persona. Distinct from the code-defined `BATTLE_BOT_PROFILES`
+/// runtime registry: this row stores the editorial config (name, persona, accuracy/delay tuning,
+/// vocabulary level, lifecycle) so operators can introduce or tune bots without redeploys. Mutated
+/// only via the admin `battle/bots` surface; every change is audited via `admin.audit_log`.
+model BattleBot {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String   @db.VarChar(80)
+  difficulty      String   @db.VarChar(16)
+  persona         String?
+  accuracyPct     Int      @map("accuracy_pct")
+  minDelayMs      Int      @map("min_delay_ms")
+  maxDelayMs      Int      @map("max_delay_ms")
+  vocabularyLevel String   @map("vocabulary_level") @db.VarChar(32)
+  status          String   @default("active") @db.VarChar(16)
+  createdById     String?  @map("created_by_id") @db.Uuid
+  updatedById     String?  @map("updated_by_id") @db.Uuid
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([status], map: "idx_battle_bot_status")
+  @@index([difficulty], map: "idx_battle_bot_difficulty")
+  @@index([updatedAt], map: "idx_battle_bot_updated_at")
+  @@map("battle_bot")
+  @@schema("learning")
+}
+
+/// Battle abuse / fairness moderation queue. Created by users (or system-detected signals once
+/// wired) against another player; admins triage via `battle/abuse` admin surface. `subjectId` is the
+/// reported player; `reporterId` is nullable (system-generated reports). Resolution requires
+/// `battle.manage` (no dedicated `battle.moderate` permission yet — gap recorded in inventory).
+model BattleAbuseReport {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  reporterId      String?   @map("reporter_id") @db.Uuid
+  subjectId       String    @map("subject_id") @db.Uuid
+  matchId         String?   @map("match_id") @db.Uuid
+  severity        String    @default("medium") @db.VarChar(16)
+  kind            String    @db.VarChar(32)
+  description     String
+  evidence        Json      @default("{}") @map("evidence")
+  status          String    @default("open") @db.VarChar(16)
+  actionTaken     String?   @map("action_taken") @db.VarChar(32)
+  resolutionNotes String?   @map("resolution_notes")
+  resolvedById    String?   @map("resolved_by_id") @db.Uuid
+  resolvedAt      DateTime? @map("resolved_at") @db.Timestamptz(6)
+  escalatedAt     DateTime? @map("escalated_at") @db.Timestamptz(6)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([status, createdAt], map: "idx_battle_abuse_status")
+  @@index([subjectId, createdAt], map: "idx_battle_abuse_subject")
+  @@index([severity, status], map: "idx_battle_abuse_severity")
+  @@index([reporterId], map: "idx_battle_abuse_reporter")
+  @@map("battle_abuse_report")
+  @@schema("learning")
+}
+
 /// Cached tokenization + dictionary lookup by normalized text hash.
 model ReadingTextAnalysis {
   id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
@@ -581,6 +667,7 @@ model BjtMockTest {
   titleJa     String?          @map("title_ja")
   type        String           @default("practice") @db.VarChar(32)
   status      String           @default("draft") @db.VarChar(32)
+  level       String?          @db.VarChar(16)
   timeLimitSeconds Int?        @map("time_limit_seconds")
   blueprintMeta Json?          @map("blueprint_meta")
   description String?
@@ -590,6 +677,7 @@ model BjtMockTest {
   sessions    QuizSession[]
 
   @@index([status, type], map: "idx_bjt_mock_test_status_type")
+  @@index([level], map: "idx_bjt_mock_test_level")
   @@map("bjt_mock_test")
   @@schema("assessment")
 }
@@ -624,6 +712,7 @@ model BjtQuestion {
   remediationCardId String?             @map("remediation_card_id") @db.Uuid
   qualityFlags      Json?               @map("quality_flags")
   status            String              @default("published") @db.VarChar(32)
+  tags              String[]            @default([])
   createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt         DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
   section           BjtTestSection      @relation(fields: [sectionId], references: [id], onDelete: Cascade)
@@ -635,6 +724,7 @@ model BjtQuestion {
   @@index([sectionId, difficulty, skillTag], map: "idx_bjt_question_section_skill")
   @@index([status], map: "idx_bjt_question_status")
   @@index([remediationCardId], map: "idx_bjt_question_remediation_card")
+  @@index([tags], map: "idx_bjt_question_tags", type: Gin)
   @@map("bjt_question")
   @@schema("assessment")
 }
@@ -688,6 +778,48 @@ model QuizAnswer {
   @@unique([sessionId, questionId], map: "uq_quiz_answer_question")
   @@index([sessionId, answeredAt], map: "idx_quiz_answer_session_answered_at")
   @@map("quiz_answer")
+  @@schema("assessment")
+}
+
+model AssessmentRemediationRule {
+  id                       String                          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                     String                          @db.VarChar(200)
+  description              String?
+  topicSkillTag            String                          @map("topic_skill_tag") @db.VarChar(64)
+  level                    String                          @db.VarChar(16)
+  thresholdFailedCount     Int                             @map("threshold_failed_count")
+  thresholdWindowQuestions Int                             @map("threshold_window_questions")
+  recommendedContentType   String                          @map("recommended_content_type") @db.VarChar(32)
+  recommendedContentId     String                          @map("recommended_content_id") @db.Uuid
+  active                   Boolean                         @default(true)
+  createdById              String?                         @map("created_by_id") @db.Uuid
+  updatedById              String?                         @map("updated_by_id") @db.Uuid
+  createdAt                DateTime                        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                DateTime                        @updatedAt @map("updated_at") @db.Timestamptz(6)
+  triggers                 AssessmentRemediationTrigger[]
+
+  @@index([topicSkillTag, level], map: "idx_assessment_remediation_rule_topic_level")
+  @@index([active, updatedAt], map: "idx_assessment_remediation_rule_active")
+  @@map("assessment_remediation_rule")
+  @@schema("assessment")
+}
+
+model AssessmentRemediationTrigger {
+  id                     String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ruleId                 String                    @map("rule_id") @db.Uuid
+  userId                 String                    @map("user_id") @db.Uuid
+  sessionId              String?                   @map("session_id") @db.Uuid
+  failedQuestionIds      Json                      @default("[]") @map("failed_question_ids")
+  recommendedContentType String                    @map("recommended_content_type") @db.VarChar(32)
+  recommendedContentId   String                    @map("recommended_content_id") @db.Uuid
+  context                Json                      @default("{}")
+  createdAt              DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+  rule                   AssessmentRemediationRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+
+  @@index([ruleId, createdAt], map: "idx_assessment_remediation_trigger_rule_created")
+  @@index([userId, createdAt], map: "idx_assessment_remediation_trigger_user_created")
+  @@index([createdAt], map: "idx_assessment_remediation_trigger_created")
+  @@map("assessment_remediation_trigger")
   @@schema("assessment")
 }
 
@@ -1434,6 +1566,29 @@ model AuthLinkCode {
 
 // --- Growth: sharing, referrals, postcard assets ---
 
+model GrowthCampaign {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name           String    @db.VarChar(200)
+  description    String?
+  status         String    @default("draft") @db.VarChar(32)
+  channel        String    @db.VarChar(32)
+  audience       Json      @default("{}")
+  cta            Json      @default("{}")
+  contentBody    String?   @map("content_body")
+  trackingUtm    Json      @default("{}") @map("tracking_utm")
+  scheduleStart  DateTime? @map("schedule_start") @db.Timestamptz(6)
+  scheduleEnd    DateTime? @map("schedule_end") @db.Timestamptz(6)
+  createdById    String?   @map("created_by_id") @db.Uuid
+  updatedById    String?   @map("updated_by_id") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([status, scheduleStart], map: "idx_growth_campaign_status_schedule")
+  @@index([updatedAt], map: "idx_growth_campaign_updated_at")
+  @@map("growth_campaign")
+  @@schema("growth")
+}
+
 model ShareTemplate {
   id         String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   slug       String      @unique @db.VarChar(64)
@@ -1685,37 +1840,49 @@ model Competency {
 
 // ── Content Versioning & Enrichment ─────────────────────────────────────────
 model ContentVersion {
-  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  entityType    String   @map("entity_type") @db.VarChar(64)
-  entityId      String   @map("entity_id") @db.Uuid
-  versionNumber Int      @map("version_number")
-  changeSummary String?  @map("change_summary")
-  snapshot      Json
-  authorUserId  String?  @map("author_user_id") @db.Uuid
-  status        String   @default("current") @db.VarChar(32)
-  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  id                     String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  entityType             String   @map("entity_type") @db.VarChar(64)
+  entityId               String   @map("entity_id") @db.Uuid
+  versionNumber          Int      @map("version_number")
+  changeSummary          String?  @map("change_summary")
+  snapshot               Json
+  authorUserId           String?  @map("author_user_id") @db.Uuid
+  status                 String   @default("draft") @db.VarChar(32)
+  publishedAt            DateTime? @map("published_at") @db.Timestamptz(6)
+  revertedFromVersionId  String?  @map("reverted_from_version_id") @db.Uuid
+  createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@unique([entityType, entityId, versionNumber], map: "uq_content_version_entity_version")
   @@index([entityType, entityId], map: "idx_content_version_entity")
+  @@index([status, createdAt], map: "idx_content_version_status_created")
   @@map("content_version")
   @@schema("content")
 }
 
 model ContentEnrichment {
-  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  entityType    String    @map("entity_type") @db.VarChar(64)
-  entityId      String    @map("entity_id") @db.Uuid
-  enrichmentType String   @map("enrichment_type") @db.VarChar(64)
-  priority      Int       @default(0)
-  status        String    @default("pending") @db.VarChar(32)
-  result        Json?
-  errorMessage  String?   @map("error_message")
-  processedAt   DateTime? @map("processed_at") @db.Timestamptz(6)
-  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  entityType      String    @map("entity_type") @db.VarChar(64)
+  entityId        String    @map("entity_id") @db.Uuid
+  enrichmentType  String    @map("enrichment_type") @db.VarChar(64)
+  priority        Int       @default(0)
+  status          String    @default("pending") @db.VarChar(32)
+  result          Json?
+  errorMessage    String?   @map("error_message")
+  inputSnapshot   Json?     @map("input_snapshot")
+  provider        String?   @db.VarChar(64)
+  providerLicense String?   @map("provider_license") @db.VarChar(64)
+  providerSource  String?   @map("provider_source")
+  attempts        Int       @default(0)
+  lastAttemptedAt DateTime? @map("last_attempted_at") @db.Timestamptz(6)
+  cancelReason    String?   @map("cancel_reason")
+  retryHistory    Json      @default("[]") @map("retry_history")
+  processedAt     DateTime? @map("processed_at") @db.Timestamptz(6)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@index([status, priority], map: "idx_content_enrichment_status_priority")
   @@index([entityType, entityId], map: "idx_content_enrichment_entity")
+  @@index([status, createdAt], map: "idx_content_enrichment_status_created")
   @@map("content_enrichment")
   @@schema("content")
 }

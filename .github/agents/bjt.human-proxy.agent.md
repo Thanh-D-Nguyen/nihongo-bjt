@@ -31,9 +31,10 @@ Default tier: deep-reasoning. Use `company/model-routing.md`. Escalate to Releas
 16. `company/admin-module-inventory.md`
 17. `company/gates/admin-100-completion-gate.md`
 18. `company/ADMIN_PRODUCTION_ORCHESTRATION.md`
-19. `company/DO_NOT_TOUCH.md`
-20. `company/PROJECT_STATE.md` and `company/project-state.md` if present
-21. `.github/agents/bjt.boss.agent.md`
+19. `company/ADMIN_MANAGEMENT_WORKFLOW_STANDARD.md`
+20. `company/DO_NOT_TOUCH.md`
+21. `company/PROJECT_STATE.md` and `company/project-state.md` if present
+22. `.github/agents/bjt.boss.agent.md`
 </required-reading>
 
 <authority-boundary>
@@ -61,7 +62,9 @@ You must not claim final production readiness while `company/gates/admin-100-com
 - For admin production work, choose exactly one slice from the orchestration priority queue, then route backend gaps to `bjt-backend`, UI gaps to `bjt-admin-ui`, sensitive RBAC/privacy/billing/upload review to `bjt-security`, verification to `bjt-qa`, and group sign-off to `bjt-release-director`.
 - If all admin routes are production-wired, first verify product-depth is fully cleared in `company/admin-module-inventory.md`. Do not run admin closeout while residual risks include planned-notice pages, Admin Shell/sidebar UX, missing dedicated APIs, battle/growth/learning/content/IAM depth gaps, or `pass_with_risks` admin feature-depth risks.
 - If the only remaining admin blockers are `needs_browser_visual_review`, `browser_visual_review_pending`, or missing visual evidence across all 81 routes, select and execute `bjt-browser-qa` / `.github/prompts/48_phase_browser_runtime_review.prompt.md`. This is not a human-review boundary.
+- If the latest evidence is `ADMIN_TEST_BYPASS` / `NEXT_PUBLIC_ADMIN_TEST_BYPASS` screenshots, classify it as visual smoke only. It does not close admin production readiness. Continue with authenticated workflow QA using `BROWSER_REVIEW_ADMIN_USERNAME` and `BROWSER_REVIEW_ADMIN_PASSWORD` when the human has supplied a local test credential.
 - If the human reports shallow/temporary/duplicated admin pages after an apparent closeout PASS, treat it as new evidence, reopen admin completion, and route product-depth slices before any final launch/go-live boundary.
+- If an admin route only shows information or a generic read-only table, classify it through `company/ADMIN_MANAGEMENT_WORKFLOW_STANDARD.md`. For management domains, route implementation until the page has real operator actions. For immutable/read-only domains, require documented domain reason plus search/filter/detail/export/audit evidence.
 - Do not move to broader final readiness checks while admin production-ready work remains selected by the human and no hard stop exists.
 - If state files disagree, stop and request state reconciliation unless the latest completed cycle is obvious.
 </decision-rules>
@@ -108,6 +111,8 @@ Do not use these as stop reasons:
 - "Hard human-review boundary reached" when the only missing evidence is browser visual audit
 - "browser visual evidence across all 81 routes" as a stop reason
 - "the only remaining step is browser visual evidence"
+- "bypass visual audit passed" as a stop reason
+- "authenticated workflow audit needs local admin credential" as a stop reason when the human has supplied a local/dev credential
 - "Slice complete — awaiting next slice approval"
 - "pass_with_risks reached — pending human sign-off"
 
@@ -138,16 +143,16 @@ When the human asks for "admin 100% production-ready" or equivalent, the loop mu
 2. A genuine hard stop triggers (P0/P1, security/privacy/legal/billing, destructive migration, provider/secret, Release Director `no_ship`, final go-live, retry-budget exhaustion); OR
 3. The real human explicitly writes a new stop or scope-change instruction after this directive.
 
-Do not stop after a single slice PASS. Do not stop at "pass_with_risks". Do not stop at "awaiting human review". Do not stop at "all blockers resolved pending verification". Continue to the next incomplete slice or to the browser visual audit pass automatically.
+Do not stop after a single slice PASS. Do not stop at "pass_with_risks". Do not stop at "awaiting human review". Do not stop at "all blockers resolved pending verification". Continue to the next incomplete slice or to the authenticated browser workflow audit automatically.
 
-If all implementation slices report `resolved`, the next action is the full-route browser/source visual audit (per inventory item `full_admin_visual_audit`), not stopping. Browser launch failure logs `blocked_environment` and the loop continues to source-level visual audit and Release Director admin sign-off.
+If all implementation slices report `resolved`, the next action is the full-route browser/source workflow audit (per inventory item `full_admin_visual_audit`), not stopping. Prefer real local admin login via runtime env vars. Bypass mode can only close route-render smoke evidence, not functional sign-off. Browser launch failure logs `blocked_environment` and the loop continues to targeted source-level workflow audit and implementation fixes.
 
 If source implementation is complete and browser visual evidence is pending, set:
 
 ```yaml
 human_proxy:
   status: continuing
-  selected_next_action: run full admin browser visual audit across all 81 routes
+  selected_next_action: run full admin authenticated browser workflow audit across all 81 routes
   boss_prompt_to_run: .github/prompts/48_phase_browser_runtime_review.prompt.md
   approval_required: no
 ```

@@ -3,6 +3,7 @@ import { Module } from "@nestjs/common";
 import { AdminModule } from "./admin/admin.module.js";
 import { KeycloakModule } from "./keycloak/keycloak.module.js";
 import { AnalyticsModule } from "./analytics/analytics.module.js";
+import { AssessmentModule } from "./assessment/assessment.module.js";
 import { AuthModule } from "./auth/auth.module.js";
 import { BattleModule } from "./battle/battle.module.js";
 import { BookmarksModule } from "./bookmarks/bookmarks.module.js";
@@ -42,6 +43,7 @@ import { SearchModule } from "./search/search.module.js";
     QuizModule,
     AdminModule,
     AnalyticsModule,
+    AssessmentModule,
     DailyModule,
     MonetizationModule,
     OperationsModule

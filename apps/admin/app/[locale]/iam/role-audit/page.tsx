@@ -1,25 +1,18 @@
+import en from "../../../../messages/en.json";
 import ja from "../../../../messages/ja.json";
 import vi from "../../../../messages/vi.json";
-import { AdminResourceTableClient } from "../../_components/admin-resource-table-client";
+import { IamRoleAuditClient } from "./iam-role-audit-client";
 
-const messages = { ja, vi };
+const messages = { en, ja, vi };
 
 export default async function Page({ params }: { params: Promise<{ locale: keyof typeof messages }> }) {
   const { locale } = await params;
   const t = messages[locale] ?? messages.vi;
   return (
-    <AdminResourceTableClient
-      columns={[
-        { key: "action", label: t.adminConsole.common.action },
-        { key: "targetType", label: "Target Type" },
-        { key: "targetId", label: "Target ID" },
-        { key: "actorId", label: "Actor" },
-        { key: "createdAt", label: t.adminConsole.common.createdAt }
-      ]}
+    <IamRoleAuditClient
       common={t.adminConsole.common}
-      description={t.shell.navItems.iamDescription}
-      endpoint="/api/admin/iam/role-audit?limit=50"
-      title={t.shell.navItems.iamRoleAudit}
+      labels={t.iam.roleAudit as unknown as Record<string, string>}
+      locale={locale}
     />
   );
 }

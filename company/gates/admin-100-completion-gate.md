@@ -11,6 +11,7 @@ Passing this gate requires product-depth, not only removal of scaffold renderers
 ## Required Checks
 
 - `company/ADMIN_COMPLETION_PROGRAM.md` is loaded.
+- `company/ADMIN_MANAGEMENT_WORKFLOW_STANDARD.md` is loaded.
 - `company/admin-module-inventory.md` is updated in the current run.
 - Every enabled item in `apps/admin/lib/admin-nav-data.ts` has an inventory row.
 - No enabled nav item remains `status: "scaffold"` for final production.
@@ -24,9 +25,11 @@ Passing this gate requires product-depth, not only removal of scaffold renderers
 - UI pages pass `company/gates/open-design-bjt-ui-gate.md`.
 - No enabled route is merely a planned-notice, static header/back-link page, or information-only placeholder for a spec-required management workflow.
 - No enabled route is a duplicate generic page unless route-specific initial state, filters, copy, and actions make the workflow distinct.
+- No enabled management route uses a generic read-only table as the primary experience unless the inventory records a valid immutable/read-only exception.
 - Required CRUD/review/moderation workflows exist for the domain, or the inventory records why the operation is intentionally not allowed.
+- Domain lifecycle actions exist where relevant: create, edit, enable/disable, publish/unpublish, archive/restore, retry/cancel, approve/reject, moderate, assign, export, and detail/history views.
 - Admin Shell/sidebar navigation remains usable for the full nav surface: grouped, compact/collapsible or equivalent, exact active state, keyboard/focus accessible, and responsive.
-- Browser/visual review evidence exists for changed admin routes. For full-admin closeout, browser/visual review evidence must cover all 81 visible admin routes.
+- Browser/visual review evidence exists for changed admin routes. For full-admin closeout, browser/visual review evidence must cover all 81 visible admin routes and include safe interaction/workflow checks, not screenshots alone.
 
 ## Allowed Non-Blocking Cases
 
@@ -43,9 +46,11 @@ Passing this gate requires product-depth, not only removal of scaffold renderers
 - Any raw technical placeholder shown as production copy.
 - Inventory missing or stale when final release is being evaluated.
 - Any visible admin page classified as `temporary_ui`, `duplicate_route`, `planned_notice`, `missing_workflow`, `read_only_when_management_required`, `connected_but_incomplete`, or `needs_product_depth`.
+- Any visible management route whose primary UI is `AdminResourceTableClient` or an equivalent read-only generic table without a documented immutable/read-only exception.
 - Human-reported admin incompleteness that is not triaged into the inventory with owner and next action.
 - Long-sidebar/Admin Shell navigation blocker remains unresolved.
 - Browser visual evidence pending is a blocker for final readiness, but it is not a human approval boundary. The next action is `bjt-browser-qa` / `.github/prompts/48_phase_browser_runtime_review.prompt.md`, not `stopped_for_approval`.
+- Any admin route whose primary workflow is untested, absent, or only visually rendered during browser QA remains a blocker.
 
 ## Output
 

@@ -1,7 +1,7 @@
 import { createPrismaClient, Prisma, type PrismaClient } from "@nihongo-bjt/database";
 import { Body, BadRequestException, Controller, Get, Inject, Post, Query, Req, UseGuards } from "@nestjs/common";
 import type { Request } from "express";
-import { ApiBearerAuth, ApiBody, ApiOkResponse, ApiOperation, ApiQuery, ApiSecurity, ApiTags } from "@nestjs/swagger";
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiSecurity, ApiTags } from "@nestjs/swagger";
 import { z } from "zod";
 
 import { AdminAuthService } from "../admin/admin-auth.service.js";
@@ -20,11 +20,6 @@ const previewSchema = z.object({
 
 const referralShareAnalyticsQuerySchema = z.object({
   days: z.coerce.number().int().min(1).max(90).default(30)
-});
-
-const listQuerySchema = z.object({
-  limit: z.coerce.number().int().min(1).max(200).optional().default(50),
-  offset: z.coerce.number().int().min(0).optional().default(0)
 });
 
 @Controller("admin/growth")
@@ -99,60 +94,5 @@ export class GrowthAdminController {
       }
     });
     return { base64Png: buf.toString("base64"), format: "image/png" };
-  }
-
-  @Get("referrals")
-  @ApiOperation({ summary: "List referral codes with pagination." })
-  @ApiQuery({ name: "limit", required: false, schema: { type: "integer", default: 50 } })
-  @ApiQuery({ name: "offset", required: false, schema: { type: "integer", default: 0 } })
-  @ApiOkResponse({ description: "Paginated list of referral codes." })
-  async listReferrals(@Query() query: Record<string, unknown>) {
-    const parsed = listQuerySchema.parse(query);
-    const [items, total] = await Promise.all([
-      this.prisma.referralCode.findMany({
-        orderBy: { createdAt: "desc" },
-        skip: parsed.offset,
-        take: parsed.limit
-      }),
-      this.prisma.referralCode.count()
-    ]);
-    return { items, total };
-  }
-
-  @Get("share-items")
-  @ApiOperation({ summary: "List share items (postcards/social) with pagination." })
-  @ApiQuery({ name: "limit", required: false, schema: { type: "integer", default: 50 } })
-  @ApiQuery({ name: "offset", required: false, schema: { type: "integer", default: 0 } })
-  @ApiOkResponse({ description: "Paginated list of share items." })
-  async listShareItems(@Query() query: Record<string, unknown>) {
-    const parsed = listQuerySchema.parse(query);
-    const [items, total] = await Promise.all([
-      this.prisma.shareItem.findMany({
-        include: { _count: { select: { cardAssets: true } } },
-        orderBy: { createdAt: "desc" },
-        skip: parsed.offset,
-        take: parsed.limit
-      }),
-      this.prisma.shareItem.count()
-    ]);
-    return { items, total };
-  }
-
-  @Get("campaigns")
-  @ApiOperation({ summary: "List ad campaigns with pagination." })
-  @ApiQuery({ name: "limit", required: false, schema: { type: "integer", default: 50 } })
-  @ApiQuery({ name: "offset", required: false, schema: { type: "integer", default: 0 } })
-  @ApiOkResponse({ description: "Paginated list of ad campaigns." })
-  async listCampaigns(@Query() query: Record<string, unknown>) {
-    const parsed = listQuerySchema.parse(query);
-    const [items, total] = await Promise.all([
-      this.prisma.adCampaign.findMany({
-        orderBy: { createdAt: "desc" },
-        skip: parsed.offset,
-        take: parsed.limit
-      }),
-      this.prisma.adCampaign.count()
-    ]);
-    return { items, total };
   }
 }

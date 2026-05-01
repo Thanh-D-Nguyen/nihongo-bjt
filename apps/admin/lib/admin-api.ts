@@ -1,6 +1,6 @@
 "use client";
 
-import { isAdminKeycloakEnabled } from "./public-keycloak";
+import { isAdminKeycloakEnabled, isAdminTestBypassEnabled } from "./public-keycloak";
 
 const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/$/u, "");
 const localAdminActorId =
@@ -17,7 +17,7 @@ let keycloakTokenCache: Cached | null = null;
 let inFlightKeycloakToken: Promise<string> | null = null;
 
 function keycloakBearerMode() {
-  return isAdminKeycloakEnabled();
+  return isAdminKeycloakEnabled() && !isAdminTestBypassEnabled();
 }
 
 function invalidateKeycloakTokenCache() {

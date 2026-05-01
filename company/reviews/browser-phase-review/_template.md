@@ -34,6 +34,14 @@ Reviewer agent:
 
 - none
 
+## Admin Workflow Coverage
+
+- intended admin decision:
+- primary actions tested:
+- missing expected actions:
+- read-only exception reason, if any:
+- RBAC/audit/confirmation evidence:
+
 ## Evidence
 
 - screenshot/test path:
@@ -41,4 +49,3 @@ Reviewer agent:
 ## Result
 
 PASS / PASS_WITH_RISKS / BLOCKED_ENVIRONMENT / BLOCK / NOT_APPLICABLE
-

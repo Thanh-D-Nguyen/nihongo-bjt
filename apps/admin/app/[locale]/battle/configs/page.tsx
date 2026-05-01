@@ -1,26 +1,22 @@
+import en from "../../../../messages/en.json";
 import ja from "../../../../messages/ja.json";
 import vi from "../../../../messages/vi.json";
-import { AdminResourceTableClient } from "../../_components/admin-resource-table-client";
+import { BattleConfigsClient } from "./battle-configs-client";
 
-const messages = { ja, vi };
+const messages = { en, ja, vi };
 
 export default async function Page({ params }: { params: Promise<{ locale: keyof typeof messages }> }) {
   const { locale } = await params;
   const t = messages[locale] ?? messages.vi;
-  const sec = (t as Record<string, unknown>)["battleConfigs"] as Record<string, string> | undefined;
+  const sec =
+    ((t.adminConsole as Record<string, unknown> | undefined)?.["battleConfigs"] as
+      | Record<string, string>
+      | undefined) ?? {};
   return (
-    <AdminResourceTableClient
-      columns={[
-        { key: "key", label: sec?.colKey ?? "Key" },
-        { key: "value", label: sec?.colValue ?? "Value" },
-        { key: "source", label: sec?.colSource ?? "Source" },
-        { key: "description", label: sec?.colDescription ?? "Description" }
-      ]}
+    <BattleConfigsClient
       common={t.adminConsole.common}
-      description={sec?.subtitle ?? "Current battle system configuration (code-defined + live stats)."}
-      endpoint="/api/admin/battle/configs"
-      statusKeys={["source"]}
-      title={sec?.title ?? "Battle Configs"}
+      labels={sec as unknown as Record<string, string>}
+      locale={locale}
     />
   );
 }

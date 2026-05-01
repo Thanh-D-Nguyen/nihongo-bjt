@@ -1,17 +1,71 @@
-import { Controller, Get, Inject, Query, UseGuards } from "@nestjs/common";
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  UseGuards
+} from "@nestjs/common";
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiQuery, ApiSecurity, ApiTags } from "@nestjs/swagger";
-import { createPrismaClient } from "@nihongo-bjt/database";
+import type { Request } from "express";
 import { z } from "zod";
 
+import { AdminAuthService } from "../admin/admin-auth.service.js";
 import { AdminRbacGuard } from "../admin/admin-rbac.guard.js";
 import { LogAdminAction } from "../admin/admin-audit.decorator.js";
 import { RequireAdminPermissions } from "../admin/admin.rbac.js";
 import { DocumentedHttpErrors } from "../openapi/common-decorators.js";
+import { FlashcardsAdminRepository } from "./flashcards-admin.repository.js";
 
 const listQuerySchema = z.object({
-  limit: z.coerce.number().int().min(1).max(200).optional().default(50),
-  offset: z.coerce.number().int().min(0).optional().default(0),
-  status: z.string().trim().min(1).max(32).optional()
+  page: z.coerce.number().int().min(1).optional().default(1),
+  pageSize: z.coerce.number().int().min(1).max(200).optional().default(50),
+  q: z
+    .string()
+    .trim()
+    .max(200)
+    .optional()
+    .transform((s) => (s === "" ? undefined : s)),
+  status: z
+    .string()
+    .trim()
+    .max(32)
+    .optional()
+    .transform((s) => (s === "" || s === "all" ? undefined : s))
+});
+
+const deckListQuerySchema = listQuerySchema.extend({
+  visibility: z
+    .string()
+    .trim()
+    .max(32)
+    .optional()
+    .transform((s) => (s === "" || s === "all" ? undefined : s))
+});
+
+const variantListQuerySchema = listQuerySchema.extend({
+  sourceType: z
+    .string()
+    .trim()
+    .max(64)
+    .optional()
+    .transform((s) => (s === "" || s === "all" ? undefined : s))
+});
+
+const transitionSchema = z.object({
+  next: z.enum(["active", "archived", "draft"]),
+  reason: z.string().trim().min(3).max(500)
+});
+
+const variantPatchSchema = z.object({
+  frontText: z.string().trim().min(1).max(2000).optional(),
+  backText: z.string().trim().min(1).max(4000).optional(),
+  reading: z.string().trim().max(2000).nullable().optional(),
+  reason: z.string().trim().min(3).max(500)
 });
 
 @Controller("admin/flashcards")
@@ -23,62 +77,124 @@ const listQuerySchema = z.object({
 @ApiSecurity("admin-actor")
 @DocumentedHttpErrors()
 export class FlashcardsAdminController {
-  private readonly prisma = createPrismaClient();
+  constructor(
+    private readonly auth: AdminAuthService,
+    private readonly repo: FlashcardsAdminRepository
+  ) {}
 
-  @Get("variants")
-  @ApiOperation({ summary: "List flashcard variants (templates) with pagination." })
-  @ApiQuery({ name: "limit", required: false, schema: { type: "integer", default: 50 } })
-  @ApiQuery({ name: "offset", required: false, schema: { type: "integer", default: 0 } })
-  @ApiQuery({ name: "status", required: false, schema: { type: "string" } })
-  @ApiOkResponse({ description: "Paginated list of flashcard variants." })
-  async listVariants(@Query() query: Record<string, unknown>) {
-    const parsed = listQuerySchema.parse(query);
-    const where: Record<string, unknown> = {};
-    if (parsed.status) where.status = parsed.status;
-
-    const [items, total] = await Promise.all([
-      this.prisma.flashcardVariant.findMany({
-        orderBy: { createdAt: "desc" },
-        select: {
-          id: true,
-          sourceType: true,
-          sourceId: true,
-          frontText: true,
-          backText: true,
-          reading: true,
-          status: true,
-          createdAt: true
-        },
-        skip: parsed.offset,
-        take: parsed.limit,
-        where
-      }),
-      this.prisma.flashcardVariant.count({ where })
+  /* ----- Decks ("generated") ----- */
+  @Get("decks")
+  @ApiOperation({ summary: "List decks with workflow filters (q, status, visibility) and pagination." })
+  @ApiQuery({ name: "page", required: false })
+  @ApiQuery({ name: "pageSize", required: false })
+  @ApiQuery({ name: "q", required: false })
+  @ApiQuery({ name: "status", required: false })
+  @ApiQuery({ name: "visibility", required: false })
+  @ApiOkResponse({ description: "Paginated decks." })
+  async listDecks(@Req() req: Request, @Query() query: Record<string, string | undefined>) {
+    await this.auth.requireOneOfPermissions(req, [
+      "admin.content.write",
+      "admin.content.read",
+      "viewer.audit"
     ]);
-    return { items, total };
+    const parsed = deckListQuerySchema.safeParse(query);
+    if (!parsed.success) throw new BadRequestException(parsed.error.flatten());
+    return this.repo.listDecks(parsed.data);
   }
 
-  @Get("decks")
-  @ApiOperation({ summary: "List decks with pagination." })
-  @ApiQuery({ name: "limit", required: false, schema: { type: "integer", default: 50 } })
-  @ApiQuery({ name: "offset", required: false, schema: { type: "integer", default: 0 } })
-  @ApiQuery({ name: "status", required: false, schema: { type: "string" } })
-  @ApiOkResponse({ description: "Paginated list of decks." })
-  async listDecks(@Query() query: Record<string, unknown>) {
-    const parsed = listQuerySchema.parse(query);
-    const where: Record<string, unknown> = {};
-    if (parsed.status) where.status = parsed.status;
-
-    const [items, total] = await Promise.all([
-      this.prisma.deck.findMany({
-        include: { _count: { select: { cards: true } } },
-        orderBy: { createdAt: "desc" },
-        skip: parsed.offset,
-        take: parsed.limit,
-        where
-      }),
-      this.prisma.deck.count({ where })
+  @Get("decks/:id")
+  @ApiOperation({ summary: "Deck detail with last 30 audit entries." })
+  async deckDetail(@Req() req: Request, @Param("id") id: string) {
+    await this.auth.requireOneOfPermissions(req, [
+      "admin.content.write",
+      "admin.content.read",
+      "viewer.audit"
     ]);
-    return { items, total };
+    const found = await this.repo.deckDetail(id);
+    if (!found) throw new BadRequestException({ code: "deck_not_found", id });
+    return found;
+  }
+
+  @Post("decks/:id/transition")
+  @ApiOperation({
+    summary:
+      "Transition a deck status. next: active (approve/publish) | archived (reject) | draft. Audited."
+  })
+  async transitionDeck(@Req() req: Request, @Param("id") id: string, @Body() body: unknown) {
+    const principal = await this.auth.requirePermission(req, "admin.content.write");
+    const parsed = transitionSchema.safeParse(body);
+    if (!parsed.success) throw new BadRequestException(parsed.error.flatten());
+    return this.repo.transitionDeck({
+      actorId: principal.actorId,
+      id,
+      next: parsed.data.next,
+      reason: parsed.data.reason
+    });
+  }
+
+  /* ----- Variants ("templates") ----- */
+  @Get("variants")
+  @ApiOperation({ summary: "List flashcard variants with filters (q, status, sourceType) and pagination." })
+  @ApiQuery({ name: "page", required: false })
+  @ApiQuery({ name: "pageSize", required: false })
+  @ApiQuery({ name: "q", required: false })
+  @ApiQuery({ name: "status", required: false })
+  @ApiQuery({ name: "sourceType", required: false })
+  @ApiOkResponse({ description: "Paginated flashcard variants." })
+  async listVariants(@Req() req: Request, @Query() query: Record<string, string | undefined>) {
+    await this.auth.requireOneOfPermissions(req, [
+      "admin.content.write",
+      "admin.content.read",
+      "viewer.audit"
+    ]);
+    const parsed = variantListQuerySchema.safeParse(query);
+    if (!parsed.success) throw new BadRequestException(parsed.error.flatten());
+    return this.repo.listVariants(parsed.data);
+  }
+
+  @Get("variants/:id")
+  @ApiOperation({ summary: "Flashcard variant detail with last 30 audit entries." })
+  async variantDetail(@Req() req: Request, @Param("id") id: string) {
+    await this.auth.requireOneOfPermissions(req, [
+      "admin.content.write",
+      "admin.content.read",
+      "viewer.audit"
+    ]);
+    const found = await this.repo.variantDetail(id);
+    if (!found) throw new BadRequestException({ code: "flashcard_variant_not_found", id });
+    return found;
+  }
+
+  @Patch("variants/:id")
+  @ApiOperation({ summary: "Update flashcard variant front/back/reading. Audited." })
+  async patchVariant(@Req() req: Request, @Param("id") id: string, @Body() body: unknown) {
+    const principal = await this.auth.requirePermission(req, "admin.content.write");
+    const parsed = variantPatchSchema.safeParse(body);
+    if (!parsed.success) throw new BadRequestException(parsed.error.flatten());
+    return this.repo.patchVariant({
+      actorId: principal.actorId,
+      backText: parsed.data.backText,
+      frontText: parsed.data.frontText,
+      id,
+      reading: parsed.data.reading,
+      reason: parsed.data.reason
+    });
+  }
+
+  @Post("variants/:id/transition")
+  @ApiOperation({
+    summary:
+      "Transition variant status. next: active (publish) | archived | draft. Audited."
+  })
+  async transitionVariant(@Req() req: Request, @Param("id") id: string, @Body() body: unknown) {
+    const principal = await this.auth.requirePermission(req, "admin.content.write");
+    const parsed = transitionSchema.safeParse(body);
+    if (!parsed.success) throw new BadRequestException(parsed.error.flatten());
+    return this.repo.transitionVariant({
+      actorId: principal.actorId,
+      id,
+      next: parsed.data.next,
+      reason: parsed.data.reason
+    });
   }
 }

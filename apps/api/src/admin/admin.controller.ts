@@ -6,10 +6,17 @@ import {
   adminCreateContentSchema,
   adminCreateLexemeExampleBodySchema,
   adminDeleteLexemeExampleBodySchema,
+  adminIamAdminAssignRoleBodySchema,
+  adminIamAdminListQuerySchema,
+  adminIamAdminPatchStatusBodySchema,
+  adminIamAdminRevokeRoleBodySchema,
+  adminIamRoleAuditQuerySchema,
   adminPatchContentBodySchema,
   adminPatchLexemeExampleBodySchema,
   adminPatchUserStatusBodySchema,
   adminReadingAssistReportsQuerySchema,
+  adminSupportNoteCreateBodySchema,
+  adminSupportNotesListQuerySchema,
   adminUpdateContentStatusSchema,
   adminUserListQuerySchema,
   adminUserSupportNoteBodySchema,
@@ -22,6 +29,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Inject,
   Param,
@@ -57,6 +65,47 @@ import { RequireAdminPermissions } from "./admin.rbac.js";
 import { ADMIN_MODULE_CONTRACTS } from "./admin-module-contracts.js";
 import { AdminRepository } from "./admin.repository.js";
 import { AdminUserInviteService } from "./admin-user-invite.service.js";
+
+const USER_360_ACCESS_REASON_MIN = 8;
+const USER_360_ACCESS_CATEGORIES = new Set([
+  "compliance",
+  "support",
+  "abuse",
+  "billing",
+  "other"
+]);
+
+export type User360AccessReason = { category: string; reason: string };
+
+/**
+ * User 360 privacy gate: every deep-profile read (`/admin/users/:id`, `/admin/users/:id/audit`)
+ * MUST include `x-admin-access-reason` and `x-admin-access-reason-category` request headers.
+ * Throws 403 `access_reason_required` otherwise. Header values are persisted via
+ * `recordUserDetailAccess` so the audit log is the system of record for who read what and why.
+ */
+function requireUser360AccessReason(req: Request): User360AccessReason {
+  const headers = (req?.headers ?? {}) as Record<string, string | string[] | undefined>;
+  const rawReason = headers["x-admin-access-reason"];
+  const rawCat = headers["x-admin-access-reason-category"];
+  const reason = (Array.isArray(rawReason) ? rawReason[0] : rawReason ?? "").trim();
+  const category = (Array.isArray(rawCat) ? rawCat[0] : rawCat ?? "").trim().toLowerCase();
+  if (reason.length < USER_360_ACCESS_REASON_MIN) {
+    throw new ForbiddenException({
+      code: "access_reason_required",
+      message: `User 360 access requires header 'x-admin-access-reason' (>= ${USER_360_ACCESS_REASON_MIN} chars).`,
+      minLength: USER_360_ACCESS_REASON_MIN
+    });
+  }
+  if (!USER_360_ACCESS_CATEGORIES.has(category)) {
+    throw new ForbiddenException({
+      code: "access_reason_category_required",
+      message:
+        "User 360 access requires header 'x-admin-access-reason-category' (compliance | support | abuse | billing | other).",
+      allowed: Array.from(USER_360_ACCESS_CATEGORIES)
+    });
+  }
+  return { category, reason };
+}
 
 @Controller("admin")
 @UseGuards(AdminRbacGuard)
@@ -123,6 +172,23 @@ export class AdminController {
     return this.adminRepository.iamRoles();
   }
 
+  @Get("iam/roles/:code")
+  @ApiTags("IAM")
+  @ApiOperation({
+    summary: "Detail of one IAM role: full permission list, assigned admins.",
+    description: "**RBAC:** `iam.manage` or `viewer.audit`. 404 when the role code is unknown."
+  })
+  @ApiParam({ name: "code", description: "Role code, e.g. `admin`." })
+  @DocumentedHttpErrors()
+  async iamRoleDetail(@Req() req: Request, @Param("code") code: string) {
+    await this.adminAuth.requireOneOfPermissions(req, ["iam.manage", "viewer.audit"]);
+    const detail = await this.adminRepository.iamRoleDetail(code);
+    if (!detail) {
+      throw new BadRequestException({ code: "role_not_found", code_value: code });
+    }
+    return detail;
+  }
+
   @Get("iam/permissions")
   @ApiTags("IAM")
   @ApiOperation({ summary: "List IAM permissions and role mapping counts." })
@@ -132,23 +198,165 @@ export class AdminController {
     return this.adminRepository.iamPermissions();
   }
 
+  @Get("iam/permissions/:code")
+  @ApiTags("IAM")
+  @ApiOperation({
+    summary: "Detail of one IAM permission: roles that grant it and admins inheriting it via role.",
+    description:
+      "**RBAC:** `iam.manage` or `viewer.audit`. Read-only — the permission catalog is code-defined (`ADMIN_PERMISSION` / `ADMIN_SYSTEM_ROLE_PERMISSION_MATRIX`). Use Roles & Admins surfaces to mutate assignments. Admins list is capped at 100; `adminsTruncated` flags overflow."
+  })
+  @ApiParam({ name: "code", description: "Permission code, e.g. `iam.manage`." })
+  @DocumentedHttpErrors()
+  async iamPermissionDetail(@Req() req: Request, @Param("code") code: string) {
+    await this.adminAuth.requireOneOfPermissions(req, ["iam.manage", "viewer.audit"]);
+    const detail = await this.adminRepository.iamPermissionDetail(code);
+    if (!detail) {
+      throw new BadRequestException({ code: "permission_not_found", code_value: code });
+    }
+    return detail;
+  }
+
   @Get("iam/admins")
   @ApiTags("IAM")
-  @ApiOperation({ summary: "List admin actors and their assigned role codes." })
+  @ApiOperation({
+    summary: "List admin actors with filters (q, role, status) and pagination.",
+    description: "**RBAC:** `iam.manage` or `viewer.audit`. Returns `{ items, total, page, pageSize }`."
+  })
+  @ApiQuery({ name: "q", required: false })
+  @ApiQuery({ name: "role", required: false, description: "Role code filter (e.g. `admin.super`)." })
+  @ApiQuery({ name: "status", required: false, enum: ["active", "disabled", "all"] })
+  @ApiQuery({ name: "page", required: false, schema: { type: "integer", default: 1 } })
+  @ApiQuery({ name: "pageSize", required: false, schema: { type: "integer", default: 25 } })
   @DocumentedHttpErrors()
-  async iamAdmins(@Req() req: Request) {
+  async iamAdmins(@Req() req: Request, @Query() query: Record<string, string | undefined>) {
     await this.adminAuth.requireOneOfPermissions(req, ["iam.manage", "viewer.audit"]);
-    return this.adminRepository.iamAdmins();
+    const parsed = adminIamAdminListQuerySchema.safeParse(query);
+    if (!parsed.success) {
+      throw new BadRequestException(parsed.error.flatten());
+    }
+    return this.adminRepository.iamAdmins(parsed.data);
+  }
+
+  @Get("iam/admins/:id")
+  @ApiTags("IAM")
+  @ApiOperation({
+    summary: "Detail of one admin actor: roles, recent admin audit (last 50, scoped to this actor).",
+    description: "**RBAC:** `iam.manage` or `viewer.audit`. 404 when actor id is unknown."
+  })
+  @ApiParam({ name: "id", description: "`admin_actor.id` (UUID)." })
+  @DocumentedHttpErrors()
+  async iamAdminDetail(@Req() req: Request, @Param("id") id: string) {
+    await this.adminAuth.requireOneOfPermissions(req, ["iam.manage", "viewer.audit"]);
+    const detail = await this.adminRepository.iamAdminDetail(id);
+    if (!detail) {
+      throw new BadRequestException({ code: "admin_actor_not_found", id });
+    }
+    return detail;
+  }
+
+  @Post("iam/admins/:id/roles")
+  @ApiTags("IAM")
+  @ApiOperation({
+    summary: "Assign a role to an admin actor (audited; requires `reason`).",
+    description: "**RBAC:** `iam.manage`. Body Zod: `{ roleCode, reason }`. 409 when role already assigned."
+  })
+  @ApiParam({ name: "id" })
+  @DocumentedHttpErrors()
+  async iamAdminAssignRole(
+    @Req() req: Request,
+    @Param("id") id: string,
+    @Body() body: unknown
+  ) {
+    const principal = await this.adminAuth.requirePermission(req, "iam.manage");
+    const parsed = adminIamAdminAssignRoleBodySchema.safeParse(body);
+    if (!parsed.success) {
+      throw new BadRequestException(parsed.error.flatten());
+    }
+    return this.adminRepository.iamAdminAssignRole(
+      principal.actorId,
+      id,
+      parsed.data.roleCode,
+      parsed.data.reason
+    );
+  }
+
+  @Delete("iam/admins/:id/roles/:roleCode")
+  @ApiTags("IAM")
+  @ApiOperation({
+    summary: "Revoke a role from an admin actor (audited; requires `reason` in body).",
+    description: "**RBAC:** `iam.manage`. Body Zod: `{ reason }`."
+  })
+  @ApiParam({ name: "id" })
+  @ApiParam({ name: "roleCode" })
+  @DocumentedHttpErrors()
+  async iamAdminRevokeRole(
+    @Req() req: Request,
+    @Param("id") id: string,
+    @Param("roleCode") roleCode: string,
+    @Body() body: unknown
+  ) {
+    const principal = await this.adminAuth.requirePermission(req, "iam.manage");
+    const parsed = adminIamAdminRevokeRoleBodySchema.safeParse(body);
+    if (!parsed.success) {
+      throw new BadRequestException(parsed.error.flatten());
+    }
+    return this.adminRepository.iamAdminRevokeRole(
+      principal.actorId,
+      id,
+      roleCode,
+      parsed.data.reason
+    );
+  }
+
+  @Patch("iam/admins/:id")
+  @ApiTags("IAM")
+  @ApiOperation({
+    summary: "Update admin actor status (active / disabled). Audited.",
+    description: "**RBAC:** `iam.manage`. Body Zod: `{ status, reason }`."
+  })
+  @ApiParam({ name: "id" })
+  @DocumentedHttpErrors()
+  async iamAdminPatchStatus(
+    @Req() req: Request,
+    @Param("id") id: string,
+    @Body() body: unknown
+  ) {
+    const principal = await this.adminAuth.requirePermission(req, "iam.manage");
+    const parsed = adminIamAdminPatchStatusBodySchema.safeParse(body);
+    if (!parsed.success) {
+      throw new BadRequestException(parsed.error.flatten());
+    }
+    return this.adminRepository.iamAdminPatchStatus(
+      principal.actorId,
+      id,
+      parsed.data.status,
+      parsed.data.reason
+    );
   }
 
   @Get("iam/role-audit")
   @ApiTags("IAM", "Audit")
-  @ApiOperation({ summary: "Recent IAM role/permission related audit records." })
-  @ApiQuery({ name: "limit", required: false, example: 50 })
+  @ApiOperation({
+    summary: "Filterable IAM/admin-actor audit timeline (paginated).",
+    description:
+      "**RBAC:** `iam.manage` or `viewer.audit`. Filters: `actorId`, `targetActorId`, `action`, `from`, `to`, `q`. Returns `{ items, total, page, pageSize }`. Read-only — audit log is append-only by design."
+  })
+  @ApiQuery({ name: "actorId", required: false })
+  @ApiQuery({ name: "targetActorId", required: false })
+  @ApiQuery({ name: "action", required: false })
+  @ApiQuery({ name: "from", required: false, description: "ISO datetime" })
+  @ApiQuery({ name: "to", required: false, description: "ISO datetime" })
+  @ApiQuery({ name: "q", required: false })
+  @ApiQuery({ name: "page", required: false })
+  @ApiQuery({ name: "pageSize", required: false })
   @DocumentedHttpErrors()
-  async iamRoleAudit(@Req() req: Request, @Query("limit") limit: string | undefined) {
+  async iamRoleAudit(@Req() req: Request, @Query() query: Record<string, string | undefined>) {
     await this.adminAuth.requireOneOfPermissions(req, ["iam.manage", "viewer.audit"]);
-    return this.adminRepository.iamRoleAudit(Math.min(Math.max(Number(limit ?? 50), 1), 200));
+    const parsed = adminIamRoleAuditQuerySchema.safeParse(query);
+    if (!parsed.success) {
+      throw new BadRequestException(parsed.error.flatten());
+    }
+    return this.adminRepository.iamRoleAudit(parsed.data);
   }
 
   @Get("content/summary")
@@ -387,7 +595,9 @@ export class AdminController {
 
   @Get("users/:id/audit")
   @ApiTags("Admin Users", "Audit")
-  @ApiOperation({ summary: "Admin audit log rows for a user (targeted)." })
+  @ApiOperation({
+    summary: "Admin audit log rows for a user (targeted). Requires `x-admin-access-reason` header (User 360 privacy gate)."
+  })
   @ApiParam({ name: "id", description: "`user_profile` id" })
   @ApiQuery({ name: "limit", example: 50, required: false })
   @DocumentedHttpErrors()
@@ -401,6 +611,7 @@ export class AdminController {
       ADMIN_PERMISSION.supportUserWrite,
       ADMIN_PERMISSION.supportUserLegacy
     ]);
+    requireUser360AccessReason(req);
     return this.adminRepository.userAuditForTarget(
       id,
       Math.min(Math.max(Number(limit ?? 50), 1), 200)
@@ -409,7 +620,11 @@ export class AdminController {
 
   @Get("users/:id")
   @ApiTags("Admin Users")
-  @ApiOperation({ summary: "User detail: profile, plan, learning, login events, usage counters (support read; sensitive fields privacy-gated)." })
+  @ApiOperation({
+    summary: "User detail: profile, plan, learning, login events, usage counters (support read; sensitive fields privacy-gated).",
+    description:
+      "User 360 privacy gate: callers MUST send header `x-admin-access-reason` (>=8 chars) and `x-admin-access-reason-category` (compliance | support | abuse | billing | other). Reason is recorded in `admin_audit_log` on every read."
+  })
   @ApiParam({ name: "id" })
   @DocumentedHttpErrors()
   async userDetail(@Req() req: Request, @Param("id") id: string) {
@@ -418,8 +633,9 @@ export class AdminController {
       ADMIN_PERMISSION.supportUserWrite,
       ADMIN_PERMISSION.supportUserLegacy
     ]);
+    const access = requireUser360AccessReason(req);
     const includeSensitive = canReadSensitiveUserProfile(principal.permissions);
-    await this.adminRepository.recordUserDetailAccess(principal.actorId, id, includeSensitive);
+    await this.adminRepository.recordUserDetailAccess(principal.actorId, id, includeSensitive, access);
     return this.adminRepository.userConsoleDetail(id, { includeSensitive });
   }
 
@@ -550,29 +766,56 @@ export class AdminController {
 
   @Get("support/notes")
   @ApiTags("Admin Users", "Support")
-  @ApiOperation({ summary: "List support notes (audit entries for support_note actions).", description: "**RBAC:** `support.user.read` or `support.user.write`." })
-  @ApiQuery({ name: "limit", required: false, schema: { type: "integer", default: 50 } })
-  @ApiQuery({ name: "offset", required: false, schema: { type: "integer", default: 0 } })
-  @ApiQuery({ name: "userId", required: false, schema: { type: "string" } })
+  @ApiOperation({
+    summary: "List support notes (audit-backed). Privacy-hardened.",
+    description:
+      "**RBAC:** `support.user.read` or `support.user.write` (team scope). `iam.manage` upgrades to audit-only scope (sees private notes by other authors)."
+  })
+  @ApiQuery({ name: "limit", required: false })
+  @ApiQuery({ name: "offset", required: false })
+  @ApiQuery({ name: "userId", required: false })
+  @ApiQuery({ name: "createdBy", required: false })
+  @ApiQuery({ name: "q", required: false })
+  @ApiQuery({ name: "visibility", required: false })
+  @ApiQuery({ name: "dateFrom", required: false })
+  @ApiQuery({ name: "dateTo", required: false })
   @DocumentedHttpErrors()
-  async supportNotes(
-    @Req() req: Request,
-    @Query("limit") limit: string | undefined,
-    @Query("offset") offset: string | undefined,
-    @Query("userId") userId: string | undefined
-  ) {
-    await this.adminAuth.requireOneOfPermissions(req, [
+  async supportNotes(@Req() req: Request, @Query() query: Record<string, string | undefined>) {
+    const principal = await this.adminAuth.requireOneOfPermissions(req, [
       ADMIN_PERMISSION.supportUserRead,
+      ADMIN_PERMISSION.supportUserWrite,
+      ADMIN_PERMISSION.supportUserLegacy,
+      "iam.manage"
+    ]);
+    const parsed = adminSupportNotesListQuerySchema.safeParse(query);
+    if (!parsed.success) throw new BadRequestException(parsed.error.flatten());
+    const isAuditScope = principal.permissions.has("*") || principal.permissions.has("iam.manage");
+    return this.adminRepository.supportNotes({
+      ...parsed.data,
+      actorScope: isAuditScope ? "audit_only" : "team_only",
+      viewerActorId: principal.actorId
+    });
+  }
+
+  @Post("support/notes")
+  @ApiTags("Admin Users", "Support")
+  @ApiOperation({
+    summary: "Create a support note for any user (audited). Server-side privacy enforcement.",
+    description: "**RBAC:** `support.user.write` or `support.user`. Body: { userId, body, reason, visibility }."
+  })
+  @DocumentedHttpErrors()
+  async createSupportNote(@Req() req: Request, @Body() body: unknown) {
+    const principal = await this.adminAuth.requireOneOfPermissions(req, [
       ADMIN_PERMISSION.supportUserWrite,
       ADMIN_PERMISSION.supportUserLegacy
     ]);
-    return {
-      items: await this.adminRepository.supportNotes({
-        limit: Math.min(Math.max(Number(limit ?? 50), 1), 200),
-        offset: Math.max(Number(offset ?? 0), 0),
-        userId: userId?.trim() || undefined
-      })
-    };
+    const parsed = adminSupportNoteCreateBodySchema.safeParse(body);
+    if (!parsed.success) throw new BadRequestException(parsed.error.flatten());
+    return this.adminRepository.addUserSupportNote(principal.actorId, parsed.data.userId, {
+      body: parsed.data.body,
+      reason: parsed.data.reason,
+      visibility: parsed.data.visibility
+    });
   }
 
   @Get("reading-assist/reports")
