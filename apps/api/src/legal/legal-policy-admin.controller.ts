@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  Inject,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -40,8 +41,8 @@ const LEGAL_READ_PERMS = ["admin.legal.read", "admin.legal.write", "legal.admin"
 @DocumentedHttpErrors()
 export class LegalPolicyAdminController {
   constructor(
-    private readonly adminAuth: AdminAuthService,
-    private readonly legalPolicyAdmin: LegalPolicyAdminService
+    @Inject(AdminAuthService) private readonly adminAuth: AdminAuthService,
+    @Inject(LegalPolicyAdminService) private readonly legalPolicyAdmin: LegalPolicyAdminService
   ) {}
 
   @Get()

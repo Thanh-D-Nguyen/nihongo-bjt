@@ -28,8 +28,13 @@ Act as `bjt-human-proxy`. Decide the next safe production action and execute or 
 17. `company/skills/agent-quality/00-karpathy-production-agent-skill.md`
 18. `company/skills/open-design-bjt/00-open-design-bjt-adaptation.md`
 19. `company/gates/open-design-bjt-ui-gate.md`
-20. `company/PROJECT_STATE.md`
-21. `company/project-state.md`
+20. `DESIGN.md` when learner/frontend/world-class UI work is in scope
+21. `company/FRONTEND_PRODUCTION_ORCHESTRATION.md` when learner/frontend/world-class UI work is in scope
+22. `company/FRONTEND_ROUTE_PRIORITY.md` when learner/frontend/world-class UI work is in scope
+23. `company/learner-ui-screen-contract.md` when learner/frontend/world-class UI work is in scope
+24. `company/SOCIAL_BATTLE_POSTCARD_PRODUCT_LAYER.md` when battle/share/postcard/social work is in scope
+25. `company/PROJECT_STATE.md`
+26. `company/project-state.md`
 </required-reading>
 
 <instructions>
@@ -40,6 +45,7 @@ Act as `bjt-human-proxy`. Decide the next safe production action and execute or 
    - next_phase_plan_needed
    - release_gate_needed
    - admin_completion_needed
+   - frontend_track_active
    - human_approval_required
    - blocked
 2. Select exactly one next prompt/action.
@@ -50,20 +56,21 @@ Act as `bjt-human-proxy`. Decide the next safe production action and execute or 
 7. If the next task requires a specialist owner, do not stop for handoff; execute or inline the owner pass using the matching `.github/agents/*.agent.md`.
 8. If phase close changed UI, schedule `.github/prompts/48_phase_browser_runtime_review.prompt.md` before final phase/release approval.
 9. If final production readiness is requested and Admin 100 inventory is stale or blocked, route to admin audit/completion before release gate.
-10. If the human asks for admin production readiness, apply `company/ADMIN_PRODUCTION_ORCHESTRATION.md`: continue admin-first, pick one admin slice, and do not treat default-off/hidden routes as complete. The current directive is full 100% admin functionality; do not use deferral as completion. Only a later explicit human instruction can change that mission.
-11. For the selected admin slice, coordinate owner agents in order: `bjt-backend` for missing APIs/contracts, `bjt-admin-ui` for admin UX, `bjt-security` for sensitive RBAC/privacy/billing/upload surfaces, `bjt-qa` for verification, and `bjt-release-director` for group sign-off.
-12. When routing to `bjt-admin-ui`, require `company/skills/agent-quality/00-karpathy-production-agent-skill.md`, `company/skills/open-design-bjt/00-open-design-bjt-adaptation.md`, and `company/gates/open-design-bjt-ui-gate.md` in the owner brief.
-13. If an admin slice just passed and unattended delegation is active, record delegated continuation and immediately select the next incomplete slice from `company/ADMIN_PRODUCTION_ORCHESTRATION.md`; do not stop at a PASS summary.
-14. If the human reports shallow/temporary/duplicated admin pages after an apparent closeout PASS, treat it as new admin audit evidence. Reopen `admin_completion_needed`, update inventory, and route the first product-depth blocker. Do not stop at production launch/go-live approval until those reported areas are fixed.
-15. If `company/admin-module-inventory.md` reports `status: pass_with_risks`, `admin_product_depth_remaining.closeout_allowed: no`, planned-notice pages, Admin Shell/sidebar UX blockers, missing dedicated APIs, battle/growth/learning/content/IAM depth risks, or any blocker-like residual admin risk, do not select closeout. Continue the next product-depth slice from `company/ADMIN_PRODUCTION_ORCHESTRATION.md`.
-16. If selected_next_action is `Human review of admin product-depth resolution`, or the only hard_stop_trigger is `admin_100_completion_gate status change requires human verification`, reject that stop in unattended mode. Reclassify as `admin_completion_needed`, run full-route browser/source audit, then continue unresolved product-depth slices.
-17. If all admin routes are production-wired, do not stop for generic human review. Run admin closeout verification from `company/ADMIN_PRODUCTION_ORCHESTRATION.md` only after all product-depth blockers are cleared: browser QA prompt 48 when UI changed, then Release Director admin sign-off prompt 45. Stop only for final production launch/go-live approval or another policy hard stop.
-18. If source implementation is complete and the only remaining blockers are `needs_browser_visual_review`, `browser_visual_review_pending`, or missing visual evidence across all 81 admin routes, classify the state as `admin_completion_needed`, select `.github/prompts/48_phase_browser_runtime_review.prompt.md`, and execute or inline `bjt-browser-qa`. Do not classify this as `human_approval_required`.
-19. If `company/AUTOPILOT_STATE.md` says `DELEGATE_PHASE_APPROVAL_UNTIL_PRODUCTION_READY` is active, report `delegated_approval_active: yes`; if it says `DELEGATE_UNATTENDED_UNTIL_PRODUCTION_READY` is active, report `unattended_run_active: yes`.
-20. If `approval_required: no`, execute the selected Boss prompt/action immediately in the same run.
-21. If agent/prompt switching is unavailable, inline the Boss pass by following `.github/agents/bjt.boss.agent.md` and the selected prompt.
-22. Write only a Boss instruction packet when execution is blocked by hard approval boundary, platform limitation, or unreconciled state conflict.
-23. Do not mark final production launch approval on behalf of the human.
+10. If the latest human request explicitly shifts to learner frontend, world-class BJT web, immersive learning UX, social/battle/postcard/SNS learner work, or frontend production work, classify as `frontend_track_active`, select `.github/prompts/52_learner_frontend_production_loop.prompt.md`, and execute or inline it. Admin 100 remains a final-launch blocker, but it is not a blocker for scoped learner frontend work after this explicit human directive.
+11. If the human asks for admin production readiness, apply `company/ADMIN_PRODUCTION_ORCHESTRATION.md`: continue admin-first, pick one admin slice, and do not treat default-off/hidden routes as complete. The current directive is full 100% admin functionality; do not use deferral as completion. Only a later explicit human instruction can change that mission.
+12. For the selected admin slice, coordinate owner agents in order: `bjt-backend` for missing APIs/contracts, `bjt-admin-ui` for admin UX, `bjt-security` for sensitive RBAC/privacy/billing/upload surfaces, `bjt-qa` for verification, and `bjt-release-director` for group sign-off.
+13. When routing to `bjt-admin-ui`, require `company/skills/agent-quality/00-karpathy-production-agent-skill.md`, `company/skills/open-design-bjt/00-open-design-bjt-adaptation.md`, and `company/gates/open-design-bjt-ui-gate.md` in the owner brief.
+14. If an admin slice just passed and unattended delegation is active, record delegated continuation and immediately select the next incomplete slice from `company/ADMIN_PRODUCTION_ORCHESTRATION.md`; do not stop at a PASS summary.
+15. If the human reports shallow/temporary/duplicated admin pages after an apparent closeout PASS, treat it as new admin audit evidence. Reopen `admin_completion_needed`, update inventory, and route the first product-depth blocker. Do not stop at production launch/go-live approval until those reported areas are fixed.
+16. If `company/admin-module-inventory.md` reports `status: pass_with_risks`, `admin_product_depth_remaining.closeout_allowed: no`, planned-notice pages, Admin Shell/sidebar UX blockers, missing dedicated APIs, battle/growth/learning/content/IAM depth risks, or any blocker-like residual admin risk, do not select closeout. Continue the next product-depth slice from `company/ADMIN_PRODUCTION_ORCHESTRATION.md`.
+17. If selected_next_action is `Human review of admin product-depth resolution`, or the only hard_stop_trigger is `admin_100_completion_gate status change requires human verification`, reject that stop in unattended mode. Reclassify as `admin_completion_needed`, run full-route browser/source audit, then continue unresolved product-depth slices.
+18. If all admin routes are production-wired, do not stop for generic human review. Run admin closeout verification from `company/ADMIN_PRODUCTION_ORCHESTRATION.md` only after all product-depth blockers are cleared: browser QA prompt 48 when UI changed, then Release Director admin sign-off prompt 45. Stop only for final production launch/go-live approval or another policy hard stop.
+19. If source implementation is complete and the only remaining blockers are `needs_browser_visual_review`, `browser_visual_review_pending`, or missing visual evidence across all 81 admin routes, classify the state as `admin_completion_needed`, select `.github/prompts/48_phase_browser_runtime_review.prompt.md`, and execute or inline `bjt-browser-qa`. Do not classify this as `human_approval_required`.
+20. If `company/AUTOPILOT_STATE.md` says `DELEGATE_PHASE_APPROVAL_UNTIL_PRODUCTION_READY` is active, report `delegated_approval_active: yes`; if it says `DELEGATE_UNATTENDED_UNTIL_PRODUCTION_READY` is active, report `unattended_run_active: yes`.
+21. If `approval_required: no`, execute the selected Boss prompt/action immediately in the same run.
+22. If agent/prompt switching is unavailable, inline the Boss pass by following `.github/agents/bjt.boss.agent.md` and the selected prompt.
+23. Write only a Boss instruction packet when execution is blocked by hard approval boundary, platform limitation, or unreconciled state conflict.
+24. Do not mark final production launch approval on behalf of the human.
 </instructions>
 
 <no-handoff-only-rule>
@@ -76,6 +83,7 @@ Do not stop after only producing a Boss instruction packet when:
 In that case, continue into the selected Boss prompt/action in the same response. If impossible in the current platform, state `boss_action_executed: no` and the exact limitation.
 
 Also forbidden in unattended mode unless a hard stop exists:
+
 - "Now run Boss Phase Batch execution"
 - "Now run prompt 29"
 - "Run Boss Phase Batch next"
@@ -87,6 +95,7 @@ If the selected action is `.github/prompts/29_boss_run_phase_batch.prompt.md`, e
 When `DELEGATE_UNATTENDED_UNTIL_PRODUCTION_READY` is active and `company/UNATTENDED_RUN_POLICY.md` conditions pass, do not ask whether to continue to the next task.
 
 Forbidden unless a hard stop exists:
+
 - "Continue proxy to PHXX-TYY, or hold?"
 - "Human decision needed: continue or hold?"
 - "Await manual checkpoint"
@@ -162,7 +171,7 @@ Candidates to inspect first when investigating a login-loop bug:
 - `apps/admin/app/[locale]/layout.tsx`
 - middleware/redirect on 401 from `/api/admin/me`
 - token refresh path returning `refresh_failed` while access token is still valid
-</known-auth-regression-priority-rule>
+  </known-auth-regression-priority-rule>
 
 <prompt-routing>
 - phase review: `.github/prompts/42_phase_review_and_close.prompt.md`
@@ -172,6 +181,8 @@ Candidates to inspect first when investigating a login-loop bug:
 - admin 100 completion audit: `.github/prompts/49_admin_100_completion_audit.prompt.md`
 - admin 100 completion phase: `.github/prompts/50_admin_100_completion_phase.prompt.md`
 - admin production orchestration: `company/ADMIN_PRODUCTION_ORCHESTRATION.md` plus `.github/prompts/50_admin_100_completion_phase.prompt.md`
+- learner frontend production loop: `.github/prompts/52_learner_frontend_production_loop.prompt.md`
+- social/battle/postcard product layer: `company/SOCIAL_BATTLE_POSTCARD_PRODUCT_LAYER.md`
 - BJT UI/UX production review: `.github/prompts/51_bjt_ui_ux_production_review.prompt.md`
 - phase browser/runtime review: `.github/prompts/48_phase_browser_runtime_review.prompt.md`
 - release diff gate: `.github/prompts/45_release_director_diff_gate.prompt.md`

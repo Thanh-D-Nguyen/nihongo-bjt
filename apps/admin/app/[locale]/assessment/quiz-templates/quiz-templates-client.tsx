@@ -15,6 +15,8 @@ import {
 } from "@nihongo-bjt/ui";
 import {
   ASSESSMENT_BJT_LEVELS,
+  ASSESSMENT_BJT_SECTIONS,
+  ASSESSMENT_BJT_SECTION_LABELS,
   ASSESSMENT_MOCK_EXAM_STATUSES,
   ASSESSMENT_QUESTION_DIFFICULTIES,
   ASSESSMENT_QUIZ_TEMPLATE_TYPES
@@ -22,6 +24,7 @@ import {
 import { useCallback, useEffect, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
+import { permsFromMe, type MePayload } from "@/app/_components/admin-client-utils";
 
 type CommonLabels = { empty: string; error: string; loading: string; records: string };
 type Labels = Record<string, string>;
@@ -43,7 +46,15 @@ type Summary = {
 
 type AuditEntry = { id: string; action: string; createdAt: string; reason: string | null; actor: { id: string; displayName: string; email: string } | null };
 type Detail = Summary & {
-  samplePreview: { questionCount: number; difficultyTargets: Array<{ difficulty: string; targetCount: number }>; topicTargets: Array<{ topic: string; targetCount: number }> } | null;
+  samplePreview: {
+    difficultyAllocation?: Array<{ difficulty: string; target: number }>;
+    difficultyTargets?: Array<{ difficulty: string; targetCount: number }>;
+    questionCount?: number;
+    timeLimitSec?: number;
+    topicAllocation?: Array<{ target: number; topic: string }>;
+    topicTargets?: Array<{ targetCount: number; topic: string }>;
+    totalQuestions?: number;
+  } | null;
   audit: AuditEntry[];
 };
 
@@ -66,15 +77,6 @@ function downloadCsv(filename: string, header: string[], rows: string[][]) {
   const a = document.createElement("a"); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
 }
 
-type MePayload = { roles?: Array<{ role?: { permissions?: Array<{ permission?: { code?: string } }> } }> };
-function permsFromMe(me: MePayload): Set<string> {
-  const out = new Set<string>();
-  for (const r of me.roles ?? []) for (const link of r.role?.permissions ?? []) {
-    const c = link.permission?.code; if (c) out.add(c);
-  }
-  return out;
-}
-
 type DifficultyMix = { difficulty: string; weight: number };
 type TopicMix = { topic: string; weight: number };
 
@@ -82,6 +84,7 @@ type FormState = {
   slug: string; titleVi: string; titleJa: string; description: string;
   level: string; type: string;
   questionCount: number; timeLimitSec: number;
+  sectionCoverage: string[];
   difficultyMix: DifficultyMix[]; topicMix: TopicMix[];
 };
 const DEFAULT_FORM: FormState = {
@@ -89,11 +92,40 @@ const DEFAULT_FORM: FormState = {
   level: ASSESSMENT_BJT_LEVELS[2] ?? "BJT-J3",
   type: ASSESSMENT_QUIZ_TEMPLATE_TYPES[0] ?? "practice",
   questionCount: 10, timeLimitSec: 600,
+  sectionCoverage: [],
   difficultyMix: [{ difficulty: "standard", weight: 1 }],
   topicMix: []
 };
 
 type ConfirmAction = "publish" | "archive" | "duplicate" | "delete" | null;
+
+function previewQuestionCount(preview: Detail["samplePreview"]): number {
+  return preview?.questionCount ?? preview?.totalQuestions ?? 0;
+}
+
+function previewDifficultyTargets(preview: Detail["samplePreview"]): Array<{ difficulty: string; targetCount: number }> {
+  if (!preview) return [];
+  if (Array.isArray(preview.difficultyTargets)) return preview.difficultyTargets;
+  if (Array.isArray(preview.difficultyAllocation)) {
+    return preview.difficultyAllocation.map((item) => ({
+      difficulty: item.difficulty,
+      targetCount: item.target
+    }));
+  }
+  return [];
+}
+
+function previewTopicTargets(preview: Detail["samplePreview"]): Array<{ targetCount: number; topic: string }> {
+  if (!preview) return [];
+  if (Array.isArray(preview.topicTargets)) return preview.topicTargets;
+  if (Array.isArray(preview.topicAllocation)) {
+    return preview.topicAllocation.map((item) => ({
+      targetCount: item.target,
+      topic: item.topic
+    }));
+  }
+  return [];
+}
 
 export function QuizTemplatesAdminClient({ common, labels, locale }: { common: CommonLabels; labels: Labels; locale: string }) {
   const t = (k: string) => labels[k] ?? k;
@@ -160,7 +192,7 @@ export function QuizTemplatesAdminClient({ common, labels, locale }: { common: C
   function openEdit() {
     if (!detail) return;
     const meta = (detail.blueprintMeta ?? {}) as Record<string, unknown>;
-    const rules = (meta.generationRules ?? {}) as { questionCount?: number; timeLimitSec?: number; difficultyMix?: DifficultyMix[]; topicMix?: TopicMix[] };
+    const rules = (meta.generationRules ?? {}) as { questionCount?: number; timeLimitSec?: number; difficultyMix?: DifficultyMix[]; topicMix?: TopicMix[]; sectionCoverage?: string[] };
     setForm({
       slug: detail.slug,
       titleVi: detail.titleVi ?? "",
@@ -170,6 +202,7 @@ export function QuizTemplatesAdminClient({ common, labels, locale }: { common: C
       type: detail.type,
       questionCount: rules.questionCount ?? 10,
       timeLimitSec: rules.timeLimitSec ?? detail.timeLimitSeconds ?? 600,
+      sectionCoverage: rules.sectionCoverage ?? [],
       difficultyMix: rules.difficultyMix ?? [{ difficulty: "standard", weight: 1 }],
       topicMix: rules.topicMix ?? []
     });
@@ -191,6 +224,7 @@ export function QuizTemplatesAdminClient({ common, labels, locale }: { common: C
         generationRules: {
           questionCount: form.questionCount,
           timeLimitSec: form.timeLimitSec,
+          sectionCoverage: form.sectionCoverage.length > 0 ? form.sectionCoverage : undefined,
           difficultyMix: form.difficultyMix,
           topicMix: form.topicMix
         },
@@ -329,18 +363,33 @@ export function QuizTemplatesAdminClient({ common, labels, locale }: { common: C
                   <button className="rounded border border-red-300 px-3 py-1 text-sm text-red-700" onClick={() => { setReason(""); setConfirm("delete"); }} type="button">{t("delete")}</button>
                 </div>
               ) : null}
+              {(() => {
+                const meta = (detail.blueprintMeta ?? {}) as Record<string, unknown>;
+                const rules = (meta.generationRules ?? {}) as { sectionCoverage?: string[] };
+                const sections = rules.sectionCoverage ?? [];
+                return sections.length > 0 ? (
+                  <div>
+                    <h3 className="mb-2 text-sm font-semibold">{t("sectionCoverageHeading")}</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {sections.map((s) => (
+                        <span key={s} className="rounded border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-mono">{s} <span className="text-slate-500">{ASSESSMENT_BJT_SECTION_LABELS[s] ?? ""}</span></span>
+                      ))}
+                    </div>
+                  </div>
+                ) : null;
+              })()}
               {detail.samplePreview ? (
                 <div>
-                  <h3 className="mb-2 text-sm font-semibold">{t("samplePreview")} ({detail.samplePreview.questionCount} {t("questions")})</h3>
+                  <h3 className="mb-2 text-sm font-semibold">{t("samplePreview")} ({previewQuestionCount(detail.samplePreview)} {t("questions")})</h3>
                   <div className="grid grid-cols-2 gap-3 text-xs">
                     <div>
                       <div className="font-semibold">{t("difficultyMix")}</div>
-                      <ul>{detail.samplePreview.difficultyTargets.map((d) => <li key={d.difficulty}>{d.difficulty}: {d.targetCount}</li>)}</ul>
+                      <ul>{previewDifficultyTargets(detail.samplePreview).map((d) => <li key={d.difficulty}>{d.difficulty}: {d.targetCount}</li>)}</ul>
                     </div>
                     <div>
                       <div className="font-semibold">{t("topicMix")}</div>
-                      <ul>{detail.samplePreview.topicTargets.map((d) => <li key={d.topic}>{d.topic}: {d.targetCount}</li>)}</ul>
-                      {detail.samplePreview.topicTargets.length === 0 ? <span className="text-slate-500">{t("topicAuto")}</span> : null}
+                      <ul>{previewTopicTargets(detail.samplePreview).map((d) => <li key={d.topic}>{d.topic}: {d.targetCount}</li>)}</ul>
+                      {previewTopicTargets(detail.samplePreview).length === 0 ? <span className="text-slate-500">{t("topicAuto")}</span> : null}
                     </div>
                   </div>
                 </div>
@@ -382,6 +431,22 @@ export function QuizTemplatesAdminClient({ common, labels, locale }: { common: C
               </label>
               <label className="flex flex-col gap-1"><span className="text-xs font-medium text-slate-600">{t("formQuestionCount")}</span><input type="number" min={1} max={200} className="rounded border border-slate-300 px-3 py-2" value={form.questionCount} onChange={(e) => setForm({ ...form, questionCount: Number(e.target.value) })} /></label>
               <label className="flex flex-col gap-1"><span className="text-xs font-medium text-slate-600">{t("formTimeLimitSec")}</span><input type="number" min={60} max={36000} className="rounded border border-slate-300 px-3 py-2" value={form.timeLimitSec} onChange={(e) => setForm({ ...form, timeLimitSec: Number(e.target.value) })} /></label>
+              <div className="col-span-2">
+                <div className="mb-1 text-xs font-medium text-slate-600">{t("formSectionCoverage")}</div>
+                <div className="flex flex-wrap gap-2">
+                  {ASSESSMENT_BJT_SECTIONS.map((sec) => (
+                    <label key={sec} className="flex items-center gap-1.5 text-xs">
+                      <input type="checkbox" checked={form.sectionCoverage.includes(sec)} onChange={(e) => {
+                        const next = e.target.checked ? [...form.sectionCoverage, sec] : form.sectionCoverage.filter((s) => s !== sec);
+                        setForm({ ...form, sectionCoverage: next });
+                      }} />
+                      <span className="font-mono">{sec}</span>
+                      <span className="text-slate-500">{ASSESSMENT_BJT_SECTION_LABELS[sec] ?? ""}</span>
+                    </label>
+                  ))}
+                </div>
+                {form.sectionCoverage.length === 0 ? <p className="mt-1 text-xs text-slate-400">{t("sectionCoverageEmpty")}</p> : null}
+              </div>
               <label className="col-span-2 flex flex-col gap-1"><span className="text-xs font-medium text-slate-600">{t("formDescription")}</span><textarea className="rounded border border-slate-300 px-3 py-2" rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></label>
               <div className="col-span-2">
                 <div className="mb-1 text-xs font-medium text-slate-600">{t("formDifficultyMix")}</div>

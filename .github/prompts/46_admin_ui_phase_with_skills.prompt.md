@@ -31,8 +31,9 @@ Act as `bjt-boss`. Run admin UI work with production UI/UX skills and gates.
 20. `company/admin-module-inventory.md`
 21. `company/gates/admin-100-completion-gate.md`
 22. `company/ADMIN_MANAGEMENT_WORKFLOW_STANDARD.md`
-23. `docs/design/bjt-ui-ux-production-standard.md` when the admin page controls learner content, assessment, reading assist, media, growth, or learning operations
-24. `company/gates/bjt-ui-ux-production-gate.md` when applicable
+23. `company/BJT_ASSESSMENT_FORMAT_STANDARD.md` when the admin page controls assessment/BJT
+24. `docs/design/bjt-ui-ux-production-standard.md` when the admin page controls learner content, assessment, reading assist, media, growth, or learning operations
+25. `company/gates/bjt-ui-ux-production-gate.md` when applicable
 </required-reading>
 
 <conditional-reading>
@@ -52,6 +53,7 @@ Before each admin UI task:
 4. State assumptions, design direction, acceptance criteria, and verification path before editing.
    - Include the route's admin decision and required management actions.
    - A page that only renders information/table data does not pass unless the domain is intentionally immutable/read-only and the inventory records the reason.
+   - For assessment/BJT routes, include BJT part/section/timing/media/scoring requirements from `company/BJT_ASSESSMENT_FORMAT_STANDARD.md`.
 5. Require permission-aware actions, feature-flag states, i18n labels, loading/empty/error/degraded states, responsive layout, accessibility, no fake success, and no raw technical labels.
 6. Apply `company/gates/admin-page-production-gate.md` and `company/gates/open-design-bjt-ui-gate.md`.
 7. Record the Open Design BJT five-dimension critique in the handoff.

@@ -20,6 +20,7 @@ import {
 import { useCallback, useEffect, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
+import { permsFromMe, type MePayload } from "@/app/_components/admin-client-utils";
 
 type CommonLabels = { empty: string; error: string; loading: string; records: string };
 type Labels = Record<string, string>;
@@ -119,18 +120,6 @@ function downloadCsv(filename: string, header: string[], rows: string[][]) {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-}
-
-type MePayload = { roles?: Array<{ role?: { permissions?: Array<{ permission?: { code?: string } }> } }> };
-function permsFromMe(me: MePayload): Set<string> {
-  const out = new Set<string>();
-  for (const r of me.roles ?? []) {
-    for (const link of r.role?.permissions ?? []) {
-      const code = link.permission?.code;
-      if (code) out.add(code);
-    }
-  }
-  return out;
 }
 
 function buildConfig(form: FormState) {

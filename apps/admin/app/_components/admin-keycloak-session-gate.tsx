@@ -73,6 +73,17 @@ export function AdminKeycloakSessionGate({
           return;
         }
         if (adminRes.status === 401) {
+          const sessionRes = await fetch("/api/auth/keycloak/session", {
+            credentials: "same-origin",
+            signal: AbortSignal.timeout(12_000)
+          }).catch(() => null);
+          if (cancelled) {
+            return;
+          }
+          if (sessionRes?.ok) {
+            setReady(true);
+            return;
+          }
           router.replace(
             `/${locale}/login?returnTo=${encodeURIComponent(pathname || `/${locale}`)}`
           );

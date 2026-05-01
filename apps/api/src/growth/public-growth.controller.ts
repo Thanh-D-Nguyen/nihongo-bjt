@@ -1,4 +1,11 @@
-import { Controller, Get, NotFoundException, Param, Res } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  Inject,
+  NotFoundException,
+  Param,
+  Res
+} from "@nestjs/common";
 import type { Response } from "express";
 import { ApiOperation, ApiParam, ApiTags } from "@nestjs/swagger";
 
@@ -15,9 +22,9 @@ export class PublicGrowthController {
   private readonly env = parseServerEnv(process.env);
 
   constructor(
-    private readonly share: ShareService,
-    private readonly referral: ReferralService,
-    private readonly featureGate: RuntimeFeatureGateService
+    @Inject(ShareService) private readonly share: ShareService,
+    @Inject(ReferralService) private readonly referral: ReferralService,
+    @Inject(RuntimeFeatureGateService) private readonly featureGate: RuntimeFeatureGateService
   ) {}
 
   @Get("shares/:token")

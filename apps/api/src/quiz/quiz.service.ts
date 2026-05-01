@@ -1,5 +1,5 @@
 import { createPrismaClient, Prisma } from "@nihongo-bjt/database";
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 
 import { QuotaService } from "../monetization/quota.service.js";
 import { QuizRepository } from "./quiz.repository.js";
@@ -9,8 +9,8 @@ export class QuizService {
   private readonly prisma = createPrismaClient();
 
   constructor(
-    private readonly quizRepository: QuizRepository,
-    private readonly quotaService: QuotaService
+    @Inject(QuizRepository) private readonly quizRepository: QuizRepository,
+    @Inject(QuotaService) private readonly quotaService: QuotaService
   ) {}
 
   async startSessionWithQuota(testId: string, userId: string) {

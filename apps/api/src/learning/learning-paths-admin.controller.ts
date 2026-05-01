@@ -10,6 +10,7 @@ import {
   Controller,
   Delete,
   Get,
+  Inject,
   Param,
   Patch,
   Post,
@@ -52,8 +53,8 @@ import { LearningPathsAdminRepository } from "./learning-paths-admin.repository.
 @DocumentedHttpErrors()
 export class LearningPathsAdminController {
   constructor(
-    private readonly auth: AdminAuthService,
-    private readonly repo: LearningPathsAdminRepository
+    @Inject(AdminAuthService) private readonly auth: AdminAuthService,
+    @Inject(LearningPathsAdminRepository) private readonly repo: LearningPathsAdminRepository
   ) {}
 
   @Get()

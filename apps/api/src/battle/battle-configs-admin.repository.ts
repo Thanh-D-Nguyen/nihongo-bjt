@@ -20,6 +20,7 @@ const SUMMARY_SELECT = {
   questionCount: true,
   timePerQuestionSec: true,
   maxParticipants: true,
+  scoringRules: true,
   publishedAt: true,
   archivedAt: true,
   createdAt: true,

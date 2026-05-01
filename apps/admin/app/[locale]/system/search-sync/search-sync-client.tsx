@@ -10,6 +10,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
+import { permsFromMe, type MePayload } from "@/app/_components/admin-client-utils";
 
 type Snapshot = {
   generatedAt?: string;
@@ -41,16 +42,6 @@ type Labels = {
   noPermission: string;
   successMessage: string;
 };
-
-type MePayload = { roles?: Array<{ role?: { permissions?: Array<{ permission?: { code?: string } }> } }> };
-function permsFromMe(me: MePayload): Set<string> {
-  const out = new Set<string>();
-  for (const r of me.roles ?? []) for (const link of r.role?.permissions ?? []) {
-    const c = link.permission?.code;
-    if (c) out.add(c);
-  }
-  return out;
-}
 
 const FULL_CONFIRM_TOKEN = "rebuild-search-projection";
 const CONTENT_TYPES = ["lexeme", "kanji", "grammar", "example"];

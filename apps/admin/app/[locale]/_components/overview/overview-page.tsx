@@ -8,6 +8,7 @@ import { loadOverviewBundle } from "@/lib/admin-overview-fetch";
 import { mapAuditActionLabelI18nKey } from "@/lib/admin-overview-mappers";
 import type { AdminAnalyticsExecutiveResponse, DateRangeKey } from "@/lib/admin-overview-types";
 import { readClientAdminFeatureFlags } from "@/lib/admin-feature-flags";
+import { permsFromMe, type MePayload } from "@/app/_components/admin-client-utils";
 
 import { ActivityTrendChart } from "./activity-chart";
 import { ExecutiveKpiGrid } from "./overview-kpis";
@@ -65,15 +66,8 @@ function Inner({ locale, m }: { locale: "en" | "ja" | "vi"; m: Messages }) {
     try {
       const me = await adminApiFetch("/api/admin/me");
       if (me.ok) {
-        const body = (await me.json()) as { roles?: Array<{ role?: { permissions?: Array<{ permission?: { code?: string } }> } }> };
-        const codes = new Set<string>();
-        for (const r of body.roles ?? []) {
-          for (const link of r.role?.permissions ?? []) {
-            if (link.permission?.code) {
-              codes.add(link.permission.code);
-            }
-          }
-        }
+        const body = (await me.json()) as MePayload;
+        const codes = permsFromMe(body);
         p = [...codes];
         setPermCount(codes.size);
         setPerms(codes);

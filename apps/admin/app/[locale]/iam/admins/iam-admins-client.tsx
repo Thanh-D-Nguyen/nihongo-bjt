@@ -16,6 +16,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
+import { permsFromMe, type MePayload } from "@/app/_components/admin-client-utils";
 
 type Labels = Record<string, string>;
 
@@ -143,21 +144,6 @@ function downloadCsv(filename: string, header: string[], rows: string[][]) {
   URL.revokeObjectURL(url);
 }
 
-type MePayload = {
-  roles?: Array<{ role?: { permissions?: Array<{ permission?: { code?: string } }> } }>;
-};
-
-function permissionCodesFromMe(me: MePayload): Set<string> {
-  const out = new Set<string>();
-  for (const r of me.roles ?? []) {
-    for (const link of r.role?.permissions ?? []) {
-      const code = link.permission?.code;
-      if (code) out.add(code);
-    }
-  }
-  return out;
-}
-
 export function IamAdminsClient({
   common,
   labels,
@@ -231,7 +217,7 @@ export function IamAdminsClient({
           return;
         }
         const body = (await r.json()) as MePayload;
-        if (!cancelled) setPerms(permissionCodesFromMe(body));
+        if (!cancelled) setPerms(permsFromMe(body));
       } catch {
         if (!cancelled) setPerms(new Set());
       }
@@ -859,6 +845,9 @@ export function IamAdminsClient({
                     >
                       {t("actionAssignSubmit")}
                     </button>
+                    {assignRole && reason.trim().length < 3 ? (
+                      <span className="text-[11px] text-amber-600">{t("reasonRequired")}</span>
+                    ) : null}
                   </div>
                 ) : null}
               </div>

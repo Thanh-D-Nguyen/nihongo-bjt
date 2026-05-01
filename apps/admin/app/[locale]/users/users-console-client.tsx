@@ -28,6 +28,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { adminApiFetch } from "@/lib/admin-api";
 
 import { UserInviteModal } from "./user-invite-modal";
+import { permsFromMe, type MePayload } from "@/app/_components/admin-client-utils";
 
 const fieldClass =
   "mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100";
@@ -90,18 +91,6 @@ type PlanRow = {
   status: string;
 };
 
-function permissionCodesFromMe(data: MeResponse): Set<string> {
-  const codes = new Set<string>();
-  for (const actorRole of data.roles ?? []) {
-    for (const link of actorRole.role?.permissions ?? []) {
-      if (link.permission?.code) {
-        codes.add(link.permission.code);
-      }
-    }
-  }
-  return codes;
-}
-
 function canWriteUsers(codes: Set<string>) {
   return (
     codes.has("support.user.write") || codes.has("support.user") // legacy
@@ -156,7 +145,6 @@ function formatWhen(iso: string, locale: string) {
     return iso;
   }
 }
-
 
 function buildListQuery(
   p: {
@@ -391,7 +379,7 @@ export function UsersConsoleClient({
         }
         const data = (await res.json()) as MeResponse;
         if (!c) {
-          setPerms(permissionCodesFromMe(data));
+          setPerms(permsFromMe(data));
         }
       } catch {
         if (!c) {

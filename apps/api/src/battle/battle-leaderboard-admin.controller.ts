@@ -1,5 +1,13 @@
 import { adminBattleLeaderboardQuerySchema } from "@nihongo-bjt/shared";
-import { BadRequestException, Controller, Get, Query, Req, UseGuards } from "@nestjs/common";
+import {
+  BadRequestException,
+  Controller,
+  Get,
+  Inject,
+  Query,
+  Req,
+  UseGuards
+} from "@nestjs/common";
 import {
   ApiBearerAuth,
   ApiOkResponse,
@@ -34,8 +42,8 @@ import { BattleLeaderboardAdminRepository } from "./battle-leaderboard-admin.rep
 @DocumentedHttpErrors()
 export class BattleLeaderboardAdminController {
   constructor(
-    private readonly auth: AdminAuthService,
-    private readonly repo: BattleLeaderboardAdminRepository
+    @Inject(AdminAuthService) private readonly auth: AdminAuthService,
+    @Inject(BattleLeaderboardAdminRepository) private readonly repo: BattleLeaderboardAdminRepository
   ) {}
 
   @Get()

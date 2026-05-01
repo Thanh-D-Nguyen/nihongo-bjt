@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Get,
+  Inject,
   Param,
   ParseUUIDPipe,
   Post,
@@ -37,7 +38,7 @@ const createRequestSchema = z.object({
 @ApiBearerAuth("bearer")
 @DocumentedHttpErrors()
 export class PrivacyRequestController {
-  constructor(private readonly privacyService: PrivacyRequestService) {}
+  constructor(@Inject(PrivacyRequestService) private readonly privacyService: PrivacyRequestService) {}
 
   @Post()
   @ApiOperation({

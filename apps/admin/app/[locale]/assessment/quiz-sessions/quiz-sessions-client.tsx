@@ -17,6 +17,7 @@ import { ASSESSMENT_QUIZ_SESSION_STATUSES } from "@nihongo-bjt/shared";
 import { useCallback, useEffect, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
+import { permsFromMe, type MePayload } from "@/app/_components/admin-client-utils";
 
 type CommonLabels = { empty: string; error: string; loading: string; records: string };
 type Labels = Record<string, string>;
@@ -71,15 +72,6 @@ function downloadCsv(filename: string, header: string[], rows: string[][]) {
   const blob = new Blob([`\uFEFF${body}`], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a"); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-}
-
-type MePayload = { roles?: Array<{ role?: { permissions?: Array<{ permission?: { code?: string } }> } }> };
-function permsFromMe(me: MePayload): Set<string> {
-  const out = new Set<string>();
-  for (const r of me.roles ?? []) for (const link of r.role?.permissions ?? []) {
-    const c = link.permission?.code; if (c) out.add(c);
-  }
-  return out;
 }
 
 export function QuizSessionsAdminClient({ common, labels, locale }: { common: CommonLabels; labels: Labels; locale: string }) {

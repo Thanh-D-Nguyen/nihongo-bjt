@@ -756,12 +756,31 @@ export class AdminController {
 
   @Get("audit")
   @ApiTags("Audit")
-  @ApiOperation({ summary: "Global admin audit log (recent).", description: "**RBAC:** `viewer.audit`." })
+  @ApiOperation({ summary: "Global admin audit log with filters and pagination.", description: "**RBAC:** `viewer.audit`." })
   @ApiQuery({ name: "limit", required: false, example: 20 })
+  @ApiQuery({ name: "page", required: false, example: 1 })
+  @ApiQuery({ name: "action", required: false, description: "Filter by action (partial match)" })
+  @ApiQuery({ name: "actorId", required: false, description: "Filter by actor UUID" })
+  @ApiQuery({ name: "targetType", required: false, description: "Filter by target type" })
+  @ApiQuery({ name: "q", required: false, description: "Search across action, targetId, reason" })
+  @ApiQuery({ name: "dateFrom", required: false, description: "ISO date start" })
+  @ApiQuery({ name: "dateTo", required: false, description: "ISO date end" })
   @DocumentedHttpErrors()
-  async audit(@Req() req: Request, @Query("limit") limit: string | undefined) {
+  async audit(@Req() req: Request, @Query() query: Record<string, string | undefined>) {
     await this.adminAuth.requirePermission(req, "viewer.audit");
-    return this.adminRepository.audit(Math.min(Math.max(Number(limit ?? 20), 1), 100));
+    const limit = Math.min(Math.max(Number(query.limit ?? 25), 1), 100);
+    const page = Math.max(Number(query.page ?? 1), 1);
+    const offset = (page - 1) * limit;
+    return this.adminRepository.audit({
+      limit,
+      offset,
+      action: query.action || undefined,
+      actorId: query.actorId || undefined,
+      targetType: query.targetType || undefined,
+      q: query.q || undefined,
+      dateFrom: query.dateFrom || undefined,
+      dateTo: query.dateTo || undefined
+    });
   }
 
   @Get("support/notes")

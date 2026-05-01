@@ -10,6 +10,7 @@ import {
   Controller,
   Delete,
   Get,
+  Inject,
   Param,
   Patch,
   Post,
@@ -50,8 +51,8 @@ import { CompetenciesAdminRepository } from "./learning-competencies-admin.repos
 @DocumentedHttpErrors()
 export class CompetenciesAdminController {
   constructor(
-    private readonly auth: AdminAuthService,
-    private readonly repo: CompetenciesAdminRepository
+    @Inject(AdminAuthService) private readonly auth: AdminAuthService,
+    @Inject(CompetenciesAdminRepository) private readonly repo: CompetenciesAdminRepository
   ) {}
 
   @Get()

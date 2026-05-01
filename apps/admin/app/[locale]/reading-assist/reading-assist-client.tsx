@@ -1,5 +1,16 @@
 "use client";
 
+import {
+  AdminDataTable,
+  AdminDataTableBody,
+  AdminDataTableHead,
+  AdminDataTableRow,
+  AdminDataTableTd,
+  AdminDataTableTh,
+  AdminEmptyState,
+  AdminPageHeader,
+  AdminSection,
+} from "@nihongo-bjt/ui";
 import { useEffect, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
@@ -62,38 +73,49 @@ export function ReadingAssistAdminClient({ labels }: { labels: Labels }) {
   }, []);
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-6">
-      <section className="admin-card">
-        <p className="eyebrow">{labels.eyebrow}</p>
-        <h1>{labels.title}</h1>
-        <p>{labels.subtitle}</p>
-        {error ? <p role="alert">{labels.error}</p> : null}
-        {loading ? <p>{labels.loading}</p> : null}
-        {!loading && rows.length === 0 ? <p>{labels.empty}</p> : null}
-        <ul className="deck-list">
-          {rows.map((row) => (
-            <li key={row.id}>
-              <strong>{labels.kindLabel}</strong> {row.kind}
-              <br />
-              <span>
-                {labels.hashLabel} {row.textHash}
-              </span>
-              <br />
-              <span>
-                {labels.userLabel} {row.user ? `${row.user.displayName} (${row.user.id})` : "—"}
-              </span>
-              {row.context ? (
-                <>
-                  <br />
-                  <span>{row.context}</span>
-                </>
-              ) : null}
-              <br />
-              <small>{new Date(row.createdAt).toISOString()}</small>
-            </li>
-          ))}
-        </ul>
-      </section>
+    <div className="space-y-4">
+      <AdminPageHeader title={labels.title} description={labels.subtitle} />
+
+      {error ? (
+        <div role="alert" className="rounded border border-red-300 bg-red-50 p-3 text-sm text-red-900">
+          {labels.error}
+        </div>
+      ) : null}
+
+      <AdminSection>
+        {loading ? (
+          <div className="p-3 text-sm text-gray-500">{labels.loading}</div>
+        ) : rows.length === 0 ? (
+          <AdminEmptyState title={labels.empty} />
+        ) : (
+          <AdminDataTable>
+            <AdminDataTableHead>
+              <AdminDataTableRow>
+                <AdminDataTableTh>{labels.kindLabel}</AdminDataTableTh>
+                <AdminDataTableTh>{labels.hashLabel}</AdminDataTableTh>
+                <AdminDataTableTh>{labels.userLabel}</AdminDataTableTh>
+                <AdminDataTableTh>Context</AdminDataTableTh>
+                <AdminDataTableTh>Time</AdminDataTableTh>
+              </AdminDataTableRow>
+            </AdminDataTableHead>
+            <AdminDataTableBody>
+              {rows.map((row) => (
+                <AdminDataTableRow key={row.id}>
+                  <AdminDataTableTd><span className="text-sm">{row.kind}</span></AdminDataTableTd>
+                  <AdminDataTableTd><span className="font-mono text-xs">{row.textHash}</span></AdminDataTableTd>
+                  <AdminDataTableTd>
+                    <span className="text-sm">{row.user ? `${row.user.displayName} (${row.user.id.slice(0, 8)}…)` : "—"}</span>
+                  </AdminDataTableTd>
+                  <AdminDataTableTd><span className="text-xs text-gray-600">{row.context ?? "—"}</span></AdminDataTableTd>
+                  <AdminDataTableTd>
+                    <span className="text-xs text-gray-500">{new Date(row.createdAt).toLocaleString()}</span>
+                  </AdminDataTableTd>
+                </AdminDataTableRow>
+              ))}
+            </AdminDataTableBody>
+          </AdminDataTable>
+        )}
+      </AdminSection>
     </div>
   );
 }

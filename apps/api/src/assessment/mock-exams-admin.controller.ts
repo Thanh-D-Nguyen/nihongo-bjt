@@ -10,6 +10,7 @@ import {
   Controller,
   Delete,
   Get,
+  Inject,
   Param,
   Patch,
   Post,
@@ -41,8 +42,8 @@ const WRITE_PERM = "assessment.manage" as const;
 @DocumentedHttpErrors()
 export class MockExamsAdminController {
   constructor(
-    private readonly auth: AdminAuthService,
-    private readonly repo: MockExamsAdminRepository
+    @Inject(AdminAuthService) private readonly auth: AdminAuthService,
+    @Inject(MockExamsAdminRepository) private readonly repo: MockExamsAdminRepository
   ) {}
 
   @Get()

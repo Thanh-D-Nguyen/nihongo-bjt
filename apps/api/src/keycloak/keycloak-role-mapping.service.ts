@@ -8,6 +8,7 @@ import type { KeycloakJwtPayload } from "./keycloak.types.js";
  */
 @Injectable()
 export class KeycloakRoleMappingService {
+  private readonly internalRoleAliases: Map<string, string>;
   private readonly adminPortalRealmRoles: Set<string>;
 
   constructor() {
@@ -19,6 +20,20 @@ export class KeycloakRoleMappingService {
         .map((s) => s.trim())
         .filter(Boolean)
     );
+    this.internalRoleAliases = this.parseAliases(
+      process.env.KEYCLOAK_ADMIN_INTERNAL_ROLE_ALIASES ?? "admin:admin.super,superadmin:admin.super"
+    );
+  }
+
+  private parseAliases(raw: string): Map<string, string> {
+    const aliases = new Map<string, string>();
+    for (const entry of raw.split(",")) {
+      const [from, to] = entry.split(":").map((s) => s?.trim()).filter(Boolean);
+      if (from && to) {
+        aliases.set(from, to);
+      }
+    }
+    return aliases;
   }
 
   collectRealmRoles(claims: KeycloakJwtPayload): string[] {
@@ -39,7 +54,12 @@ export class KeycloakRoleMappingService {
   rolesForInternalAdminSync(claims: KeycloakJwtPayload): string[] {
     const realm = this.collectRealmRoles(claims);
     const fromResource = Object.values(this.collectResourceRoles(claims)).flat();
-    return [...new Set([...realm, ...fromResource])];
+    const rawRoles = [...realm, ...fromResource];
+    const expanded = rawRoles.flatMap((role) => {
+      const alias = this.internalRoleAliases.get(role);
+      return alias ? [role, alias] : [role];
+    });
+    return [...new Set(expanded)];
   }
 
   tokenHasAdminPortalAccess(claims: KeycloakJwtPayload): boolean {

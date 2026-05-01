@@ -42,13 +42,21 @@ describe("KeycloakRoleMappingService", () => {
     expect(svc().tokenHasAdminPortalAccess(claims)).toBe(false);
   });
 
-  it("rolesForInternalAdminSync merges realm and resource roles uniquely", () => {
+  it("rolesForInternalAdminSync merges realm/resource roles and admin aliases uniquely", () => {
     const claims: KeycloakJwtPayload = {
       realm_access: { roles: ["admin", "learner"] },
       resource_access: { clientA: { roles: ["viewer", "admin"] } }
     };
     const roles = svc().rolesForInternalAdminSync(claims).sort();
-    expect(roles).toEqual(["admin", "learner", "viewer"]);
+    expect(roles).toEqual(["admin", "admin.super", "learner", "viewer"]);
+  });
+
+  it("supports explicit KEYCLOAK_ADMIN_INTERNAL_ROLE_ALIASES overrides", () => {
+    process.env.KEYCLOAK_ADMIN_INTERNAL_ROLE_ALIASES = "ops_admin:iam.manage";
+    const claims: KeycloakJwtPayload = {
+      realm_access: { roles: ["ops_admin"] }
+    };
+    expect(svc().rolesForInternalAdminSync(claims).sort()).toEqual(["iam.manage", "ops_admin"]);
   });
 
   it("respects KEYCLOAK_ADMIN_REALM_ROLES for portal check", () => {

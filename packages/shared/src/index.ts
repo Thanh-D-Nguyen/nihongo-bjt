@@ -526,6 +526,30 @@ export const BATTLE_CONFIG_LEVELS = [
 
 export const BATTLE_CONFIG_BOT_DIFFICULTIES = ["easy", "medium", "hard"] as const;
 
+export const BATTLE_GAME_TYPES = [
+  "speed_duel",
+  "kanji_vocab_duel",
+  "listening_challenge",
+  "business_roleplay",
+  "boss_rush",
+  "mock_exam_sprint",
+  "team_room",
+  "tournament",
+  "custom"
+] as const;
+
+export const BATTLE_GAME_TYPE_LABELS: Record<string, string> = {
+  speed_duel: "Speed Duel — thi tốc độ trả lời",
+  kanji_vocab_duel: "Kanji/Vocab Duel — đối đầu Kanji & từ vựng",
+  listening_challenge: "Listening Challenge — thử thách nghe",
+  business_roleplay: "Business Roleplay — tình huống kinh doanh",
+  boss_rush: "Boss Rush — vượt ải liên tục",
+  mock_exam_sprint: "Mock Exam Sprint — chạy đua đề thi",
+  team_room: "Team Room — phòng nhóm",
+  tournament: "Tournament — giải đấu",
+  custom: "Custom — tùy chỉnh"
+};
+
 export const BATTLE_CONFIG_QUESTION_POOLS = [
   "bjt_questions_active",
   "jlpt_grammar_active",
@@ -1740,6 +1764,65 @@ export const ASSESSMENT_QUESTION_DIFFICULTIES = [
   "standard",
   "hard",
   "elite"
+] as const;
+
+export const ASSESSMENT_BJT_PARTS = [
+  "listening",
+  "listening_reading",
+  "reading"
+] as const;
+
+export const ASSESSMENT_BJT_SECTIONS = [
+  "LC_SCENE",
+  "LC_STATEMENT",
+  "LC_INTEGRATED",
+  "LR_SITUATION",
+  "LR_DOCUMENT",
+  "LR_INTEGRATED",
+  "RC_VOCAB_GRAMMAR",
+  "RC_EXPRESSION",
+  "RC_INTEGRATED"
+] as const;
+
+export const ASSESSMENT_BJT_SECTION_LABELS: Record<string, string> = {
+  LC_SCENE: "Nghe – Cảnh huống",
+  LC_STATEMENT: "Nghe – Phát ngôn",
+  LC_INTEGRATED: "Nghe – Tổng hợp",
+  LR_SITUATION: "Nghe-Đọc – Tình huống",
+  LR_DOCUMENT: "Nghe-Đọc – Tài liệu",
+  LR_INTEGRATED: "Nghe-Đọc – Tổng hợp",
+  RC_VOCAB_GRAMMAR: "Đọc – Từ vựng & Ngữ pháp",
+  RC_EXPRESSION: "Đọc – Biểu hiện",
+  RC_INTEGRATED: "Đọc – Tổng hợp"
+};
+
+export const ASSESSMENT_BUSINESS_SITUATIONS = [
+  "meeting",
+  "phone",
+  "presentation",
+  "negotiation",
+  "complaint",
+  "report_document",
+  "email_chat",
+  "schedule",
+  "chart_table",
+  "hr_interview",
+  "sales_customer",
+  "internal_coordination",
+  "other"
+] as const;
+
+export const ASSESSMENT_STIMULUS_KINDS = [
+  "audio",
+  "photo",
+  "illustration",
+  "chart",
+  "table",
+  "document",
+  "email",
+  "memo",
+  "conversation",
+  "text"
 ] as const;
 
 const assessmentReasonField = z.string().trim().min(3).max(500);

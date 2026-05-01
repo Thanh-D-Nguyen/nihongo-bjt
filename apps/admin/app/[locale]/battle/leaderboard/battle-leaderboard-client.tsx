@@ -67,7 +67,7 @@ export function BattleLeaderboardClient({
   labels: Labels;
   locale: string;
 }) {
-  const t = (k: string) => labels[k] ?? k;
+  const t = useCallback((k: string) => labels[k] ?? k, [labels]);
 
   const [data, setData] = useState<ListResponse | null>(null);
   const [error, setError] = useState<string | null>(null);

@@ -8,6 +8,7 @@ import {
   Body,
   Controller,
   Get,
+  Inject,
   Param,
   Post,
   Query,
@@ -41,8 +42,8 @@ import { ContentVersionsAdminRepository } from "./content-versions-admin.reposit
 @DocumentedHttpErrors()
 export class ContentVersionsAdminController {
   constructor(
-    private readonly auth: AdminAuthService,
-    private readonly repo: ContentVersionsAdminRepository
+    @Inject(AdminAuthService) private readonly auth: AdminAuthService,
+    @Inject(ContentVersionsAdminRepository) private readonly repo: ContentVersionsAdminRepository
   ) {}
 
   @Get("versions")

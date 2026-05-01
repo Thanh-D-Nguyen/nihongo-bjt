@@ -1,19 +1,23 @@
 "use client";
 
+import {
+  AdminDataTable,
+  AdminDataTableBody,
+  AdminDataTableHead,
+  AdminDataTableRow,
+  AdminDataTableTd,
+  AdminDataTableTh,
+  AdminEmptyState,
+  AdminPageHeader,
+  AdminSection,
+  AdminStatusBadge
+} from "@nihongo-bjt/ui";
 import { useEffect, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
 
-interface GrowthLabels {
-  empty: string;
-  error: string;
-  eyebrow: string;
-  kind: string;
-  loading: string;
-  slug: string;
-  subtitle: string;
-  title: string;
-}
+type Labels = Record<string, string>;
+type CommonLabels = Record<string, string>;
 
 interface TemplateRow {
   active: boolean;
@@ -58,7 +62,9 @@ function unwrap<T>(data: unknown): T[] {
   return [];
 }
 
-export function GrowthClient({ labels }: { labels: GrowthLabels }) {
+export function GrowthClient({ common, labels }: { common?: CommonLabels; labels: Labels }) {
+  const t = (k: string) => labels[k] ?? common?.[k] ?? k;
+
   const [templates, setTemplates] = useState<TemplateRow[] | null>(null);
   const [referrals, setReferrals] = useState<ReferralRow[] | null>(null);
   const [campaigns, setCampaigns] = useState<CampaignRow[] | null>(null);
@@ -96,142 +102,152 @@ export function GrowthClient({ labels }: { labels: GrowthLabels }) {
 
   const loading =
     templates === null && referrals === null && campaigns === null && shareItems === null;
-  const activeTpls = templates?.filter((t) => t.active).length ?? 0;
+  const activeTpls = templates?.filter((tp) => tp.active).length ?? 0;
   const totalTpls = templates?.length ?? 0;
   const activeCampaigns = campaigns?.filter((c) => (c.status ?? "").toLowerCase() === "active").length ?? 0;
   const totalReferrals = referrals?.length ?? 0;
   const totalShareItems = shareItems?.length ?? 0;
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-6">
-      <section className="admin-card">
-        <p className="eyebrow">{labels.eyebrow}</p>
-        <h1>{labels.title}</h1>
-        <p className="lead">{labels.subtitle}</p>
-        {err ? <p role="alert">{labels.error}</p> : null}
-        {loading && !err ? <p>{labels.loading}</p> : null}
-      </section>
+    <div className="space-y-4">
+      <AdminPageHeader title={t("title")} description={t("subtitle")} />
 
-      <section className="grid gap-4 md:grid-cols-4">
-        <div className="admin-card">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Share templates</p>
+      {err ? (
+        <div role="alert" className="rounded border border-red-300 bg-red-50 p-3 text-sm text-red-900">
+          {t("error")}
+        </div>
+      ) : null}
+      {loading && !err ? (
+        <div className="p-4 text-sm text-gray-500">{t("loading")}</div>
+      ) : null}
+
+      {/* KPI Cards */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <a href="growth/postcards" className="admin-card block hover:ring-2 hover:ring-primary/30 transition-shadow">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("kpiTemplates")}</p>
           <p className="text-3xl font-bold">{totalTpls}</p>
-          <p className="text-xs text-muted-foreground">{activeTpls} active</p>
-        </div>
-        <div className="admin-card">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Active campaigns</p>
+          <p className="text-xs text-muted-foreground">{activeTpls} {t("active")}</p>
+        </a>
+        <a href="growth/campaigns" className="admin-card block hover:ring-2 hover:ring-primary/30 transition-shadow">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("kpiCampaigns")}</p>
           <p className="text-3xl font-bold">{activeCampaigns}</p>
-          <p className="text-xs text-muted-foreground">{campaigns?.length ?? 0} loaded</p>
-        </div>
-        <div className="admin-card">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Recent referrals</p>
+          <p className="text-xs text-muted-foreground">{campaigns?.length ?? 0} {t("loaded")}</p>
+        </a>
+        <a href="growth/referrals" className="admin-card block hover:ring-2 hover:ring-primary/30 transition-shadow">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("kpiReferrals")}</p>
           <p className="text-3xl font-bold">{totalReferrals}</p>
-        </div>
-        <div className="admin-card">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Recent share items</p>
+        </a>
+        <a href="growth/social" className="admin-card block hover:ring-2 hover:ring-primary/30 transition-shadow">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("kpiShareItems")}</p>
           <p className="text-3xl font-bold">{totalShareItems}</p>
+        </a>
+      </div>
+
+      {/* Share templates */}
+      <AdminSection>
+        <div className="flex items-center justify-between px-4 pt-3 pb-1">
+          <h2 className="text-sm font-semibold">{t("sectionTemplates")}</h2>
+          <a href="growth/postcards" className="text-xs text-blue-600 hover:underline">{t("viewAll")}</a>
         </div>
-      </section>
-
-      <section className="admin-card">
-        <h2>Share templates</h2>
         {templates && templates.length > 0 ? (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left">
-                <th className="py-2">{labels.slug}</th>
-                <th className="py-2">{labels.kind}</th>
-                <th className="py-2">Active</th>
-                <th className="py-2">Version</th>
-              </tr>
-            </thead>
-            <tbody>
-              {templates.map((t) => (
-                <tr key={t.id} className="border-t">
-                  <td className="py-2">
-                    <code>{t.slug}</code>
-                  </td>
-                  <td className="py-2">{t.kind}</td>
-                  <td className="py-2">{t.active ? "✓" : "—"}</td>
-                  <td className="py-2">v{t.version}</td>
-                </tr>
+          <AdminDataTable>
+            <AdminDataTableHead>
+              <AdminDataTableRow>
+                <AdminDataTableTh>{t("slug")}</AdminDataTableTh>
+                <AdminDataTableTh>{t("kind")}</AdminDataTableTh>
+                <AdminDataTableTh>{t("colActive")}</AdminDataTableTh>
+                <AdminDataTableTh>{t("colVersion")}</AdminDataTableTh>
+              </AdminDataTableRow>
+            </AdminDataTableHead>
+            <AdminDataTableBody>
+              {templates.map((tp) => (
+                <AdminDataTableRow key={tp.id}>
+                  <AdminDataTableTd><code className="text-xs">{tp.slug}</code></AdminDataTableTd>
+                  <AdminDataTableTd><AdminStatusBadge tone="neutral">{tp.kind}</AdminStatusBadge></AdminDataTableTd>
+                  <AdminDataTableTd>{tp.active ? "✓" : "—"}</AdminDataTableTd>
+                  <AdminDataTableTd>v{tp.version}</AdminDataTableTd>
+                </AdminDataTableRow>
               ))}
-            </tbody>
-          </table>
-        ) : (
-          <p className="text-sm text-muted-foreground">{labels.empty}</p>
-        )}
-      </section>
+            </AdminDataTableBody>
+          </AdminDataTable>
+        ) : templates ? (
+          <AdminEmptyState title={t("empty")} />
+        ) : null}
+      </AdminSection>
 
-      <section className="admin-card">
-        <h2>Recent campaigns</h2>
+      {/* Campaigns */}
+      <AdminSection>
+        <div className="flex items-center justify-between px-4 pt-3 pb-1">
+          <h2 className="text-sm font-semibold">{t("sectionCampaigns")}</h2>
+          <a href="growth/campaigns" className="text-xs text-blue-600 hover:underline">{t("viewAll")}</a>
+        </div>
         {campaigns && campaigns.length > 0 ? (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left">
-                <th className="py-2">Slug</th>
-                <th className="py-2">Name</th>
-                <th className="py-2">Status</th>
-                <th className="py-2">Starts</th>
-                <th className="py-2">Ends</th>
-              </tr>
-            </thead>
-            <tbody>
+          <AdminDataTable>
+            <AdminDataTableHead>
+              <AdminDataTableRow>
+                <AdminDataTableTh>{t("slug")}</AdminDataTableTh>
+                <AdminDataTableTh>{t("colName")}</AdminDataTableTh>
+                <AdminDataTableTh>{t("status")}</AdminDataTableTh>
+                <AdminDataTableTh>{t("colStarts")}</AdminDataTableTh>
+                <AdminDataTableTh>{t("colEnds")}</AdminDataTableTh>
+              </AdminDataTableRow>
+            </AdminDataTableHead>
+            <AdminDataTableBody>
               {campaigns.map((c) => (
-                <tr key={c.id} className="border-t">
-                  <td className="py-2">
-                    <code>{c.slug ?? "—"}</code>
-                  </td>
-                  <td className="py-2">{c.name ?? "—"}</td>
-                  <td className="py-2">
-                    <code>{c.status ?? "—"}</code>
-                  </td>
-                  <td className="py-2">{c.startsAt ? new Date(c.startsAt).toLocaleDateString() : "—"}</td>
-                  <td className="py-2">{c.endsAt ? new Date(c.endsAt).toLocaleDateString() : "—"}</td>
-                </tr>
+                <AdminDataTableRow key={c.id}>
+                  <AdminDataTableTd><code className="text-xs">{c.slug ?? "—"}</code></AdminDataTableTd>
+                  <AdminDataTableTd>{c.name ?? "—"}</AdminDataTableTd>
+                  <AdminDataTableTd>
+                    <AdminStatusBadge tone={(c.status ?? "").toLowerCase() === "active" ? "good" : "neutral"}>
+                      {c.status ?? "—"}
+                    </AdminStatusBadge>
+                  </AdminDataTableTd>
+                  <AdminDataTableTd>{c.startsAt ? new Date(c.startsAt).toLocaleDateString() : "—"}</AdminDataTableTd>
+                  <AdminDataTableTd>{c.endsAt ? new Date(c.endsAt).toLocaleDateString() : "—"}</AdminDataTableTd>
+                </AdminDataTableRow>
               ))}
-            </tbody>
-          </table>
-        ) : (
-          <p className="text-sm text-muted-foreground">No campaigns yet.</p>
-        )}
-      </section>
+            </AdminDataTableBody>
+          </AdminDataTable>
+        ) : campaigns ? (
+          <AdminEmptyState title={t("noCampaigns")} />
+        ) : null}
+      </AdminSection>
 
-      <section className="admin-card">
-        <h2>Recent referrals</h2>
+      {/* Referrals */}
+      <AdminSection>
+        <div className="flex items-center justify-between px-4 pt-3 pb-1">
+          <h2 className="text-sm font-semibold">{t("sectionReferrals")}</h2>
+          <a href="growth/referrals" className="text-xs text-blue-600 hover:underline">{t("viewAll")}</a>
+        </div>
         {referrals && referrals.length > 0 ? (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left">
-                <th className="py-2">Referrer</th>
-                <th className="py-2">Referee</th>
-                <th className="py-2">Status</th>
-                <th className="py-2">Channel</th>
-                <th className="py-2">When</th>
-              </tr>
-            </thead>
-            <tbody>
+          <AdminDataTable>
+            <AdminDataTableHead>
+              <AdminDataTableRow>
+                <AdminDataTableTh>{t("colReferrer")}</AdminDataTableTh>
+                <AdminDataTableTh>{t("colReferee")}</AdminDataTableTh>
+                <AdminDataTableTh>{t("status")}</AdminDataTableTh>
+                <AdminDataTableTh>{t("colChannel")}</AdminDataTableTh>
+                <AdminDataTableTh>{t("colWhen")}</AdminDataTableTh>
+              </AdminDataTableRow>
+            </AdminDataTableHead>
+            <AdminDataTableBody>
               {referrals.map((r) => (
-                <tr key={r.id} className="border-t">
-                  <td className="py-2">
-                    <code className="text-xs">{r.referrerUserId?.slice(0, 8) ?? "—"}</code>
-                  </td>
-                  <td className="py-2">
-                    <code className="text-xs">{r.refereeUserId?.slice(0, 8) ?? "—"}</code>
-                  </td>
-                  <td className="py-2">
-                    <code>{r.status ?? "—"}</code>
-                  </td>
-                  <td className="py-2">{r.channel ?? "—"}</td>
-                  <td className="py-2">{r.createdAt ? new Date(r.createdAt).toLocaleString() : "—"}</td>
-                </tr>
+                <AdminDataTableRow key={r.id}>
+                  <AdminDataTableTd><code className="text-xs">{r.referrerUserId?.slice(0, 8) ?? "—"}</code></AdminDataTableTd>
+                  <AdminDataTableTd><code className="text-xs">{r.refereeUserId?.slice(0, 8) ?? "—"}</code></AdminDataTableTd>
+                  <AdminDataTableTd><AdminStatusBadge tone="neutral">{r.status ?? "—"}</AdminStatusBadge></AdminDataTableTd>
+                  <AdminDataTableTd>{r.channel ?? "—"}</AdminDataTableTd>
+                  <AdminDataTableTd>
+                    <span className="text-xs font-mono">{r.createdAt ? new Date(r.createdAt).toLocaleString() : "—"}</span>
+                  </AdminDataTableTd>
+                </AdminDataTableRow>
               ))}
-            </tbody>
-          </table>
-        ) : (
-          <p className="text-sm text-muted-foreground">No recent referrals.</p>
-        )}
-      </section>
+            </AdminDataTableBody>
+          </AdminDataTable>
+        ) : referrals ? (
+          <AdminEmptyState title={t("noReferrals")} />
+        ) : null}
+      </AdminSection>
     </div>
   );
 }

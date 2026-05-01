@@ -4,6 +4,7 @@ import {
   Controller,
   Get,
   Headers,
+  Inject,
   Param,
   ParseUUIDPipe,
   Post,
@@ -42,8 +43,8 @@ const WEBHOOK_MANAGE_PERMS = ["admin.monetization.write", "billing.webhook.manag
 @DocumentedHttpErrors()
 export class BillingWebhookController {
   constructor(
-    private readonly adminAuth: AdminAuthService,
-    private readonly webhookService: BillingWebhookService
+    @Inject(AdminAuthService) private readonly adminAuth: AdminAuthService,
+    @Inject(BillingWebhookService) private readonly webhookService: BillingWebhookService
   ) {}
 
   @Post()

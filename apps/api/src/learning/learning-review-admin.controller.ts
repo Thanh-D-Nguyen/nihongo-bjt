@@ -8,6 +8,7 @@ import {
   Body,
   Controller,
   Get,
+  Inject,
   Param,
   Post,
   Query,
@@ -52,8 +53,8 @@ import { LearningReviewAdminRepository } from "./learning-review-admin.repositor
 @DocumentedHttpErrors()
 export class LearningReviewAdminController {
   constructor(
-    private readonly auth: AdminAuthService,
-    private readonly repo: LearningReviewAdminRepository
+    @Inject(AdminAuthService) private readonly auth: AdminAuthService,
+    @Inject(LearningReviewAdminRepository) private readonly repo: LearningReviewAdminRepository
   ) {}
 
   @Get("summary")

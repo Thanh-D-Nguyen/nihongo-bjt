@@ -31,6 +31,9 @@ function canAccessItem(
   if (!permissions) {
     return true;
   }
+  if (permissions.includes("*")) {
+    return true;
+  }
   if (Array.isArray(required)) {
     return required.some((c) => permissions.includes(c));
   }

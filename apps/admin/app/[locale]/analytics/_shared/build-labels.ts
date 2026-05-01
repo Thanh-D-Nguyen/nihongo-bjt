@@ -62,7 +62,7 @@ export function buildAnalyticsDomainLabels(t: unknown, domainKey: DomainKey): An
     breakdownDescription: d.breakdownDescription,
     paginationPrev: c.paginationPrev,
     paginationNext: c.paginationNext,
-    paginationOf: (page, total) => `${page} / ${total}`,
+    paginationOf: c.paginationOf,
     metricLabels: d.metric as Record<string, string>,
     dimensionLabels: d.dimension as Record<string, string>,
     kpiLabels: d.kpi as Record<string, string>

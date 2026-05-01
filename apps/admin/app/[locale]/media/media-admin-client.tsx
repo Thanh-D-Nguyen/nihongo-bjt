@@ -18,6 +18,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
+import { permsFromMe, type MePayload } from "@/app/_components/admin-client-utils";
 
 type CommonLabels = { empty: string; error: string; loading: string; records: string };
 type Labels = Record<string, string>;
@@ -56,21 +57,6 @@ type Detail = Asset & {
   cardLinkCount: number;
   audit: AuditEntry[];
 };
-
-type MePayload = {
-  roles?: Array<{ role?: { permissions?: Array<{ permission?: { code?: string } }> } }>;
-};
-
-function permsFromMe(me: MePayload): Set<string> {
-  const out = new Set<string>();
-  for (const r of me.roles ?? []) {
-    for (const link of r.role?.permissions ?? []) {
-      const code = link.permission?.code;
-      if (code) out.add(code);
-    }
-  }
-  return out;
-}
 
 const PAGE_SIZE = 25;
 const RIGHTS_TONE: Record<string, "good" | "warning" | "danger" | "neutral"> = {
@@ -136,7 +122,7 @@ export function MediaAdminClient({
   labels: Labels;
   locale: string;
 }) {
-  const t = (k: string) => labels[k] ?? k;
+  const t = useCallback((k: string) => labels[k] ?? k, [labels]);
   const [perms, setPerms] = useState<Set<string> | null>(null);
   const canWrite = perms != null && (perms.has("admin.content.write") || perms.has("iam.manage"));
   const isViewerOnly = perms != null && !canWrite;

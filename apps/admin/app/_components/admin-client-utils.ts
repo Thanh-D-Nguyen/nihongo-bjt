@@ -15,9 +15,16 @@ export type MePayload = {
   roles?: Array<{ role?: { permissions?: Array<{ permission?: { code?: string } }> } }>;
 };
 
+/** Set that treats `*` as a wildcard matching any permission code. */
+class WildcardPermissionSet extends Set<string> {
+  has(key: string): boolean {
+    return super.has("*") || super.has(key);
+  }
+}
+
 /** Compute permission code set from `/api/admin/me` payload. */
 export function permsFromMe(me: MePayload): Set<string> {
-  const out = new Set<string>();
+  const out = new WildcardPermissionSet();
   for (const r of me.roles ?? []) {
     for (const link of r.role?.permissions ?? []) {
       const code = link.permission?.code;

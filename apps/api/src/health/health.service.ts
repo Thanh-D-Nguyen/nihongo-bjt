@@ -1,7 +1,7 @@
 import { createPrismaClient } from "@nihongo-bjt/database";
 import { parseServerEnv } from "@nihongo-bjt/config";
 import type { HealthStatus } from "@nihongo-bjt/shared";
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 import { Socket } from "node:net";
 
 import { KeycloakRealmAdminService } from "../keycloak/keycloak-realm-admin.service.js";
@@ -14,7 +14,7 @@ export class HealthService {
   private readonly prisma = createPrismaClient();
   private readonly env = parseServerEnv(process.env);
 
-  constructor(private readonly keycloakRealmAdmin: KeycloakRealmAdminService) {}
+  constructor(@Inject(KeycloakRealmAdminService) private readonly keycloakRealmAdmin: KeycloakRealmAdminService) {}
 
   live(): HealthStatus {
     return {

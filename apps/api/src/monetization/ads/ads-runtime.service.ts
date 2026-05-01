@@ -1,5 +1,5 @@
 import { createPrismaClient, type Prisma, type PrismaClient } from "@nihongo-bjt/database";
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { adsRuntimeClickBodySchema, adsRuntimeImpressionBodySchema } from "@nihongo-bjt/shared";
 
 import { LocalAdProvider } from "./local-ad.provider.js";
@@ -9,7 +9,7 @@ import type { AdDecideInput } from "./ad-provider.js";
 export class AdsRuntimeService {
   private readonly prisma: PrismaClient = createPrismaClient();
 
-  constructor(private readonly ads: LocalAdProvider) {}
+  constructor(@Inject(LocalAdProvider) private readonly ads: LocalAdProvider) {}
 
   async decide(input: AdDecideInput) {
     return this.ads.decide(input);

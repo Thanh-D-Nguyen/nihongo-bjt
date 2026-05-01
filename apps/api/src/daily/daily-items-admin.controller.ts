@@ -10,6 +10,7 @@ import {
   Controller,
   Delete,
   Get,
+  Inject,
   Param,
   Patch,
   Post,
@@ -55,8 +56,8 @@ import { DailyItemsAdminRepository } from "./daily-items-admin.repository.js";
 @DocumentedHttpErrors()
 export class DailyItemsAdminController {
   constructor(
-    private readonly auth: AdminAuthService,
-    private readonly repo: DailyItemsAdminRepository
+    @Inject(AdminAuthService) private readonly auth: AdminAuthService,
+    @Inject(DailyItemsAdminRepository) private readonly repo: DailyItemsAdminRepository
   ) {}
 
   @Get()

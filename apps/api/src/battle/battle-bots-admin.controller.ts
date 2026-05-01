@@ -10,6 +10,7 @@ import {
   Controller,
   Delete,
   Get,
+  Inject,
   Param,
   Patch,
   Post,
@@ -53,8 +54,8 @@ import { BattleBotsAdminRepository } from "./battle-bots-admin.repository.js";
 @DocumentedHttpErrors()
 export class BattleBotsAdminController {
   constructor(
-    private readonly auth: AdminAuthService,
-    private readonly repo: BattleBotsAdminRepository
+    @Inject(AdminAuthService) private readonly auth: AdminAuthService,
+    @Inject(BattleBotsAdminRepository) private readonly repo: BattleBotsAdminRepository
   ) {}
 
   @Get()

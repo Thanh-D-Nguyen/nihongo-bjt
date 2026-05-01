@@ -1,5 +1,12 @@
 import { adsRuntimeDecisionBodySchema } from "@nihongo-bjt/shared";
-import { BadRequestException, Body, Controller, Post, UseGuards } from "@nestjs/common";
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Inject,
+  Post,
+  UseGuards
+} from "@nestjs/common";
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiTags } from "@nestjs/swagger";
 
 import { CurrentUser } from "../../keycloak/current-user.decorator.js";
@@ -17,8 +24,8 @@ import { AdsRuntimeService } from "./ads-runtime.service.js";
 @DocumentedHttpErrors()
 export class AdsRuntimeController {
   constructor(
-    private readonly runtime: AdsRuntimeService,
-    private readonly featureGate: RuntimeFeatureGateService
+    @Inject(AdsRuntimeService) private readonly runtime: AdsRuntimeService,
+    @Inject(RuntimeFeatureGateService) private readonly featureGate: RuntimeFeatureGateService
   ) {}
 
   @Post("decision")

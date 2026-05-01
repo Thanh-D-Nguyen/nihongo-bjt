@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Get,
+  Inject,
   Param,
   Patch,
   Post,
@@ -78,8 +79,8 @@ const variantPatchSchema = z.object({
 @DocumentedHttpErrors()
 export class FlashcardsAdminController {
   constructor(
-    private readonly auth: AdminAuthService,
-    private readonly repo: FlashcardsAdminRepository
+    @Inject(AdminAuthService) private readonly auth: AdminAuthService,
+    @Inject(FlashcardsAdminRepository) private readonly repo: FlashcardsAdminRepository
   ) {}
 
   /* ----- Decks ("generated") ----- */

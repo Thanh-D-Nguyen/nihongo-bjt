@@ -9,6 +9,7 @@ import {
   Body,
   Controller,
   Get,
+  Inject,
   Param,
   Patch,
   Post,
@@ -44,8 +45,8 @@ import { GrowthCampaignsAdminRepository } from "./growth-campaigns-admin.reposit
 @DocumentedHttpErrors()
 export class GrowthCampaignsAdminController {
   constructor(
-    private readonly auth: AdminAuthService,
-    private readonly repo: GrowthCampaignsAdminRepository
+    @Inject(AdminAuthService) private readonly auth: AdminAuthService,
+    @Inject(GrowthCampaignsAdminRepository) private readonly repo: GrowthCampaignsAdminRepository
   ) {}
 
   @Get()

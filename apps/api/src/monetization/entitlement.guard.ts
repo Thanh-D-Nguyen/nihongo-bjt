@@ -2,6 +2,7 @@ import {
   CanActivate,
   ExecutionContext,
   ForbiddenException,
+  Inject,
   Injectable,
   SetMetadata
 } from "@nestjs/common";
@@ -33,8 +34,8 @@ export const RequiresEntitlement = (entitlementKey: string) =>
 @Injectable()
 export class EntitlementGuard implements CanActivate {
   constructor(
-    private readonly entitlementService: EntitlementService,
-    private readonly reflector: Reflector
+    @Inject(EntitlementService) private readonly entitlementService: EntitlementService,
+    @Inject(Reflector) private readonly reflector: Reflector
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {

@@ -11,6 +11,7 @@ import {
   Body,
   Controller,
   Get,
+  Inject,
   Param,
   Patch,
   Post,
@@ -45,8 +46,8 @@ import { GrowthSocialAdminRepository } from "./growth-social-admin.repository.js
 @DocumentedHttpErrors()
 export class GrowthSocialAdminController {
   constructor(
-    private readonly auth: AdminAuthService,
-    private readonly repo: GrowthSocialAdminRepository
+    @Inject(AdminAuthService) private readonly auth: AdminAuthService,
+    @Inject(GrowthSocialAdminRepository) private readonly repo: GrowthSocialAdminRepository
   ) {}
 
   // ---------- Templates ----------

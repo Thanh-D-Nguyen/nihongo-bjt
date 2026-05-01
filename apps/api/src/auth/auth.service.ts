@@ -4,6 +4,7 @@ import {
   BadRequestException,
   ForbiddenException,
   GoneException,
+  Inject,
   Injectable,
   NotFoundException,
   ServiceUnavailableException
@@ -17,7 +18,7 @@ export class AuthService {
   private readonly prisma: PrismaClient = createPrismaClient();
   private readonly env = parseServerEnv(process.env);
 
-  constructor(private readonly referral: ReferralService) {}
+  constructor(@Inject(ReferralService) private readonly referral: ReferralService) {}
 
   isGoogleConfigured(): boolean {
     return Boolean(

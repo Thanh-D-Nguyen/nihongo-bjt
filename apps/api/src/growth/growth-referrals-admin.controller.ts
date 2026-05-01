@@ -7,6 +7,7 @@ import {
   Body,
   Controller,
   Get,
+  Inject,
   Param,
   Post,
   Query,
@@ -39,8 +40,8 @@ import { GrowthReferralsAdminRepository } from "./growth-referrals-admin.reposit
 @DocumentedHttpErrors()
 export class GrowthReferralsAdminController {
   constructor(
-    private readonly auth: AdminAuthService,
-    private readonly repo: GrowthReferralsAdminRepository
+    @Inject(AdminAuthService) private readonly auth: AdminAuthService,
+    @Inject(GrowthReferralsAdminRepository) private readonly repo: GrowthReferralsAdminRepository
   ) {}
 
   @Get()

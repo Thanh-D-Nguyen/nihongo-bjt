@@ -16,6 +16,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
+import { permsFromMe, type MePayload } from "@/app/_components/admin-client-utils";
 
 type Labels = Record<string, string>;
 type CommonLabels = { empty: string; error: string; loading: string; records: string };
@@ -109,18 +110,6 @@ function downloadCsv(filename: string, header: string[], rows: string[][]) {
   URL.revokeObjectURL(url);
 }
 
-type MePayload = { roles?: Array<{ role?: { permissions?: Array<{ permission?: { code?: string } }> } }> };
-function permissionCodesFromMe(me: MePayload): Set<string> {
-  const out = new Set<string>();
-  for (const r of me.roles ?? []) {
-    for (const link of r.role?.permissions ?? []) {
-      const code = link.permission?.code;
-      if (code) out.add(code);
-    }
-  }
-  return out;
-}
-
 export function BattleMatchesClient({
   common,
   labels,
@@ -130,7 +119,7 @@ export function BattleMatchesClient({
   labels: Labels;
   locale: string;
 }) {
-  const t = (k: string) => labels[k] ?? k;
+  const t = useCallback((k: string) => labels[k] ?? k, [labels]);
 
   const [perms, setPerms] = useState<Set<string> | null>(null);
   const canManage = perms != null && perms.has("battle.manage");
@@ -179,7 +168,7 @@ export function BattleMatchesClient({
           return;
         }
         const body = (await r.json()) as MePayload;
-        if (!cancelled) setPerms(permissionCodesFromMe(body));
+        if (!cancelled) setPerms(permsFromMe(body));
       } catch {
         if (!cancelled) setPerms(new Set());
       }

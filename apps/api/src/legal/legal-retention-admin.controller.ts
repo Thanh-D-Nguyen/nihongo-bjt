@@ -1,4 +1,4 @@
-import { Controller, Get, Req, UseGuards } from "@nestjs/common";
+import { Controller, Get, Inject, Req, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from "@nestjs/swagger";
 import type { Request } from "express";
 
@@ -109,7 +109,7 @@ const RETENTION_DOMAINS = [
 @ApiSecurity("admin-actor")
 @DocumentedHttpErrors()
 export class LegalRetentionAdminController {
-  constructor(private readonly auth: AdminAuthService) {}
+  constructor(@Inject(AdminAuthService) private readonly auth: AdminAuthService) {}
 
   @Get()
   @ApiOperation({

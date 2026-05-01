@@ -12,6 +12,7 @@ Use separate OIDC clients for learner and admin. The API validates both access-t
 | `WEB_KEYCLOAK_CLIENT_ID` / `WEB_KEYCLOAK_CLIENT_SECRET` | Learner Next.js token exchange |
 | `ADMIN_KEYCLOAK_CLIENT_ID` / `ADMIN_KEYCLOAK_CLIENT_SECRET` | Admin Next.js token exchange |
 | `KEYCLOAK_ADMIN_REALM_ROLES` | Comma-separated realm or resource role names that may use the **admin** app shell; default `admin` |
+| `KEYCLOAK_ADMIN_INTERNAL_ROLE_ALIASES` | Optional alias map from Keycloak roles to internal `authz.admin_role.code`; default `admin:admin.super,superadmin:admin.super` |
 | `NEXT_PUBLIC_WEB_KEYCLOAK_*` | Learner browser OIDC metadata |
 | `NEXT_PUBLIC_ADMIN_KEYCLOAK_*` | Admin browser OIDC metadata |
 
@@ -34,6 +35,7 @@ After OIDC session exists, the admin app calls **`GET /api/admin/session`** (wit
 - **Valid redirect URIs** for the public client must include the Next.js callback URLs, e.g. `http://localhost:3000/auth/callback` (learner) and `http://localhost:3001/auth/callback` (admin), plus production URLs.
 - Assign at least one role listed in `KEYCLOAK_ADMIN_REALM_ROLES` to users who should pass the admin portal gate.
 - Link each admin user to a row in `authz.admin_actor` with `keycloak_subject` equal to the Keycloak user `sub`.
+- Ensure mapped internal roles grant the expected admin permissions. By default, Keycloak role `admin` syncs to internal `admin.super`, so local admin accounts get `assessment.manage`, `battle.manage`, `iam.manage`, and other production-admin permissions after the next authenticated API request.
 
 ## Legacy dev (Keycloak off)
 

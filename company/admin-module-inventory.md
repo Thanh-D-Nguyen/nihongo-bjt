@@ -2,10 +2,37 @@
 
 ## Status
 
-status: admin_release_director_signed_off_pass_with_risks
+status: admin_loop_reopened_human_blockers_2026_05_01
 last_updated: 2026-05-01
 owner: bjt-human-proxy
 release_director_signoff: company/reviews/release-director/admin-100-signoff-2026-05-01.md
+
+## Human Manual Review Override — 2026-05-01
+
+The prior `admin_release_director_signed_off_pass_with_risks` state is not acceptable for the current goal. The human reports active product defects and incomplete workflows after real login.
+
+Latest blocker register: `company/admin-production-blockers-2026-05-01.md`.
+
+Current routing decision:
+
+```yaml
+admin_100_completion_gate:
+  status: block_human_reported_product_defects
+  reason: real_admin_walkthrough_found_loading_failures_permission_misgrants_crashes_and_incomplete_uiux
+  launch_gate_allowed: no
+  release_director_signoff_valid_for_public_launch: no
+  blockers_ref: company/admin-production-blockers-2026-05-01.md
+  next_action:
+    - human-proxy continues unattended admin production loop
+    - first fix auth/RBAC foundation so real local admin receives intended internal permissions
+    - then route implementation slices for loading stability, IAM/admin-users, assessment, battle, user360, analytics crashes, growth, notifications, audit log, retention, decks, reading assist
+    - rerun targeted authenticated browser QA after every slice
+  not_hard_stops:
+    - scope_exceeds_single_cycle
+    - requires_specialist_design_per_domain
+    - retry_budget_exhausted_for_single_turn
+    - pass_with_risks_pending_human_review
+```
 
 ## Human Manual Review Override — 2026-04-30
 
@@ -69,6 +96,30 @@ Admin closeout/browser QA/Release Director sign-off is allowed only when:
 admin_product_depth_remaining:
   status: reopened_authenticated_workflow_audit_required
   closeout_allowed: no
+  slice_1_auth_rbac_foundation:
+    status: pass
+    date: 2026-05-01
+    evidence:
+      - keycloak_localadmin_has_admin_realm_role: true
+      - db_admin_super_role_has_wildcard_permission: true
+      - db_admin_actor_linked_to_keycloak_subject: true
+      - api_admin_me_returns_48_permissions_including_wildcard: true
+      - login_via_password_login_endpoint: 200_OK
+      - no_bounce_to_login_after_reaching_vi: true
+      - assessment_quiz_templates_write_button: "Tạo template"
+      - assessment_question_bank_bulk_checkboxes: true
+      - assessment_quiz_sessions_no_readonly: true
+      - assessment_mock_exams_write_button: "Tạo mock exam"
+      - assessment_remediation_write_button: "Tạo rule"
+      - battle_configs_write_button: "Tạo cấu hình mới"
+      - battle_bots_write_text: "Tạo bot mới"
+      - battle_abuse_no_readonly: true
+      - admin_typecheck: PASS
+      - api_typecheck: PASS
+      - rbac_tests: 19/19_PASS
+    blockers_resolved:
+      - blocker_3_assessment_readonly: resolved_was_session_issue_not_code_defect
+      - blocker_4_battle_readonly: resolved_was_session_issue_not_code_defect
   items:
     - id: admin.auth.login_redirect_loop
       status: resolved
@@ -693,4 +744,3 @@ pnpm --filter @nihongo-bjt/admin typecheck              # PASS
 pnpm exec vitest run apps/api/src/analytics/ apps/api/src/admin/  # 11 files / 57 tests PASS
 node -e "JSON.parse(...vi.json/ja.json/en.json)"        # ok (i18n valid)
 ```
-

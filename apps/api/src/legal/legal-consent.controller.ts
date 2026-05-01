@@ -7,6 +7,7 @@ import {
   Body,
   Controller,
   Get,
+  Inject,
   Post,
   Query,
   UnauthorizedException,
@@ -27,7 +28,7 @@ import { LegalConsentService } from "./legal-consent.service.js";
 @ApiBearerAuth("bearer")
 @DocumentedHttpErrors()
 export class LegalConsentController {
-  constructor(private readonly legalConsent: LegalConsentService) {}
+  constructor(@Inject(LegalConsentService) private readonly legalConsent: LegalConsentService) {}
 
   @Get("status")
   @ApiOperation({ summary: "Get required policy versions and current user consent status." })

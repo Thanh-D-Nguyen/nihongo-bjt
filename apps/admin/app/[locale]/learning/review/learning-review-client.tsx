@@ -15,6 +15,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
+import { permsFromMe, type MePayload } from "@/app/_components/admin-client-utils";
 
 type Labels = Record<string, string>;
 type CommonLabels = { empty: string; error: string; loading: string; records: string };
@@ -92,18 +93,6 @@ function tone(s: string): "danger" | "good" | "neutral" | "warning" {
   return "warning";
 }
 
-type MePayload = { roles?: Array<{ role?: { permissions?: Array<{ permission?: { code?: string } }> } }> };
-function permissionCodesFromMe(me: MePayload): Set<string> {
-  const out = new Set<string>();
-  for (const r of me.roles ?? []) {
-    for (const link of r.role?.permissions ?? []) {
-      const code = link.permission?.code;
-      if (code) out.add(code);
-    }
-  }
-  return out;
-}
-
 export function LearningReviewAdminClient({
   common,
   labels
@@ -112,7 +101,7 @@ export function LearningReviewAdminClient({
   labels: Labels;
   locale: string;
 }) {
-  const t = (k: string) => labels[k] ?? k;
+  const t = useCallback((k: string) => labels[k] ?? k, [labels]);
 
   const [perms, setPerms] = useState<Set<string> | null>(null);
   const canWrite = perms != null && perms.has("admin.content.write");
@@ -126,7 +115,7 @@ export function LearningReviewAdminClient({
           if (!c) setPerms(new Set());
           return;
         }
-        if (!c) setPerms(permissionCodesFromMe((await r.json()) as MePayload));
+        if (!c) setPerms(permsFromMe((await r.json()) as MePayload));
       } catch {
         if (!c) setPerms(new Set());
       }
@@ -149,7 +138,7 @@ export function LearningReviewAdminClient({
         adminApiFetch(`/api/admin/learning/review/retention-curve?windowDays=${windowDays}`)
       ]);
       if (s.ok) setSummary((await s.json()) as Summary);
-      if (r.ok) setRetention(((await r.json()) as { points: RetentionPoint[] }).points);
+      if (r.ok) setRetention(((await r.json()) as { points: RetentionPoint[] }).points ?? []);
     } finally {
       setOverviewLoading(false);
     }
@@ -239,7 +228,7 @@ export function LearningReviewAdminClient({
 
   const reviewsByRating = useMemo(() => summary?.reviewsByRating ?? {}, [summary]);
   const maxReviewsInCurve = useMemo(
-    () => retention.reduce((m, p) => Math.max(m, p.reviews), 1),
+    () => (retention ?? []).reduce((m, p) => Math.max(m, p.reviews), 1),
     [retention]
   );
 

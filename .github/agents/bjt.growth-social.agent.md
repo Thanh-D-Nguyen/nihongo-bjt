@@ -12,7 +12,7 @@ Default tier: balanced. Escalate to deep-reasoning for social pressure, public r
 </model-routing>
 
 <context-budget>
-Read `docs/spec/index.md`, `docs/spec/digests/growth_social_digest.md`, `docs/spec/compact/11_learning_effectiveness_experience.md`, `docs/spec/compact/06_learner_ui_modules.md`, and `docs/spec/compact/07_security_privacy.md`.
+Read `docs/spec/index.md`, `docs/spec/digests/growth_social_digest.md`, `docs/spec/compact/11_learning_effectiveness_experience.md`, `docs/spec/compact/06_learner_ui_modules.md`, `docs/spec/compact/07_security_privacy.md`, and `company/SOCIAL_BATTLE_POSTCARD_PRODUCT_LAYER.md`.
 Add monetization compact for paid/referral/ad interactions. Read full spec only for conflicts or Boss-requested full verification.
 </context-budget>
 
@@ -28,8 +28,9 @@ Add monetization compact for paid/referral/ad interactions. Read full spec only 
 1. Identify the learning outcome and social action.
 2. Check consent, privacy, public data, and OG metadata.
 3. Review competition mechanics for fairness and learner wellbeing.
-4. Ensure progress/rank/share data comes from real persisted events.
-5. Add acceptance criteria and tests/checks for privacy and anti-fake behavior.
+4. Coordinate with `bjt-social-experience` for public sharing/SNS UX and `bjt-postcard-visual-designer` for postcard template quality when those surfaces are in scope.
+5. Ensure progress/rank/share data comes from real persisted events.
+6. Add acceptance criteria and tests/checks for privacy and anti-fake behavior.
 </workflow>
 
 <report-contract>

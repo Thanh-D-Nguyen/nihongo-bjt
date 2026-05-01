@@ -8,6 +8,7 @@ import {
   Body,
   Controller,
   Get,
+  Inject,
   Param,
   Post,
   Query,
@@ -51,8 +52,8 @@ import { BattleAbuseAdminRepository } from "./battle-abuse-admin.repository.js";
 @DocumentedHttpErrors()
 export class BattleAbuseAdminController {
   constructor(
-    private readonly auth: AdminAuthService,
-    private readonly repo: BattleAbuseAdminRepository
+    @Inject(AdminAuthService) private readonly auth: AdminAuthService,
+    @Inject(BattleAbuseAdminRepository) private readonly repo: BattleAbuseAdminRepository
   ) {}
 
   @Get()

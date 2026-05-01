@@ -32,9 +32,15 @@ Default tier: deep-reasoning. Use `company/model-routing.md`. Escalate to Releas
 17. `company/gates/admin-100-completion-gate.md`
 18. `company/ADMIN_PRODUCTION_ORCHESTRATION.md`
 19. `company/ADMIN_MANAGEMENT_WORKFLOW_STANDARD.md`
-20. `company/DO_NOT_TOUCH.md`
-21. `company/PROJECT_STATE.md` and `company/project-state.md` if present
-22. `.github/agents/bjt.boss.agent.md`
+20. `company/BJT_ASSESSMENT_FORMAT_STANDARD.md` when assessment/BJT routes are in scope
+21. `DESIGN.md` when learner/frontend/world-class UI work is in scope
+22. `company/FRONTEND_PRODUCTION_ORCHESTRATION.md` when learner/frontend/world-class UI work is in scope
+23. `company/FRONTEND_ROUTE_PRIORITY.md` when learner/frontend/world-class UI work is in scope
+24. `company/learner-ui-screen-contract.md` when learner/frontend/world-class UI work is in scope
+25. `company/SOCIAL_BATTLE_POSTCARD_PRODUCT_LAYER.md` when battle/share/postcard/social work is in scope
+26. `company/DO_NOT_TOUCH.md`
+27. `company/PROJECT_STATE.md` and `company/project-state.md` if present
+28. `.github/agents/bjt.boss.agent.md`
 </required-reading>
 
 <authority-boundary>
@@ -56,6 +62,8 @@ You must not claim final production readiness while `company/gates/admin-100-com
 - If a task checkpoint is complete and unattended delegation is active, apply `company/UNATTENDED_RUN_POLICY.md`; continue to the next task only when all conditions pass.
 - If the next task requires a specialist owner, do not stop for handoff in unattended mode; execute or inline the owner pass using that agent file.
 - If phase close changed UI, schedule `.github/prompts/48_phase_browser_runtime_review.prompt.md` before final release/phase approval.
+- If the latest human request explicitly shifts to learner frontend, world-class BJT web, immersive learning UX, social/battle/postcard/SNS learner work, or frontend production work, classify the next action as `frontend_track_active` and choose `.github/prompts/52_learner_frontend_production_loop.prompt.md`. Admin 100 remains a final-launch blocker, but do not let the admin loop prevent scoped learner frontend execution after this explicit human directive.
+- For learner frontend work, follow `DESIGN.md`, `company/FRONTEND_PRODUCTION_ORCHESTRATION.md`, `company/FRONTEND_ROUTE_PRIORITY.md`, and `company/learner-ui-screen-contract.md`. Route specialists according to the selected surface: learning science for focus/motivation, assessment psychometrics for quiz/mock/scoring, media experience for audio/image/motion, localization for Vietnamese/Japanese copy, social-experience/postcard/growth/security for battle/share/postcard/privacy, and backend for missing APIs/provider support.
 - If final production readiness is the goal and admin scaffolds remain or inventory is incomplete, choose `.github/prompts/49_admin_100_completion_audit.prompt.md` before release gate.
 - After admin audit, choose `.github/prompts/50_admin_100_completion_phase.prompt.md` until Admin 100 product-depth gate passes or a hard stop occurs. A scaffold-count pass is not enough when the human reports shallow, duplicate, planned-notice, or missing-workflow admin pages.
 - If the human asks for admin production readiness, treat `company/ADMIN_PRODUCTION_ORCHESTRATION.md` as the active routing contract. Continue admin-first even if hidden/default-off routes make the release cutline pass; hidden/off is not done. The current human directive is full 100% admin functionality, so do not use deferral as a completion path. Only a later explicit human instruction can change that mission.
@@ -65,6 +73,7 @@ You must not claim final production readiness while `company/gates/admin-100-com
 - If the latest evidence is `ADMIN_TEST_BYPASS` / `NEXT_PUBLIC_ADMIN_TEST_BYPASS` screenshots, classify it as visual smoke only. It does not close admin production readiness. Continue with authenticated workflow QA using `BROWSER_REVIEW_ADMIN_USERNAME` and `BROWSER_REVIEW_ADMIN_PASSWORD` when the human has supplied a local test credential.
 - If the human reports shallow/temporary/duplicated admin pages after an apparent closeout PASS, treat it as new evidence, reopen admin completion, and route product-depth slices before any final launch/go-live boundary.
 - If an admin route only shows information or a generic read-only table, classify it through `company/ADMIN_MANAGEMENT_WORKFLOW_STANDARD.md`. For management domains, route implementation until the page has real operator actions. For immutable/read-only domains, require documented domain reason plus search/filter/detail/export/audit evidence.
+- If the route is assessment/BJT, classify it through `company/BJT_ASSESSMENT_FORMAT_STANDARD.md`. Generic quiz workflows are not enough: Quiz Templates, Mock Exams, Question Bank, Sessions, and Remediation must expose BJT part/section/timing/media/scoring metadata and correct lifecycle actions.
 - Do not move to broader final readiness checks while admin production-ready work remains selected by the human and no hard stop exists.
 - If state files disagree, stop and request state reconciliation unless the latest completed cycle is obvious.
 </decision-rules>
@@ -83,10 +92,15 @@ You must not claim final production readiness while `company/gates/admin-100-com
 <no-handoff-only-rule>
 Do not stop at a Boss instruction packet when the selected action is scoped, non-destructive, and approval is not required. A `status: continuing` response must include either executed results or an explicit platform limitation.
 
+A `status: continuing` response is invalid if it only names the next slice. If `selected_next_action` is "Slice N" and approval is not required, `boss_action_executed` must mean the slice was actually investigated/fixed/verified in this turn, not merely selected for later.
+
 Forbidden in unattended mode unless a hard stop exists:
+
 - "Now run Boss Phase Batch execution"
 - "Now run prompt 29"
 - "Run Boss Phase Batch next"
+- "Continuing to next slice" without executing that slice
+- "selected_next_action: Slice N" with no route/file evidence from Slice N
 
 If the selected action is `.github/prompts/29_boss_run_phase_batch.prompt.md`, execute it or inline the Boss phase-batch pass.
 </no-handoff-only-rule>
@@ -113,22 +127,28 @@ Do not use these as stop reasons:
 - "the only remaining step is browser visual evidence"
 - "bypass visual audit passed" as a stop reason
 - "authenticated workflow audit needs local admin credential" as a stop reason when the human has supplied a local/dev credential
+- "scope exceeds single cycle" as a stop reason
+- "multi-cycle work, cannot finish in single proxy turn" as a stop reason
+- "requires specialist design per domain" as a stop reason
+- "retry budget exhausted for single turn" as a project-level stop reason when the remaining work can be split into the next safe slice
 - "Slice complete — awaiting next slice approval"
 - "pass_with_risks reached — pending human sign-off"
 
-Continue automatically under unattended delegation unless final production launch/go-live, Release Director `no_ship`, P0/P1, destructive/data, security/privacy/legal/billing, provider/secret, or retry-budget hard stop applies.
+Continue automatically under unattended delegation unless final production launch/go-live, Release Director `no_ship`, P0/P1, destructive/data, security/privacy/legal/billing, provider/secret, or a true retry-budget hard stop for the same concrete fix applies. Large admin scope is handled by selecting the next domain slice, not by stopping.
 </not-a-hard-stop>
 
 <no-shortcut-via-feature-flag-rule>
 Feature-flagging an admin route off (adding to `ADMIN_FEATURE_FLAG_DEFAULTS_OFF`) is NOT a resolution of a product-depth blocker. Under the current full-admin directive, it remains blocked until implemented.
 
 For each blocker in `company/admin-module-inventory.md` Product-Depth Remaining Backlog, the valid resolution for the current directive is:
+
 1. Real implementation (backend API + admin UI workflow + audit + RBAC + tests).
 2. Existing real wiring confirmed by browser visual evidence on the actual route.
 
 Deferral is not a valid completion path for this current "full 100% admin functionality" request. Only a later explicit human instruction can change the target from full implementation to a scoped exclusion.
 
 Forbidden as resolution:
+
 - Marking a blocker `resolved` because the route was hidden via `featureFlag` defaults-off.
 - Marking a blocker `resolved` because a duplicate route was hidden, when the canonical route still lacks workflow depth.
 - Marking a blocker `resolved` based only on typecheck PASS or scaffold-count.
@@ -140,7 +160,7 @@ If the only available action is feature-flagging, record it as `blocked_requires
 <admin-100-percent-completion-rule>
 When the human asks for "admin 100% production-ready" or equivalent, the loop must not stop until ONE of:
 1. Every item in `admin_product_depth_remaining.items` has `status: resolved` AND has browser visual evidence recorded; OR
-2. A genuine hard stop triggers (P0/P1, security/privacy/legal/billing, destructive migration, provider/secret, Release Director `no_ship`, final go-live, retry-budget exhaustion); OR
+2. A genuine hard stop triggers (P0/P1, security/privacy/legal/billing, destructive migration, provider/secret, Release Director `no_ship`, final go-live, true retry-budget exhaustion on the same concrete fix); OR
 3. The real human explicitly writes a new stop or scope-change instruction after this directive.
 
 Do not stop after a single slice PASS. Do not stop at "pass_with_risks". Do not stop at "awaiting human review". Do not stop at "all blockers resolved pending verification". Continue to the next incomplete slice or to the authenticated browser workflow audit automatically.

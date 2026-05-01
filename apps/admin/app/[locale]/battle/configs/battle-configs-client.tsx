@@ -16,11 +16,14 @@ import {
 import {
   BATTLE_CONFIG_BOT_DIFFICULTIES,
   BATTLE_CONFIG_LEVELS,
-  BATTLE_CONFIG_QUESTION_POOLS
+  BATTLE_CONFIG_QUESTION_POOLS,
+  BATTLE_GAME_TYPES,
+  BATTLE_GAME_TYPE_LABELS
 } from "@nihongo-bjt/shared";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
+import { permsFromMe, type MePayload } from "@/app/_components/admin-client-utils";
 
 type Labels = Record<string, string>;
 type CommonLabels = { empty: string; error: string; loading: string; records: string };
@@ -33,6 +36,7 @@ type BattleConfigSummary = {
   questionCount: number;
   timePerQuestionSec: number;
   maxParticipants: number;
+  scoringRules?: Record<string, unknown> | null;
   publishedAt: string | null;
   archivedAt: string | null;
   createdAt: string;
@@ -82,6 +86,7 @@ type FormState = {
   name: string;
   description: string;
   level: string;
+  gameType: string;
   questionPoolKey: string;
   questionCount: number;
   timePerQuestionSec: number;
@@ -99,6 +104,7 @@ const DEFAULT_FORM: FormState = {
   name: "",
   description: "",
   level: BATTLE_CONFIG_LEVELS[2] ?? "jlpt_n3",
+  gameType: BATTLE_GAME_TYPES[0] ?? "speed_duel",
   questionPoolKey: BATTLE_CONFIG_QUESTION_POOLS[0] ?? "bjt_questions_active",
   questionCount: 10,
   timePerQuestionSec: 30,
@@ -160,20 +166,9 @@ function downloadCsv(filename: string, header: string[], rows: string[][]) {
   URL.revokeObjectURL(url);
 }
 
-type MePayload = { roles?: Array<{ role?: { permissions?: Array<{ permission?: { code?: string } }> } }> };
-function permissionCodesFromMe(me: MePayload): Set<string> {
-  const out = new Set<string>();
-  for (const r of me.roles ?? []) {
-    for (const link of r.role?.permissions ?? []) {
-      const code = link.permission?.code;
-      if (code) out.add(code);
-    }
-  }
-  return out;
-}
-
 function buildScoringRules(form: FormState): ScoringRules {
   const out: ScoringRules = {};
+  if (form.gameType) out.gameType = form.gameType;
   const num = (v: string) => (v.trim() === "" ? undefined : Number(v));
   const cp = num(form.correctPoints);
   const wp = num(form.wrongPenalty);
@@ -193,6 +188,7 @@ function detailToForm(detail: BattleConfigDetail): FormState {
     name: detail.name,
     description: detail.description ?? "",
     level: detail.level,
+    gameType: (scoring.gameType as string) ?? "speed_duel",
     questionPoolKey: detail.questionPoolKey,
     questionCount: detail.questionCount,
     timePerQuestionSec: detail.timePerQuestionSec,
@@ -216,7 +212,7 @@ export function BattleConfigsClient({
   labels: Labels;
   locale: string;
 }) {
-  const t = (k: string) => labels[k] ?? k;
+  const t = useCallback((k: string) => labels[k] ?? k, [labels]);
 
   const [perms, setPerms] = useState<Set<string> | null>(null);
   const canManage = perms != null && perms.has("battle.manage");
@@ -271,7 +267,7 @@ export function BattleConfigsClient({
           return;
         }
         const body = (await r.json()) as MePayload;
-        if (!cancelled) setPerms(permissionCodesFromMe(body));
+        if (!cancelled) setPerms(permsFromMe(body));
       } catch {
         if (!cancelled) setPerms(new Set());
       }
@@ -695,6 +691,7 @@ export function BattleConfigsClient({
                 <AdminDataTableRow>
                   <AdminDataTableTh>{t("colName")}</AdminDataTableTh>
                   <AdminDataTableTh>{t("colLevel")}</AdminDataTableTh>
+                  <AdminDataTableTh>{t("formGameType")}</AdminDataTableTh>
                   <AdminDataTableTh>{t("colStatus")}</AdminDataTableTh>
                   <AdminDataTableTh>{t("colQuestionCount")}</AdminDataTableTh>
                   <AdminDataTableTh>{t("colTimePerQuestion")}</AdminDataTableTh>
@@ -727,6 +724,11 @@ export function BattleConfigsClient({
                       <code className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-800">
                         {row.level}
                       </code>
+                    </AdminDataTableTd>
+                    <AdminDataTableTd>
+                      <span className="rounded bg-violet-50 px-1.5 py-0.5 text-[10px] font-medium text-violet-700">
+                        {BATTLE_GAME_TYPE_LABELS[(row.scoringRules?.gameType as string) ?? ""] ?? (row.scoringRules?.gameType as string) ?? "speed_duel"}
+                      </span>
                     </AdminDataTableTd>
                     <AdminDataTableTd>
                       <AdminStatusBadge tone={statusTone(row.status)}>{t(`status_${row.status}`) || row.status}</AdminStatusBadge>
@@ -1036,6 +1038,10 @@ function DetailReadOnly({
         <h5 className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t("blockBasics")}</h5>
         <dl className="mt-2 space-y-1 text-xs">
           <div className="flex justify-between gap-2">
+            <dt className="text-slate-500">{t("formGameType")}</dt>
+            <dd className="font-medium">{BATTLE_GAME_TYPE_LABELS[(scoring.gameType as string) ?? ""] ?? (scoring.gameType as string) ?? "speed_duel"}</dd>
+          </div>
+          <div className="flex justify-between gap-2">
             <dt className="text-slate-500">{t("colQuestionPool")}</dt>
             <dd>
               <code className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px]">{detail.questionPoolKey}</code>
@@ -1117,6 +1123,19 @@ function ConfigForm({
           {BATTLE_CONFIG_LEVELS.map((l) => (
             <option key={l} value={l}>
               {l}
+            </option>
+          ))}
+        </select>
+      </Field>
+      <Field label={t("formGameType")}>
+        <select
+          className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+          onChange={(e) => upd({ gameType: e.target.value })}
+          value={form.gameType}
+        >
+          {BATTLE_GAME_TYPES.map((gt) => (
+            <option key={gt} value={gt}>
+              {BATTLE_GAME_TYPE_LABELS[gt] ?? gt}
             </option>
           ))}
         </select>

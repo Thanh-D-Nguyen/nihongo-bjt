@@ -1554,12 +1554,49 @@ export class AdminRepository {
     return user;
   }
 
-  audit(limit: number) {
-    return this.prisma.adminAuditLog.findMany({
-      include: { actor: true },
-      orderBy: { createdAt: "desc" },
-      take: limit
-    });
+  async audit(params: {
+    limit: number;
+    offset: number;
+    action?: string;
+    actorId?: string;
+    targetType?: string;
+    q?: string;
+    dateFrom?: string;
+    dateTo?: string;
+  }) {
+    const where: Prisma.AdminAuditLogWhereInput = {
+      ...(params.action ? { action: { contains: params.action, mode: "insensitive" as const } } : {}),
+      ...(params.actorId ? { actorId: params.actorId } : {}),
+      ...(params.targetType ? { targetType: params.targetType } : {}),
+      ...(params.q
+        ? {
+            OR: [
+              { action: { contains: params.q, mode: "insensitive" as const } },
+              { targetId: { contains: params.q, mode: "insensitive" as const } },
+              { reason: { contains: params.q, mode: "insensitive" as const } }
+            ]
+          }
+        : {}),
+      ...(params.dateFrom || params.dateTo
+        ? {
+            createdAt: {
+              ...(params.dateFrom ? { gte: new Date(params.dateFrom) } : {}),
+              ...(params.dateTo ? { lte: new Date(params.dateTo) } : {})
+            }
+          }
+        : {})
+    };
+    const [items, total] = await Promise.all([
+      this.prisma.adminAuditLog.findMany({
+        where,
+        include: { actor: true },
+        orderBy: { createdAt: "desc" },
+        skip: params.offset,
+        take: params.limit
+      }),
+      this.prisma.adminAuditLog.count({ where })
+    ]);
+    return { items, total, page: Math.floor(params.offset / params.limit) + 1, pageSize: params.limit };
   }
 
   /**

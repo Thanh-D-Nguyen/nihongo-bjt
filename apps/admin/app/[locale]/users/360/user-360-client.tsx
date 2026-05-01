@@ -303,6 +303,18 @@ export function User360Client({
   const [noteBusy, setNoteBusy] = useState(false);
   const [noteError, setNoteError] = useState<string | null>(null);
 
+  // Admin action modals (status change, plan change)
+  const [actionModal, setActionModal] = useState<
+    | { kind: "closed" }
+    | { kind: "status" }
+    | { kind: "plan" }
+  >({ kind: "closed" });
+  const [actionStatusChoice, setActionStatusChoice] = useState("active");
+  const [actionPlanChoice, setActionPlanChoice] = useState("free");
+  const [actionReason, setActionReason] = useState("");
+  const [actionBusy, setActionBusy] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+
   const submitNote = async () => {
     if (!detail || !grant) return;
     if (noteRef.trim().length < 3) {
@@ -331,6 +343,58 @@ export function User360Client({
     setNoteOpen(false);
     setNoteBody("");
     setNoteRef("");
+    void lookupUser(detail.profile.id, grant);
+  };
+
+  const submitStatusChange = async () => {
+    if (!detail || !grant) return;
+    if (actionReason.trim().length < 3) {
+      setActionError(t("reasonMin"));
+      return;
+    }
+    setActionBusy(true);
+    setActionError(null);
+    const res = await adminApiFetch(
+      `/api/admin/users/${encodeURIComponent(detail.profile.id)}/status`,
+      {
+        body: JSON.stringify({ reason: actionReason.trim(), status: actionStatusChoice }),
+        headers: { "content-type": "application/json", ...reasonHeaders(grant) },
+        method: "PATCH"
+      }
+    );
+    setActionBusy(false);
+    if (!res.ok) {
+      setActionError(common.error);
+      return;
+    }
+    setActionModal({ kind: "closed" });
+    setActionReason("");
+    void lookupUser(detail.profile.id, grant);
+  };
+
+  const submitPlanChange = async () => {
+    if (!detail || !grant) return;
+    if (actionReason.trim().length < 3) {
+      setActionError(t("reasonMin"));
+      return;
+    }
+    setActionBusy(true);
+    setActionError(null);
+    const res = await adminApiFetch(
+      `/api/admin/users/${encodeURIComponent(detail.profile.id)}/plan`,
+      {
+        body: JSON.stringify({ planSlug: actionPlanChoice, reason: actionReason.trim() }),
+        headers: { "content-type": "application/json", ...reasonHeaders(grant) },
+        method: "PATCH"
+      }
+    );
+    setActionBusy(false);
+    if (!res.ok) {
+      setActionError(common.error);
+      return;
+    }
+    setActionModal({ kind: "closed" });
+    setActionReason("");
     void lookupUser(detail.profile.id, grant);
   };
 
@@ -505,6 +569,32 @@ export function User360Client({
                   </ul>
                 </div>
               ) : null}
+              <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-3">
+                <button
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 shadow-sm hover:bg-slate-50"
+                  onClick={() => {
+                    setActionStatusChoice(detail.profile.status);
+                    setActionReason("");
+                    setActionError(null);
+                    setActionModal({ kind: "status" });
+                  }}
+                  type="button"
+                >
+                  {t("user360ChangeStatus")}
+                </button>
+                <button
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 shadow-sm hover:bg-slate-50"
+                  onClick={() => {
+                    setActionPlanChoice(detail.plan.planSlug);
+                    setActionReason("");
+                    setActionError(null);
+                    setActionModal({ kind: "plan" });
+                  }}
+                  type="button"
+                >
+                  {t("user360ChangePlan")}
+                </button>
+              </div>
             </AdminSection>
           ) : null}
 
@@ -780,6 +870,116 @@ export function User360Client({
               </button>
             </div>
           </form>
+        </div>
+      ) : null}
+
+      {actionModal.kind === "status" && detail ? (
+        <div
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4"
+          role="dialog"
+        >
+          <div className="w-full max-w-md rounded-2xl border border-ink/10 bg-white p-5 shadow-lg">
+            <h3 className="text-base font-semibold text-ink">
+              {t("user360ChangeStatus")} — {detail.profile.displayName}
+            </h3>
+            {actionError ? (
+              <p className="mt-2 text-sm text-red-700">{actionError}</p>
+            ) : null}
+            <label className="mt-3 block text-sm">
+              {t("user360StatusLabel")}
+              <AdminSelect
+                className="mt-1 w-full"
+                onChange={(e) => setActionStatusChoice(e.target.value)}
+                value={actionStatusChoice}
+              >
+                {["active", "pending", "disabled", "suspended", "deleted"].map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </AdminSelect>
+            </label>
+            <label className="mt-2 block text-sm">
+              {t("user360ActionReason")}
+              <textarea
+                className={cn(fieldClass, "min-h-[72px]")}
+                onChange={(e) => setActionReason(e.target.value)}
+                placeholder={t("user360ActionReasonPlaceholder")}
+                value={actionReason}
+              />
+            </label>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                className="rounded-lg border px-3 py-1.5 text-sm"
+                onClick={() => setActionModal({ kind: "closed" })}
+                type="button"
+              >
+                {t("cancel")}
+              </button>
+              <button
+                className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm text-white disabled:opacity-50"
+                disabled={actionBusy || actionReason.trim().length < 3}
+                onClick={() => void submitStatusChange()}
+                type="button"
+              >
+                {t("save")}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {actionModal.kind === "plan" && detail ? (
+        <div
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4"
+          role="dialog"
+        >
+          <div className="w-full max-w-md rounded-2xl border border-ink/10 bg-white p-5 shadow-lg">
+            <h3 className="text-base font-semibold text-ink">
+              {t("user360ChangePlan")} — {detail.profile.displayName}
+            </h3>
+            {actionError ? (
+              <p className="mt-2 text-sm text-red-700">{actionError}</p>
+            ) : null}
+            <label className="mt-3 block text-sm">
+              {t("user360PlanLabel")}
+              <AdminSelect
+                className="mt-1 w-full"
+                onChange={(e) => setActionPlanChoice(e.target.value)}
+                value={actionPlanChoice}
+              >
+                {["free", "plus", "standard"].map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </AdminSelect>
+            </label>
+            <label className="mt-2 block text-sm">
+              {t("user360ActionReason")}
+              <textarea
+                className={cn(fieldClass, "min-h-[72px]")}
+                onChange={(e) => setActionReason(e.target.value)}
+                placeholder={t("user360ActionReasonPlaceholder")}
+                value={actionReason}
+              />
+            </label>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                className="rounded-lg border px-3 py-1.5 text-sm"
+                onClick={() => setActionModal({ kind: "closed" })}
+                type="button"
+              >
+                {t("cancel")}
+              </button>
+              <button
+                className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm text-white disabled:opacity-50"
+                disabled={actionBusy || actionReason.trim().length < 3}
+                onClick={() => void submitPlanChange()}
+                type="button"
+              >
+                {t("save")}
+              </button>
+            </div>
+          </div>
         </div>
       ) : null}
     </div>

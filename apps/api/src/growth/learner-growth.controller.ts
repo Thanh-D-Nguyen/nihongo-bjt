@@ -1,10 +1,11 @@
 import { createPrismaClient, type Prisma } from "@nihongo-bjt/database";
 import { shareCreateSchema, userScopedQuerySchema } from "@nihongo-bjt/shared";
 import {
-  Body,
   BadRequestException,
+  Body,
   Controller,
   Get,
+  Inject,
   Post,
   Query,
   UseGuards
@@ -29,9 +30,9 @@ export class LearnerGrowthController {
   private readonly prisma = createPrismaClient();
 
   constructor(
-    private readonly share: ShareService,
-    private readonly referral: ReferralService,
-    private readonly featureGate: RuntimeFeatureGateService
+    @Inject(ShareService) private readonly share: ShareService,
+    @Inject(ReferralService) private readonly referral: ReferralService,
+    @Inject(RuntimeFeatureGateService) private readonly featureGate: RuntimeFeatureGateService
   ) {}
 
   @Get("referral")

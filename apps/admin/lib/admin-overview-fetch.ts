@@ -7,7 +7,7 @@ import type {
 } from "./admin-overview-types";
 
 function can(p: Set<string>, codes: string[]) {
-  return codes.some((c) => p.has(c));
+  return p.has("*") || codes.some((c) => p.has(c));
 }
 
 export type OverviewLoadResult = {
@@ -30,9 +30,9 @@ export async function loadOverviewBundle(input: {
 }): Promise<OverviewLoadResult> {
   const p = input.permissions ? new Set(input.permissions) : null;
   const canAnalytics =
-    p == null || can(p, ["viewer.analytics", "admin.analytics.view", "analytics.view"]);
-  const canAudit = p == null || p.has("viewer.audit");
-  const canContent = p == null || p.has("admin.content.read");
+    p == null || can(p, ["*", "viewer.analytics", "admin.analytics.view", "analytics.view"]);
+  const canAudit = p == null || p.has("*") || p.has("viewer.audit");
+  const canContent = p == null || p.has("*") || p.has("admin.content.read");
 
   const results: OverviewLoadResult = {
     analytics: null,
@@ -103,7 +103,8 @@ export async function loadOverviewBundle(input: {
             results.audit = [];
             return;
           }
-          results.audit = (await res.json()) as AdminAuditLogRow[];
+          const body = await res.json();
+          results.audit = Array.isArray(body) ? body as AdminAuditLogRow[] : (body as { items: AdminAuditLogRow[] }).items ?? [];
         } catch {
           results.partialDegradation = true;
           results.audit = [];

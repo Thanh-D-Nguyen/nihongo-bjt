@@ -18,23 +18,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import { adminApiFetch } from "@/lib/admin-api";
+import { permsFromMe, type MePayload } from "@/app/_components/admin-client-utils";
 
 type MeResponse = {
   roles?: Array<{ role?: { permissions?: Array<{ permission?: { code?: string } }> } }>;
 };
-
-function permissionCodesFromMe(data: MeResponse): Set<string> {
-  const codes: string[] = [];
-  for (const r of data.roles ?? []) {
-    for (const p of r.role?.permissions ?? []) {
-      const c = p.permission?.code;
-      if (c) {
-        codes.push(c);
-      }
-    }
-  }
-  return new Set(codes);
-}
 
 type Common = { error: string; loading: string; records: string; status: string; updatedAt: string };
 type Labels = {
@@ -147,7 +135,7 @@ export function MonetizationConsoleClient({ common, labels }: { common: Common; 
       try {
         const res = await adminApiFetch("/api/admin/me");
         if (res.ok && !c) {
-          setPerms(permissionCodesFromMe((await res.json()) as MeResponse));
+          setPerms(permsFromMe((await res.json()) as MeResponse));
         } else if (!c) {
           setPerms(new Set());
         }

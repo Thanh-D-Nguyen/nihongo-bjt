@@ -18,7 +18,7 @@ Default tier: deep-reasoning. Use `company/model-routing.md` before assigning sp
 - Keep scope small and sequential.
 - Protect the repo from rewrites and fake completion.
 - Always favor production foundation over UI breadth.
-- Use Learning Science, Media Experience, or Growth Social agents for focus, sensory media, postcards, sharing, battle motivation, or competition work.
+- Use Learning Science, Media Experience, Social Experience, Postcard Visual Designer, or Growth Social agents for focus, sensory media, postcards, sharing, battle motivation, or competition work.
 - Use Assessment Psychometrics for quiz/mock exam/scoring, Content Quality for Japanese content, Localization for Japanese/Vietnamese copy, Red Team before release/security-sensitive work, and Release Director for ship/no-ship decisions.
 - Use Life in Japan agent for housing, banking, tax, insurance, pension, lottery/probability, stocks/crypto vocabulary, and other sensitive practical-life learning contexts.
 </core-principles>
@@ -55,6 +55,8 @@ Default tier: deep-reasoning. Use `company/model-routing.md` before assigning sp
 29. `company/SPRINT_BOARD.md` if it exists
 30. compact spec files relevant to the next task
 31. `company/skills/agent-quality/00-karpathy-production-agent-skill.md`
+32. `DESIGN.md` and `company/FRONTEND_PRODUCTION_ORCHESTRATION.md` when learner frontend production work is in scope
+33. `company/SOCIAL_BATTLE_POSTCARD_PRODUCT_LAYER.md` when battle/share/postcard/social work is in scope
 </required-reading>
 
 <context-budget>
@@ -65,6 +67,7 @@ Do not read the full canonical spec by default. Read it only when compact files 
 Use the fewest agents necessary. Default max agents per task: 3.
 
 Use:
+
 - 1 agent for docs, labels, or small UI.
 - 2 agents for low-risk code.
 - 3 agents for normal production work.
@@ -93,6 +96,7 @@ For admin UI tasks, load base skills:
 - `company/gates/open-design-bjt-ui-gate.md`
 
 Add:
+
 - table: `company/skills/ui-production/03-admin-table-skill.md`
 - form: `company/skills/ui-production/04-form-validation-skill.md`
 - dashboard/analytics: `company/skills/ui-production/08-dashboard-data-viz-skill.md`
@@ -101,6 +105,7 @@ Add:
 - visual QA: `company/skills/ui-production/13-visual-qa-checklist.md`
 
 For learner UI tasks, load base UI skills plus:
+
 - `company/skills/ui-production/12-ux-writing-skill.md`
 - `docs/design/bjt-ui-ux-production-standard.md`
 - `company/skills/bjt-ui-ux/00-bjt-ui-ux-principles.md`
@@ -111,6 +116,7 @@ For learner UI tasks, load base UI skills plus:
 - `company/gates/learning-quality-gate.md` when study/quiz/progress/onboarding changes
 
 BJT UI/UX conditional skills:
+
 - dashboard/daily/comeback: `company/skills/bjt-ui-ux/02-learning-focus-cognitive-load-skill.md`
 - quiz/mock/result: `company/skills/bjt-ui-ux/03-bjt-assessment-exam-ux-skill.md`
 - Japanese text/reading assist: `company/skills/bjt-ui-ux/04-japanese-reading-support-ux-skill.md`
@@ -122,6 +128,7 @@ Do not mark UI production-ready unless the relevant UI gate passes.
 Do not mark UI production-ready when the Open Design BJT five-dimension critique has any score below `3/5`.
 
 When completing the whole admin workspace, also load:
+
 - `company/ADMIN_COMPLETION_PROGRAM.md`
 - `company/admin-module-inventory.md`
 - `company/gates/admin-100-completion-gate.md`
@@ -147,27 +154,31 @@ Use when the human provides phase-level approval and requests phase execution, o
 2. Verify `approval_token` is non-empty and max task/file/risk budget is defined.
 3. Initialize or resume `company/CURRENT_PHASE.md`.
 4. Execute phase queue tasks in dependency order only:
-  - database/schema before backend
-  - backend/API before UI
-  - feature flags before gated UI
-  - RBAC before admin pages
-  - tests before release gate
-  - docs/handoff last
+
+- database/schema before backend
+- backend/API before UI
+- feature flags before gated UI
+- RBAC before admin pages
+- tests before release gate
+- docs/handoff last
+
 5. For each task, use minimal agents and run owner + required reviewers.
 6. For each task with file changes, apply diff review and no-fake checks.
 7. After each task, update:
-  - `company/CURRENT_PHASE.md`
-  - `company/PHASE_HANDOFF.md`
-  - `company/PHASE_TASK_REPORT.md`
-  - `company/PHASE_RISK_LOG.md`
-  - `company/backlog.md`
-  - `company/project-state.md`
+
+- `company/CURRENT_PHASE.md`
+- `company/PHASE_HANDOFF.md`
+- `company/PHASE_TASK_REPORT.md`
+- `company/PHASE_RISK_LOG.md`
+- `company/backlog.md`
+- `company/project-state.md`
+
 8. Keep repository runnable after each task.
 9. Continue automatically to next task unless a mandatory stop condition occurs.
 10. At phase end, run `.github/prompts/42_phase_review_and_close.prompt.md` or equivalent review packet before marking completed.
 11. If the phase changed UI, run `.github/prompts/48_phase_browser_runtime_review.prompt.md` or equivalent Browser QA gate before final approval.
 12. Produce final report and ask only phase decisions.
-</phase-batch-workflow>
+    </phase-batch-workflow>
 
 <no-agent-handoff-stop-rule>
 In unattended/proxy mode, do not stop only because a task requires a specialist owner. If subagents are unavailable, execute the owner pass inline by following the selected agent file, then run required reviewers/gates.
@@ -195,7 +206,7 @@ Stop immediately when any item is true:
 8. spec conflict cannot be resolved from compact docs
 9. explicit user approval is required by `company/PHASE_PLAN.md`
 10. phase max task count, max file count, or max risk threshold is exceeded
-</phase-batch-stop-conditions>
+    </phase-batch-stop-conditions>
 
 <autopilot-workflow>
 Use when the human says `approve, tiếp đi`, `boss tiếp tục`, `run next cycle`, or uses `.github/prompts/28_boss_autopilot_cycle.prompt.md`.
@@ -223,7 +234,7 @@ When PHASE_BATCH reaches phase end or blocker, ask for exactly one of:
 - `REJECT_PHASE`
 - `RUN_NEXT_PHASE`
 - `RUN_RELEASE_GATE`
-</phase-decision-output>
+  </phase-decision-output>
 
 <delegation-format>
 ```yaml

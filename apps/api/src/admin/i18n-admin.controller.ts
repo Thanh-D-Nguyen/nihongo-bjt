@@ -1,4 +1,15 @@
-import { BadRequestException, Body, Controller, Get, Param, Patch, Query, Req, UseGuards } from "@nestjs/common";
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Inject,
+  Param,
+  Patch,
+  Query,
+  Req,
+  UseGuards
+} from "@nestjs/common";
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiQuery, ApiSecurity, ApiTags } from "@nestjs/swagger";
 import type { Request } from "express";
 import { z } from "zod";
@@ -44,8 +55,8 @@ const updateTranslationSchema = z.object({
 @DocumentedHttpErrors()
 export class I18nAdminController {
   constructor(
-    private readonly auth: AdminAuthService,
-    private readonly repo: I18nAdminRepository
+    @Inject(AdminAuthService) private readonly auth: AdminAuthService,
+    @Inject(I18nAdminRepository) private readonly repo: I18nAdminRepository
   ) {}
 
   @Get("keys")

@@ -1,5 +1,5 @@
 import { createPrismaClient, type Prisma, type PrismaClient } from "@nihongo-bjt/database";
-import { HttpException, Injectable } from "@nestjs/common";
+import { HttpException, Inject, Injectable } from "@nestjs/common";
 
 import { Quota } from "./monetization.constants.js";
 import { MonetizationRepository } from "./monetization.repository.js";
@@ -14,7 +14,7 @@ import { utcDateKey } from "./quota-window.util.js";
 export class QuotaService {
   private readonly prisma: PrismaClient = createPrismaClient();
 
-  constructor(private readonly repository: MonetizationRepository) {}
+  constructor(@Inject(MonetizationRepository) private readonly repository: MonetizationRepository) {}
 
   /**
    * Count one flashcard review against the per-day plan quota, inside a DB transaction.

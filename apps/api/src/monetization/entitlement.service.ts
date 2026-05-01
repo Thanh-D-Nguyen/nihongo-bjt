@@ -1,5 +1,5 @@
 import { createPrismaClient, type PrismaClient } from "@nihongo-bjt/database";
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 
 import { MonetizationRepository } from "./monetization.repository.js";
 
@@ -11,7 +11,7 @@ import { MonetizationRepository } from "./monetization.repository.js";
 export class EntitlementService {
   private readonly prisma: PrismaClient = createPrismaClient();
 
-  constructor(private readonly repository: MonetizationRepository) {}
+  constructor(@Inject(MonetizationRepository) private readonly repository: MonetizationRepository) {}
 
   async listEntitlementKeysForUser(userId: string) {
     const resolved = await this.repository.resolvePlanForUser(userId, this.prisma);

@@ -21,7 +21,7 @@ export class KeycloakTokenService {
   }
 
   isEnabled(): boolean {
-    return Boolean(this.jwks && this.issuer && this.env.KEYCLOAK_CLIENT_ID);
+    return Boolean(this.jwks && this.issuer && (this.env.KEYCLOAK_EXPECTED_AUDIENCE || this.env.KEYCLOAK_CLIENT_ID));
   }
 
   getIssuer(): string | null {

@@ -8,6 +8,7 @@ import {
   Body,
   Controller,
   Get,
+  Inject,
   Param,
   Post,
   Query,
@@ -41,8 +42,8 @@ import { ContentEnrichmentAdminRepository } from "./content-enrichment-admin.rep
 @DocumentedHttpErrors()
 export class ContentEnrichmentAdminController {
   constructor(
-    private readonly auth: AdminAuthService,
-    private readonly repo: ContentEnrichmentAdminRepository
+    @Inject(AdminAuthService) private readonly auth: AdminAuthService,
+    @Inject(ContentEnrichmentAdminRepository) private readonly repo: ContentEnrichmentAdminRepository
   ) {}
 
   @Get()

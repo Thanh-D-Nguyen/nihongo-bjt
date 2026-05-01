@@ -62,7 +62,7 @@ export type AnalyticsDomainLabels = {
   breakdownDescription: string;
   paginationPrev: string;
   paginationNext: string;
-  paginationOf: (page: number, total: number) => string;
+  paginationOf: string;
   metricLabels: Record<string, string>;
   dimensionLabels: Record<string, string>;
   kpiLabels: Record<string, string>;

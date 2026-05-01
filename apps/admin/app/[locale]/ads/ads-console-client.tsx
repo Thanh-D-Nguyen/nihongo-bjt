@@ -20,25 +20,13 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Bar, BarChart, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import { adminApiFetch } from "@/lib/admin-api";
+import { permsFromMe, type MePayload } from "@/app/_components/admin-client-utils";
 
 const CHART_COLORS = ["#4f46e5", "#059669", "#d97706", "#64748b", "#7c3aed"];
 
 type MeResponse = {
   roles?: Array<{ role?: { permissions?: Array<{ permission?: { code?: string } }> } }>;
 };
-
-function permissionCodesFromMe(data: MeResponse): Set<string> {
-  const codes: string[] = [];
-  for (const r of data.roles ?? []) {
-    for (const p of r.role?.permissions ?? []) {
-      const c = p.permission?.code;
-      if (c) {
-        codes.push(c);
-      }
-    }
-  }
-  return new Set(codes);
-}
 
 type Common = {
   action: string;
@@ -167,7 +155,7 @@ export function AdsConsoleClient({ common, labels }: { common: Common; labels: A
     try {
       const me = await adminApiFetch("/api/admin/me");
       if (me.ok) {
-        setPerms(permissionCodesFromMe((await me.json()) as MeResponse));
+        setPerms(permsFromMe((await me.json()) as MeResponse));
       } else {
         setPerms(new Set());
       }

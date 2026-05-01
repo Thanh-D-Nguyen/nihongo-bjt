@@ -10,6 +10,7 @@ import {
   Body,
   Controller,
   Get,
+  Inject,
   Post,
   Query,
   UnauthorizedException,
@@ -45,12 +46,12 @@ export class LearnerMonetizationController {
   private readonly prisma: PrismaClient = createPrismaClient();
 
   constructor(
-    private readonly billing: LocalBillingProvider,
-    private readonly ads: LocalAdProvider,
-    private readonly entitlements: EntitlementService,
-    private readonly quota: QuotaService,
-    private readonly featureGate: RuntimeFeatureGateService,
-    private readonly legalConsent: LegalConsentService
+    @Inject(LocalBillingProvider) private readonly billing: LocalBillingProvider,
+    @Inject(LocalAdProvider) private readonly ads: LocalAdProvider,
+    @Inject(EntitlementService) private readonly entitlements: EntitlementService,
+    @Inject(QuotaService) private readonly quota: QuotaService,
+    @Inject(RuntimeFeatureGateService) private readonly featureGate: RuntimeFeatureGateService,
+    @Inject(LegalConsentService) private readonly legalConsent: LegalConsentService
   ) {}
 
   @Get("monetization/summary")

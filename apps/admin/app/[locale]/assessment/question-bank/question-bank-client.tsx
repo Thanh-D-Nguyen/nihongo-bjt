@@ -15,12 +15,15 @@ import {
 } from "@nihongo-bjt/ui";
 import {
   ASSESSMENT_BJT_LEVELS,
+  ASSESSMENT_BJT_SECTION_LABELS,
+  ASSESSMENT_BJT_SECTIONS,
   ASSESSMENT_QUESTION_DIFFICULTIES,
   ASSESSMENT_QUESTION_STATUSES
 } from "@nihongo-bjt/shared";
 import { useCallback, useEffect, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
+import { permsFromMe, type MePayload } from "@/app/_components/admin-client-utils";
 
 type CommonLabels = { empty: string; error: string; loading: string; records: string };
 type Labels = Record<string, string>;
@@ -55,9 +58,34 @@ type AuditEntry = {
 
 type Detail = Summary & {
   explanationVi: string | null;
+  qualityFlags: Record<string, unknown> | null;
   options: Option[];
   remediationCard: { id: string; sourceType: string; sourceId: string; frontText: string } | null;
   audit: AuditEntry[];
+};
+
+type SectionChoice = { id: string; code: string; titleVi: string | null; testSlug: string; testLevel: string | null };
+type OptionInput = { optionKey: string; text: string; isCorrect: boolean };
+type QuestionForm = {
+  sectionId: string;
+  prompt: string;
+  scenario: string;
+  explanationVi: string;
+  skillTag: string;
+  difficulty: string;
+  tags: string;
+  options: OptionInput[];
+};
+const DEFAULT_OPTION_KEYS = ["A", "B", "C", "D"];
+const DEFAULT_QUESTION_FORM: QuestionForm = {
+  sectionId: "",
+  prompt: "",
+  scenario: "",
+  explanationVi: "",
+  skillTag: "",
+  difficulty: "standard",
+  tags: "",
+  options: DEFAULT_OPTION_KEYS.map((k, i) => ({ optionKey: k, text: "", isCorrect: i === 0 }))
 };
 
 type ListResponse = { items: Summary[]; total: number; page: number; pageSize: number };
@@ -80,15 +108,6 @@ function downloadCsv(filename: string, header: string[], rows: string[][]) {
   const blob = new Blob([`\uFEFF${body}`], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a"); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-}
-
-type MePayload = { roles?: Array<{ role?: { permissions?: Array<{ permission?: { code?: string } }> } }> };
-function permsFromMe(me: MePayload): Set<string> {
-  const out = new Set<string>();
-  for (const r of me.roles ?? []) for (const link of r.role?.permissions ?? []) {
-    const c = link.permission?.code; if (c) out.add(c);
-  }
-  return out;
 }
 
 type BulkAction = "publish" | "archive" | "tag" | "untag";
@@ -120,6 +139,9 @@ export function QuestionBankAdminClient({ common, labels, locale }: { common: Co
   const [suggestValue, setSuggestValue] = useState("");
   const [suggestRationale, setSuggestRationale] = useState("");
   const [showRemove, setShowRemove] = useState(false);
+  const [showForm, setShowForm] = useState<"create" | "edit" | null>(null);
+  const [qForm, setQForm] = useState<QuestionForm>(DEFAULT_QUESTION_FORM);
+  const [sections, setSections] = useState<SectionChoice[]>([]);
   const [reason, setReason] = useState("");
   const [mutating, setMutating] = useState(false);
   const [toast, setToast] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
@@ -164,6 +186,86 @@ export function QuestionBankAdminClient({ common, labels, locale }: { common: Co
     setDetail((await r.json()) as Detail);
   }, []);
   useEffect(() => { if (selectedId) void loadDetail(selectedId); else setDetail(null); }, [selectedId, loadDetail]);
+
+  /* Load available sections from mock exams for the section picker */
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const r = await adminApiFetch("/api/admin/assessment/mock-exams?page=1&pageSize=50");
+        if (!r.ok || cancelled) return;
+        const body = (await r.json()) as { items: Array<{ id: string; slug: string; level: string | null; sections?: Array<{ id: string; code: string; titleVi: string | null }> }> };
+        /* Fetch details for each exam to get sections */
+        const allSections: SectionChoice[] = [];
+        for (const exam of body.items) {
+          const dr = await adminApiFetch(`/api/admin/assessment/mock-exams/${exam.id}`);
+          if (dr.ok && !cancelled) {
+            const d = (await dr.json()) as { sections: Array<{ id: string; code: string; titleVi: string | null }> };
+            for (const s of d.sections) {
+              allSections.push({ id: s.id, code: s.code, titleVi: s.titleVi, testSlug: exam.slug, testLevel: exam.level });
+            }
+          }
+        }
+        if (!cancelled) setSections(allSections);
+      } catch { /* non-critical */ }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  function openCreate() {
+    setQForm(DEFAULT_QUESTION_FORM);
+    setReason("");
+    setShowForm("create");
+  }
+  function openEdit() {
+    if (!detail) return;
+    setQForm({
+      sectionId: detail.sectionId,
+      prompt: detail.prompt,
+      scenario: detail.scenario ?? "",
+      explanationVi: detail.explanationVi ?? "",
+      skillTag: detail.skillTag,
+      difficulty: detail.difficulty,
+      tags: detail.tags.join(", "),
+      options: detail.options.map((o) => ({ optionKey: o.optionKey, text: o.text, isCorrect: o.isCorrect }))
+    });
+    setReason("");
+    setShowForm("edit");
+  }
+
+  async function submitQuestion() {
+    if (!canManage) return;
+    if (reason.trim().length < 3) { setToast({ kind: "err", text: t("reasonRequired") }); return; }
+    if (!qForm.sectionId) { setToast({ kind: "err", text: t("sectionRequired") }); return; }
+    if (!qForm.prompt.trim()) { setToast({ kind: "err", text: t("promptRequired") }); return; }
+    const correctCount = qForm.options.filter((o) => o.isCorrect).length;
+    if (correctCount !== 1) { setToast({ kind: "err", text: t("exactlyOneCorrect") }); return; }
+    const emptyOption = qForm.options.some((o) => !o.text.trim());
+    if (emptyOption) { setToast({ kind: "err", text: t("optionTextRequired") }); return; }
+    setMutating(true);
+    try {
+      const body: Record<string, unknown> = {
+        sectionId: qForm.sectionId,
+        prompt: qForm.prompt.trim(),
+        scenario: qForm.scenario.trim() || null,
+        explanationVi: qForm.explanationVi.trim(),
+        skillTag: qForm.skillTag.trim() || "general",
+        difficulty: qForm.difficulty,
+        tags: qForm.tags.split(",").map((s) => s.trim()).filter((s) => s.length > 0),
+        options: qForm.options.map((o) => ({ optionKey: o.optionKey, text: o.text.trim(), isCorrect: o.isCorrect })),
+        reason: reason.trim()
+      };
+      const url = showForm === "create" ? "/api/admin/assessment/question-bank" : `/api/admin/assessment/question-bank/${detail?.id}`;
+      const method = showForm === "create" ? "POST" : "PATCH";
+      const r = await adminApiFetch(url, { method, body: JSON.stringify(body) });
+      if (!r.ok) { const err = await r.text(); setToast({ kind: "err", text: err || t("saveFailed") }); return; }
+      const saved = (await r.json()) as { id: string };
+      setShowForm(null);
+      setToast({ kind: "ok", text: t("saveOk") });
+      void loadList();
+      setSelectedId(saved.id);
+    } finally { setMutating(false); }
+  }
 
   function toggleRow(id: string) {
     setSelectedIds((prev) => {
@@ -273,6 +375,7 @@ export function QuestionBankAdminClient({ common, labels, locale }: { common: Co
           <label className="flex flex-col text-xs"><span className="mb-1 font-medium text-slate-600">{t("filterTopic")}</span><input className="rounded border border-slate-300 px-3 py-2 text-sm" placeholder="vocab.verb" value={topicFilter} onChange={(e) => setTopicFilter(e.target.value)} /></label>
           <label className="flex flex-col text-xs"><span className="mb-1 font-medium text-slate-600">{t("filterTags")}</span><input className="rounded border border-slate-300 px-3 py-2 text-sm" placeholder="bjt,verb" value={tagFilter} onChange={(e) => setTagFilter(e.target.value)} /></label>
           <button className="ml-auto rounded border border-slate-300 px-3 py-2 text-sm hover:bg-slate-50" onClick={exportCsv} type="button">{t("exportCsv")}</button>
+          {canManage ? <button className="rounded bg-slate-900 px-3 py-2 text-sm font-medium text-white" onClick={openCreate} type="button">{t("createQuestion")}</button> : null}
         </div>
       </AdminSection>
 
@@ -357,8 +460,28 @@ export function QuestionBankAdminClient({ common, labels, locale }: { common: Co
                 <span className="text-slate-600">{detail.difficulty}</span>
                 <span className="text-slate-600">{detail.section?.test.level ?? "—"}</span>
               </div>
+              {detail.qualityFlags ? (() => {
+                const qf = detail.qualityFlags;
+                const bjtPart = qf.bjtPart as string | undefined;
+                const bjtSection = qf.bjtSection as string | undefined;
+                const businessSituation = qf.businessSituation as string | undefined;
+                const stimulusKind = qf.stimulusKind as string | undefined;
+                const hasAny = bjtPart || bjtSection || businessSituation || stimulusKind;
+                return hasAny ? (
+                  <div className="rounded border border-blue-100 bg-blue-50 p-3">
+                    <h4 className="mb-1 text-xs font-semibold text-blue-800">{t("bjtMetadata")}</h4>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-blue-700">
+                      {bjtPart ? <span><span className="font-medium">{t("bjtPart")}:</span> {bjtPart}</span> : null}
+                      {bjtSection ? <span><span className="font-medium">{t("bjtSectionLabel")}:</span> {bjtSection} {ASSESSMENT_BJT_SECTION_LABELS[bjtSection] ? `(${ASSESSMENT_BJT_SECTION_LABELS[bjtSection]})` : ""}</span> : null}
+                      {businessSituation ? <span><span className="font-medium">{t("businessSituation")}:</span> {businessSituation}</span> : null}
+                      {stimulusKind ? <span><span className="font-medium">{t("stimulusKind")}:</span> {stimulusKind}</span> : null}
+                    </div>
+                  </div>
+                ) : null;
+              })() : null}
               {canReview ? (
                 <div className="flex flex-wrap gap-2">
+                  {canManage ? <button className="rounded border border-slate-300 px-3 py-1 text-sm" onClick={openEdit} type="button">{t("editQuestion")}</button> : null}
                   <button className="rounded bg-amber-600 px-3 py-1 text-sm text-white" onClick={() => { setReason(""); setSuggestField("prompt"); setSuggestValue(detail.prompt); setSuggestRationale(""); setShowSuggest(true); }} type="button">{t("suggestEdit")}</button>
                   {canManage ? <button className="rounded border border-red-300 px-3 py-1 text-sm text-red-700" onClick={() => { setReason(""); setShowRemove(true); }} type="button">{t("delete")}</button> : null}
                 </div>
@@ -446,6 +569,87 @@ export function QuestionBankAdminClient({ common, labels, locale }: { common: Co
             <div className="mt-4 flex justify-end gap-2">
               <button className="rounded border border-slate-300 px-3 py-2 text-sm" onClick={() => setShowRemove(false)} type="button">{t("cancel")}</button>
               <button className="rounded bg-red-600 px-3 py-2 text-sm font-medium text-white disabled:opacity-50" disabled={mutating} onClick={submitRemove} type="button">{t("removeSubmit")}</button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showForm ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-lg bg-white p-6 shadow-2xl">
+            <h2 className="mb-4 text-lg font-semibold">{showForm === "create" ? t("createHeading") : t("editHeading")}</h2>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <label className="col-span-2 flex flex-col gap-1">
+                <span className="text-xs font-medium text-slate-600">{t("formSection")}</span>
+                <select className="rounded border border-slate-300 px-3 py-2" value={qForm.sectionId} onChange={(e) => setQForm({ ...qForm, sectionId: e.target.value })}>
+                  <option value="">{t("selectSection")}</option>
+                  {sections.map((s) => (
+                    <option key={s.id} value={s.id}>{s.testSlug} / {s.code} {ASSESSMENT_BJT_SECTION_LABELS[s.code] ?? s.titleVi ?? ""} {s.testLevel ? `(${s.testLevel})` : ""}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="col-span-2 flex flex-col gap-1">
+                <span className="text-xs font-medium text-slate-600">{t("formPrompt")}</span>
+                <textarea className="rounded border border-slate-300 px-3 py-2" rows={3} value={qForm.prompt} onChange={(e) => setQForm({ ...qForm, prompt: e.target.value })} />
+              </label>
+              <label className="col-span-2 flex flex-col gap-1">
+                <span className="text-xs font-medium text-slate-600">{t("formScenario")} ({t("optional")})</span>
+                <textarea className="rounded border border-slate-300 px-3 py-2" rows={2} value={qForm.scenario} onChange={(e) => setQForm({ ...qForm, scenario: e.target.value })} />
+              </label>
+              <label className="col-span-2 flex flex-col gap-1">
+                <span className="text-xs font-medium text-slate-600">{t("formExplanation")}</span>
+                <textarea className="rounded border border-slate-300 px-3 py-2" rows={2} value={qForm.explanationVi} onChange={(e) => setQForm({ ...qForm, explanationVi: e.target.value })} />
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="text-xs font-medium text-slate-600">{t("formSkillTag")}</span>
+                <input className="rounded border border-slate-300 px-3 py-2" value={qForm.skillTag} onChange={(e) => setQForm({ ...qForm, skillTag: e.target.value })} />
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="text-xs font-medium text-slate-600">{t("formDifficultyField")}</span>
+                <select className="rounded border border-slate-300 px-3 py-2" value={qForm.difficulty} onChange={(e) => setQForm({ ...qForm, difficulty: e.target.value })}>
+                  {ASSESSMENT_QUESTION_DIFFICULTIES.map((d) => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </label>
+              <label className="col-span-2 flex flex-col gap-1">
+                <span className="text-xs font-medium text-slate-600">{t("formTagsField")}</span>
+                <input className="rounded border border-slate-300 px-3 py-2" placeholder="bjt, rc_integrated, ..." value={qForm.tags} onChange={(e) => setQForm({ ...qForm, tags: e.target.value })} />
+              </label>
+
+              <div className="col-span-2">
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="text-xs font-medium text-slate-600">{t("formOptions")} ({qForm.options.length} {t("items")})</span>
+                  {qForm.options.length < 8 ? (
+                    <button type="button" className="rounded border border-slate-300 px-2 py-1 text-xs" onClick={() => {
+                      const nextKey = String.fromCharCode(65 + qForm.options.length);
+                      setQForm({ ...qForm, options: [...qForm.options, { optionKey: nextKey, text: "", isCorrect: false }] });
+                    }}>+ {t("addOption")}</button>
+                  ) : null}
+                </div>
+                <div className="space-y-2">
+                  {qForm.options.map((opt, idx) => (
+                    <div key={idx} className="grid grid-cols-12 gap-2 items-center">
+                      <input className="col-span-1 rounded border border-slate-300 px-2 py-1 text-center text-xs font-bold" value={opt.optionKey} onChange={(e) => setQForm({ ...qForm, options: qForm.options.map((o, i) => i === idx ? { ...o, optionKey: e.target.value } : o) })} />
+                      <input className="col-span-8 rounded border border-slate-300 px-2 py-1 text-sm" placeholder={t("optionTextPlaceholder")} value={opt.text} onChange={(e) => setQForm({ ...qForm, options: qForm.options.map((o, i) => i === idx ? { ...o, text: e.target.value } : o) })} />
+                      <label className="col-span-2 flex items-center gap-1 text-xs">
+                        <input type="radio" name="correctOption" checked={opt.isCorrect} onChange={() => setQForm({ ...qForm, options: qForm.options.map((o, i) => ({ ...o, isCorrect: i === idx })) })} />
+                        {t("correct")}
+                      </label>
+                      {qForm.options.length > 2 ? (
+                        <button type="button" className="col-span-1 rounded border border-red-300 text-xs text-red-600" onClick={() => setQForm({ ...qForm, options: qForm.options.filter((_, i) => i !== idx) })}>×</button>
+                      ) : <div className="col-span-1" />}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <label className="col-span-2 flex flex-col gap-1">
+                <span className="text-xs font-medium text-slate-600">{t("formReason")}</span>
+                <input className="rounded border border-slate-300 px-3 py-2" value={reason} onChange={(e) => setReason(e.target.value)} />
+              </label>
+            </div>
+            <div className="mt-4 flex justify-end gap-2">
+              <button className="rounded border border-slate-300 px-3 py-2 text-sm" onClick={() => setShowForm(null)} type="button">{t("cancel")}</button>
+              <button className="rounded bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50" disabled={mutating} onClick={submitQuestion} type="button">{showForm === "create" ? t("createSubmit") : t("editSubmit")}</button>
             </div>
           </div>
         </div>
