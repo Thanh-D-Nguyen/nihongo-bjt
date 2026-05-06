@@ -25,6 +25,18 @@ async function main() {
     update: {},
     where: { key: "quiz.bjt.start" }
   });
+  const eQuizOfficialSimulation = await prisma.entitlementDefinition.upsert({
+    create: {
+      category: "bjt",
+      description: "Access paid official-format BJT simulation templates.",
+      key: "quiz.official_simulation"
+    },
+    update: {
+      category: "bjt",
+      description: "Access paid official-format BJT simulation templates."
+    },
+    where: { key: "quiz.official_simulation" }
+  });
   const eAdsRemove = await prisma.entitlementDefinition.upsert({
     create: { key: "ads.remove" },
     update: {},
@@ -77,7 +89,14 @@ async function main() {
     update: {},
     where: { planId_entitlementId: { entitlementId: eAds.id, planId: plus.id } }
   });
-  for (const entitlement of [eBasic, eDeckCreate, eQuizStart, eAds, eAdsRemove]) {
+  for (const entitlement of [
+    eBasic,
+    eDeckCreate,
+    eQuizStart,
+    eQuizOfficialSimulation,
+    eAds,
+    eAdsRemove
+  ]) {
     await prisma.planEntitlement.upsert({
       create: { entitlementId: entitlement.id, planId: standard.id },
       update: {},

@@ -15,6 +15,7 @@ import {
 } from "@nihongo-bjt/ui";
 import {
   BATTLE_BOT_DIFFICULTIES,
+  BATTLE_BOT_STYLE_TOKENS,
   BATTLE_BOT_VOCAB_LEVELS
 } from "@nihongo-bjt/shared";
 import { useCallback, useEffect, useState } from "react";
@@ -26,6 +27,8 @@ type Labels = Record<string, string>;
 type CommonLabels = { empty: string; error: string; loading: string; records: string };
 
 type BotSummary = {
+  avatarFallback: string;
+  botKey: string;
   id: string;
   name: string;
   difficulty: "easy" | "medium" | "hard";
@@ -33,6 +36,8 @@ type BotSummary = {
   accuracyPct: number;
   minDelayMs: number;
   maxDelayMs: number;
+  riveSrc: string | null;
+  styleToken: "calm" | "focused" | "sharp";
   vocabularyLevel: string;
   createdAt: string;
   updatedAt: string;
@@ -48,27 +53,50 @@ type AuditEntry = {
   actor: { id: string; displayName: string; email: string } | null;
 };
 
-type BotDetail = BotSummary & { persona: string | null; audit: AuditEntry[] };
+type BotDetail = BotSummary & {
+  audit: AuditEntry[];
+  persona: string | null;
+  riveArtboard: string;
+  riveLicense: string | null;
+  riveProvenance: Record<string, unknown>;
+  riveStateMachine: string;
+};
 
 type ListResponse = { items: BotSummary[]; total: number; page: number; pageSize: number };
 
 type FormState = {
+  avatarFallback: string;
+  botKey: string;
   name: string;
   difficulty: "easy" | "medium" | "hard";
   persona: string;
   accuracyPct: number;
   minDelayMs: number;
   maxDelayMs: number;
+  riveArtboard: string;
+  riveLicense: string;
+  riveProvenanceJson: string;
+  riveSrc: string;
+  riveStateMachine: string;
+  styleToken: "calm" | "focused" | "sharp";
   vocabularyLevel: string;
 };
 
 const DEFAULT_FORM: FormState = {
   accuracyPct: 70,
+  avatarFallback: "J3",
+  botKey: "bot_j3_custom",
   difficulty: "medium",
   maxDelayMs: 4000,
   minDelayMs: 1500,
   name: "",
   persona: "",
+  riveArtboard: "__default__",
+  riveLicense: "",
+  riveProvenanceJson: "{}",
+  riveSrc: "",
+  riveStateMachine: "__none__",
+  styleToken: "focused",
   vocabularyLevel: BATTLE_BOT_VOCAB_LEVELS[2] ?? "jlpt_n3"
 };
 
@@ -126,7 +154,9 @@ export function BattleBotsClient({
 
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "disabled" | "archived">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "disabled" | "archived">(
+    "all"
+  );
   const [diffFilter, setDiffFilter] = useState<"all" | "easy" | "medium" | "hard">("all");
   const [page, setPage] = useState(1);
 
@@ -241,14 +271,26 @@ export function BattleBotsClient({
     if (!list) return;
     downloadCsv(
       `battle-bots-page-${list.page}.csv`,
-      [t("colName"), t("colDifficulty"), t("colStatus"), t("colAccuracy"), t("colDelay"), t("colVocab"), t("colUpdated")],
+      [
+        t("colBotKey"),
+        t("colName"),
+        t("colDifficulty"),
+        t("colStatus"),
+        t("colAccuracy"),
+        t("colDelay"),
+        t("colVocab"),
+        t("colRive"),
+        t("colUpdated")
+      ],
       list.items.map((row) => [
+        row.botKey,
         row.name,
         row.difficulty,
         row.status,
         `${row.accuracyPct}%`,
         `${row.minDelayMs}-${row.maxDelayMs}ms`,
         row.vocabularyLevel,
+        row.riveSrc ? "configured" : "fallback",
         row.updatedAt
       ])
     );
@@ -270,22 +312,42 @@ export function BattleBotsClient({
 
   const validateForm = (state: FormState): Record<string, string> => {
     const errs: Record<string, string> = {};
+    if (!/^[a-z0-9][a-z0-9_-]*$/i.test(state.botKey.trim())) errs.botKey = t("formErrBotKey");
     if (state.name.trim().length < 2) errs.name = t("formErrName");
+    if (state.avatarFallback.trim().length < 1) errs.avatarFallback = t("formErrAvatar");
     if (state.accuracyPct < 0 || state.accuracyPct > 100) errs.accuracyPct = t("formErrAccuracy");
     if (state.minDelayMs < 0 || state.minDelayMs > 60000) errs.minDelayMs = t("formErrDelay");
     if (state.maxDelayMs < 0 || state.maxDelayMs > 60000) errs.maxDelayMs = t("formErrDelay");
     if (state.maxDelayMs < state.minDelayMs) errs.maxDelayMs = t("formErrDelayOrder");
+    if (state.riveArtboard.trim().length < 1) errs.riveArtboard = t("formErrRive");
+    if (state.riveStateMachine.trim().length < 1) errs.riveStateMachine = t("formErrRive");
+    try {
+      const parsed = JSON.parse(state.riveProvenanceJson || "{}") as unknown;
+      if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+        errs.riveProvenanceJson = t("formErrJson");
+      }
+    } catch {
+      errs.riveProvenanceJson = t("formErrJson");
+    }
     return errs;
   };
 
   const buildBody = (state: FormState, withReason: string) => ({
     accuracyPct: state.accuracyPct,
+    avatarFallback: state.avatarFallback.trim(),
+    botKey: state.botKey.trim(),
     difficulty: state.difficulty,
     maxDelayMs: state.maxDelayMs,
     minDelayMs: state.minDelayMs,
     name: state.name.trim(),
     persona: state.persona.trim() || null,
     reason: withReason,
+    riveArtboard: state.riveArtboard.trim(),
+    riveLicense: state.riveLicense.trim() || null,
+    riveProvenance: JSON.parse(state.riveProvenanceJson || "{}") as Record<string, unknown>,
+    riveSrc: state.riveSrc.trim() || null,
+    riveStateMachine: state.riveStateMachine.trim(),
+    styleToken: state.styleToken,
     vocabularyLevel: state.vocabularyLevel
   });
 
@@ -406,11 +468,19 @@ export function BattleBotsClient({
 
   const detailToForm = (d: BotDetail): FormState => ({
     accuracyPct: d.accuracyPct,
+    avatarFallback: d.avatarFallback,
+    botKey: d.botKey,
     difficulty: d.difficulty,
     maxDelayMs: d.maxDelayMs,
     minDelayMs: d.minDelayMs,
     name: d.name,
     persona: d.persona ?? "",
+    riveArtboard: d.riveArtboard,
+    riveLicense: d.riveLicense ?? "",
+    riveProvenanceJson: JSON.stringify(d.riveProvenance ?? {}, null, 2),
+    riveSrc: d.riveSrc ?? "",
+    riveStateMachine: d.riveStateMachine,
+    styleToken: d.styleToken,
     vocabularyLevel: d.vocabularyLevel
   });
 
@@ -444,7 +514,9 @@ export function BattleBotsClient({
       >
         <div className="mb-3 flex flex-wrap items-end gap-3">
           <label className="block flex-1 min-w-[200px] text-sm">
-            <span className="block text-xs font-medium text-slate-600">{t("searchPlaceholder")}</span>
+            <span className="block text-xs font-medium text-slate-600">
+              {t("searchPlaceholder")}
+            </span>
             <input
               className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
               onChange={(e) => setSearch(e.target.value)}
@@ -467,7 +539,9 @@ export function BattleBotsClient({
             </select>
           </label>
           <label className="block min-w-[140px] text-sm">
-            <span className="block text-xs font-medium text-slate-600">{t("filterDifficulty")}</span>
+            <span className="block text-xs font-medium text-slate-600">
+              {t("filterDifficulty")}
+            </span>
             <select
               className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
               onChange={(e) => setDiffFilter(e.target.value as typeof diffFilter)}
@@ -524,12 +598,14 @@ export function BattleBotsClient({
             <AdminDataTable>
               <AdminDataTableHead>
                 <AdminDataTableRow>
+                  <AdminDataTableTh>{t("colBotKey")}</AdminDataTableTh>
                   <AdminDataTableTh>{t("colName")}</AdminDataTableTh>
                   <AdminDataTableTh>{t("colDifficulty")}</AdminDataTableTh>
                   <AdminDataTableTh>{t("colStatus")}</AdminDataTableTh>
                   <AdminDataTableTh>{t("colAccuracy")}</AdminDataTableTh>
                   <AdminDataTableTh>{t("colDelay")}</AdminDataTableTh>
                   <AdminDataTableTh>{t("colVocab")}</AdminDataTableTh>
+                  <AdminDataTableTh>{t("colRive")}</AdminDataTableTh>
                   <AdminDataTableTh>{t("colUpdated")}</AdminDataTableTh>
                 </AdminDataTableRow>
               </AdminDataTableHead>
@@ -543,8 +619,11 @@ export function BattleBotsClient({
                     key={row.id}
                     onClick={() => setSelectedId(row.id)}
                   >
+                    <AdminDataTableTd className="font-mono text-xs">{row.botKey}</AdminDataTableTd>
                     <AdminDataTableTd>{row.name}</AdminDataTableTd>
-                    <AdminDataTableTd>{t(`difficulty_${row.difficulty}`) || row.difficulty}</AdminDataTableTd>
+                    <AdminDataTableTd>
+                      {t(`difficulty_${row.difficulty}`) || row.difficulty}
+                    </AdminDataTableTd>
                     <AdminDataTableTd>
                       <AdminStatusBadge tone={statusTone(row.status)}>
                         {t(`status_${row.status}`) || row.status}
@@ -555,6 +634,11 @@ export function BattleBotsClient({
                       {row.minDelayMs}–{row.maxDelayMs} ms
                     </AdminDataTableTd>
                     <AdminDataTableTd>{row.vocabularyLevel}</AdminDataTableTd>
+                    <AdminDataTableTd>
+                      <AdminStatusBadge tone={row.riveSrc ? "good" : "warning"}>
+                        {row.riveSrc ? t("riveConfigured") : t("riveFallback")}
+                      </AdminStatusBadge>
+                    </AdminDataTableTd>
                     <AdminDataTableTd>{formatWhen(row.updatedAt, locale)}</AdminDataTableTd>
                   </AdminDataTableRow>
                 ))}
@@ -683,6 +767,8 @@ export function BattleBotsClient({
                 <dl className="grid grid-cols-2 gap-x-4 gap-y-2 rounded-lg border border-slate-200 bg-slate-50/60 p-3 text-xs">
                   <dt className="text-slate-500">{t("colName")}</dt>
                   <dd>{detail.name}</dd>
+                  <dt className="text-slate-500">{t("colBotKey")}</dt>
+                  <dd className="font-mono">{detail.botKey}</dd>
                   <dt className="text-slate-500">{t("colDifficulty")}</dt>
                   <dd>{t(`difficulty_${detail.difficulty}`) || detail.difficulty}</dd>
                   <dt className="text-slate-500">{t("colAccuracy")}</dt>
@@ -693,6 +779,18 @@ export function BattleBotsClient({
                   </dd>
                   <dt className="text-slate-500">{t("colVocab")}</dt>
                   <dd>{detail.vocabularyLevel}</dd>
+                  <dt className="text-slate-500">{t("formAvatar")}</dt>
+                  <dd>{detail.avatarFallback}</dd>
+                  <dt className="text-slate-500">{t("formStyleToken")}</dt>
+                  <dd>{detail.styleToken}</dd>
+                  <dt className="text-slate-500">{t("formRiveSrc")}</dt>
+                  <dd className="break-all">{detail.riveSrc ?? "—"}</dd>
+                  <dt className="text-slate-500">{t("formRiveArtboard")}</dt>
+                  <dd>{detail.riveArtboard}</dd>
+                  <dt className="text-slate-500">{t("formRiveStateMachine")}</dt>
+                  <dd>{detail.riveStateMachine}</dd>
+                  <dt className="text-slate-500">{t("formRiveLicense")}</dt>
+                  <dd>{detail.riveLicense ?? "—"}</dd>
                   <dt className="text-slate-500">{t("formPersona")}</dt>
                   <dd className="whitespace-pre-wrap">{detail.persona ?? "—"}</dd>
                 </dl>
@@ -707,12 +805,17 @@ export function BattleBotsClient({
                 ) : (
                   <ul className="space-y-1 text-xs">
                     {detail.audit.map((a) => (
-                      <li key={a.id} className="rounded-md border border-slate-200 bg-white px-2 py-1">
+                      <li
+                        key={a.id}
+                        className="rounded-md border border-slate-200 bg-white px-2 py-1"
+                      >
                         <span className="font-mono text-[10px] text-slate-500">
                           {formatWhen(a.createdAt, locale)}
                         </span>{" "}
                         <span className="font-semibold text-slate-700">{a.action}</span>{" "}
-                        <span className="text-slate-500">{a.actor?.displayName ?? a.actor?.email ?? "—"}</span>
+                        <span className="text-slate-500">
+                          {a.actor?.displayName ?? a.actor?.email ?? "—"}
+                        </span>
                         {a.reason ? <p className="text-slate-600">{a.reason}</p> : null}
                       </li>
                     ))}
@@ -745,7 +848,10 @@ export function BattleBotsClient({
       ) : null}
 
       {confirm && detail ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4" role="dialog">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
+          role="dialog"
+        >
           <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl">
             <h3 className="text-base font-semibold">{t(`confirm_${confirm}_title`)}</h3>
             <p className="mt-1 text-sm text-slate-600">
@@ -824,6 +930,17 @@ function BotForm({
     <div className="space-y-3 text-sm">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label className="block">
+          <span className="block text-xs font-medium text-slate-600">{t("formBotKey")}</span>
+          <input
+            className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 font-mono text-sm"
+            onChange={(e) => setForm({ ...form, botKey: e.target.value })}
+            value={form.botKey}
+          />
+          {errors.botKey ? (
+            <span className="text-[10px] text-rose-600">{errors.botKey}</span>
+          ) : null}
+        </label>
+        <label className="block">
           <span className="block text-xs font-medium text-slate-600">{t("formName")}</span>
           <input
             className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
@@ -836,7 +953,9 @@ function BotForm({
           <span className="block text-xs font-medium text-slate-600">{t("formDifficulty")}</span>
           <select
             className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
-            onChange={(e) => setForm({ ...form, difficulty: e.target.value as FormState["difficulty"] })}
+            onChange={(e) =>
+              setForm({ ...form, difficulty: e.target.value as FormState["difficulty"] })
+            }
             value={form.difficulty}
           >
             {BATTLE_BOT_DIFFICULTIES.map((d) => (
@@ -856,7 +975,9 @@ function BotForm({
             type="number"
             value={form.accuracyPct}
           />
-          {errors.accuracyPct ? <span className="text-[10px] text-rose-600">{errors.accuracyPct}</span> : null}
+          {errors.accuracyPct ? (
+            <span className="text-[10px] text-rose-600">{errors.accuracyPct}</span>
+          ) : null}
         </label>
         <label className="block">
           <span className="block text-xs font-medium text-slate-600">{t("formVocab")}</span>
@@ -873,6 +994,34 @@ function BotForm({
           </select>
         </label>
         <label className="block">
+          <span className="block text-xs font-medium text-slate-600">{t("formAvatar")}</span>
+          <input
+            className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+            maxLength={12}
+            onChange={(e) => setForm({ ...form, avatarFallback: e.target.value })}
+            value={form.avatarFallback}
+          />
+          {errors.avatarFallback ? (
+            <span className="text-[10px] text-rose-600">{errors.avatarFallback}</span>
+          ) : null}
+        </label>
+        <label className="block">
+          <span className="block text-xs font-medium text-slate-600">{t("formStyleToken")}</span>
+          <select
+            className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+            onChange={(e) =>
+              setForm({ ...form, styleToken: e.target.value as FormState["styleToken"] })
+            }
+            value={form.styleToken}
+          >
+            {BATTLE_BOT_STYLE_TOKENS.map((token) => (
+              <option key={token} value={token}>
+                {t(`style_${token}`)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
           <span className="block text-xs font-medium text-slate-600">{t("formMinDelay")}</span>
           <input
             className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
@@ -881,7 +1030,9 @@ function BotForm({
             type="number"
             value={form.minDelayMs}
           />
-          {errors.minDelayMs ? <span className="text-[10px] text-rose-600">{errors.minDelayMs}</span> : null}
+          {errors.minDelayMs ? (
+            <span className="text-[10px] text-rose-600">{errors.minDelayMs}</span>
+          ) : null}
         </label>
         <label className="block">
           <span className="block text-xs font-medium text-slate-600">{t("formMaxDelay")}</span>
@@ -892,7 +1043,66 @@ function BotForm({
             type="number"
             value={form.maxDelayMs}
           />
-          {errors.maxDelayMs ? <span className="text-[10px] text-rose-600">{errors.maxDelayMs}</span> : null}
+          {errors.maxDelayMs ? (
+            <span className="text-[10px] text-rose-600">{errors.maxDelayMs}</span>
+          ) : null}
+        </label>
+      </div>
+      <div className="grid grid-cols-1 gap-3 rounded-lg border border-slate-200 bg-slate-50/70 p-3 sm:grid-cols-2">
+        <label className="block sm:col-span-2">
+          <span className="block text-xs font-medium text-slate-600">{t("formRiveSrc")}</span>
+          <input
+            className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+            onChange={(e) => setForm({ ...form, riveSrc: e.target.value })}
+            placeholder="/assets/battle/bots/sakura.riv"
+            value={form.riveSrc}
+          />
+        </label>
+        <label className="block">
+          <span className="block text-xs font-medium text-slate-600">{t("formRiveArtboard")}</span>
+          <input
+            className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+            onChange={(e) => setForm({ ...form, riveArtboard: e.target.value })}
+            value={form.riveArtboard}
+          />
+          {errors.riveArtboard ? (
+            <span className="text-[10px] text-rose-600">{errors.riveArtboard}</span>
+          ) : null}
+        </label>
+        <label className="block">
+          <span className="block text-xs font-medium text-slate-600">
+            {t("formRiveStateMachine")}
+          </span>
+          <input
+            className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+            onChange={(e) => setForm({ ...form, riveStateMachine: e.target.value })}
+            value={form.riveStateMachine}
+          />
+          {errors.riveStateMachine ? (
+            <span className="text-[10px] text-rose-600">{errors.riveStateMachine}</span>
+          ) : null}
+        </label>
+        <label className="block sm:col-span-2">
+          <span className="block text-xs font-medium text-slate-600">{t("formRiveLicense")}</span>
+          <input
+            className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+            onChange={(e) => setForm({ ...form, riveLicense: e.target.value })}
+            value={form.riveLicense}
+          />
+        </label>
+        <label className="block sm:col-span-2">
+          <span className="block text-xs font-medium text-slate-600">
+            {t("formRiveProvenance")}
+          </span>
+          <textarea
+            className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 font-mono text-xs"
+            onChange={(e) => setForm({ ...form, riveProvenanceJson: e.target.value })}
+            rows={4}
+            value={form.riveProvenanceJson}
+          />
+          {errors.riveProvenanceJson ? (
+            <span className="text-[10px] text-rose-600">{errors.riveProvenanceJson}</span>
+          ) : null}
         </label>
       </div>
       <label className="block">

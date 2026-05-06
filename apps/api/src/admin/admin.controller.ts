@@ -61,7 +61,7 @@ import { AdminModuleContractOpenApiDto } from "../openapi/dto/backend-api-openap
 import { AdminAuthService } from "./admin-auth.service.js";
 import { LogAdminAction } from "./admin-audit.decorator.js";
 import { AdminRbacGuard } from "./admin-rbac.guard.js";
-import { RequireAdminPermissions } from "./admin.rbac.js";
+import { AdminPortalSessionBootstrap, RequireAdminPermissions } from "./admin.rbac.js";
 import { ADMIN_MODULE_CONTRACTS } from "./admin-module-contracts.js";
 import { AdminRepository } from "./admin.repository.js";
 import { AdminUserInviteService } from "./admin-user-invite.service.js";
@@ -123,6 +123,7 @@ export class AdminController {
   ) {}
 
   @Get("session")
+  @AdminPortalSessionBootstrap()
   @ApiTags("Auth", "RBAC")
   @ApiOperation({
     summary: "Validate admin portal session (Keycloak JWT + realm role gate, linked `admin_actor`)."

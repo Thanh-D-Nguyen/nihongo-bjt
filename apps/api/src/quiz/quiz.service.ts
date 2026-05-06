@@ -1,7 +1,10 @@
 import { createPrismaClient, Prisma } from "@nihongo-bjt/database";
-import { Inject, Injectable } from "@nestjs/common";
+import { ForbiddenException, Inject, Injectable, NotFoundException } from "@nestjs/common";
 
+import { EntitlementService } from "../monetization/entitlement.service.js";
+import { EntitlementKey, FeatureFlagKey } from "../monetization/monetization.constants.js";
 import { QuotaService } from "../monetization/quota.service.js";
+import { RuntimeFeatureGateService } from "../operations/runtime-feature-gate.service.js";
 import { QuizRepository } from "./quiz.repository.js";
 
 @Injectable()
@@ -10,10 +13,34 @@ export class QuizService {
 
   constructor(
     @Inject(QuizRepository) private readonly quizRepository: QuizRepository,
-    @Inject(QuotaService) private readonly quotaService: QuotaService
+    @Inject(QuotaService) private readonly quotaService: QuotaService,
+    @Inject(EntitlementService) private readonly entitlementService: EntitlementService,
+    @Inject(RuntimeFeatureGateService) private readonly featureGate: RuntimeFeatureGateService
   ) {}
 
   async startSessionWithQuota(testId: string, userId: string) {
+    const template = await this.quizRepository.templateAccessMeta(testId);
+    if (!template) {
+      throw new NotFoundException("Quiz template not found");
+    }
+
+    if (template.type === "official") {
+      await this.featureGate.requireEnabled(FeatureFlagKey.quiz_official_simulation, {
+        message: "Official BJT simulation is temporarily closed"
+      });
+      const { entitlements, planSlug } =
+        await this.entitlementService.listEntitlementKeysForUser(userId);
+      if (!entitlements.includes(EntitlementKey.quiz_official_simulation)) {
+        throw new ForbiddenException({
+          code: "ENTITLEMENT_DENIED",
+          entitlementKey: EntitlementKey.quiz_official_simulation,
+          message: "Your current plan does not include official BJT simulation",
+          planSlug,
+          upgradeRequired: true
+        });
+      }
+    }
+
     return this.prisma.$transaction(
       async (tx) => {
         const session = await this.quizRepository.startSession(testId, userId, tx);
@@ -22,5 +49,22 @@ export class QuizService {
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
     );
+  }
+
+  async officialSimulationStatus(userId: string) {
+    const [feature, resolved, availableTemplates] = await Promise.all([
+      this.featureGate.status(FeatureFlagKey.quiz_official_simulation),
+      this.entitlementService.listEntitlementKeysForUser(userId),
+      this.prisma.bjtMockTest.count({ where: { status: "published", type: "official" } })
+    ]);
+
+    return {
+      availableTemplates,
+      enabled: feature.enabled,
+      entitlementKey: EntitlementKey.quiz_official_simulation,
+      entitled: resolved.entitlements.includes(EntitlementKey.quiz_official_simulation),
+      featureFlag: FeatureFlagKey.quiz_official_simulation,
+      planSlug: resolved.planSlug
+    };
   }
 }

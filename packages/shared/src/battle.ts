@@ -28,32 +28,97 @@ export function shuffleDeterministic<T>(items: T[], seedString: string): T[] {
 }
 
 export type BattleBotProfile = {
+  avatarFallback: string;
   correctProbability: number;
   labelI18nKey: string;
   maxDelayMs: number;
   minDelayMs: number;
+  personaI18nKey: string;
+  rive: {
+    artboard: string | null;
+    src: string | null;
+    stateMachine: string | null;
+  };
+  styleToken: "calm" | "focused" | "sharp";
 };
 
 export const BATTLE_BOT_PROFILES: Record<string, BattleBotProfile> = {
+  bot_j1: {
+    avatarFallback: "J1",
+    correctProbability: 0.76,
+    labelI18nKey: "battle.bots.j1",
+    maxDelayMs: 1700,
+    minDelayMs: 260,
+    personaI18nKey: "battle.botPersonas.j1",
+    rive: {
+      artboard: null,
+      src: "/assets/battle/bots/23764-44433-character-customization-ui.riv",
+      stateMachine: null
+    },
+    styleToken: "sharp"
+  },
   bot_j2: {
+    avatarFallback: "J2",
     correctProbability: 0.4,
     labelI18nKey: "battle.bots.j2",
     maxDelayMs: 2400,
-    minDelayMs: 450
+    minDelayMs: 450,
+    personaI18nKey: "battle.botPersonas.j2",
+    rive: {
+      artboard: null,
+      src: "/assets/battle/bots/18912-35694-lil-guy.riv",
+      stateMachine: null
+    },
+    styleToken: "calm"
   },
   bot_j3: {
+    avatarFallback: "J3",
     correctProbability: 0.55,
     labelI18nKey: "battle.bots.j3",
     maxDelayMs: 2000,
-    minDelayMs: 350
+    minDelayMs: 350,
+    personaI18nKey: "battle.botPersonas.j3",
+    rive: {
+      artboard: null,
+      src: "/assets/battle/bots/24876-46460-interactive-bunny-character.riv",
+      stateMachine: null
+    },
+    styleToken: "focused"
   },
   bot_j4: {
+    avatarFallback: "J4",
     correctProbability: 0.68,
     labelI18nKey: "battle.bots.j4",
     maxDelayMs: 1800,
-    minDelayMs: 280
+    minDelayMs: 280,
+    personaI18nKey: "battle.botPersonas.j4",
+    rive: {
+      artboard: null,
+      src: "/assets/battle/bots/20538-38646-cheeky-chops.riv",
+      stateMachine: null
+    },
+    styleToken: "sharp"
   }
 };
+
+export const BATTLE_BOT_ANIMATION_STATES = [
+  "idle",
+  "matched",
+  "countdown",
+  "thinking",
+  "correct",
+  "wrong",
+  "win",
+  "lose",
+  "draw",
+  "abandoned"
+] as const;
+
+export type BattleBotAnimationState = (typeof BATTLE_BOT_ANIMATION_STATES)[number];
+
+export function battleBotStateToRiveInput(state: BattleBotAnimationState): string {
+  return `battle_${state}`;
+}
 
 export const DEFAULT_BATTLE_BOT_KEY = "bot_j3";
 

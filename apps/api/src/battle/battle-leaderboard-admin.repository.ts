@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { createPrismaClient, type PrismaClient } from "@nihongo-bjt/database";
+import { createPrismaClient, Prisma, type PrismaClient } from "@nihongo-bjt/database";
 import type { z } from "zod";
 
 import type { adminBattleLeaderboardQuerySchema } from "@nihongo-bjt/shared";
@@ -25,39 +25,80 @@ export class BattleLeaderboardAdminRepository {
    */
   async list(input: ListInput) {
     const since = this.windowToDate(input.window);
-    const sinceClause = since ? `AND started_at >= TIMESTAMP WITH TIME ZONE '${since.toISOString()}'` : "";
+    const sinceFragment = since
+      ? Prisma.sql`AND started_at >= ${since}`
+      : Prisma.empty;
+    const limit = input.pageSize;
     const offset = (input.page - 1) * input.pageSize;
 
     const [rankings, totalRow, summaryRow] = await Promise.all([
-      this.prisma.$queryRawUnsafe<RankingRow[]>(`
+      this.prisma.$queryRaw<RankingRow[]>`
+        WITH participant_sessions AS (
+          SELECT user_id AS pid, user_score AS my_score, opponent_score AS their_score
+          FROM learning.battle_session
+          WHERE status = 'completed' AND mode = 'bot' ${sinceFragment}
+          UNION ALL
+          SELECT user_id, user_score, opponent_score
+          FROM learning.battle_session
+          WHERE status = 'completed' AND mode = 'pvp' ${sinceFragment}
+          UNION ALL
+          SELECT opponent_user_id, opponent_score, user_score
+          FROM learning.battle_session
+          WHERE status = 'completed' AND mode = 'pvp' AND opponent_user_id IS NOT NULL ${sinceFragment}
+        )
         SELECT
-          user_id AS "userId",
-          COUNT(*) FILTER (WHERE user_score > opponent_score) AS wins,
-          COUNT(*) FILTER (WHERE user_score < opponent_score) AS losses,
-          COUNT(*) AS "totalMatches",
-          ROUND(AVG(user_score)::numeric, 1)::float AS "avgScore"
-        FROM learning.battle_session
-        WHERE status = 'completed' ${sinceClause}
-        GROUP BY user_id
+          pid AS "userId",
+          COUNT(*) FILTER (WHERE my_score > their_score) AS wins,
+          COUNT(*) FILTER (WHERE my_score < their_score) AS losses,
+          COUNT(*)::bigint AS "totalMatches",
+          ROUND(AVG(my_score)::numeric, 1)::float AS "avgScore"
+        FROM participant_sessions
+        WHERE pid IS NOT NULL
+        GROUP BY pid
         HAVING COUNT(*) >= 1
-        ORDER BY COUNT(*) FILTER (WHERE user_score > opponent_score) DESC, AVG(user_score) DESC
-        LIMIT ${input.pageSize} OFFSET ${offset}
-      `),
-      this.prisma.$queryRawUnsafe<Array<{ total: bigint }>>(`
+        ORDER BY COUNT(*) FILTER (WHERE my_score > their_score) DESC, AVG(my_score) DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `,
+      this.prisma.$queryRaw<Array<{ total: bigint }>>`
+        WITH participant_sessions AS (
+          SELECT user_id AS pid
+          FROM learning.battle_session
+          WHERE status = 'completed' AND mode = 'bot' ${sinceFragment}
+          UNION ALL
+          SELECT user_id FROM learning.battle_session
+          WHERE status = 'completed' AND mode = 'pvp' ${sinceFragment}
+          UNION ALL
+          SELECT opponent_user_id FROM learning.battle_session
+          WHERE status = 'completed' AND mode = 'pvp' AND opponent_user_id IS NOT NULL ${sinceFragment}
+        )
         SELECT COUNT(*)::bigint AS total
         FROM (
-          SELECT user_id FROM learning.battle_session
-          WHERE status = 'completed' ${sinceClause}
-          GROUP BY user_id HAVING COUNT(*) >= 1
+          SELECT pid FROM participant_sessions WHERE pid IS NOT NULL GROUP BY pid HAVING COUNT(*) >= 1
         ) sub
-      `),
-      this.prisma.$queryRawUnsafe<Array<{ participants: bigint; completedMatches: bigint }>>(`
+      `,
+      this.prisma.$queryRaw<Array<{ participants: bigint; completedMatches: bigint }>>`
+        WITH participant_sessions AS (
+          SELECT user_id AS pid
+          FROM learning.battle_session
+          WHERE status = 'completed' AND mode = 'bot' ${sinceFragment}
+          UNION ALL
+          SELECT user_id FROM learning.battle_session
+          WHERE status = 'completed' AND mode = 'pvp' ${sinceFragment}
+          UNION ALL
+          SELECT opponent_user_id FROM learning.battle_session
+          WHERE status = 'completed' AND mode = 'pvp' AND opponent_user_id IS NOT NULL ${sinceFragment}
+        )
         SELECT
-          COUNT(DISTINCT user_id)::bigint AS participants,
-          COUNT(*)::bigint AS "completedMatches"
-        FROM learning.battle_session
-        WHERE status = 'completed' ${sinceClause}
-      `)
+          (
+            SELECT COUNT(*)::bigint FROM (
+              SELECT pid FROM participant_sessions WHERE pid IS NOT NULL GROUP BY pid
+            ) ranked_players
+          ) AS participants,
+          (
+            SELECT COUNT(*)::bigint FROM learning.battle_session
+            WHERE status = 'completed' ${sinceFragment}
+          ) AS "completedMatches"
+      `
     ]);
 
     const total = Number(totalRow[0]?.total ?? 0n);

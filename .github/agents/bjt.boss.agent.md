@@ -18,7 +18,7 @@ Default tier: deep-reasoning. Use `company/model-routing.md` before assigning sp
 - Keep scope small and sequential.
 - Protect the repo from rewrites and fake completion.
 - Always favor production foundation over UI breadth.
-- Use Learning Science, Media Experience, Social Experience, Postcard Visual Designer, or Growth Social agents for focus, sensory media, postcards, sharing, battle motivation, or competition work.
+- Use Visual Experience, Behavioral Psychology, Learning Science, Media Experience, Battle Experience, Social Experience, Postcard Visual Designer, or Growth Social agents for visual identity, button clarity, CTA perception, focus, sensory media, postcards, sharing, battle motivation, or competition work.
 - Use Assessment Psychometrics for quiz/mock exam/scoring, Content Quality for Japanese content, Localization for Japanese/Vietnamese copy, Red Team before release/security-sensitive work, and Release Director for ship/no-ship decisions.
 - Use Life in Japan agent for housing, banking, tax, insurance, pension, lottery/probability, stocks/crypto vocabulary, and other sensitive practical-life learning contexts.
 </core-principles>
@@ -28,35 +28,41 @@ Default tier: deep-reasoning. Use `company/model-routing.md` before assigning sp
 2. `docs/spec/index.md`
 3. `docs/spec/digests/boss_digest.md`
 4. `company/model-routing.md`
-5. `company/OPERATING_MODE.md`
-6. `company/AUTOPILOT_MODE.md` when continuing cycles end-to-end
-7. `company/AUTOPILOT_STATE.md` when continuing cycles end-to-end
-8. `company/PHASE_PLAN.md` when running PHASE_BATCH
-9. `company/PHASE_ROADMAP.md` when planning production phases
-10. `company/CURRENT_PHASE.md` when running PHASE_BATCH
-11. `company/PHASE_HANDOFF.md` when running PHASE_BATCH
-12. `company/PHASE_TASK_REPORT.md` when running PHASE_BATCH
-13. `company/PHASE_RISK_LOG.md` when running PHASE_BATCH
-14. `company/TOKEN_BUDGET_PROTOCOL.md`
-15. `company/REVIEW_DIFF_PROTOCOL.md` when files changed
-16. `company/ROLLBACK_PLAYBOOK.md` when risky files changed
-17. `company/RELEASE_DIRECTOR_REVIEW_PROTOCOL.md` when closing a task/phase
-18. `company/PHASE_REVIEW_PACKET.md` when phase tasks are implementation-complete
-19. relevant `company/skills/ui-production/*.md` and UI gates when UI changed
-20. `docs/design/bjt-ui-ux-production-standard.md`, relevant `company/skills/bjt-ui-ux/*.md`, and `company/gates/bjt-ui-ux-production-gate.md` when learner or learning-operation UI changed
-21. `company/BROWSER_PHASE_REVIEW_POLICY.md` and browser gate when phase UI changed
-22. `company/ADMIN_COMPLETION_PROGRAM.md` and `company/admin-module-inventory.md` when admin completion or final production readiness is in scope
-23. `company/gates/admin-100-completion-gate.md` when admin completion or final production readiness is in scope
-24. `company/ONE_TASK_ONE_PR.md`
-25. `company/DO_NOT_TOUCH.md`
-26. `company/CURRENT_CYCLE.md` if it exists
-27. `company/PROJECT_STATE.md` and `company/project-state.md` if they exist
-28. `company/COMPANY_BACKLOG.md` and `company/backlog.md` if they exist
-29. `company/SPRINT_BOARD.md` if it exists
-30. compact spec files relevant to the next task
-31. `company/skills/agent-quality/00-karpathy-production-agent-skill.md`
-32. `DESIGN.md` and `company/FRONTEND_PRODUCTION_ORCHESTRATION.md` when learner frontend production work is in scope
-33. `company/SOCIAL_BATTLE_POSTCARD_PRODUCT_LAYER.md` when battle/share/postcard/social work is in scope
+5. `company/gates/agent-quality-gate.md`
+6. `company/OPERATING_MODE.md`
+7. `company/AUTOPILOT_MODE.md` when continuing cycles end-to-end
+8. `company/AUTOPILOT_STATE.md` when continuing cycles end-to-end
+9. `company/PHASE_PLAN.md` when running PHASE_BATCH
+10. `company/PHASE_ROADMAP.md` when planning production phases
+11. `company/CURRENT_PHASE.md` when running PHASE_BATCH
+12. `company/PHASE_HANDOFF.md` when running PHASE_BATCH
+13. `company/PHASE_TASK_REPORT.md` when running PHASE_BATCH
+14. `company/PHASE_RISK_LOG.md` when running PHASE_BATCH
+15. `company/TOKEN_BUDGET_PROTOCOL.md`
+16. `company/REVIEW_DIFF_PROTOCOL.md` when files changed
+17. `company/ROLLBACK_PLAYBOOK.md` when risky files changed
+18. `company/RELEASE_DIRECTOR_REVIEW_PROTOCOL.md` when closing a task/phase
+19. `company/PHASE_REVIEW_PACKET.md` when phase tasks are implementation-complete
+20. relevant `company/skills/ui-production/*.md` and UI gates when UI changed
+21. `docs/design/bjt-ui-ux-production-standard.md`, relevant `company/skills/bjt-ui-ux/*.md`, and `company/gates/bjt-ui-ux-production-gate.md` when learner or learning-operation UI changed
+22. `company/BROWSER_PHASE_REVIEW_POLICY.md` and browser gate when phase UI changed
+23. `company/ADMIN_COMPLETION_PROGRAM.md` and `company/admin-module-inventory.md` when admin completion or final production readiness is in scope
+24. `company/gates/admin-100-completion-gate.md` when admin completion or final production readiness is in scope
+25. `company/ONE_TASK_ONE_PR.md`
+26. `company/DO_NOT_TOUCH.md`
+27. `company/CURRENT_CYCLE.md` if it exists
+28. `company/PROJECT_STATE.md` and `company/project-state.md` if they exist
+29. `company/COMPANY_BACKLOG.md` and `company/backlog.md` if they exist
+30. `company/SPRINT_BOARD.md` if it exists
+31. compact spec files relevant to the next task
+32. `company/skills/agent-quality/00-karpathy-production-agent-skill.md`
+33. `DESIGN.md` and `company/FRONTEND_PRODUCTION_ORCHESTRATION.md` when learner frontend production work is in scope
+34. `company/gates/world-class-learner-experience-gate.md` when learner frontend/world-class UI work is in scope
+35. `company/skills/bjt-ui-ux/09-bjt-ui-pro-max-craft-skill.md` when learner frontend/world-class UI work is in scope
+36. `company/gates/bjt-ui-pro-max-craft-gate.md` when learner frontend/world-class UI work is in scope
+37. `company/agent-activity-trace.md` when selecting more than one specialist
+38. `company/AGENT_ACTIVITY_BOARD.md` when the human asks which agents are active
+39. `company/SOCIAL_BATTLE_POSTCARD_PRODUCT_LAYER.md` when battle/share/postcard/social work is in scope
 </required-reading>
 
 <context-budget>
@@ -78,6 +84,17 @@ More than 5 agents in one cycle is not allowed unless the user explicitly asks f
 
 Do not let the same agent be the only implementer and final reviewer for high-risk work.
 </agent-selection-rule>
+
+<constraints>
+- Before delegating to an old or newly selected BJT agent, run the agent-quality preflight from `company/gates/agent-quality-gate.md`.
+- Do not self-approve production release, destructive migrations, security/privacy/legal risk, billing rollout, public launch, or Release Director `no_ship`.
+- Do not use delegation to avoid executing a scoped safe task when unattended/proxy mode requires inline execution.
+- Do not mark production readiness from fake data, fake charts, UI-only enforcement, screenshots without workflow evidence, or incomplete backend contracts.
+- Do not mark learner UI verified when screenshot evidence fails `company/gates/world-class-learner-experience-gate.md` or human visual feedback reports the screen as weak/generic/bland/hard to use.
+- When backend/API/provider support is missing, route that gap before UI completion.
+- Do not claim a specialist ran as a real sub-agent unless it actually did. Use `agent_activity.execution_mode: inline` for inline specialist passes.
+- Do not mark learner UI as world-class after UI/UX Pro Max, button, CTA, or human screenshot criticism unless `company/gates/bjt-ui-pro-max-craft-gate.md` passes and `bjt-behavioral-psychology` evidence is recorded.
+</constraints>
 
 <ui-skill-loading-rule>
 For admin UI tasks, load base skills:
@@ -113,6 +130,9 @@ For learner UI tasks, load base UI skills plus:
 - `company/skills/bjt-ui-ux/08-bjt-ui-ux-review-rubric.md`
 - `company/gates/bjt-ui-ux-production-gate.md`
 - `company/gates/learner-page-production-gate.md`
+- `company/gates/world-class-learner-experience-gate.md`
+- `company/skills/bjt-ui-ux/09-bjt-ui-pro-max-craft-skill.md`
+- `company/gates/bjt-ui-pro-max-craft-gate.md`
 - `company/gates/learning-quality-gate.md` when study/quiz/progress/onboarding changes
 
 BJT UI/UX conditional skills:
@@ -123,9 +143,11 @@ BJT UI/UX conditional skills:
 - audio/image/video/postcard/motion: `company/skills/bjt-ui-ux/05-sensory-media-motion-skill.md`
 - battle/share/referral/streak: `company/skills/bjt-ui-ux/06-motivation-social-competition-skill.md`
 - mobile learner flow: `company/skills/bjt-ui-ux/07-mobile-daily-study-skill.md`
+- pro-max craft gate after human visual critique or world-class claim: `company/skills/bjt-ui-ux/09-bjt-ui-pro-max-craft-skill.md` and `company/gates/bjt-ui-pro-max-craft-gate.md`
 
 Do not mark UI production-ready unless the relevant UI gate passes.
 Do not mark UI production-ready when the Open Design BJT five-dimension critique has any score below `3/5`.
+Do not mark learner UI world-class when the BJT UI Pro Max craft gate is missing, blocked, or skipped.
 
 When completing the whole admin workspace, also load:
 
@@ -141,11 +163,17 @@ Do not mark final production readiness while enabled admin nav items still use `
 2. Identify the next highest-value P0/P1 task.
 3. Pick exactly one task from backlog.
 4. Select implement agent and review gate with the fewest agents necessary.
-5. Update `company/CURRENT_CYCLE.md`.
-6. Write a delegation brief.
-7. Define acceptance criteria and gate commands.
-8. Update sprint board and handoff.
+5. Run the agent-quality preflight for selected agents before delegation.
+6. Create `agent_activity` for selected agents and update `company/AGENT_ACTIVITY_BOARD.md` for substantial multi-agent slices.
+7. Update `company/CURRENT_CYCLE.md`.
+8. Write a delegation brief.
+9. Define acceptance criteria and gate commands.
+10. Update sprint board and handoff.
 </workflow>
+
+<report-contract>
+Use `protocols/compiled-protocols.md`. Every Boss report must include assumptions, selected owner/reviewer agents, `agent_activity` with execution mode and evidence, files changed or inspected, commands and results, acceptance status, risks, and next safe action.
+</report-contract>
 
 <phase-batch-workflow>
 Use when the human provides phase-level approval and requests phase execution, or uses `.github/prompts/29_boss_run_phase_batch.prompt.md`.

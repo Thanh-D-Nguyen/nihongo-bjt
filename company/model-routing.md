@@ -84,9 +84,12 @@ Use for:
 | bjt.backend                    | code-heavy      | deep-reasoning                    |
 | bjt.admin-ui                   | balanced        | code-heavy                        |
 | bjt.learner-ui                 | balanced        | code-heavy                        |
+| bjt.behavioral-psychology      | balanced        | deep-reasoning                    |
 | bjt.learning-science           | balanced        | deep-reasoning                    |
 | bjt.media-experience           | balanced        | code-heavy or review-security     |
 | bjt.growth-social              | balanced        | deep-reasoning or review-security |
+| bjt.battle-experience          | balanced        | deep-reasoning or code-heavy      |
+| bjt.visual-experience          | balanced        | deep-reasoning                    |
 | bjt.social-experience          | balanced        | deep-reasoning or review-security |
 | bjt.postcard-visual-designer   | balanced        | code-heavy or review-security     |
 | bjt.assessment-psychometrics   | deep-reasoning  | deep-reasoning                    |
@@ -105,31 +108,35 @@ Use for:
 
 ## Task routing examples
 
-| Task                                                                                    | Tier                              | Reason                                                          |
-| --------------------------------------------------------------------------------------- | --------------------------------- | --------------------------------------------------------------- |
-| Boss planning, task splitting, architecture decision                                    | deep-reasoning                    | Multi-context trade-offs                                        |
-| Human proxy production loop orchestration                                               | deep-reasoning                    | Needs state classification and approval-boundary judgment       |
-| Spec gap analysis                                                                       | deep-reasoning                    | Easy to miss requirements                                       |
-| Backend API production, Prisma, auth, RBAC                                              | code-heavy or deep-reasoning      | Code precision plus architecture                                |
-| Swagger/OpenAPI DTO coverage                                                            | balanced or code-heavy            | Repetitive but exact                                            |
-| Admin UI production page                                                                | balanced                          | Components, state, i18n, permissions                            |
-| Learner UI/UX polish                                                                    | balanced                          | Product quality without full release reasoning                  |
-| Learning psychology, focus, motivation loops                                            | balanced or deep-reasoning        | Learner wellbeing and retention trade-offs                      |
-| Audio/image/video/color learning assets                                                 | balanced or code-heavy            | UX plus media/provider correctness                              |
-| Postcards, sharing, referrals, leaderboards, battle motivation                          | balanced or deep-reasoning        | Privacy, fairness, and social pressure                          |
-| BJT scoring, mock exam blueprint, item calibration                                      | deep-reasoning                    | Assessment credibility                                          |
-| Japanese content quality, keigo, grammar, examples                                      | balanced or deep-reasoning        | Language correctness                                            |
-| Japan/Vietnam localization and tone                                                     | balanced                          | Natural learner/admin experience                                |
-| Red team abuse review                                                                   | review-security                   | Bypass/leak/injection risk                                      |
-| Customer success/support readiness                                                      | balanced                          | Learner recovery and support privacy                            |
-| Life in Japan context: housing, tax, banking, lottery/probability, investing vocabulary | balanced or deep-reasoning        | Sensitive practical-life topics need advice/gambling guardrails |
-| Test generation                                                                         | code-heavy                        | Code and edge-case reasoning                                    |
-| Browser/runtime visual QA after UI phase                                                | code-heavy                        | Needs app runtime, Playwright, screenshot evidence              |
-| Security review                                                                         | review-security or deep-reasoning | Subtle failure modes                                            |
-| DevOps/CI/CD/Docker                                                                     | code-heavy                        | Commands and config precision                                   |
-| Docs, handoff, checklist                                                                | cheap-fast or balanced            | Low-risk text work                                              |
-| Small refactor, label, i18n mapping                                                     | cheap-fast                        | Simple and bounded                                              |
-| Final release gate                                                                      | deep-reasoning                    | Cross-system verification                                       |
+| Task                                                                                    | Tier                              | Reason                                                           |
+| --------------------------------------------------------------------------------------- | --------------------------------- | ---------------------------------------------------------------- |
+| Boss planning, task splitting, architecture decision                                    | deep-reasoning                    | Multi-context trade-offs                                         |
+| Human proxy production loop orchestration                                               | deep-reasoning                    | Needs state classification and approval-boundary judgment        |
+| Agent quality audit and old-agent preflight                                             | balanced or deep-reasoning        | Structural checks are bounded; authority gaps need escalation    |
+| Spec gap analysis                                                                       | deep-reasoning                    | Easy to miss requirements                                        |
+| Backend API production, Prisma, auth, RBAC                                              | code-heavy or deep-reasoning      | Code precision plus architecture                                 |
+| Swagger/OpenAPI DTO coverage                                                            | balanced or code-heavy            | Repetitive but exact                                             |
+| Admin UI production page                                                                | balanced                          | Components, state, i18n, permissions                             |
+| Learner UI/UX polish                                                                    | balanced                          | Product quality without full release reasoning                   |
+| Learner visual quality rescue, color, button clarity, screenshot critique               | balanced or deep-reasoning        | Taste is not enough; needs explicit product and learning logic   |
+| Failed learner visual rescue escalation                                                 | deep-reasoning                    | Human rejection overrides self-score and needs stricter judgment |
+| Behavioral psychology UI/CTA friction review                                            | balanced or deep-reasoning        | Perceived affordance, decision fatigue, motivation, and pressure |
+| Learning psychology, focus, motivation loops                                            | balanced or deep-reasoning        | Learner wellbeing and retention trade-offs                       |
+| Audio/image/video/color learning assets                                                 | balanced or code-heavy            | UX plus media/provider correctness                               |
+| Postcards, sharing, referrals, leaderboards, battle motivation                          | balanced or deep-reasoning        | Privacy, fairness, and social pressure                           |
+| BJT scoring, mock exam blueprint, item calibration                                      | deep-reasoning                    | Assessment credibility                                           |
+| Japanese content quality, keigo, grammar, examples                                      | balanced or deep-reasoning        | Language correctness                                             |
+| Japan/Vietnam localization and tone                                                     | balanced                          | Natural learner/admin experience                                 |
+| Red team abuse review                                                                   | review-security                   | Bypass/leak/injection risk                                       |
+| Customer success/support readiness                                                      | balanced                          | Learner recovery and support privacy                             |
+| Life in Japan context: housing, tax, banking, lottery/probability, investing vocabulary | balanced or deep-reasoning        | Sensitive practical-life topics need advice/gambling guardrails  |
+| Test generation                                                                         | code-heavy                        | Code and edge-case reasoning                                     |
+| Browser/runtime visual QA after UI phase                                                | code-heavy                        | Needs app runtime, Playwright, screenshot evidence               |
+| Security review                                                                         | review-security or deep-reasoning | Subtle failure modes                                             |
+| DevOps/CI/CD/Docker                                                                     | code-heavy                        | Commands and config precision                                    |
+| Docs, handoff, checklist                                                                | cheap-fast or balanced            | Low-risk text work                                               |
+| Small refactor, label, i18n mapping                                                     | cheap-fast                        | Simple and bounded                                               |
+| Final release gate                                                                      | deep-reasoning                    | Cross-system verification                                        |
 
 ## Escalation rules
 

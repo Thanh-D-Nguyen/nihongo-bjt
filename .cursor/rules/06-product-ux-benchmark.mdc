@@ -1,0 +1,100 @@
+---
+description: Product and UX benchmark standards — Mazii (depth), Quizlet (clarity); learner-facing UI
+globs:
+  - "apps/web/**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# Product and UX benchmarks (BJT learner platform)
+
+Use external references only to understand **UX patterns and product expectations**. Do not copy assets, HTML, branding, icons, color palettes, typography choices, or exact layouts from any external product.
+
+## Core references
+
+| Dimension | Reference | Use it for |
+|-----------|-----------|------------|
+| Feature coverage and information richness | **Mazii** | What “complete” feels like for Japanese learners (search, detail depth, related content). |
+| Visual simplicity, flow, and interaction clarity | **Quizlet** | Calm study UI, obvious actions, predictable hierarchy, mobile-first comfort. |
+
+These are benchmarks for **judgment**, not templates to clone.
+
+---
+
+## Functional benchmark (inspired by Mazii)
+
+Search and discovery should feel **complete and useful** for Japanese learners, not like a thin index.
+
+### Search detail — dictionary-like depth when data exists
+
+Aim for rich detail that can include, as applicable:
+
+- Headword
+- Reading(s)
+- Meaning(s)
+- Example sentences or usage
+- Kanji breakdown / components / metadata
+- Stroke order when stroke data exists
+- Bookmark / save to collections or SRS where the product supports it
+- Read aloud (TTS or attached audio) when available
+- Related entries (synonyms, compounds, decompositions) when the backend provides them
+
+### Progressive disclosure
+
+- Do **not** overload the first view with every field at once.
+- Lead with what answers the learner’s immediate question; reveal depth in **sections, tabs, accordions, or cards** so scanning stays easy.
+- Advanced or rare fields belong behind clear labels, not in the hero block.
+
+---
+
+## UX benchmark (inspired by Quizlet)
+
+### Tone and layout
+
+- UI should feel **clean, calm, and study-focused**.
+- Prefer **spacious cards**, clear typographic hierarchy, and **predictable** actions (same affordances in the same places across similar screens).
+- Avoid **dense enterprise-dashboard** patterns on learner screens (tight tables of metrics, wall of filters, “control room” chrome).
+
+### Visual noise
+
+- Avoid noisy borders, excessive shadows, and too many competing accent colors.
+- Decoration should support comprehension or hierarchy, not fill space.
+
+### Primary learning actions
+
+Important actions should be **obvious at a glance** (consistent styling, placement, and labeling via i18n):
+
+- Save / bookmark
+- Play audio / read aloud
+- Practice / drill
+- Review (SRS or session)
+- Continue learning / resume
+
+### Mobile
+
+- **Mobile UX is first-class**, not a squeezed desktop layout.
+- **Touch targets** meet comfortable minimums; avoid tiny icon-only controls without adequate hit area.
+- **Empty, loading, and error** states should feel **helpful and human**, not raw technical messages or blank screens.
+
+---
+
+## Process for every learner-facing UI change
+
+1. **Identify the main learner intent** for that surface (e.g. “confirm meaning,” “hear pronunciation,” “save for later”).
+2. Design around the **minimum number of primary actions** that serve that intent; demote or hide the rest.
+3. **Reuse** existing design system components, tokens, and patterns already in `apps/web`.
+4. **Scope discipline:** do not redesign unrelated screens or add decorative UI that does not support learning.
+
+---
+
+## Required summary after UI implementation
+
+When finishing a learner UI change, briefly document:
+
+1. **Learner intent** the UI supports.
+2. **Benchmark behavior** applied (Mazii-like depth vs Quizlet-like clarity — or both, and where).
+3. **What changed visually** (layout, hierarchy, components).
+4. **Mobile behavior** (touch targets, scroll, sticky actions if any).
+5. **Loading / empty / error** behavior (copy tone, recovery actions).
+6. **Remaining UX risks** (edge cases, data gaps, follow-ups).
+
+This pairs with `.cursor/rules/04-ui-ux-polish.mdc` (i18n, a11y, tokens). Prefer **this file** for product depth vs calm-study tradeoffs; prefer **04** for implementation polish and accessibility.

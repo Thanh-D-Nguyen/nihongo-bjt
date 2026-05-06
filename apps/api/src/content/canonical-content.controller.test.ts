@@ -1,4 +1,8 @@
-import { BadRequestException, NotFoundException } from "@nestjs/common";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+
+import { BadRequestException, NotFoundException, StreamableFile } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 
 import {
@@ -37,7 +41,8 @@ describe("Canonical content controllers", () => {
       kanji: vi.fn().mockResolvedValue([{ character: "会", id: "kanji-1" }]),
       kanjiDetail: vi.fn().mockResolvedValue({ character: "会", id: "kanji-1" })
     };
-    const controller = new KanjiController(contentRepository as any);
+    const mediaService = { streamPublicBucketObject: vi.fn() };
+    const controller = new KanjiController(contentRepository as any, mediaService as any);
 
     await expect(controller.list({ level: "N3", limit: "2" })).resolves.toEqual([
       { character: "会", id: "kanji-1" }
@@ -59,7 +64,8 @@ describe("Canonical content controllers", () => {
       kanji: vi.fn().mockResolvedValue([])
     };
 
-    await expect(new KanjiController(contentRepository as any).list({ level: "N2", limit: "2", q: "会" })).resolves.toEqual([]);
+    const mediaService = { streamPublicBucketObject: vi.fn() };
+    await expect(new KanjiController(contentRepository as any, mediaService as any).list({ level: "N2", limit: "2", q: "会" })).resolves.toEqual([]);
     expect(contentRepository.kanji).toHaveBeenCalledWith("会", 2);
 
     await expect(new GrammarController(contentRepository as any).list({ level: "N3", limit: "4", q: "受け身" })).resolves.toEqual([]);
@@ -133,5 +139,32 @@ describe("Canonical content controllers", () => {
     const controller = new VijaController({ reverseSearch: vi.fn() } as any);
 
     expect(() => controller.search({ q: "" })).toThrow(BadRequestException);
+  });
+
+  it("streams repo-relative stroke SVG from disk without calling object storage", async () => {
+    const prev = process.env.KANJI_STROKE_REPO_ROOT;
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "kanji-stroke-ctrl-"));
+    fs.mkdirSync(path.join(tmp, "data", "generated", "kanji-strokes"), { recursive: true });
+    fs.writeFileSync(path.join(tmp, "data", "generated", "kanji-strokes", "1-aaaa.svg"), "<svg/>", "utf8");
+
+    try {
+      process.env.KANJI_STROKE_REPO_ROOT = tmp;
+      const contentRepository = {
+        kanjiStrokeSvgPath: vi.fn().mockResolvedValue("data/generated/kanji-strokes/1-aaaa.svg")
+      };
+      const mediaService = { streamPublicBucketObject: vi.fn() };
+      const controller = new KanjiController(contentRepository as any, mediaService as any);
+      const out = await controller.stroke("k-1");
+      expect(mediaService.streamPublicBucketObject).not.toHaveBeenCalled();
+      expect(out).toBeInstanceOf(StreamableFile);
+      const body = out as StreamableFile;
+      const chunks: Buffer[] = [];
+      for await (const c of body.getStream()) chunks.push(Buffer.from(c));
+      expect(Buffer.concat(chunks).toString("utf8")).toBe("<svg/>");
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+      if (prev === undefined) delete process.env.KANJI_STROKE_REPO_ROOT;
+      else process.env.KANJI_STROKE_REPO_ROOT = prev;
+    }
   });
 });

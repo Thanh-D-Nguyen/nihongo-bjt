@@ -1,4 +1,4 @@
-import { searchQuerySchema } from "@nihongo-bjt/shared";
+import { searchQuerySchema, searchSuggestQuerySchema } from "@nihongo-bjt/shared";
 import { BadRequestException, Controller, Get, Inject, Query } from "@nestjs/common";
 import { ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from "@nestjs/swagger";
 
@@ -17,6 +17,8 @@ export class SearchController {
   })
   @ApiQuery({ name: "q", required: true, example: "会議" })
   @ApiQuery({ name: "limit", required: false, example: 10 })
+  @ApiQuery({ name: "scope", required: false, example: "lexeme" })
+  @ApiQuery({ name: "level", required: false, example: "N2" })
   @DocumentedHttpErrors()
   search(@Query() query: Record<string, string | undefined>) {
     const parsed = searchQuerySchema.safeParse(query);
@@ -24,6 +26,20 @@ export class SearchController {
       throw new BadRequestException(parsed.error.flatten());
     }
 
-    return this.searchService.search(parsed.data.q, parsed.data.limit);
+    return this.searchService.search(parsed.data.q, parsed.data.limit, parsed.data.scope, parsed.data.level);
+  }
+
+  @Get("suggest")
+  @ApiOperation({ summary: "Lightweight prefix-search suggestions for search dropdown autocomplete." })
+  @ApiQuery({ name: "q", required: true, example: "会" })
+  @ApiQuery({ name: "limit", required: false, example: 6 })
+  @DocumentedHttpErrors()
+  suggest(@Query() query: Record<string, string | undefined>) {
+    const parsed = searchSuggestQuerySchema.safeParse(query);
+    if (!parsed.success) {
+      throw new BadRequestException(parsed.error.flatten());
+    }
+
+    return this.searchService.suggest(parsed.data.q, parsed.data.limit);
   }
 }

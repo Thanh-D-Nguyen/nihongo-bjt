@@ -1,26 +1,20 @@
 import { isSupportedLocale, type SupportedLocale } from "@nihongo-bjt/config";
-import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import ja from "../../messages/ja.json";
 import vi from "../../messages/vi.json";
+import { adminKcCookies } from "../../lib/kc-cookies";
 import { AdminKeycloakSessionGate } from "../_components/admin-keycloak-session-gate";
 import { AdminShellClient } from "../_components/admin-shell-client";
-import "../globals.css";
 
 const messages = { ja, vi };
 
-// Force dynamic rendering so server-side cookie reads (kc_access_token) reflect
+// Force dynamic rendering so server-side cookie reads reflect
 // the freshly-set Set-Cookie from POST /api/auth/keycloak/password-login on the
 // very next navigation. Without this, Next.js can serve a cached RSC payload
 // where initialAuthed=false even though the browser already has the cookie,
 // which contributed to the post-login redirect loop.
 export const dynamic = "force-dynamic";
-
-export const metadata: Metadata = {
-  title: "NihonGo BJT Admin",
-  description: "NihonGo BJT administration shell"
-};
 
 export function generateStaticParams() {
   // Only vi/ja are first-class admin locales. `en` is accepted at runtime as a
@@ -80,22 +74,20 @@ export default async function AdminLayout({
   // authenticated admins (and keeps the redirect-on-401 path intact).
   const cookieStore = await cookies();
   const initialAuthed = Boolean(
-    cookieStore.get("kc_access_token")?.value || cookieStore.get("kc_refresh_token")?.value
+    cookieStore.get(adminKcCookies.access)?.value || cookieStore.get(adminKcCookies.refresh)?.value
   );
 
   return (
-    <html lang={locale} suppressHydrationWarning>
-      <body className="min-h-screen bg-paper text-ink antialiased" suppressHydrationWarning>
-        <AdminKeycloakSessionGate
-          busyLabel={t.shell.sessionChecking}
-          initialAuthed={initialAuthed}
-          locale={locale}
-        >
-          <AdminShellClient chrome={chrome} locale={locale} navLabelMaps={navLabelMaps}>
-            {children}
-          </AdminShellClient>
-        </AdminKeycloakSessionGate>
-      </body>
-    </html>
+    <div lang={locale} className="contents">
+      <AdminKeycloakSessionGate
+        busyLabel={t.shell.sessionChecking}
+        initialAuthed={initialAuthed}
+        locale={locale}
+      >
+        <AdminShellClient chrome={chrome} locale={locale} navLabelMaps={navLabelMaps}>
+          {children}
+        </AdminShellClient>
+      </AdminKeycloakSessionGate>
+    </div>
   );
 }

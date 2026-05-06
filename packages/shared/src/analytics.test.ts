@@ -17,4 +17,16 @@ describe("analytics helpers", () => {
       "missed items"
     );
   });
+
+  it("generates Vietnamese coaching insight", () => {
+    expect(coachingInsight({ bjtAccuracyPct: 45, reviewCount: 10, streakDays: 2 }, "vi")).toContain(
+      "câu sai"
+    );
+  });
+
+  it("generates Japanese coaching insight", () => {
+    expect(coachingInsight({ bjtAccuracyPct: 45, reviewCount: 10, streakDays: 2 }, "ja")).toContain(
+      "間違えた"
+    );
+  });
 });

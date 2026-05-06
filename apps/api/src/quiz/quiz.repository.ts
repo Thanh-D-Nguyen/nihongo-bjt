@@ -37,6 +37,13 @@ export class QuizRepository {
     });
   }
 
+  templateAccessMeta(id: string) {
+    return this.prisma.bjtMockTest.findFirst({
+      select: { id: true, type: true },
+      where: { id, status: "published" }
+    });
+  }
+
   async adminListTests(params: { limit: number; offset: number; status?: string; type?: string }) {
     const where: Record<string, unknown> = {};
     if (params.status) where.status = params.status;
@@ -61,9 +68,13 @@ export class QuizRepository {
           include: {
             questions: {
               select: {
+                audioScript: true,
+                audioUrl: true,
                 createdAt: true,
                 difficulty: true,
                 id: true,
+                imageUrl: true,
+                imageAlt: true,
                 options: {
                   orderBy: { optionKey: "asc" },
                   select: {
@@ -90,11 +101,84 @@ export class QuizRepository {
     });
   }
 
-  async startSession(
-    testId: string,
-    userId: string,
-    tx?: Prisma.TransactionClient
-  ) {
+  async printableTemplate(id: string) {
+    const test = await this.prisma.bjtMockTest.findFirst({
+      include: {
+        sections: {
+          include: {
+            questions: {
+              select: {
+                id: true,
+                prompt: true,
+                scenario: true,
+                skillTag: true,
+                difficulty: true,
+                options: {
+                  orderBy: { optionKey: "asc" },
+                  select: {
+                    optionKey: true,
+                    text: true,
+                    isCorrect: true
+                  }
+                }
+              }
+            }
+          },
+          orderBy: { displayOrder: "asc" }
+        }
+      },
+      where: { id, status: "published" }
+    });
+
+    if (!test) {
+      throw new NotFoundException("Quiz template not found");
+    }
+
+    const totalQuestions = test.sections.reduce((count, s) => count + s.questions.length, 0);
+
+    let questionNumber = 0;
+    const sections = test.sections.map((section) => ({
+      code: section.code,
+      displayOrder: section.displayOrder,
+      titleJa: section.titleJa,
+      titleVi: section.titleVi,
+      questions: section.questions.map((q) => {
+        questionNumber++;
+        return {
+          number: questionNumber,
+          prompt: q.prompt,
+          scenario: q.scenario,
+          options: q.options.map((o) => ({
+            key: o.optionKey,
+            text: o.text
+          })),
+          correctKey: q.options.find((o) => o.isCorrect)?.optionKey ?? null
+        };
+      })
+    }));
+
+    const answerKey = sections.flatMap((s) =>
+      s.questions.map((q) => ({
+        number: q.number,
+        correctKey: q.correctKey
+      }))
+    );
+
+    return {
+      id: test.id,
+      slug: test.slug,
+      titleVi: test.titleVi,
+      titleJa: test.titleJa,
+      level: test.level,
+      type: test.type,
+      timeLimitSeconds: test.timeLimitSeconds,
+      totalQuestions,
+      sections,
+      answerKey
+    };
+  }
+
+  async startSession(testId: string, userId: string, tx?: Prisma.TransactionClient) {
     const client = tx ?? this.prisma;
     const test = await this.templateForStart(testId, client);
     if (!test) {
@@ -134,6 +218,99 @@ export class QuizRepository {
     return this.prisma.$transaction(async (trx) => run(trx));
   }
 
+  async activeSession(userId: string) {
+    const session = await this.prisma.quizSession.findFirst({
+      include: {
+        test: {
+          select: {
+            id: true,
+            level: true,
+            slug: true,
+            timeLimitSeconds: true,
+            titleJa: true,
+            titleVi: true,
+            type: true
+          }
+        }
+      },
+      orderBy: { startedAt: "desc" },
+      where: { status: "in_progress", userId }
+    });
+
+    if (!session) {
+      return { session: null };
+    }
+
+    // Auto-expire if timer ran out
+    if (this.hasSessionExpired(session.startedAt, session.test.timeLimitSeconds)) {
+      await this.autoExpireSession(session.id, userId);
+      return { session: null };
+    }
+
+    const remainingSeconds =
+      session.test.timeLimitSeconds && session.test.timeLimitSeconds > 0
+        ? Math.max(
+            0,
+            Math.round(
+              (session.startedAt.getTime() + session.test.timeLimitSeconds * 1000 - Date.now()) /
+                1000
+            )
+          )
+        : null;
+
+    return {
+      session: {
+        correctCount: session.correctCount,
+        currentQuestionNo: session.currentQuestionNo,
+        id: session.id,
+        remainingSeconds,
+        startedAt: session.startedAt.toISOString(),
+        status: session.status,
+        test: session.test,
+        timeLimitSeconds: session.test.timeLimitSeconds,
+        totalQuestions: session.totalQuestions
+      }
+    };
+  }
+
+  private async autoExpireSession(sessionId: string, userId: string) {
+    const session = await this.prisma.quizSession.findFirst({
+      where: { id: sessionId, status: "in_progress" }
+    });
+    if (!session) return;
+
+    const answeredCount = await this.prisma.quizAnswer.count({
+      where: { sessionId }
+    });
+
+    const score = scoreBjtPractice({
+      correctCount: session.correctCount,
+      totalQuestions: session.totalQuestions
+    });
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.quizSession.update({
+        data: {
+          completedAt: new Date(),
+          currentQuestionNo: answeredCount,
+          estimatedBjtBand: score.estimatedBjtBand,
+          estimatedScore: score.estimatedScore,
+          status: "completed"
+        },
+        where: { id: sessionId }
+      });
+
+      await tx.analyticsEvent.create({
+        data: {
+          eventName: "quiz_session_expired",
+          payload: { answeredCount, sessionId, totalQuestions: session.totalQuestions },
+          source: "api",
+          userId
+        }
+      });
+    });
+  }
+
   async currentQuestion(sessionId: string, userId: string) {
     const session = await this.prisma.quizSession.findFirst({
       include: {
@@ -144,9 +321,13 @@ export class QuizRepository {
               include: {
                 questions: {
                   select: {
+                    audioScript: true,
+                    audioUrl: true,
                     createdAt: true,
                     difficulty: true,
                     id: true,
+                    imageUrl: true,
+                    imageAlt: true,
                     options: {
                       orderBy: { optionKey: "asc" },
                       select: {
@@ -181,19 +362,49 @@ export class QuizRepository {
     }
 
     if (this.hasSessionExpired(session.startedAt, session.test.timeLimitSeconds)) {
-      throw new ForbiddenException("Quiz session expired");
+      // Auto-expire the session and return completed status
+      await this.autoExpireSession(session.id, session.userId);
+      const expired = await this.prisma.quizSession.findFirst({
+        where: { id: sessionId }
+      });
+      return {
+        question: null,
+        session: {
+          correctCount: expired?.correctCount ?? session.correctCount,
+          currentQuestionNo: expired?.currentQuestionNo ?? session.currentQuestionNo,
+          estimatedBjtBand: expired?.estimatedBjtBand ?? null,
+          estimatedScore: expired?.estimatedScore ?? null,
+          id: session.id,
+          remainingSeconds: 0,
+          startedAt: session.startedAt.toISOString(),
+          status: "completed",
+          timeLimitSeconds: session.test.timeLimitSeconds,
+          totalQuestions: session.totalQuestions
+        }
+      };
     }
 
     const answeredIds = new Set(session.answers.map((answer) => answer.questionId));
-    const question = session.test.sections
-      .flatMap((section) => section.questions)
-      .find((item) => !answeredIds.has(item.id));
+    let matchedSectionCode: string | null = null;
+    let question: (typeof session.test.sections)[number]["questions"][number] | undefined;
+    for (const section of session.test.sections) {
+      const found = section.questions.find((item) => !answeredIds.has(item.id));
+      if (found) {
+        question = found;
+        matchedSectionCode = section.code;
+        break;
+      }
+    }
 
     const sanitizedQuestion = question
       ? {
+          audioScript: question.audioScript,
+          audioUrl: question.audioUrl,
           createdAt: question.createdAt,
           difficulty: question.difficulty,
           id: question.id,
+          imageUrl: question.imageUrl,
+          imageAlt: question.imageAlt,
           options: question.options.map((option) => ({
             createdAt: option.createdAt,
             id: option.id,
@@ -203,6 +414,7 @@ export class QuizRepository {
           })),
           prompt: question.prompt,
           scenario: question.scenario,
+          sectionCode: matchedSectionCode,
           skillTag: question.skillTag,
           sourceId: question.sourceId,
           sourceType: question.sourceType,
@@ -210,13 +422,27 @@ export class QuizRepository {
         }
       : null;
 
+    const remainingSeconds =
+      session.test.timeLimitSeconds && session.test.timeLimitSeconds > 0
+        ? Math.max(
+            0,
+            Math.round(
+              (session.startedAt.getTime() + session.test.timeLimitSeconds * 1000 - Date.now()) /
+                1000
+            )
+          )
+        : null;
+
     return {
       question: sanitizedQuestion,
       session: {
         correctCount: session.correctCount,
         currentQuestionNo: session.currentQuestionNo,
         id: session.id,
+        remainingSeconds,
+        startedAt: session.startedAt.toISOString(),
         status: session.status,
+        timeLimitSeconds: session.test.timeLimitSeconds,
         totalQuestions: session.totalQuestions
       }
     };
@@ -237,7 +463,23 @@ export class QuizRepository {
     }
 
     if (this.hasSessionExpired(session.startedAt, session.test.timeLimitSeconds)) {
-      throw new ForbiddenException("Quiz session expired");
+      // Auto-expire and return completed session
+      await this.autoExpireSession(session.id, input.userId);
+      const expired = await this.prisma.quizSession.findFirst({
+        where: { id: input.sessionId }
+      });
+      return {
+        answer: null,
+        session: {
+          correctCount: expired?.correctCount ?? session.correctCount,
+          currentQuestionNo: expired?.currentQuestionNo ?? session.currentQuestionNo,
+          estimatedBjtBand: expired?.estimatedBjtBand ?? null,
+          estimatedScore: expired?.estimatedScore ?? null,
+          id: session.id,
+          status: "completed",
+          totalQuestions: session.totalQuestions
+        }
+      };
     }
 
     const option = await this.prisma.bjtQuestionOption.findFirst({
@@ -393,7 +635,11 @@ export class QuizRepository {
     return session;
   }
 
-  private validateBjtQuestionIntegrity(question: { explanationVi: string; skillTag: string; options: { isCorrect: boolean }[] }): { isValid: boolean; issues: string[] } {
+  private validateBjtQuestionIntegrity(question: {
+    explanationVi: string;
+    skillTag: string;
+    options: { isCorrect: boolean }[];
+  }): { isValid: boolean; issues: string[] } {
     const issues: string[] = [];
 
     if (!question.explanationVi || question.explanationVi.trim().length === 0) {
@@ -427,7 +673,11 @@ export class QuizRepository {
         validation: this.validateBjtQuestionIntegrity(q),
         qualityFlags: q.qualityFlags as Record<string, unknown> | null
       }))
-      .filter((item) => !item.validation.isValid || (item.qualityFlags && Object.keys(item.qualityFlags).length > 0));
+      .filter(
+        (item) =>
+          !item.validation.isValid ||
+          (item.qualityFlags && Object.keys(item.qualityFlags).length > 0)
+      );
 
     return issuesList;
   }
@@ -468,7 +718,9 @@ export class QuizRepository {
     }
 
     const breakdown = session.answers.map((answer) => {
-      const selectedCorrect = answer.question.options.find((opt) => opt.optionKey === answer.selectedOption)?.isCorrect ?? false;
+      const selectedCorrect =
+        answer.question.options.find((opt) => opt.optionKey === answer.selectedOption)?.isCorrect ??
+        false;
       return {
         questionId: answer.question.id,
         prompt: answer.question.prompt,

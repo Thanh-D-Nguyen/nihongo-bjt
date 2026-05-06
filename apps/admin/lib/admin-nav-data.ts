@@ -91,7 +91,8 @@ export const ADMIN_NAV_DATA: AdminNavGroupDefinition[] = [
       item({ href: "/media", icon: "book", id: "cm.media", labelKey: "shell.navItems.media", permissions: ["admin.content.read"], status: "implemented" }),
       item({ href: "/content/versions", icon: "queue", id: "cm.versions", labelKey: "shell.navItems.contentVersions", permissions: ["admin.content.read"], status: "implemented" }),
       item({ href: "/content/enrichment", icon: "bolt", id: "cm.enrichment", labelKey: "shell.navItems.enrichment", permissions: ["admin.content.read"], status: "implemented" }),
-      item({ href: "/i18n", icon: "cog", id: "cm.i18n", labelKey: "shell.navItems.i18n", permissions: ["admin.content.read", "iam.manage"], status: "implemented" })
+      item({ href: "/i18n", icon: "cog", id: "cm.i18n", labelKey: "shell.navItems.i18n", permissions: ["admin.content.read", "iam.manage"], status: "implemented" }),
+      item({ href: "/announcements", icon: "bolt", id: "cm.announcements", labelKey: "shell.navItems.announcements", permissions: ["admin.content.write"], status: "implemented" })
     ],
     labelKey: "shell.navGroups.content",
     sectionCollapsible: true

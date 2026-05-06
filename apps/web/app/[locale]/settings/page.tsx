@@ -1,10 +1,17 @@
 import { ActionCard, PageHeader, SectionHeader } from "@nihongo-bjt/ui";
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import ja from "../../../messages/ja.json";
 import vi from "../../../messages/vi.json";
 
-const messages = { ja, vi };
+const messages: Record<string, typeof vi> = { ja, vi };
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  const t = messages[locale] ?? messages.vi;
+  return { title: `${t.settings.title} — NihonGo BJT` };
+}
 
 export default async function SettingsHubPage({
   params

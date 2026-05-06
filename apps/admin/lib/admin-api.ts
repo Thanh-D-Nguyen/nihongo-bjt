@@ -1,6 +1,6 @@
 "use client";
 
-import { isAdminKeycloakEnabled, isAdminTestBypassEnabled } from "./public-keycloak";
+import { isAdminKeycloakEnabled } from "./public-keycloak";
 
 const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/$/u, "");
 const localAdminActorId =
@@ -17,7 +17,7 @@ let keycloakTokenCache: Cached | null = null;
 let inFlightKeycloakToken: Promise<string> | null = null;
 
 function keycloakBearerMode() {
-  return isAdminKeycloakEnabled() && !isAdminTestBypassEnabled();
+  return isAdminKeycloakEnabled();
 }
 
 function invalidateKeycloakTokenCache() {
@@ -60,6 +60,9 @@ async function getKeycloakAccessTokenCached(): Promise<string> {
         signal: AbortSignal.timeout(KEYCLOAK_SESSION_FETCH_TIMEOUT_MS)
       });
       if (!sr.ok) {
+        if (sr.status === 503) {
+          throw new Error("admin_keycloak_server_not_configured");
+        }
         throw new Error("admin_session_unauthorized");
       }
       const { accessToken } = (await sr.json()) as { accessToken: string };

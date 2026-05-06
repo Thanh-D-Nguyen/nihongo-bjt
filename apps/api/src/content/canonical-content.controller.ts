@@ -1,9 +1,23 @@
 import { paginationQuerySchema, searchQuerySchema } from "@nihongo-bjt/shared";
-import { BadRequestException, Controller, Get, Inject, Param, Query } from "@nestjs/common";
+import { parseServerEnv } from "@nihongo-bjt/config";
+import {
+  BadGatewayException,
+  BadRequestException,
+  Controller,
+  Get,
+  Header,
+  Inject,
+  NotFoundException,
+  Param,
+  Query,
+  StreamableFile
+} from "@nestjs/common";
 import { ApiOperation, ApiParam, ApiQuery, ApiTags } from "@nestjs/swagger";
 
 import { DocumentedHttpErrors } from "../openapi/common-decorators.js";
+import { MediaService } from "../media/media.service.js";
 import { ContentRepository } from "./content.repository.js";
+import { isRepoRelativeKanjiStrokePath, openKanjiStrokeRepoReadStream } from "./kanji-stroke-repo-path.util.js";
 
 @ApiTags("Dictionary", "Content")
 @DocumentedHttpErrors()
@@ -44,6 +58,13 @@ export class DictionaryController extends CanonicalContentBase {
 @Controller("kanji")
 @ApiTags("Kanji")
 export class KanjiController extends CanonicalContentBase {
+  constructor(
+    @Inject(ContentRepository) contentRepository: ContentRepository,
+    private readonly mediaService: MediaService
+  ) {
+    super(contentRepository);
+  }
+
   @Get()
   @ApiOperation({ summary: "Canonical v15 kanji list." })
   list(@Query() query: Record<string, string | undefined>) {
@@ -56,6 +77,58 @@ export class KanjiController extends CanonicalContentBase {
   search(@Query() query: Record<string, string | undefined>) {
     const parsed = this.parsePagination(query);
     return this.contentRepository.kanji(parsed.q, parsed.limit);
+  }
+
+  @Get(":id/stroke")
+  @Header("Cache-Control", "public, max-age=86400")
+  @ApiOperation({
+    summary:
+      "Kanji stroke-order SVG (same-origin): reads repo files under data/generated/kanji-strokes/, streams object storage keys, or fetches allowlisted HTTPS (avoids browser→MinIO CORS)."
+  })
+  @ApiParam({ name: "id" })
+  async stroke(@Param("id") id: string): Promise<StreamableFile> {
+    const strokeSvgPath = await this.contentRepository.kanjiStrokeSvgPath(id);
+    if (!strokeSvgPath) {
+      throw new NotFoundException("Kanji stroke diagram is not available");
+    }
+
+    if (strokeSvgPath.startsWith("<")) {
+      throw new BadRequestException("Inline stroke SVG is delivered in JSON; use client rendering");
+    }
+
+    if (/^https?:\/\//i.test(strokeSvgPath)) {
+      const env = parseServerEnv(process.env);
+      let url: URL;
+      try {
+        url = new URL(strokeSvgPath);
+      } catch {
+        throw new BadRequestException("Invalid stroke SVG URL");
+      }
+      if (!strokeSvgFetchHostAllowed(url.hostname, env)) {
+        throw new BadRequestException("Stroke SVG URL host is not allowlisted for server fetch");
+      }
+      const upstream = await fetch(strokeSvgPath, { redirect: "follow" });
+      if (upstream.status === 404) {
+        throw new NotFoundException("Upstream stroke SVG not found");
+      }
+      if (!upstream.ok) {
+        throw new BadGatewayException("Upstream stroke SVG could not be fetched");
+      }
+      const buf = Buffer.from(await upstream.arrayBuffer());
+      if (buf.length > 2_000_000) {
+        throw new BadRequestException("Stroke SVG exceeds size limit");
+      }
+      return new StreamableFile(buf, { type: "image/svg+xml; charset=utf-8" });
+    }
+
+    if (isRepoRelativeKanjiStrokePath(strokeSvgPath)) {
+      const stream = openKanjiStrokeRepoReadStream(strokeSvgPath);
+      return new StreamableFile(stream, { type: "image/svg+xml; charset=utf-8" });
+    }
+
+    const key = strokeSvgPath.replace(/^\/+/, "");
+    const stream = await this.mediaService.streamPublicBucketObject(key);
+    return new StreamableFile(stream, { type: "image/svg+xml; charset=utf-8" });
   }
 
   @Get(":id")
@@ -122,4 +195,22 @@ export class VijaController extends CanonicalContentBase {
     }
     return this.contentRepository.reverseSearch(parsed.data.q, parsed.data.limit);
   }
+}
+
+function strokeSvgExtraFetchHosts(): string[] {
+  return (process.env.KANJI_STROKE_SVG_FETCH_HOSTS ?? "")
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function strokeSvgFetchHostAllowed(hostname: string, env: ReturnType<typeof parseServerEnv>): boolean {
+  const h = hostname.toLowerCase();
+  const allowed = new Set<string>([
+    env.MINIO_ENDPOINT.toLowerCase(),
+    "localhost",
+    "127.0.0.1",
+    ...strokeSvgExtraFetchHosts()
+  ]);
+  return allowed.has(h);
 }

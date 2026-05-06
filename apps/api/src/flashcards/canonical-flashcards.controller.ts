@@ -1,10 +1,24 @@
 import {
+  archiveOwnedDeckBodySchema,
+  archiveOwnedDeckQuerySchema,
   createCardFromContentSchema,
   createDeckSchema,
-  submitReviewSchema,
-  userScopedQuerySchema
+  flashcardsDueQuerySchema,
+  flashcardsUserScopedQuerySchema,
+  submitReviewSchema
 } from "@nihongo-bjt/shared";
-import { BadRequestException, Body, Controller, Get, Inject, Param, Post, Query, UseGuards } from "@nestjs/common";
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Inject,
+  Param,
+  Post,
+  Query,
+  UseGuards
+} from "@nestjs/common";
 import { ApiBearerAuth, ApiBody, ApiOkResponse, ApiOperation, ApiParam, ApiQuery, ApiTags } from "@nestjs/swagger";
 
 import { CurrentUser } from "../keycloak/current-user.decorator.js";
@@ -36,7 +50,7 @@ export class DecksController {
   @ApiQuery({ name: "limit", required: false, example: 20 })
   list(@CurrentUser() user: KeycloakAuthenticatedUser | undefined, @Query() query: Record<string, string | undefined>) {
     const userId = resolveLearnerUserId(user, query.userId, { required: true })!;
-    const parsed = userScopedQuerySchema.safeParse({ ...query, userId });
+    const parsed = flashcardsUserScopedQuerySchema.safeParse({ ...query, userId });
     if (!parsed.success) throw new BadRequestException(parsed.error.flatten());
     return this.repo.decks(parsed.data.userId, parsed.data.limit);
   }
@@ -59,12 +73,48 @@ export class DecksController {
     return this.repo.deckDetail(userId, id);
   }
 
+  @Delete(":id")
+  @ApiOperation({
+    summary: "Archive learner-owned deck (same contract as DELETE /api/flashcards/decks/:deckId).",
+    description:
+      "Soft-removes the deck from the active library, unlinks cards, and prunes the caller's SRS rows per server policy."
+  })
+  @ApiParam({ name: "id" })
+  archiveOwnedDeck(
+    @CurrentUser() user: KeycloakAuthenticatedUser | undefined,
+    @Param("id") id: string,
+    @Query() query: Record<string, string | undefined>
+  ) {
+    const userId = resolveLearnerUserId(user, query.userId, { required: true })!;
+    const parsed = archiveOwnedDeckQuerySchema.safeParse({ ...query, userId });
+    if (!parsed.success) throw new BadRequestException(parsed.error.flatten());
+    return this.repo.archiveOwnedDeckForLearner(parsed.data.userId, id.trim());
+  }
+
+  @Post(":id/archive")
+  @ApiOperation({
+    summary: "Archive learner-owned deck via POST (alias when DELETE is blocked).",
+    description: "Same as `DELETE /decks/:id?userId=`; JSON body `{ \"userId\" }`."
+  })
+  @ApiParam({ name: "id" })
+  archiveOwnedDeckPost(
+    @CurrentUser() user: KeycloakAuthenticatedUser | undefined,
+    @Param("id") id: string,
+    @Body() body: unknown
+  ) {
+    const raw = body && typeof body === "object" ? (body as Record<string, unknown>) : {};
+    const userId = resolveLearnerUserId(user, raw.userId as string | undefined, { required: true })!;
+    const parsed = archiveOwnedDeckBodySchema.safeParse({ ...raw, userId });
+    if (!parsed.success) throw new BadRequestException(parsed.error.flatten());
+    return this.repo.archiveOwnedDeckForLearner(parsed.data.userId, id.trim());
+  }
+
   @Get(":deckId/cards")
   @ApiOperation({ summary: "Canonical v15 cards in deck." })
   @ApiParam({ name: "deckId" })
   cards(@CurrentUser() user: KeycloakAuthenticatedUser | undefined, @Param("deckId") deckId: string, @Query() query: Record<string, string | undefined>) {
     const userId = resolveLearnerUserId(user, query.userId, { required: true })!;
-    const parsed = userScopedQuerySchema.safeParse({ ...query, userId });
+    const parsed = flashcardsUserScopedQuerySchema.safeParse({ ...query, userId });
     if (!parsed.success) throw new BadRequestException(parsed.error.flatten());
     return this.repo.deckCards(userId, deckId, parsed.data.limit);
   }
@@ -97,9 +147,9 @@ export class ReviewController {
   @ApiOkResponse({ type: DueFlashcardOpenApiDto, isArray: true })
   next(@CurrentUser() user: KeycloakAuthenticatedUser | undefined, @Query() query: Record<string, string | undefined>) {
     const userId = resolveLearnerUserId(user, query.userId, { required: true })!;
-    const parsed = userScopedQuerySchema.safeParse({ ...query, userId });
+    const parsed = flashcardsDueQuerySchema.safeParse({ ...query, userId });
     if (!parsed.success) throw new BadRequestException(parsed.error.flatten());
-    return this.service.dueReviewsForLearner(parsed.data.userId, parsed.data.limit);
+    return this.service.dueReviewsForLearner(parsed.data.userId, parsed.data.limit, parsed.data.deckId);
   }
 
   @Post()

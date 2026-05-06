@@ -7,7 +7,9 @@ vi.mock("@nihongo-bjt/shared", async () => {
   const actual = await vi.importActual<typeof import("@nihongo-bjt/shared")>("@nihongo-bjt/shared");
   return {
     ...actual,
-    decideBotOption: vi.fn().mockImplementation(({ correctOptionKey }) => ({ optionKey: correctOptionKey })),
+    decideBotOption: vi
+      .fn()
+      .mockImplementation(({ correctOptionKey }) => ({ optionKey: correctOptionKey })),
     getBattleBotProfile: vi.fn().mockReturnValue({
       correctProbability: 1,
       labelI18nKey: "battle.bots.j3",
@@ -19,6 +21,20 @@ vi.mock("@nihongo-bjt/shared", async () => {
 });
 
 describe("BattleOrchestratorService", () => {
+  const botProfile = {
+    accuracyPct: 100,
+    avatarFallback: "J3",
+    botKey: "bot_j3",
+    difficulty: "medium",
+    label: "battle.bots.j3",
+    maxDelayMs: 0,
+    minDelayMs: 0,
+    persona: "battle.botPersonas.j3",
+    rive: { artboard: "BotJ3", src: null, stateMachine: "BattleBot" },
+    styleToken: "focused",
+    vocabularyLevel: "bjt_intermediate"
+  } as const;
+
   function buildService() {
     const repository = {
       abandonInProgressForUser: vi.fn().mockResolvedValue(undefined),
@@ -39,20 +55,66 @@ describe("BattleOrchestratorService", () => {
         session: { id: "s-start" }
       }),
       createAnalyticsEvent: vi.fn().mockResolvedValue(undefined),
+      createChatMessage: vi.fn().mockImplementation((input: any) =>
+        Promise.resolve({
+          createdAt: new Date("2026-05-02T00:00:00.000Z"),
+          displayName: input.displayName ?? null,
+          id: input.metadata?.clientMessageId ?? "message-id",
+          kind: "chat",
+          message: input.message,
+          metadata: input.metadata ?? {},
+          roomKey: input.roomKey,
+          userId: input.userId
+        })
+      ),
+      getPlayableBot: vi.fn().mockResolvedValue(botProfile),
+      listRecentChatMessages: vi.fn().mockResolvedValue([]),
       markAbandoned: vi.fn().mockResolvedValue(undefined),
       markCompleted: vi.fn().mockResolvedValue(undefined),
       updateRoundWithScores: vi.fn().mockResolvedValue(undefined)
     };
     const matchmaking = { releaseUser: vi.fn() };
-    const service = new BattleOrchestratorService(repository as any, matchmaking as any);
-    return { matchmaking, repository, service };
+    const botResponder = {
+      generateResponse: vi.fn().mockResolvedValue(null)
+    };
+    const service = new BattleOrchestratorService(repository as any, matchmaking as any, botResponder as any);
+    return { botResponder, matchmaking, repository, service };
   }
+
+  it("rate limits global lobby chat at five messages per ten seconds", async () => {
+    const { repository, service } = buildService();
+    const to = vi.fn().mockReturnValue({ emit: vi.fn() });
+    const client = {
+      emit: vi.fn(),
+      id: "socket-chat",
+      join: vi.fn().mockResolvedValue(undefined),
+      nsp: { to }
+    };
+
+    await service.joinLobby(client as any, { displayName: "Learner", userId: "u-chat" });
+    for (let i = 0; i < 6; i += 1) {
+      await service.sendLobbyMessage(client as any, {
+        clientMessageId: `m-${i}`,
+        displayName: "Learner",
+        message: `hello ${i}`,
+        roomKey: "global",
+        userId: "u-chat"
+      });
+    }
+
+    expect(repository.createChatMessage).toHaveBeenCalledTimes(5);
+    expect(client.emit).toHaveBeenCalledWith("battle:lobby_error", { code: "rate_limited" });
+    expect(repository.createAnalyticsEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ eventName: "battle_chat_rate_limited", userId: "u-chat" })
+    );
+  });
 
   it("rejects answer option not present in question options", async () => {
     const { service } = buildService();
     const client = { emit: vi.fn(), id: "socket-1" };
     (service as any).rooms.set("room-1", {
       botKey: "bot_j3",
+      botProfile,
       idempotency: new Set<string>(),
       maxRounds: 1,
       opponentScore: 0,
@@ -96,6 +158,7 @@ describe("BattleOrchestratorService", () => {
     const client = { emit: vi.fn(), id: "socket-3" };
     (service as any).rooms.set("room-3", {
       botKey: "bot_j3",
+      botProfile,
       idempotency: new Set<string>(),
       maxRounds: 1,
       missedSkillTagCounts: new Map<string, number>(),
@@ -146,9 +209,13 @@ describe("BattleOrchestratorService", () => {
   it("rejects unknown bot key before starting session", async () => {
     const { matchmaking, repository, service } = buildService();
     const client = { emit: vi.fn(), id: "socket-4", join: vi.fn() };
+    repository.getPlayableBot.mockResolvedValueOnce(null);
 
     await expect(
-      service.startBotBattle(client as any, { botKey: "bot_cheat", userId: "00000000-0000-4000-8000-000000000001" })
+      service.startBotBattle(client as any, {
+        botKey: "bot_cheat",
+        userId: "00000000-0000-4000-8000-000000000001"
+      })
     ).rejects.toBeInstanceOf(BadRequestException);
 
     expect(matchmaking.releaseUser).not.toHaveBeenCalled();
@@ -160,6 +227,7 @@ describe("BattleOrchestratorService", () => {
     const client = { emit: vi.fn(), id: "socket-2" };
     (service as any).rooms.set("room-2", {
       botKey: "bot_j3",
+      botProfile,
       idempotency: new Set<string>(),
       maxRounds: 1,
       missedSkillTagCounts: new Map<string, number>(),

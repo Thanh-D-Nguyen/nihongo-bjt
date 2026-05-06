@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 
 import { AdminModule } from "../admin/admin.module.js";
+import { MediaModule } from "../media/media.module.js";
 import { ContentEnrichmentAdminController } from "./content-enrichment-admin.controller.js";
 import { ContentEnrichmentAdminRepository } from "./content-enrichment-admin.repository.js";
 import { ContentVersionsAdminController } from "./content-versions-admin.controller.js";
@@ -26,7 +27,7 @@ import {
     ExamplesController,
     VijaController
   ],
-  imports: [AdminModule],
+  imports: [AdminModule, MediaModule],
   providers: [ContentRepository, ContentEnrichmentAdminRepository, ContentVersionsAdminRepository],
   exports: [ContentRepository]
 })

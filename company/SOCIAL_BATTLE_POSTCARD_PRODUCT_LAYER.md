@@ -173,6 +173,7 @@ Known backend anchors to inspect first:
 Use these specialists for any battle/share/postcard slice:
 
 - `bjt-social-experience`: social action, SNS UX, public-page privacy posture, growth ethics;
+- `bjt-battle-experience`: bot/PvP mode design, match pacing, fairness, abandonment, and post-battle learning loop;
 - `bjt-postcard-visual-designer`: template visual system, postcard preview quality, share image composition;
 - `bjt-learning-science`: motivation, pressure, focus, learner wellbeing;
 - `bjt-media-experience`: media, motion, accessibility, provenance;

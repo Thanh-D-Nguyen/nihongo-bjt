@@ -32,6 +32,7 @@ export async function createRealmUser(params: {
   baseUrl: string;
   email: string;
   firstName?: string;
+  lastName?: string;
   password: string;
   realm: string;
   username: string;
@@ -45,6 +46,8 @@ export async function createRealmUser(params: {
       emailVerified: true,
       enabled: true,
       firstName: params.firstName ?? params.username,
+      lastName: params.lastName ?? params.username,
+      requiredActions: [],
       username: params.username
     }),
     headers: {
@@ -93,4 +96,45 @@ export async function assignRealmRole(params: {
     },
     method: "POST"
   });
+}
+
+export async function findRealmUserByEmail(params: {
+  adminToken: string;
+  baseUrl: string;
+  email: string;
+  realm: string;
+}): Promise<{ id: string } | null> {
+  const base = params.baseUrl.replace(/\/$/u, "");
+  const realm = encodeURIComponent(params.realm);
+  const email = encodeURIComponent(params.email);
+  const res = await fetch(`${base}/admin/realms/${realm}/users?email=${email}&exact=true`, {
+    headers: { Authorization: `Bearer ${params.adminToken}` }
+  });
+  if (!res.ok) {
+    return null;
+  }
+  const users = (await res.json()) as Array<{ id: string }>;
+  return users.length > 0 ? { id: users[0].id } : null;
+}
+
+export async function sendResetPasswordEmail(params: {
+  adminToken: string;
+  baseUrl: string;
+  realm: string;
+  userId: string;
+}): Promise<boolean> {
+  const base = params.baseUrl.replace(/\/$/u, "");
+  const realm = encodeURIComponent(params.realm);
+  const res = await fetch(
+    `${base}/admin/realms/${realm}/users/${params.userId}/execute-actions-email`,
+    {
+      body: JSON.stringify(["UPDATE_PASSWORD"]),
+      headers: {
+        Authorization: `Bearer ${params.adminToken}`,
+        "content-type": "application/json"
+      },
+      method: "PUT"
+    }
+  );
+  return res.ok;
 }

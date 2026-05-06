@@ -1,13 +1,9 @@
-import {
-  buildAuthorizationRedirect,
-  generatePkcePair,
-  KC_COOKIE
-} from "@nihongo-bjt/keycloak-oidc";
+import { buildAuthorizationRedirect, generatePkcePair } from "@nihongo-bjt/keycloak-oidc";
 import { randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-import { ephemeralOauthCookieOptions, safeReturnToPath } from "@/lib/kc-cookies";
+import { adminKcCookies, ephemeralOauthCookieOptions, safeReturnToPath } from "@/lib/kc-cookies";
 import { getKcAdminConfig } from "@/lib/kc-server-config";
 
 export async function GET(request: Request) {
@@ -39,9 +35,9 @@ export async function GET(request: Request) {
   const state = randomBytes(24).toString("hex");
   const jar = await cookies();
   const opt = ephemeralOauthCookieOptions();
-  jar.set(KC_COOKIE.pkceVerifier, verifier, opt);
-  jar.set(KC_COOKIE.state, state, opt);
-  jar.set(KC_COOKIE.returnTo, returnTo, opt);
+  jar.set(adminKcCookies.pkceVerifier, verifier, opt);
+  jar.set(adminKcCookies.state, state, opt);
+  jar.set(adminKcCookies.returnTo, returnTo, opt);
 
   const location = buildAuthorizationRedirect({
     clientId: cfg.clientId,

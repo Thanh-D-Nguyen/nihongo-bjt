@@ -1,5 +1,5 @@
 import { createPrismaClient, type Prisma } from "@nihongo-bjt/database";
-import { greetingForHour, todayDateKey } from "@nihongo-bjt/shared";
+import { greetingForHour, repairDailyContentFlashcardBackIfNeeded, todayDateKey } from "@nihongo-bjt/shared";
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 
 interface SuggestedFlashcard {
@@ -75,6 +75,31 @@ export class DailyRepository {
     });
   }
 
+  async findPublishedItem(id: string) {
+    const item = await this.prisma.dailyContentItem.findUnique({
+      include: { extraction: true },
+      where: { id }
+    });
+    if (!item || item.status !== "published") {
+      throw new NotFoundException("Daily content item not found");
+    }
+    const safeguard = this.buildLearningSafeguard(item.widgetKind, item.extraction?.extractedEntries, item.locale as "vi" | "ja");
+    return {
+      id: item.id,
+      title: item.title,
+      widgetKind: item.widgetKind,
+      contentDate: item.contentDate,
+      locale: item.locale,
+      japaneseText: item.japaneseText,
+      readingText: item.readingText,
+      explanationText: item.explanationText,
+      bodyMd: item.bodyMd,
+      sourceProvider: item.sourceProvider,
+      sourceRef: item.sourceRef,
+      ...(safeguard ? { learningSafeguard: safeguard } : {})
+    };
+  }
+
   async generateFlashcards(itemId: string, userId: string) {
     const item = await this.prisma.dailyContentItem.findUnique({
       include: { extraction: true },
@@ -84,7 +109,8 @@ export class DailyRepository {
       throw new NotFoundException("Daily content item not found");
     }
 
-    const cards = this.parseFlashcards(item.extraction.suggestedFlashcards);
+    const rawCards = this.parseFlashcards(item.extraction.suggestedFlashcards);
+    const cards = rawCards.map((card, index) => this.maybeRepairDailyFlashcardBack(item, card, index));
     if (cards.length === 0) {
       throw new NotFoundException("No suggested flashcards for daily content item");
     }
@@ -246,6 +272,25 @@ export class DailyRepository {
       return null;
     }
     return { answer: o.answer, options, prompt: o.prompt };
+  }
+
+  private maybeRepairDailyFlashcardBack(
+    item: Prisma.DailyContentItemGetPayload<{ include: { extraction: true } }>,
+    card: SuggestedFlashcard,
+    index: number
+  ): SuggestedFlashcard {
+    if (index !== 0) {
+      return card;
+    }
+    const fixed = repairDailyContentFlashcardBackIfNeeded(
+      card.backText,
+      item.bodyMd,
+      item.explanationText
+    );
+    if (fixed == null) {
+      return card;
+    }
+    return { ...card, backText: fixed };
   }
 
   private parseFlashcards(value: Prisma.JsonValue): SuggestedFlashcard[] {

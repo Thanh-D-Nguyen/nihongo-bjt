@@ -8,9 +8,12 @@ import { getKcWebConfig } from "@/lib/kc-server-config";
 
 import ja from "../../../messages/ja.json";
 import vi from "../../../messages/vi.json";
+import { AuthHeroLayout } from "../_components/auth-hero-layout";
 import { LoginFormClient } from "./_components/login-form-client";
 
 const messages = { ja, vi };
+
+const LOCALE_LABELS: Record<string, string> = { vi: "Tiếng Việt", ja: "日本語" };
 
 export async function generateMetadata({
   params
@@ -53,72 +56,137 @@ export default async function LoginPage({
   const localePrefix = `/${locale}`;
   const showRegister = process.env.NEXT_PUBLIC_AUTH_REGISTRATION_ENABLED !== "false";
 
+  // Social login feature flags — server-side gated
+  const showGoogle = Boolean(process.env.NEXT_PUBLIC_AUTH_GOOGLE_IDP_HINT?.trim());
+  const showFacebook = Boolean(process.env.NEXT_PUBLIC_AUTH_FACEBOOK_IDP_HINT?.trim());
+  const showApple = Boolean(process.env.NEXT_PUBLIC_AUTH_APPLE_IDP_HINT?.trim());
+  const showLine = Boolean(process.env.NEXT_PUBLIC_AUTH_LINE_IDP_HINT?.trim());
+
+  // Locale switcher query
+  const localeQuery = new URLSearchParams();
+  if (sp.returnTo && sp.returnTo.startsWith("/") && !sp.returnTo.startsWith("//")) {
+    localeQuery.set("returnTo", sp.returnTo);
+  }
+  const localeQs = localeQuery.toString();
+
   return (
-    <main className="mx-auto flex min-h-[80vh] w-full max-w-[420px] flex-col justify-center px-4 py-16">
-      <div className="mb-8 text-center">
-        <p className="text-lg font-semibold tracking-tight text-ink">{nav.brand}</p>
+    <AuthHeroLayout locale={locale}>
+      {/* Brand — mobile only */}
+      <div className="mb-8 text-center lg:hidden">
+        <Link href={localePrefix} className="no-underline">
+          <p className="text-xl font-bold tracking-tight text-ink">{nav.brand}</p>
+        </Link>
         <p className="mt-1 text-xs font-medium text-muted">{t.brandTagline}</p>
       </div>
 
-      <div className="space-y-2 text-center">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">{t.eyebrow}</p>
-        <h1 className="text-2xl font-semibold tracking-tight text-ink">{t.title}</h1>
-        <p className="text-sm leading-relaxed text-muted">{t.subtitle}</p>
-        {err ? (
-          <p
-            className="rounded-xl border border-red-200/80 bg-red-50/90 px-3 py-2 text-sm text-red-800"
-            role="alert"
+      {/* Tab switcher: Log in / Sign up */}
+      <div className="mb-6 flex items-center justify-center gap-1 rounded-full border border-ink/10 bg-paper p-1">
+        <span className="rounded-full bg-ink px-5 py-2 text-sm font-semibold text-paper">
+          {t.primaryCta}
+        </span>
+        {showRegister ? (
+          <Link
+            className="rounded-full px-5 py-2 text-sm font-medium text-muted no-underline transition hover:text-ink"
+            href={`${localePrefix}/register`}
           >
-            {err}
-          </p>
+            {messages[loc].auth.register.primaryCta}
+          </Link>
         ) : null}
       </div>
 
-      <div className="mt-8 rounded-2xl border border-ink/10 bg-surface p-6 shadow-[0_12px_40px_rgba(23,33,31,0.06)]">
+      {/* Locale switcher */}
+      <nav
+        aria-label="Language"
+        className="mb-6 flex justify-center"
+      >
+        <div className="inline-flex items-center gap-1 rounded-full border border-ink/10 bg-surface/70 p-1">
+          {(["vi", "ja"] as const).map((code) => {
+            const isActive = code === loc;
+            const href = `/${code}/login${localeQs ? `?${localeQs}` : ""}`;
+            return (
+              <Link
+                aria-current={isActive ? "page" : undefined}
+                className={
+                  isActive
+                    ? "rounded-full bg-ink px-3 py-1 text-xs font-semibold text-paper no-underline"
+                    : "rounded-full px-3 py-1 text-xs font-medium text-muted no-underline transition hover:text-ink"
+                }
+                href={href}
+                key={code}
+                lang={code}
+              >
+                {LOCALE_LABELS[code]}
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+
+      {/* Heading */}
+      <div className="mb-4 text-center">
+        <h1 className="text-2xl font-bold tracking-tight text-ink">{t.title}</h1>
+        <p className="mt-1 text-sm leading-relaxed text-muted">{t.subtitle}</p>
+      </div>
+
+      {err ? (
+        <div
+          aria-live="polite"
+          className="mb-4 rounded-xl border border-red-200/80 bg-red-50/90 px-3 py-2.5 text-sm text-red-800"
+          role="alert"
+        >
+          {err}
+        </div>
+      ) : null}
+
+      {/* Login form */}
+      <div className="rounded-2xl border border-ink/10 bg-surface p-6 shadow-[0_12px_40px_rgba(23,33,31,0.06)]">
         <LoginFormClient
           authReady={authReady}
           copy={{
             authDisabledHint: t.authDisabledHint,
+            continueApple: t.continueApple,
+            continueFacebook: t.continueFacebook,
+            continueGoogle: t.continueGoogle,
+            continueLine: t.continueLine,
+            divider: t.divider,
             errorAuthMethodNotAllowed: t.errorAuthMethodNotAllowed,
             errorClientMisconfigured: t.errorClientMisconfigured,
             errorInvalidScope: t.errorInvalidScope,
             errorLoginFailed: t.errorLoginFailed,
             errorNotConfigured: messages[loc].auth.errors.configuration,
+            forgotPassword: t.forgotPassword,
             genericFormError: messages[loc].auth.errors.generic,
             passwordLabel: t.passwordLabel,
             passwordPlaceholder: t.passwordPlaceholder,
             primaryCta: t.primaryCta,
+            privacyLink: t.privacyLink,
             submitting: t.submitting,
+            termsAnd: t.termsAnd,
+            termsLink: t.termsLink,
+            termsNotice: t.termsNotice,
             usernameLabel: t.usernameLabel,
             usernamePlaceholder: t.usernamePlaceholder,
             validationError: t.validationError,
             wrongCredentials: t.wrongCredentials
           }}
+          locale={locale}
           returnTo={returnTo}
+          showApple={showApple}
+          showFacebook={showFacebook}
+          showGoogle={showGoogle}
+          showLine={showLine}
         />
-
-        {showRegister ? (
-          <p className="mt-6 text-center text-sm text-muted">
-            <span>{t.registerLead} </span>
-            <Link
-              className="font-semibold text-ink underline-offset-4 hover:underline"
-              href={`${localePrefix}/register`}
-            >
-              {t.registerCta}
-            </Link>
-          </p>
-        ) : null}
-
-        {authReady ? (
-          <p className="mt-4 text-center text-xs leading-snug text-muted">{t.hint}</p>
-        ) : null}
       </div>
 
-      <p className="mt-8 text-center text-sm text-muted">
-        <Link className="font-medium text-ink underline-offset-4 hover:underline" href={localePrefix}>
+      {/* Footer links */}
+      <div className="mt-6 text-center text-sm text-muted">
+        <Link
+          className="font-medium text-ink underline-offset-4 hover:underline"
+          href={localePrefix}
+        >
           {t.backHome}
         </Link>
-      </p>
-    </main>
+      </div>
+    </AuthHeroLayout>
   );
 }

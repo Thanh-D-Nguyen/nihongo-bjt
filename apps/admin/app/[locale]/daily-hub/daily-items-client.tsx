@@ -34,6 +34,8 @@ type DailyItemSummary = {
   status: "draft" | "scheduled" | "published" | "archived";
   publishAt: string | null;
   publishedAt: string | null;
+  title: string | null;
+  japaneseText: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -47,12 +49,26 @@ type AuditEntry = {
 };
 
 type DailyItemDetail = DailyItemSummary & {
+  bodyMd: string | null;
+  readingText: string | null;
+  explanationText: string | null;
+  imageUrl: string | null;
+  sourceProvider: string | null;
+  sourceRef: string | null;
   payload: unknown;
   notes: string | null;
   extraction: unknown | null;
   engagement: Record<string, number>;
   _count: { actions: number };
   audit: AuditEntry[];
+};
+
+type WidgetConfig = {
+  id: string;
+  widgetKind: string;
+  enabled: boolean;
+  displayOrder: number;
+  locale: string;
 };
 
 type ListResponse = {
@@ -69,21 +85,31 @@ type FormState = {
   contentDate: string;
   locale: string;
   widgetKind: string;
-  level: string;
-  publishAt: string;
-  notes: string;
-  payloadJson: string;
+  title: string;
+  bodyMd: string;
+  japaneseText: string;
+  readingText: string;
+  explanationText: string;
+  imageUrl: string;
+  sourceProvider: string;
+  sourceRef: string;
 };
 
 const EMPTY_FORM: FormState = {
   contentDate: new Date().toISOString().slice(0, 10),
   locale: "vi",
-  widgetKind: "phrase_of_the_day",
-  level: "",
-  publishAt: "",
-  notes: "",
-  payloadJson: "{}"
+  widgetKind: "life_situation",
+  title: "",
+  bodyMd: "",
+  japaneseText: "",
+  readingText: "",
+  explanationText: "",
+  imageUrl: "",
+  sourceProvider: "admin_seed",
+  sourceRef: ""
 };
+
+type Tab = "items" | "configs";
 
 function statusTone(s: string): "danger" | "good" | "neutral" | "warning" {
   if (s === "published") return "good";
@@ -92,15 +118,26 @@ function statusTone(s: string): "danger" | "good" | "neutral" | "warning" {
   return "warning";
 }
 
-const WIDGET_KINDS = [
-  "phrase_of_the_day",
-  "kanji_of_the_day",
-  "vocab_of_the_day",
-  "grammar_of_the_day",
-  "listening_of_the_day",
-  "challenge_of_the_day",
-  "tip_of_the_day"
-];
+const WIDGET_KIND_GROUPS = [
+  { label: "Nổi bật", kinds: ["weather", "business_phrase", "seasonal_word"] },
+  { label: "Cuộc sống Nhật Bản", kinds: ["life_situation", "life_housing", "life_banking", "life_tax"] },
+  { label: "Tin tức & khác", kinds: ["time_greeting", "nhk_news"] }
+] as const;
+
+function widgetKindLabel(kind: string): string {
+  const m: Record<string, string> = {
+    weather: "🌤 Thời tiết",
+    business_phrase: "💼 Công sở",
+    seasonal_word: "🌸 Từ mùa",
+    life_situation: "🚃 Đời sống",
+    life_housing: "🏠 Thuê nhà",
+    life_banking: "🏦 Ngân hàng",
+    life_tax: "📋 Thuế & bảo hiểm",
+    time_greeting: "⏰ Chào theo giờ",
+    nhk_news: "📰 Tin NHK"
+  };
+  return m[kind] ?? kind;
+}
 
 export function DailyItemsAdminClient({
   common,
@@ -112,6 +149,7 @@ export function DailyItemsAdminClient({
 }) {
   const t = useCallback((k: string) => labels[k] ?? k, [labels]);
 
+  const [tab, setTab] = useState<Tab>("items");
   const [perms, setPerms] = useState<Set<string> | null>(null);
   const canWrite = perms != null && perms.has("admin.content.write");
 
@@ -220,12 +258,16 @@ export function DailyItemsAdminClient({
     setEditing("edit");
     setForm({
       contentDate: detail.contentDate.slice(0, 10),
-      level: detail.level ?? "",
       locale: detail.locale,
-      notes: detail.notes ?? "",
-      payloadJson: JSON.stringify(detail.payload ?? {}, null, 2),
-      publishAt: detail.publishAt ? detail.publishAt.slice(0, 16) : "",
-      widgetKind: detail.widgetKind
+      widgetKind: detail.widgetKind,
+      title: detail.title ?? "",
+      bodyMd: detail.bodyMd ?? "",
+      japaneseText: detail.japaneseText ?? "",
+      readingText: detail.readingText ?? "",
+      explanationText: detail.explanationText ?? "",
+      imageUrl: (detail as DailyItemDetail).imageUrl ?? "",
+      sourceProvider: detail.sourceProvider ?? "",
+      sourceRef: detail.sourceRef ?? ""
     });
     setFormError(null);
   };
@@ -238,16 +280,13 @@ export function DailyItemsAdminClient({
   };
 
   const submitForm = async () => {
+    if (!form.title.trim()) {
+      setFormError(t("errorTitleRequired"));
+      return;
+    }
     const reasonText = window.prompt(t("promptReason") ?? "Reason");
     if (!reasonText || reasonText.trim().length < 3) {
       setFormError(t("errorReasonRequired"));
-      return;
-    }
-    let payload: unknown;
-    try {
-      payload = JSON.parse(form.payloadJson || "{}");
-    } catch {
-      setFormError(t("errorInvalidJson"));
       return;
     }
     setSubmitting(true);
@@ -255,13 +294,17 @@ export function DailyItemsAdminClient({
     try {
       const body: Record<string, unknown> = {
         contentDate: form.contentDate,
-        level: form.level || null,
         locale: form.locale,
-        notes: form.notes || null,
-        payload,
-        publishAt: form.publishAt || null,
-        reason: reasonText.trim(),
-        widgetKind: form.widgetKind
+        widgetKind: form.widgetKind,
+        title: form.title.trim(),
+        bodyMd: form.bodyMd || null,
+        japaneseText: form.japaneseText || null,
+        readingText: form.readingText || null,
+        explanationText: form.explanationText || null,
+        imageUrl: form.imageUrl || null,
+        sourceProvider: form.sourceProvider || null,
+        sourceRef: form.sourceRef || null,
+        reason: reasonText.trim()
       };
       const url = editing === "create"
         ? "/api/admin/daily/items"
@@ -321,18 +364,40 @@ export function DailyItemsAdminClient({
 
   return (
     <div className="space-y-6">
-      <AdminPageHeader description={t("subtitle")} title={t("title")}>
-        {canWrite ? (
-          <button
-            className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
-            onClick={openCreate}
-            type="button"
-          >
-            {t("actionCreate")}
-          </button>
-        ) : null}
-      </AdminPageHeader>
+      <AdminPageHeader
+        actions={
+          <div className="flex items-center gap-3">
+            <div className="flex rounded-md border border-slate-200 bg-slate-50 p-0.5 text-xs">
+              <button
+                className={cn("rounded px-3 py-1.5 font-medium transition-colors", tab === "items" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700")}
+                onClick={() => setTab("items")}
+                type="button"
+              >{t("tabItems")}</button>
+              <button
+                className={cn("rounded px-3 py-1.5 font-medium transition-colors", tab === "configs" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700")}
+                onClick={() => setTab("configs")}
+                type="button"
+              >{t("tabConfigs")}</button>
+            </div>
+            {canWrite && tab === "items" ? (
+              <button
+                className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
+                onClick={openCreate}
+                type="button"
+              >
+                {t("actionCreate")}
+              </button>
+            ) : null}
+          </div>
+        }
+        description={t("subtitle")}
+        title={t("title")}
+      />
 
+      {tab === "configs" ? (
+        <ConfigsTab canWrite={canWrite} t={t} />
+      ) : (
+      <>
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {[...DAILY_CONTENT_ITEM_STATUSES].map((s) => (
           <div key={s} className="rounded-lg border border-slate-200 bg-white px-4 py-3">
@@ -391,10 +456,12 @@ export function DailyItemsAdminClient({
               value={widgetKindFilter}
             >
               <option value="all">{t("status_all")}</option>
-              {WIDGET_KINDS.map((w) => (
-                <option key={w} value={w}>
-                  {w}
-                </option>
+              {WIDGET_KIND_GROUPS.map((g) => (
+                <optgroup key={g.label} label={g.label}>
+                  {g.kinds.map((w) => (
+                    <option key={w} value={w}>{widgetKindLabel(w)}</option>
+                  ))}
+                </optgroup>
               ))}
             </select>
           </label>
@@ -440,9 +507,9 @@ export function DailyItemsAdminClient({
                   <AdminDataTableTh>{t("colDate")}</AdminDataTableTh>
                   <AdminDataTableTh>{t("colLocale")}</AdminDataTableTh>
                   <AdminDataTableTh>{t("colWidgetKind")}</AdminDataTableTh>
-                  <AdminDataTableTh>{t("colLevel")}</AdminDataTableTh>
+                  <AdminDataTableTh>{t("colTitle")}</AdminDataTableTh>
+                  <AdminDataTableTh>{t("colJapanese")}</AdminDataTableTh>
                   <AdminDataTableTh>{t("colStatus")}</AdminDataTableTh>
-                  <AdminDataTableTh>{t("colPublishAt")}</AdminDataTableTh>
                 </AdminDataTableRow>
               </AdminDataTableHead>
               <AdminDataTableBody>
@@ -457,18 +524,18 @@ export function DailyItemsAdminClient({
                     </AdminDataTableTd>
                     <AdminDataTableTd>{row.locale}</AdminDataTableTd>
                     <AdminDataTableTd>
-                      <span className="font-medium">{row.widgetKind}</span>
+                      <span className="font-medium text-xs">{widgetKindLabel(row.widgetKind)}</span>
                     </AdminDataTableTd>
-                    <AdminDataTableTd>{row.level ?? "—"}</AdminDataTableTd>
+                    <AdminDataTableTd>
+                      <span className="text-sm">{row.title ?? "—"}</span>
+                    </AdminDataTableTd>
+                    <AdminDataTableTd>
+                      <span className="text-sm font-medium">{row.japaneseText ?? "—"}</span>
+                    </AdminDataTableTd>
                     <AdminDataTableTd>
                       <AdminStatusBadge tone={statusTone(row.status)}>
                         {t(`status_${row.status}`)}
                       </AdminStatusBadge>
-                    </AdminDataTableTd>
-                    <AdminDataTableTd>
-                      <span className="text-xs text-slate-500">
-                        {row.publishAt ? new Date(row.publishAt).toLocaleString() : "—"}
-                      </span>
                     </AdminDataTableTd>
                   </AdminDataTableRow>
                 ))}
@@ -557,45 +624,99 @@ export function DailyItemsAdminClient({
                         onChange={(e) => setForm({ ...form, widgetKind: e.target.value })}
                         value={form.widgetKind}
                       >
-                        {WIDGET_KINDS.map((w) => (
-                          <option key={w} value={w}>
-                            {w}
-                          </option>
+                        {WIDGET_KIND_GROUPS.map((g) => (
+                          <optgroup key={g.label} label={g.label}>
+                            {g.kinds.map((w) => (
+                              <option key={w} value={w}>{widgetKindLabel(w)}</option>
+                            ))}
+                          </optgroup>
                         ))}
                       </select>
                     </FormField>
-                    <FormField label={t("formLevel")}>
+                    <FormField label={t("formTitle")}>
                       <input
                         className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
-                        onChange={(e) => setForm({ ...form, level: e.target.value })}
-                        value={form.level}
-                      />
-                    </FormField>
-                    <FormField label={t("formPublishAt")}>
-                      <input
-                        className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
-                        onChange={(e) => setForm({ ...form, publishAt: e.target.value })}
-                        type="datetime-local"
-                        value={form.publishAt}
+                        onChange={(e) => setForm({ ...form, title: e.target.value })}
+                        placeholder={t("formTitlePlaceholder")}
+                        value={form.title}
                       />
                     </FormField>
                   </div>
-                  <FormField label={t("formPayload")}>
-                    <textarea
-                      className="w-full rounded-md border border-slate-300 px-2 py-1.5 font-mono text-xs"
-                      onChange={(e) => setForm({ ...form, payloadJson: e.target.value })}
-                      rows={8}
-                      value={form.payloadJson}
-                    />
-                  </FormField>
-                  <FormField label={t("formNotes")}>
+
+                  <div className="rounded-md border border-slate-200 bg-slate-50 p-3 space-y-3">
+                    <div className="text-xs font-semibold text-slate-600 uppercase tracking-wide">{t("formJapaneseSection")}</div>
+                    <FormField label={t("formJapaneseText")}>
+                      <input
+                        className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm font-medium"
+                        onChange={(e) => setForm({ ...form, japaneseText: e.target.value })}
+                        placeholder="日本語テキスト"
+                        value={form.japaneseText}
+                      />
+                    </FormField>
+                    <FormField label={t("formReadingText")}>
+                      <input
+                        className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+                        onChange={(e) => setForm({ ...form, readingText: e.target.value })}
+                        placeholder="にほんごテキスト"
+                        value={form.readingText}
+                      />
+                    </FormField>
+                    <FormField label={t("formExplanation")}>
+                      <textarea
+                        className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+                        onChange={(e) => setForm({ ...form, explanationText: e.target.value })}
+                        rows={2}
+                        value={form.explanationText}
+                      />
+                    </FormField>
+                    {form.japaneseText && (
+                      <div className="rounded-md border border-indigo-100 bg-indigo-50 p-2.5 text-center">
+                        <div className="text-lg font-bold text-slate-900">{form.japaneseText}</div>
+                        {form.readingText && <div className="text-xs text-slate-500">{form.readingText}</div>}
+                        {form.explanationText && <div className="mt-1 text-xs text-slate-600">{form.explanationText}</div>}
+                      </div>
+                    )}
+                  </div>
+
+                  <FormField label={t("formBodyMd")}>
                     <textarea
                       className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
-                      onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                      rows={2}
-                      value={form.notes}
+                      onChange={(e) => setForm({ ...form, bodyMd: e.target.value })}
+                      rows={3}
+                      value={form.bodyMd}
                     />
                   </FormField>
+                  <div className="grid grid-cols-2 gap-3">
+                    <FormField label={t("formSourceProvider")}>
+                      <input
+                        className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+                        onChange={(e) => setForm({ ...form, sourceProvider: e.target.value })}
+                        value={form.sourceProvider}
+                      />
+                    </FormField>
+                    <FormField label={t("formSourceRef")}>
+                      <input
+                        className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+                        onChange={(e) => setForm({ ...form, sourceRef: e.target.value })}
+                        value={form.sourceRef}
+                      />
+                    </FormField>
+                    <FormField label={t("formImageUrl") ?? "Image URL"}>
+                      <input
+                        className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+                        onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
+                        placeholder="https://..."
+                        value={form.imageUrl}
+                      />
+                      {form.imageUrl ? (
+                        <img
+                          alt="Preview"
+                          className="mt-1.5 h-16 w-auto rounded-md border border-slate-200 object-cover"
+                          src={form.imageUrl}
+                        />
+                      ) : null}
+                    </FormField>
+                  </div>
                   <div className="flex justify-end gap-2">
                     <button
                       className="rounded-md border border-slate-200 px-3 py-1.5 text-sm"
@@ -626,12 +747,34 @@ export function DailyItemsAdminClient({
                     <span className="rounded bg-slate-100 px-2 py-0.5 text-[10px] uppercase">
                       {detail.locale}
                     </span>
-                    <span className="font-medium text-sm">{detail.widgetKind}</span>
+                    <span className="font-medium text-sm">{widgetKindLabel(detail.widgetKind)}</span>
                   </div>
+
+                  {(detail.title ?? detail.japaneseText) ? (
+                    <div className="rounded-md border border-indigo-100 bg-indigo-50 p-3 space-y-1">
+                      {detail.title && <div className="font-semibold text-sm text-slate-800">{detail.title}</div>}
+                      {detail.japaneseText && <div className="text-lg font-bold text-slate-900">{detail.japaneseText}</div>}
+                      {detail.readingText && <div className="text-xs text-slate-500">{detail.readingText}</div>}
+                      {detail.explanationText && <div className="mt-1 text-xs text-slate-600">{detail.explanationText}</div>}
+                    </div>
+                  ) : null}
+
+                  {detail.bodyMd && (
+                    <DetailField label={t("formBodyMd")}>
+                      <div className="text-sm text-slate-700 whitespace-pre-wrap">{detail.bodyMd}</div>
+                    </DetailField>
+                  )}
+
                   <div className="grid grid-cols-2 gap-3 text-sm">
-                    <DetailField label={t("formLevel")}>{detail.level ?? "—"}</DetailField>
-                    <DetailField label={t("formPublishAt")}>
-                      {detail.publishAt ? new Date(detail.publishAt).toLocaleString() : "—"}
+                    <DetailField label={t("formSourceProvider")}>{detail.sourceProvider ?? "—"}</DetailField>
+                    <DetailField label={t("formSourceRef")}>{detail.sourceRef ?? "—"}</DetailField>
+                    <DetailField label={t("formImageUrl") ?? "Image URL"}>
+                      {(detail as DailyItemDetail).imageUrl ? (
+                        <div className="flex items-center gap-2">
+                          <img alt="" className="h-8 w-auto rounded border border-slate-200" src={(detail as DailyItemDetail).imageUrl!} />
+                          <span className="truncate text-xs">{(detail as DailyItemDetail).imageUrl}</span>
+                        </div>
+                      ) : "—"}
                     </DetailField>
                     <DetailField label={t("colPublishedAt")}>
                       {detail.publishedAt ? new Date(detail.publishedAt).toLocaleString() : "—"}
@@ -651,11 +794,13 @@ export function DailyItemsAdminClient({
                       </div>
                     </DetailField>
                   ) : null}
-                  <DetailField label={t("formPayload")}>
-                    <pre className="overflow-x-auto rounded-md bg-slate-50 px-3 py-2 font-mono text-[10px]">
-                      {JSON.stringify(detail.payload ?? {}, null, 2)}
-                    </pre>
-                  </DetailField>
+                  {detail.payload && Object.keys(detail.payload as Record<string, unknown>).length > 0 ? (
+                    <DetailField label={t("formPayload")}>
+                      <pre className="overflow-x-auto rounded-md bg-slate-50 px-3 py-2 font-mono text-[10px]">
+                        {JSON.stringify(detail.payload, null, 2)}
+                      </pre>
+                    </DetailField>
+                  ) : null}
                   {detail.notes ? <DetailField label={t("formNotes")}>{detail.notes}</DetailField> : null}
 
                   {canWrite ? (
@@ -771,6 +916,8 @@ export function DailyItemsAdminClient({
           </div>
         </div>
       ) : null}
+      </>
+      )}
     </div>
   );
 }
@@ -813,10 +960,102 @@ function AuditList({ audit, labels }: { audit: AuditEntry[]; labels: Labels }) {
                 {row.actor.displayName} ({row.actor.email})
               </div>
             ) : null}
-            {row.reason ? <div className="mt-1 text-slate-700">"{row.reason}"</div> : null}
+            {row.reason ? <div className="mt-1 text-slate-700">&quot;{row.reason}&quot;</div> : null}
           </li>
         ))}
       </ul>
     </div>
+  );
+}
+
+function ConfigsTab({
+  canWrite,
+  t
+}: {
+  canWrite: boolean;
+  t: (k: string) => string;
+}) {
+  const [configs, setConfigs] = useState<WidgetConfig[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const r = await adminApiFetch("/api/admin/daily/widgets?locale=vi");
+      if (!r.ok) throw new Error("fetch failed");
+      setConfigs((await r.json()) as WidgetConfig[]);
+    } catch {
+      setError(t("errorLoad"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void load();
+  }, []);
+
+  const toggle = async (cfg: WidgetConfig) => {
+    try {
+      const r = await adminApiFetch(`/api/admin/daily/widgets/${cfg.id}`, {
+        body: JSON.stringify({ enabled: !cfg.enabled }),
+        headers: { "content-type": "application/json" },
+        method: "PATCH"
+      });
+      if (!r.ok) throw new Error("toggle failed");
+      await load();
+    } catch {
+      setError(t("errorSave"));
+    }
+  };
+
+  return (
+    <AdminSection description={t("configsDescription")} title={t("configsTitle")}>
+      {loading ? <p className="text-sm text-slate-500">{t("loading")}</p> : null}
+      {error ? <AdminEmptyState title={error}>{error}</AdminEmptyState> : null}
+      {!loading && !error && configs.length === 0 ? (
+        <AdminEmptyState title={t("configsEmpty")}>{t("configsEmptyHint")}</AdminEmptyState>
+      ) : null}
+      {!loading && !error && configs.length > 0 ? (
+        <AdminDataTable>
+          <AdminDataTableHead>
+            <AdminDataTableRow>
+              <AdminDataTableTh>{t("configsColKind")}</AdminDataTableTh>
+              <AdminDataTableTh>{t("configsColOrder")}</AdminDataTableTh>
+              <AdminDataTableTh>{t("colStatus")}</AdminDataTableTh>
+              {canWrite && <AdminDataTableTh>{t("configsColAction")}</AdminDataTableTh>}
+            </AdminDataTableRow>
+          </AdminDataTableHead>
+          <AdminDataTableBody>
+            {configs.map((cfg) => (
+              <AdminDataTableRow key={cfg.id}>
+                <AdminDataTableTd>
+                  <span className="font-medium text-sm">{widgetKindLabel(cfg.widgetKind)}</span>
+                </AdminDataTableTd>
+                <AdminDataTableTd>{cfg.displayOrder}</AdminDataTableTd>
+                <AdminDataTableTd>
+                  <AdminStatusBadge tone={cfg.enabled ? "good" : "warning"}>
+                    {cfg.enabled ? t("configsEnabled") : t("configsDisabled")}
+                  </AdminStatusBadge>
+                </AdminDataTableTd>
+                {canWrite && (
+                  <AdminDataTableTd>
+                    <button
+                      className="rounded-md border border-slate-300 px-3 py-1 text-xs font-medium transition-colors hover:bg-slate-100"
+                      onClick={() => void toggle(cfg)}
+                      type="button"
+                    >
+                      {cfg.enabled ? t("configsDisable") : t("configsEnable")}
+                    </button>
+                  </AdminDataTableTd>
+                )}
+              </AdminDataTableRow>
+            ))}
+          </AdminDataTableBody>
+        </AdminDataTable>
+      ) : null}
+    </AdminSection>
   );
 }

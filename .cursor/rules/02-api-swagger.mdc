@@ -1,0 +1,24 @@
+---
+description: NestJS API contracts, validation, and OpenAPI alignment
+globs:
+  - "apps/api/**/*.ts"
+alwaysApply: false
+---
+
+# API and OpenAPI
+
+## Controllers and DTOs
+
+- Validate inputs with class-validator (or project-standard DTO pattern); no trust of raw query/body.
+- Return types and errors should be consistent and safe for clients (no stack traces in production responses).
+
+## OpenAPI (Swagger)
+
+- New or changed routes should be reflected in OpenAPI decorators/metadata so the doc matches reality.
+- Document auth requirements, major error shapes, and response schemas where they stabilize the contract.
+- If you add a route, confirm it appears in generated or served OpenAPI; if you see documented routes without handlers (or the reverse), fix or ticket as P0/P1.
+
+## Domain boundaries
+
+- Learner vs admin vs public: enforce authorization in the service/guard layer, not only by hiding buttons in the UI.
+- Idempotency and signature checks belong on webhooks and sensitive mutating endpoints per existing patterns in the repo.

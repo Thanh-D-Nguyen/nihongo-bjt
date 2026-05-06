@@ -1,9 +1,20 @@
+import type { Metadata } from "next";
 import ja from "../../../messages/ja.json";
 import vi from "../../../messages/vi.json";
 import { RequireKeycloakAuth } from "../../../components/auth/require-keycloak-auth";
-import { BattleClient } from "./_components/battle-client";
+import { BattleLobbyClient } from "./_components/battle-lobby-client";
 
-const messages = { ja, vi };
+const messages: Record<string, typeof vi> = { ja, vi };
+
+export async function generateMetadata({
+  params
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = messages[locale] ?? messages.vi;
+  return { title: `${t.battle.title} — NihonGo BJT` };
+}
 
 export default async function BattlePage({
   params
@@ -11,11 +22,10 @@ export default async function BattlePage({
   params: Promise<{ locale: keyof typeof messages }>;
 }) {
   const { locale } = await params;
-  const t = messages[locale] ?? messages.vi;
 
   return (
     <RequireKeycloakAuth locale={locale}>
-      <BattleClient labels={t.battle} />
+      <BattleLobbyClient />
     </RequireKeycloakAuth>
   );
 }

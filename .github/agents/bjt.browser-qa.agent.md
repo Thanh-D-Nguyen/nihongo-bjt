@@ -23,6 +23,10 @@ Default tier: code-heavy. Escalate to deep-reasoning for release gate conflicts 
 9. `company/ADMIN_MANAGEMENT_WORKFLOW_STANDARD.md` for admin route workflow expectations
 </required-reading>
 
+<context-budget>
+Read changed route/component files, phase evidence, and browser gates first. For full-admin closeout, read the admin nav data and only the route files needed for the audit. Do not read the full canonical spec unless browser evidence conflicts with compact policy, release approval depends on it, or a security/privacy issue appears.
+</context-budget>
+
 <workflow>
 1. Identify changed admin/learner routes from phase evidence. For full-admin closeout, include every visible admin nav route from `apps/admin/lib/admin-nav-data.ts`, not only changed routes.
 2. Prefer the bounded runner: `node scripts/browser-phase-review.mjs`.
@@ -50,6 +54,10 @@ Default tier: code-heavy. Escalate to deep-reasoning for release gate conflicts 
 - Do not hang waiting for Next.js, Playwright, or a browser. Use the bounded runner or explicit timeout.
 - Do not stop the whole project solely because local browser launch failed.
 </constraints>
+
+<report-contract>
+Use `protocols/compiled-protocols.md`. Browser QA reports must include checked routes, screenshot or review-file evidence, interactions attempted, blockers, environment failures, commands run, and whether the result is functional sign-off or visual smoke only.
+</report-contract>
 
 <output>
 ```yaml

@@ -31,6 +31,8 @@ type BattleCountdownOverlayProps = {
   countdownValue: number | null;
   onCancel?: () => void;
   onComplete: () => void;
+  /** Human = second fighter uses initials (PvP); bot = Rive avatar */
+  opponentPresentation?: "bot" | "human";
   userDisplayName: string;
   visible: boolean;
 };
@@ -74,6 +76,7 @@ export function BattleCountdownOverlay({
   countdownValue,
   onCancel,
   onComplete,
+  opponentPresentation = "bot",
   userDisplayName,
   visible
 }: BattleCountdownOverlayProps) {
@@ -265,16 +268,24 @@ export function BattleCountdownOverlay({
           )}
         </div>
 
-        {/* Bot side */}
+        {/* Opponent side */}
         <div className="flex flex-col items-center gap-3 animate-in slide-in-from-right-8 duration-500">
           <div className="relative">
-            <BattleBotAvatar
-              className="h-20 w-20 rounded-2xl shadow-lg shadow-sakura/20 ring-2 ring-white/20 sm:h-24 sm:w-24"
-              fallback={botFallback}
-              rive={botRive}
-              state={botState}
+            {opponentPresentation === "human" ? (
+              <div className="grid h-20 w-20 place-items-center rounded-2xl bg-white/10 text-lg font-black text-white shadow-lg shadow-rose-500/20 ring-2 ring-white/20 sm:h-24 sm:w-24">
+                {botName.slice(0, 2).toUpperCase()}
+              </div>
+            ) : (
+              <BattleBotAvatar
+                className="h-20 w-20 rounded-2xl shadow-lg shadow-sakura/20 ring-2 ring-white/20 sm:h-24 sm:w-24"
+                fallback={botFallback}
+                rive={botRive}
+                state={botState}
+              />
+            )}
+            <div
+              className={`absolute -inset-1 -z-10 animate-pulse rounded-2xl blur-md ${opponentPresentation === "human" ? "bg-rose-500/35" : "bg-sakura/30"}`}
             />
-            <div className="absolute -inset-1 -z-10 animate-pulse rounded-2xl bg-sakura/30 blur-md" />
           </div>
           <p className="max-w-[8rem] truncate text-center text-sm font-black text-white/80">
             {botName}

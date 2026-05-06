@@ -79,7 +79,6 @@ function StructuredEditor({
   // Subsequent edits update local state which is synced upward via onChange.
   useEffect(() => {
     setPayload(parsePayload(initial));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initial]);
 
   const missingRequired = useMemo(

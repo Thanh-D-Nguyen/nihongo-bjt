@@ -1,13 +1,9 @@
-import {
-  buildAuthorizationRedirect,
-  generatePkcePair,
-  KC_COOKIE
-} from "@nihongo-bjt/keycloak-oidc";
+import { buildAuthorizationRedirect, generatePkcePair } from "@nihongo-bjt/keycloak-oidc";
 import { randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-import { ephemeralOauthCookieOptions, safeReturnToPath } from "@/lib/kc-cookies";
+import { ephemeralOauthCookieOptions, learnerKcCookies, safeReturnToPath } from "@/lib/kc-cookies";
 import { getKcWebConfig } from "@/lib/kc-server-config";
 
 export async function GET(request: Request) {
@@ -29,6 +25,8 @@ export async function GET(request: Request) {
   const idpKey = url.searchParams.get("idp")?.trim();
   const googleHint = process.env.NEXT_PUBLIC_AUTH_GOOGLE_IDP_HINT?.trim();
   const appleHint = process.env.NEXT_PUBLIC_AUTH_APPLE_IDP_HINT?.trim();
+  const facebookHint = process.env.NEXT_PUBLIC_AUTH_FACEBOOK_IDP_HINT?.trim();
+  const lineHint = process.env.NEXT_PUBLIC_AUTH_LINE_IDP_HINT?.trim();
   const extraSearchParams: Record<string, string | undefined> = {};
   if (intent === "register" && process.env.NEXT_PUBLIC_AUTH_REGISTRATION_ENABLED !== "false") {
     extraSearchParams.kc_action = "register";
@@ -37,15 +35,19 @@ export async function GET(request: Request) {
     extraSearchParams.kc_idp_hint = googleHint;
   } else if (idpKey === "apple" && appleHint) {
     extraSearchParams.kc_idp_hint = appleHint;
+  } else if (idpKey === "facebook" && facebookHint) {
+    extraSearchParams.kc_idp_hint = facebookHint;
+  } else if (idpKey === "line" && lineHint) {
+    extraSearchParams.kc_idp_hint = lineHint;
   }
 
   const { challenge, verifier } = generatePkcePair();
   const state = randomBytes(24).toString("hex");
   const jar = await cookies();
   const opt = ephemeralOauthCookieOptions();
-  jar.set(KC_COOKIE.pkceVerifier, verifier, opt);
-  jar.set(KC_COOKIE.state, state, opt);
-  jar.set(KC_COOKIE.returnTo, returnTo, opt);
+  jar.set(learnerKcCookies.pkceVerifier, verifier, opt);
+  jar.set(learnerKcCookies.state, state, opt);
+  jar.set(learnerKcCookies.returnTo, returnTo, opt);
 
   const location = buildAuthorizationRedirect({
     clientId: cfg.clientId,

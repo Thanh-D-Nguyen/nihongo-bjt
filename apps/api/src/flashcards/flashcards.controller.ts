@@ -1,16 +1,20 @@
 import {
+  archiveOwnedDeckBodySchema,
+  archiveOwnedDeckQuerySchema,
   createCardFromContentSchema,
   comebackSummaryQuerySchema,
   createDeckSchema,
+  flashcardsDueQuerySchema,
+  flashcardsUserScopedQuerySchema,
   linkCardMediaSchema,
   reviewBatchSchema,
-  submitReviewSchema,
-  userScopedQuerySchema
+  submitReviewSchema
 } from "@nihongo-bjt/shared";
 import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   Inject,
   Param,
@@ -40,18 +44,61 @@ export class FlashcardsController {
   ) {}
 
   @Get("decks")
-  @ApiOperation({ summary: "List user decks (paginated by `userScopedQuerySchema`)." })
+  @ApiOperation({ summary: "List user decks (paginated by `flashcardsUserScopedQuerySchema`)." })
   decks(
     @CurrentUser() user: KeycloakAuthenticatedUser | undefined,
     @Query() query: Record<string, string | undefined>
   ) {
     const userId = resolveLearnerUserId(user, query.userId, { required: true })!;
-    const parsed = userScopedQuerySchema.safeParse({ ...query, userId });
+    const parsed = flashcardsUserScopedQuerySchema.safeParse({ ...query, userId });
     if (!parsed.success) {
       throw new BadRequestException(parsed.error.flatten());
     }
 
     return this.flashcardsRepository.decks(parsed.data.userId, parsed.data.limit);
+  }
+
+  @Delete("decks/:deckId")
+  @ApiOperation({
+    summary: "Archive a learner-owned deck and apply SRS prune policy.",
+    description:
+      "Requires `ownerUserId` to match the authenticated learner. Removes deck-card links, sets deck to archived, " +
+      "deletes the learner's user_flashcard rows when a card has no remaining membership in any active deck " +
+      "visible to them (owner or public). Review history for removed user_flashcard rows cascades away."
+  })
+  @ApiParam({ name: "deckId" })
+  archiveOwnedDeck(
+    @CurrentUser() user: KeycloakAuthenticatedUser | undefined,
+    @Param("deckId") deckId: string,
+    @Query() query: Record<string, string | undefined>
+  ) {
+    const userId = resolveLearnerUserId(user, query.userId, { required: true })!;
+    const parsed = archiveOwnedDeckQuerySchema.safeParse({ ...query, userId });
+    if (!parsed.success) {
+      throw new BadRequestException(parsed.error.flatten());
+    }
+
+    return this.flashcardsRepository.archiveOwnedDeckForLearner(parsed.data.userId, deckId.trim());
+  }
+
+  @Post("decks/:deckId/archive")
+  @ApiOperation({
+    summary: "Archive learner-owned deck (POST alias for proxies that block DELETE or strip query params).",
+    description: "Same behavior as `DELETE /flashcards/decks/:deckId?userId=`; body `{ \"userId\" }`."
+  })
+  @ApiParam({ name: "deckId" })
+  archiveOwnedDeckPost(
+    @CurrentUser() user: KeycloakAuthenticatedUser | undefined,
+    @Param("deckId") deckId: string,
+    @Body() body: unknown
+  ) {
+    const raw = body && typeof body === "object" ? (body as Record<string, unknown>) : {};
+    const userId = resolveLearnerUserId(user, raw.userId as string | undefined, { required: true })!;
+    const parsed = archiveOwnedDeckBodySchema.safeParse({ ...raw, userId });
+    if (!parsed.success) {
+      throw new BadRequestException(parsed.error.flatten());
+    }
+    return this.flashcardsRepository.archiveOwnedDeckForLearner(parsed.data.userId, deckId.trim());
   }
 
   @Post("decks")
@@ -90,12 +137,16 @@ export class FlashcardsController {
     @Query() query: Record<string, string | undefined>
   ) {
     const userId = resolveLearnerUserId(user, query.userId, { required: true })!;
-    const parsed = userScopedQuerySchema.safeParse({ ...query, userId });
+    const parsed = flashcardsDueQuerySchema.safeParse({ ...query, userId });
     if (!parsed.success) {
       throw new BadRequestException(parsed.error.flatten());
     }
 
-    return this.flashcardsService.dueReviewsForLearner(parsed.data.userId, parsed.data.limit);
+    return this.flashcardsService.dueReviewsForLearner(
+      parsed.data.userId,
+      parsed.data.limit,
+      parsed.data.deckId
+    );
   }
 
   @Get("reviews/comeback-summary")

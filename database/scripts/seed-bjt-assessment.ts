@@ -57,7 +57,7 @@ const SECTIONS: SectionDef[] = [
     titleJa: "聴解 – 場面把握",
     type: "listening",
     timeLimitSec: 300,
-    questionCount: 3
+    questionCount: 5
   },
   {
     code: "LC_STATEMENT",
@@ -65,7 +65,7 @@ const SECTIONS: SectionDef[] = [
     titleJa: "聴解 – 発話表現",
     type: "listening",
     timeLimitSec: 300,
-    questionCount: 3
+    questionCount: 5
   },
   {
     code: "LC_INTEGRATED",
@@ -73,7 +73,7 @@ const SECTIONS: SectionDef[] = [
     titleJa: "聴解 – 総合聴解",
     type: "listening",
     timeLimitSec: 300,
-    questionCount: 2
+    questionCount: 4
   },
   {
     code: "LR_SITUATION",
@@ -81,7 +81,7 @@ const SECTIONS: SectionDef[] = [
     titleJa: "聴読解 – 状況把握",
     type: "listening_reading",
     timeLimitSec: 300,
-    questionCount: 2
+    questionCount: 3
   },
   {
     code: "LR_DOCUMENT",
@@ -89,7 +89,7 @@ const SECTIONS: SectionDef[] = [
     titleJa: "聴読解 – 資料聴読解",
     type: "listening_reading",
     timeLimitSec: 300,
-    questionCount: 2
+    questionCount: 3
   },
   {
     code: "LR_INTEGRATED",
@@ -97,7 +97,7 @@ const SECTIONS: SectionDef[] = [
     titleJa: "聴読解 – 総合聴読解",
     type: "listening_reading",
     timeLimitSec: 300,
-    questionCount: 2
+    questionCount: 3
   },
   {
     code: "RC_VOCAB_GRAMMAR",
@@ -105,7 +105,7 @@ const SECTIONS: SectionDef[] = [
     titleJa: "読解 – 語彙・文法",
     type: "reading",
     timeLimitSec: 300,
-    questionCount: 3
+    questionCount: 5
   },
   {
     code: "RC_EXPRESSION",
@@ -113,7 +113,7 @@ const SECTIONS: SectionDef[] = [
     titleJa: "読解 – 表現読解",
     type: "reading",
     timeLimitSec: 300,
-    questionCount: 2
+    questionCount: 3
   },
   {
     code: "RC_INTEGRATED",
@@ -121,7 +121,7 @@ const SECTIONS: SectionDef[] = [
     titleJa: "読解 – 総合読解",
     type: "reading",
     timeLimitSec: 300,
-    questionCount: 2
+    questionCount: 3
   }
 ];
 
@@ -154,11 +154,15 @@ type BattleConfigSeed = {
 
 type BattleBotSeed = {
   accuracyPct: number;
+  avatarFallback: string;
+  botKey: string;
   difficulty: "easy" | "medium" | "hard";
   maxDelayMs: number;
   minDelayMs: number;
   name: string;
   persona: string;
+  riveSrc: string;
+  styleToken: "calm" | "focused" | "sharp";
   vocabularyLevel: string;
 };
 
@@ -266,33 +270,59 @@ const BATTLE_CONFIGS: BattleConfigSeed[] = [
 
 const BATTLE_BOTS: BattleBotSeed[] = [
   {
+    accuracyPct: 76,
+    avatarFallback: "J1",
+    botKey: "bot_j1",
+    difficulty: "hard",
+    maxDelayMs: 1700,
+    minDelayMs: 260,
+    name: "Kuroda J1 Mentor",
+    persona:
+      "Advanced business mentor for fast decisions across integrated reading and meeting contexts.",
+    riveSrc: "/assets/battle/bots/23764-44433-character-customization-ui.riv",
+    styleToken: "sharp",
+    vocabularyLevel: "bjt_advanced"
+  },
+  {
     accuracyPct: 42,
+    avatarFallback: "J2",
+    botKey: "bot_j2",
     difficulty: "easy",
     maxDelayMs: 2600,
     minDelayMs: 700,
     name: "Mika J4 Coach",
     persona:
       "Encouraging office-Japanese sparring partner tuned for basic business response practice.",
+    riveSrc: "/assets/battle/bots/18912-35694-lil-guy.riv",
+    styleToken: "calm",
     vocabularyLevel: "bjt_basic"
   },
   {
     accuracyPct: 58,
+    avatarFallback: "J3",
+    botKey: "bot_j3",
     difficulty: "medium",
     maxDelayMs: 2200,
     minDelayMs: 500,
     name: "Sato J3 Rival",
     persona:
       "Balanced rival that pressures learners on coordination, reporting, and polite expressions.",
+    riveSrc: "/assets/battle/bots/24876-46460-interactive-bunny-character.riv",
+    styleToken: "focused",
     vocabularyLevel: "bjt_intermediate"
   },
   {
     accuracyPct: 74,
+    avatarFallback: "J4",
+    botKey: "bot_j4",
     difficulty: "hard",
     maxDelayMs: 1800,
     minDelayMs: 350,
-    name: "Kuroda J1 Mentor",
+    name: "Hayashi J2 Challenger",
     persona:
-      "Advanced business mentor for fast decisions across integrated reading and meeting contexts.",
+      "Sharp challenger for tense business scenes, fast e-mail judgment, and meeting nuance.",
+    riveSrc: "/assets/battle/bots/20538-38646-cheeky-chops.riv",
+    styleToken: "sharp",
     vocabularyLevel: "bjt_advanced"
   }
 ];
@@ -1060,17 +1090,28 @@ async function seedBattle() {
 
   for (const item of BATTLE_BOTS) {
     const existing = await prisma.battleBot.findFirst({
-      where: { name: item.name }
+      where: { botKey: item.botKey }
     });
     const data = {
       accuracyPct: item.accuracyPct,
+      avatarFallback: item.avatarFallback,
+      botKey: item.botKey,
       createdById: actor.id,
       difficulty: item.difficulty,
       maxDelayMs: item.maxDelayMs,
       minDelayMs: item.minDelayMs,
       name: item.name,
       persona: item.persona,
+      riveArtboard: "__default__",
+      riveLicense: "User-provided Rive asset; verify license before production release",
+      riveProvenance: {
+        importedBy: "seed-bjt-assessment",
+        sourcePath: item.riveSrc
+      },
+      riveSrc: item.riveSrc,
+      riveStateMachine: "__none__",
       status: "active",
+      styleToken: item.styleToken,
       updatedById: actor.id,
       vocabularyLevel: item.vocabularyLevel
     };
@@ -1083,8 +1124,10 @@ async function seedBattle() {
         actorId: actor.id,
         after: {
           accuracyPct: row.accuracyPct,
+          botKey: row.botKey,
           difficulty: row.difficulty,
           name: row.name,
+          riveSrc: row.riveSrc,
           status: row.status,
           vocabularyLevel: row.vocabularyLevel
         },

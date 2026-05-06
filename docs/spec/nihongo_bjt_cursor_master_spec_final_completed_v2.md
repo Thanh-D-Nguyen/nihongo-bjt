@@ -4191,14 +4191,12 @@ Create or copy the following files into the repository root before starting impl
 
 ```text
 AGENTS.md
-.cursor/rules/00-project-contract.mdc
-.cursor/rules/01-architecture-stack.mdc
-.cursor/rules/02-database-postgresql-prisma.mdc
-.cursor/rules/03-frontend-uiux-i18n.mdc
-.cursor/rules/04-admin-rbac-analytics.mdc
-.cursor/rules/05-learning-srs-bjt-battle.mdc
-.cursor/rules/06-media-rights-privacy.mdc
-.cursor/rules/07-testing-quality-ops.mdc
+.cursor/rules/00-project-context.mdc
+.cursor/rules/01-production-coding.mdc
+.cursor/rules/02-api-swagger.mdc
+.cursor/rules/03-testing-security.mdc
+.cursor/rules/04-ui-ux-polish.mdc
+.cursor/rules/05-review-and-fix.mdc
 docs/cursor-prompts/phase-01-foundation.xml
 docs/cursor-prompts/phase-02-core-content-search.xml
 docs/cursor-prompts/phase-03-flashcards-srs.xml
@@ -4400,10 +4398,15 @@ Do not over-engineer for 100,000 users during MVP. But all code should remain up
 The Cursor pack must include:
 
 ```text
-.cursor/rules/08-production-quality-no-demo.mdc
+.cursor/rules/00-project-context.mdc
+.cursor/rules/01-production-coding.mdc
+.cursor/rules/02-api-swagger.mdc
+.cursor/rules/03-testing-security.mdc
+.cursor/rules/04-ui-ux-polish.mdc
+.cursor/rules/05-review-and-fix.mdc
 ```
 
-This rule is mandatory and must be applied together with the one-click and phase prompts.
+These rules are mandatory and must be applied together with the one-click and phase prompts.
 
 ---
 

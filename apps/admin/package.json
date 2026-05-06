@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev --port 3001 --webpack",
-    "dev:turbo": "next dev --port 3001 --turbopack",
+    "dev": "next dev --port 3001",
+    "dev:webpack": "next dev --port 3001 --webpack",
     "build": "next build",
     "typecheck": "tsc --noEmit"
   },
@@ -14,6 +14,7 @@
     "@nihongo-bjt/keycloak-oidc": "workspace:*",
     "@nihongo-bjt/shared": "workspace:*",
     "@nihongo-bjt/ui": "workspace:*",
+    "dotenv": "^17.4.2",
     "jose": "^6.2.2",
     "next": "^16.2.4",
     "react": "^19.2.5",

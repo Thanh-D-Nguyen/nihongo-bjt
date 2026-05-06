@@ -460,6 +460,7 @@ exports.Prisma.BattleConfigScalarFieldEnum = {
 exports.Prisma.BattleSessionScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
+  opponentUserId: 'opponentUserId',
   roomCode: 'roomCode',
   mode: 'mode',
   botKey: 'botKey',
@@ -474,6 +475,19 @@ exports.Prisma.BattleSessionScalarFieldEnum = {
   completedAt: 'completedAt'
 };
 
+exports.Prisma.BattleChatMessageScalarFieldEnum = {
+  id: 'id',
+  roomKey: 'roomKey',
+  sessionId: 'sessionId',
+  userId: 'userId',
+  displayName: 'displayName',
+  message: 'message',
+  kind: 'kind',
+  moderationState: 'moderationState',
+  metadata: 'metadata',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.BattleRoundScalarFieldEnum = {
   id: 'id',
   sessionId: 'sessionId',
@@ -485,11 +499,15 @@ exports.Prisma.BattleRoundScalarFieldEnum = {
   botOptionKey: 'botOptionKey',
   botCorrect: 'botCorrect',
   botResponseMs: 'botResponseMs',
+  opponentOptionKey: 'opponentOptionKey',
+  opponentCorrect: 'opponentCorrect',
+  opponentResponseMs: 'opponentResponseMs',
   decidedAt: 'decidedAt'
 };
 
 exports.Prisma.BattleBotScalarFieldEnum = {
   id: 'id',
+  botKey: 'botKey',
   name: 'name',
   difficulty: 'difficulty',
   persona: 'persona',
@@ -497,6 +515,13 @@ exports.Prisma.BattleBotScalarFieldEnum = {
   minDelayMs: 'minDelayMs',
   maxDelayMs: 'maxDelayMs',
   vocabularyLevel: 'vocabularyLevel',
+  avatarFallback: 'avatarFallback',
+  styleToken: 'styleToken',
+  riveSrc: 'riveSrc',
+  riveArtboard: 'riveArtboard',
+  riveStateMachine: 'riveStateMachine',
+  riveLicense: 'riveLicense',
+  riveProvenance: 'riveProvenance',
   status: 'status',
   createdById: 'createdById',
   updatedById: 'updatedById',
@@ -571,6 +596,10 @@ exports.Prisma.BjtQuestionScalarFieldEnum = {
   sectionId: 'sectionId',
   prompt: 'prompt',
   scenario: 'scenario',
+  audioScript: 'audioScript',
+  audioUrl: 'audioUrl',
+  imageUrl: 'imageUrl',
+  imageAlt: 'imageAlt',
   explanationVi: 'explanationVi',
   skillTag: 'skillTag',
   difficulty: 'difficulty',
@@ -817,6 +846,7 @@ exports.Prisma.DailyContentItemScalarFieldEnum = {
   japaneseText: 'japaneseText',
   readingText: 'readingText',
   explanationText: 'explanationText',
+  imageUrl: 'imageUrl',
   sourceProvider: 'sourceProvider',
   sourceRef: 'sourceRef',
   payload: 'payload',
@@ -1327,6 +1357,17 @@ exports.Prisma.ContentEnrichmentScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.AnnouncementScalarFieldEnum = {
+  id: 'id',
+  type: 'type',
+  message: 'message',
+  href: 'href',
+  active: 'active',
+  sortOrder: 'sortOrder',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1387,6 +1428,7 @@ exports.Prisma.ModelName = {
   Bookmark: 'Bookmark',
   BattleConfig: 'BattleConfig',
   BattleSession: 'BattleSession',
+  BattleChatMessage: 'BattleChatMessage',
   BattleRound: 'BattleRound',
   BattleBot: 'BattleBot',
   BattleAbuseReport: 'BattleAbuseReport',
@@ -1460,7 +1502,8 @@ exports.Prisma.ModelName = {
   LearningPath: 'LearningPath',
   Competency: 'Competency',
   ContentVersion: 'ContentVersion',
-  ContentEnrichment: 'ContentEnrichment'
+  ContentEnrichment: 'ContentEnrichment',
+  Announcement: 'Announcement'
 };
 
 /**

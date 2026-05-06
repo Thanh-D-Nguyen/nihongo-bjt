@@ -62,6 +62,11 @@ screen_contract:
     image:
     motion:
     reduced_motion:
+    quiet_mode:
+    sound_effects:
+      allowed:
+      trigger:
+      mute_control:
     provenance_required:
 
   social_battle_postcard:
@@ -88,6 +93,10 @@ screen_contract:
     permission_denied:
     feature_disabled:
     offline_or_network_failure:
+    unauthenticated:
+    authenticated:
+    auth_loading:
+    auth_error:
 
   layout:
     desktop:
@@ -97,17 +106,61 @@ screen_contract:
     focus_management:
     contrast_notes:
 
+  world_class_visual:
+    signature_element:
+    color_strategy:
+    primary_button_rule:
+    cta_contrast_evidence:
+      primary_cta:
+      auth_cta:
+      active_nav:
+    footer_trust_surface:
+      present:
+      links:
+      mobile_overlap_checked:
+    card_grid_risk:
+    screenshot_desktop:
+    screenshot_mobile_375:
+    authenticated_screenshot_desktop:
+    authenticated_screenshot_mobile_375:
+    auth_state_evidence:
+      credential_source:
+      login_result:
+      user_menu_checked:
+      sign_out_checked:
+      personalized_data_truth:
+    human_screenshot_feedback:
+      latest:
+      overrides_self_score:
+    scores:
+      visual_identity:
+      hierarchy:
+      button_clarity:
+      learning_focus:
+      japanese_readability:
+      sensory_interaction:
+      production_content_truth:
+      footer_trust:
+      cta_contrast:
+      authenticated_state:
+
   specialist_review:
     required_agents:
       - bjt-learner-ui
     optional_agents:
     consulted_agents:
+      - agent:
+        responsibility:
+        execution_mode: subagent | inline | planned | skipped
+        status: planned | running | completed | blocked | skipped
+        evidence:
     findings:
 
   acceptance_gates:
     - open_design_bjt_ui_gate
     - bjt_ui_ux_production_gate
     - learner_page_production_gate
+    - world_class_learner_experience_gate
 
   verification:
     commands:
@@ -136,6 +189,8 @@ The contract is not implementation-ready until these are filled:
 - i18n namespaces;
 - reading assist behavior;
 - loading/error/empty states;
+- unauthenticated and authenticated state behavior;
 - mobile behavior;
+- world-class visual strategy and screenshot evidence;
 - relevant specialist agents;
 - acceptance gates.

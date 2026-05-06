@@ -37,6 +37,15 @@ After OIDC session exists, the admin app calls **`GET /api/admin/session`** (wit
 - Link each admin user to a row in `authz.admin_actor` with `keycloak_subject` equal to the Keycloak user `sub`.
 - Ensure mapped internal roles grant the expected admin permissions. By default, Keycloak role `admin` syncs to internal `admin.super`, so local admin accounts get `assessment.manage`, `battle.manage`, `iam.manage`, and other production-admin permissions after the next authenticated API request.
 
+## Local HTTP (Docker Keycloak)
+
+For the bundled `docker/keycloak` stack, Keycloak listens on **http://localhost:8080** without TLS. The imported realm uses **`sslRequired: none`** so HTTP is allowed for all clients (not only “localhost” guesses). Docker `start-dev` is started with **`--hostname=http://localhost:8080`** so discovery documents and redirects stay on **http**, not **https**.
+
+The Docker Compose stack runs a **`keycloak-configure-http`** one-shot container after Keycloak becomes healthy; it uses `kcadm.sh` to set **`sslRequired=NONE`** on realm **`master`** (Admin Console) and **`nihongo-bjt`**. Directory import does not alter `master`, so without this step you can still see **HTTPS required** when opening `/admin` over HTTP (especially from a non-`localhost` hostname/IP).
+
+- If login breaks after a realm change: either re-import (`docker compose down -v` in `docker/keycloak`) or set **Require SSL = None** in the Keycloak Admin UI for realm **`master`** and **`nihongo-bjt`** (imports do not overwrite an existing realm).
+- Keep app env URLs as **`http://localhost:8080/...`**; using `https://` without a real certificate or reverse proxy will fail.
+
 ## Legacy dev (Keycloak off)
 
 If `NEXT_PUBLIC_KEYCLOAK_ISSUER_URL` (and URL+realm fallback) are unset, the UIs skip OIDC and the API may accept legacy dev headers where implemented (e.g. `x-admin-actor-id`). This is for local development only.

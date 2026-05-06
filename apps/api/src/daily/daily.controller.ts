@@ -80,6 +80,14 @@ export class DailyController {
     return this.dailyRepository.widgets(parsed.data.locale);
   }
 
+  @Get("items/:id")
+  @KeycloakAuthOptional()
+  @ApiOperation({ summary: "Get a single published daily content item by id (public)." })
+  @ApiParam({ name: "id", description: "Daily content item id" })
+  getItem(@Param("id") id: string) {
+    return this.dailyRepository.findPublishedItem(id);
+  }
+
   @Post("items/:id/generate-flashcards")
   @ApiBearerAuth("bearer")
   @ApiOperation({ summary: "Generate flashcards from a daily item (requires Bearer access token from Keycloak)." })

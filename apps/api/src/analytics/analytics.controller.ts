@@ -60,6 +60,7 @@ export class AnalyticsController {
   })
   @ApiQuery({ name: "days", required: false, type: Number, description: "Lookback 1–90, default 7" })
   @ApiQuery({ name: "userId", required: false, description: "Profile id (optional; dev override if allowed)" })
+  @ApiQuery({ name: "locale", required: false, description: "Locale for coaching insight (vi|ja), default en" })
   learner(
     @CurrentUser() user: KeycloakAuthenticatedUser | undefined,
     @Query() query: Record<string, string | undefined>
@@ -70,7 +71,7 @@ export class AnalyticsController {
       throw new BadRequestException(parsed.error.flatten());
     }
 
-    return this.analyticsRepository.learner(parsed.data.days, parsed.data.userId);
+    return this.analyticsRepository.learner(parsed.data.days, parsed.data.userId, query.locale);
   }
 }
 

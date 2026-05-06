@@ -323,17 +323,17 @@ export function AnnotatedJapaneseText({
   if (error) {
     return (
       <div className="annotated-ja--error" role="status" aria-live="polite">
-        <p className="text-sm text-muted">
-          {/* Error message should be rendered by parent using i18n keys */}
-          {error}
-        </p>
-        <button
-          className="mt-2 rounded-lg border border-ink/15 bg-surface px-3 py-1.5 text-xs font-medium text-ink"
-          onClick={() => void runAnalyze()}
-          type="button"
-        >
-          {labels.retryAction}
-        </button>
+        <div className="jp-text mb-3 text-sm leading-relaxed whitespace-pre-wrap" lang="ja">{text}</div>
+        <div className="flex items-center gap-2 text-xs text-muted">
+          <span>{error}</span>
+          <button
+            className="rounded-lg border border-ink/15 bg-surface px-2 py-1 text-xs font-medium text-ink"
+            onClick={() => void runAnalyze()}
+            type="button"
+          >
+            {labels.retryAction}
+          </button>
+        </div>
       </div>
     );
   }
@@ -385,7 +385,7 @@ export function AnnotatedJapaneseText({
           </button>
         </div>
       ) : null}
-      <p className="jp-text" style={loading ? { opacity: 0.6 } : undefined}>
+      <div className="jp-text" style={loading ? { opacity: 0.6 } : undefined}>
         {tokens.map((t) => {
           const key = `t-${t.start}-${t.end}`;
           const useRuby = ruby && t.reading.length > 0;
@@ -489,7 +489,7 @@ export function AnnotatedJapaneseText({
           );
           return el;
         })}
-      </p>
+      </div>
 
       {isCoarsePointer && sheetOpen && active && interactive ? (
         <div

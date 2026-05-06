@@ -10,7 +10,120 @@ Phase 00 data profiling and canonical import is complete and archived in `archiv
 - **pnpm** 10+ (`corepack enable` then `corepack prepare pnpm@10.26.2 --activate`, or install via npm)
 - **Docker** with Docker Compose (for local Postgres, Redis, Meilisearch, MinIO)
 
-## Build and run (step by step)
+## Full stack after `git clone` or `git pull`
+
+Run from the **repo root** unless noted. Use this when you need **learner + API + admin + Keycloak** locally.
+
+### 1. Core infrastructure (Postgres, Redis, Meilisearch, MinIO)
+
+```bash
+docker compose up -d postgres redis meilisearch minio
+docker compose ps
+```
+
+Wait until **postgres** is healthy. Host DB URL uses **`127.0.0.1:15432`** (see `docker-compose.yml`).
+
+### 2. Keycloak (required if admin/learner use OIDC env vars)
+
+Admin at `http://localhost:3001` expects Keycloak on **HTTP** `http://localhost:8080` when using the example env files.
+
+```bash
+cd docker/keycloak
+docker compose up -d
+docker compose logs keycloak-configure-http
+cd ../..
+```
+
+Wait until **`keycloak-configure-http`** logs `sslRequired=NONE applied` (or similar), then open Keycloak only if needed: `http://localhost:8080/admin`. Details: `docker/keycloak/README.md`.
+
+### 3. Root `.env` (API + shared)
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env`:
+
+- **`DATABASE_URL`**: for the default Docker Postgres, keep the example pointing at `127.0.0.1:15432` and `?schema=content`.
+- **`OAUTH_STATE_SECRET`**: must **not** be empty — use a dummy string **≥ 32 characters** if you are not using Google OAuth yet.
+- **`MEILI_MASTER_KEY`**: must match compose (`local_dev_meili_master_key`).
+- **Keycloak (API JWT)**: merge the block from [`docker/keycloak/env.api.example`](docker/keycloak/env.api.example) into `.env` (`KEYCLOAK_ISSUER_URL`, `KEYCLOAK_EXPECTED_AUDIENCE`, etc.) so the Nest API validates tokens from learner/admin clients.
+
+### 4. Per-app env (Next.js route handlers)
+
+```bash
+cp docker/keycloak/env.admin.local.example apps/admin/.env.local
+cp docker/keycloak/env.web.local.example apps/web/.env.local
+```
+
+Adjust if your ports differ. Client secrets must match **`docker/keycloak/realm-export.json`** (`nihongo-admin-dev-secret`, `nihongo-web-dev-secret`) unless you changed them in Keycloak.
+
+### Login/auth contract
+
+Local login is standardized around Keycloak + Next.js BFF route handlers:
+
+- Learner (`apps/web`, `:3000`) uses the `nihongo-web` Keycloak client and stores HttpOnly cookies prefixed with `bjt_web_`.
+- Admin (`apps/admin`, `:3001`) uses the `nihongo-admin` Keycloak client and stores HttpOnly cookies prefixed with `bjt_admin_`.
+- Next.js route handlers exchange password/OAuth login for cookies, refresh sessions, and attach Bearer tokens to API calls.
+- NestJS (`apps/api`, `:4000`) is the backend auth boundary. It validates Keycloak JWTs through JWKS. Admin APIs additionally require the Keycloak admin realm/resource role and a linked active `authz.admin_actor.keycloak_subject`; RBAC permissions are loaded from PostgreSQL.
+- Keep `KEYCLOAK_EXPECTED_AUDIENCE=nihongo-web,nihongo-admin` in the API env so both learner and admin access tokens are accepted.
+- Do not rely on frontend-only admin checks. Admin pages may hide actions, but the API must enforce RBAC.
+
+For admin login to work locally, the Keycloak user must have the configured admin portal role (`admin` by default) and the matching `admin_actor` row must be seeded/linked. Run `pnpm seed:foundation`; if needed, use `database/scripts/link-keycloak-admin.ts` as the linking utility.
+
+### 5. Install, Prisma Client, migrations
+
+```bash
+pnpm install
+pnpm prisma:generate
+pnpm exec prisma migrate deploy --schema packages/database/prisma/schema.prisma
+```
+
+Re-run **`pnpm prisma:generate`** and **`migrate deploy`** after pulls that change Prisma schema or migrations.
+
+### 6. Seed data (recommended for admin RBAC and demos)
+
+```bash
+pnpm seed:foundation
+```
+
+This runs foundation + admin + monetization seeds (see `apps/api/package.json`). Optional extras:
+
+```bash
+pnpm --filter @nihongo-bjt/api growth:seed
+pnpm --filter @nihongo-bjt/api daily:seed
+pnpm --filter @nihongo-bjt/api quiz:seed
+```
+
+### 7. Search index (optional)
+
+```bash
+pnpm search:index
+```
+
+### 8. Run dev servers
+
+**Important:** root **`pnpm dev`** starts **learner web (`:3000`) + API (`:4000`) only** — it does **not** start the admin app.
+
+```bash
+# Terminal 1 — learner + API
+pnpm dev
+
+# Terminal 2 — admin
+pnpm dev:admin
+```
+
+Then open:
+
+- Learner: `http://localhost:3000/vi`
+- Admin: `http://localhost:3001/vi`
+- API: `http://localhost:4000/api/health/live`
+
+If admin “cannot reach backend”, confirm **`NEXT_PUBLIC_API_URL=http://localhost:4000`** in `apps/admin/.env.local` and that **terminal 1** is running the API.
+
+---
+
+## Build and run (reference — same steps in smaller chunks)
 
 ### 1. Clone and enter the repo
 
@@ -91,13 +204,10 @@ pnpm data:backfill-lexeme-pronunciation
 
 Use **`DATABASE_URL`** or **`DATABASE_URLS`** (pipe `|` separated) for multiple databases. Requires the `pronunciation` column migration to be applied first.
 
-### 9. Run all apps in development
+### 9. Run apps in development
 
-```bash
-pnpm dev
-```
-
-This runs **Turbo** `dev` in parallel: learner web **:3000**, admin **:3001**, API **:4000** (see each app’s `package.json`).
+- **Learner + API:** `pnpm dev` (ports **3000** + **4000**).
+- **Admin (separate terminal):** `pnpm dev:admin` (port **3001**).
 
 ### 10. Verify
 
@@ -119,6 +229,8 @@ Note: the API package’s `build` script is currently `tsc --noEmit` (typecheck 
 - **API env validation / `OAUTH_STATE_SECRET`**: `.env.example` includes `OAUTH_STATE_SECRET=""`. An empty string is invalid for the server schema. Remove that line or set a **dummy secret at least 32 characters** for local dev if you are not using Google OAuth yet.
 - **`P1010` / DB connection**: Confirm `DATABASE_URL` matches your Postgres host, port, user, password, and database name; run `prisma migrate deploy` against the same URL the API uses.
 - **Prisma Client out of date**: After `git pull`, run `pnpm prisma:generate` again.
+- **Admin `http://localhost:3001/vi` errors / “backend” unreachable**: Start the API (`pnpm dev` or `pnpm dev:api`) and ensure `apps/admin/.env.local` has `NEXT_PUBLIC_API_URL=http://localhost:4000`. If Keycloak env vars are set, start Keycloak (`docker/keycloak`) and wait for `keycloak-configure-http` to finish (see **Full stack** above).
+- **Keycloak “HTTPS required” on `/admin`**: Realm `master` must allow HTTP in dev; the `docker/keycloak` stack runs a one-shot `keycloak-configure-http` — see `docker/keycloak/README.md`.
 
 ## Stack
 
@@ -132,18 +244,19 @@ Note: the API package’s `build` script is currently `tsc --noEmit` (typecheck 
 
 ## Default service ports (reference)
 
-| Service                   | URL / host                                                        |
-| ------------------------- | ----------------------------------------------------------------- |
-| Learner web               | `http://localhost:3000/vi`                                        |
-| Admin web                 | `http://localhost:3001/vi`                                        |
-| API health                | `http://localhost:4000/api/health/live` (also `ready`, `version`) |
-| Postgres (Docker publish) | `127.0.0.1:15432` → container `5432`                              |
-| Redis                     | `127.0.0.1:6379`                                                  |
-| Meilisearch               | `http://localhost:7700`                                           |
-| MinIO S3 API              | `http://localhost:9000`                                           |
-| MinIO console             | `http://localhost:9001`                                           |
+| Service                   | URL / host                                                         |
+| ------------------------- | ------------------------------------------------------------------ |
+| Learner web               | `http://localhost:3000/vi`                                         |
+| Admin web                 | `http://localhost:3001/vi`                                         |
+| API health                | `http://localhost:4000/api/health/live` (also `ready`, `version`)  |
+| Postgres (Docker publish) | `127.0.0.1:15432` → container `5432`                               |
+| Redis                     | `127.0.0.1:6379`                                                   |
+| Meilisearch               | `http://localhost:7700`                                            |
+| MinIO S3 API              | `http://localhost:9000`                                            |
+| MinIO console             | `http://localhost:9001`                                            |
+| Keycloak (optional stack) | `http://localhost:8080` — see `docker/keycloak/docker-compose.yml` |
 
-Database backup/restore: [docs/ops/backup-restore.md](docs/ops/backup-restore.md).
+Database backup/restore: [docs/ops/backup-restore.md](docs/ops/backup-restore.md). Keycloak local setup: [docker/keycloak/README.md](docker/keycloak/README.md). OIDC env reference: [docs/ops/keycloak-app-integration.md](docs/ops/keycloak-app-integration.md).
 
 ### MinIO and learner image uploads
 

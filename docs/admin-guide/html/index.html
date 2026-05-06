@@ -1,0 +1,1449 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hướng dẫn Admin Console — NihonGo BJT</title>
+  <style>
+    :root {
+      --bg: #f5f4f0;
+      --paper: #ffffff;
+      --ink: #0f172a;
+      --ink-muted: #64748b;
+      --accent: #312e81;
+      --accent-hover: #1e1b4b;
+      --accent-soft: #e0e7ff;
+      --border: #e2e8f0;
+      --nav-w: min(300px, 92vw);
+      --radius: 12px;
+      --font: ui-sans-serif, system-ui, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+      --score-low: #94a3b8;
+      --score-mid: #f59e0b;
+      --score-high: #059669;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; font-family: var(--font); font-size: 14px; line-height: 1.55; color: var(--ink); background: var(--bg); }
+    .app-header {
+      background: var(--paper);
+      border-bottom: 1px solid var(--border);
+      padding: 0.85rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+    .app-header h1 {
+      margin: 0;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .app-header .hint { color: var(--ink-muted); font-size: 0.82rem; }
+    .layout {
+      display: flex;
+      min-height: calc(100vh - 52px);
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    .nav-rail {
+      width: var(--nav-w);
+      flex-shrink: 0;
+      background: var(--paper);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      max-height: calc(100vh - 52px);
+      position: sticky;
+      top: 0;
+      align-self: flex-start;
+    }
+    .nav-search {
+      padding: 0.65rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-search input {
+      width: 100%;
+      padding: 0.45rem 0.65rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font: inherit;
+    }
+    .nav-search input:focus {
+      outline: 2px solid var(--accent-soft);
+      border-color: var(--accent);
+    }
+    .nav-scroll {
+      overflow-y: auto;
+      flex: 1;
+      padding: 0.35rem 0 1rem;
+    }
+    .nav-group { border-bottom: 1px solid var(--border); }
+    .nav-group summary {
+      list-style: none;
+      padding: 0.55rem 0.75rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--ink-muted);
+      cursor: pointer;
+      user-select: none;
+    }
+    .nav-group summary::-webkit-details-marker { display: none; }
+    .nav-group summary::before {
+      content: "";
+      display: inline-block;
+      width: 0.35em;
+      margin-right: 0.35em;
+      border: solid var(--ink-muted);
+      border-width: 0 2px 2px 0;
+      padding: 0.2em;
+      transform: rotate(-45deg);
+      transition: transform 0.15s ease;
+    }
+    .nav-group:not([open]) summary::before { transform: rotate(45deg); }
+    .nav-group ul {
+      list-style: none;
+      margin: 0;
+      padding: 0 0 0.5rem;
+    }
+    .nav-item {
+      display: block;
+      width: 100%;
+      text-align: left;
+      padding: 0.45rem 0.75rem 0.45rem 1rem;
+      border: none;
+      background: transparent;
+      font: inherit;
+      color: var(--ink);
+      cursor: pointer;
+      border-left: 3px solid transparent;
+    }
+    .nav-item:hover { background: var(--bg); }
+    .nav-item[aria-current="true"] {
+      background: var(--accent-soft);
+      border-left-color: var(--accent);
+      font-weight: 600;
+      color: var(--accent-hover);
+    }
+    .nav-item .flag { font-size: 0.68rem; color: var(--ink-muted); display: block; margin-top: 0.15rem; }
+    .nav-item.hidden-by-filter { display: none; }
+    .nav-group.hidden-by-filter > summary { display: none; }
+    .nav-group.hidden-by-filter { border: none; }
+    .detail {
+      flex: 1;
+      min-width: 0;
+      padding: 1.25rem 1.5rem 3rem;
+      max-height: calc(100vh - 52px);
+      overflow-y: auto;
+    }
+    .panel { display: none; animation: fadeIn 0.18s ease; }
+    .panel.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .panel h2 { margin: 0 0 0.35rem; font-size: 1.35rem; color: var(--accent); }
+    .panel .path-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      font-size: 0.88rem;
+    }
+    code.path {
+      font-family: ui-monospace, monospace;
+      background: var(--accent-soft);
+      color: var(--accent);
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.12rem 0.45rem;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+    .badge-flag { background: #fef3c7; color: #92400e; }
+    .badge-id { font-family: monospace; background: var(--border); color: var(--ink-muted); }
+    .block { margin: 1rem 0; }
+    .block h3 {
+      margin: 0 0 0.5rem;
+      font-size: 0.95rem;
+      color: var(--ink);
+      border-left: 3px solid var(--accent);
+      padding-left: 0.5rem;
+    }
+    .block p { margin: 0.4rem 0; color: var(--ink); }
+    .block ul { margin: 0.35rem 0; padding-left: 1.2rem; }
+    .block li { margin: 0.25rem 0; }
+    .scores {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 0.65rem;
+      margin-top: 0.5rem;
+    }
+    .score-card {
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.65rem 0.75rem;
+    }
+    .score-card .label { font-size: 0.78rem; color: var(--ink-muted); margin-bottom: 0.25rem; }
+    .score-card .value { font-size: 1.1rem; font-weight: 700; }
+    .score-card .hint { font-size: 0.72rem; color: var(--ink-muted); margin-top: 0.2rem; }
+    .bar {
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      margin-top: 0.35rem;
+      overflow: hidden;
+    }
+    .bar > i {
+      display: block;
+      height: 100%;
+      border-radius: 3px;
+      background: linear-gradient(90deg, var(--score-low), var(--score-mid) 50%, var(--score-high));
+    }
+    .type-compare {
+      margin-top: 1.5rem;
+      overflow-x: auto;
+    }
+    .tiny-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    .tiny-table th, .tiny-table td { border: 1px solid var(--border); padding: 0.45rem 0.55rem; text-align: left; vertical-align: top; }
+    .tiny-table th { background: var(--bg); }
+    .intro-note { color: var(--ink-muted); font-size: 0.9rem; margin-bottom: 1rem; }
+    @media (max-width: 880px) {
+      .layout { flex-direction: column; }
+      .nav-rail {
+        position: relative;
+        max-height: 45vh;
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+      .detail { max-height: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <h1>Hướng dẫn Admin Console — NihonGo BJT</h1>
+    <span class="hint">Chọn mục trái để xem mô tả · Đường dẫn sau locale (<code class="path">/vi</code>…)</span>
+  </header>
+  <div class="layout">
+    <aside class="nav-rail" aria-label="Danh mục màn hình">
+      <div class="nav-search">
+        <input type="search" id="nav-filter" placeholder="Lọc menu…" autocomplete="off" aria-label="Lọc danh sách menu" />
+      </div>
+      <nav class="nav-scroll" id="nav-root"></nav>
+    </aside>
+    <article class="detail" id="detail-root" aria-live="polite"></article>
+  </div>
+
+  <script>
+(function () {
+  "use strict";
+
+  /** @typedef {{ depth: number, extend: number, integration: number }} Scores
+   * depth: độ sâu chức năng (1=rất mỏng, 5=đủ workflow production)
+   * extend: tiềm năng mở rộng (1=hạn chế, 5=rất linh hoạt)
+   * integration: độ phụ thuộc tích hợp (1=gần như chỉ CRUD DB, 5=nhiều dịch vụ: queue, search, IdP, billing…)
+   */
+  /** @type {{ id: string, label: string, group: string, path: string, perms: string, featureFlag?: string, purpose: string, workflows: string[], extend: string[], scores: Scores }[]} */
+  const ITEMS = [];
+
+  const G = {
+    overview: "Tổng quan & hệ thống",
+    content: "Nội dung",
+    learning: "Học tập",
+    assessment: "Đánh giá & BJT",
+    battle: "Battle",
+    users: "Người dùng & quyền riêng tư",
+    analytics: "Phân tích",
+    monetization: "Monetization & ads",
+    growth: "Growth",
+    operations: "Vận hành",
+    legal: "Pháp lý",
+    iam: "IAM"
+  };
+
+  function add(o) { ITEMS.push(o); }
+
+  add({
+    id: "intro",
+    label: "Giới thiệu & cách đọc đánh giá",
+    group: G.overview,
+    path: "—",
+    perms: "—",
+    purpose: "Tài liệu mô tả từng mục trong sidebar Admin theo mã nguồn (apps/admin/lib/admin-nav-data.ts). Bạn dùng bản này để onboard nhân sự vận hành Product / CS / Compliance; không thay cho tài liệu API chi tiết.",
+    workflows: [
+      "Đăng nhập Admin → URL có locale (ví dụ /vi/…).",
+      "Mục menu phụ thuộc permission Keycloak + mapping IAM trong backend.",
+      "Thao tác nhạy cảm thường yêu cầu lý do và ghi admin_audit_log."
+    ],
+    extend: [
+      "Thêm locale cho chính tài liệu này (ja/en).",
+      "Liên kết trực tiếp tới OpenAPI từng nhóm (deep link).",
+      "Ẩn/hiện nhóm theo role khi host trên portal nội bộ."
+    ],
+    scores: { depth: 5, extend: 5, integration: 2 }
+  });
+
+  add({
+    id: "ov.home",
+    label: "Trang chủ Admin",
+    group: G.overview,
+    path: "/",
+    perms: "Đăng nhập thành công",
+    purpose: "Điểm vào sau login: tóm tắt trạng thái, shortcut tới các khu vực thường dùng (tùy triển khai UI). Không thay thế dashboard analytics chuyên sâu.",
+    workflows: ["Xác nhận đúng môi trường (staging/prod).", "Điều hướng nhanh xuống nhóm Content / Users / Ops."],
+    extend: ["Widget KPI theo role", "Danh sách tác vụ chờ (approval queue)"],
+    scores: { depth: 3, extend: 4, integration: 2 }
+  });
+  add({
+    id: "ov.systemHealth",
+    label: "Sức khỏe hệ thống",
+    group: G.overview,
+    path: "/system/health",
+    perms: "admin.analytics.view · viewer.analytics · analytics.view",
+    purpose: "Live/ready/version, kiểm tra phụ thuộc runtime (DB, Redis, v.v.). Dùng cho vận hành ca trực và sanity check trước khi bật feature.",
+    workflows: ["Xem endpoint health API", "So sánh với monitor ngoài (Datadog, v.v.)"],
+    extend: ["Synthetic checks", "Lịch sử incident ngắn", "Dependency map"],
+    scores: { depth: 4, extend: 3, integration: 5 }
+  });
+  add({
+    id: "ov.queueHealth",
+    label: "Hàng đợi (Queue health)",
+    group: G.overview,
+    path: "/system/queue-health",
+    perms: "admin.analytics.view · …",
+    purpose: "Độ sâu hàng đợi BullMQ / job: backlog, failed, throughput. Quan trọng khi import, search rebuild, webhook billing.",
+    workflows: ["Xác định queue nghẽn", "Đối chiếu worker count / rate limit"],
+    extend: ["Retry DLQ từ UI", "Pause consumer", "Alert threshold"],
+    scores: { depth: 4, extend: 4, integration: 5 }
+  });
+  add({
+    id: "ov.searchSync",
+    label: "Đồng bộ tìm kiếm",
+    group: G.overview,
+    path: "/system/search-sync",
+    perms: "admin.content.read · admin.analytics.view · viewer.analytics",
+    purpose: "Kích hoạt / theo dõi reindex Meilisearch so với PostgreSQL. Nội dung learner search không khớp thường do projection lệch.",
+    workflows: ["Đọc trạng thái sync", "Chạy partial hoặc full rebuild theo policy"],
+    extend: ["So sánh count PG vs Meili", "Dry-run diff", "Schedule rebuild"],
+    scores: { depth: 4, extend: 4, integration: 5 }
+  });
+  add({
+    id: "ov.release",
+    label: "Phiên bản / Release",
+    group: G.overview,
+    path: "/system/release",
+    perms: "iam.manage",
+    purpose: "Thông tin build/version/commit (hỗ trợ audit “đang chạy bản nào”). Hạn chế chỉ super-admins.",
+    workflows: ["Ghi nhận version khi báo lỗi", "Đối chiếu changelog deploy"],
+    extend: ["Link tới Git SHA + pipeline", "Feature matrix theo build"],
+    scores: { depth: 3, extend: 3, integration: 2 }
+  });
+
+  add({
+    id: "cm.overview",
+    label: "Tổng quan nội dung",
+    group: G.content,
+    path: "/content",
+    perms: "admin.content.read",
+    purpose: "Bản đồ kho Dictionary / Kanji / Grammar / Media và trạng thái tổng hợp. Điểm xuất phát cho biên tập viên.",
+    workflows: ["Đọc KPI nội dung", "Nhảy xuống module con"],
+    extend: ["Coverage theo level BJT", "Gap report theo topic"],
+    scores: { depth: 3, extend: 4, integration: 3 }
+  });
+  add({
+    id: "cm.dictionary",
+    label: "Từ điển",
+    group: G.content,
+    path: "/dictionary",
+    perms: "admin.content.read (+ write theo API)",
+    purpose: "CRUD lemma/từ vựng, làm nguồn cho Reading Assist, flashcard, quiz. Chất lượng entry ảnh hưởng trực tiếp trải nghiệm học.",
+    workflows: ["Tìm kiếm entry", "Tạo/sửa/xóa mềm", "Liên kết audio / ví dụ"],
+    extend: ["Bulk import validated", "Version diff UI", "Tách staging / production content"],
+    scores: { depth: 5, extend: 4, integration: 4 }
+  });
+  add({
+    id: "cm.kanji",
+    label: "Kanji",
+    group: G.content,
+    path: "/kanji",
+    perms: "admin.content.read",
+    purpose: "Quản lý glyph, reading, stroke/metadata phục vụ tra cứu và học.",
+    workflows: ["Chuẩn hóa reading", "Gắn ví dụ từ content"],
+    extend: ["JLPT / BJT tag set", "Link ảnh minh họa từ Media"],
+    scores: { depth: 4, extend: 4, integration: 3 }
+  });
+  add({
+    id: "cm.grammar",
+    label: "Ngữ pháp",
+    group: G.content,
+    path: "/grammar",
+    perms: "admin.content.read",
+    purpose: "Mục grammar pattern, giải thích đa ngôn ngữ, ví dụ kinh doanh (BJT).",
+    workflows: ["Tạo pattern mới", "Gắn quiz question"],
+    extend: ["Graph prerequisite grammar", "Gợi ý remediation tự động"],
+    scores: { depth: 4, extend: 4, integration: 3 }
+  });
+  add({
+    id: "cm.media",
+    label: "Thư viện Media",
+    group: G.content,
+    path: "/media",
+    perms: "admin.content.read",
+    purpose: "Object storage (MinIO/S3): upload, license, provenance. Bắt buộc trước khi dùng ảnh/audio trên thẻ / bài học.",
+    workflows: ["Presign upload", "Đánh dấu licensed / pending review", "Gắn asset vào card"],
+    extend: ["Virus scan hook", "Automatic alt-text", "CDN cache purge"],
+    scores: { depth: 5, extend: 4, integration: 5 }
+  });
+  add({
+    id: "cm.versions",
+    label: "Phiên bản nội dung",
+    group: G.content,
+    path: "/content/versions",
+    perms: "admin.content.read",
+    purpose: "Theo dõi revision Content CMS: ai đổi gì, rollback có kiểm soát (theo policy).",
+    workflows: ["Diff giữa version", "Khôi phục bản cũ (nếu được phép)"],
+    extend: ["Branch nội dung", "Publish window"],
+    scores: { depth: 4, extend: 3, integration: 3 }
+  });
+  add({
+    id: "cm.enrichment",
+    label: "Làm giàu dữ liệu (Enrichment)",
+    group: G.content,
+    path: "/content/enrichment",
+    perms: "admin.content.read",
+    purpose: "Pipeline bổ sung furigana, tag, liên kết từ điển — giảm thủ công.",
+    workflows: ["Chạy job enrichment theo batch", "Xem lỗi / retry"],
+    extend: ["ML suggest-only mode", "Human-in-the-loop queue"],
+    scores: { depth: 4, extend: 5, integration: 5 }
+  });
+  add({
+    id: "cm.i18n",
+    label: "Chuỗi đa ngôn ngữ (i18n)",
+    group: G.content,
+    path: "/i18n",
+    perms: "admin.content.read · iam.manage",
+    purpose: "Quản lý key chuỗi admin/learner; đồng bộ missing keys. Ảnh hưởng compliance copy (legal, error messages).",
+    workflows: ["Tìm key", "Sửa vi/ja/en", "Export/import JSON"],
+    extend: ["TM (translation memory)", "Lint hard-coded string trong build"],
+    scores: { depth: 4, extend: 4, integration: 2 }
+  });
+  add({
+    id: "cm.announcements",
+    label: "Thông báo (Announcements)",
+    group: G.content,
+    path: "/announcements",
+    perms: "admin.content.write",
+    purpose: "Banner / strip thông tin trên learner app: bảo trì, tính năng mới, cảnh báo compliance.",
+    workflows: ["Soạn nội dung theo locale", "Lên lịch hiển thị", "Archive khi hết hạn"],
+    extend: ["Targeting theo segment", "A/B headline", "Đo click-through"],
+    scores: { depth: 4, extend: 4, integration: 3 }
+  });
+
+  add({
+    id: "ln.daily",
+    label: "Daily Hub",
+    group: G.learning,
+    path: "/daily-hub",
+    perms: "admin.content.read · write qua API",
+    purpose: "Nội dung daily widget (thời tiết, tin, cụm từ…): CRUD daily_content_item, publish/archive, audit lý do.",
+    workflows: ["Lọc theo ngày / locale / widgetKind", "JSON payload + widgetConfig", "Lifecycle schedule → publish"],
+    extend: ["Preview learner layout", "Approval hai cấp", "Auto-ingest NHK"],
+    scores: { depth: 5, extend: 4, integration: 4 }
+  });
+  add({
+    id: "ln.decks",
+    label: "Bộ thẻ (Decks)",
+    group: G.learning,
+    path: "/decks",
+    perms: "admin.content.read",
+    purpose: "Deck nội dung editorial: cấu trúc bài học, gắn card. Khác deck cá nhân của learner.",
+    workflows: ["Xem deck public/system", "Sửa meta và membership card"],
+    extend: ["Curriculum map", "Import Anki từ manifest"],
+    scores: { depth: 4, extend: 4, integration: 3 }
+  });
+  add({
+    id: "ln.templates",
+    label: "Template flashcard",
+    group: G.learning,
+    path: "/flashcards/templates",
+    perms: "admin.content.read",
+    purpose: "Mẫu thẻ để generate hàng loạt hoặc standardize field.",
+    workflows: ["Tạo template", "Versioning", "Gắn vào pipeline generated"],
+    extend: ["Merge field từ dictionary API", "A/B template hiệu quả SRS"],
+    scores: { depth: 4, extend: 5, integration: 3 }
+  });
+  add({
+    id: "ln.generated",
+    label: "Thẻ sinh tự động",
+    group: G.learning,
+    path: "/flashcards/generated",
+    perms: "admin.content.read",
+    purpose: "Theo dõi output batch / job tạo thẻ; retry, flag chất lượng.",
+    workflows: ["Lọc theo trạng thái", "Duyệt / loại bỏ outliers"],
+    extend: ["Score chất lượng tự động", "Human review queue"],
+    scores: { depth: 4, extend: 5, integration: 5 }
+  });
+  add({
+    id: "ln.reading",
+    label: "Reading Assist (vận hành)",
+    group: G.learning,
+    path: "/reading-assist",
+    perms: "admin.content.read",
+    purpose: "Giám sát analyzer, cache tokenization, gap từ điển; hỗ trợ debug “hover không ra nghĩa”.",
+    workflows: ["Xem log failed analysis", "Flush cache theo policy"],
+    extend: ["Rate limit per IP", "Quality dashboard theo locale"],
+    scores: { depth: 4, extend: 4, integration: 5 }
+  });
+  add({
+    id: "ln.paths",
+    label: "Lộ trình học",
+    group: G.learning,
+    path: "/learning/paths",
+    perms: "admin.content.read · admin.content.write",
+    purpose: "learning_path CRUD: slug, title đa ngôn ngữ, level BJT; publish / archive / duplicate / delete draft — có audit lý do.",
+    workflows: ["Tạo draft", "Publish khi nội dung đủ", "Duplicate để thử biến thể"],
+    extend: ["LearningPathStep (thứ tự bài) khi schema có model", "Gắn competency matrix"],
+    scores: { depth: 5, extend: 4, integration: 3 }
+  });
+  add({
+    id: "ln.competencies",
+    label: "Năng lực (Competencies)",
+    group: G.learning,
+    path: "/learning/competencies",
+    perms: "admin.content.read · write",
+    purpose: "Competency code + level BJT; publish lifecycle; dùng cho báo cáo và roadmap skill.",
+    workflows: ["Định nghĩa code chuẩn", "Publish / archive", "Xóa draft"],
+    extend: ["Mapping câu hỏi BJT → competency", "Heatmap lớp học"],
+    scores: { depth: 5, extend: 4, integration: 3 }
+  });
+  add({
+    id: "ln.review",
+    label: "SRS / Learning review",
+    group: G.learning,
+    path: "/learning/review",
+    perms: "admin.content.read · write",
+    purpose: "Sức khỏe SRS: retention curve, problem cards, force reintroduce user_flashcard (audit).",
+    workflows: ["Chọn windowDays", "Lọc leeches / lapses", "Can thiệp có lý do"],
+    extend: ["Forecast retention", "Auto-suspend bot review abuse"],
+    scores: { depth: 5, extend: 4, integration: 4 }
+  });
+
+  add({
+    id: "as.bjt",
+    label: "BJT Dashboard",
+    group: G.assessment,
+    path: "/bjt",
+    perms: "admin.content.read",
+    purpose: "Điều phối nội dung đánh giá BJT cấp cao: section, blueprint, trạng thái đề thi (tùy UI).",
+    workflows: ["Xem tổng quan band", "Drill vào qbank / mock"],
+    extend: ["Blueprint versioning", "Item response theory pilot"],
+    scores: { depth: 4, extend: 4, integration: 4 }
+  });
+  add({
+    id: "as.quizTemplates",
+    label: "Quiz templates",
+    group: G.assessment,
+    path: "/assessment/quiz-templates",
+    perms: "assessment.manage · assessment.review (đọc)",
+    purpose: "Template practice/daily/diagnostic: generationRules trong blueprintMeta, time limit, mix độ khó.",
+    workflows: ["Tạo template", "Sample preview count", "Publish / archive"],
+    extend: ["Adaptive difficulty", "Pull chỉ từ pool đã review"],
+    scores: { depth: 5, extend: 4, integration: 3 }
+  });
+  add({
+    id: "as.qbank",
+    label: "Ngân hàng câu hỏi",
+    group: G.assessment,
+    path: "/assessment/question-bank",
+    perms: "assessment.manage · assessment.review (suggest)",
+    purpose: "CRUD câu BJT đầy đủ option/skill/difficulty; bulk publish/archive/tag; suggest-edit ghi audit không sửa live.",
+    workflows: ["Lọc theo tag/level", "Bulk bar", "Reviewer suggest field"],
+    extend: ["Dedicated suggestion queue table", "AI draft với human sign-off"],
+    scores: { depth: 5, extend: 5, integration: 3 }
+  });
+  add({
+    id: "as.sessions",
+    label: "Phiên quiz / thi",
+    group: G.assessment,
+    path: "/assessment/quiz-sessions",
+    perms: "admin.content.read · viewer.analytics …",
+    purpose: "Operator theo dõi attempt: in_progress, breakdown skill, abort, extend time — có audit.",
+    workflows: ["Auto-refresh session đang chạy", "Abort abuse / stuck", "Extend time sự cố mạng"],
+    extend: ["Proctoring signal", "Integrity risk score"],
+    scores: { depth: 5, extend: 4, integration: 4 }
+  });
+  add({
+    id: "as.mock",
+    label: "Mock exam",
+    group: G.assessment,
+    path: "/assessment/mock-exams",
+    perms: "assessment.manage",
+    purpose: "Mô phỏng BJT: sections + time limit; validate tổng thời gian vs blueprint.",
+    workflows: ["Tạo mock", "Publish cho cohort", "Archive bản cũ"],
+    extend: ["Lịch thi ảo", "Chấm partial / speaking (khi có)"],
+    scores: { depth: 5, extend: 4, integration: 3 }
+  });
+  add({
+    id: "as.remediation",
+    label: "Remediation",
+    group: G.assessment,
+    path: "/assessment/remediation",
+    perms: "assessment.manage",
+    purpose: "Luật gợi ý học lại sau N câu sai trong cửa sổ; trigger log export CSV.",
+    workflows: ["Rule CRUD", "Enable/disable", "Theo dõi trigger theo user"],
+    extend: ["A/B rule effectiveness", "Personalized threshold"],
+    scores: { depth: 5, extend: 4, integration: 3 }
+  });
+
+  const battleFlag = "adminNav.battle";
+  add({
+    id: "bt.configs",
+    label: "Cấu hình Battle",
+    group: G.battle,
+    path: "/battle/configs",
+    perms: "admin.content.read",
+    featureFlag: battleFlag,
+    purpose: "Tham số matchmaking, thời gian vòng, bot default — điều chỉnh fairness / độ khó.",
+    workflows: ["Sửa config", "So sánh với metrics abuse"],
+    extend: ["Môi trường staging riêng", "Canary config % user"],
+    scores: { depth: 4, extend: 4, integration: 4 }
+  });
+  add({
+    id: "bt.bots",
+    label: "Battle bots",
+    group: G.battle,
+    path: "/battle/bots",
+    perms: "battle.manage (ghi)",
+    featureFlag: battleFlag,
+    purpose: "CRUD bot: personality, accuracy, delay; lifecycle enable/disable/archive; xóa chỉ khi archived.",
+    workflows: ["Tune latency giống người", "Archive bot cũ"],
+    extend: ["Import Rive avatar", "Elo calibration"],
+    scores: { depth: 5, extend: 4, integration: 4 }
+  });
+  add({
+    id: "bt.matches",
+    label: "Trận đấu (Matches)",
+    group: G.battle,
+    path: "/battle/matches",
+    perms: "battle.manage · analytics (đọc)",
+    featureFlag: battleFlag,
+    purpose: "Live session: rounds, audit; abort/rerun có lý do (moderation / test).",
+    workflows: ["Drawer chi tiết", "Abort stuck match"],
+    extend: ["Replay timeline", "Anti-cheat heuristics"],
+    scores: { depth: 5, extend: 4, integration: 5 }
+  });
+  add({
+    id: "bt.leader",
+    label: "Bảng xếp hạng",
+    group: G.battle,
+    path: "/battle/leaderboard",
+    perms: "battle.manage · analytics",
+    featureFlag: battleFlag,
+    purpose: "Ranking cửa sổ 30d/90d; export CSV; privacy masking theo product policy.",
+    workflows: ["Chọn window", "Export"],
+    extend: ["BattleSeason entity (mùa giải)", "Reward badge"],
+    scores: { depth: 4, extend: 3, integration: 4 }
+  });
+  add({
+    id: "bt.abuse",
+    label: "Battle abuse",
+    group: G.battle,
+    path: "/battle/abuse",
+    perms: "iam.manage · support.user.read",
+    featureFlag: battleFlag,
+    purpose: "Queue báo cáo toxicity/cheat: context prior reports, resolve action, escalate.",
+    workflows: ["Severity triage", "Ghi resolution note + reason"],
+    extend: ["Dedicated battle.moderate permission", "ML toxicity pre-score"],
+    scores: { depth: 5, extend: 4, integration: 4 }
+  });
+
+  add({
+    id: "u.users",
+    label: "Danh sách người dùng",
+    group: G.users,
+    path: "/users",
+    perms: "support.user.read · write · support.user",
+    purpose: "Tra cứu user profile, plan, trạng thái; điểm vào flow support.",
+    workflows: ["Search email/display", "Mở user 360"],
+    extend: ["Bulk export theo filter", "Tag internal VIP"],
+    scores: { depth: 4, extend: 4, integration: 4 }
+  });
+  add({
+    id: "u.360",
+    label: "User 360",
+    group: G.users,
+    path: "/users/360",
+    perms: "support.user.*",
+    purpose: "Một trang tổng hợp: học tập, quota, entitlement, phiên đăng nhập — cần access reason nội bộ.",
+    workflows: ["Verify identity trước khi xem PII", "Ghi support note"],
+    extend: ["Timeline event unified", "GDPR redaction preview"],
+    scores: { depth: 5, extend: 4, integration: 5 }
+  });
+  add({
+    id: "u.notes",
+    label: "Ghi chú hỗ trợ",
+    group: G.users,
+    path: "/support/notes",
+    perms: "support.user.write · read",
+    purpose: "Internal notes cho CS; không hiển thị cho learner.",
+    workflows: ["Append note sau ticket", "Tìm theo user"],
+    extend: ["Template response", "Link Zendesk"],
+    scores: { depth: 3, extend: 4, integration: 2 }
+  });
+  add({
+    id: "u.privacy",
+    label: "Yêu cầu quyền riêng tư",
+    group: G.users,
+    path: "/privacy/requests",
+    perms: "support.user.read · iam.manage",
+    purpose: "RTBF, xóa dữ liệu, yêu cầu pháp lý — workflow có audit.",
+    workflows: ["Verify ticket", "Execute workflow soft-delete/anonymize"],
+    extend: ["Deadline SLA dashboard", "Auto-reply email"],
+    scores: { depth: 4, extend: 4, integration: 5 }
+  });
+  add({
+    id: "u.export",
+    label: "Data requests / xuất dữ liệu",
+    group: G.users,
+    path: "/privacy/data-requests",
+    perms: "support.user.read · iam.manage",
+    purpose: "DSAR export pack; kiểm tra quyền trước khi gửi file cho user.",
+    workflows: ["Generate bundle", "Secure delivery link"],
+    extend: ["Incremental export", "Watermark PDF"],
+    scores: { depth: 4, extend: 3, integration: 5 }
+  });
+
+  const analyticsBase = {
+    perms: "viewer.analytics · admin.analytics.view · analytics.view",
+    workflows: [
+      "Chọn bộ lọc thời gian / phân đoạn (nếu có).",
+      "Đọc KPI + biểu đồ; di chuyển drill-down link.",
+      "Xác nhậh độ tươi dữ liệu (freshness) trước khi báo cáo điều hành."
+    ],
+    extend: [
+      "Thêm metric từ warehouse đã modeled.",
+      "Cảnh báo ngưỡng (email/Slack).",
+      "Export theo lịch (scheduled report)."
+    ],
+    scores: { depth: 3, extend: 5, integration: 5 }
+  };
+  add({
+    id: "an.exec",
+    label: "Executive analytics",
+    group: G.analytics,
+    path: "/analytics",
+    perms: analyticsBase.perms,
+    purpose: "Dashboard điều hành: KPI tăng trưởng, engagement tổng quan — tránh raw key metric.",
+    workflows: [...analyticsBase.workflows],
+    extend: [...analyticsBase.extend, "So sánh cohort theo thị trường"],
+    scores: { depth: 4, extend: 5, integration: 5 }
+  });
+  add({
+    id: "an.growth",
+    label: "User growth analytics",
+    group: G.analytics,
+    path: "/analytics/growth",
+    perms: analyticsBase.perms,
+    purpose: "Funnel đăng ký, activation, kênh acquisition.",
+    workflows: [...analyticsBase.workflows],
+    extend: [...analyticsBase.extend],
+    scores: { ...analyticsBase.scores, depth: 3 }
+  });
+  add({
+    id: "an.learning",
+    label: "Learning analytics",
+    group: G.analytics,
+    path: "/analytics/learning",
+    perms: analyticsBase.perms,
+    purpose: "Hành vi học: thời gian, completion, path.",
+    workflows: [...analyticsBase.workflows],
+    extend: [...analyticsBase.extend, "Skill radar theo competency"],
+    scores: { ...analyticsBase.scores, depth: 3 }
+  });
+  add({
+    id: "an.content",
+    label: "Content analytics",
+    group: G.analytics,
+    path: "/analytics/content",
+    perms: analyticsBase.perms,
+    purpose: "Hiệu quả nội dung: view, save, bounce reading assist.",
+    workflows: [...analyticsBase.workflows],
+    extend: [...analyticsBase.extend],
+    scores: { ...analyticsBase.scores, depth: 3 }
+  });
+  add({
+    id: "an.search",
+    label: "Search analytics",
+    group: G.analytics,
+    path: "/analytics/search",
+    perms: analyticsBase.perms,
+    purpose: "Truy vấn, zero-result rate, top clicks — điều phối với search-sync.",
+    workflows: [...analyticsBase.workflows],
+    extend: [...analyticsBase.extend, "Synonym suggestion từ log"],
+    scores: { ...analyticsBase.scores, depth: 3 }
+  });
+  add({
+    id: "an.bjt",
+    label: "BJT analytics",
+    group: G.analytics,
+    path: "/analytics/bjt",
+    perms: analyticsBase.perms,
+    purpose: "Điểm số band, phân bố skill, item difficulty proxy.",
+    workflows: [...analyticsBase.workflows],
+    extend: [...analyticsBase.extend],
+    scores: { ...analyticsBase.scores, depth: 4 }
+  });
+  add({
+    id: "an.fc",
+    label: "Flashcard / SRS analytics",
+    group: G.analytics,
+    path: "/analytics/flashcards",
+    perms: analyticsBase.perms,
+    purpose: "Retention deck, review volume, leech rate tổng hợp.",
+    workflows: [...analyticsBase.workflows],
+    extend: [...analyticsBase.extend],
+    scores: { ...analyticsBase.scores, depth: 3 }
+  });
+  add({
+    id: "an.battle",
+    label: "Battle analytics",
+    group: G.analytics,
+    path: "/analytics/battle",
+    perms: analyticsBase.perms,
+    purpose: "Match volume, completion, bot participation mix.",
+    workflows: [...analyticsBase.workflows],
+    extend: [...analyticsBase.extend],
+    scores: { ...analyticsBase.scores, depth: 3 }
+  });
+  add({
+    id: "an.sys",
+    label: "System analytics",
+    group: G.analytics,
+    path: "/analytics/system",
+    perms: "viewer.analytics · admin.analytics.view · iam.manage · analytics.view",
+    purpose: "Chi tiết hạ tầng hơn public health: latency, error budget — hạn chế role.",
+    workflows: ["Chỉ dùng khi có iam.manage hoặc analytics.view mở rộng", ...analyticsBase.workflows.slice(1)],
+    extend: ["SLO burn chart", "Trace sample ID"],
+    scores: { depth: 3, extend: 4, integration: 5 }
+  });
+
+  add({
+    id: "mo.ov",
+    label: "Monetization overview",
+    group: G.monetization,
+    path: "/monetization",
+    perms: "admin.monetization.read",
+    purpose: "KPI revenue ops: MRR proxy, churn signal, quota warning — không phải chart giả.",
+    workflows: ["Daily standup revenue", "Identify plan anomaly"],
+    extend: ["Forecast", "Cohort LTV"],
+    scores: { depth: 4, extend: 5, integration: 5 }
+  });
+  add({
+    id: "mo.plans",
+    label: "Plans",
+    group: G.monetization,
+    path: "/monetization/plans",
+    perms: "admin.monetization.read · billing.plan.view",
+    purpose: "Định nghĩa gói, giá hiển thị theo locale, mapping entitlement.",
+    workflows: ["Draft plan", "Publish khi legal ok"],
+    extend: ["Grandfather pricing", "Regional price list"],
+    scores: { depth: 5, extend: 4, integration: 4 }
+  });
+  add({
+    id: "mo.ent",
+    label: "Entitlements",
+    group: G.monetization,
+    path: "/monetization/entitlements",
+    perms: "billing.entitlement.manage · …",
+    purpose: "Gán quyền tính năng cho plan / override user — ảnh hưởng trực tiếp paywall.",
+    workflows: ["Grant/revoke có audit", "Kiểm tra conflict plan"],
+    extend: ["Time-bound entitlement", "A/B feature flag per plan"],
+    scores: { depth: 5, extend: 4, integration: 5 }
+  });
+  add({
+    id: "mo.quo",
+    label: "Quotas",
+    group: G.monetization,
+    path: "/monetization/quotas",
+    perms: "billing.quota.view · …",
+    purpose: "Policy quota (SRS/day, search…) và override tạm cho support VIP.",
+    workflows: ["Đọc usage vs limit", "Open ticket nếu abuse"],
+    extend: ["Dynamic quota from plan tier", "Burst allowance"],
+    scores: { depth: 5, extend: 4, integration: 4 }
+  });
+  add({
+    id: "mo.sub",
+    label: "Subscriptions",
+    group: G.monetization,
+    path: "/monetization/subscriptions",
+    perms: "billing.subscription.view · …",
+    purpose: "Lifecycle Stripe/local provider: active, past_due, canceled.",
+    workflows: ["Tra cứu theo user id nội bộ", "Link billing event"],
+    extend: ["Self-serve portal deep link", "Proration preview"],
+    scores: { depth: 5, extend: 4, integration: 5 }
+  });
+  add({
+    id: "mo.bill",
+    label: "Billing events",
+    group: G.monetization,
+    path: "/monetization/billing-events",
+    perms: "revenue.analytics.view · …",
+    purpose: "Webhook / invoice event log — debug thanh toán.",
+    workflows: ["Search by id", "Replay (policy)"],
+    extend: ["Idempotency dashboard", "Stripe sync reconcile"],
+    scores: { depth: 4, extend: 4, integration: 5 }
+  });
+  add({
+    id: "mo.ref",
+    label: "Refunds",
+    group: G.monetization,
+    path: "/monetization/refunds",
+    perms: "admin.monetization.write · billing.subscription.manage",
+    purpose: "Hoàn tiền / điều chỉnh nhạy cảm — bắt buộc lý do + audit.",
+    workflows: ["Verify policy", "Execute partial/full refund"],
+    extend: ["Approval hai người", "Integration accounting export"],
+    scores: { depth: 4, extend: 3, integration: 5 }
+  });
+  add({
+    id: "mo.ads",
+    label: "Ads & placement",
+    group: G.monetization,
+    path: "/ads",
+    perms: "ads.placement.view · …",
+    purpose: "Campaign / placement; frequency cap; không xen vào flashcard/quiz timed (policy product).",
+    workflows: ["Tạo placement test", "Monitor impression"],
+    extend: ["Creative rotation", "Brand safety keyword"],
+    scores: { depth: 4, extend: 4, integration: 5 }
+  });
+  add({
+    id: "mo.prov",
+    label: "Provider config",
+    group: G.monetization,
+    path: "/monetization/provider-config",
+    perms: "ads.provider.view · …",
+    purpose: "Cấu hình billing/ads provider — secrets chỉ qua env/backend, UI không lộ key.",
+    workflows: ["Rotate webhook secret", "Toggle sandbox"],
+    extend: ["Multi-provider routing", "Per-region endpoint"],
+    scores: { depth: 3, extend: 4, integration: 5 }
+  });
+  add({
+    id: "mo.dlq",
+    label: "Webhook DLQ",
+    group: G.monetization,
+    path: "/monetization/webhook-dlq",
+    perms: "admin.monetization.read · iam.manage",
+    purpose: "Dead-letter cho webhook billing: retry / discard có audit.",
+    workflows: ["Inspect payload hash", "Replay an toàn"],
+    extend: ["Auto-retry backoff UI", "Poison message quarantine"],
+    scores: { depth: 4, extend: 4, integration: 5 }
+  });
+
+  add({
+    id: "gr.main",
+    label: "Growth overview",
+    group: G.growth,
+    path: "/growth",
+    perms: "admin.growth.read",
+    purpose: "Tổng quan campaign + share + referral health.",
+    workflows: ["Đọc KPI growth", "Drill campaign"],
+    extend: ["Cohort LTV by campaign"],
+    scores: { depth: 3, extend: 4, integration: 4 }
+  });
+  add({
+    id: "gr.social",
+    label: "Growth — Social",
+    group: G.growth,
+    path: "/growth/social",
+    perms: "admin.growth.read · iam.manage (tab moderation)",
+    purpose: "Template social surface + moderation ShareItem; redact PII trong preview.",
+    workflows: ["Hide share từ public", "Escalate legal"],
+    extend: ["growth.moderate permission tách khỏi growth.manage"],
+    scores: { depth: 5, extend: 4, integration: 4 }
+  });
+  add({
+    id: "gr.ref",
+    label: "Referrals",
+    group: G.growth,
+    path: "/growth/referrals",
+    perms: "admin.growth.read",
+    purpose: "User referral codes + sự kiện; revoke abuse; system campaign có thể partial_schema.",
+    workflows: ["Filter flagged codes", "Revoke with reason"],
+    extend: ["ReferralCampaign table day-one", "Fraud graph"],
+    scores: { depth: 4, extend: 5, integration: 3 }
+  });
+  add({
+    id: "gr.pc",
+    label: "Postcards / share templates",
+    group: G.growth,
+    path: "/growth/postcards",
+    perms: "admin.growth.read · growth.manage (ghi)",
+    purpose: "ShareTemplate postcard: biến {variable}, public template bắt buộc noPiiVerified.",
+    workflows: ["Preview substitution", "Publish gate privacy"],
+    extend: ["WebGL renderer version", "Admin preview on real data fake"],
+    scores: { depth: 5, extend: 4, integration: 4 }
+  });
+  add({
+    id: "gr.camp",
+    label: "Campaigns",
+    group: G.growth,
+    path: "/growth/campaigns",
+    perms: "growth.manage · admin.growth.read",
+    purpose: "Campaign đa kênh: audience filter, schedule, UTM; server chặn copy dark pattern.",
+    workflows: ["Ethics review server message", "Schedule activate"],
+    extend: ["Holdout group", "Incrementality"],
+    scores: { depth: 5, extend: 4, integration: 4 }
+  });
+
+  add({
+    id: "op.ff",
+    label: "Feature flags",
+    group: G.operations,
+    path: "/ops/feature-flags",
+    perms: "iam.manage",
+    purpose: "Bật/tắt nav hoặc learner feature theo môi trường; ví dụ adminNav.battle.",
+    workflows: ["Canary % rollout", "Kill nhanh khi incident"],
+    extend: ["Targeting theo role/plan", "Automated rollback"],
+    scores: { depth: 4, extend: 5, integration: 3 }
+  });
+  add({
+    id: "op.kill",
+    label: "Kill switches",
+    group: G.operations,
+    path: "/ops/kill-switches",
+    perms: "iam.manage",
+    purpose: "Công tắc khẩn: tắt login social, tắt battle, v.v.",
+    workflows: ["Runbook incident", "Bật lại sau RCA"],
+    extend: ["Dependency on status page", "PagerDuty hook"],
+    scores: { depth: 4, extend: 4, integration: 4 }
+  });
+  add({
+    id: "op.dl",
+    label: "Dead letters (generic)",
+    group: G.operations,
+    path: "/ops/dead-letters",
+    perms: "iam.manage · admin.content.read",
+    purpose: "Queue lỗi tổng quát ngoài billing DLQ.",
+    workflows: ["Inspect", "Replay"],
+    extend: ["Unified DLQ bus"],
+    scores: { depth: 3, extend: 4, integration: 5 }
+  });
+  add({
+    id: "op.import",
+    label: "Import nội dung",
+    group: G.operations,
+    path: "/import",
+    perms: "admin.content.read",
+    purpose: "Upload batch content qua manifest đã kiểm định.",
+    workflows: ["Validate staging", "Promote production"],
+    extend: ["Schema-inferred mapper", "Dry-run diff"],
+    scores: { depth: 4, extend: 5, integration: 5 }
+  });
+  add({
+    id: "op.manifests",
+    label: "Import manifests",
+    group: G.operations,
+    path: "/import/manifests",
+    perms: "admin.content.read",
+    purpose: "Theo dõi version manifest, checksum, lineage.",
+    workflows: ["Lock manifest cho replay"],
+    extend: ["Git LFS link", "Signature verify"],
+    scores: { depth: 4, extend: 4, integration: 3 }
+  });
+  add({
+    id: "op.failed",
+    label: "Import failed rows",
+    group: G.operations,
+    path: "/import/failed",
+    perms: "admin.content.read",
+    purpose: "Chi tiết dòng lỗi validation; export để sửa offline.",
+    workflows: ["CSV export errors", "Fix và re-upload"],
+    extend: ["Auto split bad row file"],
+    scores: { depth: 4, extend: 3, integration: 3 }
+  });
+  add({
+    id: "op.notif",
+    label: "Thông báo vận hành",
+    group: G.operations,
+    path: "/ops/notifications",
+    perms: "iam.manage · admin.content.read",
+    purpose: "Template email/push nội bộ vận hành (không nhầm marketing blast).",
+    workflows: ["Edit template", "Test send sandbox"],
+    extend: ["Per-locale legal footer"],
+    scores: { depth: 3, extend: 4, integration: 4 }
+  });
+  add({
+    id: "op.audit",
+    label: "Audit log (admin)",
+    group: G.operations,
+    path: "/audit",
+    perms: "viewer.audit · iam.manage",
+    purpose: "Tra cứu admin_audit_log: actor, action, target, payload; điều tra sau thay đổi.",
+    workflows: ["Filter theo actor / code", "Export investigation"],
+    extend: ["SIEM forward", "Immutable storage"],
+    scores: { depth: 5, extend: 4, integration: 3 }
+  });
+  add({
+    id: "op.sec",
+    label: "Security audit",
+    group: G.operations,
+    path: "/ops/security",
+    perms: "viewer.audit · iam.manage",
+    purpose: "Sự kiện bảo mật: đăng nhập admin thất bại, thay đổi role nhạy cảm.",
+    workflows: ["Weekly security review"],
+    extend: ["UEBA score", "Geo anomaly"],
+    scores: { depth: 4, extend: 4, integration: 4 }
+  });
+  add({
+    id: "op.settings",
+    label: "Cài đặt Admin",
+    group: G.operations,
+    path: "/settings",
+    perms: "iam.manage",
+    purpose: "Cấu hình chung app admin (tùy triển khai).",
+    workflows: ["Đổi maintenance message", "Locale default"],
+    extend: ["Per-tenant branding"],
+    scores: { depth: 3, extend: 4, integration: 2 }
+  });
+
+  add({
+    id: "lg.doc",
+    label: "Tài liệu pháp lý",
+    group: G.legal,
+    path: "/legal/documents",
+    perms: "iam.manage",
+    purpose: "Quản lý metadata văn bản pháp lý, version hiển thị learner.",
+    workflows: ["Upload PDF/markdown", "Set effective date"],
+    extend: ["E-signature workflow", "Jurisdiction tag"],
+    scores: { depth: 4, extend: 4, integration: 2 }
+  });
+  add({
+    id: "lg.terms",
+    label: "Điều khoản",
+    group: G.legal,
+    path: "/legal/terms",
+    perms: "iam.manage",
+    purpose: "Terms of service versioning; đồng bộ với consent records.",
+    workflows: ["Publish major version", "Notify user chấp nhận"],
+    extend: ["Diff viewer public"],
+    scores: { depth: 4, extend: 3, integration: 3 }
+  });
+  add({
+    id: "lg.consent",
+    label: "Consent",
+    group: G.legal,
+    path: "/legal/consent",
+    perms: "iam.manage",
+    purpose: "Bằng chứng opt-in marketing, analytics optional.",
+    workflows: ["Audit trail consent"],
+    extend: ["Granular purpose TCF-like"],
+    scores: { depth: 4, extend: 4, integration: 4 }
+  });
+  add({
+    id: "lg.cookies",
+    label: "Cookies",
+    group: G.legal,
+    path: "/legal/cookies",
+    perms: "iam.manage",
+    purpose: "Chính sách cookie, nhóm cookie kỹ thuật vs marketing.",
+    workflows: ["Update sau thay vendor analytics"],
+    extend: ["Cookie scan import"],
+    scores: { depth: 3, extend: 3, integration: 3 }
+  });
+  add({
+    id: "lg.tt",
+    label: "Tokushoho (表記)",
+    group: G.legal,
+    path: "/legal/tokushoho",
+    perms: "iam.manage",
+    purpose: "Hiển thị thông tin nhà cung cấp theo luật thương mại điện tử Nhật Bản.",
+    workflows: ["Cập nhật địa chỉ / đại diện"],
+    extend: ["Auto sync từ company registry"],
+    scores: { depth: 3, extend: 2, integration: 2 }
+  });
+  add({
+    id: "lg.ret",
+    label: "Retention policy",
+    group: G.legal,
+    path: "/legal/retention",
+    perms: "iam.manage",
+    purpose: "Thời gian lưu log/event/PPI theo class dữ liệu.",
+    workflows: ["Legal hold override", "Schedule purge job"],
+    extend: ["Data map linkage", "DPD Impact assessment form"],
+    scores: { depth: 4, extend: 4, integration: 5 }
+  });
+
+  add({
+    id: "iam.main",
+    label: "IAM — Tổng quan",
+    group: G.iam,
+    path: "/iam",
+    perms: "iam.manage",
+    purpose: "Điểm vào quản trị định danh nội bộ: role snapshot, shortcut.",
+    workflows: ["Verify wildcard super role chỉ cho break-glass"],
+    extend: ["JIT access request portal"],
+    scores: { depth: 3, extend: 4, integration: 5 }
+  });
+  add({
+    id: "iam.roles",
+    label: "Vai trò (Roles)",
+    group: G.iam,
+    path: "/iam/roles",
+    perms: "iam.manage",
+    purpose: "Gắn permission key vào role; ảnh hưởng toàn bộ menu admin.",
+    workflows: ["Least privilege template", "Test user shadow"],
+    extend: ["Role version + approval"],
+    scores: { depth: 5, extend: 4, integration: 5 }
+  });
+  add({
+    id: "iam.permissions",
+    label: "Permission catalog",
+    group: G.iam,
+    path: "/iam/permissions",
+    perms: "iam.manage",
+    purpose: "Danh mục permission canonical; document ý nghĩa cho compliance.",
+    workflows: ["Đặt tên key mới khi thêm API"],
+    extend: ["Auto generate từ OpenAPI"],
+    scores: { depth: 4, extend: 4, integration: 2 }
+  });
+  add({
+    id: "iam.admins",
+    label: "Admin actors",
+    group: G.iam,
+    path: "/iam/admins",
+    perms: "iam.manage",
+    purpose: "Liên kết Keycloak subject ↔ admin actor trong DB; onboard/ offboard.",
+    workflows: ["Offboard: disable+remove role", "Joiner checklist"],
+    extend: ["SCIM provision"],
+    scores: { depth: 5, extend: 4, integration: 5 }
+  });
+  add({
+    id: "iam.roleAudit",
+    label: "Role audit",
+    group: G.iam,
+    path: "/iam/role-audit",
+    perms: "iam.manage",
+    purpose: "Timeline thay đổi role permission; điều tra privilege escalation.",
+    workflows: ["Filter theo actor", "Export cho SOC2"],
+    extend: ["Alert khi grant wildcard"],
+    scores: { depth: 4, extend: 4, integration: 3 }
+  });
+
+  /** So sánh "kiểu" khu vực admin */
+  const AREA_TYPES = [
+    {
+      type: "Nội dung & học tập",
+      examples: "Dictionary, Daily Hub, Paths, Question bank",
+      risk: "Trung bình — sai nội dung ảnh hưởng uy tín và điểm thi.",
+      ext: "Cao — thêm schema qua Prisma + admin slice theo pattern hiện có."
+    },
+    {
+      type: "Tiền & ads",
+      examples: "Plans, Subscription, Ads, Webhook DLQ",
+      risk: "Cao — sai cấu hình tài chính / hiển thị ads trong lúc học.",
+      ext: "Trung bình — phụ thuộc provider abstraction; test sandbox bắt buộc."
+    },
+    {
+      type: "Tuân thủ & IAM",
+      examples: "Legal, Retention, Roles, Admin actors",
+      risk: "Rất cao — lộ PII, grant quá quyền, không đủ bằng chứng consent.",
+      ext: "Thấp–trung — thay đổi chậm, cần review pháp lý."
+    },
+    {
+      type: "Realtime & vận hành queue",
+      examples: "Battle matches, Queue health, Search sync",
+      risk: "Cao — incident lan nhanh; cần kill switch + observability.",
+      ext: "Trung bình — phụ thuộc Redis/Socket/Meilisearch."
+    },
+    {
+      type: "Analytics (đọc)",
+      examples: "Executive, Learning, Search slices",
+      risk: "Thấp nếu chỉ đọc; sai báo cáo nếu dữ liệu chưa modeled.",
+      ext: "Cao — chủ yếu thêm projection/metric mới."
+    }
+  ];
+
+  function slug(id) {
+    return id.replace(/\./g, "-");
+  }
+
+  function scoreBar(n) {
+    const pct = Math.round((n / 5) * 100);
+    return '<div class="bar" aria-hidden="true"><i style="width:' + pct + '%"></i></div>';
+  }
+
+  function renderScores(s) {
+    return (
+      '<div class="scores">' +
+      '<div class="score-card"><div class="label">Độ sâu chức năng</div><div class="value">' +
+      s.depth +
+      '/5</div><div class="hint">Workflow production đầy đủ?</div>' +
+      scoreBar(s.depth) +
+      "</div>" +
+      '<div class="score-card"><div class="label">Tiềm năng mở rộng</div><div class="value">' +
+      s.extend +
+      "/5</div><div class='hint'>Dễ thêm tính năng mà không phá kiến trúc?</div>" +
+      scoreBar(s.extend) +
+      "</div>" +
+      '<div class="score-card"><div class="label">Phụ thuộc tích hợp</div><div class="value">' +
+      s.integration +
+      '/5</div><div class="hint">1=ít dịch vụ ngoài, 5=nhiều hệ thống.</div>' +
+      scoreBar(s.integration) +
+      "</div></div>"
+    );
+  }
+
+  function renderPanel(it) {
+    const flagHtml = it.featureFlag
+      ? '<span class="badge badge-flag">Feature flag: ' +
+        it.featureFlag +
+        "</span>"
+      : "";
+    let html = '<div class="panel" id="panel-' + slug(it.id) + '" role="region" aria-labelledby="h-' + slug(it.id) + '">';
+    html += "<h2 id='h-" + slug(it.id) + "'>" + escapeHtml(it.label) + "</h2>";
+    html += '<div class="path-row"><code class="path">' + escapeHtml(it.path) + "</code>";
+    html += '<span class="badge badge-id">' + escapeHtml(it.id) + "</span>" + flagHtml + "</div>";
+    html += '<div class="block"><h3>Mục đích &amp; chức năng cụ thể</h3><p>' + escapeHtml(it.purpose) + "</p></div>";
+    html += '<div class="block"><h3>Luồng vận hành gợi ý</h3><ul>';
+    it.workflows.forEach(function (w) {
+      html += "<li>" + escapeHtml(w) + "</li>";
+    });
+    html += "</ul></div>";
+    html += '<div class="block"><h3>Có thể mở rộng về sau</h3><ul>';
+    it.extend.forEach(function (w) {
+      html += "<li>" + escapeHtml(w) + "</li>";
+    });
+    html += "</ul></div>";
+    html += '<div class="block"><h3>Đánh giá nhanh (thang 1–5)</h3><p class="intro-note">Điểm mang tính <strong>định hướng sản phẩm</strong>, không phải KPI kỹ thuật tuyệt đối. So sánh giữa các màn trong cùng hệ BJT.</p>';
+    html += renderScores(it.scores);
+    html += "</div>";
+
+    if (it.id === "intro") {
+      html += '<div class="block type-compare"><h3>Đánh giá theo kiểu khu vực</h3><p class="intro-note">Năm “kiểu” sau giúp lập kế hoạch ưu tiên mở rộng và kiểm soát rủi ro.</p><table class="tiny-table"><thead><tr><th>Kiểu</th><th>Ví dụ</th><th>Rủi ro vận hành</th><th>Tiềm năng mở rộng</th></tr></thead><tbody>';
+      AREA_TYPES.forEach(function (a) {
+        html +=
+          "<tr><td><strong>" +
+          escapeHtml(a.type) +
+          "</strong></td><td>" +
+          escapeHtml(a.examples) +
+          "</td><td>" +
+          escapeHtml(a.risk) +
+          "</td><td>" +
+          escapeHtml(a.ext) +
+          "</td></tr>";
+      });
+      html += "</tbody></table></div>";
+    }
+
+    html += "</div>";
+    return html;
+  }
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\"/g, "&quot;");
+  }
+
+  const byGroup = {};
+  ITEMS.forEach(function (it) {
+    const g = it.group;
+    if (!byGroup[g]) byGroup[g] = [];
+    byGroup[g].push(it);
+  });
+
+  const navRoot = document.getElementById("nav-root");
+  const detailRoot = document.getElementById("detail-root");
+  const groupOrder = Object.values(G);
+
+  let navHtml = "";
+  groupOrder.forEach(function (gLabel) {
+    const items = byGroup[gLabel];
+    if (!items || !items.length) return;
+    navHtml += '<details class="nav-group" open data-group="' + escapeHtml(gLabel) + '">';
+    navHtml += "<summary>" + escapeHtml(gLabel) + "</summary><ul>";
+    items.forEach(function (it) {
+      const flagNote = it.featureFlag
+        ? '<span class="flag">' + escapeHtml(it.featureFlag) + "</span>"
+        : "";
+      navHtml +=
+        '<li><button type="button" class="nav-item" data-target="' +
+        slug(it.id) +
+        '">' +
+        escapeHtml(it.label) +
+        flagNote +
+        "</button></li>";
+    });
+    navHtml += "</ul></details>";
+  });
+  navRoot.innerHTML = navHtml;
+
+  let panelsHtml = "";
+  ITEMS.forEach(function (it) {
+    panelsHtml += renderPanel(it);
+  });
+  detailRoot.innerHTML = panelsHtml;
+
+  function activate(slugId, pushHash) {
+    document.querySelectorAll(".nav-item").forEach(function (btn) {
+      btn.setAttribute("aria-current", btn.getAttribute("data-target") === slugId ? "true" : "false");
+    });
+    document.querySelectorAll(".panel").forEach(function (p) {
+      p.classList.toggle("active", p.id === "panel-" + slugId);
+    });
+    if (pushHash) {
+      const h = slugId === "intro" ? "" : "#" + slugId;
+      if (window.location.hash !== h) history.replaceState(null, "", window.location.pathname + window.location.search + h);
+    }
+    document.querySelector(".detail").scrollTop = 0;
+  }
+
+  navRoot.addEventListener("click", function (e) {
+    const btn = e.target.closest(".nav-item");
+    if (!btn) return;
+    activate(btn.getAttribute("data-target"), true);
+  });
+
+  document.getElementById("nav-filter").addEventListener("input", function () {
+    const q = this.value.trim().toLowerCase();
+    if (!q) {
+      document.querySelectorAll(".hidden-by-filter").forEach(function (el) {
+        el.classList.remove("hidden-by-filter");
+      });
+      return;
+    }
+    document.querySelectorAll(".nav-group").forEach(function (grp) {
+      let any = false;
+      grp.querySelectorAll(".nav-item").forEach(function (btn) {
+        const show =
+          !q ||
+          btn.textContent.toLowerCase().includes(q) ||
+          (grp.querySelector("summary") && grp.querySelector("summary").textContent.toLowerCase().includes(q));
+        btn.classList.toggle("hidden-by-filter", !show);
+        if (show) any = true;
+      });
+      grp.classList.toggle("hidden-by-filter", !any && q.length > 0);
+      if (q && any) grp.setAttribute("open", "");
+    });
+  });
+
+  window.addEventListener("hashchange", function () {
+    const h = (window.location.hash || "#intro").replace(/^#/, "");
+    const id = h || "intro";
+    if (document.getElementById("panel-" + id)) activate(id, false);
+  });
+
+  const initial = (window.location.hash || "#intro").replace(/^#/, "") || "intro";
+  if (document.getElementById("panel-" + initial)) activate(initial, false);
+  else activate("intro", true);
+})();
+  </script>
+</body>
+</html>

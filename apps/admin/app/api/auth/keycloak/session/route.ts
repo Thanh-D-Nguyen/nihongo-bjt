@@ -1,19 +1,9 @@
-import { KC_COOKIE, refreshAccessToken } from "@nihongo-bjt/keycloak-oidc";
-import { decodeJwt } from "jose";
+import { isAccessTokenUsable, refreshAccessToken } from "@nihongo-bjt/keycloak-oidc";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-import { setTokenCookies } from "@/lib/kc-cookies";
+import { adminKcCookies, setTokenCookies } from "@/lib/kc-cookies";
 import { getKcAdminConfig } from "@/lib/kc-server-config";
-
-function accessValid(token: string): boolean {
-  try {
-    const { exp } = decodeJwt(token);
-    return typeof exp === "number" && exp * 1000 > Date.now() + 30_000;
-  } catch {
-    return false;
-  }
-}
 
 export async function GET() {
   const cfg = getKcAdminConfig();
@@ -22,12 +12,12 @@ export async function GET() {
   }
 
   const jar = await cookies();
-  const access = jar.get(KC_COOKIE.access)?.value;
-  if (access && accessValid(access)) {
+  const access = jar.get(adminKcCookies.access)?.value;
+  if (access && isAccessTokenUsable(access)) {
     return NextResponse.json({ accessToken: access });
   }
 
-  const refresh = jar.get(KC_COOKIE.refresh)?.value;
+  const refresh = jar.get(adminKcCookies.refresh)?.value;
   if (!refresh) {
     return NextResponse.json({ error: "no_session" }, { status: 401 });
   }

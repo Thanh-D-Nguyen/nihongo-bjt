@@ -96,7 +96,7 @@ function passRateTone(n: number | null): "good" | "warning" | "danger" | "neutra
 }
 
 export function BjtDashboardClient({ labels, locale }: { labels: Labels; locale: string }) {
-  const t = (k: string) => labels[k] ?? k;
+  const t = useCallback((k: string) => labels[k] ?? k, [labels]);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -107,17 +107,17 @@ export function BjtDashboardClient({ labels, locale }: { labels: Labels; locale:
     try {
       const r = await adminApiFetch("/api/admin/bjt/summary");
       if (!r.ok) {
-        setError(t("errorLoad"));
+        setError(labels.errorLoad ?? "errorLoad");
         setSummary(null);
         return;
       }
       setSummary((await r.json()) as Summary);
     } catch {
-      setError(t("errorLoad"));
+      setError(labels.errorLoad ?? "errorLoad");
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, [labels.errorLoad]);
 
   useEffect(() => {
     void load();

@@ -18,7 +18,23 @@ export type {
 
 export function createPrismaClient(connectionString = process.env.DATABASE_URL): PrismaClient {
   if (connectionString === undefined || connectionString.trim() === "") {
-    throw new Error("DATABASE_URL is required to create a Prisma client");
+    // Avoid throwing at module import time so dev watch tools (tsx/turbo)
+    // don't keep restarting the process. Return a proxy that will throw a
+    // helpful error when any Prisma property/method is actually accessed.
+    // This keeps the app running in dev so other non-DB routes remain available.
+    const handler: ProxyHandler<any> = {
+      get() {
+        throw new Error(
+          "DATABASE_URL is required to use Prisma. Set DATABASE_URL in your .env or start Postgres."
+        );
+      },
+      apply() {
+        throw new Error(
+          "DATABASE_URL is required to use Prisma. Set DATABASE_URL in your .env or start Postgres."
+        );
+      }
+    };
+    return new Proxy({}, handler) as unknown as PrismaClient;
   }
 
   return new PrismaClient({

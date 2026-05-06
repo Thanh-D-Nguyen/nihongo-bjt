@@ -4,6 +4,15 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+// Polyfill ResizeObserver for jsdom
+if (typeof globalThis.ResizeObserver === "undefined") {
+  globalThis.ResizeObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  } as unknown as typeof ResizeObserver;
+}
+
 import viMessages from "../../../messages/vi.json";
 
 const learnerApiFetchMock = vi.fn();
@@ -164,7 +173,7 @@ describe("DailyHubClient resilient state coverage", () => {
     container.remove();
   });
 
-  it("shows supportive fallback text when comeback summary endpoint fails", async () => {
+  it("shows supportive fallback text when analytics endpoint fails", async () => {
     authState.userId = "11111111-1111-4111-8111-111111111111";
 
     learnerApiFetchOptionalMock.mockImplementation((path: string) => {
@@ -172,7 +181,7 @@ describe("DailyHubClient resilient state coverage", () => {
         return Promise.resolve(jsonResponse(dailyHubPayload));
       }
       if (path.startsWith("/api/analytics/learner")) {
-        return Promise.resolve(jsonResponse(analyticsPayload));
+        return Promise.resolve(jsonResponse({ code: "failed" }, false));
       }
       return Promise.resolve(jsonResponse({}));
     });

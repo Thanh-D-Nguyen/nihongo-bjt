@@ -20,7 +20,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Bar, BarChart, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import { adminApiFetch } from "@/lib/admin-api";
-import { permsFromMe, type MePayload } from "@/app/_components/admin-client-utils";
+import { permsFromMe } from "@/app/_components/admin-client-utils";
 
 const CHART_COLORS = ["#4f46e5", "#059669", "#d97706", "#64748b", "#7c3aed"];
 

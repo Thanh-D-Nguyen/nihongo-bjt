@@ -1,0 +1,29 @@
+---
+description: NihonGo BJT — repo context and non‑negotiables for maintenance and shipping
+alwaysApply: true
+---
+
+# Project context
+
+Monorepo: Next.js (learner `apps/web`, admin `apps/admin`), NestJS `apps/api`, PostgreSQL + Prisma, Redis/BullMQ, Meilisearch, Socket.IO, object storage for media.
+
+## Before large or cross-cutting changes
+
+- Read `AGENTS.md` and the specs it names (v14 / digest paths as in AGENTS).
+- Prefer `docs/spec/index.md` and relevant digests over loading the full master spec unless resolving a conflict or release risk.
+
+## Non‑negotiables
+
+- **Data:** PostgreSQL is source of truth; no MongoDB. Prisma migrations for schema changes; avoid destructive migrations without explicit rollback/backup note.
+- **Quality:** No fake production UI, fake analytics, or in-memory substitutes for persisted domain data. Smallest complete vertical slice over broad scaffolding.
+- **Auth & admin:** Backend RBAC and auth checks; admin mutations need audit trail design (actor, action, target, time, reason where required).
+- **Monetization & gates:** Entitlements, quotas, plans enforced server-side — never frontend-only for premium or limits.
+- **i18n:** No hard-coded user-visible strings in learner/admin UI; use message catalogs / keys.
+- **Media & privacy:** Object storage for binaries; provenance/license metadata; do not leak infra tokens or raw OAuth payloads to clients.
+- **Learning UX:** Support focus, comprehension, and progress; avoid shame copy, manipulative pressure, and ads inside active quiz/review/timed flows.
+- **Reading assist:** Treat as a reusable layer (analyzer, preferences, subtle UX) — not one-off demo tooltips as the long-term pattern.
+- **Deferred work:** If you narrow scope, state what was deferred and where it should be tracked.
+
+## Stack reference (detail on demand)
+
+Architecture, domain modules, and extended policies live in `AGENTS.md` and existing specs — load those paths when the task touches that surface area.

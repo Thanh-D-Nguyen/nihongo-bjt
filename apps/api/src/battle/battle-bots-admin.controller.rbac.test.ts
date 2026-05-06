@@ -32,12 +32,20 @@ function createController(opts: { canManage: boolean; canRead: boolean }) {
 const targetId = "22222222-2222-4222-8222-222222222222";
 const validCreate = {
   accuracyPct: 75,
+  avatarFallback: "S3",
+  botKey: "sakura_n3",
   difficulty: "medium",
   maxDelayMs: 4000,
   minDelayMs: 1500,
   name: "Sakura N3",
   persona: "Friendly study partner",
   reason: "Add new N3 bot for evening shift",
+  riveArtboard: "BattleBot",
+  riveLicense: "owned",
+  riveProvenance: { source: "internal-design" },
+  riveSrc: "/assets/battle/bots/sakura-n3.riv",
+  riveStateMachine: "BattleBot",
+  styleToken: "focused",
   vocabularyLevel: "jlpt_n3"
 };
 const validReason = { reason: "rotation T1" };

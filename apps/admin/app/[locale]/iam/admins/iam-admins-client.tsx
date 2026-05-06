@@ -272,7 +272,6 @@ export function IamAdminsClient({
       setListLoading(false);
     }
     // labels are stable per render; we intentionally exclude `t` to avoid re-running every keystroke.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearch, roleFilter, statusFilter, page]);
 
   useEffect(() => {
@@ -298,7 +297,6 @@ export function IamAdminsClient({
       } finally {
         setDetailLoading(false);
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
     []
   );
@@ -315,11 +313,10 @@ export function IamAdminsClient({
   const sortedItems = useMemo(() => {
     if (!list) return [];
     return list.items.slice().sort((a, b) => {
-      let cmp = 0;
-      if (sortKey === "displayName") cmp = a.displayName.localeCompare(b.displayName);
-      else if (sortKey === "email") cmp = a.email.localeCompare(b.email);
-      else if (sortKey === "roleCount") cmp = a.roleCodes.length - b.roleCodes.length;
-      else cmp = new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
+      const cmp = sortKey === "displayName" ? a.displayName.localeCompare(b.displayName)
+        : sortKey === "email" ? a.email.localeCompare(b.email)
+        : sortKey === "roleCount" ? a.roleCodes.length - b.roleCodes.length
+        : new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
       return sortAsc ? cmp : -cmp;
     });
   }, [list, sortKey, sortAsc]);

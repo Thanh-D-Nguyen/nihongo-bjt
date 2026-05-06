@@ -138,7 +138,7 @@ export default async function AdminLoginPage({
         {err ? (
           <div
             aria-live="polite"
-            className="mt-6 rounded-xl border border-red-200/80 bg-red-50/90 px-3 py-2 text-sm text-red-800"
+            className="mt-6 rounded-xl border border-red-200/80 bg-red-50/90 px-3 py-2 text-sm text-red-800 whitespace-pre-wrap break-words"
             id="admin-login-server-error"
             role="alert"
           >

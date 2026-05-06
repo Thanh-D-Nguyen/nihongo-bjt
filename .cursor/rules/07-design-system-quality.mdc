@@ -1,0 +1,90 @@
+---
+description: Design system quality — tokens, components, layout; no demo-grade UI
+globs:
+  - "apps/web/**/*.{ts,tsx}"
+  - "apps/admin/**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# Design system quality
+
+Prevent **demo-quality** UI: inconsistent spacing, random colors, one-off components, and screens that look finished but feel fragile. Enforce **consistent, product-grade** design using existing tokens and shared components.
+
+For product depth vs calm-study tradeoffs, see `.cursor/rules/06-product-ux-benchmark.mdc`. For i18n, a11y basics, and polish checklist, see `.cursor/rules/04-ui-ux-polish.mdc`.
+
+---
+
+## Design principles
+
+- **Clean, learner-first, calm, modern** — the interface supports focus, not spectacle.
+- Functionality may be **rich**, but the **first visual impression** must stay **simple** (progressive disclosure beats a wall of controls).
+- **Clarity over decoration** — every visual choice should aid scanning, hierarchy, or action.
+- **Reusable components over one-off styling** — extend patterns; do not invent a new “card style” per screen.
+- **Use existing tokens and components before adding new styles** — new CSS is a last resort after checking the design system.
+
+---
+
+## Layout
+
+- Use a **consistent spacing scale** (existing tokens or shared spacing utilities — no arbitrary pixel soup).
+- Prefer **card-based grouping** for learner (and learner-adjacent) content blocks.
+- Each **section** should have a clear **title**, **purpose**, and **action area** (what it is, why it matters, what to do next).
+- Avoid **nesting too many bordered boxes** — combine or flatten; use spacing and typography to separate instead of frames inside frames.
+- Avoid **more than two visual emphasis levels** in one card (e.g. one strong headline + one de-emphasized meta layer; avoid competing bold colors and multiple “hero” treatments).
+- **Desktop:** two-column layouts are fine when **list + detail** (or equivalent) are both useful side by side.
+- **Mobile:** stack content naturally; keep **primary actions reachable** (thumb zone, sticky footers only when they do not obscure content).
+
+---
+
+## Typography
+
+- **Clear hierarchy:** page/section title → primary content → secondary metadata → helper text.
+- Do **not** use too many font sizes in one component — typically title, body, and one smaller line suffice.
+- **Japanese text** needs **comfortable line height** for readability; do not squeeze lines to match Latin-only layouts.
+- Long explanations must be **scannable** (short paragraphs, bullets where appropriate, clear subheads).
+
+---
+
+## Color and visual style
+
+- Use **existing color tokens** only; do not introduce one-off hex/rgb values for UI chrome.
+- **No random accent colors** — meaning (success, warning, link, destructive) comes from the token set.
+- Avoid **excessive gradients** and **heavy shadows**; prefer flat or subtle elevation consistent with the rest of the app.
+- Use **muted surfaces** for secondary info so primary content stays in focus.
+- Use **color to communicate meaning** (state, emphasis, danger), not decoration.
+
+---
+
+## Interaction
+
+- **Primary action** must be visually and structurally obvious.
+- **Secondary actions** must not compete with the primary (size, color, placement).
+- **Hover, focus, and active** states must exist for interactive elements; keyboard focus must be visible.
+- **Disabled** and **loading** states must be unambiguous (no dead clicks, no silent spinners).
+- **No surprise autoplay** of audio or video; start only on explicit learner action unless the product spec says otherwise.
+- **Respect `prefers-reduced-motion`** when adding or extending motion.
+
+---
+
+## Components
+
+- Prefer existing **Button**, **Card**, **Badge**, **Tabs**, **Accordion**, **Tooltip**, and other primitives already in the codebase.
+- **Do not create a new component** if an existing one fits with minor composition or props.
+- If a new component is justified, keep it **small, reusable, and typed** — props and variants should be easy to infer from usage.
+- Component **API should be clear** (explicit prop names, avoid ambiguous booleans without labels in types/docs).
+
+---
+
+## Quality gate (before finalizing UI)
+
+Self-review:
+
+1. Does it look like a **real product**, not a prototype?
+2. Is the **main action obvious within ~3 seconds**?
+3. Is the layout **balanced on desktop and mobile**?
+4. Are **loading, empty, and error** states handled with helpful, non-technical copy (and i18n keys)?
+5. Is **visual density** appropriate for learners (not a dense admin spreadsheet unless the screen is truly admin/analytics)?
+6. Are there any **hard-coded user-visible strings**? (Must use message catalogs.)
+7. Is **accessibility** acceptable (semantic structure, contrast, touch targets, focus)?
+
+If any answer is weak, fix before shipping the change.

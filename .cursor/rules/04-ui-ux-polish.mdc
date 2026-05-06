@@ -1,0 +1,33 @@
+---
+description: Learner/admin UI — layout, i18n, accessibility, production polish
+globs:
+  - "apps/web/**/*.{ts,tsx}"
+  - "apps/admin/**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# UI and UX polish
+
+## Structure
+
+- Use shared shells/layouts already in the app (learner AppShell, admin shell); avoid one-off full-page heroes inside authenticated dashboards.
+- Clear hierarchy: one primary action per view; secondary actions grouped and de-emphasized.
+
+## Copy and i18n
+
+- All visible strings through i18n; support at least Vietnamese and Japanese where the product does today.
+- Product language for auth/session (no exposing raw provider jargon to learners).
+
+## Visual discipline
+
+- Reuse design tokens, cards, tables, and spacing rhythm from existing screens; avoid one-off palette or shadow soup.
+- Calm, readable typography; respect reduced motion if adding animation.
+
+## Accessibility and trust
+
+- Semantic HTML, focus order, visible focus, sufficient contrast (especially primary buttons).
+- Paywalls and ads must be distinguishable from learning controls; no dark patterns.
+
+## Deeper UI workflow
+
+For full design-system critique or gate checklists, load `company/skills/ui-production/`, `company/skills/bjt-ui-ux/`, and project UI gates only when doing substantial UI passes.

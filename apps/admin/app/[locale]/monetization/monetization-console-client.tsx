@@ -18,7 +18,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import { adminApiFetch } from "@/lib/admin-api";
-import { permsFromMe, type MePayload } from "@/app/_components/admin-client-utils";
+import { permsFromMe } from "@/app/_components/admin-client-utils";
 
 type MeResponse = {
   roles?: Array<{ role?: { permissions?: Array<{ permission?: { code?: string } }> } }>;

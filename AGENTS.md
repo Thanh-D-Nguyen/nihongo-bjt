@@ -9,7 +9,7 @@ Build NihonGo BJT as a production-ready Japanese/BJT learning web app. The produ
 Read these first:
 
 1. `docs/spec/nihongo_bjt_cursor_master_spec_v14.md`
-2. `.cursor/rules/*.mdc`
+2. Read and follow all active Cursor rules in `.cursor/rules/*.mdc`.
 3. `docs/cursor-prompts/*.xml`
 
 ## Non-negotiables

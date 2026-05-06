@@ -1,21 +1,13 @@
-import { tryResourceOwnerPasswordGrant } from "@nihongo-bjt/keycloak-oidc";
+import {
+  classifyPasswordGrantFailure,
+  keycloakDebugPayloadForDev,
+  readPasswordCredentials,
+  tryResourceOwnerPasswordGrant
+} from "@nihongo-bjt/keycloak-oidc";
 import { NextResponse } from "next/server";
 
 import { setTokenCookies } from "@/lib/kc-cookies";
 import { getKcWebConfig } from "@/lib/kc-server-config";
-
-function readCredentials(body: unknown): { password: string; username: string } | null {
-  if (!body || typeof body !== "object") {
-    return null;
-  }
-  const o = body as Record<string, unknown>;
-  const username = typeof o.username === "string" ? o.username.trim() : "";
-  const password = typeof o.password === "string" ? o.password : "";
-  if (!username || !password || username.length > 256 || password.length > 4096) {
-    return null;
-  }
-  return { password, username };
-}
 
 export async function POST(request: Request) {
   const cfg = getKcWebConfig();
@@ -28,7 +20,7 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ error: "bad_request" }, { status: 400 });
   }
-  const creds = readCredentials(parsed);
+  const creds = readPasswordCredentials(parsed);
   if (!creds) {
     return NextResponse.json({ error: "validation" }, { status: 400 });
   }
@@ -41,25 +33,18 @@ export async function POST(request: Request) {
       username: creds.username
     });
     if (!grant.ok) {
-      const kc = grant.keycloakError;
-      if (kc === "invalid_client") {
-        return NextResponse.json({ error: "client_misconfigured" }, { status: 502 });
+      if (process.env.NODE_ENV === "development") {
+        console.warn("[password-login] Keycloak grant failed", {
+          clientId: cfg.clientId,
+          error: grant.keycloakError,
+          errorDescription: grant.errorDescription,
+          httpStatus: grant.httpStatus
+        });
       }
-      if (kc === "unauthorized_client" || kc === "unsupported_grant_type") {
-        return NextResponse.json({ error: "auth_method_not_allowed" }, { status: 403 });
-      }
-      if (kc === "invalid_scope") {
-        return NextResponse.json({ error: "invalid_scope" }, { status: 400 });
-      }
-      if (kc === "invalid_grant" || (grant.httpStatus === 401 && !kc)) {
-        return NextResponse.json({ error: "invalid_credentials" }, { status: 401 });
-      }
-      if (kc === "invalid_token_response") {
-        return NextResponse.json({ error: "login_failed" }, { status: 502 });
-      }
+      const classified = classifyPasswordGrantFailure(grant);
       return NextResponse.json(
-        { error: "login_failed" },
-        { status: grant.httpStatus >= 400 && grant.httpStatus < 600 ? grant.httpStatus : 502 }
+        { error: classified.code, ...keycloakDebugPayloadForDev(grant, cfg.issuer) },
+        { status: classified.status }
       );
     }
     const res = NextResponse.json({ ok: true });

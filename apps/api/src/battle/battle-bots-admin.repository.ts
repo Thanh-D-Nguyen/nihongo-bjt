@@ -13,6 +13,8 @@ type PatchInput = z.infer<typeof adminBattleBotPatchSchema>;
 type ListInput = z.infer<typeof adminBattleBotListQuerySchema>;
 
 const SUMMARY_SELECT = {
+  avatarFallback: true,
+  botKey: true,
   id: true,
   name: true,
   difficulty: true,
@@ -20,6 +22,8 @@ const SUMMARY_SELECT = {
   accuracyPct: true,
   minDelayMs: true,
   maxDelayMs: true,
+  riveSrc: true,
+  styleToken: true,
   vocabularyLevel: true,
   createdAt: true,
   updatedAt: true
@@ -68,13 +72,21 @@ export class BattleBotsAdminRepository {
     const created = await this.prisma.battleBot.create({
       data: {
         accuracyPct: data.accuracyPct,
+        avatarFallback: data.avatarFallback,
+        botKey: data.botKey,
         createdById: actorId,
         difficulty: data.difficulty,
         maxDelayMs: data.maxDelayMs,
         minDelayMs: data.minDelayMs,
         name: data.name,
         persona: data.persona ?? null,
+        riveArtboard: data.riveArtboard,
+        riveLicense: data.riveLicense ?? null,
+        riveProvenance: data.riveProvenance as Prisma.InputJsonValue,
+        riveSrc: data.riveSrc ?? null,
+        riveStateMachine: data.riveStateMachine,
         status: "active",
+        styleToken: data.styleToken,
         updatedById: actorId,
         vocabularyLevel: data.vocabularyLevel
       }
@@ -94,6 +106,7 @@ export class BattleBotsAdminRepository {
     const before = await this.prisma.battleBot.findUnique({ where: { id } });
     if (!before) throw new NotFoundException("Battle bot not found");
     const update: Prisma.BattleBotUpdateInput = { updatedById: actorId };
+    if (data.botKey !== undefined) update.botKey = data.botKey;
     if (data.name !== undefined) update.name = data.name;
     if (data.difficulty !== undefined) update.difficulty = data.difficulty;
     if (data.persona !== undefined) update.persona = data.persona;
@@ -101,6 +114,13 @@ export class BattleBotsAdminRepository {
     if (data.minDelayMs !== undefined) update.minDelayMs = data.minDelayMs;
     if (data.maxDelayMs !== undefined) update.maxDelayMs = data.maxDelayMs;
     if (data.vocabularyLevel !== undefined) update.vocabularyLevel = data.vocabularyLevel;
+    if (data.avatarFallback !== undefined) update.avatarFallback = data.avatarFallback;
+    if (data.styleToken !== undefined) update.styleToken = data.styleToken;
+    if (data.riveSrc !== undefined) update.riveSrc = data.riveSrc;
+    if (data.riveArtboard !== undefined) update.riveArtboard = data.riveArtboard;
+    if (data.riveStateMachine !== undefined) update.riveStateMachine = data.riveStateMachine;
+    if (data.riveLicense !== undefined) update.riveLicense = data.riveLicense;
+    if (data.riveProvenance !== undefined) update.riveProvenance = data.riveProvenance as Prisma.InputJsonValue;
     const updated = await this.prisma.battleBot.update({ data: update, where: { id } });
     await this.writeAudit({
       action: "admin.battle.bot.updated",
@@ -176,22 +196,38 @@ export class BattleBotsAdminRepository {
 
   private serialize(row: {
     accuracyPct: number;
+    avatarFallback: string;
+    botKey: string;
     difficulty: string;
     maxDelayMs: number;
     minDelayMs: number;
     name: string;
     persona: string | null;
+    riveArtboard: string;
+    riveLicense: string | null;
+    riveProvenance: Prisma.JsonValue;
+    riveSrc: string | null;
+    riveStateMachine: string;
     status: string;
+    styleToken: string;
     vocabularyLevel: string;
   }) {
     return {
       accuracyPct: row.accuracyPct,
+      avatarFallback: row.avatarFallback,
+      botKey: row.botKey,
       difficulty: row.difficulty,
       maxDelayMs: row.maxDelayMs,
       minDelayMs: row.minDelayMs,
       name: row.name,
       persona: row.persona,
+      riveArtboard: row.riveArtboard,
+      riveLicense: row.riveLicense,
+      riveProvenance: row.riveProvenance,
+      riveSrc: row.riveSrc,
+      riveStateMachine: row.riveStateMachine,
       status: row.status,
+      styleToken: row.styleToken,
       vocabularyLevel: row.vocabularyLevel
     };
   }

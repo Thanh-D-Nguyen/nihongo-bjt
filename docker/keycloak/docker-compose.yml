@@ -3,6 +3,10 @@
 #
 # Admin console: http://localhost:8080  (admin / admin)
 # See README.md in this folder.
+#
+# Realm "master" (Admin Console login) keeps sslRequired=external by default — accessing via a non-local
+# hostname/IP shows "HTTPS required". Service keycloak-configure-http runs kcadm once Keycloak is up and
+# sets sslRequired=NONE on master + nihongo-bjt.
 
 services:
   keycloak:
@@ -10,6 +14,8 @@ services:
     command:
       - start-dev
       - --http-port=8080
+      # Advertise plain HTTP on local dev so issued URLs are not upgraded to https://.
+      - --hostname=http://localhost:8080
       - --hostname-strict=false
       - --import-realm
     ports:
@@ -20,6 +26,28 @@ services:
     volumes:
       - keycloak_data:/opt/keycloak/data
       - ./realm-export.json:/opt/keycloak/data/import/nihongo-bjt-realm.json:ro
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - bash -ec 'exec 3<>/dev/tcp/127.0.0.1/8080'
+      interval: 5s
+      timeout: 2s
+      retries: 30
+      start_period: 55s
+
+  keycloak-configure-http:
+    image: quay.io/keycloak/keycloak:26.2.4
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    environment:
+      KEYCLOAK_SERVER: http://keycloak:8080
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+    volumes:
+      - ./configure-realms-http.sh:/tmp/configure-realms-http.sh:ro
+    entrypoint: ["/bin/bash", "/tmp/configure-realms-http.sh"]
+    restart: "no"
 
 volumes:
   keycloak_data:

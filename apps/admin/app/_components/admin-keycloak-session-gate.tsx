@@ -4,7 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
-import { isAdminKeycloakEnabled, isAdminTestBypassEnabled } from "@/lib/public-keycloak";
+import { isAdminKeycloakEnabled } from "@/lib/public-keycloak";
 
 function isAdminPublicPath(pathname: string): boolean {
   const segments = pathname.split("/").filter(Boolean);
@@ -26,7 +26,7 @@ export function AdminKeycloakSessionGate({
   const pathname = usePathname() ?? "";
   const router = useRouter();
   const publicPath = isAdminPublicPath(pathname);
-  const kc = isAdminKeycloakEnabled() && !isAdminTestBypassEnabled();
+  const kc = isAdminKeycloakEnabled();
   // If KC cookies are present server-side, render optimistically and validate in background.
   const [ready, setReady] = useState(!kc || publicPath || initialAuthed);
 
@@ -59,6 +59,11 @@ export function AdminKeycloakSessionGate({
             return;
           }
           const msg = e instanceof Error ? e.message : "";
+          if (msg === "admin_keycloak_server_not_configured") {
+            // Public NEXT_PUBLIC_* says KC on, but server route lacks ADMIN_KEYCLOAK_* / KEYCLOAK_* (merge root `.env` in `next.config.mjs`).
+            setReady(true);
+            return;
+          }
           if (msg === "admin_session_unauthorized") {
             router.replace(
               `/${locale}/login?returnTo=${encodeURIComponent(pathname || `/${locale}`)}`

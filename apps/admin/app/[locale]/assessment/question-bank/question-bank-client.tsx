@@ -16,7 +16,6 @@ import {
 import {
   ASSESSMENT_BJT_LEVELS,
   ASSESSMENT_BJT_SECTION_LABELS,
-  ASSESSMENT_BJT_SECTIONS,
   ASSESSMENT_QUESTION_DIFFICULTIES,
   ASSESSMENT_QUESTION_STATUSES
 } from "@nihongo-bjt/shared";
@@ -58,6 +57,10 @@ type AuditEntry = {
 
 type Detail = Summary & {
   explanationVi: string | null;
+  imageUrl: string | null;
+  imageAlt: string | null;
+  audioUrl: string | null;
+  audioScript: string | null;
   qualityFlags: Record<string, unknown> | null;
   options: Option[];
   remediationCard: { id: string; sourceType: string; sourceId: string; frontText: string } | null;
@@ -74,6 +77,10 @@ type QuestionForm = {
   skillTag: string;
   difficulty: string;
   tags: string;
+  imageUrl: string;
+  imageAlt: string;
+  audioUrl: string;
+  audioScript: string;
   options: OptionInput[];
 };
 const DEFAULT_OPTION_KEYS = ["A", "B", "C", "D"];
@@ -85,6 +92,10 @@ const DEFAULT_QUESTION_FORM: QuestionForm = {
   skillTag: "",
   difficulty: "standard",
   tags: "",
+  imageUrl: "",
+  imageAlt: "",
+  audioUrl: "",
+  audioScript: "",
   options: DEFAULT_OPTION_KEYS.map((k, i) => ({ optionKey: k, text: "", isCorrect: i === 0 }))
 };
 
@@ -227,6 +238,10 @@ export function QuestionBankAdminClient({ common, labels, locale }: { common: Co
       skillTag: detail.skillTag,
       difficulty: detail.difficulty,
       tags: detail.tags.join(", "),
+      imageUrl: detail.imageUrl ?? "",
+      imageAlt: detail.imageAlt ?? "",
+      audioUrl: detail.audioUrl ?? "",
+      audioScript: detail.audioScript ?? "",
       options: detail.options.map((o) => ({ optionKey: o.optionKey, text: o.text, isCorrect: o.isCorrect }))
     });
     setReason("");
@@ -252,6 +267,10 @@ export function QuestionBankAdminClient({ common, labels, locale }: { common: Co
         skillTag: qForm.skillTag.trim() || "general",
         difficulty: qForm.difficulty,
         tags: qForm.tags.split(",").map((s) => s.trim()).filter((s) => s.length > 0),
+        imageUrl: qForm.imageUrl.trim() || null,
+        imageAlt: qForm.imageAlt.trim() || null,
+        audioUrl: qForm.audioUrl.trim() || null,
+        audioScript: qForm.audioScript.trim() || null,
         options: qForm.options.map((o) => ({ optionKey: o.optionKey, text: o.text.trim(), isCorrect: o.isCorrect })),
         reason: reason.trim()
       };
@@ -491,6 +510,25 @@ export function QuestionBankAdminClient({ common, labels, locale }: { common: Co
                 <div className="rounded border border-slate-200 bg-slate-50 p-3 text-sm whitespace-pre-wrap">{detail.prompt}</div>
                 {detail.scenario ? <div className="mt-2 rounded border border-slate-200 p-3 text-xs italic text-slate-600 whitespace-pre-wrap">{detail.scenario}</div> : null}
                 {detail.explanationVi ? <div className="mt-2 rounded border border-emerald-200 bg-emerald-50 p-3 text-xs whitespace-pre-wrap">{detail.explanationVi}</div> : null}
+                {detail.imageUrl ? (
+                  <div className="mt-2 rounded border border-slate-200 p-3">
+                    <h4 className="mb-1 text-xs font-semibold text-slate-600">{t("imageHeading")}</h4>
+                    <img src={detail.imageUrl} alt={detail.imageAlt ?? ""} className="max-h-48 rounded border border-slate-200" />
+                    {detail.imageAlt ? <p className="mt-1 text-xs text-slate-500">{detail.imageAlt}</p> : null}
+                  </div>
+                ) : null}
+                {detail.audioUrl ? (
+                  <div className="mt-2 rounded border border-slate-200 p-3">
+                    <h4 className="mb-1 text-xs font-semibold text-slate-600">{t("audioHeading")}</h4>
+                    <audio controls src={detail.audioUrl} className="w-full" />
+                  </div>
+                ) : null}
+                {detail.audioScript ? (
+                  <div className="mt-2 rounded border border-violet-200 bg-violet-50 p-3 text-xs whitespace-pre-wrap">
+                    <h4 className="mb-1 text-xs font-semibold text-violet-800">{t("audioScriptHeading")}</h4>
+                    {detail.audioScript}
+                  </div>
+                ) : null}
               </div>
               <div>
                 <h3 className="mb-2 text-sm font-semibold">{t("optionsHeading")}</h3>
@@ -613,6 +651,28 @@ export function QuestionBankAdminClient({ common, labels, locale }: { common: Co
               <label className="col-span-2 flex flex-col gap-1">
                 <span className="text-xs font-medium text-slate-600">{t("formTagsField")}</span>
                 <input className="rounded border border-slate-300 px-3 py-2" placeholder="bjt, rc_integrated, ..." value={qForm.tags} onChange={(e) => setQForm({ ...qForm, tags: e.target.value })} />
+              </label>
+
+              <label className="col-span-2 flex flex-col gap-1">
+                <span className="text-xs font-medium text-slate-600">{t("formImageUrl")} ({t("optional")})</span>
+                <input className="rounded border border-slate-300 px-3 py-2" placeholder="https://..." value={qForm.imageUrl} onChange={(e) => setQForm({ ...qForm, imageUrl: e.target.value })} />
+              </label>
+              <label className="col-span-2 flex flex-col gap-1">
+                <span className="text-xs font-medium text-slate-600">{t("formImageAlt")} ({t("optional")})</span>
+                <input className="rounded border border-slate-300 px-3 py-2" placeholder="Mô tả ảnh..." value={qForm.imageAlt} onChange={(e) => setQForm({ ...qForm, imageAlt: e.target.value })} />
+              </label>
+              {qForm.imageUrl.trim() ? (
+                <div className="col-span-2">
+                  <img src={qForm.imageUrl.trim()} alt={qForm.imageAlt || ""} className="max-h-32 rounded border border-slate-200" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                </div>
+              ) : null}
+              <label className="col-span-2 flex flex-col gap-1">
+                <span className="text-xs font-medium text-slate-600">{t("formAudioUrl")} ({t("optional")})</span>
+                <input className="rounded border border-slate-300 px-3 py-2" placeholder="https://..." value={qForm.audioUrl} onChange={(e) => setQForm({ ...qForm, audioUrl: e.target.value })} />
+              </label>
+              <label className="col-span-2 flex flex-col gap-1">
+                <span className="text-xs font-medium text-slate-600">{t("formAudioScript")} ({t("optional")})</span>
+                <textarea className="rounded border border-slate-300 px-3 py-2" rows={3} placeholder="Audio script / 音声スクリプト..." value={qForm.audioScript} onChange={(e) => setQForm({ ...qForm, audioScript: e.target.value })} />
               </label>
 
               <div className="col-span-2">

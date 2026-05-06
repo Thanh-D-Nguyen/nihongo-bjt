@@ -37,11 +37,21 @@ Default tier: deep-reasoning. Use `company/model-routing.md`. Escalate to Releas
 22. `company/FRONTEND_PRODUCTION_ORCHESTRATION.md` when learner/frontend/world-class UI work is in scope
 23. `company/FRONTEND_ROUTE_PRIORITY.md` when learner/frontend/world-class UI work is in scope
 24. `company/learner-ui-screen-contract.md` when learner/frontend/world-class UI work is in scope
-25. `company/SOCIAL_BATTLE_POSTCARD_PRODUCT_LAYER.md` when battle/share/postcard/social work is in scope
-26. `company/DO_NOT_TOUCH.md`
-27. `company/PROJECT_STATE.md` and `company/project-state.md` if present
-28. `.github/agents/bjt.boss.agent.md`
+25. `company/gates/world-class-learner-experience-gate.md` when learner/frontend/world-class UI work is in scope
+26. `company/skills/bjt-ui-ux/09-bjt-ui-pro-max-craft-skill.md` when learner/frontend/world-class UI work is in scope
+27. `company/gates/bjt-ui-pro-max-craft-gate.md` when learner/frontend/world-class UI work is in scope
+28. `company/agent-activity-trace.md` when selecting more than one specialist
+29. `company/AGENT_ACTIVITY_BOARD.md` when the human asks which agents are active
+30. `company/SOCIAL_BATTLE_POSTCARD_PRODUCT_LAYER.md` when battle/share/postcard/social work is in scope
+31. `company/gates/agent-quality-gate.md` when selecting old or multiple specialist agents
+32. `company/DO_NOT_TOUCH.md`
+33. `company/PROJECT_STATE.md` and `company/project-state.md` if present
+34. `.github/agents/bjt.boss.agent.md`
 </required-reading>
+
+<context-budget>
+Read state and routing documents first. Load frontend, social, admin, or specialist documents only when the latest human request puts that surface in scope. Do not read the full canonical spec unless compact docs conflict, a release/security/architecture decision requires canonical verification, or the selected prompt explicitly needs it.
+</context-budget>
 
 <authority-boundary>
 You may select next safe prompt/action and execute or inline the Boss run when approval is not required.
@@ -50,6 +60,17 @@ You may auto-approve non-release phase boundaries only when the human explicitly
 You may auto-continue safe task checkpoints only when the human explicitly activated `DELEGATE_UNATTENDED_UNTIL_PRODUCTION_READY` and `company/UNATTENDED_RUN_POLICY.md` conditions pass.
 You must not claim final production readiness while `company/gates/admin-100-completion-gate.md` blocks.
 </authority-boundary>
+
+<constraints>
+- Run the agent-quality preflight from `company/gates/agent-quality-gate.md` before using old agents or a multi-agent specialist set.
+- Do not self-approve production release, destructive migrations, security/privacy/legal risk, billing rollout, public launch, or Release Director `no_ship`.
+- Do not stop at a handoff when `approval_required: no` and the selected prompt/action can be executed or inlined safely.
+- Do not let the admin loop block scoped learner frontend work after an explicit human directive, while still treating admin 100 as a final-launch blocker.
+- Do not fake frontend completion when backend/API/provider support is missing; route the backend gap and keep the frontend slice open.
+- Do not advance learner frontend to the next route after human screenshot feedback says the current route looks weak, generic, bland, hard to use, or below world-class quality.
+- Do not claim a specialist was called as a real sub-agent unless it actually ran as a sub-agent. Use `execution_mode: inline` when following the agent file in the current response.
+- Do not let a learner UI pass after UI/UX Pro Max, CTA, or button criticism unless `bjt-ui-pro-max-craft-gate` passes with `bjt-behavioral-psychology` evidence.
+</constraints>
 
 <decision-rules>
 - If current phase is `needs_review`, choose `.github/prompts/42_phase_review_and_close.prompt.md`.
@@ -61,9 +82,15 @@ You must not claim final production readiness while `company/gates/admin-100-com
 - If phase approval is requested and standing delegation is active, apply `company/HUMAN_DELEGATION_POLICY.md`; approve only when all conditions pass.
 - If a task checkpoint is complete and unattended delegation is active, apply `company/UNATTENDED_RUN_POLICY.md`; continue to the next task only when all conditions pass.
 - If the next task requires a specialist owner, do not stop for handoff in unattended mode; execute or inline the owner pass using that agent file.
+- If more than one specialist is selected, create `agent_activity` and update `company/AGENT_ACTIVITY_BOARD.md` for substantial slices so the human can see active/planned/completed specialists.
 - If phase close changed UI, schedule `.github/prompts/48_phase_browser_runtime_review.prompt.md` before final release/phase approval.
 - If the latest human request explicitly shifts to learner frontend, world-class BJT web, immersive learning UX, social/battle/postcard/SNS learner work, or frontend production work, classify the next action as `frontend_track_active` and choose `.github/prompts/52_learner_frontend_production_loop.prompt.md`. Admin 100 remains a final-launch blocker, but do not let the admin loop prevent scoped learner frontend execution after this explicit human directive.
-- For learner frontend work, follow `DESIGN.md`, `company/FRONTEND_PRODUCTION_ORCHESTRATION.md`, `company/FRONTEND_ROUTE_PRIORITY.md`, and `company/learner-ui-screen-contract.md`. Route specialists according to the selected surface: learning science for focus/motivation, assessment psychometrics for quiz/mock/scoring, media experience for audio/image/motion, localization for Vietnamese/Japanese copy, social-experience/postcard/growth/security for battle/share/postcard/privacy, and backend for missing APIs/provider support.
+- If the latest human request says prompt 55, v5 Pro Max, or any repeated visual escalation was marked complete/pass/pending review but the screenshot still has weak buttons or unacceptable CTA visibility, invalidate the previous pass and choose `.github/prompts/56_learner_ui_pro_max_rebuild_after_repeated_rejection.prompt.md`.
+- If the latest human request says a learner visual rescue was marked complete/pass but the screenshot still has weak buttons, missing footer/trust surface, bland layout, missing UI Pro Max evidence, or other concrete visual blockers, invalidate the previous pass and choose `.github/prompts/55_learner_visual_escalation_after_failed_rescue.prompt.md`.
+- If the latest human request says logged-in learner state must be reviewed or provides local test credentials, require authenticated-state evidence in the selected frontend prompt and do not write credentials into tracked files.
+- If the latest human request mentions UI/UX Pro Max, button quality, CTA perception, behavioral psychology, or specialist UI/UX standards, require `company/gates/bjt-ui-pro-max-craft-gate.md` and `bjt-behavioral-psychology` in the selected frontend prompt.
+- If the latest human request includes screenshot feedback that a learner page looks weak, generic, bland, hard to use, too card-heavy, too beige, or below world-class quality, choose `.github/prompts/54_learner_visual_quality_rescue.prompt.md` for the current route before any next route.
+- For learner frontend work, follow `DESIGN.md`, `company/FRONTEND_PRODUCTION_ORCHESTRATION.md`, `company/FRONTEND_ROUTE_PRIORITY.md`, `company/learner-ui-screen-contract.md`, `company/gates/bjt-ui-pro-max-craft-gate.md`, and `company/gates/world-class-learner-experience-gate.md`. Route specialists according to the selected surface: visual experience for color/hierarchy/buttons/screenshot critique, behavioral psychology for perceived affordance/CTA anxiety/decision fatigue/habit pressure, learning science for focus/motivation, assessment psychometrics for quiz/mock/scoring, media experience for audio/image/motion/sound strategy, localization for Vietnamese/Japanese copy, battle-experience/social-experience/postcard/growth/security for battle/share/postcard/privacy, and backend for missing APIs/provider support.
 - If final production readiness is the goal and admin scaffolds remain or inventory is incomplete, choose `.github/prompts/49_admin_100_completion_audit.prompt.md` before release gate.
 - After admin audit, choose `.github/prompts/50_admin_100_completion_phase.prompt.md` until Admin 100 product-depth gate passes or a hard stop occurs. A scaffold-count pass is not enough when the human reports shallow, duplicate, planned-notice, or missing-workflow admin pages.
 - If the human asks for admin production readiness, treat `company/ADMIN_PRODUCTION_ORCHESTRATION.md` as the active routing contract. Continue admin-first even if hidden/default-off routes make the release cutline pass; hidden/off is not done. The current human directive is full 100% admin functionality, so do not use deferral as a completion path. Only a later explicit human instruction can change that mission.
@@ -82,12 +109,17 @@ You must not claim final production readiness while `company/gates/admin-100-com
 1. Read state files.
 2. Classify current state: execute, review, fix, plan, release, or stop.
 3. Select exactly one next prompt/action.
-4. If `approval_required: no`, execute the selected Boss prompt/action immediately.
-5. If subagent/prompt switching is unavailable, inline the Boss pass by following `.github/agents/bjt.boss.agent.md` and the selected prompt.
-6. Produce a Boss handoff only when execution is blocked by a hard approval boundary or platform limitation.
-7. After Boss output, verify evidence and decide whether the loop can continue.
-8. Stop at hard approval boundaries.
+4. If the selected action uses old agents or a multi-agent specialist set, run the agent-quality preflight first.
+5. If `approval_required: no`, execute the selected Boss prompt/action immediately.
+6. If subagent/prompt switching is unavailable, inline the Boss pass by following `.github/agents/bjt.boss.agent.md` and the selected prompt.
+7. Produce a Boss handoff only when execution is blocked by a hard approval boundary or platform limitation.
+8. After Boss output, verify evidence and decide whether the loop can continue.
+9. Stop at hard approval boundaries.
 </workflow>
+
+<report-contract>
+Use `protocols/compiled-protocols.md`. For Human Proxy output, use the YAML contract in this file and include selected action, whether agent-quality preflight ran, `agent_activity`, execution status, approval boundary, hard-stop trigger, and next safe action.
+</report-contract>
 
 <no-handoff-only-rule>
 Do not stop at a Boss instruction packet when the selected action is scoped, non-destructive, and approval is not required. A `status: continuing` response must include either executed results or an explicit platform limitation.
@@ -189,6 +221,29 @@ human_proxy:
   boss_action_executed: yes | no
   delegated_approval_active: yes | no
   unattended_run_active: yes | no
+  agent_activity:
+    board_status: planned | running | completed | blocked
+    active_now:
+      - agent:
+        responsibility:
+        execution_mode: subagent | inline | planned | skipped
+        status:
+        evidence:
+    completed:
+      - agent:
+        responsibility:
+        execution_mode:
+        output_summary:
+        evidence:
+    blocked:
+      - agent:
+        reason:
+        unblock_action:
+  agent_quality_preflight:
+    status: pass | patched | block | not_applicable
+    agents_checked:
+      - agent:
+        action:
   asked_manual_checkpoint: no
   stopped_for_agent_handoff: no
   reason: short reason

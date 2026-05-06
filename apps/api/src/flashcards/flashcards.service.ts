@@ -1,5 +1,9 @@
 import { createPrismaClient, Prisma } from "@nihongo-bjt/database";
-import { type SrsRating } from "@nihongo-bjt/shared";
+import {
+  isLikelyVietnameseLegalDisclaimerOnlyBack,
+  repairDailyContentFlashcardBackIfNeeded,
+  type SrsRating
+} from "@nihongo-bjt/shared";
 import { Inject, Injectable } from "@nestjs/common";
 
 import { QuotaService } from "../monetization/quota.service.js";
@@ -20,18 +24,123 @@ export class FlashcardsService {
     @Inject(QuotaService) private readonly quotaService: QuotaService
   ) {}
 
-  async dueReviewsForLearner(userId: string, limit: number) {
-    const rows = await this.flashcardsRepository.dueReviews(userId, limit);
+  async dueReviewsForLearner(userId: string, limit: number, deckId?: string) {
+    const rows = await this.flashcardsRepository.dueReviews(userId, limit, deckId);
+    const dailyRows = rows.filter((r) => r.card.sourceType === "daily_content");
+    const dailySourceIds = [...new Set(dailyRows.map((r) => r.card.sourceId))];
+
+    let dailyItems =
+      dailySourceIds.length > 0
+        ? await this.prisma.dailyContentItem.findMany({
+            select: {
+              bodyMd: true,
+              contentDate: true,
+              explanationText: true,
+              id: true,
+              japaneseText: true
+            },
+            where: { id: { in: dailySourceIds } }
+          })
+        : [];
+
+    const dailyById = new Map(dailyItems.map((it) => [it.id, it]));
+    const disclaimerJapaneseFronts = [
+      ...new Set(
+        dailyRows
+          .filter((r) => isLikelyVietnameseLegalDisclaimerOnlyBack(r.card.backText))
+          .map((r) => r.card.frontText)
+      )
+    ];
+
+    if (disclaimerJapaneseFronts.length > 0) {
+      const extra = await this.prisma.dailyContentItem.findMany({
+        select: {
+          bodyMd: true,
+          contentDate: true,
+          explanationText: true,
+          id: true,
+          japaneseText: true
+        },
+        where: { japaneseText: { in: disclaimerJapaneseFronts } }
+      });
+      const seen = new Set(dailyItems.map((i) => i.id));
+      for (const it of extra) {
+        if (!seen.has(it.id)) {
+          seen.add(it.id);
+          dailyItems.push(it);
+        }
+      }
+    }
+
+    const mergedSorted = [...dailyItems].sort(
+      (a, b) => b.contentDate.getTime() - a.contentDate.getTime()
+    );
+    const dailyByIdFull = new Map(mergedSorted.map((it) => [it.id, it]));
+    const dailyByJapanese = new Map<string, (typeof dailyItems)[number]>();
+    for (const it of mergedSorted) {
+      const key = it.japaneseText;
+      if (key == null || key.length === 0) {
+        continue;
+      }
+      const prev = dailyByJapanese.get(key);
+      if (
+        !prev ||
+        (it.bodyMd?.length ?? 0) > (prev.bodyMd?.length ?? 0)
+      ) {
+        dailyByJapanese.set(key, it);
+      }
+    }
+
+    const backFixes: Array<{ backText: string; cardId: string }> = [];
+    const backByCardId = new Map<string, string>();
+    for (const row of rows) {
+      if (row.card.sourceType !== "daily_content") {
+        continue;
+      }
+      let item = dailyByIdFull.get(row.card.sourceId);
+      const fromJapanese = dailyByJapanese.get(row.card.frontText);
+      if (isLikelyVietnameseLegalDisclaimerOnlyBack(row.card.backText) && fromJapanese) {
+        if (
+          !item ||
+          (fromJapanese.bodyMd?.length ?? 0) > (item.bodyMd?.length ?? 0)
+        ) {
+          item = fromJapanese;
+        }
+      }
+      const fixed = repairDailyContentFlashcardBackIfNeeded(
+        row.card.backText,
+        item?.bodyMd,
+        item?.explanationText
+      );
+      if (fixed) {
+        backByCardId.set(row.card.id, fixed);
+        backFixes.push({ backText: fixed, cardId: row.card.id });
+      }
+    }
+    if (backFixes.length > 0) {
+      await this.prisma.$transaction(
+        backFixes.map((u) =>
+          this.prisma.flashcardVariant.update({
+            data: { backText: u.backText },
+            where: { id: u.cardId }
+          })
+        )
+      );
+    }
     return Promise.all(
       rows.map(async (row) => {
         const mediaLinks = row.card.mediaLinks;
         const primary = mediaLinks.find((m) => m.role === "primary_image") ?? mediaLinks[0] ?? null;
-        const readUrl = primary?.asset
-          ? await this.mediaService.presignedGetForObjectKey(primary.asset.objectKey)
-          : null;
+        const readUrl =
+          primary?.asset.provider === "external_url" && primary.asset.sourceUrl?.trim()
+            ? primary.asset.sourceUrl.trim()
+            : primary?.asset
+              ? await this.mediaService.presignedGetForObjectKey(primary.asset.objectKey)
+              : null;
+        const backText = backByCardId.get(row.card.id) ?? row.card.backText;
         return {
           card: {
-            backText: row.card.backText,
+            backText,
             frontText: row.card.frontText,
             id: row.card.id,
             reading: row.card.reading

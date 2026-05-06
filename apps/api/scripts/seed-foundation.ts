@@ -31,10 +31,15 @@ const namespaces = [
 const featureFlags = [
   ["learning_path_engine", "Enable learner/admin learning path contracts and UI.", false],
   ["reading_assist", "Enable reusable Japanese reading assist APIs and UI affordances.", true],
+  ["quiz.official_simulation.enabled", "Enable paid official-format BJT simulation.", false],
   ["social_growth", "Enable social login, referrals, share pages, and postcards.", false],
   ["legal_consent", "Enable policy/consent recording and privacy workflows.", false],
   ["notification_delivery", "Enable email/in-app notification delivery workers.", false],
-  ["external_media_uploads", "Enable risky external/user media flows after scan provider is configured.", false]
+  [
+    "external_media_uploads",
+    "Enable risky external/user media flows after scan provider is configured.",
+    false
+  ]
 ] as const;
 
 async function main() {

@@ -52,7 +52,7 @@ describe("buildResolvedAdminNav", () => {
     expect(allIds).not.toContain("bt.configs");
   });
 
-  it("hides default-off user ops and analytics drilldown pages from production nav", () => {
+  it("shows user ops and analytics drilldown pages when default-off list is empty", () => {
     const nav = buildResolvedAdminNav(
       ADMIN_NAV_DATA,
       (k) => getShellNavLabel(labels, k),
@@ -63,14 +63,11 @@ describe("buildResolvedAdminNav", () => {
     const allIds = nav.flatMap((g) => g.items.map((i) => i.id));
     expect(allIds).toContain("u.users");
     expect(allIds).toContain("an.exec");
-    expect(allIds).not.toContain("u.360");
-    expect(allIds).not.toContain("u.notes");
-    expect(allIds).not.toContain("u.privacy");
-    expect(allIds).not.toContain("u.export");
-    expect(allIds).not.toContain("an.learning");
-    expect(allIds).not.toContain("an.content");
-    expect(allIds).not.toContain("an.search");
-    expect(allIds).not.toContain("op.settings");
+    // These are now implemented and visible (no longer in ADMIN_FEATURE_FLAG_DEFAULTS_OFF)
+    expect(allIds).toContain("u.360");
+    expect(allIds).toContain("u.notes");
+    expect(allIds).toContain("u.privacy");
+    expect(allIds).toContain("u.export");
   });
 
   it("uses exact matching for admin hub routes that have child routes", () => {

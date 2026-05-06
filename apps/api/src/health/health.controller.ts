@@ -1,6 +1,7 @@
 import type { HealthStatus } from "@nihongo-bjt/shared";
 import { Controller, Get, HttpCode, HttpStatus, Inject } from "@nestjs/common";
 import { ApiOperation, ApiOkResponse, ApiResponse, ApiTags } from "@nestjs/swagger";
+import { SkipThrottle } from "@nestjs/throttler";
 
 import { ApiErrorResponseDto } from "../openapi/dto/api-error.dto.js";
 import { HealthStatusOpenApiDto, VersionOpenApiDto } from "../openapi/dto/health-openapi.dto.js";
@@ -8,6 +9,7 @@ import { HealthService } from "./health.service.js";
 
 @Controller("health")
 @ApiTags("System Health")
+@SkipThrottle()
 export class HealthController {
   constructor(@Inject(HealthService) private readonly healthService: HealthService) {}
 

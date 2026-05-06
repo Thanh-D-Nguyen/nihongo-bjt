@@ -35,7 +35,18 @@ describe("LearnerAnalyticsClient weak skills", () => {
   it("renders weak skill chips with remediation links", async () => {
     learnerApiFetchMock.mockResolvedValue(
       jsonResponse({
+        dailyActivity: [
+          {
+            date: "2026-04-28",
+            quizAnswers: 2,
+            quizSessionsCompleted: 1,
+            reviews: 5
+          }
+        ],
+        dueFlashcards: 3,
         insight: "Ôn đều mỗi ngày",
+        learningPaths: [],
+        range: { days: 7, end: "2026-05-02T00:00:00.000Z", start: "2026-04-25T00:00:00.000Z" },
         totals: {
           bjtAccuracyPct: 65,
           completedBjtSessions: 2,

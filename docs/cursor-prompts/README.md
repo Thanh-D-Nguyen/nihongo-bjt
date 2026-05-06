@@ -27,7 +27,7 @@ For a repository that already has source code, use `RUN_ALL_SAFE_MODE.xml`.
 
 ## No-demo rule
 
-Use RUN_ALL_ONE_CLICK.xml only after installing this pack at the repository root. The pack includes `.cursor/rules/08-production-quality-no-demo.mdc`, which forces Cursor to implement real vertical slices with persistence, validation, tests, RBAC where needed, and i18n instead of static prototype screens.
+Use RUN_ALL_ONE_CLICK.xml only after installing this pack at the repository root. The pack includes the consolidated Cursor rules under `.cursor/rules/*.mdc`, which force real vertical slices with persistence, validation, tests, RBAC where needed, and i18n instead of static prototype screens.
 
 ## Phase 11 - Monetization, ads, billing
 

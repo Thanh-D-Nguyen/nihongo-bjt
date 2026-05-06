@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, type KeyboardEvent, useCallback, useState } from "react";
+import { type FormEvent, type KeyboardEvent, useCallback, useRef, useState } from "react";
 
 export type AdminLoginFormCopy = {
   authDisabledHint: string;
@@ -68,6 +68,7 @@ export function AdminLoginFormClient({
   const [showPassword, setShowPassword] = useState(false);
   const [capsLock, setCapsLock] = useState(false);
   const [loading, setLoading] = useState(false);
+  const submitInFlight = useRef(false);
   // initialServerError is rendered above the form by the server; we still keep
   // a local error slot for in-page (XHR) submission failures so the user does
   // not see two banners at once.
@@ -85,6 +86,10 @@ export function AdminLoginFormClient({
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (submitInFlight.current) {
+      return;
+    }
+    submitInFlight.current = true;
     setClientError(null);
     setLoading(true);
     try {
@@ -94,9 +99,32 @@ export function AdminLoginFormClient({
         headers: { "content-type": "application/json" },
         method: "POST"
       });
-      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      const data = (await res.json().catch(() => ({}))) as {
+        debug?: {
+          errorDescription?: string;
+          httpStatus?: number;
+          issuer?: string;
+          keycloakError?: string;
+        };
+        error?: string;
+      };
       if (!res.ok) {
-        setClientError(mapErrorCode(data.error, copy));
+        let msg = mapErrorCode(data.error, copy);
+        const d = data.debug;
+        if (d) {
+          const tail = [
+            d.keycloakError ? `Keycloak: ${d.keycloakError}` : null,
+            d.httpStatus != null ? `HTTP ${d.httpStatus}` : null,
+            d.issuer ? `issuer: ${d.issuer}` : null,
+            d.errorDescription ? d.errorDescription : null
+          ]
+            .filter(Boolean)
+            .join("\n");
+          if (tail) {
+            msg = `${msg}\n\n${tail}`;
+          }
+        }
+        setClientError(msg);
         return;
       }
       window.location.assign(returnTo);
@@ -104,6 +132,7 @@ export function AdminLoginFormClient({
       setClientError(copy.genericFormError);
     } finally {
       setLoading(false);
+      submitInFlight.current = false;
     }
   }
 
@@ -219,7 +248,7 @@ export function AdminLoginFormClient({
         // Server-rendered errors live in the page; this banner is only for
         // failures from the in-page XHR submit, so we never render two at once.
         <p
-          className="rounded-xl border border-red-200/80 bg-red-50/90 px-3 py-2 text-sm text-red-800"
+          className="rounded-xl border border-red-200/80 bg-red-50/90 px-3 py-2 text-sm text-red-800 whitespace-pre-wrap break-words"
           id={ERROR_REGION_ID}
           role="alert"
         >

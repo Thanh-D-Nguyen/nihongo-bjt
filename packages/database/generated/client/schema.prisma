@@ -532,42 +532,71 @@ model BattleConfig {
 }
 
 model BattleSession {
-  id                String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId            String        @map("user_id") @db.Uuid
-  roomCode          String        @unique @map("room_code") @db.VarChar(16)
-  mode              String        @default("bot") @map("mode") @db.VarChar(32)
-  botKey            String?       @map("bot_key") @db.VarChar(32)
-  status            String        @default("in_progress") @map("status") @db.VarChar(32)
-  userScore         Int           @default(0) @map("user_score")
-  opponentScore     Int           @default(0) @map("opponent_score")
-  maxRounds         Int           @map("max_rounds")
-  currentRoundIndex Int           @default(0) @map("current_round_index")
-  fairnessSeed      String        @map("fairness_seed") @db.VarChar(64)
-  abandonedReason   String?       @map("abandoned_reason") @db.VarChar(64)
-  startedAt         DateTime      @default(now()) @map("started_at") @db.Timestamptz(6)
-  completedAt       DateTime?     @map("completed_at") @db.Timestamptz(6)
+  id                String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId            String              @map("user_id") @db.Uuid
+  opponentUserId    String?             @map("opponent_user_id") @db.Uuid
+  roomCode          String              @unique @map("room_code") @db.VarChar(16)
+  mode              String              @default("bot") @map("mode") @db.VarChar(32)
+  botKey            String?             @map("bot_key") @db.VarChar(64)
+  status            String              @default("in_progress") @map("status") @db.VarChar(32)
+  userScore         Int                 @default(0) @map("user_score")
+  opponentScore     Int                 @default(0) @map("opponent_score")
+  maxRounds         Int                 @map("max_rounds")
+  currentRoundIndex Int                 @default(0) @map("current_round_index")
+  fairnessSeed      String              @map("fairness_seed") @db.VarChar(64)
+  abandonedReason   String?             @map("abandoned_reason") @db.VarChar(64)
+  startedAt         DateTime            @default(now()) @map("started_at") @db.Timestamptz(6)
+  completedAt       DateTime?           @map("completed_at") @db.Timestamptz(6)
   rounds            BattleRound[]
+  chatMessages      BattleChatMessage[]
 
   @@index([userId, startedAt], map: "idx_battle_session_user_started_at")
   @@index([roomCode, status], map: "idx_battle_session_room_status")
+  @@index([opponentUserId, startedAt], map: "idx_battle_session_opponent_started_at")
   @@map("battle_session")
   @@schema("learning")
 }
 
+/// Persisted battle lobby/room chat. The global lobby uses `room_key = global`; match rooms may link
+/// to `battle_session` later. User display is snapshotted for readable chat history while user identity
+/// remains the canonical `user_id`.
+model BattleChatMessage {
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  roomKey         String         @default("global") @map("room_key") @db.VarChar(64)
+  sessionId       String?        @map("session_id") @db.Uuid
+  userId          String         @map("user_id") @db.Uuid
+  displayName     String?        @map("display_name") @db.VarChar(120)
+  message         String         @db.VarChar(500)
+  kind            String         @default("chat") @db.VarChar(24)
+  moderationState String         @default("visible") @map("moderation_state") @db.VarChar(24)
+  metadata        Json           @default("{}")
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  session         BattleSession? @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([roomKey, createdAt], map: "idx_battle_chat_room_created")
+  @@index([userId, createdAt], map: "idx_battle_chat_user_created")
+  @@index([moderationState, createdAt], map: "idx_battle_chat_moderation")
+  @@map("battle_chat_message")
+  @@schema("learning")
+}
+
 model BattleRound {
-  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  sessionId      String        @map("session_id") @db.Uuid
-  roundIndex     Int           @map("round_index")
-  questionId     String        @map("question_id") @db.Uuid
-  userOptionKey  String?       @map("user_option_key") @db.VarChar(8)
-  userCorrect    Boolean?      @map("user_correct")
-  userResponseMs Int?          @map("user_response_ms")
-  botOptionKey   String?       @map("bot_option_key") @db.VarChar(8)
-  botCorrect     Boolean?      @map("bot_correct")
-  botResponseMs  Int?          @map("bot_response_ms")
-  decidedAt      DateTime?     @map("decided_at") @db.Timestamptz(6)
-  session        BattleSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  question       BjtQuestion   @relation(fields: [questionId], references: [id], onDelete: Restrict)
+  id                 String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId          String        @map("session_id") @db.Uuid
+  roundIndex         Int           @map("round_index")
+  questionId         String        @map("question_id") @db.Uuid
+  userOptionKey      String?       @map("user_option_key") @db.VarChar(8)
+  userCorrect        Boolean?      @map("user_correct")
+  userResponseMs     Int?          @map("user_response_ms")
+  botOptionKey       String?       @map("bot_option_key") @db.VarChar(8)
+  botCorrect         Boolean?      @map("bot_correct")
+  botResponseMs      Int?          @map("bot_response_ms")
+  opponentOptionKey  String?       @map("opponent_option_key") @db.VarChar(8)
+  opponentCorrect    Boolean?      @map("opponent_correct")
+  opponentResponseMs Int?          @map("opponent_response_ms")
+  decidedAt          DateTime?     @map("decided_at") @db.Timestamptz(6)
+  session            BattleSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  question           BjtQuestion   @relation(fields: [questionId], references: [id], onDelete: Restrict)
 
   @@unique([sessionId, roundIndex], map: "uq_battle_round_session_index")
   @@index([sessionId], map: "idx_battle_round_session_id")
@@ -580,21 +609,30 @@ model BattleRound {
 /// vocabulary level, lifecycle) so operators can introduce or tune bots without redeploys. Mutated
 /// only via the admin `battle/bots` surface; every change is audited via `admin.audit_log`.
 model BattleBot {
-  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name            String   @db.VarChar(80)
-  difficulty      String   @db.VarChar(16)
-  persona         String?
-  accuracyPct     Int      @map("accuracy_pct")
-  minDelayMs      Int      @map("min_delay_ms")
-  maxDelayMs      Int      @map("max_delay_ms")
-  vocabularyLevel String   @map("vocabulary_level") @db.VarChar(32)
-  status          String   @default("active") @db.VarChar(16)
-  createdById     String?  @map("created_by_id") @db.Uuid
-  updatedById     String?  @map("updated_by_id") @db.Uuid
-  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  botKey           String   @unique @default(dbgenerated("'bot_'::text || replace((gen_random_uuid())::text, '-'::text, ''::text)")) @map("bot_key") @db.VarChar(64)
+  name             String   @db.VarChar(80)
+  difficulty       String   @db.VarChar(16)
+  persona          String?
+  accuracyPct      Int      @map("accuracy_pct")
+  minDelayMs       Int      @map("min_delay_ms")
+  maxDelayMs       Int      @map("max_delay_ms")
+  vocabularyLevel  String   @map("vocabulary_level") @db.VarChar(32)
+  avatarFallback   String   @default("B") @map("avatar_fallback") @db.VarChar(12)
+  styleToken       String   @default("focused") @map("style_token") @db.VarChar(16)
+  riveSrc          String?  @map("rive_src")
+  riveArtboard     String   @default("BattleBot") @map("rive_artboard") @db.VarChar(80)
+  riveStateMachine String   @default("BattleBot") @map("rive_state_machine") @db.VarChar(80)
+  riveLicense      String?  @map("rive_license") @db.VarChar(120)
+  riveProvenance   Json     @default("{}") @map("rive_provenance")
+  status           String   @default("active") @db.VarChar(16)
+  createdById      String?  @map("created_by_id") @db.Uuid
+  updatedById      String?  @map("updated_by_id") @db.Uuid
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@index([status], map: "idx_battle_bot_status")
+  @@index([botKey], map: "idx_battle_bot_key")
   @@index([difficulty], map: "idx_battle_bot_difficulty")
   @@index([updatedAt], map: "idx_battle_bot_updated_at")
   @@map("battle_bot")
@@ -704,6 +742,10 @@ model BjtQuestion {
   sectionId         String              @map("section_id") @db.Uuid
   prompt            String
   scenario          String?
+  audioScript       String?             @map("audio_script")
+  audioUrl          String?             @map("audio_url")
+  imageUrl          String?             @map("image_url")
+  imageAlt          String?             @map("image_alt")
   explanationVi     String              @map("explanation_vi")
   skillTag          String              @map("skill_tag") @db.VarChar(64)
   difficulty        String              @default("standard") @db.VarChar(32)
@@ -1099,6 +1141,7 @@ model DailyContentItem {
   japaneseText    String?                  @map("japanese_text")
   readingText     String?                  @map("reading_text")
   explanationText String?                  @map("explanation_text")
+  imageUrl        String?                  @map("image_url")
   sourceProvider  String?                  @map("source_provider") @db.VarChar(80)
   sourceRef       String?                  @map("source_ref")
   payload         Json                     @default("{}")
@@ -1884,5 +1927,19 @@ model ContentEnrichment {
   @@index([entityType, entityId], map: "idx_content_enrichment_entity")
   @@index([status, createdAt], map: "idx_content_enrichment_status_created")
   @@map("content_enrichment")
+  @@schema("content")
+}
+
+model Announcement {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type      String   @default("info") @db.Text
+  message   String   @db.Text
+  href      String?  @db.Text
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("announcement")
   @@schema("content")
 }

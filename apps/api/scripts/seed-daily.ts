@@ -1,6 +1,6 @@
 import { parseServerEnv } from "@nihongo-bjt/config";
 import { createPrismaClient, type Prisma } from "@nihongo-bjt/database";
-import { todayDateKey } from "@nihongo-bjt/shared";
+import { buildDailySuggestedFlashcardBack, todayDateKey } from "@nihongo-bjt/shared";
 import { config as loadEnv } from "dotenv";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -17,6 +17,9 @@ const widgetOrder = [
   "seasonal_word",
   "business_phrase",
   "life_situation",
+  "life_housing",
+  "life_banking",
+  "life_tax",
   "nhk_news"
 ];
 
@@ -68,12 +71,40 @@ const contentSeeds = [
     kind: "nhk_news",
     readingText: "きぎょうのさいようかつどうがほんかくかしています。",
     title: "NHK News to Learn"
+  },
+  {
+    bodyMd:
+      "Tình huống: bạn đọc hợp đồng thuê nhà và gặp các khoản 敷金・礼金・更新料.\n\nÝ câu: Đặt cọc (敷金) và tiền lễ (礼金) thường bằng một tháng tiền nhà; phí gia hạn (更新料) có thể phát sinh mỗi hai năm.",
+    explanationText: "Nội dung chỉ phục vụ học tiếng Nhật theo ngữ cảnh, không phải tư vấn pháp lý.",
+    japaneseText: "敷金は家賃の１ヶ月分、礼金は家賃の１ヶ月分です。更新料は２年ごとに発生します。",
+    kind: "life_housing",
+    readingText: "しききんはやちんのいっかげつぶん、れいきんはやちんのいっかげつぶん です。こうしんりょうはにねんごとにはっせいします。",
+    title: "Thuê nhà: 敷金・礼金・更新料"
+  },
+  {
+    bodyMd:
+      "Tình huống: bạn đến quầy ngân hàng, muốn mở tài khoản lần đầu.\n\nÝ câu (kính ngữ lịch sự): Tôi muốn mở tài khoản — anh/chị vui lòng cho biết các giấy tờ cần thiết ạ?",
+    explanationText: "Nội dung chỉ phục vụ học tiếng Nhật theo ngữ cảnh, không phải tư vấn tài chính.",
+    japaneseText: "口座を開設したいのですが、必要な書類を教えていただけますか。",
+    kind: "life_banking",
+    readingText: "こうざをかいせつしたいのですが、ひつようなしょるいをおしえていただけますか。",
+    title: "Ngân hàng: mở tài khoản"
+  },
+  {
+    bodyMd:
+      "Tình huống: bạn nhận phiếu lương (給与明細) và cần đọc các khoản khấu trừ.\n\nÝ câu: Phần khấu trừ ghi thuế thu nhập, thuế cư trú, bảo hiểm y tế và bảo hiểm hưu trí (厚生年金).",
+    explanationText: "Nội dung chỉ phục vụ học tiếng Nhật theo ngữ cảnh, không phải tư vấn thuế.",
+    japaneseText: "給与明細の控除欄に、所得税・住民税・健康保険・厚生年金が記載されています。",
+    kind: "life_tax",
+    readingText: "きゅうよめいさいのこうじょらんに、しょとくぜい・じゅうみんぜい・けんこうほけん・こうせいねんきんがきさいされています。",
+    title: "Phiếu lương: thuế & bảo hiểm"
   }
 ] as const;
 
 function flashcardsFor(seed: (typeof contentSeeds)[number]) {
+  const primaryBack = buildDailySuggestedFlashcardBack(seed.bodyMd, seed.explanationText);
   return [
-    { backText: seed.explanationText, frontText: seed.japaneseText, reading: seed.readingText },
+    { backText: primaryBack, frontText: seed.japaneseText, reading: seed.readingText },
     { backText: seed.title, frontText: seed.japaneseText.split("。")[0], reading: seed.readingText }
   ];
 }

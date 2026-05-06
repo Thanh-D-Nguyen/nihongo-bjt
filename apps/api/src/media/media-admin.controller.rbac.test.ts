@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ForbiddenException } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 
 import { MediaAdminController } from "./media-admin.controller.js";

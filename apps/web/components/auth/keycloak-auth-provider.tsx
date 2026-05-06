@@ -10,6 +10,7 @@ import {
   type ReactNode
 } from "react";
 
+import { getLearnerKeycloakSession } from "../../lib/learner-keycloak-session";
 import { isWebKeycloakEnabled } from "../../lib/public-keycloak";
 
 export type LearnerAuthState = {
@@ -28,8 +29,6 @@ export type LearnerAuthState = {
 };
 
 const Ctx = createContext<LearnerAuthState | null>(null);
-
-const apiBase = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/$/u, "");
 
 function keycloakUiEnabled() {
   return isWebKeycloakEnabled();
@@ -70,30 +69,25 @@ export function KeycloakAuthProvider({
     setLoading(true);
     setError("none");
     try {
-      const fetchSession = () =>
-        fetch("/api/auth/keycloak/session", {
-          cache: "no-store",
-          credentials: "same-origin"
-        });
-      let s = await fetchSession();
-      if (!s.ok && s.status === 401) {
+      let result = await getLearnerKeycloakSession();
+      if (!result.ok && result.status === 401 && kcAccessCookiePresent) {
         await new Promise((r) => setTimeout(r, 150));
-        s = await fetchSession();
+        result = await getLearnerKeycloakSession({ force: true });
       }
-      if (!s.ok) {
+      if (!result.ok) {
         setAccessToken(null);
         clearProfile();
         setSessionFailedWithCookie(kcAccessCookiePresent);
-        setError(s.status === 401 ? "session" : "session");
+        setError(result.status === 401 ? "session" : "session");
         return;
       }
       setSessionFailedWithCookie(false);
-      const { accessToken: at } = (await s.json()) as { accessToken: string };
+      const at = result.accessToken;
       setAccessToken(at);
       try {
-        const me = await fetch(`${apiBase}/api/auth/me`, {
+        const me = await fetch("/api/auth/me", {
           cache: "no-store",
-          headers: { Authorization: `Bearer ${at}` }
+          credentials: "same-origin"
         });
         if (me.ok) {
           const body = (await me.json()) as {

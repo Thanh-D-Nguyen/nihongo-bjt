@@ -8,5 +8,10 @@ export type QuotaKey = (typeof Quota)[keyof typeof Quota];
 
 export const EntitlementKey = {
   learner_basic: "learner.basic",
-  ads_reduced: "ads.reduced"
+  ads_reduced: "ads.reduced",
+  quiz_official_simulation: "quiz.official_simulation"
+} as const;
+
+export const FeatureFlagKey = {
+  quiz_official_simulation: "quiz.official_simulation.enabled"
 } as const;

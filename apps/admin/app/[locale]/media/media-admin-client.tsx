@@ -357,6 +357,7 @@ export function MediaAdminClient({
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- asset param reserved for signed URL implementation
   function thumb(_a: Asset): string | null {
     // Thumbnail preview requires a signed admin GET URL endpoint (partial_schema_pending).
     return null;
@@ -498,7 +499,6 @@ export function MediaAdminClient({
                   <AdminDataTableTd>
                     <div className="flex items-center gap-2">
                       {thumb(a) ? (
-                        // eslint-disable-next-line @next/next/no-img-element
                         <img
                           alt=""
                           className="h-8 w-8 shrink-0 rounded border border-slate-200 object-cover"

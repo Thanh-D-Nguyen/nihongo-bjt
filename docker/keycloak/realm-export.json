@@ -3,7 +3,7 @@
   "realm": "nihongo-bjt",
   "displayName": "NihonGo BJT",
   "enabled": true,
-  "sslRequired": "external",
+  "sslRequired": "none",
   "registrationAllowed": false,
   "loginWithEmailAllowed": true,
   "duplicateEmailsAllowed": false,
@@ -39,8 +39,14 @@
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
       "secret": "nihongo-web-dev-secret",
-      "redirectUris": ["http://localhost:3000/*", "http://localhost:3001/*"],
-      "webOrigins": ["http://localhost:3000", "http://localhost:3001"],
+      "redirectUris": [
+        "http://localhost:3000/*",
+        "http://localhost:3001/*"
+      ],
+      "webOrigins": [
+        "http://localhost:3000",
+        "http://localhost:3001"
+      ],
       "notBefore": 0,
       "bearerOnly": false,
       "consentRequired": false,
@@ -82,8 +88,12 @@
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
       "secret": "nihongo-admin-dev-secret",
-      "redirectUris": ["http://localhost:3001/*"],
-      "webOrigins": ["http://localhost:3001"],
+      "redirectUris": [
+        "http://localhost:3001/*"
+      ],
+      "webOrigins": [
+        "http://localhost:3001"
+      ],
       "notBefore": 0,
       "bearerOnly": false,
       "consentRequired": false,
@@ -131,9 +141,29 @@
           "temporary": false
         }
       ],
-      "realmRoles": ["user"],
+      "realmRoles": [
+        "user"
+      ],
       "clientRoles": {},
       "groups": []
+    },
+    {
+      "username": "localadmin",
+      "enabled": true,
+      "email": "local-admin@nihongo-bjt.local",
+      "firstName": "Local",
+      "lastName": "Admin",
+      "emailVerified": true,
+      "realmRoles": [
+        "admin"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin",
+          "temporary": false
+        }
+      ]
     }
   ]
 }

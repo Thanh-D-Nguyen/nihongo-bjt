@@ -8,6 +8,7 @@ import {
 } from "@nestjs/common";
 import { Client } from "minio";
 import { randomUUID } from "node:crypto";
+import type { Readable } from "node:stream";
 
 /**
  * **Object storage** (MinIO/S3) for learner/admin uploads. Assets store **provenance/rights** in PostgreSQL
@@ -144,6 +145,33 @@ export class MediaService {
   presignedGetForObjectKey(objectKey: string, expirySec = 3600) {
     const bucket = this.env.MINIO_BUCKET;
     return this.minio.presignedGetObject(bucket, objectKey, expirySec);
+  }
+
+  /**
+   * Streams an object from the canonical media bucket for **trusted server callers** only
+   * (e.g. kanji stroke SVG keys stored in PostgreSQL). Keys are validated to reduce path abuse.
+   */
+  async streamPublicBucketObject(objectKey: string): Promise<Readable> {
+    MediaService.assertSafeCanonicalObjectKey(objectKey);
+    const bucket = this.env.MINIO_BUCKET;
+    try {
+      return await this.minio.getObject(bucket, objectKey);
+    } catch {
+      throw new NotFoundException("Object not found in storage");
+    }
+  }
+
+  private static assertSafeCanonicalObjectKey(key: string): void {
+    const t = key.trim();
+    if (t.length < 1 || t.length > 512) {
+      throw new BadRequestException("Invalid object key length");
+    }
+    if (t.includes("..")) {
+      throw new BadRequestException("Invalid object key");
+    }
+    if (!/^[\w\-./]+$/.test(t)) {
+      throw new BadRequestException("Invalid object key characters");
+    }
   }
 
   private async assertLearnerCanReadAsset(params: { assetId: string; userId: string }) {

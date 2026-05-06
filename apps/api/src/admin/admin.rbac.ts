@@ -38,6 +38,14 @@ const ADMIN_ROUTE_GROUP_PERMISSIONS = {
 
 export const ADMIN_RBAC_METADATA_KEY = "admin:rbac:require";
 
+/** When true, `AdminRbacGuard` only runs `requireAdminPortalSession` (no fine-grained permission OR). */
+export const ADMIN_RBAC_SESSION_BOOTSTRAP_KEY = "admin:rbac:sessionBootstrap";
+
+/** Portal session probe: must work before `authz` role rows grant any `admin_core` permission. */
+export function AdminPortalSessionBootstrap() {
+  return SetMetadata(ADMIN_RBAC_SESSION_BOOTSTRAP_KEY, true);
+}
+
 export type AdminRouteGroup = keyof typeof ADMIN_ROUTE_GROUP_PERMISSIONS;
 
 export type AdminRbacRequirement = {

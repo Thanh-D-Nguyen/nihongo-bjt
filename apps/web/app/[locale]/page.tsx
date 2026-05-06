@@ -1,8 +1,19 @@
+import type { Metadata } from "next";
 import ja from "../../messages/ja.json";
 import vi from "../../messages/vi.json";
-import { DailyHubClient } from "./_components/daily-hub-client";
+import { HomepageClient } from "./_components/homepage";
 
 const messages = { ja, vi };
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = (messages as Record<string, typeof vi>)[locale] ?? messages.vi;
+  return { title: `${t.dashboard.compactHeaderTitle} — NihonGo BJT` };
+}
 
 export default async function LearnerHome({
   params
@@ -13,9 +24,8 @@ export default async function LearnerHome({
   const t = messages[locale] ?? messages.vi;
 
   return (
-    <DailyHubClient
-      dailyLabels={t.daily}
-      dashboardLabels={t.dashboard}
+    <HomepageClient
+      labels={t.homepage}
       locale={locale}
     />
   );

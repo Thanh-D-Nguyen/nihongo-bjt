@@ -28,7 +28,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { adminApiFetch } from "@/lib/admin-api";
 
 import { UserInviteModal } from "./user-invite-modal";
-import { permsFromMe, type MePayload } from "@/app/_components/admin-client-utils";
+import { permsFromMe } from "@/app/_components/admin-client-utils";
 
 const fieldClass =
   "mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100";

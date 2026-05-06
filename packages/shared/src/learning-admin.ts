@@ -179,6 +179,7 @@ const dailyItemBase = {
   japaneseText: optionalNullableText(4000),
   readingText: optionalNullableText(4000),
   explanationText: optionalNullableText(8000),
+  imageUrl: optionalNullableText(1000),
   sourceProvider: optionalNullableText(80),
   sourceRef: optionalNullableText(500)
 };
@@ -197,6 +198,7 @@ export const adminDailyContentItemPatchSchema = z.object({
   japaneseText: dailyItemBase.japaneseText,
   readingText: dailyItemBase.readingText,
   explanationText: dailyItemBase.explanationText,
+  imageUrl: dailyItemBase.imageUrl,
   sourceProvider: dailyItemBase.sourceProvider,
   sourceRef: dailyItemBase.sourceRef,
   reason

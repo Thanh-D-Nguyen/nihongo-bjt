@@ -2,6 +2,12 @@ import { createPrismaClient, Prisma, type PrismaClient } from "@nihongo-bjt/data
 import { coachingInsight, percentage } from "@nihongo-bjt/shared";
 import { Injectable } from "@nestjs/common";
 
+import {
+  countLearnerDueFlashcards,
+  loadLearnerDailyActivity,
+  loadLearnerStudySignals
+} from "./learner-study-signals.js";
+
 const MET = {
   activeLearner: "learner.active_users",
   reviews: "flashcards.reviews",
@@ -130,23 +136,48 @@ export class AnalyticsRepository {
     });
   }
 
-  async learner(days: number, userId: string | undefined) {
+  async learner(days: number, userId: string | undefined, locale?: string) {
+    if (userId) {
+      const s = await loadLearnerStudySignals(this.prisma, userId, days);
+      const [dailyActivity, dueFlashcards, learningPaths] = await Promise.all([
+        loadLearnerDailyActivity(this.prisma, userId, s.range.start, s.range.end),
+        countLearnerDueFlashcards(this.prisma, userId),
+        this.publishedLearningPaths(8)
+      ]);
+      return {
+        dailyActivity,
+        dueFlashcards,
+        insight: coachingInsight(
+          { bjtAccuracyPct: s.bjtAccuracyPct, reviewCount: s.reviewCount, streakDays: s.streakDays },
+          locale
+        ),
+        learningPaths,
+        range: { days, end: s.range.end, start: s.range.start },
+        totals: {
+          bjtAccuracyPct: s.bjtAccuracyPct,
+          bjtSessions: s.bjtSessions,
+          completedBjtSessions: s.completedBjtSessions,
+          correctAnswers: s.correctQuizAnswers,
+          reviewCount: s.reviewCount,
+          streakDays: s.streakDays
+        },
+        weakSkills: s.weakSkills
+      };
+    }
+
     const { end, start } = this.range(days);
-    const [reviews, answers, sessions, answersBySkill] = await Promise.all([
+    const [reviews, answers, sessions, answersBySkill, learningPaths] = await Promise.all([
       this.prisma.reviewEvent.findMany({
         select: { rating: true, reviewedAt: true },
-        where: { reviewedAt: { gte: start, lt: end }, ...(userId ? { userId } : {}) }
+        where: { reviewedAt: { gte: start, lt: end } }
       }),
       this.prisma.quizAnswer.findMany({
         select: { answeredAt: true, isCorrect: true },
-        where: {
-          answeredAt: { gte: start, lt: end },
-          ...(userId ? { session: { userId } } : {})
-        }
+        where: { answeredAt: { gte: start, lt: end } }
       }),
       this.prisma.quizSession.findMany({
         select: { completedAt: true, estimatedBjtBand: true, estimatedScore: true, status: true },
-        where: { startedAt: { gte: start, lt: end }, ...(userId ? { userId } : {}) }
+        where: { startedAt: { gte: start, lt: end } }
       }),
       this.prisma.quizAnswer.findMany({
         select: {
@@ -157,11 +188,9 @@ export class AnalyticsRepository {
             }
           }
         },
-        where: {
-          answeredAt: { gte: start, lt: end },
-          ...(userId ? { session: { userId } } : {})
-        }
-      })
+        where: { answeredAt: { gte: start, lt: end } }
+      }),
+      this.publishedLearningPaths(8)
     ]);
 
     const correctAnswers = answers.filter((answer) => answer.isCorrect).length;
@@ -170,7 +199,10 @@ export class AnalyticsRepository {
     const weakSkills = this.weakSkillsFromAnswers(answersBySkill);
 
     return {
-      insight: coachingInsight({ bjtAccuracyPct, reviewCount: reviews.length, streakDays }),
+      dailyActivity: [],
+      dueFlashcards: null,
+      insight: coachingInsight({ bjtAccuracyPct, reviewCount: reviews.length, streakDays }, locale),
+      learningPaths,
       range: { days, end, start },
       totals: {
         bjtAccuracyPct,
@@ -182,6 +214,28 @@ export class AnalyticsRepository {
       },
       weakSkills
     };
+  }
+
+  private publishedLearningPaths(limit: number) {
+    return this.prisma.learningPath.findMany({
+      orderBy: { displayOrder: "asc" },
+      select: {
+        descriptionJa: true,
+        descriptionVi: true,
+        id: true,
+        slug: true,
+        targetLevel: true,
+        titleJa: true,
+        titleVi: true
+      },
+      take: limit,
+      where: { status: "published" }
+    });
+  }
+
+  /** Shared windowed signals for companion hint + any consumer needing consistent definitions. */
+  learnerStudySignals(userId: string, days: number) {
+    return loadLearnerStudySignals(this.prisma, userId, days);
   }
 
   private weakSkillsFromAnswers(

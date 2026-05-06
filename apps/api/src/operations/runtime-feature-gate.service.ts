@@ -7,6 +7,32 @@ type MissingBehavior = "allow" | "deny";
 export class RuntimeFeatureGateService {
   private readonly prisma = createPrismaClient();
 
+  async status(
+    key: string,
+    options?: {
+      missingBehavior?: MissingBehavior;
+    }
+  ) {
+    const missingBehavior = options?.missingBehavior ?? "deny";
+    const flag = await this.prisma.featureFlag.findUnique({ where: { key } });
+
+    if (!flag) {
+      return {
+        configured: false,
+        enabled: missingBehavior === "allow",
+        key,
+        killSwitch: false
+      };
+    }
+
+    return {
+      configured: true,
+      enabled: flag.enabled && !flag.killSwitch,
+      key,
+      killSwitch: flag.killSwitch
+    };
+  }
+
   async requireEnabled(
     key: string,
     options?: {

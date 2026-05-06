@@ -225,7 +225,7 @@ export class GrowthSocialAdminRepository {
   ) {
     const before = await this.prisma.shareItem.findUnique({ where: { id } });
     if (!before) throw new NotFoundException("Share item not found");
-    let after: Record<string, unknown> = {};
+    let after: Record<string, unknown>;
     if (action === "hide_from_public") {
       const updated = await this.prisma.shareItem.update({
         data: { expiresAt: new Date() },

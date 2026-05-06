@@ -2,6 +2,7 @@ import { NotFoundException } from "@nestjs/common";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const prismaMock = {
+  $queryRaw: vi.fn(),
   exampleSentence: {
     findMany: vi.fn()
   },
@@ -33,29 +34,20 @@ describe("ContentRepository", () => {
     vi.clearAllMocks();
   });
 
-  it("queries dictionary browse/search with bilingual filters and bounded senses", async () => {
-    prismaMock.lexeme.findMany.mockResolvedValue([{ id: "lex-1" }]);
+  it("queries dictionary browse/search with SQL-ranked ordering and bounded senses", async () => {
+    // Raw SQL returns ranked IDs
+    prismaMock.$queryRaw.mockResolvedValueOnce([{ id: "lex-1" }]);
+    // findMany fetches full rows
+    prismaMock.lexeme.findMany.mockResolvedValueOnce([{ id: "lex-1" }]);
     const repository = new ContentRepository();
 
     await expect(repository.lexemes("họp", 5)).resolves.toEqual([{ id: "lex-1" }]);
+    // First call: $queryRaw for ranked IDs
+    expect(prismaMock.$queryRaw).toHaveBeenCalled();
+    // Second call: findMany to hydrate the IDs
     expect(prismaMock.lexeme.findMany).toHaveBeenCalledWith({
-      include: {
-        senses: {
-          orderBy: { position: "asc" },
-          take: 3
-        }
-      },
-      orderBy: [{ jlptLevel: "asc" }, { headword: "asc" }],
-      take: 5,
-      where: {
-        OR: [
-          { headword: { contains: "họp", mode: "insensitive" } },
-          { reading: { contains: "họp", mode: "insensitive" } },
-          { shortMeaningVi: { contains: "họp", mode: "insensitive" } },
-          { senses: { some: { meaningVi: { contains: "họp", mode: "insensitive" } } } }
-        ],
-        status: "active"
-      }
+      include: { senses: { orderBy: { position: "asc" }, take: 3 } },
+      where: { id: { in: ["lex-1"] } }
     });
   });
 
@@ -113,9 +105,13 @@ describe("ContentRepository", () => {
     await expect(repository.lexemeDetail("missing")).rejects.toThrow(NotFoundException);
   });
 
-  it("queries kanji and grammar with nested learning detail includes", async () => {
-    prismaMock.kanji.findMany.mockResolvedValue([{ id: "kanji-1" }]);
-    prismaMock.grammarPoint.findMany.mockResolvedValue([{ id: "grammar-1" }]);
+  it("queries kanji and grammar with SQL-ranked ordering and nested detail includes", async () => {
+    // Kanji: raw SQL → findMany
+    prismaMock.$queryRaw.mockResolvedValueOnce([{ id: "kanji-1" }]);
+    prismaMock.kanji.findMany.mockResolvedValueOnce([{ id: "kanji-1" }]);
+    // Grammar: raw SQL → findMany
+    prismaMock.$queryRaw.mockResolvedValueOnce([{ id: "grammar-1" }]);
+    prismaMock.grammarPoint.findMany.mockResolvedValueOnce([{ id: "grammar-1" }]);
     const repository = new ContentRepository();
 
     await expect(repository.kanji("会", 2)).resolves.toEqual([{ id: "kanji-1" }]);
@@ -124,39 +120,13 @@ describe("ContentRepository", () => {
         components: { orderBy: { position: "asc" }, take: 8 },
         examples: { orderBy: { position: "asc" }, take: 6 }
       },
-      orderBy: [{ level: "asc" }, { frequency: "asc" }],
-      take: 2,
-      where: {
-        OR: [
-          { character: { contains: "会", mode: "insensitive" } },
-          { meaningVi: { contains: "会", mode: "insensitive" } },
-          { onyomi: { contains: "会", mode: "insensitive" } },
-          { kunyomi: { contains: "会", mode: "insensitive" } },
-          { examples: { some: { word: { contains: "会", mode: "insensitive" } } } }
-        ],
-        status: "active"
-      }
+      where: { id: { in: ["kanji-1"] } }
     });
 
     await expect(repository.grammar("N3", 4)).resolves.toEqual([{ id: "grammar-1" }]);
     expect(prismaMock.grammarPoint.findMany).toHaveBeenCalledWith({
-      include: {
-        details: {
-          orderBy: { position: "asc" },
-          take: 2
-        }
-      },
-      orderBy: [{ jlptLevel: "asc" }, { pattern: "asc" }],
-      take: 4,
-      where: {
-        OR: [
-          { pattern: { contains: "N3", mode: "insensitive" } },
-          { meaningVi: { contains: "N3", mode: "insensitive" } },
-          { jlptLevel: { contains: "N3", mode: "insensitive" } },
-          { details: { some: { explanation: { contains: "N3", mode: "insensitive" } } } }
-        ],
-        status: "active"
-      }
+      include: { details: { orderBy: { position: "asc" }, take: 2 } },
+      where: { id: { in: ["grammar-1"] } }
     });
   });
 
@@ -201,23 +171,16 @@ describe("ContentRepository", () => {
     await expect(repository.grammarDetail("missing-grammar")).rejects.toThrow(NotFoundException);
   });
 
-  it("queries examples and examples-by-word with active filters and bounded limits", async () => {
+  it("queries examples with SQL-ranked ordering and examples-by-word with active filters", async () => {
+    // Examples: raw SQL → findMany
+    prismaMock.$queryRaw.mockResolvedValueOnce([{ id: "ex-1" }]);
     prismaMock.exampleSentence.findMany.mockResolvedValueOnce([{ id: "ex-1" }]);
     prismaMock.exampleSentence.findMany.mockResolvedValueOnce([{ id: "ex-2" }]);
     const repository = new ContentRepository();
 
     await expect(repository.examples("会議", 3)).resolves.toEqual([{ id: "ex-1" }]);
     expect(prismaMock.exampleSentence.findMany).toHaveBeenNthCalledWith(1, {
-      orderBy: { japaneseText: "asc" },
-      take: 3,
-      where: {
-        OR: [
-          { japaneseText: { contains: "会議", mode: "insensitive" } },
-          { reading: { contains: "会議", mode: "insensitive" } },
-          { translationVi: { contains: "会議", mode: "insensitive" } }
-        ],
-        status: "active"
-      }
+      where: { id: { in: ["ex-1"] } }
     });
 
     await expect(repository.examplesByWord("lex-1", 6)).resolves.toEqual([{ id: "ex-2" }]);

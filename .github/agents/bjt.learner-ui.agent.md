@@ -18,7 +18,7 @@ Read `company/skills/agent-quality/00-karpathy-production-agent-skill.md`.
 Read `DESIGN.md`, `company/FRONTEND_PRODUCTION_ORCHESTRATION.md`, `company/FRONTEND_ROUTE_PRIORITY.md`, and `company/learner-ui-screen-contract.md` for learner frontend production work.
 Read `company/SOCIAL_BATTLE_POSTCARD_PRODUCT_LAYER.md` when battle, sharing, SNS, postcards, referrals, public share pages, or bot social interactions are in scope.
 Read relevant `company/skills/ui-production/*.md` files, `company/skills/open-design-bjt/00-open-design-bjt-adaptation.md`, `company/gates/learner-page-production-gate.md`, and `company/gates/open-design-bjt-ui-gate.md` for every learner UI task.
-Read `docs/design/bjt-ui-ux-production-standard.md`, relevant `company/skills/bjt-ui-ux/*.md`, and `company/gates/bjt-ui-ux-production-gate.md` for every learner-facing UI task.
+Read `docs/design/bjt-ui-ux-production-standard.md`, relevant `company/skills/bjt-ui-ux/*.md`, `company/skills/bjt-ui-ux/09-bjt-ui-pro-max-craft-skill.md`, `company/gates/bjt-ui-pro-max-craft-gate.md`, `company/gates/bjt-ui-ux-production-gate.md`, and `company/gates/world-class-learner-experience-gate.md` for every learner-facing UI task.
 Add backend/security/monetization compact files when APIs, privacy, sharing, or premium gates are touched. Read full spec only for conflicts or Boss-requested full verification.
 </context-budget>
 
@@ -29,9 +29,13 @@ Add backend/security/monetization compact files when APIs, privacy, sharing, or 
 - Keep UX calm, premium, supportive, not shame-based.
 - Do not add autoplay media, distracting motion, fake ranks, or manipulative streak/social pressure.
 - Do not use generic UI trend styles unless they improve BJT learning, Japanese readability, or operational clarity.
+- Do not accept beige/gray card-grid screens, weak buttons, or generic SaaS dashboard composition as world-class learner UI.
+- Do not mark a learner screen verified when desktop or mobile screenshot quality is below `4/5` on the world-class learner experience gate.
 - Apply design-system-first workflow and run the Open Design BJT five-dimension critique before production-ready handoff; any score below `3/5` is a blocker or must be fixed.
 - Do not hand off learner UI as production-ready unless `company/gates/learner-page-production-gate.md` passes or blockers are recorded.
 - Do not hand off learner UI as production-ready unless `company/gates/bjt-ui-ux-production-gate.md` also passes or blockers are recorded.
+- Do not hand off learner UI as world-class or visually rescued unless `company/gates/bjt-ui-pro-max-craft-gate.md` passes with CTA state evidence and behavioral psychology evidence.
+- Do not hand off repeated CTA rejection as fixed when the change only adjusts color, radius, font weight, or shadow. Implement a materially different CTA system selected from variant review.
 </constraints>
 
 <workflow>
@@ -41,8 +45,11 @@ Add backend/security/monetization compact files when APIs, privacy, sharing, or 
 4. State design direction, learning outcome, acceptance criteria, specialist review needs, and verification path.
 5. Implement one vertical slice.
 6. Add loading/error/empty/degraded/permission/feature-disabled states where relevant.
-7. Apply learner page production gate, BJT UI/UX gate, Open Design BJT UI gate, and visual QA checklist.
-8. Run/document checks.
+7. Produce or verify the BJT UI Pro Max design-system brief before major visual changes.
+8. For repeated CTA rejection, implement the selected CTA variant from `cta_variant_review`, not another token tweak.
+9. Apply learner page production gate, BJT UI/UX gate, Open Design BJT UI gate, BJT UI Pro Max craft gate, world-class learner experience gate, and visual QA checklist.
+10. If screenshots look generic or the human calls them weak, reopen the slice and run `.github/prompts/54_learner_visual_quality_rescue.prompt.md`.
+11. Run/document checks.
 </workflow>
 
 <report-contract>

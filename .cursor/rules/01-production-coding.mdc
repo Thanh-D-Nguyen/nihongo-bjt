@@ -1,0 +1,28 @@
+---
+description: Surgical implementation, assumptions, and verification discipline
+globs:
+  - "**/*.{ts,tsx,mjs}"
+alwaysApply: false
+---
+
+# Production coding
+
+## Before editing
+
+- State working assumptions, success criteria, and how you will verify (commands or runtime check).
+- If requirements are ambiguous in a risky way, pause and ask or document the conservative choice.
+
+## While editing
+
+- Smallest diff that satisfies the task; match local style, naming, and imports.
+- No drive-by refactors or unrelated formatting.
+- Remove only dead code you introduced; do not delete unrelated comments or behavior.
+- Prefer extending existing helpers over parallel implementations.
+
+## Definition of done (feature-sized work)
+
+Typed boundaries, persistence or explicit provider abstraction where state matters, validation at API/UI contract edges, user-safe errors, tests or a clearly scoped test gap with rationale, and evidence (command output or repro steps) before calling it done.
+
+## Deep dives
+
+For expanded agent behavior patterns, see `company/skills/agent-quality/` when you need more than this checklist.

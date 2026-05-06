@@ -1,0 +1,30 @@
+---
+description: Tests, CI expectations, security and migration safety
+globs:
+  - "**/*.{test,spec}.{ts,tsx}"
+  - "packages/database/prisma/**/*"
+alwaysApply: false
+---
+
+# Testing, security, and database safety
+
+## Verification habit
+
+After substantive edits, run the narrowest relevant checks from the package scripts (lint, typecheck, unit tests touching changed code, `prisma validate` / generate when schema changes). Fix failures you caused before handoff.
+
+## Tests
+
+- Prefer a failing test that reproduces the bug, then fix; for new logic, cover critical branches and permissions.
+- Keep tests deterministic; avoid real network and flaky clocks unless isolated with project patterns.
+
+## Security (pick focused slices)
+
+- AuthZ on the server, safe defaults on new endpoints, no secrets in client bundles or logs.
+- Uploads: type/size limits, virus scan hook if the codebase already defines it, no path traversal.
+- External HTTP: SSRF awareness; validate URLs and timeouts when calling third parties.
+- Rate limits and audit where the product already does so for admin or sensitive actions.
+
+## Migrations
+
+- Forward-only Prisma migrations with clear names; data backfills belong in controlled scripts or batched SQL with review.
+- Destructive steps require explicit comment and operational note (backup, order of deploy).

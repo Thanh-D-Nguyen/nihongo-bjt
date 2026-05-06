@@ -34,6 +34,86 @@ export class FlashcardsRepository {
     });
   }
 
+  /**
+   * Learner removes their own deck from the active library.
+   *
+   * **Policy**
+   * - Deck must be `status: active` and `ownerUserId` must match `userId` (otherwise 404 — no leak).
+   * - Transaction: delete all `deck_card` rows for this deck; set deck `status` to `archived` (retain row for audits).
+   * - **SRS**: For each card that was in the deck, if the learner has **no** remaining `deck_card` link to any
+   *   **active** deck that is still visible to them (`ownerUserId = user` OR `visibility = public`), delete that
+   *   learner's `user_flashcard` row. `review_event` rows cascade from `user_flashcard`.
+   * - Other learners' `user_flashcard` rows are untouched. `flashcard_variant` rows may remain as shared content.
+   */
+  async archiveOwnedDeckForLearner(userId: string, deckId: string) {
+    const deck = await this.prisma.deck.findFirst({
+      where: { id: deckId, ownerUserId: userId, status: "active" }
+    });
+    if (!deck) {
+      throw new NotFoundException({ code: "deck_not_found", message: "Deck not found" });
+    }
+
+    const result = await this.prisma.$transaction(async (tx) => {
+      const links = await tx.deckCard.findMany({
+        select: { cardId: true },
+        where: { deckId }
+      });
+      const cardIds = [...new Set(links.map((l) => l.cardId))];
+
+      const removedLinks = await tx.deckCard.deleteMany({ where: { deckId } });
+
+      await tx.deck.update({
+        data: { status: "archived" },
+        where: { id: deckId }
+      });
+
+      let deletedUserFlashcardCount = 0;
+      for (const cardId of cardIds) {
+        const stillLinked = await tx.deckCard.count({
+          where: {
+            cardId,
+            deck: {
+              status: "active",
+              OR: [{ ownerUserId: userId }, { visibility: "public" }]
+            }
+          }
+        });
+        if (stillLinked === 0) {
+          const del = await tx.userFlashcard.deleteMany({ where: { userId, cardId } });
+          deletedUserFlashcardCount += del.count;
+        }
+      }
+
+      return {
+        deletedUserFlashcardCount,
+        deckId,
+        policy: "archive_owned_deck_prune_srs" as const,
+        removedDeckCardCount: removedLinks.count,
+        status: "archived" as const
+      };
+    });
+
+    try {
+      await this.prisma.analyticsEvent.create({
+        data: {
+          eventName: "learner_deck_archived",
+          payload: {
+            deckId,
+            deletedUserFlashcardCount: result.deletedUserFlashcardCount,
+            policy: "archive_owned_deck_prune_srs",
+            removedDeckCardCount: result.removedDeckCardCount
+          } as Prisma.InputJsonValue,
+          source: "api",
+          userId
+        }
+      });
+    } catch {
+      /* Best-effort analytics; core archive already committed. */
+    }
+
+    return result;
+  }
+
   deckDetail(userId: string, deckId: string) {
     return this.prisma.deck.findFirstOrThrow({
       include: {
@@ -76,20 +156,111 @@ export class FlashcardsRepository {
   }
 
   createDeck(input: {
+    cards?: Array<{
+      backText: string;
+      frontText: string;
+      imageUrl?: string;
+      primaryImageAssetId?: string;
+      reading?: string;
+    }>;
     descriptionJa?: string;
     descriptionVi?: string;
     titleJa?: string;
     titleVi: string;
     userId: string;
+    visibility?: "private" | "public";
   }) {
-    return this.prisma.deck.create({
-      data: {
-        descriptionJa: input.descriptionJa,
-        descriptionVi: input.descriptionVi,
-        ownerUserId: input.userId,
-        titleJa: input.titleJa,
-        titleVi: input.titleVi
+    const data = {
+      descriptionJa: input.descriptionJa,
+      descriptionVi: input.descriptionVi,
+      ownerUserId: input.userId,
+      titleJa: input.titleJa,
+      titleVi: input.titleVi,
+      visibility: input.visibility ?? "private"
+    };
+
+    if (!input.cards?.length) {
+      return this.prisma.deck.create({ data });
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const deck = await tx.deck.create({ data });
+      let position = 0;
+      for (const row of input.cards!) {
+        const card = await tx.flashcardVariant.create({
+          data: {
+            backText: row.backText,
+            frontText: row.frontText,
+            reading: row.reading,
+            sourceId: randomUUID(),
+            sourceType: "reading_assist"
+          }
+        });
+
+        await tx.deckCard.create({
+          data: {
+            cardId: card.id,
+            deckId: deck.id,
+            position: position++
+          }
+        });
+
+        await tx.userFlashcard.create({
+          data: {
+            cardId: card.id,
+            userId: input.userId
+          }
+        });
+
+        if (row.primaryImageAssetId) {
+          const asset = await tx.mediaAsset.findFirst({
+            where: {
+              id: row.primaryImageAssetId,
+              ownerUserId: input.userId,
+              status: "active"
+            }
+          });
+          if (!asset) {
+            throw new BadRequestException("Card image asset not found or not owned by user");
+          }
+          await tx.cardMediaLink.create({
+            data: {
+              assetId: asset.id,
+              cardId: card.id,
+              role: "primary_image"
+            }
+          });
+        } else if (row.imageUrl) {
+          const asset = await tx.mediaAsset.create({
+            data: {
+              accessibility: {
+                altText: row.frontText.slice(0, 200),
+                reducedMotionSafe: true
+              },
+              byteSize: 1,
+              license: "user_supplied_link",
+              mimeType: "image/jpeg",
+              objectKey: `learning/external-ref/${randomUUID()}`,
+              ownerUserId: input.userId,
+              provenance: { kind: "flashcard_bulk_import_url" },
+              provider: "external_url",
+              rightsStatus: "cleared",
+              sourceUrl: row.imageUrl,
+              status: "active"
+            }
+          });
+
+          await tx.cardMediaLink.create({
+            data: {
+              assetId: asset.id,
+              cardId: card.id,
+              role: "primary_image"
+            }
+          });
+        }
       }
+
+      return deck;
     });
   }
 
@@ -195,7 +366,24 @@ export class FlashcardsRepository {
     });
   }
 
-  dueReviews(userId: string, limit: number) {
+  dueReviews(userId: string, limit: number, deckId?: string) {
+    const deckScope =
+      deckId !== undefined && deckId.length > 0
+        ? {
+            card: {
+              deckLinks: {
+                some: {
+                  deckId,
+                  deck: {
+                    OR: [{ ownerUserId: userId }, { visibility: "public" }],
+                    status: "active"
+                  }
+                }
+              }
+            }
+          }
+        : {};
+
     return this.prisma.userFlashcard.findMany({
       include: { card: { include: { mediaLinks: { include: { asset: true } } } } },
       orderBy: { dueAt: "asc" },
@@ -203,7 +391,37 @@ export class FlashcardsRepository {
       where: {
         dueAt: { lte: new Date() },
         state: { in: ["new", "learning", "review", "lapsed"] },
-        userId
+        userId,
+        ...deckScope
+      }
+    });
+  }
+
+  /** Count due SRS items (same predicate as `dueReviews`) for companion / dashboards. */
+  countDueForLearner(userId: string, deckId?: string) {
+    const deckScope =
+      deckId !== undefined && deckId.length > 0
+        ? {
+            card: {
+              deckLinks: {
+                some: {
+                  deckId,
+                  deck: {
+                    OR: [{ ownerUserId: userId }, { visibility: "public" }],
+                    status: "active"
+                  }
+                }
+              }
+            }
+          }
+        : {};
+
+    return this.prisma.userFlashcard.count({
+      where: {
+        dueAt: { lte: new Date() },
+        state: { in: ["new", "learning", "review", "lapsed"] },
+        userId,
+        ...deckScope
       }
     });
   }

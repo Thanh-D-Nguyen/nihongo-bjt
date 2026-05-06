@@ -78,17 +78,25 @@ export async function POST(request: Request) {
       userId: created.userId
     });
 
-    const tokens = await exchangeResourceOwnerPassword({
-      clientId: cfg.clientId,
-      clientSecret: cfg.clientSecret,
-      issuer: cfg.issuer,
-      password: fields.password,
-      username: fields.username
-    });
-    const res = NextResponse.json({ ok: true });
-    setTokenCookies(res, tokens);
-    return res;
-  } catch {
+    // Auto-login after registration
+    try {
+      const tokens = await exchangeResourceOwnerPassword({
+        clientId: cfg.clientId,
+        clientSecret: cfg.clientSecret,
+        issuer: cfg.issuer,
+        password: fields.password,
+        username: fields.username
+      });
+      const res = NextResponse.json({ ok: true });
+      setTokenCookies(res, tokens);
+      return res;
+    } catch (loginErr) {
+      // User was created but auto-login failed — still a success, just redirect to login
+      console.error("[register] auto-login failed after user creation:", loginErr);
+      return NextResponse.json({ ok: true });
+    }
+  } catch (err) {
+    console.error("[register] registration failed:", err);
     return NextResponse.json({ error: "registration_failed" }, { status: 500 });
   }
 }

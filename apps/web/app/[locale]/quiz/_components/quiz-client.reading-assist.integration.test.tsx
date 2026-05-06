@@ -11,12 +11,11 @@ vi.mock("../../../../components/reading-assist/annotated-japanese-text", () => (
   }
 }));
 
-import { QuizQuestionPanel } from "./quiz-client";
+import { QuizQuestionPanel, type QuizLabels } from "./quiz-client";
 
 const labels = {
   anotherRound: "another",
   bandLabel: "band",
-  estimatedScoreCaveat: "estimated caveat",
   coachJ1: "j1",
   coachJ2: "j2",
   coachJ3: "j3",
@@ -24,13 +23,40 @@ const labels = {
   coachJ5: "j5",
   completedTitle: "completed",
   correctSummary: "summary",
-  empty: "empty",
+  emptyCtaHelp: "help",
+  emptyCtaHome: "home",
+  emptyPublicDescription: "empty desc",
+  emptyPublicTitle: "empty title",
   error: "error",
+  estimatedScoreCaveat: "estimated caveat",
   eyebrow: "eyebrow",
+  formatGuideBullet1: "b1",
+  formatGuideBullet2: "b2",
+  formatGuideBullet3: "b3",
+  formatGuideBullet4: "b4",
+  formatGuideBullet5: "b5",
+  formatGuideDisclaimer: "disc",
+  formatGuideHelpLink: "help link",
+  formatGuideIntro: "intro",
+  formatGuideSummary: "summary fg",
+  hubMetaLevel: "level {level}",
+  hubMetaSections: "{n} sec",
+  hubMetaTimed: "{n} min",
+  hubMetaUntimed: "untimed",
+  hubTemplatesDescription: "hub desc",
+  hubTemplatesHeading: "hub title",
+  hubTemplatesLoading: "loading hub",
   load: "load",
   noQuestion: "no question",
-  practiceModeBadge: "practice mode",
   placeholder: "placeholder",
+  practiceModeBadge: "practice mode",
+  scoreLabel: "score",
+  sessionBadgeActive: "active",
+  sessionProgress: "{current}/{total}",
+  printExam: "print exam",
+  start: "start",
+  subtitle: "subtitle",
+  title: "title",
   breakdown: {
     resultsTitle: "Results",
     estimatedScoreLabel: "Score:",
@@ -66,11 +92,15 @@ const labels = {
     },
     sectionTitle: "assist"
   },
-  scoreLabel: "score",
-  start: "start",
-  subtitle: "subtitle",
-  title: "title"
-};
+  audio: {
+    audioSection: "Listening",
+    hideScript: "Hide script",
+    listenAudio: "Listen",
+    playCount: "{current}/{max}",
+    showScript: "Show script",
+    ttsNotice: "TTS"
+  }
+} satisfies QuizLabels;
 
 const questionPayload = {
   question: {
@@ -84,6 +114,7 @@ const questionPayload = {
   },
   session: {
     correctCount: 0,
+    currentQuestionNo: 0,
     estimatedBjtBand: null,
     estimatedScore: null,
     id: "session-123",

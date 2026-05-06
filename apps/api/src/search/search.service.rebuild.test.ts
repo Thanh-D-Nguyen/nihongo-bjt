@@ -44,7 +44,7 @@ describe("SearchService rebuildProjectionIndex", () => {
     const result = await service.rebuildProjectionIndex();
 
     expect(updateSettings).toHaveBeenCalledWith({
-      filterableAttributes: ["kind"],
+      filterableAttributes: ["kind", "jlptLevel"],
       searchableAttributes: ["title", "reading", "description"],
       sortableAttributes: ["kind"]
     });
@@ -53,6 +53,7 @@ describe("SearchService rebuildProjectionIndex", () => {
         {
           description: "cuộc họp",
           id: "lex-1",
+          jlptLevel: null,
           kind: "lexeme",
           reading: "かいぎ",
           title: "会議"
@@ -60,6 +61,7 @@ describe("SearchService rebuildProjectionIndex", () => {
         {
           description: "hội",
           id: "kanji-1",
+          jlptLevel: null,
           kind: "kanji",
           reading: "カイ / あ.う",
           title: "会"
@@ -67,6 +69,7 @@ describe("SearchService rebuildProjectionIndex", () => {
         {
           description: "đã từng",
           id: "gr-1",
+          jlptLevel: "N3",
           kind: "grammar",
           reading: "N3",
           title: "〜たことがある"
@@ -74,6 +77,7 @@ describe("SearchService rebuildProjectionIndex", () => {
         {
           description: "Bắt đầu cuộc họp.",
           id: "ex-1",
+          jlptLevel: null,
           kind: "example",
           reading: "かいぎをはじめます。",
           title: "会議を始めます。"

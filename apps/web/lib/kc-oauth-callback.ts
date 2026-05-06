@@ -1,8 +1,8 @@
-import { exchangeAuthorizationCode, KC_COOKIE } from "@nihongo-bjt/keycloak-oidc";
+import { exchangeAuthorizationCode } from "@nihongo-bjt/keycloak-oidc";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-import { clearKcCookies, safeReturnToPath, setTokenCookies } from "@/lib/kc-cookies";
+import { clearKcCookies, learnerKcCookies, safeReturnToPath, setTokenCookies } from "@/lib/kc-cookies";
 
 export type KcCallbackConfig = {
   defaultFailLocalePrefix: string;
@@ -39,13 +39,13 @@ export async function handleKeycloakOAuthCallback(request: Request, cfg: KcCallb
   const state = url.searchParams.get("state");
   const oauthError = url.searchParams.get("error");
 
-  const expectedState = jar.get(KC_COOKIE.state)?.value;
-  const verifier = jar.get(KC_COOKIE.pkceVerifier)?.value;
-  const returnTo = safeReturnToPath(jar.get(KC_COOKIE.returnTo)?.value ?? null, "/vi");
+  const expectedState = jar.get(learnerKcCookies.state)?.value;
+  const verifier = jar.get(learnerKcCookies.pkceVerifier)?.value;
+  const returnTo = safeReturnToPath(jar.get(learnerKcCookies.returnTo)?.value ?? null, "/vi");
 
-  jar.delete(KC_COOKIE.state);
-  jar.delete(KC_COOKIE.pkceVerifier);
-  jar.delete(KC_COOKIE.returnTo);
+  jar.delete(learnerKcCookies.state);
+  jar.delete(learnerKcCookies.pkceVerifier);
+  jar.delete(learnerKcCookies.returnTo);
 
   if (oauthError) {
     const code = oauthError === "access_denied" ? "access_denied" : "auth_failed";

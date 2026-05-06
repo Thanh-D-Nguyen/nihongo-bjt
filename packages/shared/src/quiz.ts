@@ -5,7 +5,7 @@ export interface QuizScoreInput {
 
 export interface QuizScoreResult {
   accuracy: number;
-  estimatedBjtBand: "J5" | "J4" | "J3" | "J2" | "J1";
+  estimatedBjtBand: "J5" | "J4" | "J3" | "J2" | "J1" | "J1+";
   estimatedScore: number;
 }
 
@@ -26,9 +26,12 @@ export function scoreBjtPractice(input: QuizScoreInput): QuizScoreResult {
 
 function bandForEstimatedScore(score: number): QuizScoreResult["estimatedBjtBand"] {
   if (score >= 600) {
+    return "J1+";
+  }
+  if (score >= 530) {
     return "J1";
   }
-  if (score >= 470) {
+  if (score >= 420) {
     return "J2";
   }
   if (score >= 320) {

@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException
-} from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { createPrismaClient, Prisma, type PrismaClient } from "@nihongo-bjt/database";
 import type { z } from "zod";
 
@@ -10,6 +6,7 @@ import type {
   adminMockExamCreateSchema,
   adminMockExamListQuerySchema,
   adminMockExamPatchSchema,
+  ASSESSMENT_EXAM_TYPES,
   ASSESSMENT_QUIZ_TEMPLATE_TYPES
 } from "@nihongo-bjt/shared";
 
@@ -24,6 +21,9 @@ const TEMPLATE_TYPES: readonly (typeof ASSESSMENT_QUIZ_TEMPLATE_TYPES)[number][]
   "topic_mastery",
   "diagnostic"
 ];
+
+const EXAM_TYPES: readonly (typeof ASSESSMENT_EXAM_TYPES)[number][] = ["mock", "official"];
+const VISIBLE_TEST_TYPES = [...EXAM_TYPES, "practice"] as const;
 
 const SUMMARY_SELECT = {
   id: true,
@@ -46,9 +46,11 @@ export class MockExamsAdminRepository {
   private readonly prisma: PrismaClient = createPrismaClient();
 
   async list(input: ListInput) {
-    const where: Prisma.BjtMockTestWhereInput = { type: "mock" };
+    const where: Prisma.BjtMockTestWhereInput = input.type
+      ? { type: input.type }
+      : { type: { in: [...VISIBLE_TEST_TYPES] } };
     if (input.status) where.status = input.status;
-    if (input.level) where.level = input.level;
+    if (input.level) where.level = { in: this.levelCandidates(input.level) };
     if (input.q) {
       where.OR = [
         { slug: { contains: input.q, mode: "insensitive" } },
@@ -86,7 +88,7 @@ export class MockExamsAdminRepository {
         },
         _count: { select: { sessions: true } }
       },
-      where: { id, type: "mock" }
+      where: { id, type: { in: [...VISIBLE_TEST_TYPES] } }
     });
     if (!row) return null;
     const audit = await this.prisma.adminAuditLog.findMany({
@@ -107,7 +109,7 @@ export class MockExamsAdminRepository {
         titleVi: data.titleVi,
         titleJa: data.titleJa ?? null,
         description: data.description ?? null,
-        type: "mock",
+        type: (data as any).type ?? "mock",
         status: "draft",
         level: data.level,
         timeLimitSeconds: data.timeLimitSeconds,
@@ -126,7 +128,9 @@ export class MockExamsAdminRepository {
   }
 
   async patch(actorId: string, id: string, data: PatchInput) {
-    const before = await this.prisma.bjtMockTest.findFirst({ where: { id, type: "mock" } });
+    const before = await this.prisma.bjtMockTest.findFirst({
+      where: { id, type: { in: [...EXAM_TYPES] } }
+    });
     if (!before) throw new NotFoundException("Mock exam not found");
     if (data.slug && data.slug !== before.slug) await this.assertSlugUnique(data.slug, id);
 
@@ -135,6 +139,7 @@ export class MockExamsAdminRepository {
     if (data.titleVi !== undefined) update.titleVi = data.titleVi;
     if (data.titleJa !== undefined) update.titleJa = data.titleJa;
     if (data.description !== undefined) update.description = data.description;
+    if ((data as any).type !== undefined) update.type = (data as any).type;
     if (data.level !== undefined) update.level = data.level;
     if (data.timeLimitSeconds !== undefined) update.timeLimitSeconds = data.timeLimitSeconds;
     if (data.blueprintMeta !== undefined) {
@@ -154,7 +159,9 @@ export class MockExamsAdminRepository {
   }
 
   async publish(actorId: string, id: string, reason: string) {
-    const before = await this.prisma.bjtMockTest.findFirst({ where: { id, type: "mock" } });
+    const before = await this.prisma.bjtMockTest.findFirst({
+      where: { id, type: { in: [...EXAM_TYPES] } }
+    });
     if (!before) throw new NotFoundException("Mock exam not found");
     if (before.status === "archived") {
       throw new BadRequestException({ code: "cannot_publish_archived" });
@@ -186,7 +193,9 @@ export class MockExamsAdminRepository {
   }
 
   async archive(actorId: string, id: string, reason: string) {
-    const before = await this.prisma.bjtMockTest.findFirst({ where: { id, type: "mock" } });
+    const before = await this.prisma.bjtMockTest.findFirst({
+      where: { id, type: { in: [...EXAM_TYPES] } }
+    });
     if (!before) throw new NotFoundException("Mock exam not found");
     if (before.status === "archived") return this.detail(id);
     const updated = await this.prisma.bjtMockTest.update({
@@ -205,7 +214,9 @@ export class MockExamsAdminRepository {
   }
 
   async duplicate(actorId: string, id: string, reason: string) {
-    const src = await this.prisma.bjtMockTest.findFirst({ where: { id, type: "mock" } });
+    const src = await this.prisma.bjtMockTest.findFirst({
+      where: { id, type: { in: [...EXAM_TYPES] } }
+    });
     if (!src) throw new NotFoundException("Mock exam not found");
     const slug = await this.uniqueCopySlug(src.slug);
     const created = await this.prisma.bjtMockTest.create({
@@ -214,7 +225,7 @@ export class MockExamsAdminRepository {
         titleVi: this.suffixCopy(src.titleVi),
         titleJa: src.titleJa,
         description: src.description,
-        type: "mock",
+        type: src.type,
         status: "draft",
         level: src.level,
         timeLimitSeconds: src.timeLimitSeconds,
@@ -233,10 +244,15 @@ export class MockExamsAdminRepository {
   }
 
   async remove(actorId: string, id: string, reason: string) {
-    const before = await this.prisma.bjtMockTest.findFirst({ where: { id, type: "mock" } });
+    const before = await this.prisma.bjtMockTest.findFirst({
+      where: { id, type: { in: [...EXAM_TYPES] } }
+    });
     if (!before) throw new NotFoundException("Mock exam not found");
     if (before.status !== "draft") {
-      throw new BadRequestException({ code: "only_draft_can_be_deleted", currentStatus: before.status });
+      throw new BadRequestException({
+        code: "only_draft_can_be_deleted",
+        currentStatus: before.status
+      });
     }
     const sessions = await this.prisma.quizSession.count({ where: { testId: id } });
     if (sessions > 0) {
@@ -277,6 +293,16 @@ export class MockExamsAdminRepository {
     if (existing && existing.id !== excludeId) {
       throw new BadRequestException({ code: "slug_already_in_use", slug });
     }
+  }
+
+  private levelCandidates(level: string) {
+    return Array.from(
+      new Set([
+        level,
+        level.replace(/^BJT-/, ""),
+        level.startsWith("BJT-") ? level : `BJT-${level}`
+      ])
+    );
   }
 
   private async uniqueCopySlug(base: string) {

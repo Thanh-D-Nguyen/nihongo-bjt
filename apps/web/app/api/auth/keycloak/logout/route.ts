@@ -1,32 +1,69 @@
-import { buildLogoutRedirect, KC_COOKIE } from "@nihongo-bjt/keycloak-oidc";
+import { revokeKeycloakSession } from "@nihongo-bjt/keycloak-oidc";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-import { clearKcCookies } from "@/lib/kc-cookies";
+import { clearKcCookies, learnerKcCookies } from "@/lib/kc-cookies";
 import { getKcWebConfig } from "@/lib/kc-server-config";
 
+/** POST — Backchannel logout (CSRF-safe: SameSite=Lax cookies not sent on cross-origin POST). */
+export async function POST(request: Request) {
+  const cfg = getKcWebConfig();
+  const url = new URL(request.url);
+  const locale = url.searchParams.get("locale") === "ja" ? "ja" : "vi";
+  const jar = await cookies();
+
+  const publicBase = cfg?.publicBaseUrl
+    ?? (process.env.WEB_PUBLIC_URL ?? "http://localhost:3000").replace(/\/$/u, "");
+
+  // Backchannel: revoke the refresh token server-side (no Keycloak redirect)
+  if (cfg) {
+    const refreshToken = jar.get(learnerKcCookies.refresh)?.value;
+    if (refreshToken) {
+      try {
+        await revokeKeycloakSession({
+          clientId: cfg.clientId,
+          clientSecret: cfg.clientSecret,
+          issuer: cfg.issuer,
+          refreshToken,
+        });
+      } catch {
+        // Best-effort: if revocation fails, still clear local cookies
+      }
+    }
+  }
+
+  const res = NextResponse.json({ ok: true, redirectTo: `/${locale}/login` });
+  clearKcCookies(res);
+  return res;
+}
+
+/** GET — Fallback for direct navigation / anchor links. */
 export async function GET(request: Request) {
   const cfg = getKcWebConfig();
   const url = new URL(request.url);
   const locale = url.searchParams.get("locale") === "ja" ? "ja" : "vi";
   const jar = await cookies();
-  const idHint = jar.get(KC_COOKIE.idToken)?.value;
 
-  if (!cfg) {
-    const base = (process.env.WEB_PUBLIC_URL ?? "http://localhost:3000").replace(/\/$/u, "");
-    const res = NextResponse.redirect(new URL(`/${locale}/login`, base));
-    clearKcCookies(res);
-    return res;
+  const publicBase = cfg?.publicBaseUrl
+    ?? (process.env.WEB_PUBLIC_URL ?? "http://localhost:3000").replace(/\/$/u, "");
+
+  if (cfg) {
+    const refreshToken = jar.get(learnerKcCookies.refresh)?.value;
+    if (refreshToken) {
+      try {
+        await revokeKeycloakSession({
+          clientId: cfg.clientId,
+          clientSecret: cfg.clientSecret,
+          issuer: cfg.issuer,
+          refreshToken,
+        });
+      } catch {
+        // Best-effort
+      }
+    }
   }
 
-  const postLogout = new URL(`/${locale}/login`, cfg.publicBaseUrl).toString();
-  const logoutUrl = buildLogoutRedirect({
-    idTokenHint: idHint,
-    issuer: cfg.issuer,
-    postLogoutRedirectUri: postLogout
-  });
-
-  const res = NextResponse.redirect(logoutUrl);
+  const res = NextResponse.redirect(new URL(`/${locale}/login`, publicBase));
   clearKcCookies(res);
   return res;
 }

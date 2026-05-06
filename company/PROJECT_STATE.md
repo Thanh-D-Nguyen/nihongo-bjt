@@ -10,12 +10,13 @@ Update this file after every major agent cycle.
 
 ## Current sprint focus
 
-- PHASE-10 Admin 100% completion slice + learner hardening: **completed_with_risks** (PH10-T01..PH10-T06 + PH10-CLOSE passed).
+- PHASE-10 Admin 100% completion slice + learner hardening: **completed** (all tasks passed).
+- Post-PHASE-10 production hardening: **in progress** (13+ micro-slices completed: i18n, utility pages, quiz/battle UX, ESLint cleanup, SQL injection fix, error boundaries, SEO metadata, viewport/favicon, NHK IDOR security fix, rate limiting).
+- Admin 100 gate: **PASS** — all 19 human-reported blockers resolved, all inventory items resolved, rate limiting installed.
 - Browser phase review evidence: admin + web routes pass under bounded runner.
 - Release Director phase-scope decision: **ship_with_risks, no-launch**.
-- Final production launch remains blocked by explicit human/Release Director approval and residual cross-phase risks.
+- Final production launch remains blocked by explicit human/Release Director approval.
 - Active phase risks: PH07-R02 open (growth-social), PH07-R03 open (security), PH08-R01 open (qa), PH08-R02 open (devops).
-- Admin 100 gate for the human's full admin production-ready goal: **BLOCKED / IN PROGRESS**. One product-depth slice resolved User 360/Support/Privacy/Analytics/Settings, but closeout is not allowed while residual admin feature-depth risks remain: Admin Shell/sidebar long-menu UX, Daily Hub/Learning Review depth, Assessment/BJT workflows, Battle admin, Growth admin, IAM depth, visible planned-notice learning/content pages, and dedicated settings/auth-provider diagnostics.
 
 ## PHASE-07 Mid-Phase Checkpoint
 

@@ -64,10 +64,26 @@ export const serverEnvSchema = z.object({
     KEYCLOAK_ADMIN_REALM_ROLES: z.string().optional(),
     /** Public browser URL of Keycloak (optional; defaults to issuer origin). Used in docs / logout hints. */
     KEYCLOAK_PUBLIC_URL: z.string().url().optional(),
+    /**
+     * Keycloak public URL (origin only) for Admin REST, e.g. `http://localhost:8080`.
+     * If unset, derived from `KEYCLOAK_ISSUER_URL` / `NEXT_PUBLIC_KEYCLOAK_ISSUER_URL`.
+     */
     KEYCLOAK_BASE_URL: z.string().url().optional(),
+    /**
+     * Confidential client in the target realm (or with realm-management) that can call Admin REST
+     * (`manage-users`, `query-users`, `view-users`). No password is stored in PostgreSQL; this is server-only.
+     */
     KEYCLOAK_USER_ADMIN_CLIENT_ID: z.string().optional(),
     KEYCLOAK_USER_ADMIN_CLIENT_SECRET: z.string().optional(),
+    /**
+     * Realm where users are created. Defaults to realm parsed from `KEYCLOAK_ISSUER_URL` path, or
+     * `KEYCLOAK_USER_ADMIN_REALM` if set.
+     */
     KEYCLOAK_USER_ADMIN_TARGET_REALM: z.string().optional(),
+    /**
+     * When not `false` / `0`, serve Swagger UI and OpenAPI JSON at `/api/docs` (and `/api/docs/openapi.json`).
+     * Set to `false` in production if the spec must not be public (use gateway auth instead).
+     */
     SWAGGER_ENABLED: z
         .string()
         .optional()
@@ -101,4 +117,3 @@ export const supportedLocales = ["vi", "ja"];
 export function isSupportedLocale(locale) {
     return supportedLocales.includes(locale);
 }
-//# sourceMappingURL=index.js.map

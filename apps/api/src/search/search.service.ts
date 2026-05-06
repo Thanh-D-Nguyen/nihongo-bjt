@@ -1,10 +1,35 @@
 import { parseServerEnv } from "@nihongo-bjt/config";
 import { createPrismaClient } from "@nihongo-bjt/database";
-import { searchResultSchema, type SearchResult } from "@nihongo-bjt/shared";
+import { searchResultSchema, type SearchResult, type SearchSuggestion } from "@nihongo-bjt/shared";
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import { Meilisearch } from "meilisearch";
+import { isRomaji, toHiragana, toKatakana } from "wanakana";
 
 import { ContentRepository } from "../content/content.repository.js";
+
+interface ScoredResult extends SearchResult {
+  score: number;
+}
+
+/** Check if a string contains any CJK characters (kanji, hiragana, katakana) */
+function isCJK(s: string): boolean {
+  return /[\u3000-\u9fff\uf900-\ufaff]/.test(s);
+}
+
+/** Check if a string is all katakana */
+function isAllKatakana(s: string): boolean {
+  return /^[\u30A0-\u30FF\u30FC]+$/.test(s);
+}
+
+/** Convert katakana to hiragana */
+function katakanaToHiragana(s: string): string {
+  return s.replace(/[\u30A1-\u30F6]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0x60));
+}
+
+/** Extract individual kanji characters from a string */
+function extractKanji(s: string): string[] {
+  return [...s].filter((ch) => /[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]/.test(ch));
+}
 
 @Injectable()
 export class SearchService {
@@ -20,20 +45,31 @@ export class SearchService {
     });
   }
 
-  async search(q: string, limit: number): Promise<SearchResult[]> {
-    const meili = await this.searchMeilisearch(q, limit);
-    if (meili.length > 0) {
-      return meili;
-    }
-    return this.searchPostgres(q, limit);
+  async search(q: string, limit: number, scope?: string, level?: string): Promise<SearchResult[]> {
+    // Always use PostgreSQL ranked search — Meilisearch CJK tokenization
+    // breaks multi-character Japanese words into individual characters,
+    // producing irrelevant results (e.g. 会議 → matches anything with 会 or 議).
+    const scored = await this.searchPostgresRanked(q, limit, scope, level);
+    return scored.map(({ score: _s, ...rest }) => rest).slice(0, limit);
   }
 
-  private async searchMeilisearch(q: string, limit: number): Promise<SearchResult[]> {
+  private async searchMeilisearch(q: string, limit: number, scope?: string, level?: string): Promise<SearchResult[]> {
     try {
-      const res = await this.meili.index<Record<string, unknown>>("content_search").search(q, {
-        attributesToRetrieve: ["description", "id", "kind", "reading", "title"],
+      const filters: string[] = [];
+      if (scope) {
+        filters.push(`kind = "${scope}"`);
+      }
+      if (level) {
+        filters.push(`jlptLevel = "${level}"`);
+      }
+      const searchOptions: Record<string, unknown> = {
+        attributesToRetrieve: ["description", "id", "jlptLevel", "kind", "reading", "title"],
         limit
-      });
+      };
+      if (filters.length > 0) {
+        searchOptions.filter = filters.join(" AND ");
+      }
+      const res = await this.meili.index<Record<string, unknown>>("content_search").search(q, searchOptions);
       if (!res.hits.length) {
         return [];
       }
@@ -53,6 +89,77 @@ export class SearchService {
     }
   }
 
+  async suggest(q: string, limit: number): Promise<SearchSuggestion[]> {
+    try {
+      const res = await this.meili.index<Record<string, unknown>>("content_search").search(q, {
+        attributesToRetrieve: ["id", "kind", "reading", "title"],
+        limit
+      });
+      if (res.hits.length > 0) {
+        return res.hits.map((hit) => ({
+          id: String(hit.id),
+          kind: hit.kind as SearchSuggestion["kind"],
+          reading: (hit.reading as string) ?? null,
+          title: String(hit.title)
+        }));
+      }
+    } catch {
+      this.logger.warn("Meilisearch suggest failed, falling back to PostgreSQL");
+    }
+
+    return this.suggestPostgres(q, limit);
+  }
+
+  private async suggestPostgres(q: string, limit: number): Promise<SearchSuggestion[]> {
+    const results: SearchSuggestion[] = [];
+
+    const [lexemes, kanji, grammar] = await Promise.all([
+      this.prisma.lexeme.findMany({
+        select: { headword: true, id: true, reading: true },
+        take: limit,
+        where: {
+          status: "active",
+          OR: [
+            { headword: { contains: q, mode: "insensitive" } },
+            { reading: { contains: q, mode: "insensitive" } }
+          ]
+        }
+      }),
+      this.prisma.kanji.findMany({
+        select: { character: true, id: true, kunyomi: true, onyomi: true },
+        take: limit,
+        where: {
+          status: "active",
+          OR: [
+            { character: { contains: q } },
+            { onyomi: { contains: q, mode: "insensitive" } },
+            { kunyomi: { contains: q, mode: "insensitive" } }
+          ]
+        }
+      }),
+      this.prisma.grammarPoint.findMany({
+        select: { id: true, jlptLevel: true, pattern: true },
+        take: limit,
+        where: {
+          status: "active",
+          pattern: { contains: q, mode: "insensitive" }
+        }
+      })
+    ]);
+
+    for (const l of lexemes) {
+      results.push({ id: l.id, kind: "lexeme", reading: l.reading, title: l.headword });
+    }
+    for (const k of kanji) {
+      results.push({ id: k.id, kind: "kanji", reading: [k.onyomi, k.kunyomi].filter(Boolean).join(" / ") || null, title: k.character });
+    }
+    for (const g of grammar) {
+      results.push({ id: g.id, kind: "grammar", reading: g.jlptLevel, title: g.pattern });
+    }
+
+    return results.slice(0, limit);
+  }
+
   async rebuildProjectionIndex(): Promise<{ indexed: number; sourceSystem: "PostgreSQL"; timestamp: string }> {
     const [lexemes, kanji, grammar, examples] = await Promise.all([
       this.prisma.lexeme.findMany({
@@ -65,10 +172,11 @@ export class SearchService {
       this.prisma.exampleSentence.findMany({ take: 5000, where: { status: "active" } })
     ]);
 
-    const documents: SearchResult[] = [
+    const documents = [
       ...lexemes.map((lexeme) => ({
         description: lexeme.shortMeaningVi ?? lexeme.senses[0]?.meaningVi ?? null,
         id: lexeme.id,
+        jlptLevel: lexeme.jlptLevel ?? null,
         kind: "lexeme" as const,
         reading: lexeme.reading,
         title: lexeme.headword
@@ -76,6 +184,7 @@ export class SearchService {
       ...kanji.map((item) => ({
         description: item.meaningVi,
         id: item.id,
+        jlptLevel: item.level != null ? `N${item.level}` : null,
         kind: "kanji" as const,
         reading: [item.onyomi, item.kunyomi].filter(Boolean).join(" / ") || null,
         title: item.character
@@ -83,6 +192,7 @@ export class SearchService {
       ...grammar.map((item) => ({
         description: item.meaningVi,
         id: item.id,
+        jlptLevel: item.jlptLevel ?? null,
         kind: "grammar" as const,
         reading: item.jlptLevel,
         title: item.pattern
@@ -90,15 +200,16 @@ export class SearchService {
       ...examples.map((item) => ({
         description: item.translationVi,
         id: item.id,
+        jlptLevel: null as string | null,
         kind: "example" as const,
         reading: item.reading,
         title: item.japaneseText
       }))
     ];
 
-    const index = this.meili.index<SearchResult>("content_search");
+    const index = this.meili.index("content_search");
     await index.updateSettings({
-      filterableAttributes: ["kind"],
+      filterableAttributes: ["kind", "jlptLevel"],
       searchableAttributes: ["title", "reading", "description"],
       sortableAttributes: ["kind"]
     });
@@ -111,43 +222,205 @@ export class SearchService {
     };
   }
 
-  private async searchPostgres(q: string, limit: number): Promise<SearchResult[]> {
-    const [lexemes, kanji, grammar, examples] = await Promise.all([
-      this.contentRepository.lexemes(q, limit),
-      this.contentRepository.kanji(q, limit),
-      this.contentRepository.grammar(q, limit),
-      this.contentRepository.examples(q, limit)
-    ]);
+  /**
+   * Normalize query: if romaji, convert to hiragana; if katakana, also get hiragana.
+   * Returns array of unique query strings to search with.
+   */
+  private normalizeQuery(q: string): string[] {
+    const queries = new Set<string>([q]);
 
-    return [
-      ...lexemes.map((lexeme) => ({
-        description: lexeme.shortMeaningVi ?? lexeme.senses[0]?.meaningVi ?? null,
-        id: lexeme.id,
-        kind: "lexeme" as const,
-        reading: lexeme.reading,
-        title: lexeme.headword
-      })),
-      ...kanji.map((item) => ({
-        description: item.meaningVi,
-        id: item.id,
-        kind: "kanji" as const,
-        reading: [item.onyomi, item.kunyomi].filter(Boolean).join(" / ") || null,
-        title: item.character
-      })),
-      ...grammar.map((item) => ({
-        description: item.meaningVi,
-        id: item.id,
-        kind: "grammar" as const,
-        reading: item.jlptLevel,
-        title: item.pattern
-      })),
-      ...examples.map((item) => ({
-        description: item.translationVi,
-        id: item.id,
-        kind: "example" as const,
-        reading: item.reading,
-        title: item.japaneseText
-      }))
-    ].slice(0, limit * 4);
+    // Romaji → hiragana + katakana (e.g. "kaigi" → "かいぎ", "カイギ")
+    if (isRomaji(q)) {
+      try {
+        const hira = toHiragana(q);
+        const kata = toKatakana(q);
+        if (hira !== q) queries.add(hira);
+        if (kata !== q) queries.add(kata);
+      } catch {
+        // wanakana may throw on edge cases — keep original
+      }
+    }
+
+    // Katakana → hiragana (e.g. "カイギ" → "かいぎ")
+    if (isAllKatakana(q)) {
+      queries.add(katakanaToHiragana(q));
+    }
+
+    return [...queries];
   }
+
+  private async searchPostgresRanked(q: string, limit: number, scope?: string, level?: string): Promise<ScoredResult[]> {
+    const queries = this.normalizeQuery(q);
+    // Fetch a larger pool to ensure exact matches aren't pushed out
+    const perType = Math.max(limit, 30);
+    const fetches: Promise<ScoredResult[]>[] = [];
+
+    if (!scope || scope === "lexeme") {
+      fetches.push(this.fetchAndScoreLexemes(queries, perType));
+    }
+    if (!scope || scope === "kanji") {
+      fetches.push(this.fetchAndScoreKanji(queries, q, perType));
+    }
+    if (!scope || scope === "grammar") {
+      fetches.push(this.fetchAndScoreGrammar(queries, perType));
+    }
+    if (!scope || scope === "example") {
+      fetches.push(this.fetchAndScoreExamples(queries, perType));
+    }
+
+    const pools = await Promise.all(fetches);
+    let results = pools.flat();
+
+    // Deduplicate by id (multiple queries might return the same result)
+    const seen = new Set<string>();
+    results = results.filter((r) => {
+      if (seen.has(r.id)) return false;
+      seen.add(r.id);
+      return true;
+    });
+
+    if (level) {
+      results = results.filter((r) => r.jlptLevel === level);
+    }
+
+    results.sort((a, b) => b.score - a.score);
+    return results.slice(0, limit);
+  }
+
+  /** Score a result based on how well `title` and `reading` match the query */
+  private scoreResult(queries: string[], title: string, reading: string | null, description: string | null): number {
+    let bestScore = 0;
+    for (const q of queries) {
+      bestScore = Math.max(bestScore, this.scoreOnePair(q, title, reading, description));
+    }
+    return bestScore;
+  }
+
+  private scoreOnePair(q: string, title: string, reading: string | null, description: string | null): number {
+    const qLower = q.toLowerCase();
+    const titleLower = title.toLowerCase();
+
+    // Exact match on title (headword)
+    if (titleLower === qLower) return 100;
+    // Reading exact match (critical for kana/romaji search: かいぎ → 会議)
+    if (reading && reading.toLowerCase() === qLower) return 90;
+    // Title starts with query
+    if (titleLower.startsWith(qLower)) return 80;
+    // Reading starts with query
+    if (reading && reading.toLowerCase().startsWith(qLower)) return 75;
+    // Query starts with title (e.g. query "会議中" matches title "会議")
+    if (qLower.startsWith(titleLower)) return 70;
+    // Title contains query
+    if (titleLower.includes(qLower)) return 60;
+    // Reading contains query
+    if (reading && reading.toLowerCase().includes(qLower)) return 40;
+    // Description contains query
+    if (description && description.toLowerCase().includes(qLower)) return 20;
+    // Matched through related data (senses, examples)
+    return 10;
+  }
+
+  private async fetchAndScoreLexemes(queries: string[], limit: number): Promise<ScoredResult[]> {
+    // Fetch results for all query variants, deduplicate by id
+    const all = new Map<string, ScoredResult>();
+    for (const q of queries) {
+      const rows = await this.contentRepository.lexemes(q, limit);
+      for (const lexeme of rows) {
+        if (all.has(lexeme.id)) continue;
+        const title = lexeme.headword;
+        const reading = lexeme.reading;
+        const description = lexeme.shortMeaningVi ?? lexeme.senses[0]?.meaningVi ?? null;
+        all.set(lexeme.id, {
+          description,
+          id: lexeme.id,
+          jlptLevel: lexeme.jlptLevel ?? null,
+          kind: "lexeme" as const,
+          reading,
+          score: this.scoreResult(queries, title, reading, description),
+          title
+        });
+      }
+    }
+    return [...all.values()];
+  }
+
+  private async fetchAndScoreKanji(queries: string[], originalQ: string, limit: number): Promise<ScoredResult[]> {
+    const all = new Map<string, ScoredResult>();
+
+    // For multi-character input containing kanji, decompose into individual characters
+    // e.g. 会議 → search for both 会 and 議 as individual kanji
+    const kanjiChars = extractKanji(originalQ);
+    const kanjiQueries = kanjiChars.length > 1 ? kanjiChars : queries;
+
+    for (const q of kanjiQueries) {
+      const rows = await this.contentRepository.kanji(q, limit);
+      for (const item of rows) {
+        if (all.has(item.id)) continue;
+        const title = item.character;
+        const reading = [item.onyomi, item.kunyomi].filter(Boolean).join(" / ") || null;
+        const description = item.meaningVi;
+        // For decomposed kanji, score based on whether the character is in the original query
+        const score = kanjiChars.length > 1 && kanjiChars.includes(title)
+          ? 95 // Individual kanji from the query word
+          : this.scoreResult(queries, title, reading, description);
+        all.set(item.id, {
+          description,
+          id: item.id,
+          jlptLevel: item.level != null ? `N${item.level}` : null,
+          kind: "kanji" as const,
+          reading,
+          score,
+          title
+        });
+      }
+    }
+    return [...all.values()];
+  }
+
+  private async fetchAndScoreGrammar(queries: string[], limit: number): Promise<ScoredResult[]> {
+    const all = new Map<string, ScoredResult>();
+    for (const q of queries) {
+      const rows = await this.contentRepository.grammar(q, limit);
+      for (const item of rows) {
+        if (all.has(item.id)) continue;
+        const title = item.pattern;
+        const reading = item.jlptLevel;
+        const description = item.meaningVi;
+        all.set(item.id, {
+          description,
+          id: item.id,
+          jlptLevel: item.jlptLevel ?? null,
+          kind: "grammar" as const,
+          reading,
+          score: this.scoreResult(queries, title, reading, description),
+          title
+        });
+      }
+    }
+    return [...all.values()];
+  }
+
+  private async fetchAndScoreExamples(queries: string[], limit: number): Promise<ScoredResult[]> {
+    const all = new Map<string, ScoredResult>();
+    for (const q of queries) {
+      const rows = await this.contentRepository.examples(q, limit);
+      for (const item of rows) {
+        if (all.has(item.id)) continue;
+        const title = item.japaneseText;
+        const reading = item.reading;
+        const description = item.translationVi;
+        all.set(item.id, {
+          description,
+          id: item.id,
+          jlptLevel: null,
+          kind: "example" as const,
+          reading,
+          score: this.scoreResult(queries, title, reading, description),
+          title
+        });
+      }
+    }
+    return [...all.values()];
+  }
+
 }

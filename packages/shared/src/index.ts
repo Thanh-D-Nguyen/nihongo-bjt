@@ -9,20 +9,41 @@ export {
   type AnalyticsInsightInput
 } from "./analytics.js";
 export {
+  COMPANION_HINT_ALGORITHM_VERSION,
+  companionActionKindSchema,
+  companionHintQuerySchema,
+  companionHintReasonSchema,
+  companionHintResponseSchema,
+  companionReasonCodeSchema,
+  type CompanionActionKind,
+  type CompanionHintAction,
+  type CompanionHintQuery,
+  type CompanionHintReason,
+  type CompanionHintResponse,
+  type CompanionReasonCode
+} from "./companion-hint.js";
+export {
   greetingForHour,
   todayDateKey,
   type DailyGreeting,
   type DailyWidgetKind
 } from "./daily.js";
+export {
+  buildDailySuggestedFlashcardBack,
+  isLikelyVietnameseLegalDisclaimerOnlyBack,
+  repairDailyContentFlashcardBackIfNeeded
+} from "./daily-flashcard-back.js";
 export * from "./learning-admin.js";
 export {
   BATTLE_BOT_PROFILES,
   DEFAULT_BATTLE_BOT_KEY,
+  battleBotStateToRiveInput,
   decideBotOption,
   getBattleBotProfile,
   hashSeedToUint32,
   randomBetween,
   shuffleDeterministic,
+  type BattleBotAnimationState,
   type BattleBotProfile
 } from "./battle.js";
 export { scoreBjtPractice, type QuizScoreInput, type QuizScoreResult } from "./quiz.js";
@@ -78,8 +99,24 @@ export const paginationQuerySchema = z.object({
 
 export const searchQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(20).default(10),
+  q: z.string().trim().min(1).max(120),
+  scope: contentKindSchema.optional(),
+  level: z.string().trim().max(10).optional()
+});
+
+export const searchSuggestQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(10).default(6),
   q: z.string().trim().min(1).max(120)
 });
+
+export const searchSuggestionSchema = z.object({
+  id: z.string(),
+  kind: contentKindSchema,
+  reading: z.string().nullable(),
+  title: z.string()
+});
+
+export type SearchSuggestion = z.infer<typeof searchSuggestionSchema>;
 
 export const contentSummarySchema = z.object({
   examples: z.number().int().nonnegative(),
@@ -93,6 +130,7 @@ export type ContentSummary = z.infer<typeof contentSummarySchema>;
 export const searchResultSchema = z.object({
   description: z.string().nullable(),
   id: z.string(),
+  jlptLevel: z.string().nullable().optional(),
   kind: contentKindSchema,
   reading: z.string().nullable(),
   title: z.string()
@@ -104,6 +142,27 @@ export const userScopedQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).default(20),
   userId: z.uuid()
 });
+
+/** Flashcards list/due endpoints allow higher page sizes than generic `userScopedQuerySchema`. */
+export const flashcardsUserScopedQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(500).default(20),
+  userId: z.uuid()
+});
+
+/** Due-queue endpoint: optional scope to one deck the learner can access. */
+export const flashcardsDueQuerySchema = flashcardsUserScopedQuerySchema.extend({
+  deckId: z.uuid().optional()
+});
+
+/** `DELETE /flashcards/decks/:deckId?userId=` — archive learner-owned deck (query only). */
+export const archiveOwnedDeckQuerySchema = z.object({
+  userId: z.uuid()
+});
+export type ArchiveOwnedDeckQuery = z.infer<typeof archiveOwnedDeckQuerySchema>;
+
+/** `POST /flashcards/decks/:deckId/archive` — same fields as query; use when DELETE is unreliable. */
+export const archiveOwnedDeckBodySchema = archiveOwnedDeckQuerySchema;
+export type ArchiveOwnedDeckBody = z.infer<typeof archiveOwnedDeckBodySchema>;
 
 export const comebackSummaryQuerySchema = z.object({
   days: z.coerce.number().int().min(1).max(30).default(14),
@@ -133,13 +192,64 @@ export const bookmarkParamsSchema = z.object({
   type: bookmarkTargetTypeSchema
 });
 
-export const createDeckSchema = z.object({
-  descriptionJa: z.string().trim().max(500).optional(),
-  descriptionVi: z.string().trim().max(500).optional(),
-  titleJa: z.string().trim().min(1).max(120).optional(),
-  titleVi: z.string().trim().min(1).max(120),
-  userId: z.uuid()
+const bulkDeckCardRowSchema = z.object({
+  backText: z.string().trim().min(1).max(2000),
+  frontText: z.string().trim().min(1).max(500),
+  imageUrl: z.string().trim().max(2048).optional(),
+  primaryImageAssetId: z.uuid().optional(),
+  reading: z.string().trim().max(300).optional()
 });
+
+export const createDeckSchema = z
+  .object({
+    cards: z.array(bulkDeckCardRowSchema).max(200).optional(),
+    descriptionJa: z.string().trim().max(500).optional(),
+    descriptionVi: z.string().trim().max(500).optional(),
+    titleJa: z.string().trim().min(1).max(120).optional(),
+    titleVi: z.string().trim().min(1).max(120),
+    userId: z.uuid(),
+    visibility: z.enum(["private", "public"]).default("private")
+  })
+  .superRefine((data, ctx) => {
+    data.cards?.forEach((row, i) => {
+      if (row.primaryImageAssetId && row.imageUrl?.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "use either imageUrl or primaryImageAssetId per card",
+          path: ["cards", i, "imageUrl"]
+        });
+      }
+      const u = row.imageUrl?.trim();
+      if (!u) {
+        return;
+      }
+      try {
+        const parsed = new URL(u);
+        if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "imageUrl must be http(s)",
+            path: ["cards", i, "imageUrl"]
+          });
+        }
+      } catch {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "invalid imageUrl",
+          path: ["cards", i, "imageUrl"]
+        });
+      }
+    });
+  })
+  .transform((d) => ({
+    ...d,
+    cards: d.cards?.map((c) => ({
+      ...c,
+      imageUrl: c.imageUrl?.trim() ? c.imageUrl.trim() : undefined,
+      primaryImageAssetId: c.primaryImageAssetId,
+      reading: c.reading?.trim() ? c.reading.trim() : undefined
+    }))
+  }));
 
 export const createCardFromContentSchema = z.object({
   backText: z.string().trim().min(1).max(1000),
@@ -956,6 +1066,13 @@ export const adminBattleLeaderboardQuerySchema = z.object({
   pageSize: z.coerce.number().int().min(1).max(100).default(25)
 });
 
+/** Learner-facing battle leaderboard (Bearer required; no per-row user ids returned). */
+export const battleLearnerLeaderboardQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(25).default(15),
+  window: z.enum(BATTLE_LEADERBOARD_WINDOWS).optional().default("30d")
+});
+
 /**
  * ----- Battle Bots admin (CRUD on `learning.battle_bot`) -----
  *
@@ -965,6 +1082,7 @@ export const adminBattleLeaderboardQuerySchema = z.object({
  */
 export const BATTLE_BOT_DIFFICULTIES = ["easy", "medium", "hard"] as const;
 export const BATTLE_BOT_STATUSES = ["active", "disabled", "archived"] as const;
+export const BATTLE_BOT_STYLE_TOKENS = ["calm", "focused", "sharp"] as const;
 export const BATTLE_BOT_VOCAB_LEVELS = [
   "jlpt_n5",
   "jlpt_n4",
@@ -977,13 +1095,38 @@ export const BATTLE_BOT_VOCAB_LEVELS = [
 ] as const;
 
 const adminBattleBotBaseShape = {
+  botKey: z
+    .string()
+    .trim()
+    .min(2)
+    .max(64)
+    .regex(/^[a-z0-9][a-z0-9_-]*$/i),
   name: z.string().trim().min(2).max(80),
   difficulty: z.enum(BATTLE_BOT_DIFFICULTIES),
   persona: z.string().trim().max(2000).optional().nullable(),
   accuracyPct: z.coerce.number().int().min(0).max(100),
   minDelayMs: z.coerce.number().int().min(0).max(60000),
   maxDelayMs: z.coerce.number().int().min(0).max(60000),
-  vocabularyLevel: z.string().trim().min(1).max(32)
+  vocabularyLevel: z.string().trim().min(1).max(32),
+  avatarFallback: z.string().trim().min(1).max(12),
+  styleToken: z.enum(BATTLE_BOT_STYLE_TOKENS),
+  riveSrc: z
+    .string()
+    .trim()
+    .max(2000)
+    .optional()
+    .nullable()
+    .transform((s) => (s === "" ? null : s)),
+  riveArtboard: z.string().trim().min(1).max(80),
+  riveStateMachine: z.string().trim().min(1).max(80),
+  riveLicense: z
+    .string()
+    .trim()
+    .max(120)
+    .optional()
+    .nullable()
+    .transform((s) => (s === "" ? null : s)),
+  riveProvenance: z.record(z.string(), z.unknown()).optional().default({})
 };
 
 export const adminBattleBotCreateSchema = z
@@ -1003,6 +1146,7 @@ export const adminBattleBotCreateSchema = z
 
 export const adminBattleBotPatchSchema = z
   .object({
+    botKey: adminBattleBotBaseShape.botKey.optional(),
     name: adminBattleBotBaseShape.name.optional(),
     difficulty: adminBattleBotBaseShape.difficulty.optional(),
     persona: adminBattleBotBaseShape.persona,
@@ -1010,6 +1154,13 @@ export const adminBattleBotPatchSchema = z
     minDelayMs: adminBattleBotBaseShape.minDelayMs.optional(),
     maxDelayMs: adminBattleBotBaseShape.maxDelayMs.optional(),
     vocabularyLevel: adminBattleBotBaseShape.vocabularyLevel.optional(),
+    avatarFallback: adminBattleBotBaseShape.avatarFallback.optional(),
+    styleToken: adminBattleBotBaseShape.styleToken.optional(),
+    riveSrc: adminBattleBotBaseShape.riveSrc,
+    riveArtboard: adminBattleBotBaseShape.riveArtboard.optional(),
+    riveStateMachine: adminBattleBotBaseShape.riveStateMachine.optional(),
+    riveLicense: adminBattleBotBaseShape.riveLicense,
+    riveProvenance: adminBattleBotBaseShape.riveProvenance.optional(),
     reason: z.string().trim().min(3).max(500)
   })
   .superRefine((value, ctx) => {
@@ -1322,8 +1473,58 @@ export const dailyQuickQuizCompleteSchema = z.object({
 });
 
 export const battleChallengeBotSchema = z.object({
-  botKey: z.string().trim().min(1).max(32),
+  botKey: z.string().trim().min(1).max(64),
   userId: z.uuid()
+});
+
+export const battleLobbyJoinSchema = z.object({
+  displayName: z.string().trim().min(1).max(120).optional(),
+  userId: z.uuid()
+});
+
+export const battleLobbyMessageSchema = z.object({
+  clientMessageId: z.string().trim().min(1).max(80),
+  displayName: z.string().trim().min(1).max(120).optional(),
+  message: z.string().trim().min(1).max(500),
+  roomKey: z.string().trim().min(1).max(64).default("global"),
+  userId: z.uuid()
+});
+
+export const battleLobbyChallengeUserSchema = z.object({
+  fromDisplayName: z.string().trim().min(1).max(120).optional(),
+  fromUserId: z.uuid(),
+  targetUserId: z.uuid()
+});
+
+export const battleAcceptChallengeSchema = z.object({
+  challengeId: z.string().trim().min(1).max(64),
+  fromUserId: z.uuid(),
+  userId: z.uuid()
+});
+
+export const battleDeclineChallengeSchema = z.object({
+  challengeId: z.string().trim().min(1).max(64),
+  fromUserId: z.uuid(),
+  userId: z.uuid()
+});
+
+export const battlePvpAnswerSchema = z.object({
+  idempotencyKey: z.string().trim().min(1).max(64),
+  optionKey: z.string().trim().min(1).max(8),
+  roomCode: z.string().trim().min(4).max(16),
+  roundIndex: z.coerce.number().int().min(0).max(99),
+  userId: z.uuid()
+});
+
+export const battlePvpForfeitSchema = z.object({
+  roomCode: z.string().trim().min(4).max(32),
+  userId: z.uuid()
+});
+
+export const battleChatRecentQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(80).default(40),
+  roomKey: z.string().trim().min(1).max(64).default("global"),
+  userId: z.uuid().optional()
 });
 
 export const battleAnswerSchema = z.object({
@@ -1744,6 +1945,7 @@ export const ASSESSMENT_BJT_LEVELS = [
   "BJT-J1+"
 ] as const;
 
+export const ASSESSMENT_EXAM_TYPES = ["mock", "official"] as const;
 export const ASSESSMENT_MOCK_EXAM_STATUSES = ["draft", "published", "archived"] as const;
 export const ASSESSMENT_QUIZ_TEMPLATE_TYPES = [
   "practice",
@@ -1785,15 +1987,27 @@ export const ASSESSMENT_BJT_SECTIONS = [
 ] as const;
 
 export const ASSESSMENT_BJT_SECTION_LABELS: Record<string, string> = {
-  LC_SCENE: "Nghe – Cảnh huống",
-  LC_STATEMENT: "Nghe – Phát ngôn",
-  LC_INTEGRATED: "Nghe – Tổng hợp",
-  LR_SITUATION: "Nghe-Đọc – Tình huống",
-  LR_DOCUMENT: "Nghe-Đọc – Tài liệu",
-  LR_INTEGRATED: "Nghe-Đọc – Tổng hợp",
+  LC_SCENE: "Nghe – Nhận biết tình huống",
+  LC_STATEMENT: "Nghe – Nghe hiểu phát ngôn",
+  LC_INTEGRATED: "Nghe – Tổng hợp nghe hiểu",
+  LR_SITUATION: "Nghe-Đọc – Nhận biết tình huống",
+  LR_DOCUMENT: "Nghe-Đọc – Tài liệu nghe-đọc",
+  LR_INTEGRATED: "Nghe-Đọc – Tổng hợp nghe-đọc",
   RC_VOCAB_GRAMMAR: "Đọc – Từ vựng & Ngữ pháp",
-  RC_EXPRESSION: "Đọc – Biểu hiện",
-  RC_INTEGRATED: "Đọc – Tổng hợp"
+  RC_EXPRESSION: "Đọc – Đọc hiểu biểu đạt",
+  RC_INTEGRATED: "Đọc – Tổng hợp đọc hiểu"
+};
+
+export const ASSESSMENT_BJT_SECTION_LABELS_JA: Record<string, string> = {
+  LC_SCENE: "場面把握問題",
+  LC_STATEMENT: "発言聴解問題",
+  LC_INTEGRATED: "総合聴解問題",
+  LR_SITUATION: "状況把握問題",
+  LR_DOCUMENT: "資料聴読解問題",
+  LR_INTEGRATED: "総合聴読解問題",
+  RC_VOCAB_GRAMMAR: "語彙・文法問題",
+  RC_EXPRESSION: "表現読解問題",
+  RC_INTEGRATED: "総合読解問題"
 };
 
 export const ASSESSMENT_BUSINESS_SITUATIONS = [
@@ -1878,7 +2092,7 @@ const mockExamBaseShape = {
 };
 
 export const adminMockExamCreateSchema = z
-  .object({ ...mockExamBaseShape, reason: assessmentReasonField })
+  .object({ ...mockExamBaseShape, type: z.enum(ASSESSMENT_EXAM_TYPES).optional().default("mock"), reason: assessmentReasonField })
   .superRefine((value, ctx) => {
     const declared = value.blueprintMeta.totalTimeMin * 60;
     if (Math.abs(declared - value.timeLimitSeconds) > 60) {
@@ -1895,6 +2109,7 @@ export const adminMockExamPatchSchema = z.object({
   titleVi: mockExamBaseShape.titleVi.optional(),
   titleJa: mockExamBaseShape.titleJa,
   description: mockExamBaseShape.description,
+  type: z.enum(ASSESSMENT_EXAM_TYPES).optional(),
   level: mockExamBaseShape.level.optional(),
   timeLimitSeconds: mockExamBaseShape.timeLimitSeconds.optional(),
   blueprintMeta: mockExamBlueprintMetaSchema.optional(),
@@ -1905,6 +2120,10 @@ export const adminMockExamListQuerySchema = z.object({
   q: z.string().trim().max(200).optional().transform((s) => (s === "" ? undefined : s)),
   status: z
     .enum([...ASSESSMENT_MOCK_EXAM_STATUSES, "all"] as [string, ...string[]])
+    .optional()
+    .transform((s) => (s === "all" ? undefined : s)),
+  type: z
+    .enum([...ASSESSMENT_EXAM_TYPES, "all"] as [string, ...string[]])
     .optional()
     .transform((s) => (s === "all" ? undefined : s)),
   level: z
@@ -2009,6 +2228,10 @@ const questionBaseShape = {
   tags: z.array(z.string().trim().min(1).max(48)).max(20).default([]),
   sourceType: z.string().trim().max(64).optional().nullable(),
   sourceId: optionalUuid,
+  imageUrl: z.string().trim().url().max(2000).optional().nullable(),
+  imageAlt: z.string().trim().max(500).optional().nullable(),
+  audioUrl: z.string().trim().url().max(2000).optional().nullable(),
+  audioScript: z.string().trim().max(8000).optional().nullable(),
   options: z.array(questionOptionSchema).min(2).max(8)
 };
 
@@ -2052,6 +2275,10 @@ export const adminQuestionBankPatchSchema = z
     tags: questionBaseShape.tags.optional(),
     sourceType: questionBaseShape.sourceType,
     sourceId: questionBaseShape.sourceId,
+    imageUrl: questionBaseShape.imageUrl,
+    imageAlt: questionBaseShape.imageAlt,
+    audioUrl: questionBaseShape.audioUrl,
+    audioScript: questionBaseShape.audioScript,
     options: z.array(questionOptionSchema).min(2).max(8).optional(),
     reason: assessmentReasonField
   })

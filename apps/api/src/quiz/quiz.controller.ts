@@ -19,7 +19,11 @@ import { PublicRoute } from "../keycloak/keycloak-public.decorator.js";
 import { resolveLearnerUserId } from "../keycloak/learner-identity.util.js";
 import type { KeycloakAuthenticatedUser } from "../keycloak/keycloak.types.js";
 import { DocumentedHttpErrors } from "../openapi/common-decorators.js";
-import { BjtQuestionQualityIssueOpenApiDto, QuizSessionBreakdownOpenApiDto, QuizSessionRemediationItemOpenApiDto } from "../openapi/dto/backend-api-openapi.dto.js";
+import {
+  BjtQuestionQualityIssueOpenApiDto,
+  QuizSessionBreakdownOpenApiDto,
+  QuizSessionRemediationItemOpenApiDto
+} from "../openapi/dto/backend-api-openapi.dto.js";
 import { QuizRepository } from "./quiz.repository.js";
 import { QuizService } from "./quiz.service.js";
 
@@ -31,7 +35,7 @@ import { QuizService } from "./quiz.service.js";
 export class QuizController {
   constructor(
     @Inject(QuizRepository) private readonly quizRepository: QuizRepository,
-    private readonly quizService: QuizService
+    @Inject(QuizService) private readonly quizService: QuizService
   ) {}
 
   @Get("templates")
@@ -49,17 +53,58 @@ export class QuizController {
     return this.quizRepository.template(id);
   }
 
+  @Get("templates/:id/printable")
+  @PublicRoute()
+  @ApiOperation({
+    summary: "Full exam data formatted for printing in official BJT layout.",
+    description:
+      "Returns complete exam with all sections, questions, options, section metadata (part, timing), and answer key. Intended for browser print / PDF export."
+  })
+  @ApiParam({ name: "id" })
+  async printableTemplate(@Param("id") id: string) {
+    return this.quizRepository.printableTemplate(id);
+  }
+
+  @Get("official-simulation/status")
+  @ApiOperation({
+    summary: "Resolve official BJT simulation availability for the current learner.",
+    description:
+      "Server-side source for paid/feature-flagged official simulation UI. The start route enforces the same gate."
+  })
+  officialSimulationStatus(
+    @CurrentUser() user: KeycloakAuthenticatedUser | undefined,
+    @Query("userId") userId: string | undefined
+  ) {
+    const resolved = resolveLearnerUserId(user, userId, { required: true })!;
+    return this.quizService.officialSimulationStatus(resolved);
+  }
+
   @Post("start")
   @ApiOperation({ summary: "Start a scored session for a `testId` (user-bound)." })
   start(@CurrentUser() user: KeycloakAuthenticatedUser | undefined, @Body() body: unknown) {
     const raw = body as Record<string, unknown>;
-    const userId = resolveLearnerUserId(user, raw.userId as string | undefined, { required: true })!;
+    const userId = resolveLearnerUserId(user, raw.userId as string | undefined, {
+      required: true
+    })!;
     const parsed = startQuizSchema.safeParse({ ...raw, userId });
     if (!parsed.success) {
       throw new BadRequestException(parsed.error.flatten());
     }
 
     return this.quizService.startSessionWithQuota(parsed.data.testId, parsed.data.userId);
+  }
+
+  @Get("session/active")
+  @ApiOperation({
+    summary:
+      "Find the user\u2019s most recent in-progress quiz session so they can resume after page reload."
+  })
+  activeSession(
+    @CurrentUser() user: KeycloakAuthenticatedUser | undefined,
+    @Query("userId") userId: string | undefined
+  ) {
+    const resolved = resolveLearnerUserId(user, userId, { required: true })!;
+    return this.quizRepository.activeSession(resolved);
   }
 
   @Get("session/:id/question")
@@ -83,7 +128,9 @@ export class QuizController {
     @Body() body: unknown
   ) {
     const raw = body as Record<string, unknown>;
-    const userId = resolveLearnerUserId(user, raw.userId as string | undefined, { required: true })!;
+    const userId = resolveLearnerUserId(user, raw.userId as string | undefined, {
+      required: true
+    })!;
     const parsed = submitQuizAnswerSchema.safeParse({ ...raw, userId });
     if (!parsed.success) {
       throw new BadRequestException(parsed.error.flatten());
@@ -98,7 +145,9 @@ export class QuizController {
   }
 
   @Get("session/:id/remediation")
-  @ApiOperation({ summary: "List wrong-answer remediation flashcards for a completed quiz session." })
+  @ApiOperation({
+    summary: "List wrong-answer remediation flashcards for a completed quiz session."
+  })
   @ApiOkResponse({ type: QuizSessionRemediationItemOpenApiDto, isArray: true })
   @ApiParam({ name: "id" })
   remediation(
@@ -123,7 +172,9 @@ export class QuizController {
   }
 
   @Get("session/:id/results/breakdown")
-  @ApiOperation({ summary: "Detailed per-question breakdown with explanations for completed session." })
+  @ApiOperation({
+    summary: "Detailed per-question breakdown with explanations for completed session."
+  })
   @ApiOkResponse({ type: QuizSessionBreakdownOpenApiDto })
   @ApiParam({ name: "id" })
   breakdown(

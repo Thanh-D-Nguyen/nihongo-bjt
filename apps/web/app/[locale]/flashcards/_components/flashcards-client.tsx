@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useId, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 
-import { Card, CardContent, PageHeader } from "@nihongo-bjt/ui";
+import { EmptyState, cn } from "@nihongo-bjt/ui";
+import Link from "next/link";
 
 import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
 import {
@@ -46,9 +47,19 @@ type ImageFlowState =
   | { step: "success" }
   | { step: "error"; userMessage: string; showCors: boolean };
 
-interface FlashcardLabels {
+export interface FlashcardLabels {
   again: string;
+  answerHeading: string;
+  comebackBody: string;
+  comebackNext: string;
+  comebackSkill: string;
+  comebackTitle: string;
+  compactReviewEyebrow?: string;
   empty: string;
+  emptyCtaDaily: string;
+  emptyCtaSearch: string;
+  emptyDescription: string;
+  emptyTitle: string;
   error: string;
   eyebrow: string;
   good: string;
@@ -66,6 +77,31 @@ interface FlashcardLabels {
   imageUploadLabel: string;
   imageUploading: string;
   inputLabel: string;
+  libraryAddFromSearchCta?: string;
+  libraryCreateSet?: string;
+  libraryDecksDescription?: string;
+  libraryDueMetric?: string;
+  libraryHeroKicker?: string;
+  libraryHeroTitle?: string;
+  libraryImportCta?: string;
+  libraryMobileNavAria?: string;
+  libraryNavCreate?: string;
+  libraryNavCreateDescription?: string;
+  libraryNavDecks?: string;
+  libraryNavMySets?: string;
+  libraryNavMySetsDescription?: string;
+  libraryNavPublicDescription?: string;
+  libraryNavPublicSets?: string;
+  libraryNavRecent?: string;
+  libraryNavRecentDescription?: string;
+  libraryNavReview?: string;
+  libraryOfflineMetric?: string;
+  libraryRecentTitle?: string;
+  libraryReviewDescription?: string;
+  librarySearchPlaceholder?: string;
+  librarySidebarAria?: string;
+  libraryStudyGoal?: string;
+  librarySubtitle?: string;
   load: string;
   loading: string;
   offlineFlushFail: string;
@@ -74,11 +110,24 @@ interface FlashcardLabels {
   offlineQueued: string;
   offlineSyncing: string;
   placeholder: string;
-  reveal: string;
-  subtitle: string;
-  title: string;
   quotaExceeded: string;
   quotaLine: string;
+  refreshDue: string;
+  reveal: string;
+  reviewScopeBackToDeckCta: string;
+  reviewScopeBanner: string;
+  reviewScopeClearCta: string;
+  reviewScopeEmptyDescription: string;
+  reviewScopeEmptyTitle: string;
+  reviewImageOptionalSummary: string;
+  reviewPhaseAnswer: string;
+  reviewPhaseQuestion: string;
+  reviewTab: string;
+  sessionFocusHint: string;
+  statDueSession: string;
+  statPendingSync: string;
+  subtitle: string;
+  title: string;
 }
 
 function imageFlowLabel(step: ImageFlowState["step"], labels: FlashcardLabels): string | null {
@@ -101,7 +150,25 @@ function imageFlowLabel(step: ImageFlowState["step"], labels: FlashcardLabels): 
   }
 }
 
-export function FlashcardsClient({ labels }: { labels: FlashcardLabels }) {
+const btnBase =
+  "inline-flex min-h-10 items-center justify-center rounded-xl px-4 text-sm font-bold outline-none ring-offset-2 transition focus-visible:ring-2 focus-visible:ring-accent disabled:pointer-events-none disabled:opacity-45";
+const btnPrimary = `${btnBase} bg-leaf text-white hover:bg-leaf/90`;
+const btnSecondary = `${btnBase} border border-ink/15 bg-surface text-ink hover:border-ink/25 hover:bg-paper`;
+const btnNeutral = `${btnBase} border border-ink/12 bg-paper/80 text-ink hover:bg-paper`;
+
+export function FlashcardsClient({
+  compact = false,
+  labels,
+  locale,
+  onPendingSyncChange,
+  scopeDeckId = null
+}: {
+  compact?: boolean;
+  labels: FlashcardLabels;
+  locale: string;
+  onPendingSyncChange?: (n: number) => void;
+  scopeDeckId?: string | null;
+}) {
   const fileInputId = useId();
   const [cards, setCards] = useState<DueCard[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -112,8 +179,19 @@ export function FlashcardsClient({ labels }: { labels: FlashcardLabels }) {
   const [queueStatus, setQueueStatus] = useState<string | null>(null);
   const [revealed, setRevealed] = useState(false);
   const [feedback, setFeedback] = useState<ReviewFeedback | null>(null);
-  const [feedbackDelay, setFeedbackDelay] = useState<NodeJS.Timeout | null>(null);
+  const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { userId } = useKeycloakAuth();
+
+  const clearFeedbackTimer = () => {
+    if (feedbackTimerRef.current) {
+      clearTimeout(feedbackTimerRef.current);
+      feedbackTimerRef.current = null;
+    }
+  };
+
+  useEffect(() => {
+    return () => clearFeedbackTimer();
+  }, []);
 
   const flushQueue = useCallback(async () => {
     const uid = userId;
@@ -212,6 +290,10 @@ export function FlashcardsClient({ labels }: { labels: FlashcardLabels }) {
     })();
   }, [userId]);
 
+  useEffect(() => {
+    onPendingSyncChange?.(pendingOffline);
+  }, [onPendingSyncChange, pendingOffline]);
+
   const loadDueCards = useCallback(
     async (options?: { resetImageFlow?: boolean }) => {
       if (!userId) {
@@ -225,9 +307,14 @@ export function FlashcardsClient({ labels }: { labels: FlashcardLabels }) {
       setLoading(true);
       setQuotaLine(null);
       try {
-        const response = await learnerApiFetch(
-          `/api/flashcards/reviews/due?userId=${encodeURIComponent(uid)}&limit=10`
-        );
+        const params = new URLSearchParams({
+          limit: "10",
+          userId: uid
+        });
+        if (scopeDeckId) {
+          params.set("deckId", scopeDeckId);
+        }
+        const response = await learnerApiFetch(`/api/flashcards/reviews/due?${params.toString()}`);
         if (!response.ok) {
           throw new Error("Due review request failed");
         }
@@ -262,7 +349,7 @@ export function FlashcardsClient({ labels }: { labels: FlashcardLabels }) {
         setLoading(false);
       }
     },
-    [labels.error, labels.quotaLine, userId]
+    [labels.error, labels.quotaLine, scopeDeckId, userId]
   );
 
   async function review(card: DueCard, rating: "again" | "hard" | "good") {
@@ -322,28 +409,24 @@ export function FlashcardsClient({ labels }: { labels: FlashcardLabels }) {
         setError(labels.error);
         return;
       }
-      
+
       const responseData = (await response.json()) as ReviewFeedback & { error?: string };
       if (responseData.error) {
         setError(labels.error);
         return;
       }
-      
-      // Show feedback for "again" rating
+
       if (rating === "again") {
         setFeedback(responseData);
-        // Clear any pending feedback delay
-        if (feedbackDelay) clearTimeout(feedbackDelay);
-        // Move to next card after 3 seconds
-        const delay = setTimeout(() => {
+        clearFeedbackTimer();
+        feedbackTimerRef.current = setTimeout(() => {
           setCards((current) => current.filter((item) => item.id !== card.id));
           setRevealed(false);
           setImageFlow({ step: "idle" });
           setFeedback(null);
+          feedbackTimerRef.current = null;
         }, 3000);
-        setFeedbackDelay(delay);
       } else {
-        // Immediately move to next card for "hard" and "good"
         setCards((current) => current.filter((item) => item.id !== card.id));
         setRevealed(false);
         setImageFlow({ step: "idle" });
@@ -430,89 +513,232 @@ export function FlashcardsClient({ labels }: { labels: FlashcardLabels }) {
 
   const currentCard = cards[0];
   const imageStatusText = imageFlowLabel(imageFlow.step, labels);
-  const showImageSection = Boolean(userId) && currentCard && !feedback;
+  const canAttachImage =
+    Boolean(userId) && Boolean(currentCard) && !feedback && !currentCard?.primaryImage?.readUrl;
 
   useEffect(() => {
     if (userId) {
       void loadDueCards({ resetImageFlow: true });
     }
-    return () => {
-      if (feedbackDelay) clearTimeout(feedbackDelay);
-    };
-  }, [loadDueCards, userId, feedbackDelay]);
+  }, [loadDueCards, scopeDeckId, userId]);
 
   return (
-    <main className="w-full space-y-6 pb-12">
-      <PageHeader
-        actions={
-          <button
-            className="rounded-xl border border-ink/15 bg-ink px-4 py-2 text-sm font-semibold text-surface hover:bg-ink/90 disabled:opacity-50"
-            disabled={loading || !userId}
-            type="button"
-            onClick={() => void loadDueCards({ resetImageFlow: true })}
+    <div className="space-y-4">
+      {scopeDeckId ? (
+        <div className="flex flex-col gap-2 rounded-xl border border-leaf/25 bg-leaf-soft/45 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs font-semibold leading-snug text-ink">{labels.reviewScopeBanner}</p>
+          <Link
+            className={`${btnSecondary} inline-flex min-h-9 shrink-0 justify-center px-3 text-xs font-bold`}
+            href={`/${locale}/flashcards?tab=review`}
           >
-            {labels.load}
-          </button>
-        }
-        description={labels.subtitle}
-        eyebrow={labels.eyebrow}
-        title={labels.title}
-      />
-      <Card className="border-ink/10 shadow-sm">
-        <CardContent className="grid gap-5 p-5 sm:p-6 lg:grid-cols-[1fr_280px]">
-          <div className="space-y-4">
-            {loading ? <p>{labels.loading}</p> : null}
-            {pendingOffline > 0 ? (
-              <p className="text-muted small" role="status">
-                {labels.offlinePendingLine.replace("{n}", String(pendingOffline))}
+            {labels.reviewScopeClearCta}
+          </Link>
+        </div>
+      ) : null}
+      <div
+        aria-label={labels.compactReviewEyebrow ?? labels.reviewTab}
+        className="flex flex-col gap-2 rounded-xl border border-ink/10 bg-paper/50 px-3 py-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"
+        role="status"
+      >
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold text-ink">
+          <span className="tabular-nums text-muted">
+            {labels.statDueSession}: <strong className="text-ink">{cards.length}</strong>
+          </span>
+          <span className="hidden text-muted sm:inline" aria-hidden>
+            ·
+          </span>
+          <span className="tabular-nums text-muted">
+            {labels.statPendingSync}: <strong className="text-ink">{pendingOffline}</strong>
+          </span>
+          {quotaLine ? (
+            <>
+              <span className="hidden text-muted sm:inline" aria-hidden>
+                ·
+              </span>
+              <span className="min-w-0 break-words text-muted">{quotaLine}</span>
+            </>
+          ) : null}
+        </div>
+        {pendingOffline > 0 ? (
+          <p className="text-xs text-muted">
+            {labels.offlinePendingLine.replace("{n}", String(pendingOffline))}
+          </p>
+        ) : null}
+        {queueStatus ? <p className="text-xs font-medium text-ink">{queueStatus}</p> : null}
+        {error ? (
+          <p className="text-xs text-sakura" role="alert">
+            {error}
+          </p>
+        ) : null}
+        {imageFlow.step === "error" ? (
+          <p className="text-xs text-sakura" role="alert">
+            {imageFlow.userMessage}
+            {imageFlow.showCors ? <span> {labels.imageErrorCors}</span> : null}
+          </p>
+        ) : null}
+        <button
+          className={`${btnNeutral} ml-auto min-h-9 shrink-0 px-3 text-xs sm:ml-0`}
+          disabled={loading || !userId}
+          type="button"
+          onClick={() => void loadDueCards({ resetImageFlow: true })}
+        >
+          {labels.refreshDue}
+        </button>
+      </div>
+
+      {!compact ? (
+        <p className="text-sm leading-relaxed text-muted">{labels.sessionFocusHint}</p>
+      ) : null}
+
+      {loading ? (
+        <div className="space-y-3" aria-busy>
+          <div className="h-44 max-w-xl animate-pulse rounded-xl bg-paper ring-1 ring-ink/5" />
+          <div className="h-10 w-40 animate-pulse rounded-xl bg-paper" />
+        </div>
+      ) : null}
+
+      {!currentCard && !loading && !error ? (
+        scopeDeckId ? (
+          <EmptyState
+            action={
+              <div className="flex flex-wrap justify-center gap-2">
+                <Link className={`${btnPrimary} min-h-10 px-5`} href={`/${locale}/flashcards?tab=review`}>
+                  {labels.reviewScopeClearCta}
+                </Link>
+                <Link
+                  className={`${btnSecondary} min-h-10 px-5`}
+                  href={`/${locale}/flashcards/decks/${scopeDeckId}`}
+                >
+                  {labels.reviewScopeBackToDeckCta}
+                </Link>
+              </div>
+            }
+            description={labels.reviewScopeEmptyDescription}
+            title={labels.reviewScopeEmptyTitle}
+          />
+        ) : (
+          <EmptyState
+            action={
+              <div className="flex flex-wrap justify-center gap-2">
+                <Link className={`${btnPrimary} min-h-10 px-5`} href={`/${locale}/search`}>
+                  {labels.emptyCtaSearch}
+                </Link>
+                <Link className={`${btnSecondary} min-h-10 px-5`} href={`/${locale}#daily-japanese`}>
+                  {labels.emptyCtaDaily}
+                </Link>
+              </div>
+            }
+            description={labels.emptyDescription}
+            title={labels.emptyTitle}
+          />
+        )
+      ) : null}
+
+      {currentCard ? (
+        <div
+          className={cn(
+            "max-w-3xl border border-ink/10 bg-surface",
+            compact
+              ? "rounded-3xl p-5 shadow-md ring-1 ring-ink/[0.05] sm:p-6"
+              : "rounded-2xl p-4 shadow-sm sm:p-5"
+          )}
+        >
+          <article className="space-y-4">
+            {!feedback ? (
+              <p className="text-[11px] font-black uppercase tracking-wider text-leaf">
+                {!revealed ? labels.reviewPhaseQuestion : labels.reviewPhaseAnswer}
               </p>
             ) : null}
-            {queueStatus ? (
-              <p className="small" role="status">
-                {queueStatus}
+
+            <div className="min-h-[7rem]">
+              {currentCard.primaryImage?.readUrl ? (
+                <figure className="mb-3 overflow-hidden rounded-xl bg-paper ring-1 ring-ink/8">
+                  <img
+                    alt={labels.imageAlt.replace("{front}", currentCard.card.frontText)}
+                    className="h-[200px] max-h-[200px] w-full object-contain"
+                    height={200}
+                    src={currentCard.primaryImage.readUrl}
+                    width={400}
+                  />
+                  <figcaption className="sr-only">{currentCard.card.frontText}</figcaption>
+                </figure>
+              ) : null}
+              <p
+                className={`font-bold leading-snug text-ink ${compact ? "text-lg sm:text-xl" : "text-xl sm:text-2xl"}`}
+                lang="ja"
+              >
+                {currentCard.card.frontText}
               </p>
+              {currentCard.card.reading ? (
+                <p className="mt-2 min-h-[1.25rem] text-sm text-muted" lang="ja">
+                  {currentCard.card.reading}
+                </p>
+              ) : (
+                <div className="min-h-[1.25rem]" />
+              )}
+            </div>
+
+            {revealed ? (
+              <div className="min-h-[7rem] rounded-xl border border-ink/10 bg-paper/50 p-4">
+                <h3 className="text-[11px] font-black uppercase tracking-wide text-muted">{labels.answerHeading}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-ink">{currentCard.card.backText}</p>
+              </div>
             ) : null}
-            {quotaLine ? <p className="text-muted small">{quotaLine}</p> : null}
-            {error ? <p role="alert">{error}</p> : null}
-            {imageFlow.step === "error" ? (
-              <p role="alert">
-                {imageFlow.userMessage}
-                {imageFlow.showCors ? <span> {labels.imageErrorCors}</span> : null}
-              </p>
-            ) : null}
-            {!currentCard && !loading && !error ? <p>{labels.empty}</p> : null}
-            {currentCard ? (
-              <article className="rounded-2xl border border-ink/10 bg-paper/60 p-5">
-                {currentCard.primaryImage?.readUrl ? (
-                  <figure className="card-image-wrap">
-                    <img
-                      alt={labels.imageAlt.replace("{front}", currentCard.card.frontText)}
-                      className="card-image"
-                      height={220}
-                      src={currentCard.primaryImage.readUrl}
-                      width={360}
-                    />
-                    <figcaption className="sr-only">{currentCard.card.frontText}</figcaption>
-                  </figure>
-                ) : null}
-                <strong className="jp-text block text-3xl font-semibold text-ink sm:text-4xl">
-                  {currentCard.card.frontText}
-                </strong>
-                {currentCard.card.reading ? (
-                  <small className="mt-2 block text-sm text-muted">
-                    {currentCard.card.reading}
-                  </small>
-                ) : null}
-                {revealed ? (
-                  <p className="mt-5 rounded-xl border border-ink/10 bg-surface p-4 text-sm leading-relaxed text-ink">
-                    {currentCard.card.backText}
+
+            {feedback ? (
+              <div className="rounded-xl border border-leaf/25 bg-leaf-soft/60 p-4">
+                <p className="text-sm font-bold text-ink">{labels.comebackTitle}</p>
+                {feedback.remediation?.sourceType ? (
+                  <p className="mt-1 text-xs font-semibold text-muted">
+                    {labels.comebackSkill.replace("{skill}", feedback.remediation.sourceType)}
                   </p>
                 ) : null}
-                {showImageSection ? (
-                  <div className="card-media-block">
-                    <h3 className="section-title">{labels.imageSectionTitle}</h3>
-                    <p className="text-muted small">{labels.imageHint}</p>
-                    <div className="actions compact">
+                <p className="mt-2 text-sm leading-relaxed text-ink">{labels.comebackBody}</p>
+                <p className="mt-2 text-xs text-muted">{labels.comebackNext}</p>
+              </div>
+            ) : null}
+
+            <div className="flex flex-wrap gap-2 pt-1">
+              {!revealed && !feedback ? (
+                <button className={`${btnPrimary} min-h-11 px-6 text-base sm:min-h-12`} onClick={() => setRevealed(true)} type="button">
+                  {labels.reveal}
+                </button>
+              ) : !feedback ? (
+                <>
+                  <button
+                    className={`${btnNeutral} min-h-10`}
+                    onClick={() => void review(currentCard, "again")}
+                    type="button"
+                  >
+                    {labels.again}
+                  </button>
+                  <button
+                    className={`${btnSecondary} min-h-10`}
+                    onClick={() => void review(currentCard, "hard")}
+                    type="button"
+                  >
+                    {labels.hard}
+                  </button>
+                  <button
+                    className={`${btnPrimary} min-h-10`}
+                    onClick={() => void review(currentCard, "good")}
+                    type="button"
+                  >
+                    {labels.good}
+                  </button>
+                </>
+              ) : null}
+            </div>
+
+            {canAttachImage ? (
+              compact ? (
+                <details className="rounded-xl border border-dashed border-ink/12 bg-paper/30 ring-1 ring-ink/[0.04]">
+                  <summary className="min-h-11 cursor-pointer list-none px-3 py-3 text-xs font-bold text-ink outline-none marker:content-none focus-visible:ring-2 focus-visible:ring-accent [&::-webkit-details-marker]:hidden sm:px-4 sm:text-sm">
+                    {labels.reviewImageOptionalSummary}
+                  </summary>
+                  <div className="border-t border-ink/10 px-3 pb-4 pt-2 sm:px-4">
+                    <p className="text-[11px] leading-snug text-muted sm:text-xs">{labels.imageHint}</p>
+                    <div className="mt-3">
                       <input
                         accept="image/jpeg,image/png,image/webp,image/gif"
                         className="sr-only"
@@ -526,89 +752,68 @@ export function FlashcardsClient({ labels }: { labels: FlashcardLabels }) {
                         }}
                         type="file"
                       />
-                      <label className="secondary-button" htmlFor={fileInputId}>
+                      <label className={`${btnSecondary} min-h-9 cursor-pointer text-xs`} htmlFor={fileInputId}>
                         {labels.imageUploadLabel}
                       </label>
                     </div>
                     {imageStatusText ? (
-                      <p aria-live="polite" className="image-flow-status" role="status">
+                      <p aria-live="polite" className="mt-2 text-[11px] font-medium text-muted" role="status">
                         {imageStatusText}
                       </p>
                     ) : null}
                   </div>
-                ) : null}
-                {feedback ? (
-                  <div className="mt-5 rounded-xl border border-green-300 bg-green-50 p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-semibold text-green-900">Let's practice this more!</p>
-                        {feedback.remediation?.sourceType && (
-                          <p className="mt-1 text-xs text-green-700">
-                            Skill: <span className="font-medium">{feedback.remediation.sourceType}</span>
-                          </p>
-                        )}
-                        <p className="mt-2 text-sm leading-relaxed text-green-800">
-                          This card has been marked for comeback review. You can review similar cards later to strengthen your knowledge.
-                        </p>
-                      </div>
-                    </div>
-                    <p className="mt-3 text-xs text-green-600">Next card loading...</p>
+                </details>
+              ) : (
+                <div className="rounded-xl border border-dashed border-ink/15 bg-paper/40 p-3 sm:p-4">
+                  <h3 className="text-xs font-bold text-ink sm:text-sm">{labels.imageSectionTitle}</h3>
+                  <p className="mt-1 text-[11px] text-muted sm:text-xs">{labels.imageHint}</p>
+                  <div className="mt-3">
+                    <input
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      className="sr-only"
+                      id={fileInputId}
+                      onChange={(event) => {
+                        const file = event.target.files?.[0];
+                        event.target.value = "";
+                        if (file) {
+                          void onPickImage(file, currentCard);
+                        }
+                      }}
+                      type="file"
+                    />
+                    <label className={`${btnSecondary} min-h-9 cursor-pointer text-xs`} htmlFor={fileInputId}>
+                      {labels.imageUploadLabel}
+                    </label>
                   </div>
-                ) : null}
-                <div className="actions">
-                  {!revealed && !feedback ? (
-                    <button
-                      className="secondary-button"
-                      onClick={() => setRevealed(true)}
-                      type="button"
-                    >
-                      {labels.reveal}
-                    </button>
-                  ) : !feedback ? (
-                    <>
-                      <button
-                        className="secondary-button"
-                        onClick={() => void review(currentCard, "again")}
-                        type="button"
-                      >
-                        {labels.again}
-                      </button>
-                      <button
-                        className="secondary-button"
-                        onClick={() => void review(currentCard, "hard")}
-                        type="button"
-                      >
-                        {labels.hard}
-                      </button>
-                      <button
-                        className="primary"
-                        onClick={() => void review(currentCard, "good")}
-                        type="button"
-                      >
-                        {labels.good}
-                      </button>
-                    </>
+                  {imageStatusText ? (
+                    <p aria-live="polite" className="mt-2 text-[11px] font-medium text-muted" role="status">
+                      {imageStatusText}
+                    </p>
                   ) : null}
                 </div>
-              </article>
+              )
             ) : null}
-          </div>
-          <aside className="space-y-3 rounded-2xl border border-ink/10 bg-paper/50 p-4 lg:self-start">
-            <p className="text-sm font-semibold text-ink">{labels.title}</p>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="rounded-xl bg-surface p-3">
-                <p className="text-xs text-muted">{labels.load}</p>
-                <p className="text-xl font-semibold text-ink">{cards.length}</p>
-              </div>
-              <div className="rounded-xl bg-surface p-3">
-                <p className="text-xs text-muted">{labels.offlineSyncing}</p>
-                <p className="text-xl font-semibold text-ink">{pendingOffline}</p>
-              </div>
+          </article>
+        </div>
+      ) : null}
+
+      {!compact ? (
+        <aside className="max-w-3xl space-y-3 rounded-2xl border border-ink/10 bg-paper/50 p-4">
+          <p className="text-sm font-bold text-ink">{labels.title}</p>
+          <p className="text-xs text-muted">{labels.subtitle}</p>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="rounded-xl border border-ink/8 bg-surface p-3">
+              <p className="text-[11px] font-semibold text-muted">{labels.statDueSession}</p>
+              <p className="mt-1 text-lg font-bold tabular-nums text-ink">{cards.length}</p>
             </div>
-            {quotaLine ? <p className="text-xs leading-relaxed text-muted">{quotaLine}</p> : null}
-          </aside>
-        </CardContent>
-      </Card>
-    </main>
+            <div className="rounded-xl border border-ink/8 bg-surface p-3">
+              <p className="text-[11px] font-semibold text-muted">{labels.statPendingSync}</p>
+              <p className="mt-1 text-lg font-bold tabular-nums text-ink">{pendingOffline}</p>
+            </div>
+          </div>
+          {quotaLine ? <p className="text-xs leading-relaxed text-muted">{quotaLine}</p> : null}
+        </aside>
+      ) : null}
+    </div>
   );
 }

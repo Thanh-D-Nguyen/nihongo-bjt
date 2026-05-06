@@ -1,5 +1,6 @@
 "use client";
 
+import { getLearnerKeycloakSession } from "./learner-keycloak-session";
 import { isWebKeycloakEnabled } from "./public-keycloak";
 
 const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/$/u, "");
@@ -19,12 +20,11 @@ export async function learnerApiFetch(path: string, init?: RequestInit): Promise
   const url = `${apiBaseUrl}${path.startsWith("/") ? path : `/${path}`}`;
   const headers = new Headers(init?.headers);
   if (isWebKeycloakEnabled()) {
-    const sr = await fetch("/api/auth/keycloak/session", { credentials: "same-origin" });
+    const sr = await getLearnerKeycloakSession();
     if (!sr.ok) {
       throw new LearnerSessionError("learner_session_unauthorized");
     }
-    const { accessToken } = (await sr.json()) as { accessToken: string };
-    headers.set("Authorization", `Bearer ${accessToken}`);
+    headers.set("Authorization", `Bearer ${sr.accessToken}`);
   }
   return fetch(url, { ...init, headers });
 }
@@ -37,10 +37,9 @@ export async function learnerApiFetchOptional(path: string, init?: RequestInit):
   const url = `${apiBaseUrl}${path.startsWith("/") ? path : `/${path}`}`;
   const headers = new Headers(init?.headers);
   if (isWebKeycloakEnabled()) {
-    const sr = await fetch("/api/auth/keycloak/session", { credentials: "same-origin" });
+    const sr = await getLearnerKeycloakSession();
     if (sr.ok) {
-      const { accessToken } = (await sr.json()) as { accessToken: string };
-      headers.set("Authorization", `Bearer ${accessToken}`);
+      headers.set("Authorization", `Bearer ${sr.accessToken}`);
     }
   }
   return fetch(url, { ...init, headers });

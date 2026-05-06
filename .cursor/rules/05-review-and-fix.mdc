@@ -1,0 +1,33 @@
+---
+description: PR review, bugfix triage, evidence, and retry discipline
+alwaysApply: false
+---
+
+# Review and fix
+
+## Review lens
+
+- **Correctness:** Does the change match the stated intent and edge cases?
+- **Scope:** Diff size vs task; unrelated churn should be zero.
+- **Safety:** Auth, data integrity, migrations, and user-visible regressions considered.
+- **Observability:** Errors logged usefully without leaking PII or secrets.
+
+## Bugfixes
+
+- Reproduce first (test or minimal steps); fix root cause over symptoms when cost is reasonable.
+- Add or adjust a test when the class of bug is likely to recur.
+
+## Output when closing a task
+
+- What changed (files/areas) and why.
+- Commands run and outcome (or explicit reason tests were skipped).
+- Residual risks, follow-ups, or TODOs with owners.
+
+## When checks fail
+
+- Read the failure, fix the smallest causal issue, rerun the same check before broad reruns.
+- Escalate flaky infrastructure separately from product defects.
+
+## Heavy review workflows
+
+Phase gates, release director packets, and multi-agent orchestration stay in `.github` and `company/` docs — invoke those paths only when the human asks for that depth.

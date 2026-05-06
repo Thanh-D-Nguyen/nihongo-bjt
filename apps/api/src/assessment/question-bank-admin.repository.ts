@@ -110,6 +110,10 @@ export class QuestionBankAdminRepository {
           tags: data.tags,
           sourceType: data.sourceType ?? null,
           sourceId: data.sourceId ?? null,
+          imageUrl: data.imageUrl ?? null,
+          imageAlt: data.imageAlt ?? null,
+          audioUrl: data.audioUrl ?? null,
+          audioScript: data.audioScript ?? null,
           status: "draft",
           options: {
             create: data.options.map((o) => ({
@@ -151,6 +155,10 @@ export class QuestionBankAdminRepository {
       if (data.tags !== undefined) update.tags = data.tags;
       if (data.sourceType !== undefined) update.sourceType = data.sourceType;
       if (data.sourceId !== undefined) update.sourceId = data.sourceId ?? null;
+      if (data.imageUrl !== undefined) update.imageUrl = data.imageUrl ?? null;
+      if (data.imageAlt !== undefined) update.imageAlt = data.imageAlt ?? null;
+      if (data.audioUrl !== undefined) update.audioUrl = data.audioUrl ?? null;
+      if (data.audioScript !== undefined) update.audioScript = data.audioScript ?? null;
       await tx.bjtQuestion.update({ data: update, where: { id } });
       if (data.options) {
         await tx.bjtQuestionOption.deleteMany({ where: { questionId: id } });

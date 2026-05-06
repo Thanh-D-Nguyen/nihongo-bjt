@@ -1,9 +1,9 @@
 import { isSupportedLocale, type SupportedLocale } from "@nihongo-bjt/config";
-import { KC_COOKIE } from "@nihongo-bjt/keycloak-oidc";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import ja from "../../messages/ja.json";
 import vi from "../../messages/vi.json";
+import { learnerKcCookies } from "../../lib/kc-cookies";
 import { KeycloakAuthShell } from "./_components/keycloak-auth-shell";
 import { PwaRegister } from "../_components/pwa-register";
 
@@ -35,7 +35,7 @@ export default async function LearnerLayout({
   const skipLabel = skipLabels[loc] ?? vi.a11y.skipToContent;
   const t = loc === "ja" ? ja : vi;
   const jar = await cookies();
-  const kcAccessCookiePresent = Boolean(jar.get(KC_COOKIE.access)?.value);
+  const kcAccessCookiePresent = Boolean(jar.get(learnerKcCookies.access)?.value);
 
   return (
     <div lang={locale as SupportedLocale}>
