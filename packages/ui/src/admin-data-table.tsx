@@ -11,11 +11,17 @@ export function AdminDataTable({ className, ...props }: HTMLAttributes<HTMLTable
   );
 }
 
-export function AdminDataTableHead({ className, ...props }: HTMLAttributes<HTMLTableSectionElement>) {
+export function AdminDataTableHead({
+  className,
+  ...props
+}: HTMLAttributes<HTMLTableSectionElement>) {
   return <thead className={cn(className)} {...props} />;
 }
 
-export function AdminDataTableBody({ className, ...props }: HTMLAttributes<HTMLTableSectionElement>) {
+export function AdminDataTableBody({
+  className,
+  ...props
+}: HTMLAttributes<HTMLTableSectionElement>) {
   return <tbody className={cn(className)} {...props} />;
 }
 

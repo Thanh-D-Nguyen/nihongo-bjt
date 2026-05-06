@@ -1,13 +1,16 @@
 "use client";
 
-import Image from "next/image";
+import { Badge, Button, Card, CardContent, EmptyState, ErrorState, LoadingSkeleton, SectionHeader, TabButton, TabsList } from "@nihongo-bjt/ui";
 import Link from "next/link";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
 import { learnerApiFetch } from "../../../../lib/learner-api";
-import { ScrollStrip } from "../../../_components/scroll-strip";
+import { IconBookmark, IconDocument } from "../../../_components/app-icons";
+import { NhkCreateDeckDialog } from "../nhk-create-deck-dialog";
 import type { HomepageLabels, NhkArticle } from "./types";
+
+type NewsType = "easy" | "normal";
 
 function timeAgo(dateStr: string, labels: HomepageLabels): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -19,217 +22,227 @@ function timeAgo(dateStr: string, labels: HomepageLabels): string {
   if (hours < 24) {
     return labels.newsTimeAgo.replace("{time}", labels.newsHoursAgo.replace("{n}", String(hours)));
   }
-  const days = Math.floor(hours / 24);
-  return labels.newsTimeAgo.replace("{time}", labels.newsDaysAgo.replace("{n}", String(days)));
+  return labels.newsTimeAgo.replace("{time}", labels.newsDaysAgo.replace("{n}", String(Math.floor(hours / 24))));
 }
 
-function DifficultyBadge({ level }: { level: string }) {
-  const colors: Record<string, string> = {
-    N5: "bg-green-100 text-green-700",
-    N4: "bg-emerald-100 text-emerald-700",
-    N3: "bg-blue-100 text-blue-700",
-    N2: "bg-violet-100 text-violet-700",
-    N1: "bg-rose-100 text-rose-700",
-  };
-  return (
-    <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide ${colors[level] ?? "bg-gray-100 text-gray-600"}`}>
-      {level}
-    </span>
-  );
+function sourceLabel(type: NewsType, labels: HomepageLabels) {
+  return type === "easy" ? labels.newsEasy : labels.newsNormal;
 }
 
 function NewsCard({
   article,
   labels,
   locale,
-  onCreateFlashcard,
+  onCreateFlashcardDeck,
   priority,
+  type
 }: {
   article: NhkArticle;
   labels: HomepageLabels;
   locale: string;
-  onCreateFlashcard: (articleId: string) => void;
+  onCreateFlashcardDeck: (articleId: string) => void;
   priority?: boolean;
+  type: NewsType;
 }) {
   return (
-    <article className="group flex w-[280px] shrink-0 flex-col overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-ink/5 transition-all hover:shadow-md hover:-translate-y-0.5 sm:w-[320px]">
-      {/* Image */}
-      <div className="relative aspect-[16/9] w-full overflow-hidden bg-gray-100">
-        {article.imageUrl ? (
-          <Image
-            src={article.imageUrl}
-            alt={article.title}
-            fill
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
-            sizes="320px"
-            priority={priority}
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
-            <svg className="h-10 w-10 text-gray-300" fill="none" stroke="currentColor" strokeWidth={1.2} viewBox="0 0 24 24">
-              <path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2Z" />
-              <circle cx="8.5" cy="8.5" r="1.5" />
-              <path d="m21 15-5-5L5 21" />
-            </svg>
-          </div>
-        )}
-        {article.difficulty && (
-          <div className="absolute left-2 top-2">
-            <DifficultyBadge level={article.difficulty} />
-          </div>
-        )}
-      </div>
-
-      {/* Content */}
-      <div className="flex flex-1 flex-col p-4">
-        <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-ink">
-          {article.title}
-        </h3>
-        <p className="mt-1.5 text-xs text-muted">
-          {timeAgo(article.publishedAt, labels)}
-        </p>
-
-        {/* Actions */}
-        <div className="mt-auto flex items-center gap-2 pt-3">
-          <Link
-            href={`/${locale}/news/${article.id}`}
-            className="flex-1 rounded-lg bg-gray-50 px-3 py-2 text-center text-xs font-medium text-ink/80 transition-colors hover:bg-gray-100"
-          >
-            {labels.newsReadMore}
-          </Link>
-          <button
-            onClick={() => onCreateFlashcard(article.id)}
-            className="flex items-center gap-1 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-100"
-            type="button"
-          >
-            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path d="M12 5v14m-7-7h14" strokeLinecap="round" />
-            </svg>
-            {labels.newsCreateFlashcard}
-          </button>
+    <Card className="group overflow-hidden rounded-xl shadow-sm transition hover:border-accent/25 hover:shadow-md">
+      <div className="grid min-h-full sm:grid-cols-[9.5rem_minmax(0,1fr)]">
+        <div className="relative aspect-[16/9] bg-paper sm:aspect-auto">
+          {article.imageUrl ? (
+            <img
+              alt={article.title}
+              className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+              loading={priority ? "eager" : "lazy"}
+              src={article.imageUrl}
+            />
+          ) : (
+            <div className="flex h-full min-h-32 items-center justify-center text-muted">
+              <IconDocument aria-hidden size={24} />
+            </div>
+          )}
         </div>
+        <CardContent className="flex min-h-48 flex-col p-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge tone={type === "easy" ? "accent" : "neutral"}>{sourceLabel(type, labels)}</Badge>
+            {article.difficulty ? <Badge>{article.difficulty}</Badge> : null}
+          </div>
+          <h3 className="mt-3 line-clamp-2 text-sm font-semibold leading-snug text-ink">
+            {article.title}
+          </h3>
+          <p className="mt-2 text-xs text-muted">{timeAgo(article.publishedAt, labels)}</p>
+          <div className="mt-auto flex flex-wrap gap-2 pt-4">
+            <Link
+              className="inline-flex min-h-9 flex-1 items-center justify-center rounded-lg bg-ink px-3 text-xs font-semibold text-surface transition hover:bg-ink/90"
+              href={`/${locale}/news/${article.id}`}
+            >
+              {labels.newsReadMore}
+            </Link>
+            <button
+              className="inline-flex min-h-9 items-center justify-center gap-1 rounded-lg border border-accent/20 bg-accent/8 px-3 text-xs font-semibold text-accent transition hover:bg-accent/12"
+              onClick={() => onCreateFlashcardDeck(article.id)}
+              type="button"
+            >
+              <IconBookmark aria-hidden size={16} />
+              {labels.newsCreateFlashcard}
+            </button>
+          </div>
+        </CardContent>
       </div>
-    </article>
+    </Card>
   );
 }
 
 export function FeaturedNewsSection({
-  articles,
+  articlesByType,
+  error,
   labels,
   loading,
   locale,
+  onRetry
 }: {
-  articles: NhkArticle[];
+  articlesByType: Record<NewsType, NhkArticle[]>;
+  error?: boolean;
   labels: HomepageLabels;
   loading?: boolean;
   locale: string;
+  onRetry: () => void;
 }) {
   const auth = useKeycloakAuth();
+  const [activeType, setActiveType] = useState<NewsType>("easy");
   const [flashcardMsg, setFlashcardMsg] = useState<string | null>(null);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [creatingDeck, setCreatingDeck] = useState(false);
+  const [pendingArticleId, setPendingArticleId] = useState<string | null>(null);
+  const articles = articlesByType[activeType] ?? [];
 
-  const handleCreateFlashcard = useCallback(
-    async (articleId: string) => {
+  const counts = useMemo(
+    () => ({
+      easy: articlesByType.easy.length,
+      normal: articlesByType.normal.length
+    }),
+    [articlesByType.easy.length, articlesByType.normal.length]
+  );
+
+  const handleOpenCreateDeck = useCallback(
+    (articleId: string) => {
       if (!auth.userId) {
         setFlashcardMsg(labels.progressSignIn);
         setTimeout(() => setFlashcardMsg(null), 3000);
         return;
       }
-      try {
-        // Get article detail to pick first vocab word
-        const res = await learnerApiFetch(`/api/nhk-news/${articleId}`);
-        if (!res.ok) throw new Error("Failed");
-        const detail = await res.json();
-        const firstWord = detail.vocabulary?.[0];
-        if (!firstWord) return;
-
-        const createRes = await learnerApiFetch(`/api/nhk-news/${articleId}/flashcard`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            word: firstWord.word,
-            reading: firstWord.reading,
-            meaning: firstWord.meaning,
-            cardType: "vocabulary",
-          }),
-        });
-        if (!createRes.ok) throw new Error("Failed");
-        const result = await createRes.json();
-        setFlashcardMsg(
-          result.message === "already_exists" ? labels.newsFlashcardExists : labels.newsFlashcardCreated,
-        );
-        setTimeout(() => setFlashcardMsg(null), 2000);
-      } catch {
-        setFlashcardMsg(labels.newsFlashcardError);
-        setTimeout(() => setFlashcardMsg(null), 2000);
-      }
+      setCreateError(null);
+      setPendingArticleId(articleId);
     },
-    [auth.userId, labels],
+    [auth.userId, labels.progressSignIn]
   );
 
-  if (loading) {
-    return (
-      <section aria-busy>
-        <div className="mb-4 flex items-end justify-between">
-          <div>
-            <h2 className="text-lg font-bold text-ink sm:text-xl">{labels.newsTitle}</h2>
-            <p className="text-sm text-muted">{labels.newsSubtitle}</p>
-          </div>
-        </div>
-        <div className="flex gap-3 overflow-hidden pb-1">
-          {[1, 2, 3].map((i) => (
-            <div
-              className="h-52 w-[280px] shrink-0 animate-pulse rounded-2xl bg-paper ring-1 ring-ink/5 sm:w-[320px]"
-              key={i}
-            />
-          ))}
-        </div>
-        <p className="sr-only">{labels.sectionLoadingHint}</p>
-      </section>
-    );
-  }
-
-  if (articles.length === 0) return null;
+  const handleCreateFlashcardDeck = useCallback(
+    async (deckTitle: string | null) => {
+      if (!pendingArticleId) return;
+      setCreatingDeck(true);
+      setCreateError(null);
+      try {
+        const createRes = await learnerApiFetch(`/api/nhk-news/${pendingArticleId}/flashcards`, {
+          body: JSON.stringify({
+            deckTitle
+          }),
+          headers: { "Content-Type": "application/json" },
+          method: "POST"
+        });
+        if (!createRes.ok) throw new Error("Failed");
+        setPendingArticleId(null);
+        setFlashcardMsg(labels.newsFlashcardCreated);
+        setTimeout(() => setFlashcardMsg(null), 2000);
+      } catch {
+        setCreateError(labels.newsFlashcardError);
+      } finally {
+        setCreatingDeck(false);
+      }
+    },
+    [labels.newsFlashcardCreated, labels.newsFlashcardError, pendingArticleId]
+  );
 
   return (
     <section>
-      <div className="mb-4 flex items-end justify-between">
-        <div>
-          <h2 className="text-lg font-bold text-ink sm:text-xl">{labels.newsTitle}</h2>
-          <p className="text-sm text-muted">{labels.newsSubtitle}</p>
-        </div>
-        <Link
-          href={`/${locale}/news`}
-          className="hidden text-sm font-medium text-emerald-600 hover:text-emerald-700 sm:block"
-        >
-          {labels.newsViewAll}
-        </Link>
-      </div>
+      <SectionHeader
+        actions={
+          <Link className="text-sm font-semibold text-accent transition hover:text-accent/80" href={`/${locale}/news`}>
+            {labels.newsViewAll}
+          </Link>
+        }
+        description={labels.newsSubtitle}
+        title={labels.newsTitle}
+      />
 
-      {flashcardMsg && (
-        <div className="mb-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+      <TabsList className="mb-4 w-fit">
+        {(["easy", "normal"] as const).map((type) => (
+          <TabButton active={activeType === type} key={type} onClick={() => setActiveType(type)}>
+            {sourceLabel(type, labels)}
+            <span className="ml-1 tabular-nums text-current/65">{type === "easy" ? counts.easy : counts.normal}</span>
+          </TabButton>
+        ))}
+      </TabsList>
+
+      {flashcardMsg ? (
+        <div className="mb-3 rounded-lg border border-accent/15 bg-accent/8 px-3 py-2 text-sm font-medium text-accent">
           {flashcardMsg}
+        </div>
+      ) : null}
+
+      {loading ? (
+        <div aria-busy className="grid gap-3 md:grid-cols-2">
+          {[1, 2, 3, 4].map((i) => (
+            <LoadingSkeleton className="h-48 rounded-xl" key={i} />
+          ))}
+          <p className="sr-only">{labels.sectionLoadingHint}</p>
+        </div>
+      ) : error ? (
+        <ErrorState
+          action={
+            <Button size="sm" variant="secondary" onClick={onRetry} type="button">
+              {labels.newsViewAll}
+            </Button>
+          }
+          description={labels.newsError}
+          title={labels.newsTitle}
+        />
+      ) : articles.length === 0 ? (
+        <EmptyState description={labels.newsEmpty} title={sourceLabel(activeType, labels)} />
+      ) : (
+        <div className="grid gap-3 md:grid-cols-2">
+          {articles.slice(0, 4).map((article, idx) => (
+            <NewsCard
+              article={article}
+              key={article.id}
+              labels={labels}
+              locale={locale}
+              onCreateFlashcardDeck={handleOpenCreateDeck}
+              priority={idx < 2}
+              type={activeType}
+            />
+          ))}
         </div>
       )}
 
-      <ScrollStrip>
-        {articles.map((article, idx) => (
-          <NewsCard
-            key={article.id}
-            article={article}
-            labels={labels}
-            locale={locale}
-            onCreateFlashcard={handleCreateFlashcard}
-            priority={idx < 2}
-          />
-        ))}
-      </ScrollStrip>
-
-      <Link
-        href={`/${locale}/news`}
-        className="mt-3 block text-center text-sm font-medium text-emerald-600 hover:text-emerald-700 sm:hidden"
-      >
-        {labels.newsViewAll}
-      </Link>
+      <NhkCreateDeckDialog
+        labels={{
+          cancel: labels.newsDeckCreateCancel,
+          description: labels.newsDeckCreateDescription,
+          error: createError ?? undefined,
+          nameHint: labels.newsDeckNameAutoHint,
+          nameLabel: labels.newsDeckNameLabel,
+          namePlaceholder: labels.newsDeckNamePlaceholder,
+          submit: creatingDeck ? labels.sectionLoadingHint : labels.newsDeckCreateSubmit,
+          title: labels.newsDeckCreateTitle
+        }}
+        loading={creatingDeck}
+        onClose={() => {
+          setPendingArticleId(null);
+          setCreateError(null);
+        }}
+        onSubmit={handleCreateFlashcardDeck}
+        open={pendingArticleId !== null}
+      />
     </section>
   );
 }

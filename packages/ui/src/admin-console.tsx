@@ -20,8 +20,12 @@ export function AdminPageHeader({
       {breadcrumbs ? <div className="text-xs font-medium text-slate-500">{breadcrumbs}</div> : null}
       <div className="flex flex-col gap-3 border-b border-slate-200 pb-5 md:flex-row md:items-end md:justify-between">
         <div className="min-w-0 space-y-1">
-          <h1 className="text-xl font-semibold tracking-tight text-slate-950 md:text-2xl">{title}</h1>
-          {description ? <p className="max-w-3xl text-sm leading-6 text-slate-600">{description}</p> : null}
+          <h1 className="text-xl font-semibold tracking-tight text-slate-950 md:text-2xl">
+            {title}
+          </h1>
+          {description ? (
+            <p className="max-w-3xl text-sm leading-6 text-slate-600">{description}</p>
+          ) : null}
         </div>
         {actions ? <div className="flex shrink-0 flex-wrap gap-2">{actions}</div> : null}
       </div>
@@ -79,13 +83,21 @@ export function AdminKpiCard({
   return (
     <div className={cn("rounded-lg border p-4 shadow-sm", tones[tone], className)} {...props}>
       <p className="text-xs font-medium uppercase text-slate-500">{label}</p>
-      <p className="mt-2 text-2xl font-semibold tabular-nums tracking-tight text-slate-950">{value}</p>
+      <p className="mt-2 text-2xl font-semibold tabular-nums tracking-tight text-slate-950">
+        {value}
+      </p>
       {trend ? <div className="mt-2 text-xs font-medium text-slate-600">{trend}</div> : null}
     </div>
   );
 }
 
-export function AdminMetricTrend({ children, tone = "neutral" }: { children: ReactNode; tone?: "neutral" | "up" | "down" }) {
+export function AdminMetricTrend({
+  children,
+  tone = "neutral"
+}: {
+  children: ReactNode;
+  tone?: "neutral" | "up" | "down";
+}) {
   return (
     <span
       className={cn(
@@ -111,7 +123,10 @@ export function AdminChartCard({
   title: ReactNode;
 }) {
   return (
-    <div className={cn("rounded-lg border border-slate-200 bg-white p-4 shadow-sm", className)} {...props}>
+    <div
+      className={cn("rounded-lg border border-slate-200 bg-white p-4 shadow-sm", className)}
+      {...props}
+    >
       <div className="mb-4">
         <h3 className="text-sm font-semibold text-slate-950">{title}</h3>
         {description ? <p className="mt-1 text-sm text-slate-600">{description}</p> : null}
@@ -124,7 +139,10 @@ export function AdminChartCard({
 export function AdminFilterBar({ children, className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("flex flex-col gap-2 rounded-lg border border-slate-200 bg-white p-3 shadow-sm md:flex-row md:items-center", className)}
+      className={cn(
+        "flex flex-col gap-2 rounded-lg border border-slate-200 bg-white p-3 shadow-sm md:flex-row md:items-center",
+        className
+      )}
       {...props}
     >
       {children}
@@ -164,7 +182,16 @@ export function AdminStatusBadge({
     neutral: "border-slate-200 bg-slate-50 text-slate-700",
     warning: "border-amber-200 bg-amber-50 text-amber-800"
   };
-  return <span className={cn("inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold", tones[tone])}>{children}</span>;
+  return (
+    <span
+      className={cn(
+        "inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold",
+        tones[tone]
+      )}
+    >
+      {children}
+    </span>
+  );
 }
 
 export function AdminEmptyState({
@@ -179,19 +206,15 @@ export function AdminEmptyState({
   return (
     <div className="rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center">
       <h3 className="text-sm font-semibold text-slate-950">{title}</h3>
-      {children ? <div className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600">{children}</div> : null}
+      {children ? (
+        <div className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600">{children}</div>
+      ) : null}
       {action ? <div className="mt-4 flex justify-center">{action}</div> : null}
     </div>
   );
 }
 
-export function AdminInsightCard({
-  children,
-  title
-}: {
-  children: ReactNode;
-  title: ReactNode;
-}) {
+export function AdminInsightCard({ children, title }: { children: ReactNode; title: ReactNode }) {
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
       <h3 className="text-sm font-semibold text-slate-950">{title}</h3>

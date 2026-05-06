@@ -26,7 +26,9 @@ const nextConfig = {
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com", pathname: "/**" },
-      { protocol: "https", hostname: "www3.nhk.or.jp", pathname: "/**" }
+      { protocol: "https", hostname: "www3.nhk.or.jp", pathname: "/**" },
+      { protocol: "https", hostname: "imgu.web.nhk", pathname: "/**" },
+      { protocol: "https", hostname: "nhkeasier.com", pathname: "/media/jpg/**" }
     ]
   }
 };

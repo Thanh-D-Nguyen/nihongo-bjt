@@ -38,10 +38,7 @@ export function SectionHeader({
   if (variant === "overline") {
     return (
       <header className={cn("mb-3 sm:mb-4", className)} {...props}>
-        <Heading
-          className="text-xs font-semibold uppercase tracking-wide text-muted"
-          id={id}
-        >
+        <Heading className="text-xs font-semibold uppercase tracking-wide text-muted" id={id}>
           {title}
         </Heading>
       </header>
@@ -58,7 +55,9 @@ export function SectionHeader({
     >
       <div className="min-w-0 space-y-1">
         {eyebrow ? (
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">{eyebrow}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+            {eyebrow}
+          </p>
         ) : null}
         <Heading className="text-base font-semibold tracking-tight text-ink md:text-[17px]" id={id}>
           {title}

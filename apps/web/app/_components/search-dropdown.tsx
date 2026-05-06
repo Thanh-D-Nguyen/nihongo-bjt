@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useRecentSearches } from "../../lib/use-recent-searches";
+import { IconClock, IconSearch } from "./app-icons";
 
 export interface SearchDropdownLabels {
   recentTitle: string;
@@ -226,7 +227,7 @@ export function SearchDropdown({
                 )}
                 onClick={() => doSelect({ type: "recent", value: term })}
               >
-                <ClockIcon />
+                <IconClock aria-hidden className="shrink-0 text-muted/40" size={16} />
                 <span className="truncate">{term}</span>
               </button>
             ))}
@@ -285,7 +286,7 @@ export function SearchDropdown({
             )}
             onClick={() => doSelect({ type: "seeAll", value: trimmedQuery })}
           >
-            <SearchIcon />
+            <IconSearch aria-hidden className="shrink-0" size={16} />
             <span>
               {labels.seeAll} <strong className="text-ink">「{trimmedQuery}」</strong>
             </span>
@@ -301,23 +302,5 @@ export function SearchDropdown({
         )}
       </div>
     </div>
-  );
-}
-
-function ClockIcon() {
-  return (
-    <svg className="shrink-0 text-muted/40" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10" />
-      <polyline points="12 6 12 12 16 14" />
-    </svg>
-  );
-}
-
-function SearchIcon() {
-  return (
-    <svg className="shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="11" cy="11" r="8" />
-      <line x1="21" y1="21" x2="16.65" y2="16.65" />
-    </svg>
   );
 }

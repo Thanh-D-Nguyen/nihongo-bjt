@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 
 import type { BattleBotAnimationState } from "@nihongo-bjt/shared";
+import { Badge, Button, Input, PageHeader } from "@nihongo-bjt/ui";
 
 import { BattleBotAvatar } from "../../../_components/battle-bot-avatar";
 import { BotDetailPopover } from "./bot-detail-popover";
@@ -142,7 +143,9 @@ function LobbyRosterColumn({
                 variant="card"
               />
               <span className="min-w-0">
-                <span className="block truncate text-sm font-black text-ink">{botName(labels, bot.label)}</span>
+                <span className="block truncate text-sm font-black text-ink">
+                  {botName(labels, bot.label)}
+                </span>
                 <span className="mt-0.5 block truncate text-[11px] font-semibold text-muted">
                   {localizeVocab(labels, bot.vocabularyLevel) ?? labels.battleDeck}
                 </span>
@@ -208,7 +211,9 @@ function LobbyRosterColumn({
       <div className="border-t border-ink/10 p-3">
         {pvpMatchInProgress ? (
           <>
-            <p className="mb-2 text-[11px] font-black uppercase text-muted">{labels.pvpSessionBadge}</p>
+            <p className="mb-2 text-[11px] font-black uppercase text-muted">
+              {labels.pvpSessionBadge}
+            </p>
             <p className="mb-3 truncate text-sm font-bold text-ink">
               {opponentName?.trim()
                 ? `${labels.userLabel} ${labels.vs} ${opponentName}`
@@ -236,7 +241,9 @@ function LobbyRosterColumn({
                 variant="card"
               />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-bold text-ink">{botName(labels, displayedBot.label)}</p>
+                <p className="truncate text-sm font-bold text-ink">
+                  {botName(labels, displayedBot.label)}
+                </p>
                 <p className="truncate text-[11px] text-muted">
                   {localizeDifficulty(labels, displayedBot.difficulty) ?? labels.battleDeck}
                 </p>
@@ -353,8 +360,7 @@ export function BattleLobbyClient() {
 
     const distanceFromBottom = root.scrollHeight - root.scrollTop - root.clientHeight;
     const nearBottom = distanceFromBottom < 72;
-    const shouldPin =
-      !didInitialChatScrollRef.current || last.userId === userId || nearBottom;
+    const shouldPin = !didInitialChatScrollRef.current || last.userId === userId || nearBottom;
 
     if (!shouldPin) return;
 
@@ -551,20 +557,17 @@ export function BattleLobbyClient() {
         />
       ) : null}
 
-      <header className="rounded-2xl border border-ink/10 bg-surface px-4 py-3 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-[11px] font-bold uppercase tracking-wide text-leaf">{labels.eyebrow}</p>
-            <h2 className="text-lg font-semibold tracking-tight text-ink sm:text-xl">{labels.title}</h2>
-          </div>
-          <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-2 rounded-full border border-ink/10 bg-paper px-2.5 py-1 text-xs font-bold text-ink">
-              <span className={`h-2 w-2 rounded-full ${socketConnected ? "bg-leaf" : "bg-amber"}`} />
-              {liveStatus}
-            </span>
-          </div>
-        </div>
-      </header>
+      <PageHeader
+        eyebrow={labels.eyebrow}
+        title={labels.title}
+        description={labels.pickBot}
+        actions={
+          <Badge className="min-h-9 gap-2 px-3">
+            <span className={`h-2 w-2 rounded-full ${socketConnected ? "bg-leaf" : "bg-amber"}`} />
+            {liveStatus}
+          </Badge>
+        }
+      />
 
       {isMatchUiActive ? (
         <div className="mt-4 flex flex-col gap-2 rounded-2xl border border-accent/25 bg-accent/5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
@@ -626,7 +629,9 @@ export function BattleLobbyClient() {
                     {rosterCountDisplay}
                   </span>
                 </button>
-                <h2 className="min-w-0 truncate text-sm font-black text-ink">{labels.lobbyTitle}</h2>
+                <h2 className="min-w-0 truncate text-sm font-black text-ink">
+                  {labels.lobbyTitle}
+                </h2>
               </div>
               {lobbyNotice ? (
                 <span className="max-w-[40%] shrink-0 truncate rounded-full bg-paper px-2 py-0.5 text-[10px] font-bold text-ink sm:max-w-[55%]">
@@ -635,7 +640,11 @@ export function BattleLobbyClient() {
               ) : null}
             </div>
           </div>
-          <div className="flex-1 space-y-2 overflow-y-auto p-3" aria-live="polite" ref={chatScrollRef}>
+          <div
+            className="flex-1 space-y-2 overflow-y-auto p-3"
+            aria-live="polite"
+            ref={chatScrollRef}
+          >
             {lobbyMessages.length === 0 ? (
               <p className="rounded-xl border border-dashed border-ink/15 bg-paper p-3 text-xs font-semibold leading-5 text-muted">
                 {labels.lobbyEmpty}
@@ -697,20 +706,20 @@ export function BattleLobbyClient() {
             }}
           >
             <div className="flex gap-2">
-              <input
-                className="min-h-10 min-w-0 flex-1 rounded-xl border border-ink/10 bg-paper px-3 text-sm font-semibold text-ink outline-none placeholder:text-muted/60 focus:border-accent"
+              <Input
+                className="min-h-10 min-w-0 flex-1 bg-paper shadow-none"
                 maxLength={500}
                 onChange={(event) => setChatText(event.target.value)}
                 placeholder={labels.lobbyMessagePlaceholder}
                 value={chatText}
               />
-              <button
-                className="min-h-10 rounded-xl bg-ink px-3 text-sm font-black text-surface hover:bg-ink/90 disabled:opacity-50"
+              <Button
+                className="min-h-10 px-3"
                 disabled={!userId || !socketConnected || chatText.trim().length === 0}
                 type="submit"
               >
                 {labels.lobbySend}
-              </button>
+              </Button>
             </div>
           </form>
         </section>

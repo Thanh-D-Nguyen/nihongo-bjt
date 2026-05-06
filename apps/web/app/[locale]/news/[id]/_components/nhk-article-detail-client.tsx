@@ -1,11 +1,11 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
 import { useKeycloakAuth } from "../../../../../components/auth/keycloak-auth-provider";
 import { learnerApiFetch, learnerApiFetchOptional } from "../../../../../lib/learner-api";
+import { NhkCreateDeckDialog } from "../../../_components/nhk-create-deck-dialog";
 
 interface NhkArticleDetail {
   id: string;
@@ -45,6 +45,14 @@ interface Labels {
   addFlashcard: string;
   addedFlashcard: string;
   addFlashcardError: string;
+  deckCreateCancel: string;
+  deckCreateDescription: string;
+  deckCreateSubmit: string;
+  deckCreateTitle: string;
+  deckNameAutoHint: string;
+  deckNameLabel: string;
+  deckNamePlaceholder: string;
+  deckCreated: string;
   signInToAdd: string;
   publishedAt: string;
 }
@@ -62,8 +70,10 @@ export function NhkArticleDetailClient({
   const [article, setArticle] = useState<NhkArticleDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [addedWords, setAddedWords] = useState<Set<string>>(new Set());
-  const [addingWord, setAddingWord] = useState<string | null>(null);
+  const [deckStatus, setDeckStatus] = useState<string | null>(null);
+  const [deckError, setDeckError] = useState<string | null>(null);
+  const [deckDialogOpen, setDeckDialogOpen] = useState(false);
+  const [creatingDeck, setCreatingDeck] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -86,31 +96,33 @@ export function NhkArticleDetailClient({
     void load();
   }, [load]);
 
-  const handleAddFlashcard = useCallback(
-    async (vocab: VocabItem) => {
+  const handleCreateDeck = useCallback(
+    async (deckTitle: string | null) => {
       if (!auth.userId) return;
-      setAddingWord(vocab.word);
+      setCreatingDeck(true);
+      setDeckStatus(null);
+      setDeckError(null);
       try {
-        const res = await learnerApiFetch(`/api/nhk-news/${encodeURIComponent(articleId)}/flashcard`, {
+        const res = await learnerApiFetch(`/api/nhk-news/${encodeURIComponent(articleId)}/flashcards`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            word: vocab.word,
-            reading: vocab.reading,
-            meaning: vocab.meaning,
-            cardType: vocab.pos === "名詞" ? "vocabulary" : vocab.pos === "動詞" ? "vocabulary" : "vocabulary",
+            deckTitle
           }),
         });
         if (res.ok) {
-          setAddedWords((prev) => new Set(prev).add(vocab.word));
+          setDeckDialogOpen(false);
+          setDeckStatus(labels.deckCreated);
+        } else {
+          setDeckError(labels.addFlashcardError);
         }
       } catch {
-        // silent
+        setDeckError(labels.addFlashcardError);
       } finally {
-        setAddingWord(null);
+        setCreatingDeck(false);
       }
     },
-    [auth.userId, articleId]
+    [auth.userId, articleId, labels.addFlashcardError, labels.deckCreated]
   );
 
   if (loading) {
@@ -161,13 +173,11 @@ export function NhkArticleDetailClient({
       {/* Hero image */}
       {article.imageUrl && (
         <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl bg-gray-100">
-          <Image
-            src={article.imageUrl}
+          <img
             alt={article.title}
-            fill
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, 768px"
-            priority
+            className="h-full w-full object-cover"
+            loading="eager"
+            src={article.imageUrl}
           />
         </div>
       )}
@@ -186,6 +196,25 @@ export function NhkArticleDetailClient({
         <h1 className="mt-3 text-2xl font-bold leading-tight text-ink sm:text-3xl" lang="ja">
           {article.title}
         </h1>
+
+        <div className="mt-5 flex flex-wrap items-center gap-3">
+          {auth.userId ? (
+            <button
+              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-ink px-4 text-sm font-semibold text-surface transition hover:bg-ink/90 disabled:opacity-50"
+              disabled={creatingDeck || article.vocabulary.length === 0}
+              onClick={() => {
+                setDeckError(null);
+                setDeckDialogOpen(true);
+              }}
+              type="button"
+            >
+              {creatingDeck ? labels.loading : labels.addFlashcard}
+            </button>
+          ) : (
+            <span className="text-sm font-medium text-muted">{labels.signInToAdd}</span>
+          )}
+          {deckStatus ? <span className="text-sm font-semibold text-emerald-700">{deckStatus}</span> : null}
+        </div>
 
         {/* Ruby title */}
         {article.titleWithRuby && (
@@ -238,7 +267,6 @@ export function NhkArticleDetailClient({
                   <th className="px-4 py-3">{labels.vocabReading}</th>
                   <th className="px-4 py-3 hidden sm:table-cell">{labels.vocabMeaning}</th>
                   <th className="px-4 py-3 hidden sm:table-cell">{labels.vocabPos}</th>
-                  <th className="px-4 py-3 w-24" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-ink/5">
@@ -255,22 +283,6 @@ export function NhkArticleDetailClient({
                     </td>
                     <td className="px-4 py-3 text-muted hidden sm:table-cell" lang="ja">
                       {v.pos ?? "—"}
-                    </td>
-                    <td className="px-4 py-3">
-                      {!auth.userId ? (
-                        <span className="text-xs text-muted">{labels.signInToAdd}</span>
-                      ) : addedWords.has(v.word) ? (
-                        <span className="text-xs font-medium text-emerald-600">{labels.addedFlashcard}</span>
-                      ) : (
-                        <button
-                          onClick={() => handleAddFlashcard(v)}
-                          disabled={addingWord === v.word}
-                          className="rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-100 disabled:opacity-50"
-                          type="button"
-                        >
-                          {addingWord === v.word ? "..." : labels.addFlashcard}
-                        </button>
-                      )}
                     </td>
                   </tr>
                 ))}
@@ -292,30 +304,31 @@ export function NhkArticleDetailClient({
                   )}
                 </div>
                 {v.meaning && <p className="mt-2 text-sm text-muted">{v.meaning}</p>}
-                <div className="mt-3">
-                  {!auth.userId ? (
-                    <span className="text-xs text-muted">{labels.signInToAdd}</span>
-                  ) : addedWords.has(v.word) ? (
-                    <span className="text-xs font-medium text-emerald-600">{labels.addedFlashcard}</span>
-                  ) : (
-                    <button
-                      onClick={() => handleAddFlashcard(v)}
-                      disabled={addingWord === v.word}
-                      className="flex items-center gap-1 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-100 disabled:opacity-50"
-                      type="button"
-                    >
-                      <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                        <path d="M12 5v14m-7-7h14" strokeLinecap="round" />
-                      </svg>
-                      {addingWord === v.word ? "..." : labels.addFlashcard}
-                    </button>
-                  )}
-                </div>
               </div>
             ))}
           </div>
         </section>
       )}
+
+      <NhkCreateDeckDialog
+        labels={{
+          cancel: labels.deckCreateCancel,
+          description: labels.deckCreateDescription,
+          error: deckError ?? undefined,
+          nameHint: labels.deckNameAutoHint,
+          nameLabel: labels.deckNameLabel,
+          namePlaceholder: labels.deckNamePlaceholder,
+          submit: creatingDeck ? labels.loading : labels.deckCreateSubmit,
+          title: labels.deckCreateTitle
+        }}
+        loading={creatingDeck}
+        onClose={() => {
+          setDeckDialogOpen(false);
+          setDeckError(null);
+        }}
+        onSubmit={handleCreateDeck}
+        open={deckDialogOpen}
+      />
     </main>
   );
 }

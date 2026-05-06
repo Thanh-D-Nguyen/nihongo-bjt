@@ -10,12 +10,14 @@ export function AppShell({
   return (
     <div
       className={cn(
-        "min-h-screen bg-paper",
+        "min-h-screen bg-paper bg-[radial-gradient(ellipse_at_top,_rgba(37,99,235,0.05),transparent_60%)]",
         className
       )}
       {...props}
     >
-      <div className="mx-auto flex min-h-screen max-w-6xl flex-col px-4 pb-16 pt-6 sm:px-6 lg:px-8">{children}</div>
+      <div className="mx-auto flex min-h-screen max-w-7xl flex-col px-4 pb-28 pt-0 sm:px-6 lg:px-8 lg:pb-16">
+        {children}
+      </div>
     </div>
   );
 }

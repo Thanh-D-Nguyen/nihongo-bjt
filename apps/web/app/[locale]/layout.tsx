@@ -43,7 +43,12 @@ export default async function LearnerLayout({
         {skipLabel}
       </a>
       <PwaRegister />
-      <KeycloakAuthShell kcAccessCookiePresent={kcAccessCookiePresent} locale={locale} nav={t.nav}>
+      <KeycloakAuthShell
+        kcAccessCookiePresent={kcAccessCookiePresent}
+        locale={locale}
+        nav={t.nav}
+        searchLabels={t.search}
+      >
         <div className="site-root" id="main" tabIndex={-1}>
           {children}
         </div>

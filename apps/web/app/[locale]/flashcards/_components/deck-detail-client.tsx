@@ -1,5 +1,6 @@
 "use client";
 
+import { Badge, Button, Card, CardContent, EmptyState, ErrorState, LoadingSkeleton } from "@nihongo-bjt/ui";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useId, useState } from "react";
@@ -101,13 +102,15 @@ export function DeckDetailClient({
 
   if (loading && !deck) {
     return (
-      <div className="mx-auto w-full max-w-4xl space-y-4 px-3 py-4 sm:px-4">
-        <div className="h-8 w-40 animate-pulse rounded-lg bg-paper ring-1 ring-ink/8" />
-        <div className="h-24 animate-pulse rounded-2xl bg-paper ring-1 ring-ink/8" />
-        <div className="space-y-2">
-          {[1, 2, 3, 4].map((i) => (
-            <div className="h-16 animate-pulse rounded-xl bg-paper ring-1 ring-ink/8" key={i} />
-          ))}
+      <div className="mx-auto w-full max-w-6xl space-y-5 px-4 py-5 sm:px-6 lg:py-8">
+        <LoadingSkeleton className="h-10 w-44 rounded-xl" />
+        <LoadingSkeleton className="h-44 rounded-2xl" />
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+          <LoadingSkeleton className="h-[28rem] rounded-2xl" />
+          <div className="space-y-3">
+            <LoadingSkeleton className="h-28 rounded-2xl" />
+            <LoadingSkeleton className="h-40 rounded-2xl" />
+          </div>
         </div>
         <p className="sr-only" role="status">
           {labels.deckDetailLoading}
@@ -118,16 +121,14 @@ export function DeckDetailClient({
 
   if (error || !deck) {
     return (
-      <div className="mx-auto w-full max-w-4xl space-y-4 px-3 py-4 sm:px-4">
+      <div className="mx-auto w-full max-w-4xl space-y-4 px-4 py-6 sm:px-6">
         <Link
           className="inline-flex min-h-10 items-center rounded-xl border border-ink/12 bg-paper px-4 text-sm font-bold text-ink hover:bg-white"
           href={backHref}
         >
           ← {labels.deckDetailBack}
         </Link>
-        <p className="text-sm text-sakura" role="alert">
-          {error ?? labels.deckDetailNotFound}
-        </p>
+        <ErrorState description={error ?? labels.deckDetailNotFound} title={labels.deckDetailPageTitle} />
       </div>
     );
   }
@@ -147,113 +148,129 @@ export function DeckDetailClient({
   const isOwner = Boolean(userId && deck.ownerUserId === userId);
 
   const sortedCards = [...deck.cards].sort((a, b) => a.position - b.position);
+  const visibilityLabel = deck.visibility === "public" ? labels.public : labels.private;
+  const statusLabel = deck.status === "active" ? labels.statusActive : labels.statusArchived;
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-6 px-3 py-4 sm:px-4 sm:py-6">
-      <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-ink/8 bg-surface/90 p-2 shadow-sm ring-1 ring-ink/[0.03] backdrop-blur-sm sm:gap-3 sm:p-2.5">
+    <div className="mx-auto w-full max-w-6xl space-y-5 px-4 py-5 sm:px-6 lg:py-8">
+      <nav className="flex flex-wrap items-center gap-2 text-sm text-muted">
         <Link
-          className="inline-flex min-h-11 items-center rounded-xl border border-ink/12 bg-paper px-4 text-sm font-black text-ink transition-colors hover:bg-white"
+          className="inline-flex min-h-9 items-center rounded-lg px-2 font-semibold transition hover:bg-ink/5 hover:text-ink"
           href={backHref}
         >
           ← {labels.deckDetailBack}
         </Link>
-        <Link
-          className="inline-flex min-h-11 items-center rounded-xl bg-ink px-4 text-sm font-black text-surface shadow-sm transition hover:bg-ink/90"
-          href={reviewHref}
-        >
-          {labels.reviewDeck}
-        </Link>
-        {isOwner ? (
-          <button
-            className="inline-flex min-h-11 items-center justify-center rounded-xl border border-ink/15 bg-paper px-4 text-sm font-black text-muted outline-none ring-offset-2 transition hover:border-sakura/35 hover:text-sakura focus-visible:ring-2 focus-visible:ring-accent"
-            onClick={() => setPendingDelete(true)}
-            type="button"
-          >
-            {labels.deleteOwnedDeck}
-          </button>
-        ) : null}
-      </div>
+      </nav>
 
-      <header className="relative overflow-hidden rounded-3xl border border-ink/10 bg-gradient-to-br from-surface via-surface to-leaf-soft/25 p-5 shadow-md ring-1 ring-ink/[0.04] sm:p-7">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-accent via-leaf to-accent/60" aria-hidden />
-        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-leaf">{labels.deckDetailKicker}</p>
-        <h1 className="mt-2 text-2xl font-black tracking-tight text-ink sm:text-3xl">{title}</h1>
-        {desc ? <p className="mt-3 max-w-prose text-sm font-semibold leading-relaxed text-muted sm:text-base">{desc}</p> : null}
-        <p className="mt-4 max-w-prose border-t border-ink/8 pt-4 text-xs leading-relaxed text-muted sm:text-sm">
-          {labels.deckDetailStudyHint}
-        </p>
+      <header className="rounded-2xl border border-ink/10 bg-surface p-5 shadow-sm ring-1 ring-ink/[0.03] sm:p-6">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge tone="accent">{labels.deckDetailKicker}</Badge>
+              <Badge>{visibilityLabel}</Badge>
+              <Badge>{statusLabel}</Badge>
+            </div>
+            <h1 className="mt-3 max-w-3xl text-2xl font-semibold leading-tight text-ink sm:text-3xl">{title}</h1>
+            {desc ? <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted sm:text-base">{desc}</p> : null}
+            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted">{labels.deckDetailStudyHint}</p>
+          </div>
+          <div className="flex shrink-0 flex-col gap-2 sm:flex-row lg:flex-col">
+            <Link
+              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-ink px-4 text-sm font-semibold text-surface shadow-sm transition hover:bg-ink/90"
+              href={reviewHref}
+            >
+              {labels.reviewDeck}
+            </Link>
+            {isOwner ? (
+              <Button onClick={() => setPendingDelete(true)} type="button" variant="secondary">
+                {labels.deleteOwnedDeck}
+              </Button>
+            ) : null}
+          </div>
+        </div>
       </header>
 
-      {sortedCards.length > 0 ? (
-        <DeckStudySession
-          key={deck.id}
-          cards={sortedCards.map((row) => ({
-            backText: row.card.backText,
-            frontText: row.card.frontText,
-            id: row.id,
-            reading: row.card.reading
-          }))}
-          labels={{
-            deckStudyEyebrow: labels.deckStudyEyebrow,
-            deckStudyFaceBack: labels.deckStudyFaceBack,
-            deckStudyFaceFront: labels.deckStudyFaceFront,
-            deckStudyFlipPrompt: labels.deckStudyFlipPrompt,
-            deckStudyKeyboardHint: labels.deckStudyKeyboardHint,
-            deckStudyModeNote: labels.deckStudyModeNote,
-            deckStudyNext: labels.deckStudyNext,
-            deckStudyPrev: labels.deckStudyPrev,
-            deckStudyProgressTpl: labels.deckStudyProgressTpl,
-            deckStudyTapToFlip: labels.deckStudyTapToFlip
-          }}
-        />
-      ) : null}
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
+        <div className="min-w-0">
+          {sortedCards.length > 0 ? (
+            <DeckStudySession
+              key={deck.id}
+              cards={sortedCards.map((row) => ({
+                backText: row.card.backText,
+                frontText: row.card.frontText,
+                id: row.id,
+                reading: row.card.reading
+              }))}
+              labels={{
+                deckStudyEyebrow: labels.deckStudyEyebrow,
+                deckStudyFaceBack: labels.deckStudyFaceBack,
+                deckStudyFaceFront: labels.deckStudyFaceFront,
+                deckStudyFlipPrompt: labels.deckStudyFlipPrompt,
+                deckStudyKeyboardHint: labels.deckStudyKeyboardHint,
+                deckStudyModeNote: labels.deckStudyModeNote,
+                deckStudyNext: labels.deckStudyNext,
+                deckStudyPrev: labels.deckStudyPrev,
+                deckStudyProgressTpl: labels.deckStudyProgressTpl,
+                deckStudyTapToFlip: labels.deckStudyTapToFlip
+              }}
+            />
+          ) : (
+            <EmptyState description={labels.empty} title={labels.deckDetailSectionCards} />
+          )}
+        </div>
 
-      <section aria-labelledby="deck-cards-heading">
-        {sortedCards.length === 0 ? (
-          <>
-            <h2 className="mb-3 text-sm font-black uppercase tracking-wide text-muted" id="deck-cards-heading">
-              {labels.deckDetailSectionCards}{" "}
-              <span className="tabular-nums">(0)</span>
-            </h2>
-            <p className="rounded-2xl border border-dashed border-ink/15 bg-paper/50 px-4 py-8 text-center text-sm text-muted">
-              {labels.empty}
-            </p>
-          </>
-        ) : (
-          <details className="group rounded-2xl border border-ink/8 bg-paper/40 shadow-sm open:bg-paper/55 open:shadow-md">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-2xl px-4 py-3.5 text-left outline-none marker:content-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent [&::-webkit-details-marker]:hidden sm:px-5 sm:py-4">
-              <div className="min-w-0">
-                <h2 className="text-sm font-black text-ink sm:text-base" id="deck-cards-heading">
-                  {labels.deckDetailAllCardsToggleTpl.replace("{count}", String(sortedCards.length))}
-                </h2>
-                <p className="mt-0.5 text-xs font-medium text-muted">{labels.deckDetailAllCardsHint}</p>
+        <aside className="space-y-4 lg:sticky lg:top-20">
+          <Card>
+            <CardContent className="space-y-4 p-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">{labels.deckDetailSectionCards}</p>
+                <p className="mt-1 text-3xl font-semibold tabular-nums text-ink">{sortedCards.length}</p>
+                <p className="text-sm text-muted">{labels.cards}</p>
               </div>
-              <span
-                aria-hidden
-                className="shrink-0 rounded-full border border-ink/10 bg-surface px-2 py-1 text-[10px] font-bold text-muted transition-transform duration-200 group-open:rotate-180"
-              >
-                ▾
-              </span>
-            </summary>
-            <div className="border-t border-ink/8 px-3 pb-4 pt-1 sm:px-4 sm:pb-5">
-              <ul className="max-h-[min(28rem,55vh)] space-y-2 overflow-y-auto overscroll-contain pr-1 sm:max-h-[32rem]">
-                {sortedCards.map((row, i) => (
-                  <li
-                    className="rounded-xl border border-ink/8 bg-surface/95 px-3 py-2.5 shadow-sm sm:px-4 sm:py-3"
-                    key={row.id}
-                  >
-                    <p className="text-[10px] font-black uppercase tracking-wider text-muted">{i + 1}</p>
-                    <p className="mt-1 text-sm font-bold text-ink" lang="ja">
-                      {row.card.frontText}
-                    </p>
-                    <p className="mt-1 text-xs leading-relaxed text-muted sm:text-sm">{row.card.backText}</p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </details>
-        )}
-      </section>
+              <p className="text-xs leading-relaxed text-muted">{labels.deckDetailAllCardsHint}</p>
+            </CardContent>
+          </Card>
+
+          <section aria-labelledby="deck-cards-heading">
+            <Card>
+              <CardContent className="p-0">
+                <div className="border-b border-ink/8 px-4 py-3">
+                  <h2 className="text-sm font-semibold text-ink" id="deck-cards-heading">
+                    {labels.deckDetailAllCardsToggleTpl.replace("{count}", String(sortedCards.length))}
+                  </h2>
+                  <p className="mt-1 text-xs leading-relaxed text-muted">{labels.deckDetailAllCardsHint}</p>
+                </div>
+                {sortedCards.length === 0 ? (
+                  <p className="px-4 py-8 text-center text-sm text-muted">{labels.empty}</p>
+                ) : (
+                  <ul className="max-h-[32rem] divide-y divide-ink/6 overflow-y-auto overscroll-contain">
+                    {sortedCards.map((row, i) => (
+                      <li className="px-4 py-3 transition hover:bg-paper/60" key={row.id}>
+                        <div className="flex items-start gap-3">
+                          <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-paper text-xs font-semibold tabular-nums text-muted">
+                            {i + 1}
+                          </span>
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold leading-snug text-ink" lang="ja">
+                              {row.card.frontText}
+                            </p>
+                            {row.card.reading ? (
+                              <p className="mt-0.5 text-xs text-muted" lang="ja">
+                                {row.card.reading}
+                              </p>
+                            ) : null}
+                            <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted">{row.card.backText}</p>
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </CardContent>
+            </Card>
+          </section>
+        </aside>
+      </div>
 
       {pendingDelete ? (
         <div

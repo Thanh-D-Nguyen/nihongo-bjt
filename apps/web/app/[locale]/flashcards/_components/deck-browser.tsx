@@ -1,6 +1,13 @@
 "use client";
 
-import { EmptyState } from "@nihongo-bjt/ui";
+import {
+  Button,
+  EmptyState,
+  ErrorState,
+  LoadingSkeleton,
+  TabButton,
+  TabsList
+} from "@nihongo-bjt/ui";
 import { useCallback, useEffect, useId, useMemo, useState } from "react";
 
 import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
@@ -78,12 +85,7 @@ function normalize(s: string) {
 function matchesSearch(deck: DeckApiRow, q: string): boolean {
   if (!q) return true;
   const n = normalize(q);
-  const hay = [
-    deck.titleVi,
-    deck.titleJa ?? "",
-    deck.descriptionVi ?? "",
-    deck.descriptionJa ?? ""
-  ]
+  const hay = [deck.titleVi, deck.titleJa ?? "", deck.descriptionVi ?? "", deck.descriptionJa ?? ""]
     .join(" ")
     .toLowerCase();
   return hay.includes(n);
@@ -121,7 +123,9 @@ export function DeckBrowser({
     setLoading(true);
     setError(null);
     try {
-      const r = await learnerApiFetch(`/api/flashcards/decks?userId=${encodeURIComponent(userId)}&limit=80`);
+      const r = await learnerApiFetch(
+        `/api/flashcards/decks?userId=${encodeURIComponent(userId)}&limit=80`
+      );
       if (!r.ok) throw new Error("load_failed");
       const raw = (await r.json()) as DeckApiRow[];
       setDecks(raw);
@@ -233,7 +237,11 @@ export function DeckBrowser({
             : labels.empty;
 
   const emptyDescription =
-    searchQuery.trim().length > 0 ? labels.emptySearchHint : filter === "my" ? labels.emptyMyHint : "";
+    searchQuery.trim().length > 0
+      ? labels.emptySearchHint
+      : filter === "my"
+        ? labels.emptyMyHint
+        : "";
 
   return (
     <section aria-label={labels.title} className="space-y-4">
@@ -246,58 +254,45 @@ export function DeckBrowser({
           <p className="text-xs font-semibold text-muted">{labels.subtitle}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <div className="inline-flex rounded-xl border border-ink/10 bg-paper/50 p-0.5" role="group">
-            <button
+          <TabsList role="group">
+            <TabButton
               aria-label={labels.viewGrid}
               aria-pressed={viewMode === "grid"}
-              className={`rounded-lg px-3 py-1.5 text-xs font-bold outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-accent transition-colors duration-200 ${
-                viewMode === "grid" ? "bg-surface text-ink shadow-sm" : "text-muted hover:text-ink"
-              }`}
+              active={viewMode === "grid"}
               onClick={() => setViewMode("grid")}
-              type="button"
             >
               {labels.viewGrid}
-            </button>
-            <button
+            </TabButton>
+            <TabButton
               aria-label={labels.viewList}
               aria-pressed={viewMode === "list"}
-              className={`rounded-lg px-3 py-1.5 text-xs font-bold outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-accent transition-colors duration-200 ${
-                viewMode === "list" ? "bg-surface text-ink shadow-sm" : "text-muted hover:text-ink"
-              }`}
+              active={viewMode === "list"}
               onClick={() => setViewMode("list")}
-              type="button"
             >
               {labels.viewList}
-            </button>
-          </div>
-          <button
-            className="inline-flex min-h-10 items-center justify-center rounded-xl border border-ink/12 bg-paper px-4 text-sm font-bold text-ink outline-none ring-offset-2 hover:bg-white focus-visible:ring-2 focus-visible:ring-accent transition-all duration-200 disabled:opacity-50"
+            </TabButton>
+          </TabsList>
+          <Button
+            size="sm"
+            variant="secondary"
             disabled={loading}
             onClick={() => void loadDecks()}
             type="button"
           >
             {labels.reloadDecks}
-          </button>
-          <button
-            className="inline-flex min-h-10 items-center justify-center rounded-xl bg-ink px-4 text-sm font-bold text-surface outline-none ring-offset-2 hover:bg-ink/90 focus-visible:ring-2 focus-visible:ring-accent transition-all duration-200"
-            onClick={() => onCreateModeChange(true)}
-            type="button"
-          >
+          </Button>
+          <Button size="sm" onClick={() => onCreateModeChange(true)} type="button">
             {labels.createDeck}
-          </button>
+          </Button>
         </div>
       </div>
 
-      {error ? (
-        <p className="text-sm text-sakura" role="alert">
-          {error}
-        </p>
-      ) : null}
+      {error ? <ErrorState className="py-5" title={error} /> : null}
 
       {loading && decks.length === 0 ? (
         <div aria-busy className="grid gap-3 sm:grid-cols-2">
           {[1, 2, 3, 4].map((i) => (
-            <div className="h-28 animate-pulse rounded-xl bg-paper ring-1 ring-ink/5" key={i} />
+            <LoadingSkeleton className="h-28" key={i} />
           ))}
         </div>
       ) : null}
@@ -306,13 +301,9 @@ export function DeckBrowser({
         <EmptyState
           action={
             filter === "my" || filter === "recent" ? (
-              <button
-                className="inline-flex min-h-10 items-center justify-center rounded-xl bg-ink px-5 text-sm font-bold text-surface outline-none ring-offset-2 hover:bg-ink/90 focus-visible:ring-2 focus-visible:ring-accent"
-                onClick={() => onCreateModeChange(true)}
-                type="button"
-              >
+              <Button onClick={() => onCreateModeChange(true)} type="button">
                 {labels.createDeck}
-              </button>
+              </Button>
             ) : undefined
           }
           description={emptyDescription || undefined}

@@ -46,9 +46,10 @@ export class LearnerGrowthController {
     @CurrentUser() user: KeycloakAuthenticatedUser | undefined,
     @Query() query: Record<string, string | undefined>
   ) {
-    await this.featureGate.requireEnabled("social_growth", {
-      message: "Social sharing is temporarily disabled"
-    });
+    const feature = await this.featureGate.status("social_growth");
+    if (!feature.enabled) {
+      return { code: null, enabled: false, link: null };
+    }
     const userId = resolveLearnerUserId(user, query.userId, { required: true })!;
     const p = userScopedQuerySchema.safeParse({ ...query, userId });
     if (!p.success) {

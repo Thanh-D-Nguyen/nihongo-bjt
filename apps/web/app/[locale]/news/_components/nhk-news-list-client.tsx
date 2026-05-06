@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { Badge, EmptyState, ErrorState, LoadingSkeleton, TabButton, TabsList } from "@nihongo-bjt/ui";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
@@ -13,6 +13,7 @@ interface NhkArticle {
   imageUrl: string | null;
   difficulty: string | null;
   url: string;
+  sourceType?: "easy" | "normal";
 }
 
 interface Labels {
@@ -24,6 +25,9 @@ interface Labels {
 }
 
 interface HomepageLabels {
+  newsEasy: string;
+  newsEmpty: string;
+  newsNormal: string;
   newsTimeAgo: string;
   newsMinutesAgo: string;
   newsHoursAgo: string;
@@ -53,6 +57,7 @@ export function NhkNewsListClient({
   homepageLabels: HomepageLabels;
   locale: string;
 }) {
+  const [activeType, setActiveType] = useState<"easy" | "normal">("easy");
   const [articles, setArticles] = useState<NhkArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -61,7 +66,9 @@ export function NhkNewsListClient({
     setLoading(true);
     setError(false);
     try {
-      const res = await learnerApiFetchOptional("/api/nhk-news?limit=30");
+      const res = await learnerApiFetchOptional(
+        `/api/nhk-news?type=${activeType}&limit=30&locale=${locale}`
+      );
       if (!res?.ok) throw new Error("Failed");
       setArticles(await res.json());
     } catch {
@@ -69,7 +76,7 @@ export function NhkNewsListClient({
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [activeType, locale]);
 
   useEffect(() => {
     void load();
@@ -83,19 +90,32 @@ export function NhkNewsListClient({
 
       <h1 className="mb-2 text-2xl font-bold text-ink">{labels.title}</h1>
 
+      <TabsList className="mt-4 w-fit">
+        <TabButton active={activeType === "easy"} onClick={() => setActiveType("easy")}>
+          {homepageLabels.newsEasy}
+        </TabButton>
+        <TabButton active={activeType === "normal"} onClick={() => setActiveType("normal")}>
+          {homepageLabels.newsNormal}
+        </TabButton>
+      </TabsList>
+
       {loading && (
-        <div className="space-y-4 mt-6">
+        <div aria-busy className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-28 animate-pulse rounded-2xl bg-gray-100" />
+            <LoadingSkeleton className="h-64 rounded-2xl" key={i} />
           ))}
         </div>
       )}
 
-      {error && <p className="mt-6 text-sm text-red-600">{labels.errorLoad}</p>}
+      {error ? <ErrorState className="mt-6" description={labels.errorLoad} title={labels.title} /> : null}
 
-      {!loading && !error && (
+      {!loading && !error && articles.length === 0 ? (
+        <EmptyState className="mt-6" description={homepageLabels.newsEmpty} title={labels.title} />
+      ) : null}
+
+      {!loading && !error && articles.length > 0 && (
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {articles.map((article) => (
+          {articles.map((article, index) => (
             <Link
               key={article.id}
               href={`/${locale}/news/${article.id}`}
@@ -103,23 +123,23 @@ export function NhkNewsListClient({
             >
               <div className="relative aspect-[16/9] w-full overflow-hidden bg-gray-100">
                 {article.imageUrl ? (
-                  <Image
-                    src={article.imageUrl}
+                  <img
                     alt={article.title}
-                    fill
-                    className="object-cover transition-transform duration-300 group-hover:scale-105"
-                    sizes="(max-width: 640px) 100vw, 33vw"
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    loading={index < 6 ? "eager" : "lazy"}
+                    src={article.imageUrl}
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
-                    <span className="text-3xl">📰</span>
+                  <div className="flex h-full w-full items-center justify-center bg-paper text-muted">
+                    <span className="text-sm font-semibold">NHK</span>
                   </div>
                 )}
-                {article.difficulty && (
-                  <span className="absolute left-2 top-2 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-bold text-emerald-700 shadow-sm backdrop-blur-sm">
-                    {article.difficulty}
-                  </span>
-                )}
+                <div className="absolute left-2 top-2 flex flex-wrap gap-1">
+                  <Badge tone={activeType === "easy" ? "accent" : "neutral"}>
+                    {activeType === "easy" ? homepageLabels.newsEasy : homepageLabels.newsNormal}
+                  </Badge>
+                  {article.difficulty ? <Badge>{article.difficulty}</Badge> : null}
+                </div>
               </div>
               <div className="flex flex-1 flex-col p-4">
                 <h2 className="line-clamp-2 text-sm font-semibold text-ink" lang="ja">

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 
-import { EmptyState, cn } from "@nihongo-bjt/ui";
+import { Button, EmptyState, ErrorState, LoadingSkeleton, cn } from "@nihongo-bjt/ui";
 import Link from "next/link";
 
 import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
@@ -565,11 +565,6 @@ export function FlashcardsClient({
           </p>
         ) : null}
         {queueStatus ? <p className="text-xs font-medium text-ink">{queueStatus}</p> : null}
-        {error ? (
-          <p className="text-xs text-sakura" role="alert">
-            {error}
-          </p>
-        ) : null}
         {imageFlow.step === "error" ? (
           <p className="text-xs text-sakura" role="alert">
             {imageFlow.userMessage}
@@ -592,9 +587,26 @@ export function FlashcardsClient({
 
       {loading ? (
         <div className="space-y-3" aria-busy>
-          <div className="h-44 max-w-xl animate-pulse rounded-xl bg-paper ring-1 ring-ink/5" />
-          <div className="h-10 w-40 animate-pulse rounded-xl bg-paper" />
+          <LoadingSkeleton className="h-56 max-w-3xl rounded-2xl" />
+          <div className="flex gap-2">
+            <LoadingSkeleton className="h-10 w-28" />
+            <LoadingSkeleton className="h-10 w-28" />
+            <LoadingSkeleton className="h-10 w-28" />
+          </div>
         </div>
+      ) : null}
+
+      {error && !loading ? (
+        <ErrorState
+          action={
+            <Button size="sm" variant="secondary" type="button" onClick={() => void loadDueCards({ resetImageFlow: true })}>
+              {labels.refreshDue}
+            </Button>
+          }
+          className="max-w-3xl"
+          description={labels.sessionFocusHint}
+          title={error}
+        />
       ) : null}
 
       {!currentCard && !loading && !error ? (

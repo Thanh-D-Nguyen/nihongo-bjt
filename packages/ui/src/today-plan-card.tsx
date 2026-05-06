@@ -20,14 +20,19 @@ export function TodayPlanCard({
   title: string;
 }) {
   return (
-    <Card className={cn("border-accent/15 bg-gradient-to-br from-surface to-indigo-50/40", className)} {...props}>
+    <Card
+      className={cn("border-accent/15 bg-gradient-to-br from-surface to-indigo-50/40", className)}
+      {...props}
+    >
       <CardHeader className="flex-row items-start justify-between gap-4 space-y-0 pb-2">
         <div>
           <CardTitle>{title}</CardTitle>
           {metaLine ? <CardDescription className="mt-1.5">{metaLine}</CardDescription> : null}
         </div>
         <div className="rounded-xl border border-leaf/20 bg-leaf/5 px-3 py-2 text-right">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">{streakLabel}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">
+            {streakLabel}
+          </p>
           <p className="text-xl font-semibold tabular-nums text-leaf">{streakValue}</p>
         </div>
       </CardHeader>

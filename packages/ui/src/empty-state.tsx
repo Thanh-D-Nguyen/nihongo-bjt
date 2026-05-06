@@ -23,7 +23,9 @@ export function EmptyState({
       {...props}
     >
       <p className="text-sm font-semibold text-ink">{title}</p>
-      {description ? <p className="mt-2 max-w-md text-sm leading-relaxed text-muted">{description}</p> : null}
+      {description ? (
+        <p className="mt-2 max-w-md text-sm leading-relaxed text-muted">{description}</p>
+      ) : null}
       {children}
       {action ? <div className="mt-5">{action}</div> : null}
     </div>

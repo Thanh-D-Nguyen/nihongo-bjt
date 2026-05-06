@@ -1,6 +1,13 @@
 "use client";
 
-import { EmptyState } from "@nihongo-bjt/ui";
+import {
+  Card,
+  CardContent,
+  EmptyState,
+  ErrorState,
+  LoadingSkeleton,
+  PageHeader
+} from "@nihongo-bjt/ui";
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -687,22 +694,14 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
   /* ---- Render ---- */
 
   return (
-    <main className="mx-auto w-full max-w-6xl space-y-6 px-4 pb-12 pt-2 sm:px-6 sm:pb-16">
+    <main className="w-full space-y-6 pb-12 sm:pb-16">
       {/* Header */}
       {showHub && (
-        <section className="overflow-hidden rounded-[2rem] border border-ink/10 bg-surface shadow-sm">
-          <div className="grid gap-5 bg-[radial-gradient(circle_at_88%_12%,rgba(37,99,235,0.16),transparent_32%),linear-gradient(135deg,#ffffff,#f7fbff)] p-5 sm:grid-cols-[1fr_auto] sm:items-end sm:p-6">
-            <div>
-              <p className="text-xs font-black uppercase tracking-widest text-accent">
-                {labels.eyebrow}
-              </p>
-              <h1 className="mt-2 max-w-3xl text-3xl font-black tracking-tight text-ink sm:text-4xl">
-                {labels.title}
-              </h1>
-              <p className="mt-3 max-w-2xl text-sm font-semibold leading-6 text-muted">
-                {labels.subtitle}
-              </p>
-            </div>
+        <PageHeader
+          eyebrow={labels.eyebrow}
+          title={labels.title}
+          description={labels.subtitle}
+          actions={
             <div className="grid min-w-[18rem] grid-cols-2 gap-2">
               {[
                 labels.heroPrimaryMetric ?? "80|questions",
@@ -710,26 +709,21 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
               ].map((item) => {
                 const [value, label] = item.split("|");
                 return (
-                  <div
-                    className="rounded-2xl border border-ink/10 bg-white/78 p-3 shadow-sm"
-                    key={item}
-                  >
-                    <p className="text-2xl font-black text-ink">{value}</p>
-                    <p className="mt-1 text-[11px] font-bold uppercase text-muted">{label}</p>
-                  </div>
+                  <Card key={item}>
+                    <CardContent className="p-3">
+                      <p className="text-2xl font-semibold text-ink">{value}</p>
+                      <p className="mt-1 text-[11px] font-semibold uppercase text-muted">{label}</p>
+                    </CardContent>
+                  </Card>
                 );
               })}
             </div>
-          </div>
-        </section>
+          }
+        />
       )}
 
       {/* Error banner */}
-      {error && (
-        <div className="rounded-xl border border-sakura/20 bg-sakura/5 px-4 py-3" role="alert">
-          <p className="text-sm font-medium text-sakura">{labels.error}</p>
-        </div>
-      )}
+      {error && <ErrorState className="py-5" title={labels.error} />}
 
       {/* Resuming session indicator */}
       {resuming && (
@@ -852,10 +846,7 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
           {templatesLoading && (
             <div className="space-y-3" aria-busy>
               {[1, 2, 3, 4].map((i) => (
-                <div
-                  className="h-28 animate-pulse rounded-2xl bg-paper ring-1 ring-ink/5"
-                  key={i}
-                />
+                <LoadingSkeleton className="h-28" key={i} />
               ))}
               <p className="sr-only">{labels.hubTemplatesLoading}</p>
             </div>

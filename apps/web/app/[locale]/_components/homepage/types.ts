@@ -27,6 +27,17 @@ export interface HomepageLabels {
   newsSubtitle: string;
   newsReadMore: string;
   newsCreateFlashcard: string;
+  newsDeckCreateCancel: string;
+  newsDeckCreateDescription: string;
+  newsDeckCreateSubmit: string;
+  newsDeckCreateTitle: string;
+  newsDeckNameAutoHint: string;
+  newsDeckNameLabel: string;
+  newsDeckNamePlaceholder: string;
+  newsEasy: string;
+  newsEmpty: string;
+  newsError: string;
+  newsNormal: string;
   newsViewAll: string;
   newsTimeAgo: string;
   newsMinutesAgo: string;
@@ -53,6 +64,12 @@ export interface HomepageLabels {
   recommendViewAll: string;
   recommendSectionCount: string;
   recommendDeckCardCount: string;
+  recommendEmpty: string;
+  recommendPrimary: string;
+  recommendReasonBjt: string;
+  recommendReasonDeck: string;
+  recommendReasonLevel: string;
+  recommendStart: string;
   sectionViewAll: string;
   sectionLoadingHint: string;
   newsFlashcardCreated: string;
@@ -68,6 +85,8 @@ export interface NhkArticle {
   imageUrl: string | null;
   difficulty: string | null;
   url: string;
+  sourceType?: "easy" | "normal";
+  sourceLabel?: string;
 }
 
 export interface DailyWidget {

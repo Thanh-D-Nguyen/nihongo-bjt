@@ -1,7 +1,9 @@
 "use client";
 
+import { Badge, Card, CardContent, EmptyState, LoadingSkeleton, ProgressBar, SectionHeader } from "@nihongo-bjt/ui";
 import Link from "next/link";
-import { ScrollStrip } from "../../../_components/scroll-strip";
+
+import { IconDeck, IconQuiz, IconReview, IconSpark } from "../../../_components/app-icons";
 import type { HomepageLabels } from "./types";
 
 export interface QuizTemplate {
@@ -20,74 +22,57 @@ export interface DeckSummary {
   visibility: string;
 }
 
-function QuizCard({
-  template,
-  labels,
-  locale,
-}: {
-  template: QuizTemplate;
-  labels: HomepageLabels;
-  locale: string;
-}) {
-  const title = locale === "ja" ? (template.titleJa ?? template.titleVi ?? "—") : (template.titleVi ?? template.titleJa ?? "—");
+type Recommendation =
+  | {
+      href: string;
+      icon: typeof IconQuiz;
+      id: string;
+      kind: string;
+      meta: string;
+      progress: number;
+      reason: string;
+      title: string;
+    }
+  | {
+      href: string;
+      icon: typeof IconDeck;
+      id: string;
+      kind: string;
+      meta: string;
+      progress: number;
+      reason: string;
+      title: string;
+    };
 
-  return (
-    <Link
-      href={`/${locale}/quiz/${template.id}`}
-      className="group flex w-[200px] shrink-0 flex-col rounded-2xl bg-white p-4 shadow-sm ring-1 ring-ink/5 transition-all hover:shadow-md hover:-translate-y-0.5 sm:w-[220px]"
-    >
-      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-leaf-soft text-leaf ring-1 ring-leaf/20 shadow-sm">
-        <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-          <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" strokeLinecap="round" />
-          <rect x="9" y="3" width="6" height="4" rx="1" />
-          <path d="m9 14 2 2 4-4" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </div>
-
-      <h3 className="line-clamp-2 text-sm font-semibold text-ink">{title}</h3>
-
-      <div className="mt-auto flex items-center gap-2 pt-2">
-        {template.level && (
-          <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[10px] font-bold text-accent">
-            {template.level}
-          </span>
-        )}
-        <span className="text-[10px] text-muted">
-          {labels.recommendSectionCount.replace("{n}", String(template._count.sections))}
-        </span>
-      </div>
-    </Link>
-  );
+function titleFor(locale: string, vi?: string | null, ja?: string | null) {
+  return locale === "ja" ? (ja || vi || "—") : (vi || ja || "—");
 }
 
-function DeckCard({
-  deck,
-  labels,
-  locale,
-}: {
-  deck: DeckSummary;
-  labels: HomepageLabels;
-  locale: string;
-}) {
-  const title = locale === "ja" ? (deck.titleJa ?? deck.titleVi) : deck.titleVi;
-
+function RecommendationCard({ item, labels }: { item: Recommendation; labels: HomepageLabels }) {
   return (
     <Link
-      href={`/${locale}/flashcards`}
-      className="group flex w-[200px] shrink-0 flex-col rounded-2xl bg-white p-4 shadow-sm ring-1 ring-ink/5 transition-all hover:shadow-md hover:-translate-y-0.5 sm:w-[220px]"
+      className="group block rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+      href={item.href}
     >
-      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-paper text-ink ring-1 ring-ink/10 shadow-sm">
-        <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-          <rect x="3" y="5" width="18" height="14" rx="2" />
-          <path d="M3 10h18" />
-        </svg>
-      </div>
-
-      <h3 className="line-clamp-2 text-sm font-semibold text-ink">{title}</h3>
-
-      <p className="mt-auto pt-2 text-[10px] text-muted">
-        {labels.recommendDeckCardCount.replace("{n}", String(deck.cardCount))}
-      </p>
+      <Card className="flex h-full min-h-52 flex-col rounded-xl shadow-sm transition group-hover:border-accent/25 group-hover:shadow-md">
+        <CardContent className="flex h-full flex-col p-4">
+          <div className="flex items-start justify-between gap-3">
+            <span className="inline-flex size-11 items-center justify-center rounded-xl border border-accent/15 bg-accent/8 text-accent">
+              <item.icon aria-hidden size={24} />
+            </span>
+            <Badge>{item.kind}</Badge>
+          </div>
+          <h3 className="mt-4 line-clamp-2 text-sm font-semibold leading-snug text-ink">{item.title}</h3>
+          <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-muted">{item.reason}</p>
+          <div className="mt-auto space-y-3 pt-4">
+            <ProgressBar value={item.progress} />
+            <div className="flex items-center justify-between gap-2 text-xs">
+              <span className="min-w-0 truncate text-muted">{item.meta}</span>
+              <span className="shrink-0 font-semibold text-accent">{labels.newsReadMore}</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </Link>
   );
 }
@@ -105,21 +90,38 @@ export function RecommendedSection({
   loading?: boolean;
   locale: string;
 }) {
+  const recommendations: Recommendation[] = [
+    ...quizTemplates.slice(0, 3).map((template) => ({
+      href: `/${locale}/quiz`,
+      icon: IconQuiz,
+      id: `quiz-${template.id}`,
+      kind: template.level ? `${labels.quickBjt} · ${template.level}` : labels.quickBjt,
+      meta: labels.recommendSectionCount.replace("{n}", String(template._count.sections)),
+      progress: Math.min(92, Math.max(28, template._count.sections * 14)),
+      reason: template.level
+        ? labels.recommendReasonLevel.replace("{level}", template.level)
+        : labels.recommendReasonBjt,
+      title: titleFor(locale, template.titleVi, template.titleJa)
+    })),
+    ...decks.slice(0, 3).map((deck) => ({
+      href: `/${locale}/flashcards?deckId=${deck.id}`,
+      icon: IconDeck,
+      id: `deck-${deck.id}`,
+      kind: labels.quickFlashcards,
+      meta: labels.recommendDeckCardCount.replace("{n}", String(deck.cardCount)),
+      progress: Math.min(96, Math.max(18, deck.cardCount * 4)),
+      reason: labels.recommendReasonDeck,
+      title: titleFor(locale, deck.titleVi, deck.titleJa)
+    }))
+  ].slice(0, 6);
+
   if (loading) {
     return (
       <section aria-busy>
-        <div className="mb-4 flex items-end justify-between">
-          <div>
-            <h2 className="text-lg font-bold text-ink sm:text-xl">{labels.recommendTitle}</h2>
-            <p className="text-sm text-muted">{labels.recommendSubtitle}</p>
-          </div>
-        </div>
-        <div className="flex gap-3 overflow-hidden pb-1">
-          {[1, 2, 3, 4].map((i) => (
-            <div
-              className="h-36 w-[200px] shrink-0 animate-pulse rounded-2xl bg-paper ring-1 ring-ink/5 sm:w-[220px]"
-              key={i}
-            />
+        <SectionHeader description={labels.recommendSubtitle} title={labels.recommendTitle} />
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <LoadingSkeleton className="h-52 rounded-xl" key={i} />
           ))}
         </div>
         <p className="sr-only">{labels.sectionLoadingHint}</p>
@@ -127,25 +129,61 @@ export function RecommendedSection({
     );
   }
 
-  if (quizTemplates.length === 0 && decks.length === 0) return null;
+  if (recommendations.length === 0) {
+    return (
+      <section>
+        <SectionHeader description={labels.recommendSubtitle} title={labels.recommendTitle} />
+        <EmptyState description={labels.recommendEmpty} title={labels.recommendTitle} />
+      </section>
+    );
+  }
+
+  const primary = recommendations[0];
+  const rest = recommendations.slice(1);
 
   return (
     <section>
-      <div className="mb-4 flex items-end justify-between">
-        <div>
-          <h2 className="text-lg font-bold text-ink sm:text-xl">{labels.recommendTitle}</h2>
-          <p className="text-sm text-muted">{labels.recommendSubtitle}</p>
+      <SectionHeader
+        actions={
+          <Link className="text-sm font-semibold text-accent transition hover:text-accent/80" href={`/${locale}/flashcards`}>
+            {labels.recommendViewAll}
+          </Link>
+        }
+        description={labels.recommendSubtitle}
+        title={labels.recommendTitle}
+      />
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,2fr)]">
+        {primary ? (
+          <Card className="rounded-xl border-accent/20 bg-accent/8 shadow-sm">
+            <CardContent className="flex h-full min-h-56 flex-col p-5">
+              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-accent">
+                <IconSpark aria-hidden size={16} />
+                {labels.recommendPrimary}
+              </div>
+              <h3 className="mt-4 text-lg font-semibold leading-tight text-ink">{primary.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-ink/75">{primary.reason}</p>
+              <div className="mt-auto pt-5">
+                <ProgressBar value={primary.progress} />
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                  <span className="text-xs font-semibold text-muted">{primary.meta}</span>
+                  <Link
+                    className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-ink px-4 text-sm font-semibold text-surface transition hover:bg-ink/90"
+                    href={primary.href}
+                  >
+                    <IconReview aria-hidden size={16} />
+                    {labels.recommendStart}
+                  </Link>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ) : null}
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {rest.map((item) => (
+            <RecommendationCard item={item} key={item.id} labels={labels} />
+          ))}
         </div>
       </div>
-
-      <ScrollStrip>
-        {quizTemplates.map((t) => (
-          <QuizCard key={t.id} labels={labels} locale={locale} template={t} />
-        ))}
-        {decks.map((d) => (
-          <DeckCard key={d.id} deck={d} labels={labels} locale={locale} />
-        ))}
-      </ScrollStrip>
     </section>
   );
 }

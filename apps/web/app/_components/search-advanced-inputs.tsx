@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@nihongo-bjt/ui";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 /* ─── Voice Search (Web Speech API) ─── */
 
@@ -16,7 +16,14 @@ export function VoiceSearchButton({
   className?: string;
 }) {
   const [listening, setListening] = useState(false);
+  const [speechSupportChecked, setSpeechSupportChecked] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(false);
   const recognitionRef = useRef<SpeechRecognitionAny>(null);
+
+  useEffect(() => {
+    setSpeechSupported("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
+    setSpeechSupportChecked(true);
+  }, []);
 
   const toggle = useCallback(() => {
     if (listening && recognitionRef.current) {
@@ -50,23 +57,20 @@ export function VoiceSearchButton({
     setListening(true);
   }, [listening, onResult]);
 
-  // Check if browser supports speech recognition
-  const supported = typeof window !== "undefined" && (
-    "SpeechRecognition" in window ||
-    "webkitSpeechRecognition" in window
-  );
-
-  if (!supported) return null;
+  if (speechSupportChecked && !speechSupported) return null;
 
   return (
     <button
       type="button"
       className={cn(
         "flex items-center justify-center rounded-md border border-ink/10 p-1.5 transition-colors",
-        listening ? "bg-sakura/10 border-sakura text-sakura" : "text-muted hover:text-ink hover:border-ink/20",
+        listening
+          ? "border-sakura bg-sakura/10 text-sakura"
+          : "text-muted hover:border-ink/20 hover:text-ink",
         className
       )}
       onClick={toggle}
+      disabled={!speechSupported}
       title={listening ? "Đang nghe..." : "Tìm bằng giọng nói"}
     >
       <MicIcon listening={listening} />
@@ -85,20 +89,23 @@ export function ImageSearchButton({
   const fileRef = useRef<HTMLInputElement>(null);
   const [processing, setProcessing] = useState(false);
 
-  const handleFile = useCallback(async (file: File) => {
-    setProcessing(true);
-    try {
-      // Stub: In production, send to OCR provider (Tesseract.js, Google Vision, etc.)
-      // For now, create a placeholder notification
-      console.info("[OCR] Image uploaded for text extraction:", file.name);
-      // TODO: Replace with real OCR provider call
-      // const text = await ocrProvider.extractText(file);
-      // onResult(text);
-      onResult(""); // Placeholder
-    } finally {
-      setProcessing(false);
-    }
-  }, [onResult]);
+  const handleFile = useCallback(
+    async (file: File) => {
+      setProcessing(true);
+      try {
+        // Stub: In production, send to OCR provider (Tesseract.js, Google Vision, etc.)
+        // For now, create a placeholder notification
+        console.info("[OCR] Image uploaded for text extraction:", file.name);
+        // TODO: Replace with real OCR provider call
+        // const text = await ocrProvider.extractText(file);
+        // onResult(text);
+        onResult(""); // Placeholder
+      } finally {
+        setProcessing(false);
+      }
+    },
+    [onResult]
+  );
 
   return (
     <>
@@ -162,7 +169,17 @@ export function AiSearchToggle({
 /* ─── Icons ─── */
 function MicIcon({ listening }: { listening: boolean }) {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={listening ? "animate-pulse" : ""}>
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={listening ? "animate-pulse" : ""}
+    >
       <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
       <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
       <line x1="12" y1="19" x2="12" y2="23" />
@@ -173,7 +190,16 @@ function MicIcon({ listening }: { listening: boolean }) {
 
 function CameraIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
       <circle cx="12" cy="13" r="4" />
     </svg>

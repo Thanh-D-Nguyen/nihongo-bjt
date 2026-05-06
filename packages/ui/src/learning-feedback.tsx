@@ -24,11 +24,7 @@ export function LearningFeedback({
 }) {
   return (
     <p
-      className={cn(
-        "rounded-xl border px-3 py-2 text-sm leading-relaxed",
-        tones[tone],
-        className
-      )}
+      className={cn("rounded-xl border px-3 py-2 text-sm leading-relaxed", tones[tone], className)}
       role="status"
       {...props}
     >

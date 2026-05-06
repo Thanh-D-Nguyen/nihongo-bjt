@@ -93,7 +93,10 @@ function NavItemRow({ active, item }: { active: boolean; item: AdminNavItemResol
         title={item.label}
       >
         {item.icon ? (
-          <span aria-hidden="true" className="flex size-4 shrink-0 items-center justify-center text-slate-500">
+          <span
+            aria-hidden="true"
+            className="flex size-4 shrink-0 items-center justify-center text-slate-500"
+          >
             {item.icon}
           </span>
         ) : null}
@@ -114,7 +117,10 @@ function NavItemRow({ active, item }: { active: boolean; item: AdminNavItemResol
       href={href}
     >
       {item.icon ? (
-        <span aria-hidden="true" className="flex size-4 shrink-0 items-center justify-center text-slate-300">
+        <span
+          aria-hidden="true"
+          className="flex size-4 shrink-0 items-center justify-center text-slate-300"
+        >
           {item.icon}
         </span>
       ) : null}
@@ -132,7 +138,9 @@ function NavItemRow({ active, item }: { active: boolean; item: AdminNavItemResol
 
 function SectionHeader({ label }: { label: string }) {
   return (
-    <h3 className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-400">{label}</h3>
+    <h3 className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+      {label}
+    </h3>
   );
 }
 
@@ -182,7 +190,9 @@ export function AdminShell({
       const s = new Set(parsed);
       if (activeGroupId) s.add(activeGroupId);
       setExpandedSections(s);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     // activeGroupId only changes on route change; safe to depend on it
   }, [activeGroupId]);
 
@@ -198,7 +208,9 @@ export function AdminShell({
       if (typeof window !== "undefined") {
         try {
           localStorage.setItem("admin-nav-expanded", JSON.stringify([...n]));
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
       }
       return n;
     });
@@ -208,7 +220,11 @@ export function AdminShell({
     const all = new Set(navGroups.map((g) => g.id));
     setExpandedSections(all);
     if (typeof window !== "undefined") {
-      try { localStorage.setItem("admin-nav-expanded", JSON.stringify([...all])); } catch { /* ignore */ }
+      try {
+        localStorage.setItem("admin-nav-expanded", JSON.stringify([...all]));
+      } catch {
+        /* ignore */
+      }
     }
   };
 
@@ -218,7 +234,11 @@ export function AdminShell({
     if (activeGroupId) s.add(activeGroupId);
     setExpandedSections(s);
     if (typeof window !== "undefined") {
-      try { localStorage.setItem("admin-nav-expanded", JSON.stringify([...s])); } catch { /* ignore */ }
+      try {
+        localStorage.setItem("admin-nav-expanded", JSON.stringify([...s]));
+      } catch {
+        /* ignore */
+      }
     }
   };
 
@@ -259,7 +279,9 @@ export function AdminShell({
           </span>
           <div className="min-w-0">
             <span className="block truncate text-sm font-semibold text-white">{chrome.brand}</span>
-            <span className="block text-xs font-medium text-slate-400">{chrome.operationConsole}</span>
+            <span className="block text-xs font-medium text-slate-400">
+              {chrome.operationConsole}
+            </span>
           </div>
         </div>
         <nav
@@ -329,7 +351,10 @@ export function AdminShell({
                   >
                     <span className="truncate pr-1">{section.label}</span>
                     <svg
-                      className={cn("h-3.5 w-3.5 shrink-0 transition-transform duration-150", isExpanded ? "rotate-90" : "rotate-0")}
+                      className={cn(
+                        "h-3.5 w-3.5 shrink-0 transition-transform duration-150",
+                        isExpanded ? "rotate-90" : "rotate-0"
+                      )}
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"

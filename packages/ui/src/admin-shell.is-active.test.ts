@@ -14,6 +14,8 @@ describe("isAdminNavItemActive", () => {
   });
 
   it("prefix match for nested routes", () => {
-    expect(isAdminNavItemActive(`${base}/dictionary`, base, "/dictionary/123", "prefix")).toBe(true);
+    expect(isAdminNavItemActive(`${base}/dictionary`, base, "/dictionary/123", "prefix")).toBe(
+      true
+    );
   });
 });

@@ -1,73 +1,35 @@
 "use client";
 
+import {
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Input,
+  PageHeader,
+  ProgressBar,
+  SectionHeader,
+  TabButton,
+  TabsList
+} from "@nihongo-bjt/ui";
 import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
+import { IconBookmark, IconDeck, IconReview, IconSearch, IconSpark } from "../../../_components/app-icons";
 import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
 import { queueSizeForUser } from "../../../../lib/offline-review-queue";
 import { learnerApiFetch } from "../../../../lib/learner-api";
-import {
-  DeckBrowser,
-  type DeckLabels,
-  type LibraryDeckFilter
-} from "./deck-browser";
+import { DeckBrowser, type DeckLabels, type LibraryDeckFilter } from "./deck-browser";
 import { FlashcardsClient, type FlashcardLabels } from "./flashcards-client";
 
 type MainView = "review" | "library";
 
-const DECK_SCOPE_ID_RE =
-  /^[\da-f]{8}-[\da-f]{4}-[1-5][\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/i;
+const DECK_SCOPE_ID_RE = /^[\da-f]{8}-[\da-f]{4}-[1-5][\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/i;
 
 function isDeckScopeId(raw: string | null): raw is string {
   return raw !== null && DECK_SCOPE_ID_RE.test(raw);
-}
-
-function IconReview() {
-  return (
-    <svg aria-hidden className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-      <path
-        d="M4 19.5V5.75A2.75 2.75 0 0 1 6.75 3H20v16H6.75A2.75 2.75 0 0 0 4 21.75"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path d="M8 7h8M8 11h6" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function IconLayers() {
-  return (
-    <svg aria-hidden className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-      <path d="M5 7.5 12 4l7 3.5-7 3.5-7-3.5Z" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="m5 12 7 3.5 7-3.5M5 16.5l7 3.5 7-3.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function IconGlobe() {
-  return (
-    <svg aria-hidden className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-      <circle cx="12" cy="12" r="10" />
-      <path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function IconClock() {
-  return (
-    <svg aria-hidden className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-      <circle cx="12" cy="12" r="10" />
-      <path d="M12 6v6l4 2" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function IconPlus() {
-  return (
-    <svg aria-hidden className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-      <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-    </svg>
-  );
 }
 
 export function FlashcardsPageClient({
@@ -128,31 +90,31 @@ export function FlashcardsPageClient({
     () => [
       {
         description: flashcardLabels.libraryReviewDescription ?? flashcardLabels.sessionFocusHint,
-        icon: <IconReview />,
+        icon: <IconReview aria-hidden size={18} />,
         id: "review" as const,
         label: flashcardLabels.libraryNavReview ?? flashcardLabels.reviewTab
       },
       {
         description: flashcardLabels.libraryNavMySetsDescription ?? deckLabels.subtitle,
-        icon: <IconLayers />,
+        icon: <IconDeck aria-hidden size={18} />,
         id: "my" as const,
         label: flashcardLabels.libraryNavMySets ?? deckLabels.myDecks
       },
       {
         description: flashcardLabels.libraryNavPublicDescription ?? "",
-        icon: <IconGlobe />,
+        icon: <IconSearch aria-hidden size={18} />,
         id: "public" as const,
         label: flashcardLabels.libraryNavPublicSets ?? deckLabels.publicDecks
       },
       {
         description: flashcardLabels.libraryNavRecentDescription ?? "",
-        icon: <IconClock />,
+        icon: <IconSpark aria-hidden size={18} />,
         id: "recent" as const,
         label: flashcardLabels.libraryNavRecent ?? flashcardLabels.libraryRecentTitle
       },
       {
         description: flashcardLabels.libraryNavCreateDescription ?? "",
-        icon: <IconPlus />,
+        icon: <IconBookmark aria-hidden size={18} />,
         id: "create" as const,
         label: flashcardLabels.libraryNavCreate ?? deckLabels.createDeck
       }
@@ -206,74 +168,81 @@ export function FlashcardsPageClient({
   };
 
   const showLibrarySearch = main === "library";
+  const dueValue = heroDue ?? 0;
+  const pendingValue = heroPending ?? 0;
+  const reviewProgress = Math.max(8, Math.min(100, dueValue > 0 ? 100 - Math.min(dueValue, 20) * 3 : 100));
 
   return (
-    <main className="mx-auto w-full max-w-7xl px-3 pb-16 pt-1 sm:px-5 sm:pb-20 lg:pt-2">
-      <div className="mb-3 space-y-3 lg:mb-4">
-        <header className="rounded-2xl border border-ink/10 bg-surface px-4 py-3 shadow-sm sm:px-5 sm:py-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="min-w-0">
-              <p className="text-[10px] font-black uppercase tracking-widest text-leaf">
-                {flashcardLabels.libraryHeroKicker ?? flashcardLabels.eyebrow}
-              </p>
-              <h1 className="mt-1 truncate text-xl font-black tracking-tight text-ink sm:text-2xl">
-                {flashcardLabels.libraryHeroTitle ?? flashcardLabels.title}
-              </h1>
-              <p className="mt-1 max-w-2xl text-xs font-semibold leading-5 text-muted sm:text-sm">
-                {flashcardLabels.librarySubtitle ?? flashcardLabels.subtitle}
-              </p>
-            </div>
-            <div className="grid shrink-0 grid-cols-2 gap-2 sm:max-w-xs">
-              <div className="rounded-xl border border-ink/10 bg-paper/60 px-3 py-2">
-                <p className="text-[10px] font-bold uppercase text-muted">
-                  {flashcardLabels.libraryDueMetric ?? flashcardLabels.statDueSession}
-                </p>
-                <p className="mt-0.5 text-xl font-black tabular-nums text-ink">
-                  {heroDue === null ? "—" : heroDue}
-                </p>
-              </div>
-              <div className="rounded-xl border border-ink/10 bg-paper/60 px-3 py-2">
-                <p className="text-[10px] font-bold uppercase text-muted">
-                  {flashcardLabels.libraryOfflineMetric ?? flashcardLabels.statPendingSync}
-                </p>
-                <p className="mt-0.5 text-xl font-black tabular-nums text-ink">
-                  {heroPending === null ? "—" : heroPending}
-                </p>
-              </div>
-            </div>
+    <main className="w-full space-y-6 pb-16">
+      <PageHeader
+        eyebrow={flashcardLabels.libraryHeroKicker ?? flashcardLabels.eyebrow}
+        title={flashcardLabels.libraryHeroTitle ?? flashcardLabels.title}
+        description={flashcardLabels.librarySubtitle ?? flashcardLabels.subtitle}
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              className="min-h-10"
+              size="sm"
+              type="button"
+              onClick={() => selectRail("review")}
+            >
+              <IconReview aria-hidden size={16} />
+              {flashcardLabels.libraryNavReview ?? flashcardLabels.reviewTab}
+            </Button>
+            <Badge className="min-h-10 justify-center px-3" tone="accent">
+              {(flashcardLabels.libraryDueMetric ?? flashcardLabels.statDueSession) + ": "}
+              <span className="ml-1 tabular-nums text-ink">{heroDue === null ? "—" : heroDue}</span>
+            </Badge>
           </div>
-        </header>
-
+        }
+      >
+        <div className="grid gap-3 pt-2 sm:grid-cols-3">
+          <Card className="rounded-xl shadow-sm">
+            <CardContent className="p-4">
+              <p className="text-xs font-semibold text-muted">{flashcardLabels.libraryDueMetric ?? flashcardLabels.statDueSession}</p>
+              <p className="mt-1 text-2xl font-semibold tabular-nums text-ink">{heroDue === null ? "—" : heroDue}</p>
+            </CardContent>
+          </Card>
+          <Card className="rounded-xl shadow-sm">
+            <CardContent className="p-4">
+              <p className="text-xs font-semibold text-muted">{flashcardLabels.libraryOfflineMetric ?? flashcardLabels.statPendingSync}</p>
+              <p className="mt-1 text-2xl font-semibold tabular-nums text-ink">{heroPending === null ? "—" : heroPending}</p>
+            </CardContent>
+          </Card>
+          <Card className="rounded-xl shadow-sm sm:col-span-1">
+            <CardContent className="p-4">
+              <p className="text-xs font-semibold text-muted">{flashcardLabels.libraryStudyGoal ?? flashcardLabels.eyebrow}</p>
+              <ProgressBar className="mt-3" value={reviewProgress} />
+              <p className="mt-2 text-xs leading-snug text-muted">{flashcardLabels.sessionFocusHint}</p>
+            </CardContent>
+          </Card>
+        </div>
+      </PageHeader>
+      <div className="space-y-3 lg:mb-4">
         {/* Mobile segmented rail */}
-        <div className="sticky top-14 z-20 -mx-3 border-y border-ink/8 bg-paper/90 px-2 py-2 backdrop-blur-md sm:-mx-5 lg:hidden">
-          <div
+        <div className="sticky top-16 z-20 -mx-4 border-y border-ink/8 bg-paper/94 px-4 py-2 backdrop-blur-md sm:-mx-6 lg:hidden">
+          <TabsList
             aria-label={flashcardLabels.libraryMobileNavAria ?? flashcardLabels.title}
-            className="flex gap-1 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-            role="tablist"
+            className="flex w-full overflow-x-auto border-0 bg-transparent p-0 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
             {railItems.map((item) => {
               const selected = activeRail === item.id;
               return (
-                <button
-                  aria-selected={selected}
-                  className={`shrink-0 rounded-full px-3 py-2 text-left text-xs font-black outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-accent ${
-                    selected ? "bg-ink text-surface shadow-sm" : "bg-surface text-ink ring-1 ring-ink/10"
-                  }`}
+                <TabButton
+                  active={selected}
+                  className="shrink-0"
                   key={item.id}
                   onClick={() => selectRail(item.id)}
-                  role="tab"
-                  type="button"
                 >
                   {item.label}
-                </button>
+                </TabButton>
               );
             })}
-          </div>
+          </TabsList>
           {showLibrarySearch ? (
             <label className="mt-2 block px-1" htmlFor={`${tabListId}-msearch`}>
               <span className="sr-only">{flashcardLabels.librarySearchPlaceholder}</span>
-              <input
-                className="min-h-10 w-full rounded-xl border border-ink/10 bg-surface px-3 text-sm font-semibold text-ink outline-none placeholder:text-muted/80 focus:border-leaf focus:ring-1 focus:ring-leaf"
+              <Input
                 id={`${tabListId}-msearch`}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={flashcardLabels.librarySearchPlaceholder}
@@ -285,22 +254,24 @@ export function FlashcardsPageClient({
         </div>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,220px)_minmax(0,1fr)] lg:gap-8">
-        <aside className="hidden lg:block lg:sticky lg:top-20 lg:self-start lg:space-y-3">
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,244px)_minmax(0,1fr)] lg:gap-8">
+        <aside className="hidden lg:block lg:sticky lg:top-24 lg:self-start lg:space-y-3">
           {showLibrarySearch ? (
-            <div className="rounded-xl border border-ink/10 bg-surface p-2 shadow-sm">
-              <label className="sr-only" htmlFor={`${tabListId}-search`}>
-                {flashcardLabels.librarySearchPlaceholder}
-              </label>
-              <input
-                className="min-h-10 w-full rounded-lg border border-ink/10 bg-paper/70 px-3 text-sm font-semibold text-ink outline-none placeholder:text-muted/80 focus:border-leaf focus:bg-white focus:ring-1 focus:ring-leaf"
-                id={`${tabListId}-search`}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={flashcardLabels.librarySearchPlaceholder}
-                type="search"
-                value={searchQuery}
-              />
-            </div>
+            <Card className="rounded-xl">
+              <CardContent className="p-2">
+                <label className="sr-only" htmlFor={`${tabListId}-search`}>
+                  {flashcardLabels.librarySearchPlaceholder}
+                </label>
+                <Input
+                  className="min-h-10 rounded-lg bg-paper/70 shadow-none focus:bg-white"
+                  id={`${tabListId}-search`}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={flashcardLabels.librarySearchPlaceholder}
+                  type="search"
+                  value={searchQuery}
+                />
+              </CardContent>
+            </Card>
           ) : null}
 
           <nav
@@ -315,8 +286,10 @@ export function FlashcardsPageClient({
                 <button
                   aria-controls={`${tabListId}-${item.id}-panel`}
                   aria-selected={selected}
-                  className={`mb-1 flex w-full items-start gap-2 rounded-xl px-2.5 py-2.5 text-left outline-none ring-offset-2 transition last:mb-0 focus-visible:ring-2 focus-visible:ring-accent ${
-                    selected ? "bg-ink text-surface shadow-sm" : "text-muted hover:bg-paper/80 hover:text-ink"
+                  className={`mb-1 flex w-full items-start gap-2.5 rounded-xl px-3 py-3 text-left outline-none ring-offset-2 transition last:mb-0 focus-visible:ring-2 focus-visible:ring-accent ${
+                    selected
+                      ? "bg-ink text-surface shadow-sm"
+                      : "text-muted hover:bg-paper/80 hover:text-ink"
                   }`}
                   id={`${tabListId}-${item.id}`}
                   key={item.id}
@@ -326,10 +299,10 @@ export function FlashcardsPageClient({
                 >
                   <span className="mt-0.5 shrink-0">{item.icon}</span>
                   <span className="min-w-0">
-                    <span className="block text-xs font-black leading-tight">{item.label}</span>
+                    <span className="block text-sm font-bold leading-tight">{item.label}</span>
                     {item.description ? (
                       <span
-                        className={`mt-0.5 block text-[10px] font-semibold leading-snug ${
+                        className={`mt-1 block text-[11px] font-semibold leading-snug ${
                           selected ? "text-white/65" : "text-muted"
                         }`}
                       >
@@ -342,20 +315,37 @@ export function FlashcardsPageClient({
             })}
           </nav>
 
-          <div className="rounded-xl border border-leaf/20 bg-leaf-soft/50 p-3">
-            <p className="text-[10px] font-black uppercase text-leaf">
-              {flashcardLabels.libraryStudyGoal ?? flashcardLabels.eyebrow}
-            </p>
-            <p className="mt-1.5 text-xs font-semibold leading-snug text-ink">
-              {flashcardLabels.sessionFocusHint}
-            </p>
-          </div>
+          <Card className="rounded-xl border-accent/15 bg-accent/8 shadow-none">
+            <CardHeader className="p-3 pb-0">
+              <CardTitle className="flex items-center gap-2 text-xs uppercase tracking-[0.12em] text-accent">
+                <IconSpark aria-hidden size={16} />
+                {flashcardLabels.libraryStudyGoal ?? flashcardLabels.eyebrow}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-3 pt-2">
+              <p className="text-xs font-semibold leading-snug text-ink">
+                {flashcardLabels.sessionFocusHint}
+              </p>
+            </CardContent>
+          </Card>
         </aside>
 
         <div className="min-w-0 space-y-4">
+          <SectionHeader
+            title={main === "review" ? (flashcardLabels.libraryNavReview ?? flashcardLabels.reviewTab) : (flashcardLabels.libraryNavDecks ?? deckLabels.title)}
+            description={main === "review" ? flashcardLabels.libraryReviewDescription : flashcardLabels.libraryDecksDescription}
+            actions={
+              main === "library" ? (
+                <Button size="sm" variant="secondary" type="button" onClick={() => selectRail("review")}>
+                  <IconReview aria-hidden size={16} />
+                  {flashcardLabels.libraryNavReview ?? flashcardLabels.reviewTab}
+                </Button>
+              ) : undefined
+            }
+          />
           <div
             aria-labelledby={`${tabListId}-${activeRail}`}
-            className="min-h-[12rem]"
+            className="min-h-[12rem] rounded-2xl border border-ink/10 bg-surface/55 p-3 shadow-[0_10px_30px_rgba(23,33,31,0.045)] sm:p-4"
             id={`${tabListId}-${activeRail}-panel`}
             role="tabpanel"
           >

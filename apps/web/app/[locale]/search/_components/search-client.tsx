@@ -1,7 +1,7 @@
 "use client";
 
 import type { SearchResult } from "@nihongo-bjt/shared";
-import { cn } from "@nihongo-bjt/ui";
+import { EmptyState, cn } from "@nihongo-bjt/ui";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   type FormEvent,
@@ -15,6 +15,7 @@ import {
 } from "react";
 
 import { VoiceSearchButton } from "../../../_components/search-advanced-inputs";
+import { IconSearch } from "../../../_components/nav-icons";
 import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
 import {
   type DetailPayload,
@@ -145,7 +146,11 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
   /** q + scope + level only — entry changes must not re-fetch the whole index */
   const urlSearchBootstrapKey = useMemo(
     () =>
-      [searchParams.get("q") ?? "", searchParams.get("scope") ?? "", searchParams.get("level") ?? ""].join("\u0001"),
+      [
+        searchParams.get("q") ?? "",
+        searchParams.get("scope") ?? "",
+        searchParams.get("level") ?? ""
+      ].join("\u0001"),
     [searchParams]
   );
   const isMobile = useIsMobileMd();
@@ -263,7 +268,8 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
 
   function selectResult(r: SearchResult) {
     if (isMobile) {
-      sheetReturnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      sheetReturnFocusRef.current =
+        document.activeElement instanceof HTMLElement ? document.activeElement : null;
     }
     setSelected(r);
     if (isMobile) setDetailSheetOpen(true);
@@ -396,7 +402,13 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
   }, [selected]);
 
   const showMobileDetailBar =
-    isMobile && selected && !detailSheetOpen && hasSearched && visibleResults.length > 0 && !loading && !error;
+    isMobile &&
+    selected &&
+    !detailSheetOpen &&
+    hasSearched &&
+    visibleResults.length > 0 &&
+    !loading &&
+    !error;
 
   /** Keep page chrome out of tab order / pointer while modal sheet is open (mobile). */
   const searchBodyInert = isMobile && detailSheetOpen;
@@ -550,261 +562,261 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
   }
 
   return (
-    <main
-      className={cn(
-        "mx-auto w-full max-w-6xl pb-24 md:pb-16",
-        showMobileDetailBar && "pb-32"
-      )}
-    >
+    <main className={cn("mx-auto w-full max-w-6xl pb-24 md:pb-16", showMobileDetailBar && "pb-32")}>
       <p className="sr-only" aria-live="polite" aria-atomic="true">
         {searchStatusAnnouncement}
       </p>
       <div inert={searchBodyInert ? true : undefined}>
-      <div
-        className="sticky top-0 z-20 border-b border-ink/10 bg-paper/95 px-4 pb-2 pt-4 shadow-[0_6px_14px_-10px_rgba(0,0,0,0.08)] backdrop-blur-sm sm:px-0"
-      >
-        <form className="relative" onSubmit={onSubmit}>
-          <label className="sr-only" htmlFor="content-search">
-            {labels.inputLabel}
-          </label>
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1">
-              <SearchIcon
-                aria-hidden
-                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted"
-              />
-              <input
-                ref={inputRef}
-                id="content-search"
-                autoComplete="off"
-                className="w-full min-h-11 appearance-none rounded-xl border border-ink/10 bg-surface py-3 pl-10 pr-4 text-base text-ink shadow-sm transition-all placeholder:text-muted/60 focus:border-accent/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
-                placeholder={labels.placeholder}
-                style={{ WebkitAppearance: "none", appearance: "none" }}
-                type="search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-              />
-            </div>
-            <VoiceSearchButton
-              className="shrink-0"
-              onResult={(text) => {
-                setQuery(text);
-                pendingEntryRef.current = null;
-                setSelected(null);
-                updateUrl(text, filter, levelFilter, null);
-              }}
-            />
-            <button
-              className="shrink-0 min-h-11 rounded-xl bg-ink px-5 py-3 text-sm font-semibold text-surface shadow-sm transition-colors hover:bg-ink/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:opacity-40"
-              disabled={loading || !query.trim()}
-              type="submit"
-            >
-              {labels.submit}
-            </button>
-          </div>
-        </form>
-
-        <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-          <div
-            aria-label={labels.kindFiltersAriaLabel}
-            className="flex items-center gap-1.5 overflow-x-auto scrollbar-none"
-            role="group"
-          >
-            <FilterPill
-              active={filter === "all"}
-              count={results.length}
-              onClick={() => handleFilterChange("all")}
-            >
-              {labels.kindAll}
-            </FilterPill>
-            {kinds.map((kind) => (
-              <FilterPill
-                key={kind}
-                active={filter === kind}
-                count={kindCounts[kind] ?? 0}
-                kind={kind}
-                onClick={() => handleFilterChange(kind)}
-              >
-                {kindLabel(kind, labels)}
-              </FilterPill>
-            ))}
-          </div>
-          <div
-            aria-label={labels.jlptLevelFiltersAriaLabel}
-            className="flex flex-wrap items-center gap-1 sm:ml-auto"
-            role="group"
-          >
-            {levels.map((lvl) => (
+        <div className="sticky top-0 z-20 border-b border-ink/10 bg-paper/95 px-4 pb-2 pt-4 shadow-[0_6px_14px_-10px_rgba(0,0,0,0.08)] backdrop-blur-sm sm:px-0">
+          <form className="relative" onSubmit={onSubmit}>
+            <label className="sr-only" htmlFor="content-search">
+              {labels.inputLabel}
+            </label>
+            <div className="grid gap-2 sm:flex sm:items-center">
+              <div className="flex min-w-0 items-center gap-2 sm:flex-1">
+                <div className="relative flex-1">
+                  <IconSearch
+                    aria-hidden
+                    className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted"
+                    size={18}
+                  />
+                  <input
+                    ref={inputRef}
+                    id="content-search"
+                    autoComplete="off"
+                    className="min-h-11 w-full appearance-none rounded-xl border border-ink/10 bg-surface py-3 pl-10 pr-4 text-base text-ink shadow-sm transition-all placeholder:text-muted/60 focus:border-accent/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+                    placeholder={labels.placeholder}
+                    style={{ WebkitAppearance: "none", appearance: "none" }}
+                    type="search"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                  />
+                </div>
+                <VoiceSearchButton
+                  className="shrink-0"
+                  onResult={(text) => {
+                    setQuery(text);
+                    pendingEntryRef.current = null;
+                    setSelected(null);
+                    updateUrl(text, filter, levelFilter, null);
+                  }}
+                />
+              </div>
               <button
-                key={lvl}
-                className={cn(
-                  "inline-flex min-h-10 min-w-10 items-center justify-center rounded-md px-2 py-1.5 text-[11px] font-semibold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30",
-                  levelFilter === lvl
-                    ? "bg-accent text-surface shadow-sm"
-                    : "text-muted hover:bg-ink/5 hover:text-ink"
-                )}
-                type="button"
-                onClick={() => handleLevelChange(lvl)}
+                className="min-h-11 w-full shrink-0 rounded-xl bg-ink px-5 py-3 text-sm font-semibold text-surface shadow-sm transition-colors hover:bg-ink/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:opacity-40 sm:w-auto"
+                disabled={loading || !query.trim()}
+                type="submit"
               >
-                {lvl}
+                {labels.submit}
               </button>
-            ))}
-          </div>
-        </div>
-      </div>
+            </div>
+          </form>
 
-      {!loading && hasSearched && results.length > 0 && (
-        <p className="mt-3 px-4 text-xs text-muted sm:px-0">
-          {labels.resultsForQueryLabel
-            .replace("{count}", String(visibleResults.length))
-            .replace("{query}", query.trim())}
-        </p>
-      )}
-
-      {loading && hasSearched && (
-        <div className="mt-4 min-h-[min(52vh,28rem)] px-4 sm:px-0" aria-busy="true">
-          <div className="mb-3 flex items-center justify-center gap-2">
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
             <div
-              className="h-5 w-5 shrink-0 animate-spin rounded-full border-2 border-accent/30 border-t-accent motion-reduce:animate-none"
-              aria-hidden
-            />
-            <span className="text-sm text-muted">{labels.loading}</span>
-          </div>
-          <SearchResultsLoadingSkeleton />
-        </div>
-      )}
-
-      {error && (
-        <div className="mx-4 mt-8 rounded-xl border border-sakura/20 bg-sakura/5 p-4 text-center sm:mx-0">
-          <p className="text-sm text-sakura" role="alert">
-            {labels.error}
-          </p>
-          {query.trim() ? (
-            <button
-              className="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl border border-ink/12 bg-surface px-4 text-sm font-semibold text-ink shadow-sm transition-colors hover:border-ink/18 hover:bg-paper focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/35"
-              type="button"
-              onClick={() => {
-                setError(false);
-                void runSearch(
-                  query.trim(),
-                  filter === "all" ? undefined : filter,
-                  levelFilter || undefined
-                );
-              }}
+              aria-label={labels.kindFiltersAriaLabel}
+              className="flex items-center gap-1.5 overflow-x-auto scrollbar-none"
+              role="group"
             >
-              {labels.retrySearch}
-            </button>
-          ) : null}
+              <FilterPill
+                active={filter === "all"}
+                count={results.length}
+                onClick={() => handleFilterChange("all")}
+              >
+                {labels.kindAll}
+              </FilterPill>
+              {kinds.map((kind) => (
+                <FilterPill
+                  key={kind}
+                  active={filter === kind}
+                  count={kindCounts[kind] ?? 0}
+                  kind={kind}
+                  onClick={() => handleFilterChange(kind)}
+                >
+                  {kindLabel(kind, labels)}
+                </FilterPill>
+              ))}
+            </div>
+            <div
+              aria-label={labels.jlptLevelFiltersAriaLabel}
+              className="flex flex-wrap items-center gap-1 sm:ml-auto"
+              role="group"
+            >
+              {levels.map((lvl) => (
+                <button
+                  key={lvl}
+                  className={cn(
+                    "inline-flex min-h-10 min-w-10 items-center justify-center rounded-md px-2 py-1.5 text-[11px] font-semibold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30",
+                    levelFilter === lvl
+                      ? "bg-accent text-surface shadow-sm"
+                      : "text-muted hover:bg-ink/5 hover:text-ink"
+                  )}
+                  type="button"
+                  onClick={() => handleLevelChange(lvl)}
+                >
+                  {lvl}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
-      )}
 
-      {!loading && !error && hasSearched && results.length === 0 && (
-        <div className="mt-16 flex flex-col items-center gap-3 px-4">
-          <SearchIcon className="h-14 w-14 shrink-0 text-muted/30" aria-hidden />
-          <p className="max-w-xs text-center text-sm text-muted">{labels.empty}</p>
-        </div>
-      )}
+        {!loading && hasSearched && results.length > 0 && (
+          <p className="mt-3 px-4 text-xs text-muted sm:px-0">
+            {labels.resultsForQueryLabel
+              .replace("{count}", String(visibleResults.length))
+              .replace("{query}", query.trim())}
+          </p>
+        )}
 
-      {!loading && !error && hasSearched && results.length > 0 && visibleResults.length === 0 && (
-        <p className="mt-8 text-center text-sm text-muted">{labels.noResultsInFilter}</p>
-      )}
+        {loading && hasSearched && (
+          <div className="mt-4 min-h-[min(52vh,28rem)] px-4 sm:px-0" aria-busy="true">
+            <div className="mb-3 flex items-center justify-center gap-2">
+              <div
+                className="h-5 w-5 shrink-0 animate-spin rounded-full border-2 border-accent/30 border-t-accent motion-reduce:animate-none"
+                aria-hidden
+              />
+              <span className="text-sm text-muted">{labels.loading}</span>
+            </div>
+            <SearchResultsLoadingSkeleton />
+          </div>
+        )}
 
-      {!hasSearched && !loading && (
-        <div className="mt-20 flex flex-col items-center gap-4 px-4 text-center">
-          <span aria-hidden className="jp-text select-none text-5xl opacity-20">
-            {labels.landingHeroGlyph}
-          </span>
-          <h2 className="text-lg font-bold text-ink">{labels.title}</h2>
-          <p className="max-w-sm text-sm text-muted">{labels.subtitle}</p>
-          <div className="mt-4 flex flex-wrap justify-center gap-2" role="group" aria-label={labels.exampleChipsAriaLabel}>
-            {labels.exampleChips.map((example) => (
+        {error && (
+          <EmptyState
+            className="mx-4 mt-8 border-sakura/20 bg-sakura/5 sm:mx-0"
+            role="alert"
+            title={labels.error}
+            action={
+              query.trim() ? (
+                <button
+                  className="inline-flex min-h-11 items-center justify-center rounded-xl border border-ink/12 bg-surface px-4 text-sm font-semibold text-ink shadow-sm transition-colors hover:border-ink/18 hover:bg-paper focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/35"
+                  type="button"
+                  onClick={() => {
+                    setError(false);
+                    void runSearch(
+                      query.trim(),
+                      filter === "all" ? undefined : filter,
+                      levelFilter || undefined
+                    );
+                  }}
+                >
+                  {labels.retrySearch}
+                </button>
+              ) : null
+            }
+          />
+        )}
+
+        {!loading && !error && hasSearched && results.length === 0 && (
+          <EmptyState className="mx-4 mt-12 sm:mx-0" title={labels.empty}>
+            <IconSearch aria-hidden className="mt-4 text-muted/30" size={44} />
+          </EmptyState>
+        )}
+
+        {!loading && !error && hasSearched && results.length > 0 && visibleResults.length === 0 && (
+          <EmptyState className="mx-4 mt-8 sm:mx-0" title={labels.noResultsInFilter} />
+        )}
+
+        {!hasSearched && !loading && (
+          <div className="mt-20 flex flex-col items-center gap-4 px-4 text-center">
+            <span aria-hidden className="jp-text select-none text-5xl opacity-20">
+              {labels.landingHeroGlyph}
+            </span>
+            <h2 className="text-lg font-bold text-ink">{labels.title}</h2>
+            <p className="max-w-sm text-sm text-muted">{labels.subtitle}</p>
+            <div
+              className="mt-4 flex flex-wrap justify-center gap-2"
+              role="group"
+              aria-label={labels.exampleChipsAriaLabel}
+            >
+              {labels.exampleChips.map((example) => (
+                <button
+                  key={example}
+                  className="min-h-10 rounded-full border border-ink/8 bg-surface px-3 py-2 text-xs text-muted transition-colors hover:border-ink/15 hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
+                  type="button"
+                  onClick={() => {
+                    setQuery(example);
+                    pendingEntryRef.current = null;
+                    setSelected(null);
+                    updateUrl(example, filter, levelFilter, null);
+                  }}
+                >
+                  {example}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {!loading && !error && hasSearched && visibleResults.length > 0 && (
+          <div className="mt-4 px-4 sm:px-0 lg:mt-6 lg:grid lg:grid-cols-[minmax(260px,min(100%,24rem))_minmax(0,1fr)] lg:items-start lg:gap-8">
+            <section
+              aria-label={labels.resultsRegionLabel}
+              className="min-w-0 lg:max-w-sm xl:max-w-md"
+              onKeyDownCapture={handleResultsListKeyDown}
+            >
+              <h2 className="mb-2 hidden text-xs font-bold uppercase tracking-wide text-muted lg:block">
+                {labels.resultsHeading}
+              </h2>
+              <ul className="divide-y divide-ink/6 overflow-hidden rounded-2xl border border-ink/8 bg-surface shadow-sm outline-none focus-within:ring-2 focus-within:ring-accent/25">
+                {visibleResults.map((result) => (
+                  <ResultEntry
+                    key={`${result.kind}:${result.id}`}
+                    labels={labels}
+                    query={query}
+                    result={result}
+                    selected={selected?.id === result.id && selected.kind === result.kind}
+                    onSelect={() => selectResult(result)}
+                  />
+                ))}
+              </ul>
+              {isMobile ? (
+                <p className="mt-3 text-center text-xs text-muted">{labels.detailMobileHint}</p>
+              ) : null}
+            </section>
+
+            <section aria-label={labels.detailRegionLabel} className="hidden min-w-0 lg:block">
+              <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-muted">
+                {labels.detailHeading}
+              </h2>
+              <SearchDetailPanel
+                detail={detail}
+                detailError={detailError}
+                detailLoading={detailLoading}
+                labels={labels}
+                locale={locale}
+                query={query}
+                result={selected}
+                userId={userId}
+                variant="desktop"
+              />
+            </section>
+          </div>
+        )}
+
+        {showMobileDetailBar ? (
+          <div className="fixed inset-x-0 bottom-0 z-30 border-t border-ink/10 bg-paper/95 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-8px_24px_-4px_rgba(0,0,0,0.08)] backdrop-blur-sm lg:hidden">
+            <div className="mx-auto flex max-w-6xl items-center gap-3 px-4">
+              <div className="min-w-0 flex-1">
+                <p className="truncate jp-text text-sm font-semibold text-ink">{selected.title}</p>
+                {selected.reading ? (
+                  <p className="truncate jp-text text-xs text-muted">{selected.reading}</p>
+                ) : null}
+              </div>
               <button
-                key={example}
-                className="min-h-10 rounded-full border border-ink/8 bg-surface px-3 py-2 text-xs text-muted transition-colors hover:border-ink/15 hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
+                className="shrink-0 rounded-xl bg-ink px-4 py-2.5 text-xs font-bold text-surface shadow-sm transition-colors hover:bg-ink/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                 type="button"
-                onClick={() => {
-                  setQuery(example);
-                  pendingEntryRef.current = null;
-                  setSelected(null);
-                  updateUrl(example, filter, levelFilter, null);
+                onClick={(e) => {
+                  sheetReturnFocusRef.current = e.currentTarget;
+                  setDetailSheetOpen(true);
                 }}
               >
-                {example}
+                {labels.openDetail}
               </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {!loading && !error && hasSearched && visibleResults.length > 0 && (
-        <div className="mt-4 px-4 sm:px-0 lg:mt-6 lg:grid lg:grid-cols-[minmax(260px,min(100%,24rem))_minmax(0,1fr)] lg:items-start lg:gap-8">
-          <section
-            aria-label={labels.resultsRegionLabel}
-            className="min-w-0 lg:max-w-sm xl:max-w-md"
-            onKeyDownCapture={handleResultsListKeyDown}
-          >
-            <h2 className="mb-2 hidden text-xs font-bold uppercase tracking-wide text-muted lg:block">
-              {labels.resultsHeading}
-            </h2>
-            <ul className="divide-y divide-ink/6 overflow-hidden rounded-2xl border border-ink/8 bg-surface shadow-sm outline-none focus-within:ring-2 focus-within:ring-accent/25">
-              {visibleResults.map((result) => (
-                <ResultEntry
-                  key={`${result.kind}:${result.id}`}
-                  labels={labels}
-                  query={query}
-                  result={result}
-                  selected={
-                    selected?.id === result.id && selected.kind === result.kind
-                  }
-                  onSelect={() => selectResult(result)}
-                />
-              ))}
-            </ul>
-            {isMobile ? (
-              <p className="mt-3 text-center text-xs text-muted">{labels.detailMobileHint}</p>
-            ) : null}
-          </section>
-
-          <section aria-label={labels.detailRegionLabel} className="hidden min-w-0 lg:block">
-            <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-muted">{labels.detailHeading}</h2>
-            <SearchDetailPanel
-              detail={detail}
-              detailError={detailError}
-              detailLoading={detailLoading}
-              labels={labels}
-              locale={locale}
-              query={query}
-              result={selected}
-              userId={userId}
-              variant="desktop"
-            />
-          </section>
-        </div>
-      )}
-
-      {showMobileDetailBar ? (
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-ink/10 bg-paper/95 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-8px_24px_-4px_rgba(0,0,0,0.08)] backdrop-blur-sm lg:hidden">
-          <div className="mx-auto flex max-w-6xl items-center gap-3 px-4">
-            <div className="min-w-0 flex-1">
-              <p className="truncate jp-text text-sm font-semibold text-ink">{selected.title}</p>
-              {selected.reading ? (
-                <p className="truncate jp-text text-xs text-muted">{selected.reading}</p>
-              ) : null}
             </div>
-            <button
-              className="shrink-0 rounded-xl bg-ink px-4 py-2.5 text-xs font-bold text-surface shadow-sm transition-colors hover:bg-ink/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
-              type="button"
-              onClick={(e) => {
-                sheetReturnFocusRef.current = e.currentTarget;
-                setDetailSheetOpen(true);
-              }}
-            >
-              {labels.openDetail}
-            </button>
           </div>
-        </div>
-      ) : null}
-
+        ) : null}
       </div>
 
       {isMobile && detailSheetOpen && selected && (
@@ -962,7 +974,11 @@ function ResultEntry({
           ) : null}
         </div>
 
-        <span aria-hidden className="shrink-0 self-center rounded-lg p-1.5 text-muted/50" title={labels.addToFlashcard}>
+        <span
+          aria-hidden
+          className="shrink-0 self-center rounded-lg p-1.5 text-muted/50"
+          title={labels.addToFlashcard}
+        >
           <ChevronIcon />
         </span>
       </button>
@@ -993,7 +1009,10 @@ function FilterPill({
       onClick={onClick}
     >
       {kind && !active ? (
-        <span aria-hidden className={cn("mr-0.5 inline-block h-2 w-2 rounded-full", kindDotColor(kind))} />
+        <span
+          aria-hidden
+          className={cn("mr-0.5 inline-block h-2 w-2 rounded-full", kindDotColor(kind))}
+        />
       ) : null}
       {children}
       {count > 0 && (
@@ -1007,26 +1026,6 @@ function FilterPill({
         </span>
       )}
     </button>
-  );
-}
-
-function SearchIcon({ "aria-hidden": ariaHidden, className }: { "aria-hidden"?: boolean; className?: string }) {
-  return (
-    <svg
-      aria-hidden={ariaHidden ?? undefined}
-      className={className}
-      fill="none"
-      height="18"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      viewBox="0 0 24 24"
-      width="18"
-    >
-      <circle cx="11" cy="11" r="8" />
-      <line x1="21" x2="16.65" y1="21" y2="16.65" />
-    </svg>
   );
 }
 

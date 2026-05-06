@@ -19,13 +19,7 @@ interface DailyHubPayload {
   widgets: DailyWidget[];
 }
 
-export function HomepageClient({
-  labels,
-  locale,
-}: {
-  labels: HomepageLabels;
-  locale: string;
-}) {
+export function HomepageClient({ labels, locale }: { labels: HomepageLabels; locale: string }) {
   const auth = useKeycloakAuth();
   const userId = auth.userId ?? "";
   const isLoggedIn = Boolean(userId);
@@ -33,8 +27,12 @@ export function HomepageClient({
 
   const [hub, setHub] = useState<DailyHubPayload | null>(null);
   const [hubReady, setHubReady] = useState(false);
-  const [nhkArticles, setNhkArticles] = useState<NhkArticle[]>([]);
+  const [nhkArticlesByType, setNhkArticlesByType] = useState<{
+    easy: NhkArticle[];
+    normal: NhkArticle[];
+  }>({ easy: [], normal: [] });
   const [nhkReady, setNhkReady] = useState(false);
+  const [nhkError, setNhkError] = useState(false);
   const [analytics, setAnalytics] = useState<LearnerAnalytics | null>(null);
   const [analyticsReady, setAnalyticsReady] = useState(false);
   const [quizTemplates, setQuizTemplates] = useState<QuizTemplate[]>([]);
@@ -48,7 +46,7 @@ export function HomepageClient({
     setRecommendReady(false);
 
     void learnerApiFetchOptional(
-      `/api/daily/home?locale=${locale}${userId ? `&userId=${encodeURIComponent(userId)}` : ""}`,
+      `/api/daily/home?locale=${locale}${userId ? `&userId=${encodeURIComponent(userId)}` : ""}`
     )
       .then(async (r) => {
         if (r?.ok) setHub(await r.json());
@@ -57,22 +55,29 @@ export function HomepageClient({
       .catch(() => setHub(null))
       .finally(() => setHubReady(true));
 
-    void learnerApiFetchOptional(`/api/nhk-news?limit=8`)
-      .then(async (r) => {
-        if (r?.ok) {
-          const data = await r.json();
-          setNhkArticles(Array.isArray(data) ? data : []);
-        } else {
-          setNhkArticles([]);
-        }
+    void Promise.all([
+      learnerApiFetchOptional(`/api/nhk-news?type=easy&limit=8&locale=${locale}`),
+      learnerApiFetchOptional(`/api/nhk-news?type=normal&limit=8&locale=${locale}`)
+    ])
+      .then(async ([easyRes, normalRes]) => {
+        const easy = easyRes?.ok ? await easyRes.json().catch(() => []) : [];
+        const normal = normalRes?.ok ? await normalRes.json().catch(() => []) : [];
+        setNhkArticlesByType({
+          easy: Array.isArray(easy) ? easy : [],
+          normal: Array.isArray(normal) ? normal : []
+        });
+        setNhkError(!easyRes?.ok && !normalRes?.ok);
       })
-      .catch(() => setNhkArticles([]))
+      .catch(() => {
+        setNhkArticlesByType({ easy: [], normal: [] });
+        setNhkError(true);
+      })
       .finally(() => setNhkReady(true));
 
     if (userId) {
       setAnalyticsReady(false);
       void learnerApiFetchOptional(
-        `/api/analytics/learner?days=7&userId=${encodeURIComponent(userId)}&locale=${locale}`,
+        `/api/analytics/learner?days=7&userId=${encodeURIComponent(userId)}&locale=${locale}`
       )
         .then(async (r) => {
           if (r?.ok) setAnalytics(await r.json());
@@ -113,7 +118,7 @@ export function HomepageClient({
             setPublicDecks([]);
           }
         })
-        .catch(() => setPublicDecks([])),
+        .catch(() => setPublicDecks([]))
     ]).finally(() => setRecommendReady(true));
   }, [locale, userId]);
 
@@ -124,7 +129,7 @@ export function HomepageClient({
   const dueCount = hub?.dueReviews ?? 0;
 
   return (
-    <main className="space-y-8 py-6">
+    <main className="space-y-7 pb-10 pt-2 sm:pt-4">
       <HeroSection
         displayName={displayName}
         dueCount={dueCount}
@@ -133,24 +138,42 @@ export function HomepageClient({
         locale={locale}
       />
 
-      <QuickActionsStrip dueCount={dueCount} hubReady={hubReady} labels={labels} locale={locale} />
+      <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
+        <div className="space-y-7">
+          <QuickActionsStrip
+            dueCount={dueCount}
+            hubReady={hubReady}
+            labels={labels}
+            locale={locale}
+          />
 
-      <FeaturedNewsSection articles={nhkArticles} labels={labels} loading={!nhkReady} locale={locale} />
+          <FeaturedNewsSection
+            articlesByType={nhkArticlesByType}
+            error={nhkError}
+            labels={labels}
+            loading={!nhkReady}
+            locale={locale}
+            onRetry={loadData}
+          />
 
-      <DailyJapaneseSection
-        hubReady={hubReady}
-        labels={labels}
-        locale={locale}
-        widgets={hub?.widgets ?? []}
-      />
+          <DailyJapaneseSection
+            hubReady={hubReady}
+            labels={labels}
+            locale={locale}
+            widgets={hub?.widgets ?? []}
+          />
+        </div>
 
-      <ProgressSection
-        analytics={analytics}
-        analyticsLoading={isLoggedIn && !analyticsReady}
-        isLoggedIn={isLoggedIn}
-        labels={labels}
-        locale={locale}
-      />
+        <div className="space-y-7 lg:sticky lg:top-20">
+          <ProgressSection
+            analytics={analytics}
+            analyticsLoading={isLoggedIn && !analyticsReady}
+            isLoggedIn={isLoggedIn}
+            labels={labels}
+            locale={locale}
+          />
+        </div>
+      </div>
 
       <RecommendedSection
         decks={publicDecks}

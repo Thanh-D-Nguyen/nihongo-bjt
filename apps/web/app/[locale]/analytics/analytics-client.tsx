@@ -7,8 +7,10 @@ import {
   CardHeader,
   CardTitle,
   EmptyState,
+  ErrorState,
+  LoadingSkeleton,
   PageHeader,
-  SectionHeader,
+  SectionHeader
 } from "@nihongo-bjt/ui";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -119,14 +121,17 @@ interface LearnerAnalyticsPayload {
 
 function normalizeLearnerAnalyticsPayload(raw: unknown): LearnerAnalyticsPayload {
   const r = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
-  const totalsRaw = r.totals && typeof r.totals === "object" ? (r.totals as Record<string, unknown>) : {};
-  const rangeRaw = r.range && typeof r.range === "object" ? (r.range as Record<string, unknown>) : {};
+  const totalsRaw =
+    r.totals && typeof r.totals === "object" ? (r.totals as Record<string, unknown>) : {};
+  const rangeRaw =
+    r.range && typeof r.range === "object" ? (r.range as Record<string, unknown>) : {};
 
   const dailyActivity = Array.isArray(r.dailyActivity) ? r.dailyActivity : [];
   const weakSkills = Array.isArray(r.weakSkills) ? r.weakSkills : [];
   const learningPaths = Array.isArray(r.learningPaths) ? r.learningPaths : [];
 
-  const n = (v: unknown, fallback: number) => (typeof v === "number" && !Number.isNaN(v) ? v : fallback);
+  const n = (v: unknown, fallback: number) =>
+    typeof v === "number" && !Number.isNaN(v) ? v : fallback;
 
   return {
     dailyActivity: dailyActivity as DailyActivityPoint[],
@@ -209,7 +214,13 @@ function pickNudgeMessage(
   return labels.nudgeCalm;
 }
 
-export function LearnerAnalyticsClient({ labels, locale }: { labels: AnalyticsLabels; locale: string }) {
+export function LearnerAnalyticsClient({
+  labels,
+  locale
+}: {
+  labels: AnalyticsLabels;
+  locale: string;
+}) {
   const [analytics, setAnalytics] = useState<LearnerAnalyticsPayload | null>(null);
   const [days, setDays] = useState<(typeof PERIOD_OPTIONS)[number]>(7);
   const [error, setError] = useState(false);
@@ -307,7 +318,7 @@ export function LearnerAnalyticsClient({ labels, locale }: { labels: AnalyticsLa
       : "";
 
   return (
-    <main className="mx-auto w-full max-w-4xl space-y-6 px-3 pb-12 sm:px-0">
+    <main className="w-full space-y-6 pb-12">
       <PageHeader
         actions={
           <div className="flex flex-wrap items-center justify-end gap-2">
@@ -325,7 +336,11 @@ export function LearnerAnalyticsClient({ labels, locale }: { labels: AnalyticsLa
                   type="button"
                   onClick={() => setDays(d)}
                 >
-                  {d === 7 ? labels.periodDays7 : d === 30 ? labels.periodDays30 : labels.periodDays90}
+                  {d === 7
+                    ? labels.periodDays7
+                    : d === 30
+                      ? labels.periodDays30
+                      : labels.periodDays90}
                 </button>
               ))}
             </fieldset>
@@ -349,25 +364,24 @@ export function LearnerAnalyticsClient({ labels, locale }: { labels: AnalyticsLa
         {rangeHint ? ` · ${rangeHint}` : ""}
       </p>
 
-      {error ? (
-        <p className="text-sm text-sakura" role="alert">
-          {labels.error}
-        </p>
-      ) : null}
+      {error ? <ErrorState className="py-5" title={labels.error} /> : null}
 
       {loading && !analytics ? (
         <div className="space-y-4" aria-busy>
-          <div className="h-36 animate-pulse rounded-2xl bg-paper ring-1 ring-ink/5" />
+          <LoadingSkeleton className="h-36" />
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {[1, 2, 3, 4].map((i) => (
-              <div className="h-24 animate-pulse rounded-xl bg-paper ring-1 ring-ink/5" key={i} />
+              <LoadingSkeleton className="h-24" key={i} />
             ))}
           </div>
         </div>
       ) : null}
 
       {analytics && hasData ? (
-        <section aria-labelledby="analytics-primary-step" className="rounded-2xl border border-ink/10 bg-surface p-4 shadow-sm sm:p-5">
+        <section
+          aria-labelledby="analytics-primary-step"
+          className="rounded-2xl border border-ink/10 bg-surface p-4 shadow-sm sm:p-5"
+        >
           <h2 className="text-base font-semibold text-ink" id="analytics-primary-step">
             {labels.primaryStepTitle}
           </h2>
@@ -389,7 +403,9 @@ export function LearnerAnalyticsClient({ labels, locale }: { labels: AnalyticsLa
 
       {analytics && hasData && nudgeLine ? (
         <div className="rounded-2xl border border-leaf/25 bg-leaf/10 p-4">
-          <p className="text-xs font-bold uppercase tracking-wide text-muted">{labels.nudgeTitle}</p>
+          <p className="text-xs font-bold uppercase tracking-wide text-muted">
+            {labels.nudgeTitle}
+          </p>
           <p className="mt-2 text-sm leading-relaxed text-ink">{nudgeLine}</p>
         </div>
       ) : null}
@@ -450,13 +466,13 @@ export function LearnerAnalyticsClient({ labels, locale }: { labels: AnalyticsLa
                     <p className="text-sm text-muted">{labels.activityEmpty}</p>
                   ) : (
                     <>
-                      <div
-                        aria-hidden
-                        className="mb-4 flex h-32 items-end gap-1 sm:gap-1.5"
-                      >
+                      <div aria-hidden className="mb-4 flex h-32 items-end gap-1 sm:gap-1.5">
                         {analytics.dailyActivity.map((p) => {
                           const total = p.reviews + p.quizAnswers + p.quizSessionsCompleted;
-                          const barPx = Math.max(total === 0 ? 0 : 4, Math.round((total / activityMax) * 120));
+                          const barPx = Math.max(
+                            total === 0 ? 0 : 4,
+                            Math.round((total / activityMax) * 120)
+                          );
                           return (
                             <div
                               className="flex min-w-0 flex-1 flex-col items-center gap-1"
@@ -508,11 +524,17 @@ export function LearnerAnalyticsClient({ labels, locale }: { labels: AnalyticsLa
                           {labels.activityReviewsShort}
                         </span>
                         <span className="inline-flex items-center gap-1">
-                          <span aria-hidden className="inline-block size-2 rounded-sm bg-accent/80" />
+                          <span
+                            aria-hidden
+                            className="inline-block size-2 rounded-sm bg-accent/80"
+                          />
                           {labels.activityQuizShort}
                         </span>
                         <span className="inline-flex items-center gap-1">
-                          <span aria-hidden className="inline-block size-2 rounded-sm bg-amber-500/75" />
+                          <span
+                            aria-hidden
+                            className="inline-block size-2 rounded-sm bg-amber-500/75"
+                          />
                           {labels.activitySessionsShort}
                         </span>
                       </div>
@@ -543,7 +565,9 @@ export function LearnerAnalyticsClient({ labels, locale }: { labels: AnalyticsLa
                                 <td className="px-3 py-2 tabular-nums text-muted">{p.date}</td>
                                 <td className="px-3 py-2 tabular-nums">{p.reviews}</td>
                                 <td className="px-3 py-2 tabular-nums">{p.quizAnswers}</td>
-                                <td className="px-3 py-2 tabular-nums">{p.quizSessionsCompleted}</td>
+                                <td className="px-3 py-2 tabular-nums">
+                                  {p.quizSessionsCompleted}
+                                </td>
                               </tr>
                             ))}
                           </tbody>
@@ -554,7 +578,9 @@ export function LearnerAnalyticsClient({ labels, locale }: { labels: AnalyticsLa
                 </div>
 
                 <div className="rounded-xl border border-amber-200/50 bg-amber-soft/35 p-4">
-                  <p className="text-xs font-bold uppercase tracking-wide text-muted">{labels.insight}</p>
+                  <p className="text-xs font-bold uppercase tracking-wide text-muted">
+                    {labels.insight}
+                  </p>
                   <p className="mt-2 text-sm leading-relaxed text-ink">{analytics.insight}</p>
                 </div>
 
@@ -649,7 +675,9 @@ function LearningPathsPanel({
           {list.map((path) => {
             const title = locale === "ja" && path.titleJa?.trim() ? path.titleJa : path.titleVi;
             const desc =
-              locale === "ja" && path.descriptionJa?.trim() ? path.descriptionJa : path.descriptionVi;
+              locale === "ja" && path.descriptionJa?.trim()
+                ? path.descriptionJa
+                : path.descriptionVi;
             return (
               <li className="rounded-xl border border-ink/8 bg-surface p-3 shadow-sm" key={path.id}>
                 <p className="text-sm font-semibold text-ink">{title}</p>

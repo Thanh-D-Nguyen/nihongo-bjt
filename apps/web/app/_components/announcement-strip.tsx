@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { IconClose, IconNotice } from "./app-icons";
+
 /* ── Types ── */
 type AnnouncementType = "info" | "event" | "promo";
 
@@ -12,19 +14,14 @@ interface Announcement {
   href?: string;
 }
 
-const DOT_COLOR: Record<AnnouncementType, string> = {
-  event: "bg-amber-400",
-  info: "bg-accent",
-  promo: "bg-violet-400",
+const NOTICE_TONE: Record<AnnouncementType, string> = {
+  event: "bg-amber-100 text-amber-700",
+  info: "bg-accent/10 text-accent",
+  promo: "bg-violet-100 text-violet-700",
 };
 
-/* ── Announcements — fetched from API, with localStorage fallback ── */
+/* ── Announcements — fetched from API ── */
 const API_BASE = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/$/u, "");
-
-/* Fallback when API is unavailable */
-const FALLBACK_ANNOUNCEMENTS: Announcement[] = [
-  { id: "welcome-2025", message: "Chào mừng bạn đến NihonGo BJT — nền tảng luyện BJT miễn phí!", type: "info" },
-];
 
 const STORAGE_KEY = "nihongo-dismissed-announcements";
 const ROTATE_MS = 8_000;
@@ -70,7 +67,7 @@ export function AnnouncementStrip() {
           }
         }
       } catch { /* network error */ }
-      if (!cancelled) setAnnouncements(FALLBACK_ANNOUNCEMENTS);
+      if (!cancelled) setAnnouncements([]);
     })();
     return () => { cancelled = true; };
   }, []);
@@ -123,8 +120,9 @@ export function AnnouncementStrip() {
       role="status"
       aria-live="polite"
     >
-      {/* Dot indicator */}
-      <span className={`inline-block h-1.5 w-1.5 shrink-0 rounded-full ${DOT_COLOR[current.type]}`} />
+      <span className={`inline-flex size-5 shrink-0 items-center justify-center rounded-full ${NOTICE_TONE[current.type]}`}>
+        <IconNotice aria-hidden size={16} />
+      </span>
 
       <Content
         className={current.href ? "underline-offset-2 hover:underline" : undefined}
@@ -140,9 +138,7 @@ export function AnnouncementStrip() {
         onClick={() => dismiss(current.id)}
         type="button"
       >
-        <svg fill="none" height={14} stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" width={14}>
-          <path d="M18 6 6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+        <IconClose aria-hidden size={16} />
       </button>
 
       {/* Page dots (when >1) */}
