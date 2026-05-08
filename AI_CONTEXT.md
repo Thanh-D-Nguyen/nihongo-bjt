@@ -65,6 +65,43 @@ Recent work expanded several production slices. Before editing them, inspect the
 - NHK/news ingestion and learner-facing news sections.
 - Admin management screens for practice/content operations.
 
+## Token-Efficient Change Workflow
+
+Use this workflow when adding, fixing, or improving a feature. The goal is to find the real ownership path quickly without loading the whole repo.
+
+1. Start from the user-visible route, endpoint, or error string.
+2. Run one narrow `rg` for the exact route, API path, component name, i18n key, Prisma model, or error message.
+3. Open only the first ownership chain:
+   - frontend route/component
+   - API controller
+   - service/use-case
+   - repository/provider
+   - shared contract/schema
+   - Prisma model/migration
+   - i18n messages
+   - focused tests
+4. Stop broad searching once the owner files are identified. Use code references from those files instead of loading adjacent modules.
+5. Read compact docs only when product intent is unclear. Use `docs/spec/index.md` to choose the smallest relevant compact/digest file. Do not open the full spec unless compact docs are insufficient or conflicting.
+6. Prefer existing patterns in the same feature folder over global guessing.
+7. Before editing, state the small working set of files and the verification command. Expand scope only when a compile/test/runtime failure proves another boundary is involved.
+
+Useful `rg` patterns:
+
+```bash
+rg -n "api/path|route-segment|i18n.key|ModelName|error text" apps packages
+rg -n "controller|service|repository|schema|messages" apps/api packages/shared apps/web apps/admin
+rg --files apps/web apps/admin apps/api packages/shared packages/database | rg "feature-name|route-name|model-name"
+```
+
+Default file budget before editing:
+
+- Bug fix: 3-7 files.
+- Single UI improvement: route/component, messages, optional shared UI, focused test.
+- API feature: shared contract, controller, service, repository, Prisma schema/migration, tests.
+- Admin mutation: admin UI, API controller/service, RBAC permission, audit log path, i18n, tests.
+
+Escalate beyond the budget only with evidence: missing contract, failing typecheck, missing database model, broken auth/RBAC boundary, or product rule conflict.
+
 ## Verification Commands
 
 Use focused commands first, then broader checks when the change has wider blast radius.
