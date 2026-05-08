@@ -22,7 +22,7 @@ export function createPrismaClient(connectionString = process.env.DATABASE_URL):
     // don't keep restarting the process. Return a proxy that will throw a
     // helpful error when any Prisma property/method is actually accessed.
     // This keeps the app running in dev so other non-DB routes remain available.
-    const handler: ProxyHandler<any> = {
+    const handler: ProxyHandler<object> = {
       get() {
         throw new Error(
           "DATABASE_URL is required to use Prisma. Set DATABASE_URL in your .env or start Postgres."

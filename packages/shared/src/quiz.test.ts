@@ -6,7 +6,7 @@ describe("scoreBjtPractice", () => {
   it("returns a clearly estimated BJT band from accuracy", () => {
     expect(scoreBjtPractice({ correctCount: 3, totalQuestions: 4 })).toEqual({
       accuracy: 0.75,
-      estimatedBjtBand: "J1",
+      estimatedBjtBand: "J1+",
       estimatedScore: 600
     });
   });

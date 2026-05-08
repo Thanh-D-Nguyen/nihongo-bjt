@@ -1368,6 +1368,186 @@ exports.Prisma.AnnouncementScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.ExerciseConfigScalarFieldEnum = {
+  id: 'id',
+  exerciseType: 'exerciseType',
+  placement: 'placement',
+  displayOrder: 'displayOrder',
+  enabled: 'enabled',
+  minLevel: 'minLevel',
+  maxLevel: 'maxLevel',
+  timeLimitSec: 'timeLimitSec',
+  pointsPerCorrect: 'pointsPerCorrect',
+  createdBy: 'createdBy',
+  updatedBy: 'updatedBy',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.ExerciseScalarFieldEnum = {
+  id: 'id',
+  exerciseType: 'exerciseType',
+  sourceType: 'sourceType',
+  sourceId: 'sourceId',
+  level: 'level',
+  prompt: 'prompt',
+  choices: 'choices',
+  correctAnswer: 'correctAnswer',
+  explanation: 'explanation',
+  difficulty: 'difficulty',
+  tags: 'tags',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.ExerciseSessionScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  sessionType: 'sessionType',
+  exerciseType: 'exerciseType',
+  level: 'level',
+  status: 'status',
+  totalQuestions: 'totalQuestions',
+  correctCount: 'correctCount',
+  score: 'score',
+  streakContribution: 'streakContribution',
+  startedAt: 'startedAt',
+  completedAt: 'completedAt'
+};
+
+exports.Prisma.ExerciseAnswerScalarFieldEnum = {
+  id: 'id',
+  sessionId: 'sessionId',
+  exerciseId: 'exerciseId',
+  userAnswer: 'userAnswer',
+  isCorrect: 'isCorrect',
+  timeSpentMs: 'timeSpentMs',
+  answeredAt: 'answeredAt'
+};
+
+exports.Prisma.StreakConfigScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  activityType: 'activityType',
+  minActionsPerDay: 'minActionsPerDay',
+  freezesAllowed: 'freezesAllowed',
+  enabled: 'enabled',
+  createdBy: 'createdBy',
+  updatedBy: 'updatedBy',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.UserStreakScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  streakConfigId: 'streakConfigId',
+  currentStreak: 'currentStreak',
+  longestStreak: 'longestStreak',
+  lastActivityDate: 'lastActivityDate',
+  streakStartDate: 'streakStartDate',
+  freezesUsed: 'freezesUsed',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.AchievementDefinitionScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  nameKey: 'nameKey',
+  descriptionKey: 'descriptionKey',
+  category: 'category',
+  metricKey: 'metricKey',
+  iconUrl: 'iconUrl',
+  displayOrder: 'displayOrder',
+  enabled: 'enabled',
+  createdBy: 'createdBy',
+  updatedBy: 'updatedBy',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.AchievementTierScalarFieldEnum = {
+  id: 'id',
+  achievementId: 'achievementId',
+  tier: 'tier',
+  threshold: 'threshold',
+  rewardType: 'rewardType',
+  rewardValue: 'rewardValue',
+  iconUrl: 'iconUrl',
+  nameKey: 'nameKey',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.UserAchievementScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  achievementId: 'achievementId',
+  tierId: 'tierId',
+  currentProgress: 'currentProgress',
+  earnedAt: 'earnedAt',
+  notifiedAt: 'notifiedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.LeaderboardConfigScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  nameKey: 'nameKey',
+  metricType: 'metricType',
+  period: 'period',
+  maxEntries: 'maxEntries',
+  enabled: 'enabled',
+  createdBy: 'createdBy',
+  updatedBy: 'updatedBy',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.LeaderboardEntryScalarFieldEnum = {
+  id: 'id',
+  leaderboardId: 'leaderboardId',
+  userId: 'userId',
+  rank: 'rank',
+  score: 'score',
+  periodStart: 'periodStart',
+  periodEnd: 'periodEnd',
+  computedAt: 'computedAt'
+};
+
+exports.Prisma.FlashcardGenRuleScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  sourceType: 'sourceType',
+  filterLevel: 'filterLevel',
+  filterTags: 'filterTags',
+  direction: 'direction',
+  cardTemplate: 'cardTemplate',
+  includeExamples: 'includeExamples',
+  includeAudio: 'includeAudio',
+  enabled: 'enabled',
+  priority: 'priority',
+  createdBy: 'createdBy',
+  updatedBy: 'updatedBy',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.FlashcardGenJobScalarFieldEnum = {
+  id: 'id',
+  ruleId: 'ruleId',
+  userId: 'userId',
+  mode: 'mode',
+  status: 'status',
+  cardsGenerated: 'cardsGenerated',
+  deckId: 'deckId',
+  params: 'params',
+  errorMessage: 'errorMessage',
+  startedAt: 'startedAt',
+  completedAt: 'completedAt',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1503,7 +1683,20 @@ exports.Prisma.ModelName = {
   Competency: 'Competency',
   ContentVersion: 'ContentVersion',
   ContentEnrichment: 'ContentEnrichment',
-  Announcement: 'Announcement'
+  Announcement: 'Announcement',
+  ExerciseConfig: 'ExerciseConfig',
+  Exercise: 'Exercise',
+  ExerciseSession: 'ExerciseSession',
+  ExerciseAnswer: 'ExerciseAnswer',
+  StreakConfig: 'StreakConfig',
+  UserStreak: 'UserStreak',
+  AchievementDefinition: 'AchievementDefinition',
+  AchievementTier: 'AchievementTier',
+  UserAchievement: 'UserAchievement',
+  LeaderboardConfig: 'LeaderboardConfig',
+  LeaderboardEntry: 'LeaderboardEntry',
+  FlashcardGenRule: 'FlashcardGenRule',
+  FlashcardGenJob: 'FlashcardGenJob'
 };
 
 /**

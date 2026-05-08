@@ -5,7 +5,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  schemas  = ["admin", "analytics", "assessment", "auth", "authz", "battle", "billing", "content", "curriculum", "daily", "growth", "iam", "learning", "legal", "l10n", "media", "monetization", "ops", "profile"]
+  schemas  = ["admin", "analytics", "assessment", "auth", "authz", "battle", "billing", "content", "curriculum", "daily", "exercise", "gamification", "growth", "iam", "learning", "legal", "l10n", "media", "monetization", "ops", "profile"]
 }
 
 model ContentImportBatch {
@@ -1062,6 +1062,8 @@ model UserProfile {
   readingUserPreference    ReadingUserPreference?
   userInvitations          UserInvitation[]
   quotaUserOverrides       QuotaUserOverride[]
+  userStreaks              UserStreak[]
+  userAchievements         UserAchievement[]
 
   @@index([status, createdAt], map: "idx_user_profile_status_created_at")
   @@index([accountType], map: "idx_user_profile_account_type")
@@ -1942,4 +1944,325 @@ model Announcement {
 
   @@map("announcement")
   @@schema("content")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ── Interactive Exercises ───────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/// Admin-managed exercise type configuration per placement surface.
+/// `displayOrder` controls the order in the UI for each placement.
+model ExerciseConfig {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// word_order | cloze | translation | meaning_match | listening
+  exerciseType     String   @map("exercise_type") @db.VarChar(32)
+  /// practice_tab | post_review | daily_hub
+  placement        String   @db.VarChar(32)
+  displayOrder     Int      @default(0) @map("display_order")
+  enabled          Boolean  @default(true)
+  /// JLPT level range filter (nullable = all levels)
+  minLevel         String?  @map("min_level") @db.VarChar(8)
+  maxLevel         String?  @map("max_level") @db.VarChar(8)
+  timeLimitSec     Int?     @map("time_limit_sec")
+  pointsPerCorrect Int      @default(10) @map("points_per_correct")
+  createdBy        String?  @map("created_by") @db.Uuid
+  updatedBy        String?  @map("updated_by") @db.Uuid
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([exerciseType, placement], map: "uq_exercise_config_type_placement")
+  @@index([placement, displayOrder], map: "idx_exercise_config_placement_order")
+  @@map("exercise_config")
+  @@schema("exercise")
+}
+
+/// A generated exercise instance. Exercises are generated on-the-fly from
+/// existing content (Lexeme, GrammarPoint, Kanji, ExampleSentence) and cached.
+model Exercise {
+  id            String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// word_order | cloze | translation | meaning_match | listening
+  exerciseType  String           @map("exercise_type") @db.VarChar(32)
+  /// lexeme | grammar | kanji
+  sourceType    String           @map("source_type") @db.VarChar(32)
+  sourceId      String           @map("source_id") @db.Uuid
+  /// N5 | N4 | N3 | N2 | N1
+  level         String?          @db.VarChar(8)
+  /// JSON: question text, audio URL, shuffled tokens, image URL, etc.
+  prompt        Json
+  /// JSON: options array for multiple-choice exercises
+  choices       Json             @default("[]")
+  /// JSON: correct answer data (ordered tokens, correct option key, etc.)
+  correctAnswer Json             @map("correct_answer")
+  /// Explanation shown after answering
+  explanation   String?
+  /// easy | medium | hard
+  difficulty    String           @default("medium") @db.VarChar(16)
+  tags          String[]         @default([])
+  createdAt     DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  answers       ExerciseAnswer[]
+
+  @@index([exerciseType, level], map: "idx_exercise_type_level")
+  @@index([sourceType, sourceId], map: "idx_exercise_source")
+  @@map("exercise")
+  @@schema("exercise")
+}
+
+/// Tracks a user's exercise practice session (a batch of exercises).
+model ExerciseSession {
+  id                 String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId             String           @map("user_id") @db.Uuid
+  /// practice_tab | post_review | daily_hub
+  sessionType        String           @map("session_type") @db.VarChar(32)
+  /// word_order | cloze | translation | meaning_match | listening | mixed
+  exerciseType       String           @map("exercise_type") @db.VarChar(32)
+  level              String?          @db.VarChar(8)
+  /// in_progress | completed | abandoned
+  status             String           @default("in_progress") @db.VarChar(32)
+  totalQuestions     Int              @default(0) @map("total_questions")
+  correctCount       Int              @default(0) @map("correct_count")
+  score              Int              @default(0)
+  /// Whether this session was counted towards streak
+  streakContribution Boolean          @default(false) @map("streak_contribution")
+  startedAt          DateTime         @default(now()) @map("started_at") @db.Timestamptz(6)
+  completedAt        DateTime?        @map("completed_at") @db.Timestamptz(6)
+  answers            ExerciseAnswer[]
+
+  @@index([userId, status], map: "idx_exercise_session_user_status")
+  @@index([userId, startedAt], map: "idx_exercise_session_user_started")
+  @@map("exercise_session")
+  @@schema("exercise")
+}
+
+/// Individual exercise answer within a session.
+model ExerciseAnswer {
+  id          String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId   String          @map("session_id") @db.Uuid
+  exerciseId  String          @map("exercise_id") @db.Uuid
+  /// JSON: the user's submitted answer
+  userAnswer  Json            @map("user_answer")
+  isCorrect   Boolean         @map("is_correct")
+  timeSpentMs Int             @default(0) @map("time_spent_ms")
+  answeredAt  DateTime        @default(now()) @map("answered_at") @db.Timestamptz(6)
+  session     ExerciseSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  exercise    Exercise        @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, answeredAt], map: "idx_exercise_answer_session")
+  @@index([exerciseId], map: "idx_exercise_answer_exercise")
+  @@map("exercise_answer")
+  @@schema("exercise")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ── Gamification ────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/// Admin-configurable streak rules. Multiple configs can be active (e.g. "any
+/// action" streak vs "review-only" streak) — typically one primary.
+model StreakConfig {
+  id               String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name             String       @db.VarChar(128)
+  /// review | exercise | quiz | battle | any
+  activityType     String       @map("activity_type") @db.VarChar(32)
+  minActionsPerDay Int          @default(1) @map("min_actions_per_day")
+  freezesAllowed   Int          @default(0) @map("freezes_allowed")
+  enabled          Boolean      @default(true)
+  createdBy        String?      @map("created_by") @db.Uuid
+  updatedBy        String?      @map("updated_by") @db.Uuid
+  createdAt        DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  userStreaks      UserStreak[]
+
+  @@map("streak_config")
+  @@schema("gamification")
+}
+
+/// Per-user streak state, linked to a StreakConfig.
+model UserStreak {
+  id               String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId           String       @map("user_id") @db.Uuid
+  streakConfigId   String       @map("streak_config_id") @db.Uuid
+  currentStreak    Int          @default(0) @map("current_streak")
+  longestStreak    Int          @default(0) @map("longest_streak")
+  lastActivityDate DateTime?    @map("last_activity_date") @db.Date
+  streakStartDate  DateTime?    @map("streak_start_date") @db.Date
+  freezesUsed      Int          @default(0) @map("freezes_used")
+  createdAt        DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  streakConfig     StreakConfig @relation(fields: [streakConfigId], references: [id], onDelete: Cascade)
+  user             UserProfile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, streakConfigId], map: "uq_user_streak_user_config")
+  @@index([userId, currentStreak], map: "idx_user_streak_user_current")
+  @@map("user_streak")
+  @@schema("gamification")
+}
+
+/// Admin-managed achievement definition (e.g. "Vocabulary Master", "Streak Champion").
+model AchievementDefinition {
+  id             String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug           String            @unique @db.VarChar(128)
+  /// i18n key for achievement name
+  nameKey        String            @map("name_key") @db.VarChar(255)
+  /// i18n key for achievement description
+  descriptionKey String            @map("description_key") @db.VarChar(255)
+  /// learning | social | streak | mastery | battle
+  category       String            @db.VarChar(32)
+  /// Metric to track: words_learned | exercises_completed | streak_days | battles_won | reviews_done | quizzes_passed | ...
+  metricKey      String            @map("metric_key") @db.VarChar(64)
+  iconUrl        String?           @map("icon_url")
+  displayOrder   Int               @default(0) @map("display_order")
+  enabled        Boolean           @default(true)
+  createdBy      String?           @map("created_by") @db.Uuid
+  updatedBy      String?           @map("updated_by") @db.Uuid
+  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  tiers          AchievementTier[]
+
+  @@index([category, displayOrder], map: "idx_achievement_def_category_order")
+  @@map("achievement_definition")
+  @@schema("gamification")
+}
+
+/// Tiered threshold for an achievement (bronze → silver → gold → platinum).
+model AchievementTier {
+  id               String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  achievementId    String                @map("achievement_id") @db.Uuid
+  /// bronze | silver | gold | platinum
+  tier             String                @db.VarChar(16)
+  /// Numeric threshold to earn this tier (e.g. 10 for bronze, 50 for silver)
+  threshold        Int
+  /// Optional: quota_credit | badge_icon | title_prefix
+  rewardType       String?               @map("reward_type") @db.VarChar(32)
+  rewardValue      String?               @map("reward_value") @db.VarChar(255)
+  iconUrl          String?               @map("icon_url")
+  /// i18n key for tier-specific name (e.g. "achievement.vocab_master.gold")
+  nameKey          String?               @map("name_key") @db.VarChar(255)
+  createdAt        DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  achievement      AchievementDefinition @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  userAchievements UserAchievement[]
+
+  @@unique([achievementId, tier], map: "uq_achievement_tier_achievement_tier")
+  @@index([achievementId, threshold], map: "idx_achievement_tier_threshold")
+  @@map("achievement_tier")
+  @@schema("gamification")
+}
+
+/// Tracks a user's progress toward and earning of an achievement tier.
+model UserAchievement {
+  id              String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String          @map("user_id") @db.Uuid
+  achievementId   String          @map("achievement_id") @db.Uuid
+  tierId          String          @map("tier_id") @db.Uuid
+  currentProgress Int             @default(0) @map("current_progress")
+  earnedAt        DateTime?       @map("earned_at") @db.Timestamptz(6)
+  notifiedAt      DateTime?       @map("notified_at") @db.Timestamptz(6)
+  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+  tier            AchievementTier @relation(fields: [tierId], references: [id], onDelete: Cascade)
+  user            UserProfile     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tierId], map: "uq_user_achievement_user_tier")
+  @@index([userId, achievementId], map: "idx_user_achievement_user_achievement")
+  @@index([userId, earnedAt], map: "idx_user_achievement_user_earned")
+  @@map("user_achievement")
+  @@schema("gamification")
+}
+
+/// Admin-managed leaderboard configurations (e.g. weekly XP, monthly battles won).
+model LeaderboardConfig {
+  id         String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name       String             @db.VarChar(128)
+  /// i18n key for display
+  nameKey    String?            @map("name_key") @db.VarChar(255)
+  /// points | streak | battles_won | exercises_completed | reviews_done
+  metricType String             @map("metric_type") @db.VarChar(32)
+  /// daily | weekly | monthly | all_time
+  period     String             @db.VarChar(16)
+  maxEntries Int                @default(100) @map("max_entries")
+  enabled    Boolean            @default(true)
+  createdBy  String?            @map("created_by") @db.Uuid
+  updatedBy  String?            @map("updated_by") @db.Uuid
+  createdAt  DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  entries    LeaderboardEntry[]
+
+  @@map("leaderboard_config")
+  @@schema("gamification")
+}
+
+/// Cached / materialized leaderboard entries, recomputed periodically by BullMQ job.
+model LeaderboardEntry {
+  id            String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  leaderboardId String            @map("leaderboard_id") @db.Uuid
+  userId        String            @map("user_id") @db.Uuid
+  rank          Int
+  score         Int
+  periodStart   DateTime          @map("period_start") @db.Date
+  periodEnd     DateTime          @map("period_end") @db.Date
+  computedAt    DateTime          @default(now()) @map("computed_at") @db.Timestamptz(6)
+  leaderboard   LeaderboardConfig @relation(fields: [leaderboardId], references: [id], onDelete: Cascade)
+
+  @@unique([leaderboardId, userId, periodStart], map: "uq_leaderboard_entry_board_user_period")
+  @@index([leaderboardId, periodStart, rank], map: "idx_leaderboard_entry_board_period_rank")
+  @@map("leaderboard_entry")
+  @@schema("gamification")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ── Auto Flashcard Generation ───────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/// Admin-managed rule defining how flashcards are auto-generated from content.
+model FlashcardGenRule {
+  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String            @db.VarChar(128)
+  /// lexeme | grammar | kanji
+  sourceType      String            @map("source_type") @db.VarChar(32)
+  /// JLPT level filter (null = all levels)
+  filterLevel     String?           @map("filter_level") @db.VarChar(8)
+  /// JSON: tag-based filters
+  filterTags      Json              @default("[]") @map("filter_tags")
+  /// jp_to_vn | vn_to_jp | both
+  direction       String            @default("both") @db.VarChar(16)
+  /// JSON: front/back template (field mapping, include reading, examples, etc.)
+  cardTemplate    Json              @default("{}") @map("card_template")
+  includeExamples Boolean           @default(true) @map("include_examples")
+  includeAudio    Boolean           @default(false) @map("include_audio")
+  enabled         Boolean           @default(true)
+  priority        Int               @default(0)
+  createdBy       String?           @map("created_by") @db.Uuid
+  updatedBy       String?           @map("updated_by") @db.Uuid
+  createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  jobs            FlashcardGenJob[]
+
+  @@index([sourceType, enabled], map: "idx_flashcard_gen_rule_source_enabled")
+  @@map("flashcard_gen_rule")
+  @@schema("learning")
+}
+
+/// Tracks a flashcard generation job (manual trigger or daily cron).
+model FlashcardGenJob {
+  id             String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ruleId         String?           @map("rule_id") @db.Uuid
+  userId         String?           @map("user_id") @db.Uuid
+  /// by_level | by_topic | by_weak_area | daily_auto
+  mode           String            @db.VarChar(32)
+  /// pending | running | completed | failed
+  status         String            @default("pending") @db.VarChar(32)
+  cardsGenerated Int               @default(0) @map("cards_generated")
+  /// Output deck ID
+  deckId         String?           @map("deck_id") @db.Uuid
+  /// JSON: generation parameters (level, tags, direction, count, etc.)
+  params         Json              @default("{}")
+  errorMessage   String?           @map("error_message")
+  startedAt      DateTime?         @map("started_at") @db.Timestamptz(6)
+  completedAt    DateTime?         @map("completed_at") @db.Timestamptz(6)
+  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  rule           FlashcardGenRule? @relation(fields: [ruleId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt], map: "idx_flashcard_gen_job_user_created")
+  @@index([status, createdAt], map: "idx_flashcard_gen_job_status_created")
+  @@map("flashcard_gen_job")
+  @@schema("learning")
 }

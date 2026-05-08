@@ -11,16 +11,24 @@ export {
 export {
   COMPANION_HINT_ALGORITHM_VERSION,
   companionActionKindSchema,
+  companionEventKindSchema,
   companionHintQuerySchema,
   companionHintReasonSchema,
   companionHintResponseSchema,
+  companionMessageTypeSchema,
   companionReasonCodeSchema,
   type CompanionActionKind,
+  type CompanionContext,
+  type CompanionEventKind,
   type CompanionHintAction,
   type CompanionHintQuery,
   type CompanionHintReason,
   type CompanionHintResponse,
-  type CompanionReasonCode
+  type CompanionMessage,
+  type CompanionMessageSender,
+  type CompanionMessageType,
+  type CompanionReasonCode,
+  type CompanionTip
 } from "./companion-hint.js";
 export {
   greetingForHour,
@@ -2528,3 +2536,214 @@ export const adminAnalyticsExportQuerySchema = adminAnalyticsCommonFilterSchema.
 export const adminAnalyticsRefreshBodySchema = z.object({
   reason: z.string().trim().min(3).max(500)
 });
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ── Interactive Exercises ────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const exerciseTypeSchema = z.enum([
+  "word_order",
+  "cloze",
+  "translation",
+  "meaning_match",
+  "listening"
+]);
+export type ExerciseType = z.infer<typeof exerciseTypeSchema>;
+
+export const exercisePlacementSchema = z.enum([
+  "practice_tab",
+  "post_review",
+  "daily_hub"
+]);
+export type ExercisePlacement = z.infer<typeof exercisePlacementSchema>;
+
+export const exerciseSourceTypeSchema = z.enum(["lexeme", "grammar", "kanji"]);
+export type ExerciseSourceType = z.infer<typeof exerciseSourceTypeSchema>;
+
+export const exerciseDifficultySchema = z.enum(["easy", "medium", "hard"]);
+export type ExerciseDifficulty = z.infer<typeof exerciseDifficultySchema>;
+
+export const exerciseSessionStatusSchema = z.enum(["in_progress", "completed", "abandoned"]);
+export type ExerciseSessionStatus = z.infer<typeof exerciseSessionStatusSchema>;
+
+export const jlptLevelSchema = z.enum(["N5", "N4", "N3", "N2", "N1"]);
+export type JlptLevel = z.infer<typeof jlptLevelSchema>;
+
+/** Generate exercise batch */
+export const generateExercisesQuerySchema = z.object({
+  type: exerciseTypeSchema.optional(),
+  level: jlptLevelSchema.optional(),
+  count: z.coerce.number().int().min(1).max(20).default(5),
+  sourceType: exerciseSourceTypeSchema.optional(),
+  placement: exercisePlacementSchema.optional()
+});
+export type GenerateExercisesQuery = z.infer<typeof generateExercisesQuerySchema>;
+
+/** Start exercise session */
+export const startExerciseSessionSchema = z.object({
+  sessionType: exercisePlacementSchema,
+  exerciseType: exerciseTypeSchema.or(z.literal("mixed")),
+  level: jlptLevelSchema.optional(),
+  userId: z.uuid()
+});
+export type StartExerciseSessionInput = z.infer<typeof startExerciseSessionSchema>;
+
+/** Submit answer */
+export const submitExerciseAnswerSchema = z.object({
+  exerciseId: z.uuid(),
+  userAnswer: z.unknown(),
+  timeSpentMs: z.number().int().min(0).max(300_000).optional(),
+  userId: z.uuid()
+});
+export type SubmitExerciseAnswerInput = z.infer<typeof submitExerciseAnswerSchema>;
+
+/** Admin exercise config CRUD */
+export const adminExerciseConfigSchema = z.object({
+  exerciseType: exerciseTypeSchema,
+  placement: exercisePlacementSchema,
+  displayOrder: z.number().int().min(0).default(0),
+  enabled: z.boolean().default(true),
+  minLevel: jlptLevelSchema.nullable().optional(),
+  maxLevel: jlptLevelSchema.nullable().optional(),
+  timeLimitSec: z.number().int().min(5).max(300).nullable().optional(),
+  pointsPerCorrect: z.number().int().min(1).max(100).default(10)
+});
+export type AdminExerciseConfigInput = z.infer<typeof adminExerciseConfigSchema>;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ── Gamification ─────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const streakActivityTypeSchema = z.enum([
+  "review",
+  "exercise",
+  "quiz",
+  "battle",
+  "any"
+]);
+export type StreakActivityType = z.infer<typeof streakActivityTypeSchema>;
+
+export const achievementCategorySchema = z.enum([
+  "learning",
+  "social",
+  "streak",
+  "mastery",
+  "battle"
+]);
+export type AchievementCategory = z.infer<typeof achievementCategorySchema>;
+
+export const achievementTierSchema = z.enum([
+  "bronze",
+  "silver",
+  "gold",
+  "platinum"
+]);
+export type AchievementTierLevel = z.infer<typeof achievementTierSchema>;
+
+export const leaderboardMetricTypeSchema = z.enum([
+  "points",
+  "streak",
+  "battles_won",
+  "exercises_completed",
+  "reviews_done"
+]);
+export type LeaderboardMetricType = z.infer<typeof leaderboardMetricTypeSchema>;
+
+export const leaderboardPeriodSchema = z.enum([
+  "daily",
+  "weekly",
+  "monthly",
+  "all_time"
+]);
+export type LeaderboardPeriod = z.infer<typeof leaderboardPeriodSchema>;
+
+/** Admin streak config CRUD */
+export const adminStreakConfigSchema = z.object({
+  name: z.string().trim().min(1).max(128),
+  activityType: streakActivityTypeSchema,
+  minActionsPerDay: z.number().int().min(1).max(100).default(1),
+  freezesAllowed: z.number().int().min(0).max(10).default(0),
+  enabled: z.boolean().default(true)
+});
+export type AdminStreakConfigInput = z.infer<typeof adminStreakConfigSchema>;
+
+/** Admin achievement definition CRUD */
+export const adminAchievementDefinitionSchema = z.object({
+  slug: z.string().trim().min(1).max(128).regex(/^[a-z0-9_-]+$/),
+  nameKey: z.string().trim().min(1).max(255),
+  descriptionKey: z.string().trim().min(1).max(255),
+  category: achievementCategorySchema,
+  metricKey: z.string().trim().min(1).max(64),
+  iconUrl: z.string().trim().max(2048).nullable().optional(),
+  displayOrder: z.number().int().min(0).default(0),
+  enabled: z.boolean().default(true)
+});
+export type AdminAchievementDefinitionInput = z.infer<typeof adminAchievementDefinitionSchema>;
+
+/** Admin achievement tier CRUD */
+export const adminAchievementTierSchema = z.object({
+  tier: achievementTierSchema,
+  threshold: z.number().int().min(1),
+  rewardType: z.string().trim().max(32).nullable().optional(),
+  rewardValue: z.string().trim().max(255).nullable().optional(),
+  iconUrl: z.string().trim().max(2048).nullable().optional(),
+  nameKey: z.string().trim().max(255).nullable().optional()
+});
+export type AdminAchievementTierInput = z.infer<typeof adminAchievementTierSchema>;
+
+/** Admin leaderboard config CRUD */
+export const adminLeaderboardConfigSchema = z.object({
+  name: z.string().trim().min(1).max(128),
+  nameKey: z.string().trim().max(255).nullable().optional(),
+  metricType: leaderboardMetricTypeSchema,
+  period: leaderboardPeriodSchema,
+  maxEntries: z.number().int().min(10).max(1000).default(100),
+  enabled: z.boolean().default(true)
+});
+export type AdminLeaderboardConfigInput = z.infer<typeof adminLeaderboardConfigSchema>;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ── Auto Flashcard Generation ────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const flashcardGenDirectionSchema = z.enum(["jp_to_vn", "vn_to_jp", "both"]);
+export type FlashcardGenDirection = z.infer<typeof flashcardGenDirectionSchema>;
+
+export const flashcardGenModeSchema = z.enum([
+  "by_level",
+  "by_topic",
+  "by_weak_area",
+  "daily_auto"
+]);
+export type FlashcardGenMode = z.infer<typeof flashcardGenModeSchema>;
+
+/** Generate flashcard deck request */
+export const generateFlashcardDeckSchema = z.object({
+  mode: flashcardGenModeSchema,
+  sourceType: exerciseSourceTypeSchema.optional(),
+  level: jlptLevelSchema.optional(),
+  tags: z.array(z.string().trim().max(64)).max(20).optional(),
+  direction: flashcardGenDirectionSchema.default("both"),
+  count: z.coerce.number().int().min(5).max(200).default(20),
+  userId: z.uuid()
+});
+export type GenerateFlashcardDeckInput = z.infer<typeof generateFlashcardDeckSchema>;
+
+/** Preview generation (dry run) */
+export const previewFlashcardGenSchema = generateFlashcardDeckSchema.omit({ userId: true });
+export type PreviewFlashcardGenInput = z.infer<typeof previewFlashcardGenSchema>;
+
+/** Admin flashcard gen rule CRUD */
+export const adminFlashcardGenRuleSchema = z.object({
+  name: z.string().trim().min(1).max(128),
+  sourceType: exerciseSourceTypeSchema,
+  filterLevel: jlptLevelSchema.nullable().optional(),
+  filterTags: z.array(z.string().trim().max(64)).max(20).default([]),
+  direction: flashcardGenDirectionSchema.default("both"),
+  cardTemplate: z.record(z.string(), z.unknown()).default({}),
+  includeExamples: z.boolean().default(true),
+  includeAudio: z.boolean().default(false),
+  enabled: z.boolean().default(true),
+  priority: z.number().int().min(0).max(100).default(0)
+});
+export type AdminFlashcardGenRuleInput = z.infer<typeof adminFlashcardGenRuleSchema>;
