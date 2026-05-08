@@ -108,7 +108,10 @@ export const ADMIN_NAV_DATA: AdminNavGroupDefinition[] = [
       item({ href: "/reading-assist", icon: "search", id: "ln.reading", labelKey: "shell.navItems.readingAssist", permissions: ["admin.content.read"], status: "implemented" }),
       item({ href: "/learning/paths", icon: "academic", id: "ln.paths", labelKey: "shell.navItems.learningPaths", permissions: ["admin.content.read"], status: "implemented" }),
       item({ href: "/learning/competencies", icon: "academic", id: "ln.competencies", labelKey: "shell.navItems.competencies", permissions: ["admin.content.read"], status: "implemented" }),
-      item({ href: "/learning/review", icon: "academic", id: "ln.review", labelKey: "shell.navItems.learningReview", permissions: ["admin.content.read"], status: "implemented" })
+      item({ href: "/learning/review", icon: "academic", id: "ln.review", labelKey: "shell.navItems.learningReview", permissions: ["admin.content.read"], status: "implemented" }),
+      item({ href: "/exercises", icon: "academic", id: "ln.exercises", labelKey: "shell.navItems.exercises", permissions: ["admin.content.read"], status: "implemented" }),
+      item({ href: "/gamification", icon: "chart", id: "ln.gamification", labelKey: "shell.navItems.gamification", permissions: ["admin.content.read"], status: "implemented" }),
+      item({ href: "/cardgen", icon: "bolt", id: "ln.cardgen", labelKey: "shell.navItems.cardgen", permissions: ["admin.content.read"], status: "implemented" })
     ],
     labelKey: "shell.navGroups.learning",
     sectionCollapsible: true

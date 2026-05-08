@@ -4,21 +4,44 @@
 @source "../../../packages/ui/src/**/*.{ts,tsx}";
 
 @theme {
-  --color-ink: #17211f;
-  --color-muted: #66736f;
-  --color-paper: #faf7ef;
-  --color-surface: #fffdf8;
-  --color-accent: #3730a3;
-  --color-accent-mid: #4f46e5;
-  --color-leaf: #3f6212;
-  --color-sakura: #d9898f;
+  /* ── Brand Core (BJT Admin Design System) ── */
+  --color-ink: #111827;
+  --color-muted: #4B5563;
+  --color-paper: #F8FAFC;
+  --color-surface: #FFFFFF;
+  --color-accent: #3B82F6;
+  --color-accent-mid: #2563EB;
+  --color-leaf: #059669;
+  --color-sakura: #DC2626;
+
+  /* ── Admin-specific ── */
+  --color-admin-sidebar: #1E293B;
+  --color-admin-sidebar-text: #E2E8F0;
+  --color-admin-sidebar-active: #3B82F6;
+  --color-brand-navy: #1B2A4A;
+
+  /* ── Borders ── */
+  --color-border: #E2E8F0;
+
+  /* ── Radius ── */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* ── Shadows ── */
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -1px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.03);
 }
 
 :root {
-  color: #17211f;
-  background: #f8f4ec;
+  color: #111827;
+  background: #F4F6F8;
   font-family:
-    Inter,
+    'Inter',
+    'Noto Sans JP',
     ui-sans-serif,
     system-ui,
     -apple-system,
@@ -41,9 +64,17 @@ body {
   }
 
   a:focus-visible {
-    outline: 3px solid #d9898f;
+    outline: 3px solid #3B82F6;
     outline-offset: 4px;
   }
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 3px solid #3B82F6;
+  outline-offset: 2px;
 }
 
 .admin-shell {
@@ -54,31 +85,33 @@ body {
 }
 
 .admin-card {
-  background: #fffdf8;
-  border: 1px solid rgba(23, 33, 31, 0.08);
-  border-radius: 24px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 14px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
   max-width: 760px;
   padding: clamp(32px, 7vw, 72px);
 }
 
 .eyebrow {
-  color: #557c55;
-  font-size: 0.875rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
+  color: #3B82F6;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .admin-card h1 {
-  font-size: clamp(2.25rem, 6vw, 4.75rem);
-  letter-spacing: -0.05em;
-  line-height: 1;
+  font-size: clamp(1.875rem, 5vw, 2.5rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
   margin: 12px 0;
 }
 
 .admin-card p {
-  color: #66736f;
-  font-size: 1.125rem;
+  color: #4B5563;
+  font-size: 1rem;
   line-height: 1.6;
 }
 
@@ -90,34 +123,41 @@ body {
 }
 
 .admin-card nav a {
-  border: 1px solid rgba(23, 33, 31, 0.16);
-  border-radius: 999px;
-  font-weight: 700;
-  padding: 12px 18px;
+  border: 1px solid #E2E8F0;
+  border-radius: 10px;
+  font-weight: 600;
+  padding: 10px 16px;
   text-decoration: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.admin-card nav a:hover {
+  border-color: #CBD5E1;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
 }
 
 .stats-grid {
   display: grid;
-  gap: 14px;
+  gap: 12px;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   margin: 32px 0 0;
 }
 
 .stats-grid div {
-  border: 1px solid rgba(23, 33, 31, 0.1);
-  border-radius: 18px;
-  padding: 18px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 14px;
+  padding: 20px;
 }
 
 .stats-grid dt {
-  color: #66736f;
-  font-size: 0.875rem;
+  color: #4B5563;
+  font-size: 0.8125rem;
 }
 
 .stats-grid dd {
-  font-size: 2rem;
-  font-weight: 800;
+  font-size: 1.75rem;
+  font-weight: 700;
   margin: 6px 0 0;
 }
 
@@ -129,29 +169,35 @@ body {
 
 .deck-form input,
 .deck-form select {
-  border: 1px solid rgba(23, 33, 31, 0.16);
-  border-radius: 999px;
+  border: 1px solid #E2E8F0;
+  border-radius: 10px;
   font: inherit;
-  padding: 12px 18px;
+  padding: 10px 16px;
+  transition: border-color 150ms ease;
+}
+
+.deck-form input:focus,
+.deck-form select:focus {
+  border-color: #3B82F6;
 }
 
 .deck-form label {
-  color: #66736f;
+  color: #4B5563;
   display: grid;
-  font-weight: 700;
+  font-weight: 600;
   gap: 6px;
 }
 
 .deck-form button,
 .row-actions button {
-  background: #17211f;
+  background: #1B2A4A;
   border: 0;
-  border-radius: 999px;
-  color: #fffdf8;
+  border-radius: 10px;
+  color: #FFFFFF;
   cursor: pointer;
   font: inherit;
-  font-weight: 700;
-  padding: 12px 18px;
+  font-weight: 600;
+  padding: 10px 16px;
 }
 
 .row-actions {
@@ -162,7 +208,7 @@ body {
 }
 
 .row-actions button + button {
-  background: #7f4d54;
+  background: #DC2626;
 }
 
 .deck-list {
@@ -174,25 +220,26 @@ body {
 }
 
 .deck-list li {
-  border: 1px solid rgba(23, 33, 31, 0.1);
-  border-radius: 18px;
-  padding: 16px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 14px;
+  padding: 16px 20px;
 }
 
 .deck-list span {
-  color: #66736f;
+  color: #4B5563;
   display: block;
   margin-top: 4px;
 }
 
 .deck-list button {
-  background: #17211f;
+  background: #1B2A4A;
   border: 0;
-  border-radius: 999px;
-  color: #fffdf8;
+  border-radius: 10px;
+  color: #FFFFFF;
   cursor: pointer;
   font: inherit;
-  font-weight: 700;
+  font-weight: 600;
   margin-top: 12px;
   padding: 10px 16px;
 }

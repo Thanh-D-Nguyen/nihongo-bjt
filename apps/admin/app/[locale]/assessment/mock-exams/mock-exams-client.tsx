@@ -79,6 +79,10 @@ const EXAM_TYPE_LABEL: Record<string, string> = {
   practice: "Practice (Đang hiện frontend)"
 };
 
+function examTypeOf(value: { type?: string | null }): string {
+  return value.type ?? "mock";
+}
+
 function fmtWhen(iso: string | null, locale: string): string {
   if (!iso) return "—";
   try {
@@ -245,7 +249,7 @@ export function MockExamsAdminClient({
       titleVi: detail.titleVi ?? "",
       titleJa: detail.titleJa ?? "",
       descriptionVi: detail.description ?? "",
-      type: (detail as any).type ?? "mock",
+      type: examTypeOf(detail),
       level: detail.level ?? "BJT-J3",
       timeLimitSeconds: detail.timeLimitSeconds ?? 3600,
       sections: detail.sections.map((s) => ({
@@ -590,12 +594,12 @@ export function MockExamsAdminClient({
                 <span
                   className={cn(
                     "rounded-full px-2 py-0.5 text-xs font-medium",
-                    (detail as any).type === "official"
+                    examTypeOf(detail) === "official"
                       ? "bg-blue-100 text-blue-800"
                       : "bg-slate-100 text-slate-700"
                   )}
                 >
-                  {EXAM_TYPE_LABEL[(detail as any).type] ?? (detail as any).type ?? "mock"}
+                  {EXAM_TYPE_LABEL[examTypeOf(detail)] ?? examTypeOf(detail)}
                 </span>
                 <span className="text-slate-600">{detail.level ?? "—"}</span>
                 <span className="text-slate-600">

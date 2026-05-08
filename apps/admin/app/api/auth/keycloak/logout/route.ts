@@ -12,9 +12,6 @@ export async function POST(request: Request) {
   const locale = url.searchParams.get("locale") === "ja" ? "ja" : "vi";
   const jar = await cookies();
 
-  const publicBase = cfg?.publicBaseUrl
-    ?? (process.env.ADMIN_PUBLIC_URL ?? "http://localhost:3001").replace(/\/$/u, "");
-
   if (cfg) {
     const refreshToken = jar.get(adminKcCookies.refresh)?.value;
     if (refreshToken) {
