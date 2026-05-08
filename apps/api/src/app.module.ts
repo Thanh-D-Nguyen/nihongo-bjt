@@ -10,10 +10,13 @@ import { AssessmentModule } from "./assessment/assessment.module.js";
 import { AuthModule } from "./auth/auth.module.js";
 import { BattleModule } from "./battle/battle.module.js";
 import { BookmarksModule } from "./bookmarks/bookmarks.module.js";
+import { CardgenModule } from "./cardgen/cardgen.module.js";
 import { ContentModule } from "./content/content.module.js";
 import { CompanionModule } from "./companion/companion.module.js";
 import { DailyModule } from "./daily/daily.module.js";
+import { ExerciseModule } from "./exercise/exercise.module.js";
 import { FlashcardsModule } from "./flashcards/flashcards.module.js";
+import { GamificationModule } from "./gamification/gamification.module.js";
 import { GrowthModule } from "./growth/growth.module.js";
 import { HealthModule } from "./health/health.module.js";
 import { LearnerModule } from "./learner/learner.module.js";
@@ -59,7 +62,10 @@ import { SearchModule } from "./search/search.module.js";
     MonetizationModule,
     NhkNewsModule,
     OperationsModule,
-    CompanionModule
+    CompanionModule,
+    ExerciseModule,
+    GamificationModule,
+    CardgenModule
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

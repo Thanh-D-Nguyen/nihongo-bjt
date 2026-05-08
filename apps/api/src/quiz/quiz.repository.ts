@@ -1,6 +1,6 @@
 import { createPrismaClient, type Prisma } from "@nihongo-bjt/database";
 import { scoreBjtPractice } from "@nihongo-bjt/shared";
-import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 
 @Injectable()
 export class QuizRepository {

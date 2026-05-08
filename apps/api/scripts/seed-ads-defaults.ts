@@ -142,7 +142,6 @@ async function main() {
       data: { active: true, code: p.code, config: p.config, labelKey: p.labelKey }
     });
   }
-  // eslint-disable-next-line no-console
   console.log("Seeded ad provider, safety rules, and default placements (missing only).");
 }
 

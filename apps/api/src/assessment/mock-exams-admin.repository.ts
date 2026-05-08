@@ -109,7 +109,7 @@ export class MockExamsAdminRepository {
         titleVi: data.titleVi,
         titleJa: data.titleJa ?? null,
         description: data.description ?? null,
-        type: (data as any).type ?? "mock",
+        type: data.type ?? "mock",
         status: "draft",
         level: data.level,
         timeLimitSeconds: data.timeLimitSeconds,
@@ -139,7 +139,7 @@ export class MockExamsAdminRepository {
     if (data.titleVi !== undefined) update.titleVi = data.titleVi;
     if (data.titleJa !== undefined) update.titleJa = data.titleJa;
     if (data.description !== undefined) update.description = data.description;
-    if ((data as any).type !== undefined) update.type = (data as any).type;
+    if (data.type !== undefined) update.type = data.type;
     if (data.level !== undefined) update.level = data.level;
     if (data.timeLimitSeconds !== undefined) update.timeLimitSeconds = data.timeLimitSeconds;
     if (data.blueprintMeta !== undefined) {

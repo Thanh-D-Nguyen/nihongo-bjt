@@ -687,7 +687,7 @@ export class BattleOrchestratorService {
     }
   }
 
-  private async settlePvpRound(roomCode: string, timeout: boolean) {
+  private async settlePvpRound(roomCode: string, _timeout: boolean) {
     const pvpRoom = this.pvpRooms.get(roomCode);
     if (!pvpRoom || pvpRoom.state === "finished" || pvpRoom.state === "resolving") {
       return;

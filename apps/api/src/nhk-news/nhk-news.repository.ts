@@ -1,4 +1,7 @@
 import { createHash } from "node:crypto";
+import * as http from "node:http";
+import * as https from "node:https";
+import * as tls from "node:tls";
 
 import { createPrismaClient } from "@nihongo-bjt/database";
 import { Injectable } from "@nestjs/common";
@@ -198,6 +201,13 @@ function extractImageFromHtml(html: string, baseUrl?: string) {
 }
 
 async function fetchText(url: string): Promise<string> {
+  const proxyUrl = process.env.https_proxy || process.env.HTTPS_PROXY || process.env.http_proxy || process.env.HTTP_PROXY;
+  const target = new URL(url);
+
+  if (proxyUrl && target.protocol === "https:") {
+    return fetchViaProxy(target, proxyUrl);
+  }
+
   const res = await fetch(url, {
     headers: {
       "accept": "application/json, application/rss+xml, application/xml, text/xml, text/html;q=0.9",
@@ -207,6 +217,48 @@ async function fetchText(url: string): Promise<string> {
   });
   if (!res.ok) throw new Error(`nhk_fetch_failed:${res.status}`);
   return res.text();
+}
+
+function fetchViaProxy(target: URL, proxyUrl: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const proxy = new URL(proxyUrl);
+    const timeout = HTTP_TIMEOUT_MS;
+    const connectReq = http.request({
+      hostname: proxy.hostname,
+      port: Number(proxy.port) || 8080,
+      method: "CONNECT",
+      path: `${target.hostname}:${target.port || 443}`
+    });
+    connectReq.setTimeout(timeout, () => { connectReq.destroy(); reject(new Error("proxy_connect_timeout")); });
+    connectReq.on("error", reject);
+    connectReq.on("connect", (res, socket) => {
+      if (res.statusCode !== 200) {
+        socket.destroy();
+        reject(new Error(`proxy_connect_failed:${res.statusCode}`));
+        return;
+      }
+      const tlsSocket = tls.connect({ socket, servername: target.hostname, rejectUnauthorized: false }, () => {
+        const req = https.request(
+          { createConnection: () => tlsSocket, hostname: target.hostname, path: target.pathname + target.search, method: "GET", headers: { "user-agent": "NihonGoBJT/1.0 (+https://nihongo-bjt.local)", "accept": "application/rss+xml, application/xml, text/xml, text/html;q=0.9" } },
+          (resp) => {
+            if (!resp.statusCode || resp.statusCode >= 400) {
+              reject(new Error(`nhk_fetch_failed:${resp.statusCode}`));
+              return;
+            }
+            let data = "";
+            resp.on("data", (chunk: Buffer) => { data += chunk.toString(); });
+            resp.on("end", () => resolve(data));
+            resp.on("error", reject);
+          }
+        );
+        req.setTimeout(timeout, () => { req.destroy(); reject(new Error("nhk_fetch_timeout")); });
+        req.on("error", reject);
+        req.end();
+      });
+      tlsSocket.on("error", reject);
+    });
+    connectReq.end();
+  });
 }
 
 function normalizeDate(raw: unknown) {
@@ -491,16 +543,20 @@ export class NhkNewsRepository {
     const feedUrl = resolvedType === "easy" ? config.easyFeedUrl : config.normalFeedUrl;
     const cacheKey = `${locale}:${resolvedType}:${limit}:${feedUrl}`;
 
-    return cached(listCache, cacheKey, NEWS_LIST_CACHE_TTL_MS, async () => {
-      let articles =
-        resolvedType === "easy"
-          ? parseEasyFeed(await fetchText(feedUrl), limit)
-          : await this.listNormalArticlesFromFeeds(feedUrl, limit);
-      for (const article of articles) {
-        articleCache.set(article.id, article);
-      }
-      return articles.slice(0, limit);
-    });
+    try {
+      return await cached(listCache, cacheKey, NEWS_LIST_CACHE_TTL_MS, async () => {
+        const articles =
+          resolvedType === "easy"
+            ? parseEasyFeed(await fetchText(feedUrl), limit)
+            : await this.listNormalArticlesFromFeeds(feedUrl, limit);
+        for (const article of articles) {
+          articleCache.set(article.id, article);
+        }
+        return articles.slice(0, limit);
+      });
+    } catch {
+      return [];
+    }
   }
 
   private async listNormalArticlesFromFeeds(feedUrl: string, limit: number) {

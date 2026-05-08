@@ -1,4 +1,4 @@
-import { ForbiddenException, NotFoundException } from "@nestjs/common";
+import { NotFoundException } from "@nestjs/common";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const prismaMock = {
@@ -31,14 +31,17 @@ describe("QuizRepository security and timed exam integrity", () => {
 
   it("does not expose isCorrect in currentQuestion options", async () => {
     const repo = new QuizRepository();
+    const nowSpy = vi.spyOn(Date, "now").mockReturnValue(Date.parse("2026-04-29T00:00:01.000Z"));
 
     prismaMock.quizSession.findFirst.mockResolvedValueOnce({
       answers: [],
       correctCount: 0,
       currentQuestionNo: 0,
       id: "session-1",
+      startedAt: new Date("2026-04-29T00:00:00.000Z"),
       status: "in_progress",
       test: {
+        timeLimitSeconds: 60,
         sections: [
           {
             questions: [
@@ -93,9 +96,13 @@ describe("QuizRepository security and timed exam integrity", () => {
       correctCount: 0,
       currentQuestionNo: 0,
       id: "session-1",
+      remainingSeconds: expect.any(Number),
+      startedAt: "2026-04-29T00:00:00.000Z",
       status: "in_progress",
+      timeLimitSeconds: 60,
       totalQuestions: 1
     });
+    nowSpy.mockRestore();
   });
 
   it("sanitizes template option query to avoid isCorrect exposure", async () => {
@@ -139,7 +146,7 @@ describe("QuizRepository security and timed exam integrity", () => {
     );
   });
 
-  it("blocks currentQuestion at exact expiry boundary", async () => {
+  it("auto-expires currentQuestion at exact expiry boundary without returning a question", async () => {
     const repo = new QuizRepository();
     const baseNow = 2_000_000;
     const nowSpy = vi.spyOn(Date, "now").mockReturnValue(baseNow + 60_000);
@@ -157,18 +164,37 @@ describe("QuizRepository security and timed exam integrity", () => {
       },
       totalQuestions: 1
     });
+    prismaMock.quizSession.findFirst.mockResolvedValueOnce({
+      correctCount: 0,
+      currentQuestionNo: 0,
+      estimatedBjtBand: "J5",
+      estimatedScore: 0
+    });
+    prismaMock.quizAnswer.count.mockResolvedValueOnce(0);
+    prismaMock.$transaction.mockImplementationOnce(async (callback) =>
+      callback({
+        analyticsEvent: {
+          create: vi.fn().mockResolvedValue(undefined)
+        },
+        quizSession: {
+          update: vi.fn().mockResolvedValue(undefined)
+        }
+      })
+    );
 
-    await expect(
-      repo.currentQuestion(
-        "11111111-1111-4111-8111-111111111111",
-        "22222222-2222-4222-8222-222222222222"
-      )
-    ).rejects.toBeInstanceOf(ForbiddenException);
+    const result = await repo.currentQuestion(
+      "11111111-1111-4111-8111-111111111111",
+      "22222222-2222-4222-8222-222222222222"
+    );
+
+    expect(result.question).toBeNull();
+    expect(result.session.status).toBe("completed");
+    expect(result.session.remainingSeconds).toBe(0);
 
     nowSpy.mockRestore();
   });
 
-  it("blocks submitAnswer when timed session has expired", async () => {
+  it("auto-expires submitAnswer when timed session has expired without accepting the answer", async () => {
     const repo = new QuizRepository();
 
     prismaMock.quizSession.findFirst.mockResolvedValueOnce({
@@ -178,20 +204,37 @@ describe("QuizRepository security and timed exam integrity", () => {
       test: { timeLimitSeconds: 60 },
       totalQuestions: 10
     });
-
-    await expect(
-      repo.submitAnswer({
-        optionKey: "A",
-        questionId: "question-1",
-        sessionId: "session-1",
-        userId: "22222222-2222-4222-8222-222222222222"
+    prismaMock.quizSession.findFirst.mockResolvedValueOnce({
+      correctCount: 0,
+      currentQuestionNo: 0,
+      estimatedBjtBand: "J5",
+      estimatedScore: 0
+    });
+    prismaMock.quizAnswer.count.mockResolvedValueOnce(0);
+    prismaMock.$transaction.mockImplementationOnce(async (callback) =>
+      callback({
+        analyticsEvent: {
+          create: vi.fn().mockResolvedValue(undefined)
+        },
+        quizSession: {
+          update: vi.fn().mockResolvedValue(undefined)
+        }
       })
-    ).rejects.toBeInstanceOf(ForbiddenException);
+    );
 
+    const result = await repo.submitAnswer({
+      optionKey: "A",
+      questionId: "question-1",
+      sessionId: "session-1",
+      userId: "22222222-2222-4222-8222-222222222222"
+    });
+
+    expect(result.answer).toBeNull();
+    expect(result.session.status).toBe("completed");
     expect(prismaMock.bjtQuestionOption.findFirst).not.toHaveBeenCalled();
   });
 
-  it("blocks submitAnswer at exact expiry boundary", async () => {
+  it("auto-expires submitAnswer at exact expiry boundary without accepting the answer", async () => {
     const repo = new QuizRepository();
     const baseNow = 1_000_000;
     const nowSpy = vi.spyOn(Date, "now").mockReturnValue(baseNow + 60_000);
@@ -203,16 +246,33 @@ describe("QuizRepository security and timed exam integrity", () => {
       test: { timeLimitSeconds: 60 },
       totalQuestions: 10
     });
-
-    await expect(
-      repo.submitAnswer({
-        optionKey: "A",
-        questionId: "question-1",
-        sessionId: "session-1",
-        userId: "22222222-2222-4222-8222-222222222222"
+    prismaMock.quizSession.findFirst.mockResolvedValueOnce({
+      correctCount: 0,
+      currentQuestionNo: 0,
+      estimatedBjtBand: "J5",
+      estimatedScore: 0
+    });
+    prismaMock.quizAnswer.count.mockResolvedValueOnce(0);
+    prismaMock.$transaction.mockImplementationOnce(async (callback) =>
+      callback({
+        analyticsEvent: {
+          create: vi.fn().mockResolvedValue(undefined)
+        },
+        quizSession: {
+          update: vi.fn().mockResolvedValue(undefined)
+        }
       })
-    ).rejects.toBeInstanceOf(ForbiddenException);
+    );
 
+    const result = await repo.submitAnswer({
+      optionKey: "A",
+      questionId: "question-1",
+      sessionId: "session-1",
+      userId: "22222222-2222-4222-8222-222222222222"
+    });
+
+    expect(result.answer).toBeNull();
+    expect(result.session.status).toBe("completed");
     expect(prismaMock.bjtQuestionOption.findFirst).not.toHaveBeenCalled();
     nowSpy.mockRestore();
   });

@@ -29,7 +29,7 @@ export class FlashcardsService {
     const dailyRows = rows.filter((r) => r.card.sourceType === "daily_content");
     const dailySourceIds = [...new Set(dailyRows.map((r) => r.card.sourceId))];
 
-    let dailyItems =
+    const dailyItems =
       dailySourceIds.length > 0
         ? await this.prisma.dailyContentItem.findMany({
             select: {
@@ -43,7 +43,6 @@ export class FlashcardsService {
           })
         : [];
 
-    const dailyById = new Map(dailyItems.map((it) => [it.id, it]));
     const disclaimerJapaneseFronts = [
       ...new Set(
         dailyRows

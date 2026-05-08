@@ -11,11 +11,6 @@ interface ScoredResult extends SearchResult {
   score: number;
 }
 
-/** Check if a string contains any CJK characters (kanji, hiragana, katakana) */
-function isCJK(s: string): boolean {
-  return /[\u3000-\u9fff\uf900-\ufaff]/.test(s);
-}
-
 /** Check if a string is all katakana */
 function isAllKatakana(s: string): boolean {
   return /^[\u30A0-\u30FF\u30FC]+$/.test(s);
