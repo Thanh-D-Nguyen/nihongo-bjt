@@ -46,7 +46,9 @@ async function tryClick(page, selectors) {
         await loc.click({ timeout: 5000 });
         return sel;
       }
-    } catch {}
+    } catch {
+      // Try the next selector.
+    }
   }
   return null;
 }

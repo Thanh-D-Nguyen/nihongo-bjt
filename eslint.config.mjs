@@ -14,9 +14,14 @@ export default [
       "test-results/**",
       "coverage/**",
       "data/generated/**",
+      "database/**",
+      "docs/admin-guide/**/*.cjs",
+      "docs/admin-guide/**/*.js",
       "node_modules/**",
       "packages/*/src/*.js",
-      "packages/database/generated/**"
+      "packages/database/generated/**",
+      "scripts/fix-*.ts",
+      "scripts/generate_admin_purposes.js"
     ]
   },
   js.configs.recommended,
