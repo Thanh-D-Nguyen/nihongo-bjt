@@ -4,12 +4,16 @@
 
 This is the NihonGo BJT learning platform. The system is functionally complete. Current focus: **adding features** and **optimizing UI/UX**.
 
+Primary AI entrypoint: `AI_CONTEXT.md`
+
 Canonical spec: `docs/spec/nihongo_bjt_cursor_master_spec_final_completed_v2.md`
 
 For context, start from:
-1. `docs/spec/index.md`
-2. `docs/spec/digests/*.md`
-3. `docs/spec/compact/*.md` (only relevant files)
+1. `AI_CONTEXT.md`
+2. `AGENTS.md`
+3. `docs/spec/index.md`
+4. `docs/spec/digests/*.md`
+5. `docs/spec/compact/*.md` (only relevant files)
 
 ## Tech Stack
 
@@ -31,25 +35,25 @@ For context, start from:
 7. Keep changes small, reviewable, and runnable.
 8. User-facing text must use i18n keys.
 9. Learning UX: support focus, comprehension, retention. No distraction loops or fake progress.
-10. Respect `company/DO_NOT_TOUCH.md`.
+10. Do not restore intentionally deleted files unless explicitly asked.
 
 ## UI/UX Standards
 
-- Load `company/skills/ui-production/` for UI component standards.
-- Load `company/skills/bjt-ui-ux/` for learner experience guidelines.
-- Admin UI gate: `company/gates/admin-page-production-gate.md`
-- Learner UI gate: `company/gates/learner-page-production-gate.md`
+- Read `DESIGN.md` for the current design system.
+- Use `.ai-design/` and `docs/design/` for active visual references.
+- Apply `.cursor/rules/06-ui-ux-production.mdc`.
+- Apply `.cursor/rules/07-ui-visual-production-upgrade.mdc`.
 
 ## Key Paths
 
-- Spec: `docs/spec/`
-- Project state: `company/PROJECT_STATE.md`
-- Backlog: `company/COMPANY_BACKLOG.md`
-- Sprint: `company/SPRINT_BOARD.md`
-- Decisions: `company/DECISION_LOG.md`
-- Admin modules: `company/admin-module-inventory.md`
-- Route priority: `company/FRONTEND_ROUTE_PRIORITY.md`
-- Screen contracts: `company/learner-ui-screen-contract.md`
+- AI project brief: `AI_CONTEXT.md`
+- Project operating guide: `AGENTS.md`
+- Spec index: `docs/spec/index.md`
+- Canonical spec: `docs/spec/nihongo_bjt_cursor_master_spec_final_completed_v2.md`
+- Runtime setup: `README.md`
+- API registry: `docs/API_REGISTRY.md`
+- OpenAPI snapshot: `docs/openapi.json`
+- Design system: `DESIGN.md`, `.ai-design/`, `docs/design/`
 
 ## Working Style
 

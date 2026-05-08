@@ -1,5 +1,9 @@
 # AGENTS.md — NihonGo BJT Cursor Operating Guide
 
+## AI quickstart
+
+Read `AI_CONTEXT.md` first. It is the compact, current project brief for any AI assistant joining this repository. Then follow this file and all active Cursor rules.
+
 ## Mission
 
 Build NihonGo BJT as a production-ready Japanese/BJT learning web app. The product must combine serious BJT preparation with joyful daily-life Japanese learning.
@@ -8,9 +12,11 @@ Build NihonGo BJT as a production-ready Japanese/BJT learning web app. The produ
 
 Read these first:
 
-1. `docs/spec/nihongo_bjt_cursor_master_spec_v14.md`
-2. Read and follow all active Cursor rules in `.cursor/rules/*.mdc`.
-3. `docs/cursor-prompts/*.xml`
+1. `AI_CONTEXT.md`
+2. `docs/spec/index.md`
+3. `docs/spec/nihongo_bjt_cursor_master_spec_final_completed_v2.md`
+4. Read and follow all active Cursor rules in `.cursor/rules/*.mdc`.
+5. `docs/cursor-prompts/*.xml`
 
 ## Non-negotiables
 
