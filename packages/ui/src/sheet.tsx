@@ -11,10 +11,10 @@ export function Sheet({
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50" {...props}>
-      <div className="absolute inset-0 bg-ink/35 backdrop-blur-[1px]" aria-hidden />
+      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]" aria-hidden />
       <div
         className={cn(
-          "absolute inset-x-0 bottom-0 max-h-[88vh] overflow-y-auto rounded-t-2xl border border-ink/10 bg-paper shadow-2xl",
+          "absolute inset-x-0 bottom-0 max-h-[88vh] overflow-y-auto rounded-t-[14px] border border-[#E2E8F0] bg-white shadow-xl",
           className
         )}
       >

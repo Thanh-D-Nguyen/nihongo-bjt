@@ -11,12 +11,12 @@ export function Dialog({
   if (!open) return null;
   return (
     <div
-      className="fixed inset-0 z-50 grid place-items-center bg-ink/35 p-4 backdrop-blur-[1px]"
+      className="fixed inset-0 z-50 grid place-items-center bg-slate-900/40 p-4 backdrop-blur-[2px]"
       {...props}
     >
       <div
         className={cn(
-          "w-full max-w-md rounded-2xl border border-ink/10 bg-surface p-5 shadow-2xl",
+          "w-full max-w-md rounded-[14px] border border-[#E2E8F0] bg-white p-5 shadow-xl",
           className
         )}
       >

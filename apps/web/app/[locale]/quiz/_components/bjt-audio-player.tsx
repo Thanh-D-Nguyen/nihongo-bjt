@@ -136,7 +136,7 @@ export function BjtAudioPlayer({
       }
     };
     void audio.play();
-  }, [audioUrl, audioScript, canPlay]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [audioUrl, audioScript, canPlay]);
 
   const playTTS = useCallback(() => {
     if (!audioScript || !canPlay) return;

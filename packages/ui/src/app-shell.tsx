@@ -10,7 +10,7 @@ export function AppShell({
   return (
     <div
       className={cn(
-        "min-h-screen bg-paper bg-[radial-gradient(ellipse_at_top,_rgba(37,99,235,0.05),transparent_60%)]",
+        "min-h-screen bg-[#F8FAFC]",
         className
       )}
       {...props}

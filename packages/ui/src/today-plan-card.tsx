@@ -21,7 +21,7 @@ export function TodayPlanCard({
 }) {
   return (
     <Card
-      className={cn("border-accent/15 bg-gradient-to-br from-surface to-indigo-50/40", className)}
+      className={cn("border-blue-100 bg-gradient-to-br from-white to-blue-50/40", className)}
       {...props}
     >
       <CardHeader className="flex-row items-start justify-between gap-4 space-y-0 pb-2">
@@ -29,11 +29,11 @@ export function TodayPlanCard({
           <CardTitle>{title}</CardTitle>
           {metaLine ? <CardDescription className="mt-1.5">{metaLine}</CardDescription> : null}
         </div>
-        <div className="rounded-xl border border-leaf/20 bg-leaf/5 px-3 py-2 text-right">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">
+        <div className="rounded-[10px] border border-emerald-200 bg-emerald-50 px-3 py-2 text-right">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-[#4B5563]">
             {streakLabel}
           </p>
-          <p className="text-xl font-semibold tabular-nums text-leaf">{streakValue}</p>
+          <p className="text-xl font-semibold tabular-nums text-emerald-600">{streakValue}</p>
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

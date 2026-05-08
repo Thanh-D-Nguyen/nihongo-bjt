@@ -130,58 +130,70 @@ export function HomepageClient({ labels, locale }: { labels: HomepageLabels; loc
 
   return (
     <main className="space-y-7 pb-10 pt-2 sm:pt-4">
-      <HeroSection
-        displayName={displayName}
-        dueCount={dueCount}
-        hubReady={hubReady}
-        labels={labels}
-        locale={locale}
-      />
+      <div className="motion-safe:animate-[fadeSlideUp_0.5s_ease-out_both]">
+        <HeroSection
+          displayName={displayName}
+          dueCount={dueCount}
+          hubReady={hubReady}
+          labels={labels}
+          locale={locale}
+        />
+      </div>
 
       <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
         <div className="space-y-7">
-          <QuickActionsStrip
-            dueCount={dueCount}
-            hubReady={hubReady}
-            labels={labels}
-            locale={locale}
-          />
+          <div className="motion-safe:animate-[fadeSlideUp_0.5s_ease-out_0.1s_both]">
+            <QuickActionsStrip
+              dueCount={dueCount}
+              hubReady={hubReady}
+              labels={labels}
+              locale={locale}
+            />
+          </div>
 
-          <FeaturedNewsSection
-            articlesByType={nhkArticlesByType}
-            error={nhkError}
-            labels={labels}
-            loading={!nhkReady}
-            locale={locale}
-            onRetry={loadData}
-          />
+          <div className="motion-safe:animate-[fadeSlideUp_0.5s_ease-out_0.2s_both]">
+            <FeaturedNewsSection
+              articlesByType={nhkArticlesByType}
+              error={nhkError}
+              labels={labels}
+              loading={!nhkReady}
+              locale={locale}
+              onRetry={loadData}
+            />
+          </div>
 
-          <DailyJapaneseSection
-            hubReady={hubReady}
-            labels={labels}
-            locale={locale}
-            widgets={hub?.widgets ?? []}
-          />
+          <div className="motion-safe:animate-[fadeSlideUp_0.5s_ease-out_0.3s_both]">
+            <DailyJapaneseSection
+              hubReady={hubReady}
+              labels={labels}
+              locale={locale}
+              widgets={hub?.widgets ?? []}
+            />
+          </div>
         </div>
 
         <div className="space-y-7 lg:sticky lg:top-20">
-          <ProgressSection
-            analytics={analytics}
-            analyticsLoading={isLoggedIn && !analyticsReady}
-            isLoggedIn={isLoggedIn}
-            labels={labels}
-            locale={locale}
-          />
+          <div className="motion-safe:animate-[fadeSlideUp_0.5s_ease-out_0.15s_both]">
+            <ProgressSection
+              analytics={analytics}
+              analyticsLoading={isLoggedIn && !analyticsReady}
+              isLoggedIn={isLoggedIn}
+              labels={labels}
+              locale={locale}
+            />
+          </div>
         </div>
       </div>
 
-      <RecommendedSection
-        decks={publicDecks}
-        labels={labels}
+      <div className="motion-safe:animate-[fadeSlideUp_0.5s_ease-out_0.35s_both]">
+        <RecommendedSection
+          decks={publicDecks}
+          labels={labels}
         loading={!recommendReady}
         locale={locale}
         quizTemplates={quizTemplates}
       />
+      </div>
     </main>
   );
 }

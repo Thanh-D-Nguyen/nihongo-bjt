@@ -38,7 +38,7 @@ export function SectionHeader({
   if (variant === "overline") {
     return (
       <header className={cn("mb-3 sm:mb-4", className)} {...props}>
-        <Heading className="text-xs font-semibold uppercase tracking-wide text-muted" id={id}>
+        <Heading className="text-xs font-semibold uppercase tracking-wide text-[#4B5563]" id={id}>
           {title}
         </Heading>
       </header>
@@ -55,15 +55,15 @@ export function SectionHeader({
     >
       <div className="min-w-0 space-y-1">
         {eyebrow ? (
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#6B7280]">
             {eyebrow}
           </p>
         ) : null}
-        <Heading className="text-base font-semibold tracking-tight text-ink md:text-[17px]" id={id}>
+        <Heading className="text-base font-semibold tracking-tight text-[#111827] md:text-[17px]" id={id}>
           {title}
         </Heading>
         {description ? (
-          <p className="max-w-2xl text-sm leading-relaxed text-muted">{description}</p>
+          <p className="max-w-2xl text-sm leading-relaxed text-[#4B5563]">{description}</p>
         ) : null}
       </div>
       {actions ? <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div> : null}

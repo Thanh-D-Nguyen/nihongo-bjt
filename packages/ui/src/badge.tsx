@@ -5,11 +5,11 @@ import { cn } from "./cn";
 export type BadgeTone = "neutral" | "accent" | "success" | "warning" | "danger";
 
 const tones: Record<BadgeTone, string> = {
-  neutral: "border-ink/10 bg-ink/5 text-muted",
-  accent: "border-accent/15 bg-accent/8 text-accent",
-  success: "border-leaf/20 bg-leaf/10 text-leaf",
-  warning: "border-amber-300/40 bg-amber-100/70 text-amber-700",
-  danger: "border-sakura/25 bg-sakura/10 text-sakura"
+  neutral: "border-[#E2E8F0] bg-[#F1F5F9] text-[#4B5563]",
+  accent: "border-blue-200 bg-blue-50 text-blue-700",
+  success: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  warning: "border-amber-200 bg-amber-50 text-amber-700",
+  danger: "border-red-200 bg-red-50 text-red-700"
 };
 
 export function Badge({

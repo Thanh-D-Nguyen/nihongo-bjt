@@ -281,7 +281,7 @@ export function SearchDetailPanel({
           </section>
         ) : null}
 
-        <DetailActions headword={result.title} labels={labels} locale={locale} result={result} />
+        <DetailActions headword={result.title} labels={labels} locale={locale} />
       </div>
     </div>
   );
@@ -599,13 +599,11 @@ function BjtBlock({
 function DetailActions({
   headword,
   labels,
-  locale,
-  result
+  locale
 }: {
   headword: string;
   labels: SearchDetailLabels;
   locale: string;
-  result: SearchResult;
 }) {
   const q = encodeURIComponent(headword);
   return (

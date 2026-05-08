@@ -45,9 +45,9 @@ function NewsCard({
   type: NewsType;
 }) {
   return (
-    <Card className="group overflow-hidden rounded-xl shadow-sm transition hover:border-accent/25 hover:shadow-md">
+    <Card className="group overflow-hidden rounded-[14px] shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg">
       <div className="grid min-h-full sm:grid-cols-[9.5rem_minmax(0,1fr)]">
-        <div className="relative aspect-[16/9] bg-paper sm:aspect-auto">
+        <div className="relative aspect-[16/9] overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200 sm:aspect-auto">
           {article.imageUrl ? (
             <img
               alt={article.title}
@@ -56,8 +56,8 @@ function NewsCard({
               src={article.imageUrl}
             />
           ) : (
-            <div className="flex h-full min-h-32 items-center justify-center text-muted">
-              <IconDocument aria-hidden size={24} />
+            <div className="flex h-full min-h-32 items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 text-blue-300">
+              <IconDocument aria-hidden size={28} />
             </div>
           )}
         </div>
@@ -66,19 +66,19 @@ function NewsCard({
             <Badge tone={type === "easy" ? "accent" : "neutral"}>{sourceLabel(type, labels)}</Badge>
             {article.difficulty ? <Badge>{article.difficulty}</Badge> : null}
           </div>
-          <h3 className="mt-3 line-clamp-2 text-sm font-semibold leading-snug text-ink">
+          <h3 className="mt-3 line-clamp-2 text-sm font-semibold leading-snug text-[#111827]">
             {article.title}
           </h3>
-          <p className="mt-2 text-xs text-muted">{timeAgo(article.publishedAt, labels)}</p>
+          <p className="mt-2 text-xs text-[#6B7280]">{timeAgo(article.publishedAt, labels)}</p>
           <div className="mt-auto flex flex-wrap gap-2 pt-4">
             <Link
-              className="inline-flex min-h-9 flex-1 items-center justify-center rounded-lg bg-ink px-3 text-xs font-semibold text-surface transition hover:bg-ink/90"
+              className="inline-flex min-h-9 flex-1 items-center justify-center rounded-[10px] bg-[#1B2A4A] px-3 text-xs font-semibold text-white transition-all duration-150 hover:bg-[#243560]"
               href={`/${locale}/news/${article.id}`}
             >
               {labels.newsReadMore}
             </Link>
             <button
-              className="inline-flex min-h-9 items-center justify-center gap-1 rounded-lg border border-accent/20 bg-accent/8 px-3 text-xs font-semibold text-accent transition hover:bg-accent/12"
+              className="inline-flex min-h-9 items-center justify-center gap-1 rounded-[10px] border border-blue-200 bg-blue-50 px-3 text-xs font-semibold text-blue-700 transition-all duration-150 hover:bg-blue-100"
               onClick={() => onCreateFlashcardDeck(article.id)}
               type="button"
             >
@@ -166,7 +166,7 @@ export function FeaturedNewsSection({
     <section>
       <SectionHeader
         actions={
-          <Link className="text-sm font-semibold text-accent transition hover:text-accent/80" href={`/${locale}/news`}>
+          <Link className="text-sm font-semibold text-[#3B82F6] transition hover:text-[#2563EB]" href={`/${locale}/news`}>
             {labels.newsViewAll}
           </Link>
         }
@@ -184,7 +184,7 @@ export function FeaturedNewsSection({
       </TabsList>
 
       {flashcardMsg ? (
-        <div className="mb-3 rounded-lg border border-accent/15 bg-accent/8 px-3 py-2 text-sm font-medium text-accent">
+        <div className="mb-3 rounded-[10px] border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700">
           {flashcardMsg}
         </div>
       ) : null}

@@ -1,6 +1,5 @@
 "use client";
 
-import { cn } from "@nihongo-bjt/ui";
 import { useRouter } from "next/navigation";
 
 import { useRecentSearches } from "../../../../../lib/use-recent-searches";

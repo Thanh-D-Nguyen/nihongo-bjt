@@ -287,7 +287,7 @@ function applySequentialStrokeDraw(
   const cleanups: Array<() => void> = [];
 
   for (const p of strokes) {
-    let len = 0;
+    let len: number;
     try {
       if (p instanceof SVGPathElement) len = p.getTotalLength();
       else {
@@ -309,7 +309,7 @@ function applySequentialStrokeDraw(
   const strokeMs = KANJI_STROKE_DRAW_MS;
 
   strokes.forEach((p, i) => {
-    let len = 0;
+    let len: number;
     try {
       if (p instanceof SVGPathElement) len = p.getTotalLength();
       else len = 120;

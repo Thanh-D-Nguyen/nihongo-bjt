@@ -18,11 +18,14 @@ import {
 import { useKeycloakAuth } from "../../components/auth/keycloak-auth-provider";
 import { AnnouncementStrip } from "./announcement-strip";
 import { BrandFull } from "./brand-logo";
+import { CompanionBot, type CompanionBotLabels } from "./companion-bot";
 import {
   IconAccount,
+  IconAchievement,
   IconAnalytics,
   IconBattle,
   IconDocument,
+  IconExercise,
   IconHelp,
   IconHome,
   IconLogout,
@@ -41,10 +44,13 @@ import {
 
 export type LearnerNavLabels = {
   account: string;
+  achievements: string;
   analytics: string;
   ariaMain: string;
   battle: string;
   brand: string;
+  cardgen: string;
+  exercises: string;
   footerCopyright: string;
   footerFeedback: string;
   footerLegal: string;
@@ -83,11 +89,13 @@ function normalizePath(path: string) {
 
 export function LearnerAppFrame({
   children,
+  companionLabels,
   locale,
   nav,
   searchLabels
 }: {
   children: ReactNode;
+  companionLabels: CompanionBotLabels;
   locale: string;
   nav: LearnerNavLabels;
   searchLabels: SearchDropdownLabels;
@@ -137,8 +145,10 @@ export function LearnerAppFrame({
     return [
       { href: base, icon: IconHome, label: nav.home },
       { href: `${base}/flashcards`, icon: IconReview, label: nav.review },
+      { href: `${base}/exercises`, icon: IconExercise, label: nav.exercises },
       { href: `${base}/quiz`, icon: IconQuiz, label: nav.quiz },
       { href: `${base}/battle`, icon: IconBattle, label: nav.battle },
+      { href: `${base}/achievements`, icon: IconAchievement, label: nav.achievements },
       { href: `${base}/analytics`, icon: IconAnalytics, label: nav.analytics }
     ] satisfies NavItem[];
   }, [base, nav]);
@@ -186,7 +196,7 @@ export function LearnerAppFrame({
   const userLabel = displayName || email || nav.userFallback;
   const userInitial = userLabel.trim().charAt(0).toUpperCase() || "N";
   const mobileNavItems = navItems.filter((item) =>
-    [base, `${base}/flashcards`, `${base}/quiz`, `${base}/battle`, `${base}/analytics`].includes(
+    [base, `${base}/flashcards`, `${base}/exercises`, `${base}/quiz`, `${base}/battle`, `${base}/achievements`].includes(
       item.href
     )
   );
@@ -378,7 +388,7 @@ export function LearnerAppFrame({
         aria-label={nav.ariaMain}
         className="fixed inset-x-0 bottom-0 z-40 border-t border-ink/10 bg-paper/92 px-2 pb-[max(0.45rem,env(safe-area-inset-bottom))] pt-1.5 shadow-[0_-8px_28px_rgba(23,33,31,0.08)] backdrop-blur-xl lg:hidden"
       >
-        <div className="mx-auto grid max-w-md grid-cols-5 gap-1">
+        <div className="mx-auto grid max-w-lg grid-cols-6 gap-0.5">
           {mobileNavItems.map((item) => {
             const active = linkActive(item.href);
             return (
@@ -439,6 +449,7 @@ export function LearnerAppFrame({
           <p>{nav.brand}</p>
         </div>
       </footer>
+      <CompanionBot base={base} labels={companionLabels} locale={locale} />
     </AppShell>
   );
 }

@@ -13,7 +13,7 @@ export function ReadingAssistPopoverPanel({
   return (
     <div
       className={cn(
-        "rounded-xl border border-ink/10 bg-surface px-3 py-2 text-sm text-ink shadow-sm",
+        "rounded-[10px] border border-[#E2E8F0] bg-white px-3 py-2 text-sm text-[#111827] shadow-sm",
         className
       )}
       {...props}

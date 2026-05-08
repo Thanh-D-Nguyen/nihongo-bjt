@@ -62,19 +62,26 @@ export { TodayPlanCard } from "./today-plan-card";
 
 export const uiTokens = {
   color: {
-    ink: "#17211f",
-    muted: "#66736f",
-    paper: "#f8f4ec",
-    surface: "#fffdf8",
-    sakura: "#d9898f",
-    matcha: "#557c55"
+    ink: "#111827",
+    muted: "#4B5563",
+    paper: "#F8FAFC",
+    surface: "#FFFFFF",
+    sakura: "#DC2626",
+    matcha: "#059669",
+    navy: "#1B2A4A",
+    blue: "#3B82F6",
+    border: "#E2E8F0"
   },
   radius: {
-    card: "24px",
-    button: "999px"
+    card: "14px",
+    button: "10px",
+    pill: "9999px"
   },
   shadow: {
-    soft: "0 24px 80px rgba(23, 33, 31, 0.10)"
+    soft: "0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04)",
+    card: "0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04)",
+    cardHover: "0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -1px rgba(15, 23, 42, 0.04)",
+    dropdown: "0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.03)"
   }
 } as const;
 

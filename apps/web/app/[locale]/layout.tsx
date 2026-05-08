@@ -44,6 +44,7 @@ export default async function LearnerLayout({
       </a>
       <PwaRegister />
       <KeycloakAuthShell
+        companionLabels={t.nav.companion}
         kcAccessCookiePresent={kcAccessCookiePresent}
         locale={locale}
         nav={t.nav}

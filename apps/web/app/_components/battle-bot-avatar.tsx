@@ -202,12 +202,13 @@ export function BattleBotAvatar({
       {fallback}
     </span>
   );
-  const pad = variant === "arena" ? "p-5" : variant === "companion" ? "p-2.5" : "p-2";
+  const pad = variant === "arena" ? "p-5" : variant === "companion" ? "p-0" : "p-2";
+  const isCompanion = variant === "companion";
 
   return (
     <span
       aria-label={label}
-      className={`relative grid aspect-square place-items-center overflow-hidden rounded-[1.65rem] border bg-white/82 shadow-sm ${style.ring} ${pad} ${className}`}
+      className={`relative grid aspect-square place-items-center overflow-hidden ${isCompanion ? "rounded-full" : `rounded-[1.65rem] border bg-white/82 shadow-sm ${style.ring}`} ${pad} ${className}`}
       role={label ? "img" : undefined}
       style={{ containerType: "inline-size" }}
     >

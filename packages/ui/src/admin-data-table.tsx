@@ -5,7 +5,7 @@ import { cn } from "./cn";
 export function AdminDataTable({ className, ...props }: HTMLAttributes<HTMLTableElement>) {
   return (
     <table
-      className={cn("w-full border-collapse text-left text-sm text-ink", className)}
+      className={cn("w-full border-collapse text-left text-sm text-[#111827]", className)}
       {...props}
     />
   );
@@ -33,7 +33,7 @@ export function AdminDataTableTh({ className, ...props }: ThHTMLAttributes<HTMLT
   return (
     <th
       className={cn(
-        "border-b border-ink/12 bg-paper/90 px-3 py-2.5 text-xs font-semibold uppercase tracking-wide text-muted",
+        "border-b border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2.5 text-xs font-semibold uppercase tracking-wide text-[#4B5563]",
         className
       )}
       {...props}
@@ -49,8 +49,8 @@ export function AdminDataTableTd({
   return (
     <td
       className={cn(
-        "border-b border-ink/8 px-3 py-2.5",
-        muted ? "text-muted" : "text-ink",
+        "border-b border-[#E2E8F0] px-3 py-2.5",
+        muted ? "text-[#4B5563]" : "text-[#111827]",
         className
       )}
       {...props}

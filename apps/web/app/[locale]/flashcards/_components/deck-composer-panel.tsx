@@ -81,7 +81,7 @@ function emptyRow(): DraftRow {
   return { back: "", front: "", id: crypto.randomUUID(), imageAssetId: null, imageUrl: "" };
 }
 
-async function uploadLearnerImage(file: File, userId: string, labels: DeckComposerLabels): Promise<string> {
+async function uploadLearnerImage(file: File, userId: string): Promise<string> {
   if (!allowedMime.has(file.type)) {
     throw new Error("type");
   }
@@ -342,7 +342,7 @@ export function DeckComposerPanel({
     setUploadingRowId(rowId);
     setError(null);
     try {
-      const assetId = await uploadLearnerImage(file, userId, labels);
+      const assetId = await uploadLearnerImage(file, userId);
       setRows((prev) => {
         const next = [...prev];
         const r = next[idx];
@@ -358,7 +358,7 @@ export function DeckComposerPanel({
     }
   };
 
-  const actionBar = (keyPrefix: string) => (
+  const actionBar = () => (
     <div className="flex flex-wrap items-center justify-end gap-2">
       <button
         className={btnNeutral}
@@ -392,7 +392,7 @@ export function DeckComposerPanel({
             {labels.createDeckTitle}
           </h2>
         </div>
-        {actionBar("top")}
+        {actionBar()}
       </div>
 
       <div className="space-y-4 rounded-xl border border-ink/8 bg-white p-3 sm:p-5 shadow-sm transition-shadow duration-300">
@@ -732,7 +732,7 @@ export function DeckComposerPanel({
       </div>
 
       <div className="flex flex-wrap items-center justify-end gap-2 border-t border-ink/8 pt-4">
-        {actionBar("bottom")}
+        {actionBar()}
       </div>
 
       {importOpen ? (

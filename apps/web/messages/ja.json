@@ -84,10 +84,13 @@
     }
   },
   "nav": {
+    "achievements": "実績",
     "analytics": "進捗",
     "ariaMain": "メインナビゲーション",
     "battle": "バトル",
     "brand": "NihonGo BJT",
+    "cardgen": "カード生成",
+    "exercises": "練習",
     "home": "ホーム",
     "more": "その他",
     "quiz": "BJT",
@@ -121,6 +124,9 @@
       "ariaLabel": "NihonGo BJT コンパニオン Bot",
       "close": "コンパニオン Bot を閉じる",
       "collapsedLabel": "コンパニオン Bot を開く",
+      "guestCta": "ログインして学習を始めよう",
+      "guestSubtitle": "ログインするとパーソナライズされた学習提案や進捗管理ができます！",
+      "guestTitle": "こんにちは！シバです 🐕",
       "hintError": "提案を読み込めませんでした。下のアクションから選べます。",
       "hintLoading": "提案を読み込み中…",
       "moodIdle": "学習リズムを見守っています",
@@ -140,7 +146,23 @@
       },
       "secondaryLabel": "ほかの提案",
       "subtitle": "コンパニオン Bot はどのページにも現れ、練習の再開や Battle への移動を助けます。",
-      "title": "コンパニオン Bot"
+      "title": "コンパニオン Bot",
+      "messagesEmpty": "メッセージはまだありません",
+      "tipSectionLabel": "今日のヒント",
+      "quickActionsLabel": "ほかの提案",
+      "muteBubble": "通知をオフ",
+      "unmuteBubble": "通知をオン",
+      "chatPlaceholder": "メッセージを入力...",
+      "chatSend": "送信",
+      "onboardingStep1Title": "こんにちは！🐕",
+      "onboardingStep1Body": "私はシバ、あなたの学習パートナーです。一緒に日本語を学びましょう！",
+      "onboardingStep2Title": "私にできること 📚",
+      "onboardingStep2Body": "復習リマインダー、BJTヒント、日本語ミニレッスン、達成のお祝いなど！",
+      "onboardingStep3Title": "始めましょう！ 🚀",
+      "onboardingStep3Body": "いつでもクリックして話しかけてね。ドラッグで移動もできるよ！",
+      "onboardingNext": "次へ",
+      "onboardingSkip": "スキップ",
+      "onboardingFinish": "始める！"
     }
   },
   "home": {
@@ -1321,5 +1343,108 @@
     "submit": "送信",
     "success": "フィードバックありがとうございます！できるだけ早く確認します。",
     "error": "送信できませんでした。後でもう一度お試しください。"
+  },
+  "exercises": {
+    "title": "練習",
+    "eyebrow": "インタラクティブ練習",
+    "subtitle": "さまざまな問題形式で練習しましょう",
+    "generate": "問題を作成",
+    "startSession": "セッション開始",
+    "submitAnswer": "回答する",
+    "nextQuestion": "次の問題",
+    "completeSession": "完了",
+    "correct": "正解！",
+    "incorrect": "不正解！",
+    "score": "スコア",
+    "history": "練習履歴",
+    "noExercises": "問題がありません。作成ボタンを押してください。",
+    "sessionComplete": "セッション完了！",
+    "types": {
+      "meaning_match": "意味マッチ",
+      "cloze": "穴埋め",
+      "word_order": "語順",
+      "translation": "翻訳",
+      "listening": "リスニング"
+    },
+    "levels": {
+      "all": "すべて",
+      "N5": "N5",
+      "N4": "N4",
+      "N3": "N3",
+      "N2": "N2",
+      "N1": "N1"
+    },
+    "filterType": "問題タイプ",
+    "filterLevel": "レベル",
+    "questionOf": "{current} / {total} 問",
+    "timeSpent": "所要時間",
+    "error": "エラーが発生しました。もう一度お試しください。"
+  },
+  "gamification": {
+    "title": "実績",
+    "eyebrow": "学習の旅",
+    "subtitle": "進捗と実績を確認しましょう",
+    "streaks": "連続記録",
+    "streakDays": "{count}日",
+    "longestStreak": "最長記録",
+    "currentStreak": "現在",
+    "freezesLeft": "凍結保護残り",
+    "achievements": "実績",
+    "earned": "獲得済み",
+    "inProgress": "進行中",
+    "locked": "未解放",
+    "progress": "{current} / {target}",
+    "leaderboards": "ランキング",
+    "rank": "{rank}位",
+    "yourRank": "あなたの順位",
+    "points": "ポイント",
+    "noStreaks": "連続記録がありません。学習を始めましょう！",
+    "noAchievements": "実績がありません。練習を続けましょう！",
+    "tiers": {
+      "bronze": "ブロンズ",
+      "silver": "シルバー",
+      "gold": "ゴールド",
+      "platinum": "プラチナ"
+    },
+    "categories": {
+      "learning": "学習",
+      "social": "ソーシャル",
+      "streak": "連続",
+      "mastery": "マスタリー",
+      "battle": "バトル"
+    },
+    "error": "エラーが発生しました。もう一度お試しください。"
+  },
+  "cardgen": {
+    "title": "自動カード作成",
+    "subtitle": "既存コンテンツからフラッシュカードを自動生成",
+    "generate": "デッキを作成",
+    "preview": "プレビュー",
+    "mode": "モード",
+    "modes": {
+      "by_level": "レベル別",
+      "by_topic": "トピック別",
+      "by_weak_area": "弱点別",
+      "daily_auto": "デイリー自動"
+    },
+    "sourceType": "ソース",
+    "sources": {
+      "lexeme": "語彙",
+      "grammar": "文法",
+      "kanji": "漢字"
+    },
+    "direction": "方向",
+    "directions": {
+      "jp_to_vn": "日→越",
+      "vn_to_jp": "越→日",
+      "both": "両方向"
+    },
+    "count": "カード数",
+    "generating": "カードを作成中...",
+    "success": "{count}枚のカードを作成しました！",
+    "viewDeck": "デッキを見る",
+    "previewResult": "推定: {count}枚",
+    "jobs": "作成履歴",
+    "error": "エラーが発生しました。もう一度お試しください。"
   }
 }

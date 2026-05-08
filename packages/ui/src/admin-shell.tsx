@@ -109,7 +109,7 @@ function NavItemRow({ active, item }: { active: boolean; item: AdminNavItemResol
       aria-current={active ? "page" : undefined}
       className={cn(
         "group flex items-center gap-2.5 rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors outline-none",
-        "focus-visible:ring-2 focus-visible:ring-accent/80 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-800",
+        "focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1E293B]",
         active
           ? "bg-white text-slate-950 shadow-sm"
           : "text-slate-300 hover:bg-white/10 hover:text-white"
@@ -266,15 +266,15 @@ export function AdminShell({
     : 0;
 
   return (
-    <div className="flex min-h-screen bg-[#f4f6f8] text-ink">
+    <div className="flex min-h-screen bg-[#F4F6F8] text-[#111827]">
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 w-72 bg-[#111827] text-white shadow-[12px_0_40px_rgba(15,23,42,0.18)] transition-transform lg:static lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-40 w-72 bg-[#1E293B] text-white shadow-[4px_0_12px_rgba(15,23,42,0.12)] transition-transform lg:static lg:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
         <div className="flex h-16 items-center gap-3 border-b border-white/10 px-4">
-          <span className="flex size-9 items-center justify-center rounded-lg bg-accent text-sm font-semibold text-white">
+          <span className="flex size-9 items-center justify-center rounded-[10px] bg-[#3B82F6] text-sm font-semibold text-white">
             NB
           </span>
           <div className="min-w-0">
@@ -312,7 +312,7 @@ export function AdminShell({
             <input
               aria-label={chrome.searchPlaceholder ?? "Tìm trong menu"}
               autoComplete="off"
-              className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-1.5 pr-7 text-[12px] text-slate-200 placeholder:text-slate-500 outline-none focus:border-accent/60 focus:bg-white/10 focus:ring-2 focus:ring-accent/40"
+              className="w-full rounded-[10px] border border-white/10 bg-white/5 px-3 py-1.5 pr-7 text-[12px] text-slate-200 placeholder:text-slate-500 outline-none focus:border-blue-400/60 focus:bg-white/10 focus:ring-2 focus:ring-blue-500/30"
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={chrome.searchPlaceholder ?? "Tìm trong menu"}
               type="search"
@@ -345,7 +345,7 @@ export function AdminShell({
               <div key={section.id}>
                 {isCollapsible ? (
                   <button
-                    className="group flex w-full items-center justify-between rounded-lg px-3 py-1.5 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-400 transition-colors outline-none hover:bg-white/5 hover:text-slate-300 focus-visible:ring-2 focus-visible:ring-accent/80 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-800"
+                    className="group flex w-full items-center justify-between rounded-lg px-3 py-1.5 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-400 transition-colors outline-none hover:bg-white/5 hover:text-slate-300 focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1E293B]"
                     onClick={() => toggleSection(section.id)}
                     type="button"
                   >
@@ -394,7 +394,7 @@ export function AdminShell({
       <div className="flex min-w-0 flex-1 flex-col lg:ml-0">
         <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-slate-200 bg-white/90 px-4 backdrop-blur-md lg:hidden">
           <button
-            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-ink shadow-sm"
+            className="rounded-[10px] border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-[#111827] shadow-sm"
             onClick={() => setOpen((v) => !v)}
             type="button"
           >

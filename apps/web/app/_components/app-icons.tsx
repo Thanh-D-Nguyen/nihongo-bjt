@@ -140,6 +140,18 @@ export function IconSpark(props: AppIconProps) {
   return path("M12 3l1.4 4.6L18 9l-4.6 1.4L12 15l-1.4-4.6L6 9l4.6-1.4L12 3Z M18 14l.8 2.2L21 17l-2.2.8L18 20l-.8-2.2L15 17l2.2-.8L18 14Z", props);
 }
 
+export function IconExercise(props: AppIconProps) {
+  return path("M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z M7 9h3 M7 13h5 M15 9l2 2-2 2", props);
+}
+
+export function IconAchievement(props: AppIconProps) {
+  return path("M6 9a6 6 0 1 0 12 0 6 6 0 0 0-12 0Z M12 15v4 M8 21h8 M12 7v4 M10 9h4", props);
+}
+
+export function IconCardgen(props: AppIconProps) {
+  return path("M5 7h11a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z M7 4h10a2 2 0 0 1 2 2v2 M12 12v4 M10 14h4", props);
+}
+
 export function IconMore(props: AppIconProps) {
   return (
     <AppIcon {...props} fill="currentColor" stroke="none">

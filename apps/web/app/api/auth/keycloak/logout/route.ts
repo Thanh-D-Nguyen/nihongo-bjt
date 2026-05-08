@@ -12,9 +12,6 @@ export async function POST(request: Request) {
   const locale = url.searchParams.get("locale") === "ja" ? "ja" : "vi";
   const jar = await cookies();
 
-  const publicBase = cfg?.publicBaseUrl
-    ?? (process.env.WEB_PUBLIC_URL ?? "http://localhost:3000").replace(/\/$/u, "");
-
   // Backchannel: revoke the refresh token server-side (no Keycloak redirect)
   if (cfg) {
     const refreshToken = jar.get(learnerKcCookies.refresh)?.value;

@@ -77,7 +77,6 @@ export default async function PublicSharePage({
 
         {data.imageUrl ? (
           <figure className="mt-6">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               alt={data.title}
               className="w-full rounded-xl border border-ink/8"

@@ -288,7 +288,7 @@ export function PrintExamClient({
                 </tr>
               </thead>
               <tbody>
-                {groupedParts.map((part, pi) =>
+                {groupedParts.map((part) =>
                   part.sections.map((section, si) => (
                     <tr key={section.code}>
                       {si === 0 && (

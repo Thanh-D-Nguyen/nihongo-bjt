@@ -84,10 +84,13 @@
     }
   },
   "nav": {
+    "achievements": "Thành tích",
     "analytics": "Tiến độ",
     "ariaMain": "Điều hướng chính",
     "battle": "Đấu trí",
     "brand": "NihonGo BJT",
+    "cardgen": "Tạo thẻ",
+    "exercises": "Luyện tập",
     "home": "Trang chủ",
     "more": "Thêm",
     "quiz": "BJT",
@@ -121,6 +124,9 @@
       "ariaLabel": "Bot đồng hành NihonGo BJT",
       "close": "Ẩn bot đồng hành",
       "collapsedLabel": "Mở bot đồng hành",
+      "guestCta": "Đăng nhập để bắt đầu học",
+      "guestSubtitle": "Đăng nhập để nhận gợi ý học tập cá nhân hóa và theo dõi tiến độ!",
+      "guestTitle": "Chào bạn! Mình là Shiba 🐕",
       "hintError": "Chưa lấy được gợi ý. Bạn vẫn có thể chọn hành động bên dưới.",
       "hintLoading": "Đang lấy gợi ý…",
       "moodIdle": "Đang theo dõi nhịp học của bạn",
@@ -140,7 +146,23 @@
       },
       "secondaryLabel": "Gợi ý khác",
       "subtitle": "Bot đồng hành có thể xuất hiện ở mọi trang để nhắc luyện tập, mở battle nhanh và giữ mạch học.",
-      "title": "Bot đồng hành"
+      "title": "Bot đồng hành",
+      "messagesEmpty": "Chưa có tin nhắn",
+      "tipSectionLabel": "Mẹo hôm nay",
+      "quickActionsLabel": "Gợi ý khác",
+      "muteBubble": "Tắt bong bóng",
+      "unmuteBubble": "Bật bong bóng",
+      "chatPlaceholder": "Nhập tin nhắn...",
+      "chatSend": "Gửi",
+      "onboardingStep1Title": "Xin chào! 🐕",
+      "onboardingStep1Body": "Mình là Shiba, bạn đồng hành học tập của bạn. Cùng học tiếng Nhật nhé!",
+      "onboardingStep2Title": "Mình có thể giúp gì 📚",
+      "onboardingStep2Body": "Nhắc ôn tập, gợi ý BJT, mini bài học tiếng Nhật, chúc mừng thành tích!",
+      "onboardingStep3Title": "Bắt đầu nào! 🚀",
+      "onboardingStep3Body": "Click vào mình bất cứ lúc nào để trò chuyện. Kéo thả để di chuyển nhé!",
+      "onboardingNext": "Tiếp",
+      "onboardingSkip": "Bỏ qua",
+      "onboardingFinish": "Bắt đầu!"
     }
   },
   "home": {
@@ -1321,5 +1343,108 @@
     "submit": "Gửi góp ý",
     "success": "Cảm ơn bạn đã góp ý! Chúng tôi sẽ xem xét sớm nhất.",
     "error": "Chưa thể gửi. Vui lòng thử lại sau."
+  },
+  "exercises": {
+    "title": "Luyện tập",
+    "eyebrow": "Bài tập tương tác",
+    "subtitle": "Luyện tập với nhiều dạng bài tập khác nhau",
+    "generate": "Tạo bài tập",
+    "startSession": "Bắt đầu phiên",
+    "submitAnswer": "Trả lời",
+    "nextQuestion": "Câu tiếp theo",
+    "completeSession": "Hoàn thành",
+    "correct": "Đúng rồi!",
+    "incorrect": "Sai rồi!",
+    "score": "Điểm",
+    "history": "Lịch sử luyện tập",
+    "noExercises": "Chưa có bài tập nào. Nhấn tạo để bắt đầu.",
+    "sessionComplete": "Hoàn thành phiên luyện tập!",
+    "types": {
+      "meaning_match": "Nối nghĩa",
+      "cloze": "Điền từ",
+      "word_order": "Sắp xếp từ",
+      "translation": "Dịch nghĩa",
+      "listening": "Nghe hiểu"
+    },
+    "levels": {
+      "all": "Tất cả",
+      "N5": "N5",
+      "N4": "N4",
+      "N3": "N3",
+      "N2": "N2",
+      "N1": "N1"
+    },
+    "filterType": "Loại bài",
+    "filterLevel": "Cấp độ",
+    "questionOf": "Câu {current} / {total}",
+    "timeSpent": "Thời gian",
+    "error": "Có lỗi xảy ra. Vui lòng thử lại."
+  },
+  "gamification": {
+    "title": "Thành tích",
+    "eyebrow": "Hành trình học tập",
+    "subtitle": "Theo dõi tiến trình và thành tích của bạn",
+    "streaks": "Chuỗi ngày",
+    "streakDays": "{count} ngày",
+    "longestStreak": "Kỷ lục",
+    "currentStreak": "Hiện tại",
+    "freezesLeft": "Lượt duy trì còn lại",
+    "achievements": "Thành tích",
+    "earned": "Đã đạt",
+    "inProgress": "Đang tiến hành",
+    "locked": "Chưa mở",
+    "progress": "{current} / {target}",
+    "leaderboards": "Bảng xếp hạng",
+    "rank": "Hạng {rank}",
+    "yourRank": "Hạng của bạn",
+    "points": "điểm",
+    "noStreaks": "Chưa có chuỗi ngày nào. Hãy bắt đầu học!",
+    "noAchievements": "Chưa có thành tích. Hãy tiếp tục luyện tập!",
+    "tiers": {
+      "bronze": "Đồng",
+      "silver": "Bạc",
+      "gold": "Vàng",
+      "platinum": "Bạch Kim"
+    },
+    "categories": {
+      "learning": "Học tập",
+      "social": "Xã hội",
+      "streak": "Chuỗi ngày",
+      "mastery": "Thành thạo",
+      "battle": "Đối kháng"
+    },
+    "error": "Có lỗi xảy ra. Vui lòng thử lại."
+  },
+  "cardgen": {
+    "title": "Tạo thẻ tự động",
+    "subtitle": "Tạo bộ thẻ flashcard từ nội dung có sẵn",
+    "generate": "Tạo bộ thẻ",
+    "preview": "Xem trước",
+    "mode": "Chế độ",
+    "modes": {
+      "by_level": "Theo cấp độ",
+      "by_topic": "Theo chủ đề",
+      "by_weak_area": "Theo điểm yếu",
+      "daily_auto": "Tự động hàng ngày"
+    },
+    "sourceType": "Nguồn",
+    "sources": {
+      "lexeme": "Từ vựng",
+      "grammar": "Ngữ pháp",
+      "kanji": "Kanji"
+    },
+    "direction": "Hướng",
+    "directions": {
+      "jp_to_vn": "Nhật → Việt",
+      "vn_to_jp": "Việt → Nhật",
+      "both": "Cả hai hướng"
+    },
+    "count": "Số thẻ",
+    "generating": "Đang tạo thẻ...",
+    "success": "Đã tạo {count} thẻ thành công!",
+    "viewDeck": "Xem bộ thẻ",
+    "previewResult": "Ước tính: {count} thẻ",
+    "jobs": "Lịch sử tạo thẻ",
+    "error": "Có lỗi xảy ra. Vui lòng thử lại."
   }
 }

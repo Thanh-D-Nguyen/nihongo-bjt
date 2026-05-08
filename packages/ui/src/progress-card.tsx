@@ -23,7 +23,7 @@ export function ProgressCard({
       </CardHeader>
       <CardContent className="space-y-3">{children}</CardContent>
       {footer ? (
-        <div className="border-t border-ink/8 px-5 py-4 text-sm text-muted">{footer}</div>
+        <div className="border-t border-[#E2E8F0] px-5 py-4 text-sm text-[#4B5563]">{footer}</div>
       ) : null}
     </Card>
   );

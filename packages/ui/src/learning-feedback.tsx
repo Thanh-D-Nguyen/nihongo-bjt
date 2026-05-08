@@ -5,9 +5,9 @@ import { cn } from "./cn";
 export type LearningFeedbackTone = "success" | "info" | "gentle";
 
 const tones: Record<LearningFeedbackTone, string> = {
-  success: "border-emerald-200/70 bg-emerald-50/60 text-emerald-950",
-  info: "border-ink/10 bg-paper/90 text-ink",
-  gentle: "border-indigo-200/60 bg-indigo-50/50 text-indigo-950"
+  success: "border-emerald-200 bg-emerald-50 text-emerald-800",
+  info: "border-[#E2E8F0] bg-[#F8FAFC] text-[#111827]",
+  gentle: "border-blue-200 bg-blue-50 text-blue-800"
 };
 
 /**
@@ -24,7 +24,7 @@ export function LearningFeedback({
 }) {
   return (
     <p
-      className={cn("rounded-xl border px-3 py-2 text-sm leading-relaxed", tones[tone], className)}
+      className={cn("rounded-[10px] border px-3 py-2 text-sm leading-relaxed", tones[tone], className)}
       role="status"
       {...props}
     >

@@ -1,9 +1,5 @@
 import type { Metadata } from "next";
-import ja from "../../../../messages/ja.json";
-import vi from "../../../../messages/vi.json";
 import { SearchHistoryClient } from "./_components/search-history-client";
-
-const messages: Record<string, typeof vi> = { ja, vi };
 
 const historyLabels = {
   vi: {

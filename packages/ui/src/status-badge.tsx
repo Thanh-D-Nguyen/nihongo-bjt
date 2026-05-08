@@ -5,10 +5,10 @@ import { cn } from "./cn";
 export type StatusBadgeVariant = "success" | "warning" | "neutral" | "danger";
 
 const variants: Record<StatusBadgeVariant, string> = {
-  success: "border-emerald-200/80 bg-emerald-50 text-emerald-950",
-  warning: "border-indigo-200/80 bg-indigo-50 text-indigo-950",
-  neutral: "border-ink/10 bg-paper text-ink",
-  danger: "border-sakura/30 bg-sakura/10 text-ink"
+  success: "border-emerald-200 bg-emerald-50 text-emerald-800",
+  warning: "border-amber-200 bg-amber-50 text-amber-800",
+  neutral: "border-[#E2E8F0] bg-[#F8FAFC] text-[#111827]",
+  danger: "border-red-200 bg-red-50 text-red-800"
 };
 
 export function StatusBadge({

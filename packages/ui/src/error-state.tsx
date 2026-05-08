@@ -17,7 +17,7 @@ export function ErrorState({
   return (
     <EmptyState
       action={action}
-      className={cn("border-sakura/25 bg-sakura/5", className)}
+      className={cn("border-red-200 bg-red-50", className)}
       description={description}
       role="alert"
       title={title}

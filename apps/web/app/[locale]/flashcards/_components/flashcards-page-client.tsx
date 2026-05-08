@@ -169,7 +169,6 @@ export function FlashcardsPageClient({
 
   const showLibrarySearch = main === "library";
   const dueValue = heroDue ?? 0;
-  const pendingValue = heroPending ?? 0;
   const reviewProgress = Math.max(8, Math.min(100, dueValue > 0 ? 100 - Math.min(dueValue, 20) * 3 : 100));
 
   return (

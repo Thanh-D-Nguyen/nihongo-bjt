@@ -81,7 +81,7 @@ export function AdminKpiCard({
     warning: "border-amber-200 bg-amber-50/60"
   };
   return (
-    <div className={cn("rounded-lg border p-4 shadow-sm", tones[tone], className)} {...props}>
+    <div className={cn("rounded-[14px] border p-4 shadow-sm", tones[tone], className)} {...props}>
       <p className="text-xs font-medium uppercase text-slate-500">{label}</p>
       <p className="mt-2 text-2xl font-semibold tabular-nums tracking-tight text-slate-950">
         {value}
@@ -124,7 +124,7 @@ export function AdminChartCard({
 }) {
   return (
     <div
-      className={cn("rounded-lg border border-slate-200 bg-white p-4 shadow-sm", className)}
+      className={cn("rounded-[14px] border border-slate-200 bg-white p-4 shadow-sm", className)}
       {...props}
     >
       <div className="mb-4">
@@ -140,7 +140,7 @@ export function AdminFilterBar({ children, className, ...props }: HTMLAttributes
   return (
     <div
       className={cn(
-        "flex flex-col gap-2 rounded-lg border border-slate-200 bg-white p-3 shadow-sm md:flex-row md:items-center",
+        "flex flex-col gap-2 rounded-[14px] border border-slate-200 bg-white p-3 shadow-sm md:flex-row md:items-center",
         className
       )}
       {...props}
@@ -153,7 +153,7 @@ export function AdminFilterBar({ children, className, ...props }: HTMLAttributes
 export function AdminSearchInput(props: InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
-      className="min-h-9 min-w-0 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-950 outline-none focus:border-accent focus:ring-2 focus:ring-accent/15 md:w-72"
+      className="min-h-9 min-w-0 rounded-[10px] border border-slate-200 bg-white px-3 text-sm text-slate-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/15 md:w-72"
       type="search"
       {...props}
     />
@@ -163,7 +163,7 @@ export function AdminSearchInput(props: InputHTMLAttributes<HTMLInputElement>) {
 export function AdminSelect(props: SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <select
-      className="min-h-9 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-950 outline-none focus:border-accent focus:ring-2 focus:ring-accent/15"
+      className="min-h-9 rounded-[10px] border border-slate-200 bg-white px-3 text-sm text-slate-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/15"
       {...props}
     />
   );

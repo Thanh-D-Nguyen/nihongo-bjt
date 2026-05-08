@@ -17,9 +17,9 @@ export function StatCard({
   return (
     <Card className={cn("overflow-hidden", className)} {...props}>
       <CardContent className="space-y-1 pt-5">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted">{label}</p>
-        <p className="text-2xl font-semibold tabular-nums tracking-tight text-ink">{value}</p>
-        {hint ? <p className="text-xs text-muted">{hint}</p> : null}
+        <p className="text-xs font-medium uppercase tracking-wide text-[#4B5563]">{label}</p>
+        <p className="text-2xl font-semibold tabular-nums tracking-tight text-[#111827]">{value}</p>
+        {hint ? <p className="text-xs text-[#6B7280]">{hint}</p> : null}
       </CardContent>
     </Card>
   );
