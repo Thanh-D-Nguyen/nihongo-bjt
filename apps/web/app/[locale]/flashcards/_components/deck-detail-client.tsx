@@ -13,9 +13,25 @@ import type { DeckApiRow } from "./deck-types";
 import { DeckStudySession } from "./deck-study-session";
 
 type DeckDetailCardRow = {
-  card: { backText: string; frontText: string; id: string; reading: string | null };
+  card: {
+    backText: string;
+    examples?: DeckStudyExample[];
+    frontText: string;
+    id: string;
+    reading: string | null;
+    sourceId?: string;
+    sourceType?: string;
+  };
   id: string;
   position: number;
+};
+
+type DeckStudyExample = {
+  id: string;
+  japaneseText: string;
+  reading: string | null;
+  sourceKind: "grammar" | "kanji" | "lexeme";
+  translationVi: string | null;
 };
 
 type DeckDetailPayload = {
@@ -197,6 +213,7 @@ export function DeckDetailClient({
               key={deck.id}
               cards={sortedCards.map((row) => ({
                 backText: row.card.backText,
+                examples: row.card.examples ?? [],
                 frontText: row.card.frontText,
                 id: row.id,
                 reading: row.card.reading
@@ -211,7 +228,18 @@ export function DeckDetailClient({
                 deckStudyNext: labels.deckStudyNext,
                 deckStudyPrev: labels.deckStudyPrev,
                 deckStudyProgressTpl: labels.deckStudyProgressTpl,
-                deckStudyTapToFlip: labels.deckStudyTapToFlip
+                deckStudyTapToFlip: labels.deckStudyTapToFlip,
+                exampleCopy: labels.deckStudyExampleCopy,
+                exampleCopied: labels.deckStudyExampleCopied,
+                exampleEmpty: labels.deckStudyExampleEmpty,
+                exampleFilterPlaceholder: labels.deckStudyExampleFilterPlaceholder,
+                exampleHeading: labels.deckStudyExampleHeading,
+                exampleManage: labels.deckStudyExampleManage,
+                exampleSourceGrammar: labels.deckStudyExampleSourceGrammar,
+                exampleSourceKanji: labels.deckStudyExampleSourceKanji,
+                exampleSourceLexeme: labels.deckStudyExampleSourceLexeme,
+                exampleToggleHide: labels.deckStudyExampleToggleHide,
+                exampleToggleShow: labels.deckStudyExampleToggleShow
               }}
             />
           ) : (
@@ -260,6 +288,11 @@ export function DeckDetailClient({
                               </p>
                             ) : null}
                             <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted">{row.card.backText}</p>
+                            {row.card.examples?.length ? (
+                              <p className="mt-1 text-[11px] font-semibold text-accent">
+                                {labels.deckStudyExampleHeading}: {row.card.examples.length}
+                              </p>
+                            ) : null}
                           </div>
                         </div>
                       </li>

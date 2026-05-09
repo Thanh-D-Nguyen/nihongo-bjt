@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { Card, CardContent, SectionHeader } from "@nihongo-bjt/ui";
-import { IconBattle, IconQuiz, IconReview, IconSearch } from "../../../_components/nav-icons";
-import { QaFlashcard, QaBjt, QaBattle, QaSearch } from "./illustrations/qa-icons";
+import { IconBattle, IconDocument, IconExercise, IconQuiz, IconReview, IconSearch } from "../../../_components/nav-icons";
+import { QaFlashcard, QaBjt, QaBattle, QaSearch, QaStandup, QaReviewInbox } from "./illustrations/qa-icons";
 import type { HomepageLabels } from "./types";
 
 const actions = [
@@ -46,6 +46,26 @@ const actions = [
     borderAccent: "via-violet-400",
     bgLight: "bg-violet-50",
     textColor: "text-violet-600"
+  },
+  {
+    key: "standup",
+    href: (l: string) => `/${l}/daily-standup`,
+    icon: IconExercise,
+    illustration: QaStandup,
+    color: "from-indigo-500 to-blue-700",
+    borderAccent: "via-indigo-400",
+    bgLight: "bg-indigo-50",
+    textColor: "text-indigo-600"
+  },
+  {
+    key: "reviewInbox",
+    href: (l: string) => `/${l}/review-inbox-preview`,
+    icon: IconDocument,
+    illustration: QaReviewInbox,
+    color: "from-rose-400 to-pink-600",
+    borderAccent: "via-rose-400",
+    bgLight: "bg-rose-50",
+    textColor: "text-rose-600"
   }
 ] as const;
 
@@ -54,7 +74,9 @@ function getLabel(key: string, labels: HomepageLabels): string {
     flashcards: labels.quickFlashcards,
     bjt: labels.quickBjt,
     battle: labels.quickBattle,
-    search: labels.quickSearch
+    search: labels.quickSearch,
+    standup: labels.quickStandup,
+    reviewInbox: labels.quickReviewInbox
   };
   return map[key] ?? key;
 }
@@ -64,7 +86,9 @@ function getSubLabel(key: string, labels: HomepageLabels, dueCount: number): str
     flashcards: labels.quickFlashcardsSub.replace("{count}", String(dueCount)),
     bjt: labels.quickBjtSub,
     battle: labels.quickBattleSub,
-    search: labels.quickSearchSub
+    search: labels.quickSearchSub,
+    standup: labels.quickStandupSub,
+    reviewInbox: labels.quickReviewInboxSub
   };
   return map[key] ?? "";
 }
@@ -87,8 +111,8 @@ export function QuickActionsStrip({
           id="homepage-quick-actions-heading"
           title={labels.quickActionsSectionLabel}
         />
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {[1, 2, 3, 4].map((i) => (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
             <Card key={i}>
               <CardContent className="flex gap-4 pt-5">
                 <div className="h-11 w-11 shrink-0 animate-pulse rounded-[10px] bg-slate-100" />
@@ -108,7 +132,7 @@ export function QuickActionsStrip({
   return (
     <section aria-labelledby="homepage-quick-actions-heading">
       <SectionHeader id="homepage-quick-actions-heading" title={labels.quickActionsSectionLabel} />
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {actions.map((a) => (
           <Link
             key={a.key}

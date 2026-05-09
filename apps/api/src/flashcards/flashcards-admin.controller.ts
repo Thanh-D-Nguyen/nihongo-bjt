@@ -69,6 +69,12 @@ const variantPatchSchema = z.object({
   reason: z.string().trim().min(3).max(500)
 });
 
+const variantSourcePatchSchema = z.object({
+  reason: z.string().trim().min(3).max(500),
+  sourceId: z.uuid(),
+  sourceType: z.enum(["lexeme", "grammar", "kanji"])
+});
+
 @Controller("admin/flashcards")
 @UseGuards(AdminRbacGuard)
 @RequireAdminPermissions("admin_core")
@@ -196,6 +202,21 @@ export class FlashcardsAdminController {
       id,
       next: parsed.data.next,
       reason: parsed.data.reason
+    });
+  }
+
+  @Patch("variants/:id/source")
+  @ApiOperation({ summary: "Remap a flashcard variant to a canonical content source. Audited." })
+  async patchVariantSource(@Req() req: Request, @Param("id") id: string, @Body() body: unknown) {
+    const principal = await this.auth.requirePermission(req, "admin.content.write");
+    const parsed = variantSourcePatchSchema.safeParse(body);
+    if (!parsed.success) throw new BadRequestException(parsed.error.flatten());
+    return this.repo.patchVariantSource({
+      actorId: principal.actorId,
+      id,
+      reason: parsed.data.reason,
+      sourceId: parsed.data.sourceId,
+      sourceType: parsed.data.sourceType
     });
   }
 }

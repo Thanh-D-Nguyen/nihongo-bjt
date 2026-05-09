@@ -5,7 +5,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  schemas  = ["admin", "analytics", "assessment", "auth", "authz", "battle", "billing", "content", "curriculum", "daily", "exercise", "gamification", "growth", "iam", "learning", "legal", "l10n", "media", "monetization", "ops", "profile"]
+  schemas  = ["admin", "analytics", "assessment", "auth", "authz", "battle", "billing", "career", "content", "curriculum", "daily", "exercise", "gamification", "growth", "iam", "learning", "legal", "l10n", "media", "monetization", "ops", "profile"]
 }
 
 model ContentImportBatch {
@@ -1064,12 +1064,173 @@ model UserProfile {
   quotaUserOverrides       QuotaUserOverride[]
   userStreaks              UserStreak[]
   userAchievements         UserAchievement[]
+  careerState              UserCareerState?
+  careerSkillStats         CareerSkillStat[]
+  rankProgressionEvents    RankProgressionEvent[]
+  chapterAttempts          ChapterAttempt[]
+  npcRelations             NpcRelation[]
 
   @@index([status, createdAt], map: "idx_user_profile_status_created_at")
   @@index([accountType], map: "idx_user_profile_account_type")
   @@index([authSyncStatus], map: "idx_user_profile_auth_sync_status")
   @@map("user_profile")
   @@schema("profile")
+}
+
+model CareerRank {
+  id                 String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rankCode           String            @unique @map("rank_code") @db.VarChar(8)
+  titleJa            String            @map("title_ja")
+  titleVi            String            @map("title_vi")
+  bjtBandTarget      String            @map("bjt_band_target") @db.VarChar(32)
+  minSkillFloor      Int               @default(0) @map("min_skill_floor")
+  requiredArcCount   Int               @default(0) @map("required_arc_count")
+  xpToNext           Int               @default(100) @map("xp_to_next")
+  unlockedSceneTypes Json              @map("unlocked_scene_types")
+  rewardsPayload     Json              @default("{}") @map("rewards_payload")
+  displayOrder       Int               @map("display_order")
+  createdAt          DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  arcs               MissionArc[]
+
+  @@index([displayOrder], map: "idx_career_rank_display_order")
+  @@map("career_rank")
+  @@schema("career")
+}
+
+model UserCareerState {
+  userId          String      @id @map("user_id") @db.Uuid
+  currentRankCode String      @default("R1") @map("current_rank_code") @db.VarChar(8)
+  rankXp          Int         @default(0) @map("rank_xp")
+  jpWorkName      String      @default("田中 太郎") @map("jp_work_name")
+  companyTheme    String      @default("mirai-shoji") @map("company_theme") @db.VarChar(80)
+  hireDate        DateTime    @default(now()) @map("hire_date") @db.Date
+  lastClockInAt   DateTime?   @map("last_clock_in_at") @db.Timestamptz(6)
+  streakDays      Int         @default(0) @map("streak_days")
+  updatedAt       DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user            UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([currentRankCode], map: "idx_user_career_state_rank")
+  @@map("user_career_state")
+  @@schema("career")
+}
+
+model CareerSkillStat {
+  id        String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String      @map("user_id") @db.Uuid
+  axisCode  String      @map("axis_code") @db.VarChar(32)
+  value     Int         @default(0)
+  updatedAt DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user      UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, axisCode], map: "uq_career_skill_stat_user_axis")
+  @@index([axisCode], map: "idx_career_skill_stat_axis")
+  @@map("career_skill_stat")
+  @@schema("career")
+}
+
+model RankProgressionEvent {
+  id           String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId       String      @map("user_id") @db.Uuid
+  fromRankCode String      @map("from_rank_code") @db.VarChar(8)
+  toRankCode   String      @map("to_rank_code") @db.VarChar(8)
+  triggerEvent String      @map("trigger_event") @db.VarChar(80)
+  snapshot     Json
+  createdAt    DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  user         UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt], map: "idx_rank_progression_event_user_created")
+  @@map("rank_progression_event")
+  @@schema("career")
+}
+
+model MissionArc {
+  id             String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug           String           @unique
+  titleJa        String           @map("title_ja")
+  titleVi        String           @map("title_vi")
+  rankCodeEntry  String           @map("rank_code_entry") @db.VarChar(8)
+  storyPayload   Json             @default("{}") @map("story_payload")
+  status         String           @default("draft") @db.VarChar(32)
+  displayOrder   Int              @default(0) @map("display_order")
+  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rankEntry      CareerRank       @relation(fields: [rankCodeEntry], references: [rankCode], onDelete: Restrict)
+  chapters       MissionChapter[]
+
+  @@index([status, displayOrder], map: "idx_mission_arc_status_order")
+  @@index([rankCodeEntry], map: "idx_mission_arc_rank_entry")
+  @@map("mission_arc")
+  @@schema("career")
+}
+
+model MissionChapter {
+  id                String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  arcId             String           @map("arc_id") @db.Uuid
+  slug              String
+  titleJa           String           @map("title_ja")
+  titleVi           String           @map("title_vi")
+  briefingPayload   Json             @default("{}") @map("briefing_payload")
+  reflectionPayload Json             @default("{}") @map("reflection_payload")
+  isBoss            Boolean          @default(false) @map("is_boss")
+  displayOrder      Int              @default(0) @map("display_order")
+  scenarioPayload   Json             @default("{}") @map("scenario_payload")
+  rewardsPayload    Json             @default("{}") @map("rewards_payload")
+  arc               MissionArc       @relation(fields: [arcId], references: [id], onDelete: Cascade)
+  attempts          ChapterAttempt[]
+
+  @@unique([arcId, slug], map: "uq_mission_chapter_arc_slug")
+  @@index([arcId, displayOrder], map: "idx_mission_chapter_arc_order")
+  @@map("mission_chapter")
+  @@schema("career")
+}
+
+model ChapterAttempt {
+  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String         @map("user_id") @db.Uuid
+  chapterId     String         @map("chapter_id") @db.Uuid
+  status        String         @default("in_progress") @db.VarChar(32)
+  scoreSnapshot Json?          @map("score_snapshot")
+  startedAt     DateTime       @default(now()) @map("started_at") @db.Timestamptz(6)
+  completedAt   DateTime?      @map("completed_at") @db.Timestamptz(6)
+  user          UserProfile    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chapter       MissionChapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status, startedAt], map: "idx_chapter_attempt_user_status_started")
+  @@index([chapterId], map: "idx_chapter_attempt_chapter")
+  @@map("chapter_attempt")
+  @@schema("career")
+}
+
+model StoryNpc {
+  id              String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug            String @unique
+  nameJa          String @map("name_ja")
+  roleJa          String @map("role_ja")
+  companyJa       String? @map("company_ja")
+  defaultRelation String @default("uchi") @map("default_relation") @db.VarChar(16)
+  personaPrompt   String? @map("persona_prompt")
+  avatarMedia     Json? @map("avatar_media")
+  status          String @default("active") @db.VarChar(32)
+
+  @@index([status], map: "idx_story_npc_status")
+  @@map("story_npc")
+  @@schema("career")
+}
+
+model NpcRelation {
+  id                String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId            String      @map("user_id") @db.Uuid
+  npcSlug           String      @map("npc_slug")
+  trustScore        Int         @default(50) @map("trust_score")
+  lastInteractionAt DateTime?   @map("last_interaction_at") @db.Timestamptz(6)
+  memoryNotes       Json?       @map("memory_notes")
+  user              UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, npcSlug], map: "uq_npc_relation_user_npc")
+  @@index([npcSlug], map: "idx_npc_relation_npc_slug")
+  @@map("npc_relation")
+  @@schema("career")
 }
 
 /// Admin-driven invitation / Keycloak handoff. No password stored.
@@ -1188,6 +1349,78 @@ model DailyUserAction {
   @@index([userId, createdAt], map: "idx_daily_user_action_user_created_at")
   @@index([dailyContentItemId, actionType], map: "idx_daily_user_action_item_type")
   @@map("daily_user_action")
+  @@schema("daily")
+}
+
+model DailyRadarModuleConfig {
+  id                  String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  moduleKey           String           @unique @map("module_key") @db.VarChar(80)
+  titleVi             String           @map("title_vi")
+  titleJa             String           @map("title_ja")
+  titleEn             String?          @map("title_en")
+  descriptionVi       String           @map("description_vi")
+  descriptionJa       String?          @map("description_ja")
+  category            String           @db.VarChar(32)
+  moduleType          String           @map("module_type") @db.VarChar(32)
+  status              String           @default("draft") @db.VarChar(32)
+  isEnabled           Boolean          @default(true) @map("is_enabled")
+  isSpotlightEligible Boolean          @default(false) @map("is_spotlight_eligible")
+  defaultPriority     Int              @default(0) @map("default_priority")
+  iconKey             String?          @map("icon_key") @db.VarChar(64)
+  visualTheme         String?          @map("visual_theme") @db.VarChar(64)
+  routePath           String?          @map("route_path")
+  externalUrl         String?          @map("external_url")
+  disclaimerVi        String?          @map("disclaimer_vi")
+  disclaimerJa        String?          @map("disclaimer_ja")
+  metadata            Json             @default("{}")
+  createdAt           DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+  cards               DailyRadarCard[]
+
+  @@index([status, isEnabled, defaultPriority], map: "idx_daily_radar_module_public")
+  @@index([category, status], map: "idx_daily_radar_module_category_status")
+  @@map("daily_radar_module_config")
+  @@schema("daily")
+}
+
+model DailyRadarCard {
+  id                     String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  moduleConfigId         String                 @map("module_config_id") @db.Uuid
+  slug                   String                 @unique @db.VarChar(120)
+  titleVi                String                 @map("title_vi")
+  titleJa                String?                @map("title_ja")
+  subtitleVi             String?                @map("subtitle_vi")
+  descriptionVi          String                 @map("description_vi")
+  recommendationReasonVi String?                @map("recommendation_reason_vi")
+  category               String                 @db.VarChar(32)
+  moduleType             String                 @map("module_type") @db.VarChar(32)
+  badgeTextVi            String?                @map("badge_text_vi") @db.VarChar(64)
+  estimatedMinutes       Int?                   @map("estimated_minutes")
+  levelLabel             String?                @map("level_label") @db.VarChar(64)
+  ctaLabelVi             String                 @map("cta_label_vi")
+  ctaLabelJa             String?                @map("cta_label_ja")
+  targetRoute            String?                @map("target_route")
+  targetEntityType       String?                @map("target_entity_type") @db.VarChar(80)
+  targetEntityId         String?                @map("target_entity_id") @db.VarChar(120)
+  imageUrl               String?                @map("image_url")
+  iconKey                String?                @map("icon_key") @db.VarChar(64)
+  visualTheme            String?                @map("visual_theme") @db.VarChar(64)
+  priority               Int                    @default(0)
+  startsAt               DateTime?              @map("starts_at") @db.Timestamptz(6)
+  endsAt                 DateTime?              @map("ends_at") @db.Timestamptz(6)
+  status                 String                 @default("draft") @db.VarChar(32)
+  isSpotlight            Boolean                @default(false) @map("is_spotlight")
+  isPinned               Boolean                @default(false) @map("is_pinned")
+  metadata               Json                   @default("{}")
+  createdAt              DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime               @updatedAt @map("updated_at") @db.Timestamptz(6)
+  moduleConfig           DailyRadarModuleConfig @relation(fields: [moduleConfigId], references: [id], onDelete: Cascade)
+
+  @@index([status, isPinned, priority, updatedAt], map: "idx_daily_radar_card_public_order")
+  @@index([category, status, priority], map: "idx_daily_radar_card_category_status")
+  @@index([moduleConfigId, status], map: "idx_daily_radar_card_module_status")
+  @@index([isSpotlight, status, priority], map: "idx_daily_radar_card_spotlight")
+  @@map("daily_radar_card")
   @@schema("daily")
 }
 

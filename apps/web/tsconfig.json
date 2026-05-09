@@ -18,6 +18,14 @@
       }
     ]
   },
-  "include": ["next-env.d.ts", "app/**/*.ts", "app/**/*.tsx", "lib/**/*.ts", "messages/**/*.json"],
+  "include": [
+    "next-env.d.ts",
+    "app/**/*.ts",
+    "app/**/*.tsx",
+    "lib/**/*.ts",
+    "messages/**/*.json",
+    "src/**/*.ts",
+    "src/**/*.tsx"
+  ],
   "exclude": ["node_modules"]
 }

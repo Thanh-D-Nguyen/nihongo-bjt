@@ -41,6 +41,17 @@ export type DeckLabels = DeckComposerLabels & {
   deckStudyPrev: string;
   deckStudyProgressTpl: string;
   deckStudyTapToFlip: string;
+  deckStudyExampleCopied: string;
+  deckStudyExampleCopy: string;
+  deckStudyExampleEmpty: string;
+  deckStudyExampleFilterPlaceholder: string;
+  deckStudyExampleHeading: string;
+  deckStudyExampleManage: string;
+  deckStudyExampleSourceGrammar: string;
+  deckStudyExampleSourceKanji: string;
+  deckStudyExampleSourceLexeme: string;
+  deckStudyExampleToggleHide: string;
+  deckStudyExampleToggleShow: string;
   openDeckAria: string;
   create: string;
   createDeck: string;

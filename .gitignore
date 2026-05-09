@@ -80,3 +80,8 @@ temp/
 # - .cursor/rules/
 # - company/
 # - docs/
+
+# Lock files (hàng ngàn dòng, tốn token vô ích)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml

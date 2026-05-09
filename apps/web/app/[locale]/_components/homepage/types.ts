@@ -1,4 +1,5 @@
 /** Shared types for homepage section components */
+import type { DailyRadarLabels } from "@/src/features/daily-radar/types";
 
 export interface HomepageLabels {
   heroGreeting: string;
@@ -46,6 +47,7 @@ export interface HomepageLabels {
   dailyTitle: string;
   dailySubtitle: string;
   dailyViewAll: string;
+  dailyRadar: DailyRadarLabels;
   progressTitle: string;
   progressSubtitle: string;
   progressStreak: string;
@@ -75,6 +77,14 @@ export interface HomepageLabels {
   newsFlashcardCreated: string;
   newsFlashcardExists: string;
   newsFlashcardError: string;
+  cockpitTertiaryToStandup: string;
+  quickStandup: string;
+  quickStandupSub: string;
+  quickReviewInbox: string;
+  quickReviewInboxSub: string;
+  careerRpgTitle: string;
+  careerRpgRank: string;
+  careerRpgCta: string;
 }
 
 export interface NhkArticle {

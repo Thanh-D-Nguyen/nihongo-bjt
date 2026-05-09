@@ -114,8 +114,8 @@ export class FlashcardsRepository {
     return result;
   }
 
-  deckDetail(userId: string, deckId: string) {
-    return this.prisma.deck.findFirstOrThrow({
+  async deckDetail(userId: string, deckId: string) {
+    const deck = await this.prisma.deck.findFirstOrThrow({
       include: {
         cards: {
           include: { card: { include: { mediaLinks: { include: { asset: true } } } } },
@@ -128,6 +128,25 @@ export class FlashcardsRepository {
         OR: [{ ownerUserId: userId }, { visibility: "public" }]
       }
     });
+
+    const examplesByCardId = await this.examplesForDeckCards(
+      deck.cards.map((row) => ({
+        cardId: row.cardId,
+        sourceId: row.card.sourceId,
+        sourceType: row.card.sourceType
+      }))
+    );
+
+    return {
+      ...deck,
+      cards: deck.cards.map((row) => ({
+        ...row,
+        card: {
+          ...row.card,
+          examples: examplesByCardId.get(row.cardId) ?? []
+        }
+      }))
+    };
   }
 
   deckCards(userId: string, deckId: string, limit: number) {
@@ -687,4 +706,200 @@ export class FlashcardsRepository {
       return link;
     });
   }
+
+  private async examplesForDeckCards(
+    cards: Array<{ cardId: string; sourceId: string; sourceType: string }>
+  ): Promise<Map<string, FlashcardExample[]>> {
+    type CanonicalCard = { cardId: string; sourceId: string; sourceType: "grammar" | "kanji" | "lexeme" };
+    const byCardId = new Map<string, FlashcardExample[]>();
+    const fallbackCards = cards.filter((card) => !["lexeme", "grammar", "kanji"].includes(card.sourceType));
+    const fallbackRows = fallbackCards.length
+      ? await this.prisma.flashcardVariant.findMany({
+          select: { frontText: true, id: true },
+          where: { id: { in: fallbackCards.map((card) => card.cardId) } }
+        })
+      : [];
+    const fallbackByCardId = new Map(fallbackRows.map((row) => [row.id, row.frontText]));
+    const fallbackTargets = await Promise.all(
+      fallbackCards.map(async (card) => {
+        const target = await this.resolveFallbackCanonicalSource(card.sourceType, fallbackByCardId.get(card.cardId) ?? "");
+        return target ? { ...card, sourceId: target.sourceId, sourceType: target.sourceType } : null;
+      })
+    );
+    const canonicalCards: CanonicalCard[] = cards
+      .filter((card) => ["lexeme", "grammar", "kanji"].includes(card.sourceType))
+      .map((card) => ({
+        cardId: card.cardId,
+        sourceId: card.sourceId,
+        sourceType: card.sourceType as "grammar" | "kanji" | "lexeme"
+      }));
+    const effectiveCards: CanonicalCard[] = [
+      ...canonicalCards,
+      ...fallbackTargets.filter((card): card is CanonicalCard => card != null)
+    ];
+    const lexemeCards = effectiveCards.filter((card) => card.sourceType === "lexeme");
+    const grammarCards = effectiveCards.filter((card) => card.sourceType === "grammar");
+    const kanjiCards = effectiveCards.filter((card) => card.sourceType === "kanji");
+    const lexemeSourceToCards = groupCardIdsBySource(lexemeCards);
+    const grammarSourceToCards = groupCardIdsBySource(grammarCards);
+    const kanjiSourceToCards = groupCardIdsBySource(kanjiCards);
+
+    await Promise.all([
+      (async () => {
+        if (lexemeCards.length === 0) return;
+        const rows = await this.prisma.exampleSentence.findMany({
+          include: {
+            lexemeSenseExamples: {
+              select: { sense: { select: { lexemeId: true } } },
+              where: { sense: { lexemeId: { in: [...lexemeSourceToCards.keys()] } } }
+            }
+          },
+          orderBy: { japaneseText: "asc" },
+          where: {
+            status: "active",
+            lexemeSenseExamples: { some: { sense: { lexemeId: { in: [...lexemeSourceToCards.keys()] } } } }
+          }
+        });
+        for (const row of rows) {
+          for (const link of row.lexemeSenseExamples) {
+            for (const cardId of lexemeSourceToCards.get(link.sense.lexemeId) ?? []) {
+              appendExample(byCardId, cardId, {
+                id: row.id,
+                japaneseText: row.japaneseText,
+                reading: row.reading,
+                sourceKind: "lexeme",
+                translationVi: row.translationVi
+              });
+            }
+          }
+        }
+      })(),
+      (async () => {
+        if (grammarCards.length === 0) return;
+        const rows = await this.prisma.exampleSentence.findMany({
+          include: {
+            grammarDetailExamples: {
+              select: { detail: { select: { grammarPointId: true } } },
+              where: { detail: { grammarPointId: { in: [...grammarSourceToCards.keys()] } } }
+            }
+          },
+          orderBy: { japaneseText: "asc" },
+          where: {
+            status: "active",
+            grammarDetailExamples: { some: { detail: { grammarPointId: { in: [...grammarSourceToCards.keys()] } } } }
+          }
+        });
+        for (const row of rows) {
+          for (const link of row.grammarDetailExamples) {
+            for (const cardId of grammarSourceToCards.get(link.detail.grammarPointId) ?? []) {
+              appendExample(byCardId, cardId, {
+                id: row.id,
+                japaneseText: row.japaneseText,
+                reading: row.reading,
+                sourceKind: "grammar",
+                translationVi: row.translationVi
+              });
+            }
+          }
+        }
+      })(),
+      (async () => {
+        if (kanjiCards.length === 0) return;
+        const rows = await this.prisma.kanjiExample.findMany({
+          orderBy: { position: "asc" },
+          where: { kanjiId: { in: [...kanjiSourceToCards.keys()] } }
+        });
+        for (const row of rows) {
+          for (const cardId of kanjiSourceToCards.get(row.kanjiId) ?? []) {
+            appendExample(byCardId, cardId, {
+              id: row.id,
+              japaneseText: row.word,
+              reading: row.reading,
+              sourceKind: "kanji",
+              translationVi: row.meaningVi
+            });
+          }
+        }
+      })()
+    ]);
+
+    for (const [cardId, examples] of byCardId) {
+      byCardId.set(cardId, dedupeExamples(examples).slice(0, 8));
+    }
+    return byCardId;
+  }
+
+  private async resolveFallbackCanonicalSource(
+    sourceType: string,
+    frontText: string
+  ): Promise<{ sourceId: string; sourceType: "grammar" | "kanji" | "lexeme" } | null> {
+    const q = frontText.trim();
+    if (!q) return null;
+
+    if (sourceType.includes("grammar")) {
+      const candidates = grammarPatternCandidates(q);
+      const grammar = await this.prisma.grammarPoint.findFirst({
+        select: { id: true },
+        where: {
+          status: "active",
+          OR: candidates.map((pattern) => ({ pattern }))
+        }
+      });
+      if (grammar) return { sourceId: grammar.id, sourceType: "grammar" };
+    }
+
+    if (sourceType.includes("kanji") || q.length === 1) {
+      const kanji = await this.prisma.kanji.findFirst({
+        select: { id: true },
+        where: { character: q, status: "active" }
+      });
+      if (kanji) return { sourceId: kanji.id, sourceType: "kanji" };
+    }
+
+    const lexeme = await this.prisma.lexeme.findFirst({
+      select: { id: true },
+      where: {
+        status: "active",
+        OR: [{ headword: q }, { reading: q }]
+      }
+    });
+    if (lexeme) return { sourceId: lexeme.id, sourceType: "lexeme" };
+
+    return null;
+  }
+}
+
+type FlashcardExample = {
+  id: string;
+  japaneseText: string;
+  reading: string | null;
+  sourceKind: "grammar" | "kanji" | "lexeme";
+  translationVi: string | null;
+};
+
+function groupCardIdsBySource(cards: Array<{ cardId: string; sourceId: string }>) {
+  const grouped = new Map<string, string[]>();
+  for (const card of cards) {
+    grouped.set(card.sourceId, [...(grouped.get(card.sourceId) ?? []), card.cardId]);
+  }
+  return grouped;
+}
+
+function appendExample(map: Map<string, FlashcardExample[]>, cardId: string, example: FlashcardExample) {
+  map.set(cardId, [...(map.get(cardId) ?? []), example]);
+}
+
+function dedupeExamples(examples: FlashcardExample[]) {
+  const seen = new Set<string>();
+  return examples.filter((example) => {
+    if (seen.has(example.id)) return false;
+    seen.add(example.id);
+    return true;
+  });
+}
+
+function grammarPatternCandidates(value: string) {
+  const trimmed = value.trim();
+  const withoutWave = trimmed.replace(/^[〜~]/u, "");
+  return [...new Set([trimmed, withoutWave, `〜${withoutWave}`, `~${withoutWave}`])];
 }

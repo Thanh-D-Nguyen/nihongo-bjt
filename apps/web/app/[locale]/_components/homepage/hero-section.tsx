@@ -164,6 +164,12 @@ export function HeroSection({
               >
                 {secondaryLabel}
               </Link>
+              <Link
+                className="inline-flex min-h-11 items-center justify-center rounded-[10px] border border-amber-300/30 bg-amber-400/[0.12] px-5 text-sm font-semibold text-amber-100 shadow-sm outline-none ring-offset-2 backdrop-blur-sm transition-all duration-150 hover:border-amber-300/50 hover:bg-amber-400/[0.2] focus-visible:ring-2 focus-visible:ring-white/50"
+                href={`/${locale}/daily-standup`}
+              >
+                {labels.cockpitTertiaryToStandup}
+              </Link>
             </div>
           </div>
 

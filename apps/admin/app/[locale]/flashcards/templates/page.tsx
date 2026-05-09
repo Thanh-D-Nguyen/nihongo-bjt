@@ -19,5 +19,11 @@ export default async function Page({
     ((t as Record<string, unknown>)["flashcardTemplatesManagement"] as Record<string, string> | undefined) ??
     ((t as Record<string, unknown>)["flashcardTemplates"] as Record<string, string> | undefined) ??
     {};
-  return <FlashcardVariantsAdminClient common={t.adminConsole.common} labels={sec} />;
+  return (
+    <FlashcardVariantsAdminClient
+      common={t.adminConsole.common}
+      labels={sec}
+      lexemeExampleLabels={t.adminConsole.lexemeExample}
+    />
+  );
 }

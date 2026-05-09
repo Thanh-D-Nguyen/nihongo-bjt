@@ -9,8 +9,8 @@ import { FeaturedNewsSection } from "./featured-news-section";
 import { HeroSection } from "./hero-section";
 import { ProgressSection } from "./progress-section";
 import { QuickActionsStrip } from "./quick-actions-strip";
-import { RecommendedSection, type DeckSummary, type QuizTemplate } from "./recommended-section";
 import type { DailyWidget, HomepageLabels, LearnerAnalytics, NhkArticle } from "./types";
+import { DailyRadarSection } from "@/src/features/daily-radar/daily-radar-section";
 
 interface DailyHubPayload {
   dueReviews: number;
@@ -35,15 +35,10 @@ export function HomepageClient({ labels, locale }: { labels: HomepageLabels; loc
   const [nhkError, setNhkError] = useState(false);
   const [analytics, setAnalytics] = useState<LearnerAnalytics | null>(null);
   const [analyticsReady, setAnalyticsReady] = useState(false);
-  const [quizTemplates, setQuizTemplates] = useState<QuizTemplate[]>([]);
-  const [publicDecks, setPublicDecks] = useState<DeckSummary[]>([]);
-  const [recommendReady, setRecommendReady] = useState(false);
-
   const loadData = useCallback(() => {
     setHubReady(false);
     setNhkReady(false);
     setAnalyticsReady(false);
-    setRecommendReady(false);
 
     void learnerApiFetchOptional(
       `/api/daily/home?locale=${locale}${userId ? `&userId=${encodeURIComponent(userId)}` : ""}`
@@ -90,36 +85,6 @@ export function HomepageClient({ labels, locale }: { labels: HomepageLabels; loc
       setAnalyticsReady(true);
     }
 
-    void Promise.all([
-      learnerApiFetchOptional(`/api/quiz/templates?status=published&limit=6`)
-        .then(async (r) => {
-          if (r?.ok) {
-            try {
-              const data = await r.json();
-              setQuizTemplates(Array.isArray(data) ? data : (data?.data ?? []));
-            } catch {
-              setQuizTemplates([]);
-            }
-          } else {
-            setQuizTemplates([]);
-          }
-        })
-        .catch(() => setQuizTemplates([])),
-      learnerApiFetchOptional(`/api/flashcards/decks?visibility=public&limit=6`)
-        .then(async (r) => {
-          if (r?.ok) {
-            try {
-              const data = await r.json();
-              setPublicDecks(Array.isArray(data) ? data : []);
-            } catch {
-              setPublicDecks([]);
-            }
-          } else {
-            setPublicDecks([]);
-          }
-        })
-        .catch(() => setPublicDecks([]))
-    ]).finally(() => setRecommendReady(true));
   }, [locale, userId]);
 
   useEffect(() => {
@@ -152,6 +117,10 @@ export function HomepageClient({ labels, locale }: { labels: HomepageLabels; loc
           </div>
 
           <div className="motion-safe:animate-[fadeSlideUp_0.5s_ease-out_0.2s_both]">
+            <DailyRadarSection labels={labels.dailyRadar} locale={locale} />
+          </div>
+
+          <div className="motion-safe:animate-[fadeSlideUp_0.5s_ease-out_0.25s_both]">
             <FeaturedNewsSection
               articlesByType={nhkArticlesByType}
               error={nhkError}
@@ -185,15 +154,6 @@ export function HomepageClient({ labels, locale }: { labels: HomepageLabels; loc
         </div>
       </div>
 
-      <div className="motion-safe:animate-[fadeSlideUp_0.5s_ease-out_0.35s_both]">
-        <RecommendedSection
-          decks={publicDecks}
-          labels={labels}
-        loading={!recommendReady}
-        locale={locale}
-        quizTemplates={quizTemplates}
-      />
-      </div>
     </main>
   );
 }

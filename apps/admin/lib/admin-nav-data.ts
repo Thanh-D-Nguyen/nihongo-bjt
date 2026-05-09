@@ -102,6 +102,7 @@ export const ADMIN_NAV_DATA: AdminNavGroupDefinition[] = [
     defaultExpanded: false,
     items: [
       item({ href: "/daily-hub", icon: "academic", id: "ln.daily", labelKey: "shell.navItems.dailyHub", permissions: ["admin.content.read"], status: "implemented" }),
+      item({ href: "/daily-radar", icon: "bolt", id: "ln.dailyRadar", labelKey: "shell.navItems.dailyRadar", permissions: ["admin.content.read"], status: "implemented" }),
       item({ href: "/decks", icon: "book", id: "ln.decks", labelKey: "shell.navItems.decks", permissions: ["admin.content.read"], status: "implemented" }),
       item({ href: "/flashcards/templates", icon: "book", id: "ln.templates", labelKey: "shell.navItems.flashcardTemplates", permissions: ["admin.content.read"], status: "implemented" }),
       item({ href: "/flashcards/generated", icon: "book", id: "ln.generated", labelKey: "shell.navItems.generatedCards", permissions: ["admin.content.read"], status: "implemented" }),

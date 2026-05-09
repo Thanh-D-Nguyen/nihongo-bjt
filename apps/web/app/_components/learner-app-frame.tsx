@@ -50,6 +50,7 @@ export type LearnerNavLabels = {
   battle: string;
   brand: string;
   cardgen: string;
+  dailyStandup: string;
   exercises: string;
   footerCopyright: string;
   footerFeedback: string;
@@ -335,6 +336,15 @@ export function LearnerAppFrame({
                       ) : null}
                     </div>
                     <div className="p-1.5">
+                      <Link
+                        className="flex min-h-10 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-muted hover:bg-paper hover:text-ink"
+                        href={`${base}/daily-standup`}
+                        role="menuitem"
+                        onClick={() => setUserMenuOpen(false)}
+                      >
+                        <IconExercise aria-hidden size={16} />
+                        {nav.dailyStandup}
+                      </Link>
                       <Link
                         className="flex min-h-10 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-muted hover:bg-paper hover:text-ink"
                         href={`${base}/account`}

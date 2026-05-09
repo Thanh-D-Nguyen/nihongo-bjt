@@ -16,6 +16,11 @@ import { useCallback, useEffect, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
 import { permsFromMe, type MePayload } from "@/app/_components/admin-client-utils";
+import {
+  LexemeExamplesSubrow,
+  type LexemeExampleLabels,
+  type LexemeExampleRow
+} from "../../_components/lexeme-examples-subrow";
 
 type CommonLabels = { empty: string; error: string; loading: string; records: string };
 type Labels = Record<string, string>;
@@ -42,7 +47,28 @@ type AuditEntry = {
   actor: { id: string; displayName: string; email: string } | null;
 };
 
-type Detail = Variant & { audit: AuditEntry[] };
+type CanonicalSource = {
+  label: string;
+  resolvedBy?: string;
+  sourceId: string;
+  sourceType: "grammar" | "kanji" | "lexeme";
+};
+
+type ExampleRow = {
+  id: string;
+  japaneseText: string;
+  reading: string | null;
+  status?: string;
+  translationVi: string | null;
+};
+
+type Detail = Variant & {
+  audit: AuditEntry[];
+  canonical: CanonicalSource | null;
+  canonicalCandidates: CanonicalSource[];
+  examples: ExampleRow[];
+  lexemeExamples: LexemeExampleRow[];
+};
 
 function downloadCsv(filename: string, header: string[], rows: string[][]) {
   const escape = (v: string) => `"${v.replace(/"/g, '""')}"`;
@@ -68,10 +94,12 @@ function statusTone(status: string): "neutral" | "warning" | "danger" {
 
 export function FlashcardVariantsAdminClient({
   common,
-  labels
+  labels,
+  lexemeExampleLabels
 }: {
   common: CommonLabels;
   labels: Labels;
+  lexemeExampleLabels: LexemeExampleLabels;
 }) {
   const t = (k: string) => labels[k] ?? k;
   const [perms, setPerms] = useState<Set<string> | null>(null);
@@ -90,6 +118,10 @@ export function FlashcardVariantsAdminClient({
   const [editForm, setEditForm] = useState<{ frontText: string; backText: string; reading: string } | null>(
     null
   );
+  const [sourceForm, setSourceForm] = useState<{
+    sourceId: string;
+    sourceType: "grammar" | "kanji" | "lexeme";
+  } | null>(null);
   const [transitioning, setTransitioning] = useState<"active" | "archived" | "draft" | null>(null);
   const [reason, setReason] = useState("");
   const [mutating, setMutating] = useState(false);
@@ -161,6 +193,7 @@ export function FlashcardVariantsAdminClient({
     setSelected(v);
     setDetail(null);
     setEditForm(null);
+    setSourceForm(null);
     setTransitioning(null);
     setReason("");
     void loadDetail(v.id);
@@ -169,6 +202,7 @@ export function FlashcardVariantsAdminClient({
     setSelected(null);
     setDetail(null);
     setEditForm(null);
+    setSourceForm(null);
     setTransitioning(null);
   }
 
@@ -236,6 +270,48 @@ export function FlashcardVariantsAdminClient({
       setTransitioning(null);
       setReason("");
       setToast({ kind: "ok", text: t("transitionOk") });
+      void loadList();
+    } finally {
+      setMutating(false);
+    }
+  }
+
+  function startSourceRemap(candidate?: CanonicalSource) {
+    if (!canWrite || !detail) return;
+    setSourceForm({
+      sourceId: candidate?.sourceId ?? detail.canonical?.sourceId ?? detail.sourceId,
+      sourceType: candidate?.sourceType ?? detail.canonical?.sourceType ?? "lexeme"
+    });
+    setEditForm(null);
+    setTransitioning(null);
+    setReason("");
+  }
+
+  async function submitSourceRemap() {
+    if (!detail || !sourceForm) return;
+    if (reason.trim().length < 3) {
+      setToast({ kind: "err", text: t("reasonRequired") });
+      return;
+    }
+    setMutating(true);
+    try {
+      const r = await adminApiFetch(`/api/admin/flashcards/variants/${detail.id}/source`, {
+        body: JSON.stringify({
+          reason: reason.trim(),
+          sourceId: sourceForm.sourceId.trim(),
+          sourceType: sourceForm.sourceType
+        }),
+        headers: { "content-type": "application/json" },
+        method: "PATCH"
+      });
+      if (!r.ok) {
+        setToast({ kind: "err", text: t("sourceRemapFailed") });
+        return;
+      }
+      setDetail((await r.json()) as Detail);
+      setSourceForm(null);
+      setReason("");
+      setToast({ kind: "ok", text: t("sourceRemapOk") });
       void loadList();
     } finally {
       setMutating(false);
@@ -567,6 +643,171 @@ export function FlashcardVariantsAdminClient({
                     </div>
                   </div>
                 ) : null}
+
+                <div className="mt-5 space-y-3 rounded-lg border border-slate-200 bg-slate-50/70 p-3">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                      <h3 className="text-sm font-semibold text-slate-900">{t("sourcePanelTitle")}</h3>
+                      {detail.canonical == null ? (
+                        <p className="mt-1 text-xs text-amber-800">{t("storedSourceNeedsRemap")}</p>
+                      ) : null}
+                    </div>
+                    {canWrite ? (
+                      <button
+                        className="rounded border border-slate-300 bg-white px-3 py-1 text-sm"
+                        onClick={() => startSourceRemap()}
+                        type="button"
+                      >
+                        {t("sourceManualTitle")}
+                      </button>
+                    ) : null}
+                  </div>
+
+                  <div className="grid gap-2 text-xs sm:grid-cols-2">
+                    <div className="rounded border border-slate-200 bg-white p-2">
+                      <div className="font-medium text-slate-600">{t("sourceStored")}</div>
+                      <div className="mt-1 font-mono text-slate-900">
+                        {detail.sourceType} / {detail.sourceId}
+                      </div>
+                    </div>
+                    <div className="rounded border border-slate-200 bg-white p-2">
+                      <div className="font-medium text-slate-600">{t("sourceResolved")}</div>
+                      {detail.canonical ? (
+                        <div className="mt-1 space-y-0.5">
+                          <div className="font-medium text-slate-900">{detail.canonical.label}</div>
+                          <div className="font-mono text-slate-600">
+                            {detail.canonical.sourceType} / {detail.canonical.sourceId}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="mt-1 text-slate-500">{t("sourceNoCandidates")}</div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      {t("sourceCandidates")}
+                    </div>
+                    {detail.canonicalCandidates.length === 0 ? (
+                      <p className="mt-1 text-xs text-slate-500">{t("sourceNoCandidates")}</p>
+                    ) : (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {detail.canonicalCandidates.map((candidate) => (
+                          <button
+                            className="rounded-lg border border-indigo-200 bg-white px-2.5 py-1.5 text-left text-xs text-slate-800 shadow-sm hover:border-indigo-400 hover:bg-indigo-50 disabled:opacity-60"
+                            disabled={!canWrite}
+                            key={`${candidate.sourceType}:${candidate.sourceId}`}
+                            onClick={() => startSourceRemap(candidate)}
+                            type="button"
+                          >
+                            <span className="block font-medium">{candidate.label}</span>
+                            <span className="font-mono text-[11px] text-slate-500">{candidate.sourceType}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {sourceForm ? (
+                    <div className="space-y-2 rounded border border-indigo-200 bg-white p-3">
+                      <div className="grid gap-2 sm:grid-cols-[160px_1fr]">
+                        <label className="block">
+                          <span className="text-xs font-medium text-slate-600">{t("sourceType")}</span>
+                          <select
+                            className="mt-1 w-full rounded border px-2 py-1 text-sm"
+                            onChange={(e) =>
+                              setSourceForm((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      sourceType: e.target.value as "grammar" | "kanji" | "lexeme"
+                                    }
+                                  : prev
+                              )
+                            }
+                            value={sourceForm.sourceType}
+                          >
+                            <option value="lexeme">{t("sourceTypeLexeme")}</option>
+                            <option value="grammar">{t("sourceTypeGrammar")}</option>
+                            <option value="kanji">{t("sourceTypeKanji")}</option>
+                          </select>
+                        </label>
+                        <label className="block">
+                          <span className="text-xs font-medium text-slate-600">{t("sourceId")}</span>
+                          <input
+                            className="mt-1 w-full rounded border px-2 py-1 text-sm"
+                            onChange={(e) =>
+                              setSourceForm((prev) => (prev ? { ...prev, sourceId: e.target.value } : prev))
+                            }
+                            placeholder={t("sourceIdPlaceholder")}
+                            value={sourceForm.sourceId}
+                          />
+                        </label>
+                      </div>
+                      <input
+                        className="w-full rounded border px-2 py-1 text-sm"
+                        onChange={(e) => setReason(e.target.value)}
+                        placeholder={t("reasonPlaceholder")}
+                        value={reason}
+                      />
+                      <div className="flex justify-end gap-2">
+                        <button
+                          className="rounded border px-3 py-1 text-sm"
+                          onClick={() => setSourceForm(null)}
+                          type="button"
+                        >
+                          {t("cancel")}
+                        </button>
+                        <button
+                          className="rounded bg-indigo-600 px-3 py-1 text-sm text-white disabled:opacity-50"
+                          disabled={mutating}
+                          onClick={() => void submitSourceRemap()}
+                          type="button"
+                        >
+                          {t("sourceRemap")}
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      {t("examplesTitle")}
+                    </div>
+                    {detail.examples.length === 0 ? (
+                      <p className="mt-1 text-xs text-slate-500">{t("examplesEmpty")}</p>
+                    ) : (
+                      <ul className="mt-2 space-y-2">
+                        {detail.examples.map((example) => (
+                          <li
+                            className="rounded border border-slate-200 bg-white px-2 py-1.5 text-xs"
+                            key={example.id}
+                          >
+                            <p className="font-medium text-slate-900">{example.japaneseText}</p>
+                            {example.reading ? <p className="text-slate-500">{example.reading}</p> : null}
+                            {example.translationVi ? <p className="text-slate-700">{example.translationVi}</p> : null}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+
+                  {detail.canonical?.sourceType === "lexeme" ? (
+                    <div className="rounded border border-indigo-100 bg-white p-2">
+                      <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        {t("manageLexemeExamples")}
+                      </div>
+                      <LexemeExamplesSubrow
+                        examples={detail.lexemeExamples}
+                        headword={detail.canonical.label}
+                        labels={lexemeExampleLabels}
+                        lexemeId={detail.canonical.sourceId}
+                        onChanged={() => loadDetail(detail.id)}
+                      />
+                    </div>
+                  ) : null}
+                </div>
 
                 <div className="mt-5">
                   <h3 className="text-sm font-semibold">{t("auditTitle")}</h3>

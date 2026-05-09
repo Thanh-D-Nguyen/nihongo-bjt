@@ -796,6 +796,110 @@ exports.Prisma.UserProfileScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.CareerRankScalarFieldEnum = {
+  id: 'id',
+  rankCode: 'rankCode',
+  titleJa: 'titleJa',
+  titleVi: 'titleVi',
+  bjtBandTarget: 'bjtBandTarget',
+  minSkillFloor: 'minSkillFloor',
+  requiredArcCount: 'requiredArcCount',
+  xpToNext: 'xpToNext',
+  unlockedSceneTypes: 'unlockedSceneTypes',
+  rewardsPayload: 'rewardsPayload',
+  displayOrder: 'displayOrder',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.UserCareerStateScalarFieldEnum = {
+  userId: 'userId',
+  currentRankCode: 'currentRankCode',
+  rankXp: 'rankXp',
+  jpWorkName: 'jpWorkName',
+  companyTheme: 'companyTheme',
+  hireDate: 'hireDate',
+  lastClockInAt: 'lastClockInAt',
+  streakDays: 'streakDays',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.CareerSkillStatScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  axisCode: 'axisCode',
+  value: 'value',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.RankProgressionEventScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  fromRankCode: 'fromRankCode',
+  toRankCode: 'toRankCode',
+  triggerEvent: 'triggerEvent',
+  snapshot: 'snapshot',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.MissionArcScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  titleJa: 'titleJa',
+  titleVi: 'titleVi',
+  rankCodeEntry: 'rankCodeEntry',
+  storyPayload: 'storyPayload',
+  status: 'status',
+  displayOrder: 'displayOrder',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.MissionChapterScalarFieldEnum = {
+  id: 'id',
+  arcId: 'arcId',
+  slug: 'slug',
+  titleJa: 'titleJa',
+  titleVi: 'titleVi',
+  briefingPayload: 'briefingPayload',
+  reflectionPayload: 'reflectionPayload',
+  isBoss: 'isBoss',
+  displayOrder: 'displayOrder',
+  scenarioPayload: 'scenarioPayload',
+  rewardsPayload: 'rewardsPayload'
+};
+
+exports.Prisma.ChapterAttemptScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  chapterId: 'chapterId',
+  status: 'status',
+  scoreSnapshot: 'scoreSnapshot',
+  startedAt: 'startedAt',
+  completedAt: 'completedAt'
+};
+
+exports.Prisma.StoryNpcScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  nameJa: 'nameJa',
+  roleJa: 'roleJa',
+  companyJa: 'companyJa',
+  defaultRelation: 'defaultRelation',
+  personaPrompt: 'personaPrompt',
+  avatarMedia: 'avatarMedia',
+  status: 'status'
+};
+
+exports.Prisma.NpcRelationScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  npcSlug: 'npcSlug',
+  trustScore: 'trustScore',
+  lastInteractionAt: 'lastInteractionAt',
+  memoryNotes: 'memoryNotes'
+};
+
 exports.Prisma.UserInvitationScalarFieldEnum = {
   id: 'id',
   email: 'email',
@@ -873,6 +977,64 @@ exports.Prisma.DailyUserActionScalarFieldEnum = {
   actionType: 'actionType',
   payload: 'payload',
   createdAt: 'createdAt'
+};
+
+exports.Prisma.DailyRadarModuleConfigScalarFieldEnum = {
+  id: 'id',
+  moduleKey: 'moduleKey',
+  titleVi: 'titleVi',
+  titleJa: 'titleJa',
+  titleEn: 'titleEn',
+  descriptionVi: 'descriptionVi',
+  descriptionJa: 'descriptionJa',
+  category: 'category',
+  moduleType: 'moduleType',
+  status: 'status',
+  isEnabled: 'isEnabled',
+  isSpotlightEligible: 'isSpotlightEligible',
+  defaultPriority: 'defaultPriority',
+  iconKey: 'iconKey',
+  visualTheme: 'visualTheme',
+  routePath: 'routePath',
+  externalUrl: 'externalUrl',
+  disclaimerVi: 'disclaimerVi',
+  disclaimerJa: 'disclaimerJa',
+  metadata: 'metadata',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.DailyRadarCardScalarFieldEnum = {
+  id: 'id',
+  moduleConfigId: 'moduleConfigId',
+  slug: 'slug',
+  titleVi: 'titleVi',
+  titleJa: 'titleJa',
+  subtitleVi: 'subtitleVi',
+  descriptionVi: 'descriptionVi',
+  recommendationReasonVi: 'recommendationReasonVi',
+  category: 'category',
+  moduleType: 'moduleType',
+  badgeTextVi: 'badgeTextVi',
+  estimatedMinutes: 'estimatedMinutes',
+  levelLabel: 'levelLabel',
+  ctaLabelVi: 'ctaLabelVi',
+  ctaLabelJa: 'ctaLabelJa',
+  targetRoute: 'targetRoute',
+  targetEntityType: 'targetEntityType',
+  targetEntityId: 'targetEntityId',
+  imageUrl: 'imageUrl',
+  iconKey: 'iconKey',
+  visualTheme: 'visualTheme',
+  priority: 'priority',
+  startsAt: 'startsAt',
+  endsAt: 'endsAt',
+  status: 'status',
+  isSpotlight: 'isSpotlight',
+  isPinned: 'isPinned',
+  metadata: 'metadata',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.PlacementTestSessionScalarFieldEnum = {
@@ -1633,12 +1795,23 @@ exports.Prisma.ModelName = {
   AdminAuditLog: 'AdminAuditLog',
   AdminAuditEvent: 'AdminAuditEvent',
   UserProfile: 'UserProfile',
+  CareerRank: 'CareerRank',
+  UserCareerState: 'UserCareerState',
+  CareerSkillStat: 'CareerSkillStat',
+  RankProgressionEvent: 'RankProgressionEvent',
+  MissionArc: 'MissionArc',
+  MissionChapter: 'MissionChapter',
+  ChapterAttempt: 'ChapterAttempt',
+  StoryNpc: 'StoryNpc',
+  NpcRelation: 'NpcRelation',
   UserInvitation: 'UserInvitation',
   ReadingUserPreference: 'ReadingUserPreference',
   DailyWidgetConfig: 'DailyWidgetConfig',
   DailyContentItem: 'DailyContentItem',
   DailyLearningExtraction: 'DailyLearningExtraction',
   DailyUserAction: 'DailyUserAction',
+  DailyRadarModuleConfig: 'DailyRadarModuleConfig',
+  DailyRadarCard: 'DailyRadarCard',
   PlacementTestSession: 'PlacementTestSession',
   LearnerOnboarding: 'LearnerOnboarding',
   NotificationPreference: 'NotificationPreference',

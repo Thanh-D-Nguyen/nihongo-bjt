@@ -21,9 +21,10 @@ type Labels = Record<string, unknown>;
 
 type GenRule = {
   id: string;
+  name: string;
   mode: string;
   sourceType: string;
-  level: string | null;
+  filterLevel: string | null;
   direction: string;
   maxCards: number;
   enabled: boolean;
@@ -64,9 +65,10 @@ export function CardgenAdminClient({ labels }: { labels: Labels }) {
   const [ruleModal, setRuleModal] = useState(false);
   const [ruleEditId, setRuleEditId] = useState<string | null>(null);
   const [ruleForm, setRuleForm] = useState({
+    name: "",
     mode: "by_level",
     sourceType: "lexeme",
-    level: "",
+    filterLevel: "",
     direction: "both",
     maxCards: 20,
     enabled: true
@@ -101,13 +103,13 @@ export function CardgenAdminClient({ labels }: { labels: Labels }) {
 
   function openRuleCreate() {
     setRuleEditId(null);
-    setRuleForm({ mode: "by_level", sourceType: "lexeme", level: "", direction: "both", maxCards: 20, enabled: true });
+    setRuleForm({ name: "", mode: "by_level", sourceType: "lexeme", filterLevel: "", direction: "both", maxCards: 20, enabled: true });
     setRuleModal(true);
   }
 
   function openRuleEdit(r: GenRule) {
     setRuleEditId(r.id);
-    setRuleForm({ mode: r.mode, sourceType: r.sourceType, level: r.level ?? "", direction: r.direction, maxCards: r.maxCards, enabled: r.enabled });
+    setRuleForm({ name: r.name, mode: r.mode, sourceType: r.sourceType, filterLevel: r.filterLevel ?? "", direction: r.direction, maxCards: r.maxCards, enabled: r.enabled });
     setRuleModal(true);
   }
 
@@ -115,12 +117,11 @@ export function CardgenAdminClient({ labels }: { labels: Labels }) {
     try {
       const url = ruleEditId ? `/api/admin/cardgen/rules/${ruleEditId}` : "/api/admin/cardgen/rules";
       const body = {
-        mode: ruleForm.mode,
+        name: ruleForm.name,
         sourceType: ruleForm.sourceType,
         direction: ruleForm.direction,
-        maxCards: ruleForm.maxCards,
         enabled: ruleForm.enabled,
-        ...(ruleForm.level ? { level: ruleForm.level } : {})
+        ...(ruleForm.filterLevel ? { filterLevel: ruleForm.filterLevel } : {})
       };
       const r = await adminApiFetch(url, {
         method: ruleEditId ? "PUT" : "POST",
@@ -191,20 +192,22 @@ export function CardgenAdminClient({ labels }: { labels: Labels }) {
               ) : (
                 <AdminDataTable>
                   <AdminDataTableHead>
-                    <AdminDataTableTh>{t("mode")}</AdminDataTableTh>
-                    <AdminDataTableTh>{t("sourceType")}</AdminDataTableTh>
-                    <AdminDataTableTh>{t("level")}</AdminDataTableTh>
-                    <AdminDataTableTh>{t("direction")}</AdminDataTableTh>
-                    <AdminDataTableTh>{t("maxCards")}</AdminDataTableTh>
-                    <AdminDataTableTh>{t("enabled")}</AdminDataTableTh>
-                    {canWrite && <AdminDataTableTh />}
+                    <AdminDataTableRow>
+                      <AdminDataTableTh>{t("mode")}</AdminDataTableTh>
+                      <AdminDataTableTh>{t("sourceType")}</AdminDataTableTh>
+                      <AdminDataTableTh>{t("level")}</AdminDataTableTh>
+                      <AdminDataTableTh>{t("direction")}</AdminDataTableTh>
+                      <AdminDataTableTh>{t("maxCards")}</AdminDataTableTh>
+                      <AdminDataTableTh>{t("enabled")}</AdminDataTableTh>
+                      {canWrite && <AdminDataTableTh />}
+                    </AdminDataTableRow>
                   </AdminDataTableHead>
                   <AdminDataTableBody>
                     {rules.map((rule) => (
                       <AdminDataTableRow key={rule.id}>
                         <AdminDataTableTd>{modes[rule.mode] ?? rule.mode}</AdminDataTableTd>
                         <AdminDataTableTd>{sources[rule.sourceType] ?? rule.sourceType}</AdminDataTableTd>
-                        <AdminDataTableTd>{rule.level ?? "—"}</AdminDataTableTd>
+                        <AdminDataTableTd>{rule.filterLevel ?? "—"}</AdminDataTableTd>
                         <AdminDataTableTd>{directions[rule.direction] ?? rule.direction}</AdminDataTableTd>
                         <AdminDataTableTd>{rule.maxCards}</AdminDataTableTd>
                         <AdminDataTableTd>
@@ -235,10 +238,12 @@ export function CardgenAdminClient({ labels }: { labels: Labels }) {
               ) : (
                 <AdminDataTable>
                   <AdminDataTableHead>
-                    <AdminDataTableTh>{t("status")}</AdminDataTableTh>
-                    <AdminDataTableTh>{t("cardsGenerated")}</AdminDataTableTh>
-                    <AdminDataTableTh>{t("triggeredBy")}</AdminDataTableTh>
-                    <AdminDataTableTh>{t("createdAt")}</AdminDataTableTh>
+                    <AdminDataTableRow>
+                      <AdminDataTableTh>{t("status")}</AdminDataTableTh>
+                      <AdminDataTableTh>{t("cardsGenerated")}</AdminDataTableTh>
+                      <AdminDataTableTh>{t("triggeredBy")}</AdminDataTableTh>
+                      <AdminDataTableTh>{t("createdAt")}</AdminDataTableTh>
+                    </AdminDataTableRow>
                   </AdminDataTableHead>
                   <AdminDataTableBody>
                     {jobs.map((job) => (
@@ -289,6 +294,10 @@ export function CardgenAdminClient({ labels }: { labels: Labels }) {
             <h3 className="mb-4 text-sm font-semibold text-slate-800">{ruleEditId ? t("edit") : t("create")}</h3>
             <div className="space-y-3">
               <div>
+                <label className="mb-1 block text-xs font-medium text-slate-600">{t("name")}</label>
+                <input type="text" className="w-full rounded border px-2 py-1.5 text-sm" value={ruleForm.name} onChange={(e) => setRuleForm({ ...ruleForm, name: e.target.value })} />
+              </div>
+              <div>
                 <label className="mb-1 block text-xs font-medium text-slate-600">{t("mode")}</label>
                 <select className="w-full rounded border px-2 py-1.5 text-sm" value={ruleForm.mode} onChange={(e) => setRuleForm({ ...ruleForm, mode: e.target.value })}>
                   {MODES.map((m) => <option key={m} value={m}>{modes[m] ?? m}</option>)}
@@ -302,7 +311,7 @@ export function CardgenAdminClient({ labels }: { labels: Labels }) {
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-slate-600">{t("level")}</label>
-                <select className="w-full rounded border px-2 py-1.5 text-sm" value={ruleForm.level} onChange={(e) => setRuleForm({ ...ruleForm, level: e.target.value })}>
+                <select className="w-full rounded border px-2 py-1.5 text-sm" value={ruleForm.filterLevel} onChange={(e) => setRuleForm({ ...ruleForm, filterLevel: e.target.value })}>
                   <option value="">—</option>
                   {["N5", "N4", "N3", "N2", "N1"].map((l) => <option key={l} value={l}>{l}</option>)}
                 </select>

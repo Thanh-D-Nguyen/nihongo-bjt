@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git grep *)",
+      "Bash(pnpm typecheck *)",
+      "Bash(pnpm build *)",
+      "Bash(pnpm lint *)",
+      "Bash(grep -n \"^    }$\\\\|^  ]\\\\|^  ],\\\\|^  scenarios:\\\\|^};\" /Users/thanhnguyen/Documents/Projects/nihongo-bjt/apps/web/src/features/career-rpg/mock-data.ts)",
+      "Bash(pnpm --filter web typecheck)",
+      "Bash(pnpm --filter web lint)",
+      "Bash(pnpm --filter web build)",
+      "Bash(pnpm --filter api typecheck)",
+      "Bash(echo \"Exit: $?\")",
+      "Bash(pnpm --filter admin typecheck)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('HomePage',{}\\), indent=2, ensure_ascii=False\\)\\)\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(list\\(d.keys\\(\\)\\)\\)\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('homepage',{}\\), indent=2, ensure_ascii=False\\)\\)\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('nav',{}\\), indent=2, ensure_ascii=False\\)\\)\")",
+      "Bash(python3 -c \"import sys; content=sys.stdin.read\\(\\); [print\\(l\\) for l in content.split\\('\\\\n'\\) if 'moduleKey' in l or 'targetRoute' in l or 'category' in l]\")",
+      "Bash(python3 -c \"import json; json.load\\(open\\('apps/web/messages/vi.json'\\)\\); print\\('OK'\\)\")",
+      "Bash(python3 -c \"import json; json.load\\(open\\('apps/web/messages/ja.json'\\)\\); print\\('OK'\\)\")",
+      "Bash(pnpm --filter @nihongo-bjt/web typecheck)",
+      "Bash(pnpm --filter @nihongo-bjt/web build)"
+    ]
+  }
+}

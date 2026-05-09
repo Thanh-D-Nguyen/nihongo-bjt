@@ -14,13 +14,33 @@ export type DeckStudySessionLabels = {
   deckStudyPrev: string;
   deckStudyProgressTpl: string;
   deckStudyTapToFlip: string;
+  exampleCopied: string;
+  exampleCopy: string;
+  exampleEmpty: string;
+  exampleFilterPlaceholder: string;
+  exampleHeading: string;
+  exampleManage: string;
+  exampleSourceGrammar: string;
+  exampleSourceKanji: string;
+  exampleSourceLexeme: string;
+  exampleToggleHide: string;
+  exampleToggleShow: string;
 };
 
 export type DeckStudyCard = {
   backText: string;
+  examples?: DeckStudyExample[];
   frontText: string;
   id: string;
   reading: string | null;
+};
+
+export type DeckStudyExample = {
+  id: string;
+  japaneseText: string;
+  reading: string | null;
+  sourceKind: "grammar" | "kanji" | "lexeme";
+  translationVi: string | null;
 };
 
 /**
@@ -29,6 +49,9 @@ export type DeckStudyCard = {
 export function DeckStudySession({ cards, labels }: { cards: DeckStudyCard[]; labels: DeckStudySessionLabels }) {
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
+  const [exampleFilter, setExampleFilter] = useState("");
+  const [examplesOpen, setExamplesOpen] = useState(true);
+  const [copiedExampleId, setCopiedExampleId] = useState<string | null>(null);
 
   const total = cards.length;
   const safeIndex = total === 0 ? 0 : Math.min(Math.max(0, index), total - 1);
@@ -42,6 +65,8 @@ export function DeckStudySession({ cards, labels }: { cards: DeckStudyCard[]; la
 
   useEffect(() => {
     setFlipped(false);
+    setExampleFilter("");
+    setCopiedExampleId(null);
   }, [safeIndex]);
 
   const goPrev = useCallback(() => {
@@ -102,6 +127,14 @@ export function DeckStudySession({ cards, labels }: { cards: DeckStudyCard[]; la
   const progressPct = total > 0 ? (displayIndex / total) * 100 : 0;
   const atStart = safeIndex <= 0;
   const atEnd = safeIndex >= total - 1;
+  const examples = current.examples ?? [];
+  const normalizedFilter = exampleFilter.trim().toLowerCase();
+  const filteredExamples = normalizedFilter
+    ? examples.filter((example) => {
+        const haystack = `${example.japaneseText} ${example.reading ?? ""} ${example.translationVi ?? ""}`.toLowerCase();
+        return haystack.includes(normalizedFilter);
+      })
+    : examples;
 
   const flipAriaLabel = flipped
     ? `${labels.deckStudyFaceBack}. ${labels.deckStudyTapToFlip}`
@@ -218,6 +251,106 @@ export function DeckStudySession({ cards, labels }: { cards: DeckStudyCard[]; la
           {labels.deckStudyKeyboardHint}
         </p>
       </div>
+
+      <section className="mt-6 overflow-hidden rounded-3xl border border-ink/10 bg-surface shadow-sm">
+        <div className="flex flex-col gap-3 border-b border-ink/8 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+          <div className="min-w-0">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-accent">
+              {labels.exampleManage}
+            </p>
+            <h3 className="mt-1 text-base font-bold text-ink">
+              {labels.exampleHeading}
+              <span className="ml-2 rounded-full bg-paper px-2 py-0.5 text-xs font-black tabular-nums text-muted">
+                {examples.length}
+              </span>
+            </h3>
+          </div>
+          <button
+            className="inline-flex min-h-10 items-center justify-center rounded-xl border border-ink/12 bg-paper px-3 text-xs font-black text-ink outline-none ring-offset-2 transition hover:bg-white focus-visible:ring-2 focus-visible:ring-accent"
+            onClick={() => setExamplesOpen((value) => !value)}
+            type="button"
+          >
+            {examplesOpen ? labels.exampleToggleHide : labels.exampleToggleShow}
+          </button>
+        </div>
+
+        {examplesOpen ? (
+          <div className="space-y-4 p-4 sm:p-5">
+            {examples.length > 0 ? (
+              <label className="block">
+                <span className="sr-only">{labels.exampleFilterPlaceholder}</span>
+                <input
+                  className="min-h-11 w-full rounded-2xl border border-ink/12 bg-paper px-4 text-sm font-semibold text-ink outline-none ring-offset-2 placeholder:text-muted/70 focus:border-accent focus:bg-white focus-visible:ring-2 focus-visible:ring-accent"
+                  onChange={(event) => setExampleFilter(event.target.value)}
+                  placeholder={labels.exampleFilterPlaceholder}
+                  type="search"
+                  value={exampleFilter}
+                />
+              </label>
+            ) : null}
+
+            {filteredExamples.length > 0 ? (
+              <ul className="grid gap-3">
+                {filteredExamples.map((example) => (
+                  <li
+                    className="rounded-2xl border border-ink/10 bg-paper/70 p-4 shadow-sm"
+                    key={example.id}
+                  >
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0">
+                        <span className="inline-flex rounded-full border border-accent/20 bg-accent-soft/40 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.16em] text-accent">
+                          {sourceLabel(example.sourceKind, labels)}
+                        </span>
+                        <p className="jp-text mt-2 text-base font-bold leading-relaxed text-ink" lang="ja">
+                          {example.japaneseText}
+                        </p>
+                        {example.reading ? (
+                          <p className="jp-text mt-1 text-sm leading-relaxed text-muted" lang="ja">
+                            {example.reading}
+                          </p>
+                        ) : null}
+                        {example.translationVi ? (
+                          <p className="mt-2 text-sm leading-relaxed text-ink/80">
+                            {example.translationVi}
+                          </p>
+                        ) : null}
+                      </div>
+                      <button
+                        className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-xl border border-ink/12 bg-surface px-3 text-xs font-black text-ink outline-none ring-offset-2 transition hover:bg-white focus-visible:ring-2 focus-visible:ring-accent"
+                        onClick={() => void copyExample(example)}
+                        type="button"
+                      >
+                        {copiedExampleId === example.id ? labels.exampleCopied : labels.exampleCopy}
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="rounded-2xl border border-dashed border-ink/12 bg-paper/60 px-4 py-6 text-center text-sm font-semibold leading-relaxed text-muted">
+                {labels.exampleEmpty}
+              </p>
+            )}
+          </div>
+        ) : null}
+      </section>
     </section>
   );
+
+  async function copyExample(example: DeckStudyExample) {
+    const text = [example.japaneseText, example.reading, example.translationVi].filter(Boolean).join("\n");
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedExampleId(example.id);
+      window.setTimeout(() => setCopiedExampleId(null), 1600);
+    } catch {
+      setCopiedExampleId(null);
+    }
+  }
+}
+
+function sourceLabel(kind: DeckStudyExample["sourceKind"], labels: DeckStudySessionLabels) {
+  if (kind === "grammar") return labels.exampleSourceGrammar;
+  if (kind === "kanji") return labels.exampleSourceKanji;
+  return labels.exampleSourceLexeme;
 }

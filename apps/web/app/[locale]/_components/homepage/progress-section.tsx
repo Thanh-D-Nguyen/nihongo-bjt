@@ -117,6 +117,19 @@ export function ProgressSection({
           {analytics.insight}
         </div>
       ) : null}
+
+      <div className="mt-3 rounded-[10px] border border-indigo-100 bg-gradient-to-br from-indigo-50 to-slate-50 p-4">
+        <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-indigo-600">
+          Career RPG
+        </p>
+        <p className="mt-1 text-sm font-semibold text-[#111827]">{labels.careerRpgTitle}</p>
+        <Link
+          href={`/${locale}/career`}
+          className="mt-3 inline-flex min-h-9 items-center rounded-lg border border-indigo-200 bg-white px-3 text-sm font-semibold text-indigo-700 shadow-sm outline-none transition hover:bg-indigo-50 focus-visible:ring-2 focus-visible:ring-indigo-400/40"
+        >
+          {labels.careerRpgCta} →
+        </Link>
+      </div>
     </section>
   );
 }

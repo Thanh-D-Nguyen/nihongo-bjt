@@ -100,3 +100,43 @@ export function QaSearch(props: SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
+export function QaStandup(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg aria-hidden fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" {...props}>
+      {/* Building body */}
+      <rect fill="currentColor" height="24" rx="3" width="30" x="9" y="18" />
+      {/* Roof bar */}
+      <rect fill="currentColor" height="4" opacity="0.6" rx="2" width="34" x="7" y="14" />
+      {/* Windows row 1 */}
+      <rect fill="white" height="4" opacity="0.45" rx="1" width="5" x="13" y="23" />
+      <rect fill="white" height="4" opacity="0.45" rx="1" width="5" x="22" y="23" />
+      <rect fill="white" height="4" opacity="0.45" rx="1" width="5" x="31" y="23" />
+      {/* Door */}
+      <rect fill="white" height="8" opacity="0.65" rx="1.5" width="7" x="20" y="34" />
+      {/* 出 character above roof */}
+      <text dominantBaseline="middle" fill="currentColor" fontFamily="serif" fontSize="9" fontWeight="bold" opacity="0.85" textAnchor="middle" x="24" y="11">
+        出
+      </text>
+    </svg>
+  );
+}
+
+export function QaReviewInbox(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg aria-hidden fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" {...props}>
+      {/* Notebook cover */}
+      <rect fill="currentColor" height="32" rx="4" width="26" x="11" y="8" />
+      {/* Spine */}
+      <rect fill="currentColor" height="32" opacity="0.45" rx="2.5" width="5" x="11" y="8" />
+      {/* Text lines */}
+      <rect fill="white" height="2" opacity="0.75" rx="0.5" width="14" x="19" y="18" />
+      <rect fill="white" height="2" opacity="0.55" rx="0.5" width="12" x="19" y="24" />
+      <rect fill="white" height="2" opacity="0.35" rx="0.5" width="10" x="19" y="30" />
+      {/* 振 character */}
+      <text dominantBaseline="middle" fill="white" fontFamily="serif" fontSize="7" fontWeight="bold" opacity="0.8" textAnchor="middle" x="25" y="13">
+        振
+      </text>
+    </svg>
+  );
+}
