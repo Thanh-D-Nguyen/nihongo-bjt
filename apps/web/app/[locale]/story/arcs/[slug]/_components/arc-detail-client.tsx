@@ -6,11 +6,6 @@ import { useEffect, useState } from "react";
 
 import { storyArcDetail } from "../../../../../../src/features/career-rpg/api";
 import { NpcRelationCard } from "../../../../../../src/features/career-rpg/components/npc-relation-card";
-import {
-  findArc,
-  findChapter,
-  mockStoryNpcs
-} from "../../../../../../src/features/career-rpg/mock-data";
 import { useCareerRpg } from "../../../../../../src/features/career-rpg/store";
 import type { CareerRpgLabels } from "../../../../../../src/features/career-rpg/i18n";
 import type { MissionArc, MissionChapter, NpcRelation, StoryNpc } from "../../../../../../src/features/career-rpg/types";
@@ -23,13 +18,12 @@ interface Props {
 
 export function ArcDetailClient({ labels, locale, slug }: Props) {
   const { npcRelations: fallbackRelations } = useCareerRpg();
-  const fallbackArc = findArc(slug);
-  const [arc, setArc] = useState<MissionArc | undefined>(fallbackArc);
-  const [chapters, setChapters] = useState<MissionChapter[]>(
-    fallbackArc?.chapterIds.map((id) => findChapter(id)).filter((chapter): chapter is MissionChapter => Boolean(chapter)) ?? []
-  );
+  const [arc, setArc] = useState<MissionArc | null>(null);
+  const [chapters, setChapters] = useState<MissionChapter[]>([]);
   const [npcRelations, setNpcRelations] = useState<NpcRelation[]>(fallbackRelations);
-  const [npcs, setNpcs] = useState<StoryNpc[]>(mockStoryNpcs);
+  const [npcs, setNpcs] = useState<StoryNpc[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -40,15 +34,31 @@ export function ArcDetailClient({ labels, locale, slug }: Props) {
         setChapters(detail.chapters);
         setNpcRelations(detail.npcRelations);
         setNpcs(detail.npcs);
+        setLoading(false);
       })
-      .catch(() => {
+      .catch((err) => {
         if (!alive) return;
-        setArc(fallbackArc);
+        setError(err instanceof Error ? err.message : "Failed to load arc details");
+        setLoading(false);
       });
     return () => {
       alive = false;
     };
-  }, [fallbackArc, slug]);
+  }, [slug]);
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-3xl px-4 py-10 text-sm text-[#4B5563]">Loading…</div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="mx-auto max-w-3xl px-4 py-10">
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>
+      </div>
+    );
+  }
 
   if (!arc) {
     return (
@@ -89,7 +99,7 @@ export function ArcDetailClient({ labels, locale, slug }: Props) {
         </h2>
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {arc.npcSlugs.map((slug) => {
-            const npc = npcs.find((n) => n.slug === slug) ?? mockStoryNpcs.find((n) => n.slug === slug);
+            const npc = npcs.find((n) => n.slug === slug);
             const relation = npcRelations.find((r) => r.npcSlug === slug);
             if (!npc || !relation) return null;
             return (

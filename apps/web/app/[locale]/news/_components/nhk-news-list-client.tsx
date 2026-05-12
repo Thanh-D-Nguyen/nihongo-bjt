@@ -4,6 +4,7 @@ import { Badge, EmptyState, ErrorState, LoadingSkeleton, TabButton, TabsList } f
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
+import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
 import { learnerApiFetchOptional } from "../../../../lib/learner-api";
 
 interface NhkArticle {
@@ -32,6 +33,8 @@ interface HomepageLabels {
   newsMinutesAgo: string;
   newsHoursAgo: string;
   newsDaysAgo: string;
+  newsLoadMore?: string;
+  newsRead?: string;
 }
 
 function timeAgo(dateStr: string, labels: HomepageLabels): string {
@@ -57,20 +60,28 @@ export function NhkNewsListClient({
   homepageLabels: HomepageLabels;
   locale: string;
 }) {
+  const auth = useKeycloakAuth();
+  const PAGE_SIZE = 12;
   const [activeType, setActiveType] = useState<"easy" | "normal">("easy");
   const [articles, setArticles] = useState<NhkArticle[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [readArticleIds, setReadArticleIds] = useState<Set<string>>(new Set());
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(false);
+    setHasMore(true);
     try {
       const res = await learnerApiFetchOptional(
-        `/api/nhk-news?type=${activeType}&limit=30&locale=${locale}`
+        `/api/nhk-news?type=${activeType}&limit=${PAGE_SIZE}&offset=0&locale=${locale}`
       );
       if (!res?.ok) throw new Error("Failed");
-      setArticles(await res.json());
+      const data: NhkArticle[] = await res.json();
+      setArticles(data);
+      setHasMore(data.length >= PAGE_SIZE);
     } catch {
       setError(true);
     } finally {
@@ -78,9 +89,38 @@ export function NhkNewsListClient({
     }
   }, [activeType, locale]);
 
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const res = await learnerApiFetchOptional(
+        `/api/nhk-news?type=${activeType}&limit=${PAGE_SIZE}&offset=${articles.length}&locale=${locale}`
+      );
+      if (!res?.ok) throw new Error("Failed");
+      const data: NhkArticle[] = await res.json();
+      setArticles((prev) => [...prev, ...data]);
+      setHasMore(data.length >= PAGE_SIZE);
+    } catch { /* silent */ } finally {
+      setLoadingMore(false);
+    }
+  }, [activeType, articles.length, hasMore, loadingMore, locale]);
+
   useEffect(() => {
     void load();
   }, [load]);
+
+  // Fetch reading progress for loaded articles
+  useEffect(() => {
+    if (!auth.userId || articles.length === 0) return;
+    const ids = articles.map((a) => a.id).join(",");
+    void learnerApiFetchOptional(`/api/nhk-news/reading/progress?articleIds=${encodeURIComponent(ids)}`)
+      .then(async (r) => {
+        if (!r?.ok) return;
+        const data: { articleId: string }[] = await r.json();
+        setReadArticleIds(new Set(data.map((d) => d.articleId)));
+      })
+      .catch(() => {});
+  }, [auth.userId, articles]);
 
   return (
     <main className="py-6">
@@ -139,6 +179,14 @@ export function NhkNewsListClient({
                     {activeType === "easy" ? homepageLabels.newsEasy : homepageLabels.newsNormal}
                   </Badge>
                   {article.difficulty ? <Badge>{article.difficulty}</Badge> : null}
+                  {readArticleIds.has(article.id) && (
+                    <Badge tone="accent">
+                      <span className="flex items-center gap-0.5">
+                        <svg className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" /></svg>
+                        {homepageLabels.newsRead ?? "Đã đọc"}
+                      </span>
+                    </Badge>
+                  )}
                 </div>
               </div>
               <div className="flex flex-1 flex-col p-4">
@@ -151,6 +199,19 @@ export function NhkNewsListClient({
               </div>
             </Link>
           ))}
+        </div>
+      )}
+
+      {!loading && !error && hasMore && articles.length > 0 && (
+        <div className="mt-6 flex justify-center">
+          <button
+            type="button"
+            disabled={loadingMore}
+            onClick={() => void loadMore()}
+            className="inline-flex min-h-11 items-center justify-center rounded-xl bg-ink px-6 text-sm font-semibold text-surface transition hover:bg-ink/90 disabled:opacity-50"
+          >
+            {loadingMore ? labels.loading : homepageLabels.newsLoadMore ?? "Xem thêm"}
+          </button>
         </div>
       )}
     </main>

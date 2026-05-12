@@ -25,6 +25,7 @@ type PublicCard = {
   levelLabel: string | null;
   metadata: Record<string, unknown> | null;
   module: { moduleKey: string };
+  slug: string;
   targetRoute: string | null;
   titleVi: string;
 };
@@ -86,10 +87,15 @@ export default async function DailyRadarModulePlaceholder({
           ) : null}
           {safeCards.length > 0 ? (
             <div className="space-y-3">
-              {safeCards.map((card) => (
+              {safeCards.map((card) => {
+                const isExternalRoute = card.targetRoute && !card.targetRoute.includes(`/modules/${moduleKey}`);
+                const href = isExternalRoute
+                  ? card.targetRoute!.replace(/^\/vi\//, `/${locale}/`)
+                  : `/${locale}/radar/${card.slug}`;
+                return (
                 <Link
                   className="block rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-slate-300 hover:bg-slate-50"
-                  href={(card.targetRoute ?? `/${locale}/modules/${moduleKey}`).replace(/^\/vi\//, `/${locale}/`)}
+                  href={href}
                   key={card.id}
                 >
                   <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-600">
@@ -101,7 +107,8 @@ export default async function DailyRadarModulePlaceholder({
                   <p className="mt-1 text-sm text-slate-700">{card.descriptionVi}</p>
                   <p className="mt-3 text-sm font-semibold text-blue-700">{card.ctaLabelVi}</p>
                 </Link>
-              ))}
+                );
+              })}
             </div>
           ) : null}
           <Link

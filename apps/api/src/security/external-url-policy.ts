@@ -19,16 +19,28 @@ function isPrivateIpv4(host: string) {
 }
 
 function isBlockedIpv6(host: string) {
-  const normalized = host.toLowerCase();
+  const normalized = host.toLowerCase().replace(/^\[|\]$/g, "");
   if (
     normalized === "::1" ||
-    normalized.startsWith("fc") ||
-    normalized.startsWith("fd") ||
-    normalized.startsWith("fe80:")
+    normalized === "::" ||
+    normalized === "::0" ||
+    normalized === "0:0:0:0:0:0:0:0" ||
+    normalized === "0:0:0:0:0:0:0:1"
   ) {
     return true;
   }
 
+  // Unique Local Addresses (ULA): fc00::/7 → fc or fd prefix
+  if (/^f[cd][0-9a-f]{2}:/.test(normalized)) {
+    return true;
+  }
+
+  // Link-local: fe80::/10
+  if (/^fe[89ab][0-9a-f]:/.test(normalized)) {
+    return true;
+  }
+
+  // IPv4-mapped IPv6: ::ffff:x.x.x.x
   if (normalized.startsWith("::ffff:")) {
     const mappedIpv4 = normalized.slice("::ffff:".length);
     return isPrivateIpv4(mappedIpv4);

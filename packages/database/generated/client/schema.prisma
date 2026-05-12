@@ -2499,3 +2499,103 @@ model FlashcardGenJob {
   @@map("flashcard_gen_job")
   @@schema("learning")
 }
+
+/**
+ * ── BJT Lessons ───────────────────────────────────────────
+ */
+
+model BjtLesson {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  levelCode     String   @map("level_code") @db.VarChar(4)
+  sortOrder     Int      @map("sort_order")
+  slug          String   @unique @db.VarChar(80)
+  titleVi       String   @map("title_vi") @db.VarChar(200)
+  titleJa       String   @map("title_ja") @db.VarChar(200)
+  descriptionVi String?  @map("description_vi")
+  descriptionJa String?  @map("description_ja")
+  status        String   @default("active") @db.VarChar(32)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  items BjtLessonItem[]
+
+  @@unique([levelCode, sortOrder], map: "uq_bjt_lesson_level_order")
+  @@index([levelCode, status], map: "idx_bjt_lesson_level_status")
+  @@map("bjt_lesson")
+  @@schema("curriculum")
+}
+
+model BjtLessonItem {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  lessonId    String   @map("lesson_id") @db.Uuid
+  contentType String   @map("content_type") @db.VarChar(20)
+  contentId   String   @map("content_id") @db.Uuid
+  sortOrder   Int      @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  lesson BjtLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([lessonId, contentType, contentId], map: "uq_bjt_lesson_item_unique")
+  @@index([lessonId, sortOrder], map: "idx_bjt_lesson_item_order")
+  @@index([contentType, contentId], map: "idx_bjt_lesson_item_content")
+  @@map("bjt_lesson_item")
+  @@schema("curriculum")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// NHK News — persistent article storage, reading progress, bookmarks
+// ═══════════════════════════════════════════════════════════════
+
+model NhkArticle {
+  id            String   @id @db.VarChar(64)
+  sourceType    String   @map("source_type") @db.VarChar(16) // "easy" | "normal"
+  title         String
+  titleWithRuby String?  @map("title_with_ruby")
+  url           String
+  imageUrl      String?  @map("image_url")
+  audioUrl      String?  @map("audio_url")
+  difficulty    String?  @db.VarChar(32)
+  bodyHtml      String?  @map("body_html")
+  bodyPlain     String?  @map("body_plain")
+  vocabulary    Json     @default("[]")
+  publishedAt   DateTime @map("published_at") @db.Timestamptz(6)
+  fetchedAt     DateTime @default(now()) @map("fetched_at") @db.Timestamptz(6)
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  readingProgress NhkReadingProgress[]
+  bookmarks       NhkBookmark[]
+
+  @@index([sourceType, publishedAt(sort: Desc)], map: "idx_nhk_article_source_published")
+  @@map("nhk_article")
+  @@schema("content")
+}
+
+model NhkReadingProgress {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String   @map("user_id") @db.VarChar(128)
+  articleId   String   @map("article_id") @db.VarChar(64)
+  readAt      DateTime @default(now()) @map("read_at") @db.Timestamptz(6)
+  readTimeSec Int?     @map("read_time_sec")
+  completed   Boolean  @default(false)
+
+  article NhkArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, articleId], map: "uq_nhk_reading_progress_user_article")
+  @@index([userId, readAt(sort: Desc)], map: "idx_nhk_reading_progress_user")
+  @@map("nhk_reading_progress")
+  @@schema("learning")
+}
+
+model NhkBookmark {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @map("user_id") @db.VarChar(128)
+  articleId String   @map("article_id") @db.VarChar(64)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  article NhkArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, articleId], map: "uq_nhk_bookmark_user_article")
+  @@index([userId, createdAt(sort: Desc)], map: "idx_nhk_bookmark_user")
+  @@map("nhk_bookmark")
+  @@schema("learning")
+}

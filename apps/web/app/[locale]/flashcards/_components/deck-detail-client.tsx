@@ -224,6 +224,18 @@ export function DeckDetailClient({
                 deckStudyFaceFront: labels.deckStudyFaceFront,
                 deckStudyFlipPrompt: labels.deckStudyFlipPrompt,
                 deckStudyKeyboardHint: labels.deckStudyKeyboardHint,
+                deckStudyModeFlip: labels.deckStudyModeFlip,
+                deckStudyModeShuffle: labels.deckStudyModeShuffle,
+                deckStudyModeQuiz: labels.deckStudyModeQuiz,
+                deckStudyQuizPrompt: labels.deckStudyQuizPrompt,
+                deckStudyQuizCorrect: labels.deckStudyQuizCorrect,
+                deckStudyQuizWrong: labels.deckStudyQuizWrong,
+                deckStudyQuizAnswer: labels.deckStudyQuizAnswer,
+                deckStudyComplete: labels.deckStudyComplete,
+                deckStudyCompleteDesc: labels.deckStudyCompleteDesc,
+                deckStudyCompleteAccuracy: labels.deckStudyCompleteAccuracy,
+                deckStudyRestart: labels.deckStudyRestart,
+                deckStudyStartReview: labels.deckStudyStartReview,
                 deckStudyModeNote: labels.deckStudyModeNote,
                 deckStudyNext: labels.deckStudyNext,
                 deckStudyPrev: labels.deckStudyPrev,
@@ -249,59 +261,24 @@ export function DeckDetailClient({
 
         <aside className="space-y-4 lg:sticky lg:top-20">
           <Card>
-            <CardContent className="space-y-4 p-4">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">{labels.deckDetailSectionCards}</p>
-                <p className="mt-1 text-3xl font-semibold tabular-nums text-ink">{sortedCards.length}</p>
-                <p className="text-sm text-muted">{labels.cards}</p>
+            <CardContent className="space-y-3 p-4">
+              <div className="flex items-center gap-3">
+                <span className="text-3xl font-black tabular-nums text-ink">{sortedCards.length}</span>
+                <span className="text-sm font-semibold text-muted">{labels.cards}</span>
               </div>
-              <p className="text-xs leading-relaxed text-muted">{labels.deckDetailAllCardsHint}</p>
+              <Link
+                className="inline-flex min-h-10 w-full items-center justify-center rounded-xl bg-ink px-4 text-sm font-bold text-surface shadow-sm transition hover:bg-ink/90"
+                href={reviewHref}
+              >
+                {labels.reviewDeck}
+              </Link>
             </CardContent>
           </Card>
 
-          <section aria-labelledby="deck-cards-heading">
-            <Card>
-              <CardContent className="p-0">
-                <div className="border-b border-ink/8 px-4 py-3">
-                  <h2 className="text-sm font-semibold text-ink" id="deck-cards-heading">
-                    {labels.deckDetailAllCardsToggleTpl.replace("{count}", String(sortedCards.length))}
-                  </h2>
-                  <p className="mt-1 text-xs leading-relaxed text-muted">{labels.deckDetailAllCardsHint}</p>
-                </div>
-                {sortedCards.length === 0 ? (
-                  <p className="px-4 py-8 text-center text-sm text-muted">{labels.empty}</p>
-                ) : (
-                  <ul className="max-h-[32rem] divide-y divide-ink/6 overflow-y-auto overscroll-contain">
-                    {sortedCards.map((row, i) => (
-                      <li className="px-4 py-3 transition hover:bg-paper/60" key={row.id}>
-                        <div className="flex items-start gap-3">
-                          <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-paper text-xs font-semibold tabular-nums text-muted">
-                            {i + 1}
-                          </span>
-                          <div className="min-w-0">
-                            <p className="text-sm font-semibold leading-snug text-ink" lang="ja">
-                              {row.card.frontText}
-                            </p>
-                            {row.card.reading ? (
-                              <p className="mt-0.5 text-xs text-muted" lang="ja">
-                                {row.card.reading}
-                              </p>
-                            ) : null}
-                            <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted">{row.card.backText}</p>
-                            {row.card.examples?.length ? (
-                              <p className="mt-1 text-[11px] font-semibold text-accent">
-                                {labels.deckStudyExampleHeading}: {row.card.examples.length}
-                              </p>
-                            ) : null}
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </CardContent>
-            </Card>
-          </section>
+          <CardListCollapsible
+            cards={sortedCards}
+            labels={labels}
+          />
         </aside>
       </div>
 
@@ -352,5 +329,63 @@ export function DeckDetailClient({
         </div>
       ) : null}
     </div>
+  );
+}
+
+/* ── Collapsible card list sidebar ── */
+function CardListCollapsible({
+  cards,
+  labels
+}: {
+  cards: DeckDetailCardRow[];
+  labels: DeckLabels;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <section aria-labelledby="deck-cards-heading">
+      <Card>
+        <CardContent className="p-0">
+          <button
+            className="flex w-full items-center justify-between border-b border-ink/8 px-4 py-3 text-left transition hover:bg-paper/60"
+            onClick={() => setOpen((v) => !v)}
+            type="button"
+          >
+            <h2 className="text-sm font-semibold text-ink" id="deck-cards-heading">
+              {labels.deckDetailAllCardsToggleTpl.replace("{count}", String(cards.length))}
+            </h2>
+            <span className={`text-xs font-bold text-muted transition-transform ${open ? "rotate-180" : ""}`}>▼</span>
+          </button>
+          {open ? (
+            cards.length === 0 ? (
+              <p className="px-4 py-8 text-center text-sm text-muted">{labels.empty}</p>
+            ) : (
+              <ul className="max-h-[32rem] divide-y divide-ink/6 overflow-y-auto overscroll-contain">
+                {cards.map((row, i) => (
+                  <li className="px-4 py-3 transition hover:bg-paper/60" key={row.id}>
+                    <div className="flex items-start gap-3">
+                      <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-paper text-xs font-semibold tabular-nums text-muted">
+                        {i + 1}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold leading-snug text-ink" lang="ja">
+                          {row.card.frontText}
+                        </p>
+                        {row.card.reading ? (
+                          <p className="mt-0.5 text-xs text-muted" lang="ja">
+                            {row.card.reading}
+                          </p>
+                        ) : null}
+                        <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted">{row.card.backText}</p>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )
+          ) : null}
+        </CardContent>
+      </Card>
+    </section>
   );
 }

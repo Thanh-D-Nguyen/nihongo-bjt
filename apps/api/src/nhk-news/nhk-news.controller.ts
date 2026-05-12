@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Get,
+  HttpException,
   Inject,
   NotFoundException,
   Param,
@@ -26,6 +27,43 @@ import type { KeycloakAuthenticatedUser } from "../keycloak/keycloak.types.js";
 import { resolveLearnerUserId } from "../keycloak/learner-identity.util.js";
 import { NhkNewsRepository, type NhkNewsType } from "./nhk-news.repository.js";
 
+/** Simple per-IP sliding window rate limiter for image proxy */
+const IMAGE_PROXY_WINDOW_MS = 60_000;
+const IMAGE_PROXY_MAX_PER_WINDOW = 60;
+const imageProxyHits = new Map<string, number[]>();
+
+function checkImageProxyRate(ip: string): boolean {
+  const now = Date.now();
+  const hits = (imageProxyHits.get(ip) ?? []).filter((t) => t > now - IMAGE_PROXY_WINDOW_MS);
+  if (hits.length >= IMAGE_PROXY_MAX_PER_WINDOW) {
+    imageProxyHits.set(ip, hits);
+    return false;
+  }
+  hits.push(now);
+  imageProxyHits.set(ip, hits);
+  // Evict stale IPs periodically
+  if (imageProxyHits.size > 10_000) {
+    for (const [k, v] of imageProxyHits) {
+      if (v.every((t) => t <= now - IMAGE_PROXY_WINDOW_MS)) imageProxyHits.delete(k);
+    }
+  }
+  return true;
+}
+
+/** Validate URL is an NHK domain */
+function isAllowedImageProxyUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return (
+      (parsed.protocol === "http:" || parsed.protocol === "https:") &&
+      (parsed.hostname === "www3.nhk.or.jp" || parsed.hostname === "www3.nhk.jp" ||
+       parsed.hostname === "nhkeasier.com" || parsed.hostname.endsWith(".nhk.or.jp"))
+    );
+  } catch {
+    return false;
+  }
+}
+
 @ApiTags("NHK News")
 @Controller("nhk-news")
 export class NhkNewsController {
@@ -44,18 +82,22 @@ export class NhkNewsController {
   @Get()
   @ApiOperation({ summary: "List recent NHK News articles. type=easy|normal; default comes from admin config." })
   @ApiQuery({ name: "limit", required: false, type: Number })
+  @ApiQuery({ name: "offset", required: false, type: Number })
   @ApiQuery({ name: "type", required: false, enum: ["easy", "normal"] })
   @ApiQuery({ name: "locale", required: false })
   async list(
     @Req() req: Request,
     @Query("limit") limitStr?: string,
+    @Query("offset") offsetStr?: string,
     @Query("type") typeStr?: string,
     @Query("locale") locale?: string
   ) {
-    const limit = limitStr ? Math.min(Math.max(parseInt(limitStr, 10) || 10, 1), 30) : 10;
+    const limit = limitStr ? Math.min(Math.max(parseInt(limitStr, 10) || 10, 1), 50) : 10;
+    const offset = offsetStr ? Math.max(parseInt(offsetStr, 10) || 0, 0) : 0;
     const type: NhkNewsType | "default" =
       typeStr === "easy" || typeStr === "normal" ? typeStr : "default";
-    const articles = await this.repo.listArticles(limit, type, locale === "ja" ? "ja" : "vi");
+    const all = await this.repo.listArticles(offset + limit, type, locale === "ja" ? "ja" : "vi");
+    const articles = all.slice(offset, offset + limit);
     return articles.map((article) =>
       article.sourceType === "normal" && !article.imageUrl
         ? { ...article, imageUrl: this.imageProxyUrl(req, article.url) }
@@ -65,8 +107,11 @@ export class NhkNewsController {
 
   @Get("image")
   @ApiOperation({ summary: "Resolve and redirect to the lead image for an NHK article URL." })
-  async image(@Query("articleUrl") articleUrl: string | undefined, @Res() res: Response) {
+  async image(@Req() req: Request, @Query("articleUrl") articleUrl: string | undefined, @Res() res: Response) {
     if (!articleUrl) throw new BadRequestException("articleUrl is required");
+    if (!isAllowedImageProxyUrl(articleUrl)) throw new BadRequestException("URL must be an NHK domain");
+    const clientIp = String(req.headers["x-forwarded-for"] ?? req.ip ?? "unknown").split(",")[0].trim();
+    if (!checkImageProxyRate(clientIp)) throw new HttpException("Too many image proxy requests", 429);
     const imageUrl = await this.repo.resolveArticleImage(articleUrl);
     if (!imageUrl) throw new NotFoundException("Image not found");
     res.setHeader("Cache-Control", "public, max-age=86400, stale-while-revalidate=604800");
@@ -126,6 +171,81 @@ export class NhkNewsController {
       throw new BadRequestException("No vocabulary or grammar found for this article");
     }
     return result;
+  }
+
+  // ─── Reading progress ───
+
+  @Post(":id/reading")
+  @UseGuards(KeycloakAuthGuard)
+  @ApiBearerAuth("bearer")
+  @ApiOperation({ summary: "Track reading progress for an NHK article" })
+  async trackReading(
+    @CurrentUser() user: KeycloakAuthenticatedUser | undefined,
+    @Param("id") articleId: string,
+    @Body() body: { readTimeSec?: number; completed?: boolean }
+  ) {
+    const userId = resolveLearnerUserId(user, undefined, { required: true })!;
+    const result = await this.repo.trackReading(userId, articleId, body.readTimeSec, body.completed);
+    if (!result) throw new NotFoundException("Article not found");
+    return result;
+  }
+
+  @Get("reading/progress")
+  @UseGuards(KeycloakAuthGuard)
+  @ApiBearerAuth("bearer")
+  @ApiOperation({ summary: "Get reading progress for current user" })
+  @ApiQuery({ name: "articleIds", required: false, description: "Comma-separated article IDs" })
+  async readingProgress(
+    @CurrentUser() user: KeycloakAuthenticatedUser | undefined,
+    @Query("articleIds") articleIdsStr?: string
+  ) {
+    const userId = resolveLearnerUserId(user, undefined, { required: true })!;
+    const articleIds = articleIdsStr?.split(",").filter(Boolean);
+    return this.repo.getReadingProgress(userId, articleIds);
+  }
+
+  // ─── Bookmarks ───
+
+  @Post(":id/bookmark")
+  @UseGuards(KeycloakAuthGuard)
+  @ApiBearerAuth("bearer")
+  @ApiOperation({ summary: "Toggle bookmark for an NHK article" })
+  async toggleBookmark(
+    @CurrentUser() user: KeycloakAuthenticatedUser | undefined,
+    @Param("id") articleId: string
+  ) {
+    const userId = resolveLearnerUserId(user, undefined, { required: true })!;
+    return this.repo.toggleBookmark(userId, articleId);
+  }
+
+  @Get(":id/bookmark")
+  @UseGuards(KeycloakAuthGuard)
+  @ApiBearerAuth("bearer")
+  @ApiOperation({ summary: "Check bookmark status for an NHK article" })
+  async checkBookmark(
+    @CurrentUser() user: KeycloakAuthenticatedUser | undefined,
+    @Param("id") articleId: string
+  ) {
+    const userId = resolveLearnerUserId(user, undefined, { required: true })!;
+    const bookmarked = await this.repo.isBookmarked(userId, articleId);
+    return { bookmarked };
+  }
+
+  @Get("bookmarks")
+  @UseGuards(KeycloakAuthGuard)
+  @ApiBearerAuth("bearer")
+  @ApiOperation({ summary: "List bookmarked NHK articles" })
+  @ApiQuery({ name: "limit", required: false, type: Number })
+  @ApiQuery({ name: "offset", required: false, type: Number })
+  async bookmarks(
+    @CurrentUser() user: KeycloakAuthenticatedUser | undefined,
+    @Query("limit") limitStr?: string,
+    @Query("offset") offsetStr?: string
+  ) {
+    const userId = resolveLearnerUserId(user, undefined, { required: true })!;
+    const limit = limitStr ? Math.min(Math.max(parseInt(limitStr, 10) || 20, 1), 50) : 20;
+    const offset = offsetStr ? Math.max(parseInt(offsetStr, 10) || 0, 0) : 0;
+    return this.repo.getBookmarks(userId, limit, offset);
   }
 }
 

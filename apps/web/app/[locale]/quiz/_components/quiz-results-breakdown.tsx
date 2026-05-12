@@ -8,6 +8,8 @@ export interface BreakdownQuestion {
   selectedOption: string;
   isCorrect: boolean;
   explanationVi: string;
+  skillTag?: string;
+  sectionCode?: string;
   remediationCardId?: string | null;
 }
 
@@ -35,7 +37,12 @@ interface BreakdownLabels {
   addToFlashcardError: string;
   loadingText: string;
   errorText: string;
+  filterAll?: string;
+  filterWrongOnly?: string;
+  filterCorrectOnly?: string;
 }
+
+type BreakdownFilter = "all" | "wrong" | "correct";
 
 export function QuizResultsBreakdown({
   breakdown,
@@ -49,6 +56,7 @@ export function QuizResultsBreakdown({
   const [addingCardId, setAddingCardId] = useState<string | null>(null);
   const [addedCards, setAddedCards] = useState<Set<string>>(new Set());
   const [cardError, setCardError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<BreakdownFilter>("all");
 
   const handleAddToFlashcard = async (questionId: string, remediationCardId: string) => {
     if (!userId) return;
@@ -80,7 +88,14 @@ export function QuizResultsBreakdown({
   };
 
   const correctCount = breakdown.breakdown.filter((q) => q.isCorrect).length;
+  const wrongCount = breakdown.breakdown.length - correctCount;
   const totalCount = breakdown.breakdown.length;
+
+  const filteredBreakdown = breakdown.breakdown.filter((q) => {
+    if (filter === "wrong") return !q.isCorrect;
+    if (filter === "correct") return q.isCorrect;
+    return true;
+  });
 
   return (
     <article className="space-y-4">
@@ -92,9 +107,38 @@ export function QuizResultsBreakdown({
         </span>
       </div>
 
+      {/* Filter pills */}
+      <div className="flex gap-1.5">
+        {([
+          { key: "all" as const, label: labels.filterAll ?? "Tất cả", count: totalCount },
+          { key: "wrong" as const, label: labels.filterWrongOnly ?? "Chỉ sai", count: wrongCount },
+          { key: "correct" as const, label: labels.filterCorrectOnly ?? "Chỉ đúng", count: correctCount },
+        ] as const).map(({ key, label, count }) => (
+          <button
+            key={key}
+            className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-bold transition ${
+              filter === key
+                ? key === "wrong"
+                  ? "bg-sakura/10 text-sakura ring-1 ring-sakura/30"
+                  : key === "correct"
+                    ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-300"
+                    : "bg-ink text-surface"
+                : "bg-ink/4 text-muted hover:bg-ink/8"
+            }`}
+            onClick={() => setFilter(key)}
+            type="button"
+          >
+            {label}
+            <span className="tabular-nums">({count})</span>
+          </button>
+        ))}
+      </div>
+
       {/* Question cards */}
       <div className="space-y-3">
-        {breakdown.breakdown.map((question, index) => (
+        {filteredBreakdown.map((question, index) => {
+          const originalIndex = breakdown.breakdown.indexOf(question);
+          return (
           <div
             key={question.questionId}
             className={`overflow-hidden rounded-2xl border bg-surface shadow-sm ${
@@ -113,7 +157,7 @@ export function QuizResultsBreakdown({
                       ? "bg-emerald-100 text-emerald-700"
                       : "bg-sakura/10 text-sakura"
                   }`}>
-                    {index + 1}
+                    {originalIndex + 1}
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium leading-relaxed text-ink">
@@ -164,7 +208,8 @@ export function QuizResultsBreakdown({
               )}
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Global error */}

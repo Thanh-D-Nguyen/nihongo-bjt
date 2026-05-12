@@ -1,7 +1,20 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { createPrismaClient, Prisma, type PrismaClient } from "@nihongo-bjt/database";
+import { todayDateKey } from "@nihongo-bjt/shared";
 
 const ACTIVE_STATUSES = new Set(["draft", "published", "archived"]);
+
+/* Map widget kinds → radar categories + display metadata */
+const WIDGET_KIND_META: Record<string, { category: string; icon: string; moduleTitle: string; moduleKey: string }> = {
+  time_greeting:   { category: "life",  icon: "⏰", moduleTitle: "Lời chào",        moduleKey: "daily_time_greeting" },
+  weather:         { category: "life",  icon: "🌤", moduleTitle: "Thời tiết",       moduleKey: "daily_weather" },
+  seasonal_word:   { category: "study", icon: "🌸", moduleTitle: "Từ theo mùa",    moduleKey: "daily_seasonal" },
+  business_phrase: { category: "work",  icon: "💼", moduleTitle: "Cụm từ công sở",  moduleKey: "daily_business" },
+  life_situation:  { category: "life",  icon: "🏠", moduleTitle: "Tình huống sống",  moduleKey: "daily_life_situation" },
+  life_housing:    { category: "life",  icon: "🏢", moduleTitle: "Nhà ở",           moduleKey: "daily_housing" },
+  life_banking:    { category: "money", icon: "🏦", moduleTitle: "Ngân hàng",       moduleKey: "daily_banking" },
+  life_tax:        { category: "money", icon: "📋", moduleTitle: "Thuế",            moduleKey: "daily_tax" },
+};
 
 type ListInput = {
   category?: string;
@@ -67,25 +80,60 @@ type CardInput = {
 export class DailyRadarRepository {
   private readonly prisma: PrismaClient = createPrismaClient();
 
-  async home() {
+  async home(locale: string = "vi") {
     const now = new Date();
     const where = this.publicCardWhere(now);
-    const cards = await this.prisma.dailyRadarCard.findMany({
+
+    // 1. Existing radar cards from dedicated tables
+    const radarCards = await this.prisma.dailyRadarCard.findMany({
       include: { moduleConfig: true },
       orderBy: [{ isPinned: "desc" }, { priority: "desc" }, { updatedAt: "desc" }],
       take: 100,
       where
     });
+    const serializedRadar = radarCards.map((card) => this.serializeCard(card));
+
+    // 2. Daily widget content items → virtual radar cards
+    const today = new Date(`${todayDateKey(now)}T00:00:00.000Z`);
+    const [widgetConfigs, contentItems] = await Promise.all([
+      this.prisma.dailyWidgetConfig.findMany({
+        orderBy: { displayOrder: "asc" },
+        where: { enabled: true, locale }
+      }),
+      this.prisma.dailyContentItem.findMany({
+        orderBy: { createdAt: "asc" },
+        where: { contentDate: today, locale, status: "published" }
+      })
+    ]);
+
+    const widgetCards = widgetConfigs
+      .map((config) => {
+        const item = contentItems.find((ci) => ci.widgetKind === config.widgetKind);
+        if (!item) return null;
+        const meta = WIDGET_KIND_META[config.widgetKind];
+        if (!meta) return null;
+        return this.widgetToCard(item, config, meta);
+      })
+      .filter((c): c is NonNullable<typeof c> => c !== null);
+
+    // 3. Merge: radar cards first (pinned/priority), then widget cards
+    const allCards = [...serializedRadar, ...widgetCards];
+
     const spotlight =
-      cards.find((card) => card.isSpotlight && card.moduleConfig.isSpotlightEligible) ??
-      cards.find((card) => card.isPinned) ??
-      cards[0] ??
+      radarCards.find((card) => card.isSpotlight && card.moduleConfig.isSpotlightEligible) ??
+      radarCards.find((card) => card.isPinned) ??
+      radarCards[0] ??
       null;
+
     const modules = await this.publicModules();
-    const categories = this.categoriesFrom(modules, cards);
+    const allCategories = new Set([
+      ...modules.map((m) => m.category),
+      ...allCards.map((c) => c.category)
+    ]);
+
     return {
-      cards: cards.map((card) => this.serializeCard(card)),
-      categories,
+      cards: allCards,
+      categories: [...allCategories],
       modules: modules.map((module) => this.serializeModule(module)),
       spotlight: spotlight ? this.serializeCard(spotlight) : null
     };
@@ -205,6 +253,12 @@ export class DailyRadarRepository {
     return row;
   }
 
+  async getCardBySlug(slug: string) {
+    const row = await this.prisma.dailyRadarCard.findUnique({ include: { moduleConfig: true }, where: { slug } });
+    if (!row) throw new NotFoundException("Daily Radar card not found");
+    return this.serializeCard(row);
+  }
+
   async createCard(actorId: string, data: CardInput) {
     this.assertStatus(data.status ?? "draft");
     this.assertDateWindow(data.startsAt, data.endsAt);
@@ -266,6 +320,59 @@ export class DailyRadarRepository {
     });
     await this.audit(actorId, "admin.daily_radar.card.duplicated", row.id, { sourceId: id }, row);
     return this.getCard(row.id);
+  }
+
+  /** Convert a daily widget content item into a virtual radar card shape */
+  private widgetToCard(
+    item: { id: string; title: string; japaneseText: string | null; readingText: string | null; explanationText: string | null; widgetKind: string; imageUrl: string | null; bodyMd: string | null },
+    config: { id: string; widgetKind: string; displayOrder: number },
+    meta: { category: string; icon: string; moduleTitle: string; moduleKey: string }
+  ) {
+    return {
+      id: item.id,
+      slug: `widget-${item.widgetKind}-${item.id.slice(0, 8)}`,
+      titleVi: item.title,
+      titleJa: item.japaneseText,
+      subtitleVi: null,
+      descriptionVi: item.explanationText ?? "",
+      recommendationReasonVi: null,
+      category: meta.category,
+      moduleType: "daily_widget",
+      badgeTextVi: null,
+      estimatedMinutes: 2,
+      levelLabel: null,
+      ctaLabelVi: "Xem ngay",
+      ctaLabelJa: "見る",
+      targetRoute: null,
+      targetEntityType: "daily_content_item",
+      targetEntityId: item.id,
+      imageUrl: item.imageUrl,
+      iconKey: meta.icon,
+      visualTheme: meta.category,
+      priority: 100 - config.displayOrder,
+      startsAt: null,
+      endsAt: null,
+      status: "published",
+      isSpotlight: false,
+      isPinned: false,
+      metadata: {},
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      moduleConfigId: config.id,
+      /* Embedded Japanese learning data */
+      japaneseText: item.japaneseText,
+      readingText: item.readingText,
+      bodyMd: item.bodyMd,
+      /* Virtual module info */
+      module: {
+        category: meta.category,
+        disclaimerJa: null,
+        disclaimerVi: null,
+        moduleKey: meta.moduleKey,
+        titleJa: item.japaneseText ?? item.title,
+        titleVi: meta.moduleTitle
+      }
+    };
   }
 
   private publicCardWhere(now: Date): Prisma.DailyRadarCardWhereInput {

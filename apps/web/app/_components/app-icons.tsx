@@ -161,3 +161,19 @@ export function IconMore(props: AppIconProps) {
     </AppIcon>
   );
 }
+
+export function IconDictionary(props: AppIconProps) {
+  return path("M4 19.5A2.5 2.5 0 0 1 6.5 17H20 M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15Z M8 7h8 M8 11h5", props);
+}
+
+export function IconKanji(props: AppIconProps) {
+  return path("M5 4h14 M12 4v16 M7 9h10 M7 14l5 6 5-6", props);
+}
+
+export function IconGrammar(props: AppIconProps) {
+  return path("M4 6h16 M4 10h12 M4 14h14 M4 18h10", props);
+}
+
+export function IconLevels(props: AppIconProps) {
+  return path("M3 21h18 M5 21V10h4v11 M10 21V6h4v15 M15 21V3h4v18", props);
+}

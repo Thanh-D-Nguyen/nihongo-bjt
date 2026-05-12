@@ -129,8 +129,10 @@ describe("QuizQuestionPanel reading assist wiring", () => {
 
     renderToStaticMarkup(
       <QuizQuestionPanel
+        flagged={false}
         labels={labels}
         onAnswer={() => undefined}
+        onToggleFlag={() => undefined}
         question={questionPayload}
         userId="11111111-1111-4111-8111-111111111111"
       />
@@ -148,7 +150,7 @@ describe("QuizQuestionPanel reading assist wiring", () => {
     capturedProps = null;
 
     const html = renderToStaticMarkup(
-      <QuizQuestionPanel labels={labels} onAnswer={() => undefined} question={questionPayload} userId={null} />
+      <QuizQuestionPanel flagged={false} labels={labels} onAnswer={() => undefined} onToggleFlag={() => undefined} question={questionPayload} userId={null} />
     );
 
     expect(capturedProps).toBeNull();

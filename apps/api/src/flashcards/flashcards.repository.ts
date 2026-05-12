@@ -1,7 +1,7 @@
 import { createPrismaClient, type Prisma } from "@nihongo-bjt/database";
 import { scheduleSrsReview, type SrsRating } from "@nihongo-bjt/shared";
 import { randomUUID } from "node:crypto";
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Injectable, Logger, NotFoundException } from "@nestjs/common";
 
 function parseAccessibilityMetadata(value: Prisma.JsonValue | null | undefined): {
   altText?: string;
@@ -20,6 +20,7 @@ function parseAccessibilityMetadata(value: Prisma.JsonValue | null | undefined):
 
 @Injectable()
 export class FlashcardsRepository {
+  private readonly logger = new Logger(FlashcardsRepository.name);
   private readonly prisma = createPrismaClient();
 
   decks(userId: string, limit: number) {
@@ -67,21 +68,26 @@ export class FlashcardsRepository {
         where: { id: deckId }
       });
 
-      let deletedUserFlashcardCount = 0;
-      for (const cardId of cardIds) {
-        const stillLinked = await tx.deckCard.count({
-          where: {
-            cardId,
-            deck: {
-              status: "active",
-              OR: [{ ownerUserId: userId }, { visibility: "public" }]
-            }
+      // Batch query: find which cards still have links to other active decks
+      const stillLinkedCards = await tx.deckCard.groupBy({
+        by: ["cardId"],
+        where: {
+          cardId: { in: cardIds },
+          deck: {
+            status: "active",
+            OR: [{ ownerUserId: userId }, { visibility: "public" }]
           }
-        });
-        if (stillLinked === 0) {
-          const del = await tx.userFlashcard.deleteMany({ where: { userId, cardId } });
-          deletedUserFlashcardCount += del.count;
         }
+      });
+      const stillLinkedCardIds = new Set(stillLinkedCards.map((r) => r.cardId));
+      const orphanedCardIds = cardIds.filter((id) => !stillLinkedCardIds.has(id));
+
+      let deletedUserFlashcardCount = 0;
+      if (orphanedCardIds.length > 0) {
+        const del = await tx.userFlashcard.deleteMany({
+          where: { userId, cardId: { in: orphanedCardIds } }
+        });
+        deletedUserFlashcardCount = del.count;
       }
 
       return {
@@ -107,8 +113,10 @@ export class FlashcardsRepository {
           userId
         }
       });
-    } catch {
-      /* Best-effort analytics; core archive already committed. */
+    } catch (error: unknown) {
+      this.logger.warn(
+        `Failed to record analytics for deck archive deckId=${deckId}: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
 
     return result;

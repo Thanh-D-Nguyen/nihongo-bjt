@@ -36,6 +36,18 @@ export type DeckLabels = DeckComposerLabels & {
   deckStudyFaceFront: string;
   deckStudyFlipPrompt: string;
   deckStudyKeyboardHint: string;
+  deckStudyModeFlip: string;
+  deckStudyModeShuffle: string;
+  deckStudyModeQuiz: string;
+  deckStudyQuizPrompt: string;
+  deckStudyQuizCorrect: string;
+  deckStudyQuizWrong: string;
+  deckStudyQuizAnswer: string;
+  deckStudyComplete: string;
+  deckStudyCompleteDesc: string;
+  deckStudyCompleteAccuracy: string;
+  deckStudyRestart: string;
+  deckStudyStartReview: string;
   deckStudyModeNote: string;
   deckStudyNext: string;
   deckStudyPrev: string;

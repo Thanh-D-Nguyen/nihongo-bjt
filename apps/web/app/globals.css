@@ -97,11 +97,23 @@
 body {
   margin: 0;
   position: relative;
+  background: linear-gradient(180deg, #F1F5F9 0%, #F8FAFC 25%, #FFFFFF 100%);
+  min-height: 100vh;
 }
+
+/* Thin custom scrollbar */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: #CBD5E1 transparent;
+}
+.scrollbar-thin::-webkit-scrollbar { height: 4px; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 999px; }
+.scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
 
 .site-root {
   min-height: 100vh;
   outline: none;
+  overflow-x: hidden;
 }
 
 .skip-to-content {
@@ -162,7 +174,7 @@ input.learner-topbar-search[type="search"] {
 @keyframes fadeSlideUp {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
@@ -170,9 +182,46 @@ input.learner-topbar-search[type="search"] {
   }
 }
 
+/* Staggered entrance classes — used by homepage sections */
+.hp-enter {
+  animation: fadeSlideUp 0.45s cubic-bezier(0, 0, 0.2, 1) both;
+}
+.hp-enter-d1 { animation-delay: 60ms; }
+.hp-enter-d2 { animation-delay: 120ms; }
+.hp-enter-d3 { animation-delay: 180ms; }
+.hp-enter-d4 { animation-delay: 240ms; }
+.hp-enter-d5 { animation-delay: 300ms; }
+.hp-enter-d6 { animation-delay: 360ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .hp-enter { animation: none; }
+}
+
+.hero-gradient-shift {
+  animation: gradientShift 12s ease infinite;
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes progressRing {
+  from { stroke-dashoffset: var(--ring-circumference, 251.2); }
+  to { stroke-dashoffset: var(--ring-offset, 0); }
+}
+
 @keyframes daruma-bob {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-4px); }
+}
+
+/* Gentle float for seasonal decorative elements (sakura, momiji, snowflakes) */
+@keyframes drift {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-6px) rotate(3deg); }
+  50% { transform: translateY(4px) rotate(-2deg); }
+  75% { transform: translateY(-3px) rotate(1deg); }
 }
 
 @keyframes drift-fall {

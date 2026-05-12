@@ -56,7 +56,7 @@ export type CompanionBotLabels = {
 
 const companionRive = {
   artboard: null,
-  src: "/assets/battle/bots/19442-36546-shiba-workout.riv",
+  src: "/assets/battle/bots/18912-35694-lil-guy.riv",
   stateMachine: null
 };
 

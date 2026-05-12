@@ -1,6 +1,6 @@
 import { paginationQuerySchema } from "@nihongo-bjt/shared";
-import { BadRequestException, Controller, Get, Inject, Query } from "@nestjs/common";
-import { ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from "@nestjs/swagger";
+import { BadRequestException, Controller, Get, Inject, Param, Query } from "@nestjs/common";
+import { ApiOkResponse, ApiOperation, ApiParam, ApiQuery, ApiTags } from "@nestjs/swagger";
 
 import { DocumentedHttpErrors } from "../openapi/common-decorators.js";
 import { ContentRepository } from "./content.repository.js";
@@ -33,6 +33,15 @@ export class ContentController {
     return this.contentRepository.lexemes(parsed.data.q, parsed.data.limit);
   }
 
+  @Get("lexemes/:id")
+  @ApiTags("Dictionary")
+  @ApiOperation({ summary: "Get a single lexeme with all senses and example sentences." })
+  @ApiParam({ name: "id", description: "Lexeme UUID" })
+  @DocumentedHttpErrors()
+  lexemeDetail(@Param("id") id: string) {
+    return this.contentRepository.lexemeDetail(id);
+  }
+
   @Get("kanji")
   @ApiTags("Kanji")
   @ApiOperation({ summary: "List kanji entries (search / pagination via `paginationQuerySchema`)." })
@@ -46,6 +55,15 @@ export class ContentController {
     return this.contentRepository.kanji(parsed.data.q, parsed.data.limit);
   }
 
+  @Get("kanji/:id")
+  @ApiTags("Kanji")
+  @ApiOperation({ summary: "Get a single kanji with examples and components." })
+  @ApiParam({ name: "id", description: "Kanji UUID" })
+  @DocumentedHttpErrors()
+  kanjiDetail(@Param("id") id: string) {
+    return this.contentRepository.kanjiDetail(id);
+  }
+
   @Get("grammar")
   @ApiTags("Grammar")
   @ApiOperation({ summary: "List grammar points." })
@@ -57,6 +75,15 @@ export class ContentController {
     }
 
     return this.contentRepository.grammar(parsed.data.q, parsed.data.limit);
+  }
+
+  @Get("grammar/:id")
+  @ApiTags("Grammar")
+  @ApiOperation({ summary: "Get a single grammar point with details and examples." })
+  @ApiParam({ name: "id", description: "GrammarPoint UUID" })
+  @DocumentedHttpErrors()
+  grammarDetail(@Param("id") id: string) {
+    return this.contentRepository.grammarDetail(id);
   }
 
   @Get("examples")

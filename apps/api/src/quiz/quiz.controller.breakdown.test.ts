@@ -34,6 +34,8 @@ describe("Quiz session breakdown endpoint", () => {
           selectedOption: "A",
           isCorrect: true,
           explanationVi: "Invoice",
+          skillTag: "vocabulary",
+          sectionCode: "RC",
           remediationCardId: undefined
         }
       ]

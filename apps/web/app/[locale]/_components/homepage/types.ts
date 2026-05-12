@@ -44,9 +44,8 @@ export interface HomepageLabels {
   newsMinutesAgo: string;
   newsHoursAgo: string;
   newsDaysAgo: string;
-  dailyTitle: string;
-  dailySubtitle: string;
-  dailyViewAll: string;
+  newsLoadMore?: string;
+  newsRead?: string;
   dailyRadar: DailyRadarLabels;
   progressTitle: string;
   progressSubtitle: string;
@@ -85,6 +84,13 @@ export interface HomepageLabels {
   careerRpgTitle: string;
   careerRpgRank: string;
   careerRpgCta: string;
+  bjtLevels: {
+    sectionTitle: string;
+    viewAll: string;
+    vocab: string;
+    kanji: string;
+    grammar: string;
+  };
 }
 
 export interface NhkArticle {
@@ -97,21 +103,6 @@ export interface NhkArticle {
   url: string;
   sourceType?: "easy" | "normal";
   sourceLabel?: string;
-}
-
-export interface DailyWidget {
-  config: { id: string; widgetKind: string };
-  item: DailyContentItem | null;
-}
-
-export interface DailyContentItem {
-  id: string;
-  title: string;
-  japaneseText: string | null;
-  readingText: string | null;
-  explanationText: string | null;
-  imageUrl?: string | null;
-  widgetKind: string;
 }
 
 export interface LearnerAnalytics {

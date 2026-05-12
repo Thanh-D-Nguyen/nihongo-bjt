@@ -43,6 +43,7 @@ export default async function FlashcardsPage({
           flashcardLabels={t.flashcards}
           initialMain={initialMain}
           locale={locale}
+          reviewSessionLabels={t.reviewSession}
         />
       </Suspense>
     </RequireKeycloakAuth>

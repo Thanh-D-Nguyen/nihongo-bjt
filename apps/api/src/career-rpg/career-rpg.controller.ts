@@ -1,8 +1,9 @@
-import { BadRequestException, Body, Controller, Get, Inject, Param, Post, Query, UseGuards } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Get, Inject, Param, Patch, Post, Query, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiTags } from "@nestjs/swagger";
 
 import { CurrentUser } from "../keycloak/current-user.decorator.js";
 import { KeycloakAuthGuard } from "../keycloak/keycloak-auth.guard.js";
+import { KeycloakAuthOptional } from "../keycloak/keycloak-public.decorator.js";
 import { resolveLearnerUserId } from "../keycloak/learner-identity.util.js";
 import type { KeycloakAuthenticatedUser } from "../keycloak/keycloak.types.js";
 import { DocumentedHttpErrors } from "../openapi/common-decorators.js";
@@ -10,6 +11,7 @@ import { CareerRpgService, DEV_CAREER_USER_ID } from "./career-rpg.service.js";
 
 @Controller("career")
 @UseGuards(KeycloakAuthGuard)
+@KeycloakAuthOptional()
 @ApiTags("Career RPG")
 @ApiBearerAuth("bearer")
 @DocumentedHttpErrors()
@@ -38,10 +40,22 @@ export class CareerController {
   ranks() {
     return this.svc.ranks();
   }
+
+  @Patch("me")
+  @ApiOperation({ summary: "Update the learner's Career RPG profile (e.g. Japanese work name)." })
+  @ApiBody({ description: "Fields to update: `{ jpWorkName?, userId? }`." })
+  updateProfile(@CurrentUser() user: KeycloakAuthenticatedUser | undefined, @Body() body: unknown) {
+    const raw = (body ?? {}) as Record<string, unknown>;
+    const userId = resolveCareerUserId(user, typeof raw.userId === "string" ? raw.userId : undefined);
+    return this.svc.updateProfile(userId, {
+      jpWorkName: typeof raw.jpWorkName === "string" ? raw.jpWorkName : undefined
+    });
+  }
 }
 
 @Controller("story")
 @UseGuards(KeycloakAuthGuard)
+@KeycloakAuthOptional()
 @ApiTags("Career RPG Story")
 @ApiBearerAuth("bearer")
 @DocumentedHttpErrors()

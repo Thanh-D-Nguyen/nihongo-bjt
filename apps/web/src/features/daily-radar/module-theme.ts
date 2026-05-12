@@ -1,11 +1,27 @@
 export function themeFor(theme?: string | null, category?: string) {
   const key = theme ?? category ?? "life";
-  if (key.includes("money")) {
+  if (key.includes("money") || key.includes("banking") || key.includes("tax")) {
     return {
       accent: "text-amber-700",
       badge: "bg-amber-100 text-amber-900 ring-amber-200",
       card: "border-amber-200 bg-gradient-to-br from-white to-amber-50",
       spotlight: "from-[#1f2933] via-[#5b4b2a] to-[#a16207]"
+    };
+  }
+  if (key.includes("work") || key.includes("business")) {
+    return {
+      accent: "text-orange-700",
+      badge: "bg-orange-100 text-orange-900 ring-orange-200",
+      card: "border-orange-200 bg-gradient-to-br from-white to-orange-50",
+      spotlight: "from-[#1f2933] via-[#9a3412] to-[#ea580c]"
+    };
+  }
+  if (key.includes("study") || key.includes("seasonal")) {
+    return {
+      accent: "text-pink-700",
+      badge: "bg-pink-100 text-pink-900 ring-pink-200",
+      card: "border-pink-200 bg-gradient-to-br from-white to-pink-50",
+      spotlight: "from-[#2d1b33] via-[#be185d] to-[#ec4899]"
     };
   }
   if (key.includes("ai")) {

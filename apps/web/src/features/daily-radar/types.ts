@@ -28,6 +28,12 @@ export type DailyRadarCard = {
   titleJa: string | null;
   titleVi: string;
   visualTheme: string | null;
+  /** Widget-sourced Japanese learning fields (present when moduleType === "daily_widget") */
+  japaneseText?: string | null;
+  readingText?: string | null;
+  bodyMd?: string | null;
+  iconKey?: string | null;
+  targetEntityId?: string | null;
 };
 
 export type DailyRadarHomePayload = {

@@ -82,8 +82,8 @@ export class DailyRadarController {
   @Get("home")
   @PublicRoute()
   @ApiOperation({ summary: "Japan Daily Radar home payload." })
-  home() {
-    return this.repo.home();
+  home(@Query("locale") locale?: string) {
+    return this.repo.home(locale || "vi");
   }
 
   @Get("cards")
@@ -98,6 +98,13 @@ export class DailyRadarController {
   @PublicRoute()
   modules() {
     return this.repo.publicModules();
+  }
+
+  @Get("cards/:slug")
+  @PublicRoute()
+  @ApiOperation({ summary: "Get a single radar card by slug." })
+  cardBySlug(@Param("slug") slug: string) {
+    return this.repo.getCardBySlug(slug);
   }
 }
 

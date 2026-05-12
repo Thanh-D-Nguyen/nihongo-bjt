@@ -33,6 +33,7 @@ export interface DeckComposerLabels {
   composerDragHandleAria: string;
   composerHeadline: string;
   composerImageAttached: string;
+  composerImageUrlLabel: string;
   composerImportAppend: string;
   composerMoveRowDown: string;
   composerMoveRowUp: string;
@@ -45,7 +46,11 @@ export interface DeckComposerLabels {
   composerNeedOneCard: string;
   composerNeedTitle: string;
   composerNoSearchResults: string;
+  composerProgressTpl: string;
+  composerReadingLabel: string;
+  composerReadingPlaceholder: string;
   composerRowImageUrlPlaceholder: string;
+  composerDuplicateHint: string;
   composerSearchPlaceholder: string;
   composerShortcutsBody: string;
   composerShortcutsTitle: string;
@@ -56,6 +61,11 @@ export interface DeckComposerLabels {
   composerUploadImage: string;
   composerUploading: string;
   composerVisibilityLabel: string;
+  composerEmojiLabel: string;
+  composerTemplateVocab: string;
+  composerTemplateKanji: string;
+  composerTemplateGrammar: string;
+  composerTemplateSentence: string;
   composerShortcuts: string;
   createDeckTitle: string;
   descLabel: string;
@@ -75,10 +85,11 @@ type DraftRow = {
   id: string;
   imageAssetId: string | null;
   imageUrl: string;
+  reading: string;
 };
 
 function emptyRow(): DraftRow {
-  return { back: "", front: "", id: crypto.randomUUID(), imageAssetId: null, imageUrl: "" };
+  return { back: "", front: "", id: crypto.randomUUID(), imageAssetId: null, imageUrl: "", reading: "" };
 }
 
 async function uploadLearnerImage(file: File, userId: string): Promise<string> {
@@ -146,6 +157,47 @@ export function DeckComposerPanel({
   const submittingRef = useRef(false);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
+  const [deckEmoji, setDeckEmoji] = useState("📚");
+  const [previewRowId, setPreviewRowId] = useState<string | null>(null);
+
+  // ── Progress: count filled cards ──
+  const filledCount = useMemo(() => rows.filter((r) => r.front.trim() && r.back.trim()).length, [rows]);
+
+  // ── Auto-add row when last row has content ──
+  useEffect(() => {
+    if (rows.length >= 200) return;
+    const last = rows[rows.length - 1];
+    if (last && (last.front.trim() || last.back.trim())) {
+      setRows((prev) => (prev.length < 200 ? [...prev, emptyRow()] : prev));
+    }
+  }, [rows]);
+
+  // ── Auto-save draft to localStorage ──
+  const draftKey = `nihongo_deck_draft_${userId}`;
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(draftKey);
+      if (saved) {
+        const d = JSON.parse(saved) as { titleVi?: string; titleJa?: string; descVi?: string; visibility?: string; emoji?: string; rows?: DraftRow[] };
+        if (d.titleVi) setTitleVi(d.titleVi);
+        if (d.titleJa) setTitleJa(d.titleJa);
+        if (d.descVi) setDescVi(d.descVi);
+        if (d.visibility === "public") setVisibility("public");
+        if (d.emoji) setDeckEmoji(d.emoji);
+        if (d.rows?.length) setRows(d.rows.map((r) => ({ ...emptyRow(), ...r, id: r.id || crypto.randomUUID() })));
+      }
+    } catch { /* ignore corrupt draft */ }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem(draftKey, JSON.stringify({ descVi, emoji: deckEmoji, rows, titleJa, titleVi, visibility }));
+      } catch { /* quota */ }
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [titleVi, titleJa, descVi, visibility, rows, deckEmoji, draftKey]);
 
   const filteredIndexes = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -164,7 +216,9 @@ export function DeckComposerPanel({
     setSearch("");
     setImportText("");
     setError(null);
-  }, []);
+    setDeckEmoji("📚");
+    try { localStorage.removeItem(draftKey); } catch { /* ok */ }
+  }, [draftKey]);
 
   const commitImport = useCallback(
     (mode: "append" | "replace") => {
@@ -182,7 +236,8 @@ export function DeckComposerPanel({
         front: r.frontText,
         id: crypto.randomUUID(),
         imageAssetId: null,
-        imageUrl: r.imageUrl ?? ""
+        imageUrl: r.imageUrl ?? "",
+        reading: ""
       }));
       if (mode === "replace") {
         setRows(next.length ? next : [emptyRow()]);
@@ -266,7 +321,8 @@ export function DeckComposerPanel({
           backText: r.back.trim(),
           frontText: r.front.trim(),
           imageUrl: r.imageUrl.trim() || undefined,
-          primaryImageAssetId: r.imageAssetId || undefined
+          primaryImageAssetId: r.imageAssetId || undefined,
+          reading: r.reading.trim() || undefined
         }))
         .filter((c) => c.frontText.length > 0 && c.backText.length > 0);
       if (cards.length === 0) {
@@ -422,6 +478,55 @@ export function DeckComposerPanel({
           </div>
         </div>
 
+        {/* ── Emoji picker ── */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-bold text-muted">{labels.composerEmojiLabel}</span>
+          <div className="flex flex-wrap gap-1">
+            {["📚", "🎯", "✨", "🌸", "🔥", "💎", "🎌", "📝", "🗾", "💼", "🏆", "🧠"].map((e) => (
+              <button
+                key={e}
+                type="button"
+                aria-pressed={deckEmoji === e}
+                className={`flex h-9 w-9 items-center justify-center rounded-lg text-lg transition ${
+                  deckEmoji === e ? "bg-accent-soft ring-2 ring-accent scale-110" : "hover:bg-paper"
+                }`}
+                onClick={() => setDeckEmoji(e)}
+              >
+                {e}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Templates ── */}
+        <div className="flex flex-wrap items-center gap-2">
+          {[
+            { label: labels.composerTemplateVocab, front: "日本語の単語…", back: "Nghĩa tiếng Việt…", reading: "ひらがな…" },
+            { label: labels.composerTemplateKanji, front: "漢字", back: "Nghĩa + cách đọc…", reading: "おんよみ / くんよみ" },
+            { label: labels.composerTemplateGrammar, front: "〜文法パターン", back: "Giải thích ngữ pháp…", reading: "" },
+            { label: labels.composerTemplateSentence, front: "日本語の文…", back: "Bản dịch tiếng Việt…", reading: "" }
+          ].map((tpl) => (
+            <button
+              key={tpl.label}
+              type="button"
+              className="rounded-lg border border-ink/10 bg-paper/80 px-3 py-1.5 text-[11px] font-bold text-muted transition hover:border-accent/30 hover:bg-accent-soft/30 hover:text-accent"
+              onClick={() => {
+                setRows((prev) => {
+                  const hasContent = prev.some((r) => r.front.trim() || r.back.trim());
+                  if (hasContent) return prev;
+                  return [
+                    { ...emptyRow(), front: tpl.front, back: tpl.back, reading: tpl.reading },
+                    { ...emptyRow(), front: tpl.front, back: tpl.back, reading: tpl.reading },
+                    emptyRow()
+                  ];
+                });
+              }}
+            >
+              {tpl.label}
+            </button>
+          ))}
+        </div>
+
         <div className="space-y-3">
           <div>
             <label className="mb-1 block text-xs font-bold text-ink" htmlFor={`${formId}-tv`}>
@@ -509,6 +614,19 @@ export function DeckComposerPanel({
         </button>
       </div>
 
+      {/* ── Progress bar ── */}
+      <div className="flex items-center gap-3">
+        <div className="h-2 flex-1 overflow-hidden rounded-full bg-ink/8">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-leaf to-accent transition-all duration-500 ease-out"
+            style={{ width: `${rows.length > 0 ? Math.min(100, (filledCount / rows.length) * 100) : 0}%` }}
+          />
+        </div>
+        <span className="shrink-0 text-xs font-black tabular-nums text-muted">
+          {labels.composerProgressTpl.replace("{filled}", String(filledCount)).replace("{total}", String(rows.length))}
+        </span>
+      </div>
+
       {error ? (
         <p className="text-sm text-sakura" role="alert">
           {error}
@@ -523,10 +641,13 @@ export function DeckComposerPanel({
           const r = rows[rowIndex]!;
           const displayNum = rowIndex + 1;
           const isDropTarget = dragOverIndex === rowIndex;
-            const isDragging = draggingIndex === rowIndex;
-            return (
+          const isDragging = draggingIndex === rowIndex;
+          const isDuplicate = r.front.trim().length > 0 && rows.some((o, oi) => oi !== rowIndex && o.front.trim().toLowerCase() === r.front.trim().toLowerCase());
+          const [showImageUrl, setShowImageUrl] = [r.imageUrl !== undefined, null]; // inline url always visible via field
+          return (
               <div
                 className={`min-w-0 rounded-xl border bg-white p-3 sm:p-4 transition-all duration-200 ease-in-out shadow-sm ${
+                  isDuplicate ? "border-amber-400/60 ring-1 ring-amber-300/30" :
                   isDropTarget ? "border-leaf ring-2 ring-leaf/25 scale-[1.01] shadow-leaf/10" : "border-ink/8"
                 } ${isDragging ? "opacity-55" : ""}`}
                 key={r.id}
@@ -542,6 +663,9 @@ export function DeckComposerPanel({
                 onFocus={() => setDragOverIndex(rowIndex)}
                 onBlur={() => setDragOverIndex(null)}
               >
+                {isDuplicate ? (
+                  <p className="mb-2 text-[11px] font-bold text-amber-600">⚠ {labels.composerDuplicateHint}</p>
+                ) : null}
                 <div className="mb-2.5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-ink/6 pb-2.5">
                   <div className="flex min-w-0 items-center gap-1 flex-wrap">
                     <span
@@ -586,6 +710,18 @@ export function DeckComposerPanel({
                       </svg>
                     </button>
                   </div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      aria-label={`Preview ${displayNum}`}
+                      className="shrink-0 rounded-md p-1.5 text-muted/50 hover:bg-accent-soft hover:text-accent focus-visible:ring-2 focus-visible:ring-accent"
+                      onClick={() => setPreviewRowId(r.id)}
+                      type="button"
+                    >
+                      <svg aria-hidden className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" strokeLinecap="round" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                    </button>
                     <button
                       aria-label={`${labels.composerDeleteRowAria} ${displayNum}`}
                       className="shrink-0 rounded-md p-1.5 text-muted/50 hover:bg-sakura/10 hover:text-sakura focus-visible:ring-2 focus-visible:ring-sakura"
@@ -596,20 +732,22 @@ export function DeckComposerPanel({
                       }
                       type="button"
                     >
-                    <svg aria-hidden className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path d="M3 6h18M8 6V4h8v2M19 6v14H5V6" strokeLinecap="round" />
-                      <path d="M10 11v6M14 11v6" strokeLinecap="round" />
-                    </svg>
-                  </button>
+                      <svg aria-hidden className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path d="M3 6h18M8 6V4h8v2M19 6v14H5V6" strokeLinecap="round" />
+                        <path d="M10 11v6M14 11v6" strokeLinecap="round" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_1fr_auto]">
-                  <div className="min-w-0">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {/* ── Front (JP) — accent bg ── */}
+                  <div className="min-w-0 rounded-lg border border-accent/15 bg-accent-soft/20 p-2.5">
                     <label className="sr-only" htmlFor={`${formId}-f-${r.id}`}>
                       {labels.composerTermPlaceholder}
                     </label>
                     <textarea
-                      className={`${inputClass} min-h-[5rem] resize-y py-2`}
+                      className="min-h-[4.5rem] w-full resize-y rounded-lg border border-accent/20 bg-white/80 px-3 py-2 text-sm text-ink outline-none transition focus:border-accent focus:ring-1 focus:ring-accent"
                       id={`${formId}-f-${r.id}`}
                       lang="ja"
                       maxLength={500}
@@ -625,16 +763,48 @@ export function DeckComposerPanel({
                       placeholder={labels.composerTermPlaceholder}
                       value={r.front}
                     />
-                    <p className="mt-1.5 text-[10px] font-black uppercase tracking-wide text-muted">
-                      {labels.composerTermLabel}
-                    </p>
+                    <div className="mt-1.5 flex items-center justify-between">
+                      <p className="text-[10px] font-black uppercase tracking-wide text-accent">
+                        {labels.composerTermLabel}
+                      </p>
+                      <span className={`text-[10px] tabular-nums ${r.front.length > 450 ? "font-bold text-sakura" : "text-muted/60"}`}>
+                        {r.front.length}/500
+                      </span>
+                    </div>
+                    {/* Reading / furigana */}
+                    <input
+                      className="mt-2 min-h-9 w-full rounded-lg border border-accent/15 bg-white/60 px-3 text-xs text-ink outline-none transition placeholder:text-muted/40 focus:border-accent focus:ring-1 focus:ring-accent"
+                      id={`${formId}-r-${r.id}`}
+                      lang="ja"
+                      maxLength={300}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setRows((prev) => {
+                          const next = [...prev];
+                          const x = next[rowIndex];
+                          if (x) next[rowIndex] = { ...x, reading: v };
+                          return next;
+                        });
+                      }}
+                      placeholder={labels.composerReadingPlaceholder}
+                      type="text"
+                      value={r.reading}
+                    />
+                    <div className="mt-1 flex items-center justify-between">
+                      <p className="text-[10px] font-bold text-accent/70">{labels.composerReadingLabel}</p>
+                      <span className={`text-[10px] tabular-nums ${r.reading.length > 270 ? "font-bold text-sakura" : "text-muted/50"}`}>
+                        {r.reading.length}/300
+                      </span>
+                    </div>
                   </div>
-                  <div className="min-w-0">
+
+                  {/* ── Back (VI/meaning) — normal bg ── */}
+                  <div className="min-w-0 rounded-lg border border-ink/8 bg-surface/60 p-2.5">
                     <label className="sr-only" htmlFor={`${formId}-b-${r.id}`}>
                       {labels.composerDefinitionPlaceholder}
                     </label>
                     <textarea
-                      className={`${inputClass} min-h-[5rem] resize-y py-2`}
+                      className="min-h-[4.5rem] w-full resize-y rounded-lg border border-ink/12 bg-white/80 px-3 py-2 text-sm text-ink outline-none transition focus:border-leaf focus:ring-1 focus:ring-leaf"
                       id={`${formId}-b-${r.id}`}
                       maxLength={2000}
                       onChange={(e) => {
@@ -649,71 +819,71 @@ export function DeckComposerPanel({
                       placeholder={labels.composerDefinitionPlaceholder}
                       value={r.back}
                     />
-                    <p className="mt-1.5 text-[10px] font-black uppercase tracking-wide text-muted">
-                      {labels.composerDefinitionLabel}
-                    </p>
-                  </div>
-
-                  <div className="flex flex-col items-center gap-2 sm:w-24">
-                    <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-dashed border-ink/15 bg-surface transition-all duration-200 hover:border-leaf/40 cursor-pointer group">
-                      {r.imageUrl.trim() ? (
-                        <img
-                          alt=""
-                          className="h-full w-full object-cover"
-                          src={r.imageUrl.trim()}
-                        />
-                      ) : r.imageAssetId ? (
-                        <span className="px-1 text-center text-[10px] font-bold text-leaf">{labels.composerImageAttached}</span>
-                      ) : (
-                        <svg aria-hidden className="h-7 w-7 text-muted/40 group-hover:text-leaf" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <rect height="16" rx="2" width="18" x="3" y="4" strokeWidth="1.5" />
-                          <circle cx="8.5" cy="9.5" r="1.5" />
-                          <path d="m21 15-5-5L5 21" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
-                        </svg>
-                      )}
-                      {uploadingRowId === r.id ? (
-                        <div className="absolute inset-0 flex items-center justify-center bg-paper/80 text-[10px] font-bold text-ink">
-                          {labels.composerUploading}
-                        </div>
-                      ) : null}
-                      {/* Overlay trigger for popover/modal */}
-                      <button
-                        type="button"
-                        aria-label={labels.composerUploadImage}
-                        className="absolute inset-0 z-10 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
-                        onClick={() => {
-                          const el = document.getElementById(`${formId}-img-${r.id}`);
-                          if (el) el.click();
-                        }}
-                        tabIndex={0}
-                      />
+                    <div className="mt-1.5 flex items-center justify-between">
+                      <p className="text-[10px] font-black uppercase tracking-wide text-muted">
+                        {labels.composerDefinitionLabel}
+                      </p>
+                      <span className={`text-[10px] tabular-nums ${r.back.length > 1800 ? "font-bold text-sakura" : "text-muted/60"}`}>
+                        {r.back.length}/2000
+                      </span>
                     </div>
-                    <input
-                      accept="image/jpeg,image/png,image/webp,image/gif"
-                      className="sr-only"
-                      id={`${formId}-img-${r.id}`}
-                      onChange={(e) => void handleRowFile(r.id, e)}
-                      type="file"
-                    />
+                  </div>
+                </div>
+
+                {/* ── Image area: upload + inline URL ── */}
+                <div className="mt-3 flex flex-wrap items-center gap-3">
+                  <div className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-dashed border-ink/15 bg-surface transition-all duration-200 hover:border-leaf/40 cursor-pointer group">
+                    {r.imageUrl.trim() ? (
+                      <img alt="" className="h-full w-full object-cover" src={r.imageUrl.trim()} />
+                    ) : r.imageAssetId ? (
+                      <span className="px-1 text-center text-[9px] font-bold text-leaf">{labels.composerImageAttached}</span>
+                    ) : (
+                      <svg aria-hidden className="h-5 w-5 text-muted/40 group-hover:text-leaf" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <rect height="16" rx="2" width="18" x="3" y="4" strokeWidth="1.5" />
+                        <circle cx="8.5" cy="9.5" r="1.5" />
+                        <path d="m21 15-5-5L5 21" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
+                      </svg>
+                    )}
+                    {uploadingRowId === r.id ? (
+                      <div className="absolute inset-0 flex items-center justify-center bg-paper/80 text-[9px] font-bold text-ink">
+                        {labels.composerUploading}
+                      </div>
+                    ) : null}
                     <button
                       type="button"
-                      className="text-[11px] text-muted underline hover:text-leaf focus-visible:text-leaf"
-                      style={{padding: 0, minHeight: 0, minWidth: 0}}
+                      aria-label={labels.composerUploadImage}
+                      className="absolute inset-0 z-10 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
                       onClick={() => {
-                        const url = prompt('Dán URL ảnh hoặc tìm trên Google Images:', r.imageUrl || '');
-                        if (url && url.trim()) {
-                          setRows((prev) => {
-                            const next = [...prev];
-                            const x = next[rowIndex];
-                            if (x) next[rowIndex] = { ...x, imageAssetId: null, imageUrl: url.trim() };
-                            return next;
-                          });
-                        }
+                        const el = document.getElementById(`${formId}-img-${r.id}`);
+                        if (el) el.click();
                       }}
-                    >
-                      Dán URL ảnh / Google
-                    </button>
+                      tabIndex={0}
+                    />
                   </div>
+                  <input
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    className="sr-only"
+                    id={`${formId}-img-${r.id}`}
+                    onChange={(e) => void handleRowFile(r.id, e)}
+                    type="file"
+                  />
+                  <input
+                    className="min-h-9 min-w-0 flex-1 rounded-lg border border-ink/10 bg-paper/60 px-3 text-xs text-ink outline-none transition placeholder:text-muted/40 focus:border-leaf focus:ring-1 focus:ring-leaf"
+                    maxLength={2000}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setRows((prev) => {
+                        const next = [...prev];
+                        const x = next[rowIndex];
+                        if (x) next[rowIndex] = { ...x, imageAssetId: null, imageUrl: v };
+                        return next;
+                      });
+                    }}
+                    placeholder={labels.composerRowImageUrlPlaceholder}
+                    type="url"
+                    value={r.imageUrl}
+                  />
+                  <span className="text-[10px] font-bold text-muted/50">{labels.composerImageUrlLabel}</span>
                 </div>
               </div>
             );
@@ -788,6 +958,54 @@ export function DeckComposerPanel({
           </div>
         </div>
       ) : null}
+
+      {/* ── Live preview modal ── */}
+      {previewRowId ? (() => {
+        const pr = rows.find((r) => r.id === previewRowId);
+        if (!pr) return null;
+        return (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4"
+            onClick={() => setPreviewRowId(null)}
+            role="presentation"
+          >
+            <div
+              className="w-full max-w-sm animate-in fade-in zoom-in-95 duration-200"
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+            >
+              <div className="overflow-hidden rounded-3xl border border-ink/10 bg-paper shadow-xl">
+                <div className="border-b border-accent/15 bg-accent-soft/30 p-5">
+                  <span className="inline-flex rounded-full border border-accent/25 bg-accent-soft/50 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-accent">
+                    {labels.composerTermLabel}
+                  </span>
+                  <p className="mt-3 text-2xl font-black text-ink" lang="ja">
+                    {pr.front || "—"}
+                  </p>
+                  {pr.reading ? (
+                    <p className="mt-1 text-sm font-medium text-muted" lang="ja">{pr.reading}</p>
+                  ) : null}
+                </div>
+                <div className="p-5">
+                  <span className="inline-flex rounded-full border border-leaf/35 bg-leaf/15 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-leaf">
+                    {labels.composerDefinitionLabel}
+                  </span>
+                  <p className="mt-3 text-base font-semibold leading-relaxed text-ink">
+                    {pr.back || "—"}
+                  </p>
+                </div>
+              </div>
+              <button
+                className={`${btnPrimary} mt-3 w-full`}
+                onClick={() => setPreviewRowId(null)}
+                type="button"
+              >
+                {labels.composerCloseShortcuts}
+              </button>
+            </div>
+          </div>
+        );
+      })() : null}
     </div>
   );
 }

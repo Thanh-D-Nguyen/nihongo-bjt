@@ -53,7 +53,7 @@ export function ScrollStrip({ children, className }: { children: ReactNode; clas
 
       {/* Scroll container */}
       <div
-        className={`flex gap-3 overflow-x-auto scrollbar-thin pb-2 ${className ?? ""}`}
+        className={`flex snap-x snap-mandatory gap-3 overflow-x-auto scrollbar-thin pb-2 ${className ?? ""}`}
         ref={ref}
       >
         {children}

@@ -24,6 +24,7 @@ import { HealthModule } from "./health/health.module.js";
 import { LearnerModule } from "./learner/learner.module.js";
 import { LearningModule } from "./learning/learning.module.js";
 import { LegalModule } from "./legal/legal.module.js";
+import { LevelsModule } from "./levels/levels.module.js";
 import { PrivacyModule } from "./privacy/privacy.module.js";
 import { MediaModule } from "./media/media.module.js";
 import { MonetizationModule } from "./monetization/monetization.module.js";
@@ -69,7 +70,8 @@ import { SearchModule } from "./search/search.module.js";
     ExerciseModule,
     GamificationModule,
     CardgenModule,
-    CareerRpgModule
+    CareerRpgModule,
+    LevelsModule
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

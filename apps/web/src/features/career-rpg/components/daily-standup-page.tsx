@@ -5,13 +5,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { careerMe, clockIn, storyArcs } from "../api";
-import { findChapter, findArc, mockMissionArcs } from "../mock-data";
+import { careerMe, clockIn, storyArcs, storyChapter } from "../api";
 import { timeOfDayBucket } from "../helpers";
 import { useCareerRpg } from "../store";
 import type { CareerRpgLabels } from "../i18n";
-import type { MissionArc, UserCareerState } from "../types";
+import type { MissionArc, MissionChapter, UserCareerState } from "../types";
 
+import { CareerNameOnboarding, needsNameOnboarding } from "./career-name-onboarding";
 import { CareerRankCard } from "./career-rank-card";
 
 interface Props {
@@ -23,9 +23,12 @@ export function DailyStandupPage({ labels, locale }: Props) {
   const { career: fallbackCareer, reset } = useCareerRpg();
   const router = useRouter();
   const [career, setCareer] = useState<UserCareerState>(fallbackCareer);
-  const [arcs, setArcs] = useState<MissionArc[]>(mockMissionArcs);
+  const [arcs, setArcs] = useState<MissionArc[]>([]);
+  const [nextChapter, setNextChapter] = useState<MissionChapter | null>(null);
+  const [loading, setLoading] = useState(true);
   const [isClockingIn, setIsClockingIn] = useState(false);
   const [bucket, setBucket] = useState<"morning" | "afternoon" | "evening">("morning");
+  const [showNamePicker, setShowNamePicker] = useState(false);
 
   useEffect(() => {
     setBucket(timeOfDayBucket());
@@ -34,20 +37,31 @@ export function DailyStandupPage({ labels, locale }: Props) {
   useEffect(() => {
     let alive = true;
     void Promise.all([careerMe(), storyArcs()])
-      .then(([careerResponse, arcsResponse]) => {
+      .then(async ([careerResponse, arcsResponse]) => {
         if (!alive) return;
         setCareer(careerResponse.state);
         setArcs(arcsResponse);
+        if (needsNameOnboarding(careerResponse.state)) {
+          setShowNamePicker(true);
+        }
+        // Find the first active arc with chapters and fetch next chapter detail
+        const active = arcsResponse.find((a) => a.status === "active" && a.chapterIds.length > 0);
+        const chId = active ? (active.chapterIds[active.completedChapters] ?? active.chapterIds[0]) : null;
+        if (chId) {
+          try {
+            const detail = await storyChapter(chId);
+            if (alive) setNextChapter(detail.chapter);
+          } catch { /* chapter detail optional */ }
+        }
+        if (alive) setLoading(false);
       })
       .catch(() => {
-        if (!alive) return;
-        setCareer(fallbackCareer);
-        setArcs(mockMissionArcs);
+        if (alive) setLoading(false);
       });
     return () => {
       alive = false;
     };
-  }, [fallbackCareer]);
+  }, []);
 
   const greeting =
     bucket === "morning"
@@ -62,12 +76,10 @@ export function DailyStandupPage({ labels, locale }: Props) {
         ? labels.daily.mentorMessageAfternoon
         : labels.daily.mentorMessageEvening;
 
-  const activeArc = arcs.find((a) => a.status === "active");
-  const todayChapterId = activeArc?.chapterIds[activeArc.completedChapters] ?? activeArc?.chapterIds[0];
-  const todayChapter = todayChapterId ? findChapter(todayChapterId) : undefined;
-  const todayArc = todayChapter ? findArc(todayChapter.arcSlug) : activeArc;
-  const todayTitleJa = todayChapter?.titleJa ?? activeArc?.titleJa;
-  const todayTitleVi = todayChapter?.titleVi ?? activeArc?.titleVi;
+  const activeArc = arcs.find((a) => a.status === "active" && a.chapterIds.length > 0);
+  const todayChapterId = activeArc ? (activeArc.chapterIds[activeArc.completedChapters] ?? activeArc.chapterIds[0]) : undefined;
+  const todayTitleJa = nextChapter?.titleJa ?? activeArc?.titleJa;
+  const todayTitleVi = nextChapter?.titleVi ?? activeArc?.titleVi;
 
   async function handleClockIn() {
     if (!todayChapterId || isClockingIn) return;
@@ -85,6 +97,15 @@ export function DailyStandupPage({ labels, locale }: Props) {
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-10">
+      {showNamePicker ? (
+        <CareerNameOnboarding
+          labels={labels.onboarding}
+          onComplete={(updated) => {
+            setShowNamePicker(false);
+            if (updated) setCareer(updated);
+          }}
+        />
+      ) : null}
       <header className="flex flex-col gap-1">
         <p className="text-[11px] uppercase tracking-[0.22em] text-[#6B7280]">
           {labels.brand.companyJa}
@@ -116,7 +137,7 @@ export function DailyStandupPage({ labels, locale }: Props) {
               </h2>
             </div>
             <ul className="space-y-2.5 text-sm text-white/90">
-              {todayTitleJa && todayArc ? (
+              {todayTitleJa && activeArc ? (
                 <li className="flex items-start gap-3 rounded-xl bg-white/10 px-4 py-3 backdrop-blur-sm">
                   <span className="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/15 text-[11px] font-semibold">
                     1
@@ -126,7 +147,7 @@ export function DailyStandupPage({ labels, locale }: Props) {
                       {todayTitleJa}
                     </p>
                     <p className="truncate text-[11px] text-white/70">
-                      {todayArc.titleJa} · {todayTitleVi}
+                      {activeArc.titleJa} · {todayTitleVi}
                     </p>
                   </div>
                 </li>

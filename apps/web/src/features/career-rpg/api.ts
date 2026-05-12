@@ -50,6 +50,15 @@ export function careerRanks() {
   return apiJson<CareerRank[]>("/api/career/ranks");
 }
 
+export function updateCareerProfile(data: { jpWorkName: string }) {
+  const body = { ...data, ...(isWebKeycloakEnabled() ? {} : { userId: DEV_CAREER_USER_ID }) };
+  return apiJson<CareerMeResponse>("/api/career/me", {
+    body: JSON.stringify(body),
+    headers: { "Content-Type": "application/json" },
+    method: "PATCH"
+  });
+}
+
 export function storyArcs() {
   return apiJson<MissionArc[]>(withDevUser("/api/story/arcs"));
 }

@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Inject,
   Injectable,
+  Logger,
   NotFoundException
 } from "@nestjs/common";
 
@@ -11,6 +12,8 @@ import { ExerciseRepository } from "./exercise.repository.js";
 
 @Injectable()
 export class ExerciseService {
+  private readonly logger = new Logger(ExerciseService.name);
+
   constructor(
     @Inject(ExerciseRepository) private readonly repo: ExerciseRepository,
     @Inject(ExerciseGeneratorService) private readonly generator: ExerciseGeneratorService,
@@ -85,27 +88,32 @@ export class ExerciseService {
     if (session.userId !== data.userId) throw new BadRequestException("Session does not belong to user");
     if (session.status !== "in_progress") throw new BadRequestException("Session already completed");
 
-    // Verify the answer against the exercise's correctAnswer
-    const exercises = await this.repo.findExercisesByTypeAndLevel(
-      session.exerciseType === "mixed" ? "" : session.exerciseType,
-      undefined,
-      1000
-    );
-    const exercise = exercises.find((e) => e.id === data.exerciseId);
+    // Look up exercise directly by ID instead of scanning all exercises
+    const exercise = await this.repo.findExerciseById(data.exerciseId);
     if (!exercise) throw new NotFoundException("Exercise not found");
 
-    const correctAnswer = exercise.correctAnswer as Record<string, unknown>;
-    const userAnswer = data.userAnswer as Record<string, unknown>;
-    const correctTokens = correctAnswer.orderedTokens;
-    const userTokens = userAnswer.orderedTokens;
+    const correctAnswer = exercise.correctAnswer as Record<string, unknown> | null;
+    const userAnswer = data.userAnswer as Record<string, unknown> | null;
 
-    const isCorrect =
-      exercise.exerciseType === "word_order"
-        ? Array.isArray(correctTokens) &&
-          Array.isArray(userTokens) &&
-          correctTokens.length === userTokens.length &&
-          correctTokens.every((t, i) => t === userTokens[i])
-        : correctAnswer.key === userAnswer.key;
+    if (!correctAnswer || typeof correctAnswer !== "object") {
+      throw new BadRequestException("Exercise has no valid correct answer");
+    }
+    if (!userAnswer || typeof userAnswer !== "object") {
+      throw new BadRequestException("Invalid user answer format");
+    }
+
+    let isCorrect: boolean;
+    if (exercise.exerciseType === "word_order") {
+      const correctTokens = correctAnswer.orderedTokens;
+      const userTokens = userAnswer.orderedTokens;
+      isCorrect =
+        Array.isArray(correctTokens) &&
+        Array.isArray(userTokens) &&
+        correctTokens.length === userTokens.length &&
+        correctTokens.every((t, i) => t === userTokens[i]);
+    } else {
+      isCorrect = correctAnswer.key === userAnswer.key;
+    }
 
     const answer = await this.repo.submitAnswer({
       sessionId: data.sessionId,
@@ -136,8 +144,10 @@ export class ExerciseService {
     try {
       await this.gamification.recordActivity(userId, "exercise");
       await this.gamification.incrementMetric(userId, "exercises_completed", 1);
-    } catch {
-      // Gamification failures should not block exercise completion
+    } catch (error: unknown) {
+      this.logger.warn(
+        `Gamification hook failed for session=${sessionId}: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
 
     return completed;

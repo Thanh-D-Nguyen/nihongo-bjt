@@ -4,19 +4,18 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
 import { learnerApiFetchOptional } from "../../../../lib/learner-api";
-import { DailyJapaneseSection } from "./daily-japanese-section";
 import { FeaturedNewsSection } from "./featured-news-section";
 import { HeroSection } from "./hero-section";
 import { ProgressSection } from "./progress-section";
 import { QuickActionsStrip } from "./quick-actions-strip";
-import type { DailyWidget, HomepageLabels, LearnerAnalytics, NhkArticle } from "./types";
+import type { HomepageLabels, LearnerAnalytics, NhkArticle } from "./types";
 import { DailyRadarSection } from "@/src/features/daily-radar/daily-radar-section";
+import { BjtLevelsSection } from "./bjt-levels-section";
 
 interface DailyHubPayload {
   dueReviews: number;
   greeting: { japanese: string; reading: string };
   today: string;
-  widgets: DailyWidget[];
 }
 
 export function HomepageClient({ labels, locale }: { labels: HomepageLabels; locale: string }) {
@@ -50,21 +49,17 @@ export function HomepageClient({ labels, locale }: { labels: HomepageLabels; loc
       .catch(() => setHub(null))
       .finally(() => setHubReady(true));
 
-    void Promise.all([
-      learnerApiFetchOptional(`/api/nhk-news?type=easy&limit=8&locale=${locale}`),
-      learnerApiFetchOptional(`/api/nhk-news?type=normal&limit=8&locale=${locale}`)
-    ])
-      .then(async ([easyRes, normalRes]) => {
+    void learnerApiFetchOptional(`/api/nhk-news?type=easy&limit=8&locale=${locale}`)
+      .then(async (easyRes) => {
         const easy = easyRes?.ok ? await easyRes.json().catch(() => []) : [];
-        const normal = normalRes?.ok ? await normalRes.json().catch(() => []) : [];
-        setNhkArticlesByType({
-          easy: Array.isArray(easy) ? easy : [],
-          normal: Array.isArray(normal) ? normal : []
-        });
-        setNhkError(!easyRes?.ok && !normalRes?.ok);
+        setNhkArticlesByType((prev) => ({
+          ...prev,
+          easy: Array.isArray(easy) ? easy : []
+        }));
+        setNhkError(!easyRes?.ok);
       })
       .catch(() => {
-        setNhkArticlesByType({ easy: [], normal: [] });
+        setNhkArticlesByType((prev) => ({ ...prev, easy: [] }));
         setNhkError(true);
       })
       .finally(() => setNhkReady(true));
@@ -91,11 +86,28 @@ export function HomepageClient({ labels, locale }: { labels: HomepageLabels; loc
     loadData();
   }, [loadData]);
 
+  /** Lazy-load a specific news type on demand (e.g. when user switches tab) */
+  const loadNewsType = useCallback(
+    (type: "easy" | "normal") => {
+      if (nhkArticlesByType[type].length > 0) return; // already loaded
+      void learnerApiFetchOptional(`/api/nhk-news?type=${type}&limit=8&locale=${locale}`)
+        .then(async (res) => {
+          const data = res?.ok ? await res.json().catch(() => []) : [];
+          setNhkArticlesByType((prev) => ({
+            ...prev,
+            [type]: Array.isArray(data) ? data : []
+          }));
+        })
+        .catch(() => {});
+    },
+    [locale, nhkArticlesByType]
+  );
+
   const dueCount = hub?.dueReviews ?? 0;
 
   return (
-    <main className="space-y-7 pb-10 pt-2 sm:pt-4">
-      <div className="motion-safe:animate-[fadeSlideUp_0.5s_ease-out_both]">
+    <main className="space-y-8 overflow-x-hidden pb-12 pt-2 sm:pt-6">
+      <div className="hp-enter">
         <HeroSection
           displayName={displayName}
           dueCount={dueCount}
@@ -105,9 +117,9 @@ export function HomepageClient({ labels, locale }: { labels: HomepageLabels; loc
         />
       </div>
 
-      <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
-        <div className="space-y-7">
-          <div className="motion-safe:animate-[fadeSlideUp_0.5s_ease-out_0.1s_both]">
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
+        <div className="min-w-0 space-y-8">
+          <div className="hp-enter hp-enter-d1">
             <QuickActionsStrip
               dueCount={dueCount}
               hubReady={hubReady}
@@ -116,11 +128,18 @@ export function HomepageClient({ labels, locale }: { labels: HomepageLabels; loc
             />
           </div>
 
-          <div className="motion-safe:animate-[fadeSlideUp_0.5s_ease-out_0.2s_both]">
+          <div className="hp-enter hp-enter-d2">
+            <BjtLevelsSection
+              labels={labels.bjtLevels}
+              locale={locale}
+            />
+          </div>
+
+          <div className="hp-enter hp-enter-d3">
             <DailyRadarSection labels={labels.dailyRadar} locale={locale} />
           </div>
 
-          <div className="motion-safe:animate-[fadeSlideUp_0.5s_ease-out_0.25s_both]">
+          <div className="hp-enter hp-enter-d4">
             <FeaturedNewsSection
               articlesByType={nhkArticlesByType}
               error={nhkError}
@@ -128,21 +147,13 @@ export function HomepageClient({ labels, locale }: { labels: HomepageLabels; loc
               loading={!nhkReady}
               locale={locale}
               onRetry={loadData}
-            />
-          </div>
-
-          <div className="motion-safe:animate-[fadeSlideUp_0.5s_ease-out_0.3s_both]">
-            <DailyJapaneseSection
-              hubReady={hubReady}
-              labels={labels}
-              locale={locale}
-              widgets={hub?.widgets ?? []}
+              onTabChange={loadNewsType}
             />
           </div>
         </div>
 
-        <div className="space-y-7 lg:sticky lg:top-20">
-          <div className="motion-safe:animate-[fadeSlideUp_0.5s_ease-out_0.15s_both]">
+        <div className="space-y-6 lg:sticky lg:top-20">
+          <div className="hp-enter hp-enter-d2">
             <ProgressSection
               analytics={analytics}
               analyticsLoading={isLoggedIn && !analyticsReady}

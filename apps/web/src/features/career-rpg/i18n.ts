@@ -146,6 +146,18 @@ export interface CareerRpgLabels {
       string
     >;
   };
+  onboarding: {
+    title: string;
+    explanation: string;
+    explanationDetail: string;
+    nameLabel: string;
+    namePlaceholder: string;
+    suggestionsLabel: string;
+    confirmCta: string;
+    skipCta: string;
+    saving: string;
+    error: string;
+  };
 }
 
 /** Slim utility: pick the right messages file given a locale string. */

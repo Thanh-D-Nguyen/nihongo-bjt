@@ -1,15 +1,12 @@
 "use client";
 
 import {
-  Badge,
   Button,
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   Input,
-  PageHeader,
-  ProgressBar,
   SectionHeader,
   TabButton,
   TabsList
@@ -23,6 +20,7 @@ import { queueSizeForUser } from "../../../../lib/offline-review-queue";
 import { learnerApiFetch } from "../../../../lib/learner-api";
 import { DeckBrowser, type DeckLabels, type LibraryDeckFilter } from "./deck-browser";
 import { FlashcardsClient, type FlashcardLabels } from "./flashcards-client";
+import { ReviewSession, type ReviewSessionLabels } from "./review-session";
 
 type MainView = "review" | "library";
 
@@ -36,12 +34,14 @@ export function FlashcardsPageClient({
   deckLabels,
   flashcardLabels,
   initialMain,
-  locale
+  locale,
+  reviewSessionLabels
 }: {
   deckLabels: DeckLabels;
   flashcardLabels: FlashcardLabels;
   initialMain: MainView;
   locale: string;
+  reviewSessionLabels: ReviewSessionLabels;
 }) {
   const { userId } = useKeycloakAuth();
   const tabListId = useId();
@@ -56,6 +56,7 @@ export function FlashcardsPageClient({
   const [searchQuery, setSearchQuery] = useState("");
   const [heroDue, setHeroDue] = useState<number | null>(null);
   const [heroPending, setHeroPending] = useState<number | null>(null);
+  const [sessionActive, setSessionActive] = useState(false);
 
   const refreshDueHero = useCallback(async () => {
     if (!userId) return;
@@ -168,55 +169,38 @@ export function FlashcardsPageClient({
   };
 
   const showLibrarySearch = main === "library";
-  const dueValue = heroDue ?? 0;
-  const reviewProgress = Math.max(8, Math.min(100, dueValue > 0 ? 100 - Math.min(dueValue, 20) * 3 : 100));
 
   return (
     <main className="w-full space-y-6 pb-16">
-      <PageHeader
-        eyebrow={flashcardLabels.libraryHeroKicker ?? flashcardLabels.eyebrow}
-        title={flashcardLabels.libraryHeroTitle ?? flashcardLabels.title}
-        description={flashcardLabels.librarySubtitle ?? flashcardLabels.subtitle}
-        actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              className="min-h-10"
-              size="sm"
-              type="button"
-              onClick={() => selectRail("review")}
-            >
-              <IconReview aria-hidden size={16} />
-              {flashcardLabels.libraryNavReview ?? flashcardLabels.reviewTab}
-            </Button>
-            <Badge className="min-h-10 justify-center px-3" tone="accent">
-              {(flashcardLabels.libraryDueMetric ?? flashcardLabels.statDueSession) + ": "}
-              <span className="ml-1 tabular-nums text-ink">{heroDue === null ? "—" : heroDue}</span>
-            </Badge>
-          </div>
-        }
-      >
-        <div className="grid gap-3 pt-2 sm:grid-cols-3">
-          <Card className="rounded-xl shadow-sm">
-            <CardContent className="p-4">
-              <p className="text-xs font-semibold text-muted">{flashcardLabels.libraryDueMetric ?? flashcardLabels.statDueSession}</p>
-              <p className="mt-1 text-2xl font-semibold tabular-nums text-ink">{heroDue === null ? "—" : heroDue}</p>
-            </CardContent>
-          </Card>
-          <Card className="rounded-xl shadow-sm">
-            <CardContent className="p-4">
-              <p className="text-xs font-semibold text-muted">{flashcardLabels.libraryOfflineMetric ?? flashcardLabels.statPendingSync}</p>
-              <p className="mt-1 text-2xl font-semibold tabular-nums text-ink">{heroPending === null ? "—" : heroPending}</p>
-            </CardContent>
-          </Card>
-          <Card className="rounded-xl shadow-sm sm:col-span-1">
-            <CardContent className="p-4">
-              <p className="text-xs font-semibold text-muted">{flashcardLabels.libraryStudyGoal ?? flashcardLabels.eyebrow}</p>
-              <ProgressBar className="mt-3" value={reviewProgress} />
-              <p className="mt-2 text-xs leading-snug text-muted">{flashcardLabels.sessionFocusHint}</p>
-            </CardContent>
-          </Card>
+      {/* ── Compact hero: review CTA + inline stats ── */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-accent">
+            {flashcardLabels.libraryHeroKicker ?? flashcardLabels.eyebrow}
+          </p>
+          <h1 className="mt-1 text-xl font-black text-ink sm:text-2xl">
+            {flashcardLabels.libraryHeroTitle ?? flashcardLabels.title}
+          </h1>
         </div>
-      </PageHeader>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            className="inline-flex min-h-11 items-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-500/15 transition-all hover:scale-[1.03] hover:shadow-emerald-500/30 active:scale-[0.98]"
+            onClick={() => { selectRail("review"); setSessionActive(true); }}
+            type="button"
+          >
+            <IconReview aria-hidden size={16} />
+            {flashcardLabels.libraryNavReview ?? flashcardLabels.reviewTab}
+            {heroDue !== null && heroDue > 0 ? (
+              <span className="ml-0.5 rounded-full bg-white/20 px-2 py-0.5 text-xs font-black tabular-nums">{heroDue}</span>
+            ) : null}
+          </button>
+          <div className="flex items-center gap-3 rounded-xl border border-ink/8 bg-surface px-3 py-2 text-xs font-semibold text-muted">
+            <span className="tabular-nums">{flashcardLabels.statDueSession}: <span className="font-black text-ink">{heroDue ?? "—"}</span></span>
+            <span className="h-3 w-px bg-ink/10" aria-hidden />
+            <span className="tabular-nums">{flashcardLabels.statPendingSync}: <span className="font-black text-ink">{heroPending ?? "—"}</span></span>
+          </div>
+        </div>
+      </div>
       <div className="space-y-3 lg:mb-4">
         {/* Mobile segmented rail */}
         <div className="sticky top-16 z-20 -mx-4 border-y border-ink/8 bg-paper/94 px-4 py-2 backdrop-blur-md sm:-mx-6 lg:hidden">
@@ -349,13 +333,30 @@ export function FlashcardsPageClient({
             role="tabpanel"
           >
             {main === "review" ? (
-              <FlashcardsClient
-                compact
-                labels={flashcardLabels}
-                locale={locale}
-                onPendingSyncChange={setHeroPending}
-                scopeDeckId={scopeDeckId}
-              />
+              <div className="flex flex-col items-center gap-6 py-10 text-center">
+                <div
+                  className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 shadow-md"
+                >
+                  <span className="text-4xl" aria-hidden>🧠</span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-ink">
+                    {reviewSessionLabels.entryTitle}
+                  </h3>
+                  <p className="mt-1 text-sm text-muted">
+                    {heroDue !== null
+                      ? reviewSessionLabels.entrySubtitle.replace("{n}", String(heroDue))
+                      : reviewSessionLabels.loadingCards}
+                  </p>
+                </div>
+                <button
+                  className="rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 px-8 py-3.5 text-base font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:scale-105 hover:shadow-emerald-500/35 active:scale-[0.98]"
+                  onClick={() => setSessionActive(true)}
+                  type="button"
+                >
+                  {reviewSessionLabels.startSession} →
+                </button>
+              </div>
             ) : (
               <DeckBrowser
                 createMode={createOpen}
@@ -378,6 +379,19 @@ export function FlashcardsPageClient({
           </div>
         </div>
       </div>
+
+      {/* Immersive review session overlay */}
+      {sessionActive ? (
+        <ReviewSession
+          labels={reviewSessionLabels}
+          locale={locale}
+          scopeDeckId={scopeDeckId}
+          onExit={() => {
+            setSessionActive(false);
+            void refreshDueHero();
+          }}
+        />
+      ) : null}
     </main>
   );
 }

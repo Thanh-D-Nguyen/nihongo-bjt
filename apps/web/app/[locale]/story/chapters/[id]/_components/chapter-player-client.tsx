@@ -15,10 +15,8 @@ import { NpcReactionOverlay } from "../../../../../../src/features/career-rpg/co
 import { RankUpOverlay } from "../../../../../../src/features/career-rpg/components/rank-up-overlay";
 import { WorkplaceScenarioCard } from "../../../../../../src/features/career-rpg/components/workplace-scenario-card";
 import {
-  findChapter,
   findRank,
-  findNextRank,
-  mockChapterResults
+  findNextRank
 } from "../../../../../../src/features/career-rpg/mock-data";
 import { useCareerRpg } from "../../../../../../src/features/career-rpg/store";
 import type { CareerRpgLabels } from "../../../../../../src/features/career-rpg/i18n";
@@ -36,9 +34,10 @@ export function ChapterPlayerClient({ chapterId, labels, locale }: Props) {
   const { applyChapterResult, career } = useCareerRpg();
   const [phase, setPhase] = useState<Phase>("briefing");
   const [outcome, setOutcome] = useState<RiskOutcomePreview | null>(null);
-  const [chapter, setChapter] = useState<MissionChapter | null | undefined>(() => findChapter(chapterId));
-  const [loadingChapter, setLoadingChapter] = useState(() => !findChapter(chapterId));
+  const [chapter, setChapter] = useState<MissionChapter | null>(null);
+  const [loadingChapter, setLoadingChapter] = useState(true);
   const [result, setResult] = useState<ChapterResult | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [rankUpState, setRankUpState] = useState<{
     oldRank: CareerRank;
     newRank: CareerRank;
@@ -52,10 +51,10 @@ export function ChapterPlayerClient({ chapterId, labels, locale }: Props) {
         setLoadingChapter(false);
         if (alive) setChapter(detail.chapter);
       })
-      .catch(() => {
+      .catch((err) => {
         if (!alive) return;
         setLoadingChapter(false);
-        setChapter(findChapter(chapterId) ?? null);
+        setChapter(null);
       });
     return () => {
       alive = false;
@@ -86,22 +85,9 @@ export function ChapterPlayerClient({ chapterId, labels, locale }: Props) {
           return;
         }
       }
-    } catch {
-      const fallbackResult = { ...mockChapterResults, chapterId };
-      applyChapterResult(fallbackResult);
-      setResult(fallbackResult);
-      const didRankUp = career.rankXp + mockChapterResults.rankXpDelta >= career.rankXpToNext;
-      if (!didRankUp) {
-        setPhase("complete");
-        return;
-      }
-      const oldRank = findRank(oldRankCode);
-      const newRank = findNextRank(oldRankCode);
-      if (oldRank && newRank) {
-        setRankUpState({ oldRank, newRank });
-        setPhase("rankup");
-        return;
-      }
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : "Failed to complete chapter");
+      setPhase("complete");
     }
     setPhase("complete");
   }, [applyChapterResult, career, chapterId]);
@@ -150,6 +136,16 @@ export function ChapterPlayerClient({ chapterId, labels, locale }: Props) {
             question={scenario.question}
           />
         </div>
+      ) : phase === "scenario" && !scenario ? (
+        <div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-6 py-10 text-center">
+          <p className="text-sm text-[#6B7280]">{labels.chapter.noScenarioYet ?? "このチャプターのシナリオは準備中です。"}</p>
+          <Link
+            className="mt-4 inline-flex min-h-10 items-center rounded-lg bg-[#1B2A4A] px-5 text-sm font-medium text-white hover:bg-[#243560]"
+            href={`/${locale}/story/arcs/${chapter.arcSlug}`}
+          >
+            ← {labels.chapter.backLink}
+          </Link>
+        </div>
       ) : null}
 
       {phase === "reacted" && outcome ? (
@@ -179,12 +175,16 @@ export function ChapterPlayerClient({ chapterId, labels, locale }: Props) {
       ) : null}
 
       {phase === "complete" ? (
-        <ChapterCompleteScreen
-          axisLabels={labels.career.skillsAxisLabels}
-          labels={labels.complete}
-          locale={locale}
-          result={result ?? { ...mockChapterResults, chapterId }}
-        />
+        submitError ? (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{submitError}</div>
+        ) : result ? (
+          <ChapterCompleteScreen
+            axisLabels={labels.career.skillsAxisLabels}
+            labels={labels.complete}
+            locale={locale}
+            result={result}
+          />
+        ) : null
       ) : null}
 
       <style jsx global>{`

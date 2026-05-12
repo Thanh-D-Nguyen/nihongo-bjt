@@ -1710,6 +1710,62 @@ exports.Prisma.FlashcardGenJobScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.BjtLessonScalarFieldEnum = {
+  id: 'id',
+  levelCode: 'levelCode',
+  sortOrder: 'sortOrder',
+  slug: 'slug',
+  titleVi: 'titleVi',
+  titleJa: 'titleJa',
+  descriptionVi: 'descriptionVi',
+  descriptionJa: 'descriptionJa',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.BjtLessonItemScalarFieldEnum = {
+  id: 'id',
+  lessonId: 'lessonId',
+  contentType: 'contentType',
+  contentId: 'contentId',
+  sortOrder: 'sortOrder',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.NhkArticleScalarFieldEnum = {
+  id: 'id',
+  sourceType: 'sourceType',
+  title: 'title',
+  titleWithRuby: 'titleWithRuby',
+  url: 'url',
+  imageUrl: 'imageUrl',
+  audioUrl: 'audioUrl',
+  difficulty: 'difficulty',
+  bodyHtml: 'bodyHtml',
+  bodyPlain: 'bodyPlain',
+  vocabulary: 'vocabulary',
+  publishedAt: 'publishedAt',
+  fetchedAt: 'fetchedAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.NhkReadingProgressScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  articleId: 'articleId',
+  readAt: 'readAt',
+  readTimeSec: 'readTimeSec',
+  completed: 'completed'
+};
+
+exports.Prisma.NhkBookmarkScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  articleId: 'articleId',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1869,7 +1925,12 @@ exports.Prisma.ModelName = {
   LeaderboardConfig: 'LeaderboardConfig',
   LeaderboardEntry: 'LeaderboardEntry',
   FlashcardGenRule: 'FlashcardGenRule',
-  FlashcardGenJob: 'FlashcardGenJob'
+  FlashcardGenJob: 'FlashcardGenJob',
+  BjtLesson: 'BjtLesson',
+  BjtLessonItem: 'BjtLessonItem',
+  NhkArticle: 'NhkArticle',
+  NhkReadingProgress: 'NhkReadingProgress',
+  NhkBookmark: 'NhkBookmark'
 };
 
 /**

@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 
 import { storyArcs } from "../../../../../src/features/career-rpg/api";
 import { MissionArcCard } from "../../../../../src/features/career-rpg/components/mission-arc-card";
-import { mockMissionArcs } from "../../../../../src/features/career-rpg/mock-data";
 import type { CareerRpgLabels } from "../../../../../src/features/career-rpg/i18n";
 import type { MissionArc } from "../../../../../src/features/career-rpg/types";
 
@@ -15,16 +14,24 @@ interface Props {
 }
 
 export function ArcsPageClient({ labels, locale }: Props) {
-  const [arcs, setArcs] = useState<MissionArc[]>(mockMissionArcs);
+  const [arcs, setArcs] = useState<MissionArc[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
     void storyArcs()
       .then((items) => {
-        if (alive) setArcs(items);
+        if (alive) {
+          setArcs(items);
+          setLoading(false);
+        }
       })
-      .catch(() => {
-        if (alive) setArcs(mockMissionArcs);
+      .catch((err) => {
+        if (alive) {
+          setError(err instanceof Error ? err.message : "Failed to load arcs");
+          setLoading(false);
+        }
       });
     return () => {
       alive = false;
@@ -50,6 +57,14 @@ export function ArcsPageClient({ labels, locale }: Props) {
           ← {labels.career.backHome}
         </Link>
       </header>
+
+      {loading ? (
+        <div className="py-12 text-center text-sm text-[#6B7280]">Loading…</div>
+      ) : error ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>
+      ) : arcs.length === 0 ? (
+        <div className="py-12 text-center text-sm text-[#6B7280]">No mission arcs available yet.</div>
+      ) : null}
 
       <ul className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {[...arcs]

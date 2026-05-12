@@ -1,11 +1,21 @@
 "use client";
 
+import DOMPurify from "isomorphic-dompurify";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useKeycloakAuth } from "../../../../../components/auth/keycloak-auth-provider";
 import { learnerApiFetch, learnerApiFetchOptional } from "../../../../../lib/learner-api";
 import { NhkCreateDeckDialog } from "../../../_components/nhk-create-deck-dialog";
+
+/** Sanitize NHK HTML — allow ruby/rt for furigana, basic formatting */
+function sanitizeNhkHtml(html: string): string {
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: ["p", "br", "ruby", "rt", "rp", "span", "strong", "em", "a", "img"],
+    ALLOWED_ATTR: ["href", "target", "rel", "src", "alt", "class", "lang"],
+    ALLOW_DATA_ATTR: false,
+  });
+}
 
 interface NhkArticleDetail {
   id: string;
@@ -13,8 +23,10 @@ interface NhkArticleDetail {
   titleWithRuby: string | null;
   publishedAt: string;
   imageUrl: string | null;
+  audioUrl: string | null;
   difficulty: string | null;
   url: string;
+  sourceType?: string;
   bodyHtml: string;
   bodyPlain: string;
   vocabulary: VocabItem[];
@@ -55,6 +67,12 @@ interface Labels {
   deckCreated: string;
   signInToAdd: string;
   publishedAt: string;
+  addWordFlashcard: string;
+  wordAdded: string;
+  bookmarkAdd: string;
+  bookmarkRemove: string;
+  summaryNote: string;
+  readFullArticle: string;
 }
 
 export function NhkArticleDetailClient({
@@ -74,6 +92,72 @@ export function NhkArticleDetailClient({
   const [deckError, setDeckError] = useState<string | null>(null);
   const [deckDialogOpen, setDeckDialogOpen] = useState(false);
   const [creatingDeck, setCreatingDeck] = useState(false);
+  const [savedWords, setSavedWords] = useState<Set<string>>(new Set());
+  const [savingWord, setSavingWord] = useState<string | null>(null);
+  const [bookmarked, setBookmarked] = useState(false);
+  const [togglingBookmark, setTogglingBookmark] = useState(false);
+  const readStartRef = { current: Date.now() };
+
+  const safeBodyHtml = useMemo(() => article ? sanitizeNhkHtml(article.bodyHtml) : "", [article]);
+  const safeTitleRuby = useMemo(() => article?.titleWithRuby ? sanitizeNhkHtml(article.titleWithRuby) : "", [article]);
+
+  const handleAddWord = useCallback(
+    async (v: VocabItem) => {
+      if (!auth.userId || savedWords.has(v.word)) return;
+      setSavingWord(v.word);
+      try {
+        const cardType = v.pos === "grammar" ? "grammar" : "vocabulary";
+        const res = await learnerApiFetch(`/api/nhk-news/${encodeURIComponent(articleId)}/flashcard`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ word: v.word, reading: v.reading, meaning: v.meaning, cardType }),
+        });
+        if (res.ok) {
+          setSavedWords((prev) => new Set(prev).add(v.word));
+        }
+      } catch { /* ignore */ } finally {
+        setSavingWord(null);
+      }
+    },
+    [auth.userId, articleId, savedWords]
+  );
+
+  const handleToggleBookmark = useCallback(async () => {
+    if (!auth.userId || togglingBookmark) return;
+    setTogglingBookmark(true);
+    try {
+      const res = await learnerApiFetch(`/api/nhk-news/${encodeURIComponent(articleId)}/bookmark`, {
+        method: "POST",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setBookmarked(data.bookmarked);
+      }
+    } catch { /* ignore */ } finally {
+      setTogglingBookmark(false);
+    }
+  }, [auth.userId, articleId, togglingBookmark]);
+
+  // Track reading time on unmount / page leave
+  useEffect(() => {
+    if (!auth.userId || !article) return;
+    readStartRef.current = Date.now();
+    const trackOnLeave = () => {
+      const sec = Math.round((Date.now() - readStartRef.current) / 1000);
+      if (sec < 3) return; // too short, skip
+      void learnerApiFetch(`/api/nhk-news/${encodeURIComponent(articleId)}/reading`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ readTimeSec: sec, completed: sec >= 30 }),
+      }).catch(() => {});
+    };
+    window.addEventListener("beforeunload", trackOnLeave);
+    return () => {
+      trackOnLeave();
+      window.removeEventListener("beforeunload", trackOnLeave);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auth.userId, article?.id]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -95,6 +179,19 @@ export function NhkArticleDetailClient({
   useEffect(() => {
     void load();
   }, [load]);
+
+  // Check bookmark status on mount
+  useEffect(() => {
+    if (!auth.userId) return;
+    void learnerApiFetchOptional(`/api/nhk-news/${encodeURIComponent(articleId)}/bookmark`)
+      .then(async (r) => {
+        if (!r?.ok) return;
+        const data = await r.json();
+        setBookmarked(!!data.bookmarked);
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auth.userId]);
 
   const handleCreateDeck = useCallback(
     async (deckTitle: string | null) => {
@@ -199,17 +296,35 @@ export function NhkArticleDetailClient({
 
         <div className="mt-5 flex flex-wrap items-center gap-3">
           {auth.userId ? (
-            <button
-              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-ink px-4 text-sm font-semibold text-surface transition hover:bg-ink/90 disabled:opacity-50"
-              disabled={creatingDeck || article.vocabulary.length === 0}
-              onClick={() => {
-                setDeckError(null);
-                setDeckDialogOpen(true);
-              }}
-              type="button"
-            >
-              {creatingDeck ? labels.loading : labels.addFlashcard}
-            </button>
+            <>
+              <button
+                className="inline-flex min-h-11 items-center justify-center rounded-xl bg-ink px-4 text-sm font-semibold text-surface transition hover:bg-ink/90 disabled:opacity-50"
+                disabled={creatingDeck || article.vocabulary.length === 0}
+                onClick={() => {
+                  setDeckError(null);
+                  setDeckDialogOpen(true);
+                }}
+                type="button"
+              >
+                {creatingDeck ? labels.loading : labels.addFlashcard}
+              </button>
+              <button
+                className={`inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border px-4 text-sm font-semibold transition disabled:opacity-50 ${
+                  bookmarked
+                    ? "border-accent bg-accent-soft text-accent"
+                    : "border-gray-200 bg-surface text-muted hover:border-accent hover:text-accent"
+                }`}
+                disabled={togglingBookmark}
+                onClick={handleToggleBookmark}
+                type="button"
+                aria-label={bookmarked ? labels.bookmarkRemove : labels.bookmarkAdd}
+              >
+                <svg className="h-4 w-4" fill={bookmarked ? "currentColor" : "none"} stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                </svg>
+                {bookmarked ? labels.bookmarkRemove : labels.bookmarkAdd}
+              </button>
+            </>
           ) : (
             <span className="text-sm font-medium text-muted">{labels.signInToAdd}</span>
           )}
@@ -224,28 +339,70 @@ export function NhkArticleDetailClient({
             </span>
             <p
               className="mt-1 leading-loose"
-              dangerouslySetInnerHTML={{ __html: article.titleWithRuby }}
+              dangerouslySetInnerHTML={{ __html: safeTitleRuby }}
             />
           </div>
         )}
       </div>
 
+      {/* Audio player */}
+      {article.audioUrl && (
+        <div className="mt-5 flex items-center gap-3 rounded-xl border border-blue-100 bg-blue-50/50 p-3">
+          <svg className="h-5 w-5 shrink-0 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M18 3.25a.75.75 0 00-1.154-.632L10 7.133V4.25a.75.75 0 00-1.154-.632l-7.5 4.75a.75.75 0 000 1.264l7.5 4.75A.75.75 0 0010 13.75v-2.883l6.846 4.515A.75.75 0 0018 14.75V3.25z" />
+          </svg>
+          <audio
+            className="h-8 w-full min-w-0"
+            controls
+            controlsList="nodownload"
+            preload="none"
+            src={article.audioUrl}
+          >
+            <track kind="captions" />
+          </audio>
+        </div>
+      )}
+
+      {/* Summary notice for normal articles */}
+      {article.sourceType === "normal" && (
+        <div className="mt-5 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50/60 p-4 text-sm text-amber-900">
+          <svg className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+          </svg>
+          <span>{labels.summaryNote}</span>
+        </div>
+      )}
+
       {/* Body */}
       <article
         className="nhk-body mt-6 space-y-4 text-base leading-relaxed text-ink/90"
         lang="ja"
-        dangerouslySetInnerHTML={{ __html: article.bodyHtml }}
+        dangerouslySetInnerHTML={{ __html: safeBodyHtml }}
       />
 
-      {/* Original link */}
-      <a
-        href={article.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="mt-6 inline-flex items-center gap-1 rounded-lg bg-gray-50 px-4 py-2 text-sm font-medium text-muted hover:bg-gray-100 hover:text-ink transition-colors"
-      >
-        {labels.originalArticle}
-      </a>
+      {/* Read full article CTA — prominent for normal, subtle for easy */}
+      {article.sourceType === "normal" ? (
+        <a
+          href={article.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3 text-base font-semibold text-white shadow-sm transition-colors hover:bg-accent/90"
+        >
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
+          {labels.readFullArticle}
+        </a>
+      ) : (
+        <a
+          href={article.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-6 inline-flex items-center gap-1 rounded-lg bg-gray-50 px-4 py-2 text-sm font-medium text-muted hover:bg-gray-100 hover:text-ink transition-colors"
+        >
+          {labels.originalArticle}
+        </a>
+      )}
 
       {/* Vocabulary table */}
       {article.vocabulary.length > 0 && (
@@ -267,6 +424,7 @@ export function NhkArticleDetailClient({
                   <th className="px-4 py-3">{labels.vocabReading}</th>
                   <th className="px-4 py-3 hidden sm:table-cell">{labels.vocabMeaning}</th>
                   <th className="px-4 py-3 hidden sm:table-cell">{labels.vocabPos}</th>
+                  {auth.userId && <th className="px-4 py-3 w-10" />}
                 </tr>
               </thead>
               <tbody className="divide-y divide-ink/5">
@@ -284,6 +442,25 @@ export function NhkArticleDetailClient({
                     <td className="px-4 py-3 text-muted hidden sm:table-cell" lang="ja">
                       {v.pos ?? "—"}
                     </td>
+                    {auth.userId && (
+                      <td className="px-2 py-3 text-center">
+                        {savedWords.has(v.word) ? (
+                          <span className="text-xs text-emerald-600">✓</span>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled={savingWord === v.word}
+                            onClick={() => void handleAddWord(v)}
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted hover:bg-accent-soft hover:text-accent transition-colors disabled:opacity-50"
+                            title={labels.addWordFlashcard}
+                          >
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                              <path d="M12 4v16m8-8H4" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          </button>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -299,9 +476,28 @@ export function NhkArticleDetailClient({
                     <p className="text-base font-semibold text-ink" lang="ja">{v.word}</p>
                     {v.reading && <p className="text-xs text-muted" lang="ja">{v.reading}</p>}
                   </div>
-                  {v.pos && (
-                    <span className="rounded bg-gray-100 px-2 py-0.5 text-[10px] text-muted" lang="ja">{v.pos}</span>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {v.pos && (
+                      <span className="rounded bg-gray-100 px-2 py-0.5 text-[10px] text-muted" lang="ja">{v.pos}</span>
+                    )}
+                    {auth.userId && (
+                      savedWords.has(v.word) ? (
+                        <span className="text-xs text-emerald-600">✓</span>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled={savingWord === v.word}
+                          onClick={() => void handleAddWord(v)}
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted hover:bg-accent-soft hover:text-accent transition-colors disabled:opacity-50"
+                          title={labels.addWordFlashcard}
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                            <path d="M12 4v16m8-8H4" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </button>
+                      )
+                    )}
+                  </div>
                 </div>
                 {v.meaning && <p className="mt-2 text-sm text-muted">{v.meaning}</p>}
               </div>

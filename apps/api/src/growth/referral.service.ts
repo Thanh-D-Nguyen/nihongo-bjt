@@ -19,11 +19,18 @@ export class ReferralService {
         return await this.prisma.referralCode.create({
           data: { code, userId }
         });
-      } catch {
-        /* unique collision */
+      } catch (error: unknown) {
+        const isUniqueViolation =
+          typeof error === "object" &&
+          error !== null &&
+          "code" in error &&
+          (error as { code: string }).code === "P2002";
+        if (!isUniqueViolation) {
+          throw error;
+        }
       }
     }
-    throw new Error("Could not allocate referral code");
+    throw new Error("Could not allocate referral code after 6 attempts");
   }
 
   async getOrCreateCode(userId: string) {

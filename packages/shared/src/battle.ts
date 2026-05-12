@@ -152,5 +152,5 @@ export function decideBotOption(input: {
 }
 
 export function randomBetween(rng: () => number, min: number, max: number) {
-  return Math.floor(rng() * (max - min + 1)) + min;
+  return Math.min(Math.floor(rng() * (max - min + 1)) + min, max);
 }

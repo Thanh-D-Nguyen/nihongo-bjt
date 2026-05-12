@@ -1,5 +1,5 @@
 import { createPrismaClient, type Prisma, type PrismaClient } from "@nihongo-bjt/database";
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 
 export const CAREER_SKILL_AXES = ["keigo", "written", "meeting", "customer", "chart", "nuance"] as const;
 export const DEV_CAREER_USER_ID = "00000000-0000-4000-8000-000000000101";
@@ -55,6 +55,23 @@ export class CareerRpgService {
       data: { lastClockInAt: now, streakDays: nextStreak },
       where: { userId }
     });
+    return this.careerMe(userId);
+  }
+
+  async updateProfile(userId: string, data: { jpWorkName?: string }) {
+    await this.ensureCareerFoundation(userId);
+    const update: Record<string, unknown> = {};
+    if (data.jpWorkName !== undefined) {
+      const trimmed = data.jpWorkName.trim();
+      if (trimmed.length < 1 || trimmed.length > 30) {
+        throw new BadRequestException("jpWorkName must be 1–30 characters");
+      }
+      update.jpWorkName = trimmed;
+    }
+    if (Object.keys(update).length === 0) {
+      return this.careerMe(userId);
+    }
+    await this.prisma.userCareerState.update({ data: update, where: { userId } });
     return this.careerMe(userId);
   }
 

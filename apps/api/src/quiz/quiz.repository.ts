@@ -682,6 +682,42 @@ export class QuizRepository {
     return issuesList;
   }
 
+  async sessionHistory(userId: string, limit: number) {
+    const sessions = await this.prisma.quizSession.findMany({
+      where: { userId, status: "completed" },
+      orderBy: { completedAt: "desc" },
+      take: limit,
+      select: {
+        id: true,
+        completedAt: true,
+        totalQuestions: true,
+        correctCount: true,
+        estimatedScore: true,
+        estimatedBjtBand: true,
+        test: {
+          select: {
+            titleVi: true,
+            titleJa: true,
+            type: true,
+            level: true
+          }
+        }
+      }
+    });
+    return sessions.map((s) => ({
+      id: s.id,
+      completedAt: s.completedAt,
+      totalQuestions: s.totalQuestions,
+      correctCount: s.correctCount,
+      estimatedScore: s.estimatedScore,
+      estimatedBjtBand: s.estimatedBjtBand,
+      testTitleVi: s.test.titleVi,
+      testTitleJa: s.test.titleJa,
+      testType: s.test.type,
+      testLevel: s.test.level
+    }));
+  }
+
   async breakdown(sessionId: string, userId: string) {
     const session = await this.prisma.quizSession.findFirst({
       include: {
@@ -693,6 +729,10 @@ export class QuizRepository {
                 prompt: true,
                 explanationVi: true,
                 remediationCardId: true,
+                skillTag: true,
+                section: {
+                  select: { code: true }
+                },
                 options: {
                   orderBy: { optionKey: "asc" },
                   select: { optionKey: true, isCorrect: true }
@@ -727,6 +767,8 @@ export class QuizRepository {
         selectedOption: answer.selectedOption,
         isCorrect: selectedCorrect,
         explanationVi: answer.question.explanationVi,
+        skillTag: answer.question.skillTag,
+        sectionCode: answer.question.section.code,
         remediationCardId: selectedCorrect ? undefined : answer.question.remediationCardId
       };
     });

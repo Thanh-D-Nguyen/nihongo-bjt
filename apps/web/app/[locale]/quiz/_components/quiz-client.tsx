@@ -18,6 +18,25 @@ import { BjtAudioPlayer, isAudioSection } from "./bjt-audio-player";
 import { BjtFormatGuidePanel } from "./bjt-format-guide";
 import { QuizResultsBreakdown } from "./quiz-results-breakdown";
 
+/** Animated number hook for count-up effects */
+function useAnimatedNumber(target: number, duration = 1200) {
+  const [value, setValue] = useState(0);
+  useEffect(() => {
+    if (target === 0) { setValue(0); return; }
+    const start = performance.now();
+    let raf: number;
+    const step = (now: number) => {
+      const t = Math.min((now - start) / duration, 1);
+      const ease = 1 - Math.pow(1 - t, 3); // easeOutCubic
+      setValue(Math.round(ease * target));
+      if (t < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration]);
+  return value;
+}
+
 interface Template {
   _count: { sections: number; sessions: number };
   description: string | null;
@@ -56,6 +75,8 @@ interface BreakdownResponse {
     selectedOption: string;
     isCorrect: boolean;
     explanationVi: string;
+    skillTag?: string;
+    sectionCode?: string;
     remediationCardId?: string | null;
   }>;
 }
@@ -177,6 +198,25 @@ export interface QuizLabels {
   title: string;
   totalScore?: string;
   viewBreakdown?: string;
+  flagQuestion?: string;
+  unflagQuestion?: string;
+  flaggedCount?: string;
+  keyboardHint?: string;
+  confidenceSure?: string;
+  confidenceGuessing?: string;
+  retryWrongOnly?: string;
+  retryWrongAndGuessed?: string;
+  sectionScoreLabel?: string;
+  recommendedNextTitle?: string;
+  recommendedNextDesc?: string;
+  historyTitle?: string;
+  historyEmpty?: string;
+  historyDate?: string;
+  historyScore?: string;
+  historyBand?: string;
+  achievementFirst?: string;
+  achievementStreak?: string;
+  achievementPerfect?: string;
   audio: {
     audioSection: string;
     hideScript: string;
@@ -273,6 +313,19 @@ function normalizeLevel(value: string | null | undefined): string | null {
   return value?.replace(/^BJT-/u, "") ?? null;
 }
 
+interface SessionHistoryItem {
+  id: string;
+  completedAt: string | null;
+  totalQuestions: number;
+  correctCount: number;
+  estimatedScore: number | null;
+  estimatedBjtBand: string | null;
+  testTitleVi: string;
+  testTitleJa: string | null;
+  testType: string;
+  testLevel: string | null;
+}
+
 /* ------------------------------------------------------------------ */
 /*  Main Component                                                     */
 /* ------------------------------------------------------------------ */
@@ -293,6 +346,9 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
   const [submitting, setSubmitting] = useState(false);
   const [resuming, setResuming] = useState(false);
   const [timerSeconds, setTimerSeconds] = useState<number | null>(null);
+  const [flaggedQuestions, setFlaggedQuestions] = useState<Set<string>>(new Set());
+  const [confidenceMap, setConfidenceMap] = useState<Record<string, "sure" | "guessing">>({});
+  const [sessionHistory, setSessionHistory] = useState<SessionHistoryItem[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const answeringRef = useRef(false);
   const { userId } = useKeycloakAuth();
@@ -474,6 +530,18 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
     }
   }, []);
 
+  const loadSessionHistory = useCallback(async (uid: string) => {
+    try {
+      const response = await learnerApiFetch(
+        `/api/quiz/session/history?userId=${encodeURIComponent(uid)}&limit=10`
+      );
+      if (!response.ok) return;
+      setSessionHistory((await response.json()) as SessionHistoryItem[]);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
   // On mount: load templates + check for active session to resume
   useEffect(() => {
     void loadTemplates();
@@ -484,16 +552,18 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
     void (async () => {
       await loadOfficialStatus(userId);
       await loadReferralLink(userId);
+      void loadSessionHistory(userId);
       const active = await checkActiveSession(userId);
       if (active) {
         await resumeSession(active.id, userId, active.remainingSeconds);
       }
     })();
-  }, [userId, checkActiveSession, loadOfficialStatus, loadReferralLink, resumeSession]);
+  }, [userId, checkActiveSession, loadOfficialStatus, loadReferralLink, loadSessionHistory, resumeSession]);
 
   useEffect(() => {
     if (results && userId && !breakdown) {
       void loadBreakdown(results.id, userId);
+      void loadSessionHistory(userId);
     }
   }, [results, userId, breakdown]);
 
@@ -570,13 +640,17 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
     }
   }
 
-  async function answer(optionKey: string) {
+  async function answer(optionKey: string, confidence?: "sure" | "guessing") {
     const uid = userId;
     if (!question?.question || !uid) return;
     // Double-submit guard
     if (answeringRef.current) return;
     answeringRef.current = true;
     setError(false);
+    // Store confidence for this question
+    if (confidence && question.question) {
+      setConfidenceMap((prev) => ({ ...prev, [question.question!.id]: confidence }));
+    }
     try {
       const response = await learnerApiFetch(`/api/quiz/session/${question.session.id}/answer`, {
         body: JSON.stringify({ optionKey, questionId: question.question.id, userId: uid }),
@@ -624,6 +698,17 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
     setBreakdown(null);
     setQuestion(null);
     setShowBreakdown(false);
+    setFlaggedQuestions(new Set());
+    setConfidenceMap({});
+  }
+
+  function toggleFlag(questionId: string) {
+    setFlaggedQuestions((prev) => {
+      const next = new Set(prev);
+      if (next.has(questionId)) next.delete(questionId);
+      else next.add(questionId);
+      return next;
+    });
   }
 
   /* ---- Filtered templates ---- */
@@ -740,6 +825,11 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
         <>
           {/* Format guide */}
           <BjtFormatGuidePanel labels={formatGuideLabels} locale={locale} />
+
+          {/* Session history timeline */}
+          {sessionHistory.length > 0 && (
+            <SessionHistoryTimeline history={sessionHistory} labels={labels} />
+          )}
 
           {!templatesLoading && templates.length > 0 && (
             <section className="grid gap-3 md:grid-cols-2" aria-label={labels.filterType}>
@@ -931,6 +1021,12 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
                 <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-accent" />
                 {labels.sessionBadgeActive}
               </span>
+              {flaggedQuestions.size > 0 && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-bold text-amber-700">
+                  <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 24 24"><path d="M4 2v20l1-1 5 3 4-3 4 3 1-3V2H4zm12 13-4-2.5L8 15V4h8v11z"/></svg>
+                  {(labels.flaggedCount ?? "{n} đánh dấu").replace("{n}", String(flaggedQuestions.size))}
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-3">
               {/* Timer display */}
@@ -954,8 +1050,10 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
 
           {/* Question card */}
           <QuizQuestionPanel
+            flagged={flaggedQuestions.has(question.question?.id ?? "")}
             labels={labels}
             onAnswer={answer}
+            onToggleFlag={() => question.question && toggleFlag(question.question.id)}
             question={question}
             userId={userId}
           />
@@ -966,12 +1064,20 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
       {results && (
         <div className="space-y-6">
           <ResultsSummary
+            confidenceMap={confidenceMap}
+            flaggedCount={flaggedQuestions.size}
+            historyCount={sessionHistory.length}
             labels={labels}
             onRetry={resetToHub}
             onViewBreakdown={() => setShowBreakdown(true)}
             results={results}
             showBreakdownBtn={!showBreakdown && !breakdownLoading}
           />
+
+          {/* Skill breakdown + section scores (show when breakdown loaded) */}
+          {breakdown && (
+            <SkillSectionBreakdown breakdown={breakdown} labels={labels} />
+          )}
 
           {showBreakdown && breakdownLoading && (
             <div className="flex items-center justify-center py-8">
@@ -982,6 +1088,15 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
 
           {showBreakdown && breakdown && (
             <QuizResultsBreakdown breakdown={breakdown} labels={labels.breakdown} userId={userId} />
+          )}
+
+          {/* Recommended next */}
+          {breakdown && (
+            <RecommendedNext
+              breakdown={breakdown}
+              labels={labels}
+              onRetry={resetToHub}
+            />
           )}
         </div>
       )}
@@ -1307,22 +1422,52 @@ function ExamCard({
 /* ------------------------------------------------------------------ */
 
 export function QuizQuestionPanel({
+  flagged,
   labels,
   onAnswer,
+  onToggleFlag,
   question,
   userId
 }: {
+  flagged: boolean;
   labels: QuizLabels;
-  onAnswer: (optionKey: string) => void | Promise<void>;
+  onAnswer: (optionKey: string, confidence?: "sure" | "guessing") => void | Promise<void>;
+  onToggleFlag: () => void;
   question: QuestionPayload;
   userId: string | null;
 }) {
   const [selected, setSelected] = useState<string | null>(null);
+  const [confidence, setConfidence] = useState<"sure" | "guessing" | null>(null);
 
-  // Reset selected when question changes
+  // Reset selected + confidence when question changes
   useEffect(() => {
     setSelected(null);
+    setConfidence(null);
   }, [question.question?.id]);
+
+  // Keyboard shortcuts: A/B/C/D to select, 1/2/3/4 alternative
+  useEffect(() => {
+    if (!question.question || selected) return;
+    const handler = (e: KeyboardEvent) => {
+      // Skip if user is typing in an input
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+
+      const keyMap: Record<string, string> = { a: "A", b: "B", c: "C", d: "D", "1": "A", "2": "B", "3": "C", "4": "D" };
+      const mapped = keyMap[e.key.toLowerCase()];
+      if (mapped && question.question!.options.some((o) => o.optionKey === mapped)) {
+        e.preventDefault();
+        handleAnswer(mapped);
+      }
+      // F key to toggle flag
+      if (e.key.toLowerCase() === "f" && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        onToggleFlag();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [question.question?.id, selected]);
 
   if (!question.question) return null;
 
@@ -1330,8 +1475,8 @@ export function QuizQuestionPanel({
     if (selected) return;
     setSelected(key);
     setTimeout(() => {
-      void onAnswer(key);
-    }, 200);
+      void onAnswer(key, confidence ?? undefined);
+    }, 250);
   };
 
   return (
@@ -1350,10 +1495,28 @@ export function QuizQuestionPanel({
               )
             )}
           </h2>
-          <span className="rounded-full bg-accent/8 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-accent">
-            {question.question.skillTag}
-          </span>
+          <div className="flex items-center gap-2">
+            {/* Flag button */}
+            <button
+              className={`rounded-full p-1.5 transition ${flagged ? "bg-amber-100 text-amber-600" : "text-muted hover:bg-paper hover:text-ink"}`}
+              onClick={onToggleFlag}
+              title={flagged ? (labels.unflagQuestion ?? "Bỏ đánh dấu") : (labels.flagQuestion ?? "Đánh dấu xem lại")}
+              type="button"
+            >
+              <svg className="h-4 w-4" fill={flagged ? "currentColor" : "none"} stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" strokeLinecap="round" strokeLinejoin="round" />
+                <line x1="4" x2="4" y1="22" y2="15" />
+              </svg>
+            </button>
+            <span className="rounded-full bg-accent/8 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-accent">
+              {question.question.skillTag}
+            </span>
+          </div>
         </div>
+        {/* Keyboard hint */}
+        <p className="mt-1 text-[10px] text-muted/60">
+          {labels.keyboardHint ?? "A/B/C/D để chọn · F để đánh dấu"}
+        </p>
       </div>
 
       {/* Question body */}
@@ -1441,6 +1604,39 @@ export function QuizQuestionPanel({
             );
           })}
         </div>
+
+        {/* Confidence indicator */}
+        {!selected && (
+          <div className="mt-3 flex items-center gap-2">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted">
+              {labels.confidenceSure ? "" : ""}
+            </span>
+            <button
+              className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-semibold transition ${
+                confidence === "sure"
+                  ? "bg-emerald-100 text-emerald-700 ring-1 ring-emerald-300"
+                  : "bg-ink/4 text-muted hover:bg-ink/8"
+              }`}
+              onClick={() => setConfidence((c) => (c === "sure" ? null : "sure"))}
+              type="button"
+            >
+              <svg className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              {labels.confidenceSure ?? "Chắc chắn"}
+            </button>
+            <button
+              className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-semibold transition ${
+                confidence === "guessing"
+                  ? "bg-amber-100 text-amber-700 ring-1 ring-amber-300"
+                  : "bg-ink/4 text-muted hover:bg-ink/8"
+              }`}
+              onClick={() => setConfidence((c) => (c === "guessing" ? null : "guessing"))}
+              type="button"
+            >
+              <svg className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><circle cx={12} cy={12} r={10} /><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" strokeLinecap="round" strokeLinejoin="round" /><line x1="12" x2="12.01" y1="17" y2="17" /></svg>
+              {labels.confidenceGuessing ?? "Đoán"}
+            </button>
+          </div>
+        )}
       </div>
     </article>
   );
@@ -1451,12 +1647,18 @@ export function QuizQuestionPanel({
 /* ------------------------------------------------------------------ */
 
 function ResultsSummary({
+  confidenceMap,
+  flaggedCount,
+  historyCount,
   labels,
   onRetry,
   onViewBreakdown,
   results,
   showBreakdownBtn
 }: {
+  confidenceMap: Record<string, "sure" | "guessing">;
+  flaggedCount: number;
+  historyCount: number;
   labels: QuizLabels;
   onRetry: () => void;
   onViewBreakdown: () => void;
@@ -1471,10 +1673,23 @@ function ResultsSummary({
   const score = results.estimatedScore ?? 0;
   const bandColor = BAND_COLORS[band] ?? "text-ink";
 
+  // Animated values
+  const animAccuracy = useAnimatedNumber(accuracy);
+  const animScore = useAnimatedNumber(score, 1500);
+
+  // Band reveal delay
+  const [bandVisible, setBandVisible] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setBandVisible(true), 1600);
+    return () => clearTimeout(t);
+  }, []);
+
+  const guessedCount = Object.values(confidenceMap).filter((c) => c === "guessing").length;
+
   const ringColor =
     accuracy >= 80 ? "stroke-emerald-500" : accuracy >= 50 ? "stroke-amber-500" : "stroke-sakura";
   const circumference = 2 * Math.PI * 54;
-  const strokeDashoffset = circumference - (accuracy / 100) * circumference;
+  const animStrokeDashoffset = circumference - (animAccuracy / 100) * circumference;
 
   return (
     <div className="space-y-6">
@@ -1506,14 +1721,14 @@ function ResultsSummary({
                   fill="none"
                   r={54}
                   strokeDasharray={circumference}
-                  strokeDashoffset={strokeDashoffset}
+                  strokeDashoffset={animStrokeDashoffset}
                   strokeLinecap="round"
                   strokeWidth={8}
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <span className="text-2xl font-extrabold tabular-nums text-ink sm:text-3xl">
-                  {accuracy}%
+                  {animAccuracy}%
                 </span>
                 <span className="text-[10px] font-medium uppercase tracking-wider text-muted">
                   {labels.correctSummary
@@ -1529,14 +1744,16 @@ function ResultsSummary({
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted">
                   {(labels.scoreLabel ?? "Điểm").replace(":", "").replace(" (thang 800)", "")}
                 </p>
-                <p className="mt-1 text-3xl font-extrabold tabular-nums text-ink">{score}</p>
+                <p className="mt-1 text-3xl font-extrabold tabular-nums text-ink">{animScore}</p>
                 <p className="text-[10px] text-muted">{labels.totalScore ?? "/ 800"}</p>
               </div>
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted">
                   {labels.bandLabel}
                 </p>
-                <p className={`mt-1 text-3xl font-extrabold ${bandColor}`}>{band}</p>
+                <p className={`mt-1 text-3xl font-extrabold transition-all duration-500 ${bandVisible ? bandColor : "text-transparent"}`}>
+                  {bandVisible ? band : "—"}
+                </p>
               </div>
             </div>
           </div>
@@ -1547,6 +1764,24 @@ function ResultsSummary({
               {coachForBand(results.estimatedBjtBand, labels)}
             </p>
           </div>
+
+          {/* Flagged / guessed stats */}
+          {(flaggedCount > 0 || guessedCount > 0) && (
+            <div className="mx-auto mt-3 flex max-w-lg items-center justify-center gap-4">
+              {flaggedCount > 0 && (
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600">
+                  <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15" /></svg>
+                  {(labels.flaggedCount ?? "{n} đánh dấu").replace("{n}", String(flaggedCount))}
+                </span>
+              )}
+              {guessedCount > 0 && (
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-500">
+                  <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><circle cx={12} cy={12} r={10} /><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" strokeLinecap="round" strokeLinejoin="round" /><line x1="12" x2="12.01" y1="17" y2="17" /></svg>
+                  {guessedCount} đoán
+                </span>
+              )}
+            </div>
+          )}
 
           {/* Caveat */}
           <p className="mt-3 text-center text-[11px] text-muted">{labels.estimatedScoreCaveat}</p>
@@ -1573,8 +1808,298 @@ function ResultsSummary({
         </div>
       </div>
 
+      {/* Achievement badges */}
+      <AchievementBadges
+        accuracy={accuracy}
+        historyCount={historyCount}
+        labels={labels}
+        score={score}
+      />
+
       {/* Encouragement note */}
       <p className="text-center text-xs text-muted">{labels.anotherRound}</p>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Achievement Badges                                                 */
+/* ------------------------------------------------------------------ */
+
+function AchievementBadges({
+  accuracy,
+  historyCount,
+  labels,
+  score
+}: {
+  accuracy: number;
+  historyCount: number;
+  labels: QuizLabels;
+  score: number;
+}) {
+  const badges: Array<{ emoji: string; label: string; earned: boolean }> = [
+    { emoji: "🎯", label: labels.achievementPerfect ?? "100% chính xác!", earned: accuracy === 100 },
+    { emoji: "🏅", label: labels.achievementFirst ?? "Bài đầu tiên hoàn thành!", earned: historyCount <= 1 },
+    { emoji: "🔥", label: labels.achievementStreak ?? "Đã làm 10+ bài!", earned: historyCount >= 10 },
+    { emoji: "⭐", label: "Score 600+", earned: score >= 600 },
+    { emoji: "💎", label: "Score 700+", earned: score >= 700 },
+  ];
+
+  const earned = badges.filter((b) => b.earned);
+  if (earned.length === 0) return null;
+
+  return (
+    <div className="flex flex-wrap items-center justify-center gap-2">
+      {earned.map((b) => (
+        <span
+          key={b.label}
+          className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700 ring-1 ring-amber-200 animate-in fade-in duration-500"
+        >
+          <span className="text-sm">{b.emoji}</span>
+          {b.label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Recommended Next                                                   */
+/* ------------------------------------------------------------------ */
+
+function RecommendedNext({
+  breakdown,
+  labels,
+  onRetry
+}: {
+  breakdown: BreakdownResponse;
+  labels: QuizLabels;
+  onRetry: () => void;
+}) {
+  // Find weakest sections
+  const weakAreas = useMemo(() => {
+    const map: Record<string, { total: number; correct: number }> = {};
+    for (const q of breakdown.breakdown) {
+      const code = q.sectionCode ?? q.skillTag ?? "general";
+      if (!map[code]) map[code] = { total: 0, correct: 0 };
+      map[code].total++;
+      if (q.isCorrect) map[code].correct++;
+    }
+    return Object.entries(map)
+      .map(([area, s]) => ({ area, pct: s.total > 0 ? Math.round((s.correct / s.total) * 100) : 100 }))
+      .filter((a) => a.pct < 80)
+      .sort((a, b) => a.pct - b.pct)
+      .slice(0, 3);
+  }, [breakdown]);
+
+  if (weakAreas.length === 0) return null;
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-accent/15 bg-accent/[0.02] shadow-sm">
+      <div className="border-b border-accent/10 bg-accent/5 px-4 py-3">
+        <h3 className="text-sm font-bold text-accent">
+          {labels.recommendedNextTitle ?? "Luyện thêm theo điểm yếu"}
+        </h3>
+        <p className="mt-0.5 text-[11px] text-muted">
+          {labels.recommendedNextDesc ?? "Các mảng cần cải thiện dựa trên kết quả bài thi vừa rồi"}
+        </p>
+      </div>
+      <div className="flex flex-wrap gap-2 px-4 py-3">
+        {weakAreas.map((a) => (
+          <span key={a.area} className="inline-flex items-center gap-1.5 rounded-full bg-sakura/8 px-3 py-1.5 text-xs font-semibold text-sakura">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-sakura" />
+            {SECTION_NAMES[a.area] ?? a.area} — {a.pct}%
+          </span>
+        ))}
+      </div>
+      <div className="border-t border-accent/10 px-4 py-3">
+        <button
+          className="inline-flex min-h-9 items-center justify-center rounded-xl bg-accent px-4 text-sm font-bold text-white outline-none ring-offset-2 transition hover:bg-accent/90 focus-visible:ring-2 focus-visible:ring-accent active:scale-[0.98]"
+          onClick={onRetry}
+          type="button"
+        >
+          {labels.retryQuiz ?? "Làm bài khác"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Session History Timeline                                           */
+/* ------------------------------------------------------------------ */
+
+function SessionHistoryTimeline({
+  history,
+  labels
+}: {
+  history: SessionHistoryItem[];
+  labels: QuizLabels;
+}) {
+  if (history.length === 0) return null;
+
+  return (
+    <section className="overflow-hidden rounded-2xl border border-ink/8 bg-surface shadow-sm">
+      <div className="border-b border-ink/6 bg-paper/40 px-4 py-3">
+        <h3 className="text-sm font-bold text-ink">{labels.historyTitle ?? "Lịch sử luyện tập"}</h3>
+      </div>
+      <div className="divide-y divide-ink/5">
+        {history.slice(0, 5).map((s) => {
+          const accuracy = s.totalQuestions > 0 ? Math.round((s.correctCount / s.totalQuestions) * 100) : 0;
+          const bandColor = BAND_COLORS[s.estimatedBjtBand ?? ""] ?? "text-ink";
+          const date = s.completedAt ? new Date(s.completedAt) : null;
+          return (
+            <div key={s.id} className="flex items-center gap-3 px-4 py-2.5">
+              {/* Score dot */}
+              <div className={`h-2.5 w-2.5 flex-shrink-0 rounded-full ${
+                accuracy >= 80 ? "bg-emerald-500" : accuracy >= 50 ? "bg-amber-400" : "bg-sakura"
+              }`} />
+              {/* Info */}
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs font-semibold text-ink">{s.testTitleVi}</p>
+                <p className="text-[10px] text-muted">
+                  {date ? date.toLocaleDateString() : "—"}
+                  {" · "}
+                  {s.correctCount}/{s.totalQuestions} ({accuracy}%)
+                </p>
+              </div>
+              {/* Score + band */}
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <span className="text-xs font-bold tabular-nums text-ink">{s.estimatedScore ?? "—"}</span>
+                {s.estimatedBjtBand && (
+                  <span className={`text-xs font-bold ${bandColor}`}>{s.estimatedBjtBand}</span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {history.length === 0 && (
+        <p className="px-4 py-6 text-center text-xs text-muted">{labels.historyEmpty ?? "Chưa có bài thi nào."}</p>
+      )}
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Skill & Section Breakdown                                          */
+/* ------------------------------------------------------------------ */
+
+const SECTION_NAMES: Record<string, string> = {
+  LC: "Listening Comprehension",
+  LR: "Listening & Reading",
+  RC: "Reading Comprehension"
+};
+
+function SkillSectionBreakdown({
+  breakdown,
+  labels
+}: {
+  breakdown: BreakdownResponse;
+  labels: QuizLabels;
+}) {
+  // Group by sectionCode
+  const sectionStats = useMemo(() => {
+    const map: Record<string, { total: number; correct: number }> = {};
+    for (const q of breakdown.breakdown) {
+      const code = q.sectionCode ?? "other";
+      if (!map[code]) map[code] = { total: 0, correct: 0 };
+      map[code].total++;
+      if (q.isCorrect) map[code].correct++;
+    }
+    return Object.entries(map)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([code, stats]) => ({
+        code,
+        name: SECTION_NAMES[code] ?? code,
+        ...stats,
+        pct: stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0
+      }));
+  }, [breakdown]);
+
+  // Group by skillTag
+  const skillStats = useMemo(() => {
+    const map: Record<string, { total: number; correct: number }> = {};
+    for (const q of breakdown.breakdown) {
+      const tag = q.skillTag ?? "general";
+      if (!map[tag]) map[tag] = { total: 0, correct: 0 };
+      map[tag].total++;
+      if (q.isCorrect) map[tag].correct++;
+    }
+    return Object.entries(map)
+      .sort(([, a], [, b]) => b.total - a.total)
+      .map(([tag, stats]) => ({
+        tag,
+        ...stats,
+        pct: stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0
+      }));
+  }, [breakdown]);
+
+  if (sectionStats.length === 0 && skillStats.length === 0) return null;
+
+  return (
+    <div className="grid gap-4 sm:grid-cols-2">
+      {/* Section scores */}
+      {sectionStats.length > 0 && (
+        <div className="overflow-hidden rounded-2xl border border-ink/8 bg-surface shadow-sm">
+          <div className="border-b border-ink/6 bg-paper/40 px-4 py-3">
+            <h3 className="text-sm font-bold text-ink">
+              {labels.sectionScoreLabel ?? "Điểm theo phần"}
+            </h3>
+          </div>
+          <div className="space-y-3 p-4">
+            {sectionStats.map((s) => (
+              <div key={s.code}>
+                <div className="flex items-baseline justify-between">
+                  <span className="text-xs font-semibold text-ink">{s.name}</span>
+                  <span className="text-xs font-bold tabular-nums text-muted">
+                    {s.correct}/{s.total} ({s.pct}%)
+                  </span>
+                </div>
+                <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-ink/5">
+                  <div
+                    className={`h-full rounded-full transition-all duration-700 ease-out ${
+                      s.pct >= 80 ? "bg-emerald-500" : s.pct >= 50 ? "bg-amber-400" : "bg-sakura"
+                    }`}
+                    style={{ width: `${s.pct}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Skill tag radar (bar chart visualization) */}
+      {skillStats.length > 0 && (
+        <div className="overflow-hidden rounded-2xl border border-ink/8 bg-surface shadow-sm">
+          <div className="border-b border-ink/6 bg-paper/40 px-4 py-3">
+            <h3 className="text-sm font-bold text-ink">
+              Skill breakdown
+            </h3>
+          </div>
+          <div className="space-y-2.5 p-4">
+            {skillStats.map((s) => (
+              <div key={s.tag} className="flex items-center gap-2">
+                <span className="w-24 truncate text-[11px] font-medium text-muted" title={s.tag}>
+                  {s.tag}
+                </span>
+                <div className="h-2 flex-1 overflow-hidden rounded-full bg-ink/5">
+                  <div
+                    className={`h-full rounded-full transition-all duration-700 ease-out ${
+                      s.pct >= 80 ? "bg-accent" : s.pct >= 50 ? "bg-amber-400" : "bg-sakura"
+                    }`}
+                    style={{ width: `${s.pct}%` }}
+                  />
+                </div>
+                <span className="w-10 text-right text-[11px] font-bold tabular-nums text-ink">
+                  {s.pct}%
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -111,6 +111,10 @@ export class ExerciseRepository {
     });
   }
 
+  async findExerciseById(exerciseId: string) {
+    return this.prisma.exercise.findUnique({ where: { id: exerciseId } });
+  }
+
   /* ── Session ─────────────────────────────────────────────────────────── */
 
   async createSession(data: {

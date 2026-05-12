@@ -5,6 +5,36 @@ import Link from "next/link";
 
 import type { DeckApiRow } from "./deck-types";
 
+/* ── Color accent: deterministic gradient from deck title hash ── */
+const DECK_GRADIENTS = [
+  "from-emerald-400/80 to-teal-500/80",
+  "from-blue-400/80 to-indigo-500/80",
+  "from-violet-400/80 to-purple-500/80",
+  "from-rose-400/80 to-pink-500/80",
+  "from-amber-400/80 to-orange-500/80",
+  "from-cyan-400/80 to-sky-500/80",
+  "from-lime-400/80 to-emerald-500/80",
+  "from-fuchsia-400/80 to-pink-500/80",
+] as const;
+
+const DECK_EMOJIS = ["📚", "🎯", "✨", "🌸", "🔥", "💎", "🎌", "📝"] as const;
+
+function hashStr(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) {
+    h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+  }
+  return Math.abs(h);
+}
+
+function deckGradient(title: string) {
+  return DECK_GRADIENTS[hashStr(title) % DECK_GRADIENTS.length];
+}
+
+function deckEmoji(title: string) {
+  return DECK_EMOJIS[hashStr(title) % DECK_EMOJIS.length];
+}
+
 export interface DeckCardLabels {
   cards: string;
   private: string;
@@ -185,16 +215,23 @@ export function DeckCard({
   }
 
   /* grid */
+  const grad = deckGradient(deck.titleVi);
+  const emoji = deckEmoji(deck.titleVi);
+
   if (insideFooter) {
     return (
       <div className={`flex h-full min-h-[8.5rem] flex-col overflow-hidden ${tileChrome}`}>
+        <div className={`h-1.5 w-full bg-gradient-to-r ${grad}`} />
         <Link
           aria-label={aria}
           className="flex min-h-0 flex-1 flex-col p-4 pb-3 outline-none"
           href={href}
         >
           <div className="flex items-start justify-between gap-2">
-            <h3 className="min-w-0 flex-1 text-sm font-bold leading-snug text-ink">{title}</h3>
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <span className="text-lg" aria-hidden>{emoji}</span>
+              <h3 className="min-w-0 flex-1 text-sm font-bold leading-snug text-ink">{title}</h3>
+            </div>
             {badge}
           </div>
           {desc ? (
@@ -213,22 +250,28 @@ export function DeckCard({
   return (
     <Link
       aria-label={aria}
-      className={`flex h-full min-h-[8.5rem] flex-col p-4 ${tileChrome}`}
+      className={`flex h-full min-h-[8.5rem] flex-col overflow-hidden ${tileChrome}`}
       href={href}
     >
-      <div className="flex items-start justify-between gap-2">
-        <h3 className="min-w-0 flex-1 text-sm font-bold leading-snug text-ink">{title}</h3>
-        {badge}
-      </div>
-      {desc ? (
-        <p className="mt-2 line-clamp-2 min-h-[2.5rem] flex-1 text-xs leading-relaxed text-muted">{desc}</p>
-      ) : (
-        <div className="min-h-[2.5rem] flex-1" />
-      )}
-      <div className="mt-auto pt-2">
-        <MetaLine asLink={false} href={href}>
-          {metaInner}
-        </MetaLine>
+      <div className={`h-1.5 w-full bg-gradient-to-r ${grad}`} />
+      <div className="flex flex-1 flex-col p-4">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <span className="text-lg" aria-hidden>{emoji}</span>
+            <h3 className="min-w-0 flex-1 text-sm font-bold leading-snug text-ink">{title}</h3>
+          </div>
+          {badge}
+        </div>
+        {desc ? (
+          <p className="mt-2 line-clamp-2 min-h-[2.5rem] flex-1 text-xs leading-relaxed text-muted">{desc}</p>
+        ) : (
+          <div className="min-h-[2.5rem] flex-1" />
+        )}
+        <div className="mt-auto pt-2">
+          <MetaLine asLink={false} href={href}>
+            {metaInner}
+          </MetaLine>
+        </div>
       </div>
     </Link>
   );

@@ -4,7 +4,7 @@ import * as https from "node:https";
 import * as tls from "node:tls";
 
 import { createPrismaClient } from "@nihongo-bjt/database";
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger, type OnModuleInit } from "@nestjs/common";
 
 export type NhkNewsType = "easy" | "normal";
 
@@ -21,6 +21,7 @@ export interface NhkArticleSummary {
 }
 
 export interface NhkArticleDetail extends NhkArticleSummary {
+  audioUrl: string | null;
   bodyHtml: string;
   bodyPlain: string;
   vocabulary: NhkVocabItem[];
@@ -42,7 +43,7 @@ export interface NhkNewsConfig {
   widgetId: string | null;
 }
 
-const CONFIG_WIDGET_KIND = "nhk_news_home";
+const CONFIG_WIDGET_KIND = "nhk_news";
 const DEFAULT_EASY_FEED_URL = "https://nhkeasier.com/feed/";
 const DEFAULT_NORMAL_FEED_URL = "https://www3.nhk.or.jp/rss/news/cat0.xml";
 const DEFAULT_NORMAL_CATEGORY_FEED_URLS = Array.from(
@@ -53,13 +54,27 @@ const HTTP_TIMEOUT_MS = 8_000;
 const NEWS_LIST_CACHE_TTL_MS = 5 * 60 * 1000;
 const NEWS_IMAGE_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
-type CachedArticle = NhkArticleSummary & { summaryHtml?: string | null; summaryPlain?: string | null };
+type CachedArticle = NhkArticleSummary & { audioUrl?: string | null; summaryHtml?: string | null; summaryPlain?: string | null };
 type TimedCacheEntry<T> = { expiresAt: number; promise: Promise<T> };
+const ARTICLE_CACHE_MAX = 500;
+const IMAGE_CACHE_MAX = 200;
 const articleCache = new Map<string, CachedArticle>();
 const listCache = new Map<string, TimedCacheEntry<NhkArticleSummary[]>>();
 const imageCache = new Map<string, TimedCacheEntry<string | null>>();
 
-function cached<T>(store: Map<string, TimedCacheEntry<T>>, key: string, ttlMs: number, loader: () => Promise<T>) {
+/** Evict oldest entries when map exceeds max size (simple LRU via insertion order) */
+function evictOldest<V>(map: Map<string, V>, max: number) {
+  if (map.size <= max) return;
+  const toDelete = map.size - max;
+  let deleted = 0;
+  for (const key of map.keys()) {
+    if (deleted >= toDelete) break;
+    map.delete(key);
+    deleted++;
+  }
+}
+
+function cached<T>(store: Map<string, TimedCacheEntry<T>>, key: string, ttlMs: number, loader: () => Promise<T>, maxSize?: number) {
   const now = Date.now();
   const existing = store.get(key);
   if (existing && existing.expiresAt > now) return existing.promise;
@@ -68,6 +83,7 @@ function cached<T>(store: Map<string, TimedCacheEntry<T>>, key: string, ttlMs: n
     throw error;
   });
   store.set(key, { expiresAt: now + ttlMs, promise });
+  if (maxSize) evictOldest(store, maxSize);
   return promise;
 }
 
@@ -219,7 +235,7 @@ async function fetchText(url: string): Promise<string> {
   return res.text();
 }
 
-function fetchViaProxy(target: URL, proxyUrl: string): Promise<string> {
+function fetchViaProxy(target: URL, proxyUrl: string, redirectsLeft = 5): Promise<string> {
   return new Promise((resolve, reject) => {
     const proxy = new URL(proxyUrl);
     const timeout = HTTP_TIMEOUT_MS;
@@ -238,16 +254,23 @@ function fetchViaProxy(target: URL, proxyUrl: string): Promise<string> {
         return;
       }
       const tlsSocket = tls.connect({ socket, servername: target.hostname, rejectUnauthorized: false }, () => {
-        const req = https.request(
-          { createConnection: () => tlsSocket, hostname: target.hostname, path: target.pathname + target.search, method: "GET", headers: { "user-agent": "NihonGoBJT/1.0 (+https://nihongo-bjt.local)", "accept": "application/rss+xml, application/xml, text/xml, text/html;q=0.9" } },
+        const req = http.request(
+          { createConnection: () => tlsSocket, hostname: target.hostname, path: target.pathname + target.search, method: "GET", headers: { host: target.host, "user-agent": "NihonGoBJT/1.0 (+https://nihongo-bjt.local)", "accept": "application/rss+xml, application/xml, text/xml, text/html;q=0.9", "accept-encoding": "identity" } },
           (resp) => {
+            // Follow redirects
+            if (resp.statusCode && resp.statusCode >= 300 && resp.statusCode < 400 && resp.headers.location && redirectsLeft > 0) {
+              tlsSocket.destroy();
+              const redirectUrl = new URL(resp.headers.location, target.href);
+              resolve(redirectUrl.protocol === "https:" ? fetchViaProxy(redirectUrl, proxyUrl, redirectsLeft - 1) : fetchText(redirectUrl.href));
+              return;
+            }
             if (!resp.statusCode || resp.statusCode >= 400) {
               reject(new Error(`nhk_fetch_failed:${resp.statusCode}`));
               return;
             }
-            let data = "";
-            resp.on("data", (chunk: Buffer) => { data += chunk.toString(); });
-            resp.on("end", () => resolve(data));
+            const chunks: Buffer[] = [];
+            resp.on("data", (chunk: Buffer) => { chunks.push(chunk); });
+            resp.on("end", () => resolve(Buffer.concat(chunks).toString("utf-8")));
             resp.on("error", reject);
           }
         );
@@ -288,12 +311,12 @@ function stringField(row: Record<string, unknown>, keys: string[]) {
   return "";
 }
 
-function parseEasyRows(rawJson: string, limit: number): NhkArticleSummary[] {
+function parseEasyRows(rawJson: string, limit: number): CachedArticle[] {
   const parsed = JSON.parse(rawJson) as unknown;
   const rows = findFirstArray(parsed);
-  const articles: NhkArticleSummary[] = rows
+  const articles: CachedArticle[] = rows
     .filter((row): row is Record<string, unknown> => Boolean(row && typeof row === "object"))
-    .reduce<NhkArticleSummary[]>((acc, row) => {
+    .reduce<CachedArticle[]>((acc, row) => {
       const upstreamId = stringField(row, ["news_id", "id", "newsId"]);
       const title = stringField(row, ["title", "title_with_ruby_removed", "titleWithoutRuby"]);
       const titleWithRuby = stringField(row, ["title_with_ruby", "titleWithRuby"]) || null;
@@ -321,7 +344,7 @@ function parseEasyRows(rawJson: string, limit: number): NhkArticleSummary[] {
   return articles.slice(0, limit);
 }
 
-function parseEasyFeed(raw: string, limit: number): NhkArticleSummary[] {
+function parseEasyFeed(raw: string, limit: number): CachedArticle[] {
   try {
     return parseEasyRows(raw, limit);
   } catch {
@@ -351,7 +374,12 @@ function parseRssItems(xml: string, limit: number): CachedArticle[] {
       const publishedAt = normalizeDate(cleanText(firstMatch(item, /<pubDate[^>]*>([\s\S]*?)<\/pubDate>/iu)));
       if (!title || !url) return acc;
       const summaryPlain = cleanText(descriptionHtml);
+      const audioUrl =
+        firstMatch(descriptionHtml, /<audio[^>]+src="([^"]+)"/iu) ??
+        firstCapture(item, /<enclosure[^>]*(?:type="audio\/[^"]+"[^>]*url="([^"]+)"|url="([^"]+)"[^>]*type="audio\/[^"]+")/iu) ??
+        null;
       acc.push({
+        audioUrl,
         difficulty: null,
         id: stableId("normal", url),
         imageUrl,
@@ -393,7 +421,7 @@ function extractVocabularyFromRuby(html: string): NhkVocabItem[] {
     if (!word || word.length < 2 || seen.has(word)) continue;
     seen.add(word);
     out.push({ meaning: null, pos: null, reading: reading || null, word });
-    if (out.length >= 18) break;
+    if (out.length >= 24) break;
   }
   return out;
 }
@@ -401,37 +429,139 @@ function extractVocabularyFromRuby(html: string): NhkVocabItem[] {
 function extractVocabularyFromText(text: string): NhkVocabItem[] {
   const seen = new Set<string>();
   const out: NhkVocabItem[] = [];
-  const matches = text.match(/[\p{Script=Han}々〆ヵヶ]{2,}/gu) ?? [];
-  for (const raw of matches) {
+  // Kanji compounds (2+ kanji chars)
+  const kanjiMatches = text.match(/[\p{Script=Han}々〆ヵヶ]{2,}/gu) ?? [];
+  for (const raw of kanjiMatches) {
     const word = raw.trim();
     if (!word || seen.has(word)) continue;
     seen.add(word);
     out.push({ meaning: null, pos: null, reading: null, word });
-    if (out.length >= 14) break;
+    if (out.length >= 20) break;
+  }
+  // Katakana words (3+ chars, likely loanwords / technical terms)
+  const katakanaMatches = text.match(/[\p{Script=Katakana}ー]{3,}/gu) ?? [];
+  for (const raw of katakanaMatches) {
+    const word = raw.trim();
+    if (!word || seen.has(word)) continue;
+    seen.add(word);
+    out.push({ meaning: null, pos: "katakana", reading: null, word });
+    if (out.length >= 28) break;
+  }
+  // Mixed kanji+kana compounds (e.g. 食べ物, 取り消し)
+  const mixedMatches = text.match(/[\p{Script=Han}][\p{Script=Hiragana}\p{Script=Han}]{2,}/gu) ?? [];
+  for (const raw of mixedMatches) {
+    const word = raw.trim();
+    if (!word || word.length < 3 || seen.has(word)) continue;
+    seen.add(word);
+    out.push({ meaning: null, pos: null, reading: null, word });
+    if (out.length >= 32) break;
   }
   return out;
 }
 
 function extractGrammarFromText(text: string): NhkVocabItem[] {
   const candidates = [
-    { pattern: /ています|ています。/u, word: "〜ています", reading: null },
+    // N4-N3 patterns
+    { pattern: /ています/u, word: "〜ています", reading: null },
     { pattern: /そうです|そうだ/u, word: "〜そうです", reading: null },
     { pattern: /ために/u, word: "〜ために", reading: null },
     { pattern: /ように/u, word: "〜ように", reading: null },
     { pattern: /とき/u, word: "〜とき", reading: null },
     { pattern: /について/u, word: "〜について", reading: null },
     { pattern: /かもしれません/u, word: "〜かもしれません", reading: null },
-    { pattern: /によると/u, word: "〜によると", reading: null }
+    { pattern: /によると/u, word: "〜によると", reading: null },
+    // N3-N2 patterns (common in news)
+    { pattern: /ことになった|ことになりました/u, word: "〜ことになる", reading: null },
+    { pattern: /ことがある|ことがあります/u, word: "〜ことがある", reading: null },
+    { pattern: /ようにする|ようにして/u, word: "〜ようにする", reading: null },
+    { pattern: /てしまう|てしまった|てしまいました/u, word: "〜てしまう", reading: null },
+    { pattern: /られる|られて|られた/u, word: "〜られる (受身/可能)", reading: null },
+    { pattern: /ということ/u, word: "〜ということ", reading: null },
+    { pattern: /に対して|に対し/u, word: "〜に対して", reading: null },
+    { pattern: /として/u, word: "〜として", reading: null },
+    // N2 news-specific
+    { pattern: /にとって/u, word: "〜にとって", reading: null },
+    { pattern: /に基づいて|に基づき/u, word: "〜に基づいて", reading: null },
+    { pattern: /において|における/u, word: "〜において", reading: null },
+    { pattern: /をはじめ/u, word: "〜をはじめ", reading: null },
   ];
   return candidates
     .filter((item) => item.pattern.test(text))
-    .slice(0, 8)
+    .slice(0, 10)
     .map((item) => ({
       meaning: "Ngữ pháp xuất hiện trong bài / Grammar pattern from the article",
       pos: "grammar",
       reading: item.reading,
       word: item.word
     }));
+}
+
+/**
+ * Extract NHK article ID (e.g. "k10015118891000") from an NHK www3 URL and
+ * derive the news.web.nhk canonical URL + JSON API URL.
+ */
+function extractNhkArticleKey(url: string): string | null {
+  const m = url.match(/\b(k\d{14,})\b/u);
+  return m ? m[1] : null;
+}
+
+async function fetchNhkApiMetadata(articleKey: string): Promise<{ imageUrl: string | null; topics: string[] } | null> {
+  try {
+    const apiUrl = `https://api.web.nhk/r8/t/newsarticle/na/na-${articleKey}.json`;
+    const text = await fetchText(apiUrl);
+    const data = JSON.parse(text) as Record<string, unknown>;
+    const image = data.image as Record<string, { url?: string }> | undefined;
+    const imageUrl = image?.medium?.url ?? image?.icon?.url ?? null;
+    const topicArr = Array.isArray(data.topic) ? data.topic : [];
+    const topics = topicArr
+      .filter((t): t is { name: string } => typeof t === "object" && t !== null && typeof (t as Record<string, unknown>).name === "string")
+      .map((t) => t.name)
+      .slice(0, 5);
+    return { imageUrl, topics };
+  } catch {
+    return null;
+  }
+}
+
+async function enrichNormalArticle(article: CachedArticle): Promise<NhkArticleDetail> {
+  const bodyPlain = article.summaryPlain || article.title;
+  const bodyHtml = article.summaryHtml
+    ? article.summaryHtml.replace(/<audio\b[\s\S]*?<\/audio>/giu, "").replace(/<ul\b[\s\S]*?<\/ul>/giu, "")
+    : `<p>${escapeHtml(bodyPlain)}</p>`;
+  // Extract paragraphs from summaryHtml
+  const paragraphs = bodyHtml.match(/<p\b[\s\S]*?<\/p>/giu);
+  const cleanBody = paragraphs?.slice(0, 12).join("\n") ?? `<p>${escapeHtml(bodyPlain)}</p>`;
+
+  // Try NHK JSON API for better image
+  const articleKey = extractNhkArticleKey(article.url);
+  let betterImage = article.imageUrl;
+  let topics: string[] = [];
+  if (articleKey) {
+    const meta = await fetchNhkApiMetadata(articleKey);
+    if (meta?.imageUrl) betterImage = meta.imageUrl;
+    if (meta?.topics) topics = meta.topics;
+  }
+
+  // Derive canonical URL on news.web.nhk
+  const canonicalUrl = articleKey
+    ? `https://news.web.nhk/newsweb/na/na-${articleKey}`
+    : article.url;
+
+  const fullText = `${article.title}\n${bodyPlain}`;
+  const vocab = extractVocabularyFromText(fullText);
+  const grammar = extractGrammarFromText(bodyPlain);
+
+  return {
+    ...article,
+    audioUrl: article.audioUrl ?? null,
+    bodyHtml: cleanBody + (topics.length > 0
+      ? `\n<div class="nhk-topics"><span>${topics.map(escapeHtml).join("</span><span>")}</span></div>`
+      : ""),
+    bodyPlain,
+    imageUrl: betterImage,
+    url: canonicalUrl,
+    vocabulary: [...vocab, ...grammar]
+  };
 }
 
 function parseArticleHtml(url: string, html: string, fallback: CachedArticle): NhkArticleDetail {
@@ -456,8 +586,14 @@ function parseArticleHtml(url: string, html: string, fallback: CachedArticle): N
   const vocab = extractVocabularyFromRuby(`${fallback.titleWithRuby ?? ""}\n${bodyHtml}`);
   const vocabulary = vocab.length > 0 ? vocab : extractVocabularyFromText(`${title}\n${bodyPlain}`);
   const grammar = extractGrammarFromText(bodyPlain);
+  const audioUrl =
+    fallback.audioUrl ??
+    firstMatch(articleBlock, /<audio[^>]+src="([^"]+)"/iu) ??
+    firstMatch(decodedHtml, /<audio[^>]+src="([^"]+)"/iu) ??
+    null;
   return {
     ...fallback,
+    audioUrl,
     bodyHtml,
     bodyPlain,
     imageUrl,
@@ -468,11 +604,35 @@ function parseArticleHtml(url: string, html: string, fallback: CachedArticle): N
 }
 
 @Injectable()
-export class NhkNewsRepository {
+export class NhkNewsRepository implements OnModuleInit {
+  private readonly logger = new Logger(NhkNewsRepository.name);
   private _prisma: ReturnType<typeof createPrismaClient> | null = null;
+  private refreshTimer: ReturnType<typeof setInterval> | null = null;
   private get prisma() {
     if (!this._prisma) this._prisma = createPrismaClient();
     return this._prisma;
+  }
+
+  onModuleInit() {
+    // Background refresh every 5 minutes — keeps cache warm so users don't wait on cold fetches
+    const REFRESH_INTERVAL_MS = 5 * 60 * 1000;
+    this.refreshTimer = setInterval(() => {
+      void this.backgroundRefresh();
+    }, REFRESH_INTERVAL_MS);
+    // Initial warm-up after 10s
+    setTimeout(() => void this.backgroundRefresh(), 10_000);
+  }
+
+  private async backgroundRefresh() {
+    try {
+      await Promise.allSettled([
+        this.listArticles(20, "easy", "vi"),
+        this.listArticles(20, "normal", "vi"),
+      ]);
+      this.logger.debug("NHK feeds refreshed in background");
+    } catch {
+      this.logger.warn("Background NHK refresh failed");
+    }
   }
 
   async getConfig(locale = "vi"): Promise<NhkNewsConfig> {
@@ -551,7 +711,9 @@ export class NhkNewsRepository {
             : await this.listNormalArticlesFromFeeds(feedUrl, limit);
         for (const article of articles) {
           articleCache.set(article.id, article);
+          void this.persistArticleSummary(article).catch(() => {});
         }
+        evictOldest(articleCache, ARTICLE_CACHE_MAX);
         return articles.slice(0, limit);
       });
     } catch {
@@ -575,7 +737,8 @@ export class NhkNewsRepository {
     const fallbackNewsWebUrl = deriveNewsWebUrl(normalizedUrl);
     try {
       const imageUrl = await cached(imageCache, normalizedUrl, NEWS_IMAGE_CACHE_TTL_MS, async () =>
-        extractImageFromHtml(await fetchText(normalizedUrl), normalizedUrl)
+        extractImageFromHtml(await fetchText(normalizedUrl), normalizedUrl),
+        IMAGE_CACHE_MAX
       );
       // Do not cache misses: NHK may temporarily serve consent/variant HTML without image metadata.
       if (!imageUrl) {
@@ -597,6 +760,32 @@ export class NhkNewsRepository {
   }
 
   async getArticleDetail(articleId: string): Promise<NhkArticleDetail | null> {
+    // Try DB first for persistent storage
+    const dbArticle = await this.prisma.nhkArticle.findUnique({ where: { id: articleId } });
+    if (dbArticle?.bodyHtml) {
+      // If DB lacks audioUrl, check in-memory cache (may have been extracted from RSS)
+      const cachedAudioUrl = dbArticle.audioUrl ?? articleCache.get(articleId)?.audioUrl ?? null;
+      // Backfill audioUrl to DB if found in cache but missing in DB
+      if (cachedAudioUrl && !dbArticle.audioUrl) {
+        void this.prisma.nhkArticle.update({ where: { id: articleId }, data: { audioUrl: cachedAudioUrl } }).catch(() => {});
+      }
+      return {
+        audioUrl: cachedAudioUrl,
+        bodyHtml: dbArticle.bodyHtml,
+        bodyPlain: dbArticle.bodyPlain ?? "",
+        difficulty: dbArticle.difficulty,
+        id: dbArticle.id,
+        imageUrl: dbArticle.imageUrl,
+        publishedAt: dbArticle.publishedAt.toISOString(),
+        sourceLabel: dbArticle.sourceType === "easy" ? "NHK Easy" : "NHK",
+        sourceType: dbArticle.sourceType as NhkNewsType,
+        title: dbArticle.title,
+        titleWithRuby: dbArticle.titleWithRuby,
+        url: dbArticle.url,
+        vocabulary: (dbArticle.vocabulary as unknown as NhkVocabItem[]) ?? [],
+      };
+    }
+
     let article = articleCache.get(articleId);
     if (!article) {
       const [easy, normal] = await Promise.allSettled([
@@ -611,12 +800,24 @@ export class NhkNewsRepository {
     }
     if (!article) return null;
 
+    // For normal NHK articles, don't scrape HTML — full content is behind consent wall.
+    // Use RSS summary + NHK JSON API for metadata enrichment.
+    if (article.sourceType === "normal") {
+      const enriched = await enrichNormalArticle(article);
+      void this.persistArticle(enriched).catch(() => {});
+      return enriched;
+    }
+
     try {
-      return parseArticleHtml(article.url, await fetchText(article.url), article);
+      const detail = parseArticleHtml(article.url, await fetchText(article.url), article);
+      // Persist to DB (fire-and-forget)
+      void this.persistArticle(detail).catch(() => {});
+      return detail;
     } catch {
       const fallbackText = `${article.title}\n${article.summaryPlain ?? ""}`;
       return {
         ...article,
+        audioUrl: article.audioUrl ?? null,
         bodyHtml: `<p>${escapeHtml(article.summaryPlain || article.title)}</p>`,
         bodyPlain: article.summaryPlain || article.title,
         vocabulary: [...extractVocabularyFromText(fallbackText), ...extractGrammarFromText(fallbackText)]
@@ -779,5 +980,132 @@ export class NhkNewsRepository {
 
       return { articleId, created, deckId: deck.id, message: "created", skipped };
     });
+  }
+
+  // ─── Persistent article storage ───
+
+  private async persistArticle(article: NhkArticleDetail) {
+    await this.prisma.nhkArticle.upsert({
+      where: { id: article.id },
+      create: {
+        id: article.id,
+        sourceType: article.sourceType,
+        title: article.title,
+        titleWithRuby: article.titleWithRuby,
+        url: article.url,
+        imageUrl: article.imageUrl,
+        audioUrl: article.audioUrl,
+        difficulty: article.difficulty,
+        bodyHtml: article.bodyHtml,
+        bodyPlain: article.bodyPlain,
+        vocabulary: article.vocabulary as unknown as object,
+        publishedAt: new Date(article.publishedAt),
+      },
+      update: {
+        title: article.title,
+        imageUrl: article.imageUrl,
+        audioUrl: article.audioUrl,
+        bodyHtml: article.bodyHtml,
+        bodyPlain: article.bodyPlain,
+        vocabulary: article.vocabulary as unknown as object,
+      },
+    });
+  }
+
+  async persistArticleSummary(article: NhkArticleSummary) {
+    await this.prisma.nhkArticle.upsert({
+      where: { id: article.id },
+      create: {
+        id: article.id,
+        sourceType: article.sourceType,
+        title: article.title,
+        titleWithRuby: article.titleWithRuby,
+        url: article.url,
+        imageUrl: article.imageUrl,
+        difficulty: article.difficulty,
+        publishedAt: new Date(article.publishedAt),
+      },
+      update: {
+        title: article.title,
+        imageUrl: article.imageUrl,
+      },
+    });
+  }
+
+  // ─── Reading progress ───
+
+  async trackReading(userId: string, articleId: string, readTimeSec?: number, completed?: boolean) {
+    // Ensure article exists in DB (at least minimal)
+    const exists = await this.prisma.nhkArticle.findUnique({ where: { id: articleId }, select: { id: true } });
+    if (!exists) return null;
+
+    return this.prisma.nhkReadingProgress.upsert({
+      where: { userId_articleId: { userId, articleId } },
+      create: { userId, articleId, readTimeSec: readTimeSec ?? null, completed: completed ?? false },
+      update: {
+        readAt: new Date(),
+        ...(readTimeSec != null ? { readTimeSec } : {}),
+        ...(completed != null ? { completed } : {}),
+      },
+    });
+  }
+
+  async getReadingProgress(userId: string, articleIds?: string[]) {
+    return this.prisma.nhkReadingProgress.findMany({
+      where: {
+        userId,
+        ...(articleIds ? { articleId: { in: articleIds } } : {}),
+      },
+      orderBy: { readAt: "desc" },
+      take: 100,
+    });
+  }
+
+  // ─── Bookmarks ───
+
+  async toggleBookmark(userId: string, articleId: string): Promise<{ bookmarked: boolean }> {
+    const exists = await this.prisma.nhkArticle.findUnique({ where: { id: articleId }, select: { id: true } });
+    if (!exists) return { bookmarked: false };
+
+    const existing = await this.prisma.nhkBookmark.findUnique({
+      where: { userId_articleId: { userId, articleId } },
+    });
+    if (existing) {
+      await this.prisma.nhkBookmark.delete({ where: { id: existing.id } });
+      return { bookmarked: false };
+    }
+    await this.prisma.nhkBookmark.create({ data: { userId, articleId } });
+    return { bookmarked: true };
+  }
+
+  async getBookmarks(userId: string, limit = 20, offset = 0) {
+    const items = await this.prisma.nhkBookmark.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      take: limit,
+      skip: offset,
+      include: { article: true },
+    });
+    return items.map((bm) => ({
+      bookmarkId: bm.id,
+      createdAt: bm.createdAt.toISOString(),
+      article: {
+        id: bm.article.id,
+        title: bm.article.title,
+        imageUrl: bm.article.imageUrl,
+        sourceType: bm.article.sourceType,
+        difficulty: bm.article.difficulty,
+        publishedAt: bm.article.publishedAt.toISOString(),
+        url: bm.article.url,
+      },
+    }));
+  }
+
+  async isBookmarked(userId: string, articleId: string): Promise<boolean> {
+    const bm = await this.prisma.nhkBookmark.findUnique({
+      where: { userId_articleId: { userId, articleId } },
+      select: { id: true },
+    });
+    return bm !== null;
   }
 }

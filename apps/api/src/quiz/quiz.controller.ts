@@ -94,6 +94,19 @@ export class QuizController {
     return this.quizService.startSessionWithQuota(parsed.data.testId, parsed.data.userId);
   }
 
+  @Get("session/history")
+  @ApiOperation({
+    summary: "List completed quiz sessions for the current user (most recent first)."
+  })
+  sessionHistory(
+    @CurrentUser() user: KeycloakAuthenticatedUser | undefined,
+    @Query("userId") userId: string | undefined,
+    @Query("limit") limit?: string
+  ) {
+    const resolved = resolveLearnerUserId(user, userId, { required: true })!;
+    return this.quizRepository.sessionHistory(resolved, Math.min(Number(limit) || 20, 50));
+  }
+
   @Get("session/active")
   @ApiOperation({
     summary:
