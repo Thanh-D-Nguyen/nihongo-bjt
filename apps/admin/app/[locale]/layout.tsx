@@ -1,4 +1,5 @@
 import { isSupportedLocale, type SupportedLocale } from "@nihongo-bjt/config";
+import { isAccessTokenUsable } from "@nihongo-bjt/keycloak-oidc";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import ja from "../../messages/ja.json";
@@ -69,13 +70,13 @@ export default async function AdminLayout({
     navItems: t.shell.navItems
   };
 
-  // Optimistic gate: if KC cookies are present server-side, render the shell immediately
-  // and let the gate validate asynchronously. This avoids the auth-gate flash for already
-  // authenticated admins (and keeps the redirect-on-401 path intact).
+  // Optimistic gate: only render the shell immediately when the access token is
+  // still locally usable. A stale access token or refresh-only cookie should stay
+  // behind the session-check screen until the client validates/redirects, otherwise
+  // unauthenticated visitors can briefly see the admin overview before /login.
   const cookieStore = await cookies();
-  const initialAuthed = Boolean(
-    cookieStore.get(adminKcCookies.access)?.value || cookieStore.get(adminKcCookies.refresh)?.value
-  );
+  const accessCookie = cookieStore.get(adminKcCookies.access)?.value;
+  const initialAuthed = Boolean(accessCookie && isAccessTokenUsable(accessCookie));
 
   return (
     <div lang={locale} className="contents">

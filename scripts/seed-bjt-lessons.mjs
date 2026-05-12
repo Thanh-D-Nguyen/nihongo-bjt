@@ -16,8 +16,32 @@ const LESSON_THEMES = [
 
 // BJT levels → JLPT mapping
 const LEVEL_JLPT = {
-  'J5': 'N5', 'J4': 'N4', 'J3': 'N3', 'J2': 'N2', 'J1': 'N1',
+  'J5': 'N5', 'J4': 'N4', 'J3': 'N3', 'J2': 'N2', 'J1': 'N1', 'J1+': 'N1',
 };
+
+const LEVEL_KANJI = {
+  'J5': 5, 'J4': 4, 'J3': 3, 'J2': 2, 'J1': 1, 'J1+': 1,
+};
+
+const LESSON_ITEM_CAPS = {
+  vocabulary: 28,
+  kanji: 14,
+  grammar: 10,
+};
+
+function slugLevelCode(levelCode) {
+  return levelCode.toLowerCase().replace('+', 'plus');
+}
+
+async function insertLessonItem(client, lessonId, contentType, contentId, sortOrder) {
+  const result = await client.query(
+    `INSERT INTO curriculum.bjt_lesson_item (lesson_id, content_type, content_id, sort_order)
+     VALUES ($1, $2, $3, $4)
+     ON CONFLICT (lesson_id, content_type, content_id) DO NOTHING`,
+    [lessonId, contentType, contentId, sortOrder]
+  );
+  return result.rowCount;
+}
 
 async function main() {
   const client = new pg.Client(DB);
@@ -43,15 +67,22 @@ async function main() {
     );
     const grammarIds = grammarRes.rows.map(r => r.id);
 
-    console.log(`  Found: ${vocabIds.length} vocab, ${grammarIds.length} grammar`);
+    const kanjiRes = await client.query(
+      `SELECT id FROM content.kanji WHERE status='active' AND level=$1 ORDER BY frequency NULLS LAST, character`,
+      [LEVEL_KANJI[levelCode]]
+    );
+    const kanjiIds = kanjiRes.rows.map(r => r.id);
+
+    console.log(`  Found: ${vocabIds.length} vocab, ${kanjiIds.length} kanji, ${grammarIds.length} grammar`);
 
     const lessonCount = LESSON_THEMES.length;
     const vocabPerLesson = Math.ceil(vocabIds.length / lessonCount);
+    const kanjiPerLesson = Math.ceil(kanjiIds.length / lessonCount);
     const grammarPerLesson = Math.ceil(grammarIds.length / lessonCount);
 
     for (let i = 0; i < LESSON_THEMES.length; i++) {
       const theme = LESSON_THEMES[i];
-      const slug = `${levelCode.toLowerCase()}-${String(theme.order).padStart(2, '0')}-${theme.slug}`;
+      const slug = `${slugLevelCode(levelCode)}-${String(theme.order).padStart(2, '0')}-${theme.slug}`;
 
       // Check if lesson exists
       const existing = await client.query(
@@ -59,45 +90,54 @@ async function main() {
         [slug]
       );
 
+      let lessonId;
+      let insertedLesson = false;
+
       if (existing.rows.length > 0) {
-        console.log(`  ⏭  Lesson ${slug} already exists`);
-        continue;
+        lessonId = existing.rows[0].id;
+      } else {
+        const lessonRes = await client.query(
+          `INSERT INTO curriculum.bjt_lesson (level_code, sort_order, slug, title_vi, title_ja, description_vi, description_ja, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, NOW()) RETURNING id`,
+          [levelCode, theme.order, slug, theme.titleVi, theme.titleJa, theme.descVi, theme.titleJa]
+        );
+        lessonId = lessonRes.rows[0].id;
+        insertedLesson = true;
+        totalLessons++;
       }
 
-      // Insert lesson
-      const lessonRes = await client.query(
-        `INSERT INTO curriculum.bjt_lesson (level_code, sort_order, slug, title_vi, title_ja, description_vi, description_ja, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW()) RETURNING id`,
-        [levelCode, theme.order, slug, theme.titleVi, theme.titleJa, theme.descVi, theme.titleJa]
-      );
-      const lessonId = lessonRes.rows[0].id;
-      totalLessons++;
+      // Lessons are guided modules, not encyclopedic dumps. Keep them learnable;
+      // the full level catalog remains available through /levels/:code tabs.
+      await client.query(`DELETE FROM curriculum.bjt_lesson_item WHERE lesson_id=$1`, [lessonId]);
 
-      // Distribute vocab
-      const lessonVocab = vocabIds.slice(i * vocabPerLesson, (i + 1) * vocabPerLesson);
+      const lessonVocab = vocabIds
+        .slice(i * vocabPerLesson, (i + 1) * vocabPerLesson)
+        .slice(0, LESSON_ITEM_CAPS.vocabulary);
+      const lessonKanji = kanjiIds
+        .slice(i * kanjiPerLesson, (i + 1) * kanjiPerLesson)
+        .slice(0, LESSON_ITEM_CAPS.kanji);
+      const lessonGrammar = grammarIds
+        .slice(i * grammarPerLesson, (i + 1) * grammarPerLesson)
+        .slice(0, LESSON_ITEM_CAPS.grammar);
+      let insertedItems = 0;
+      let sortOrder = 1;
+
       for (let j = 0; j < lessonVocab.length; j++) {
-        await client.query(
-          `INSERT INTO curriculum.bjt_lesson_item (lesson_id, content_type, content_id, sort_order)
-           VALUES ($1, 'vocabulary', $2, $3)
-           ON CONFLICT (lesson_id, content_type, content_id) DO NOTHING`,
-          [lessonId, lessonVocab[j], j + 1]
-        );
-        totalItems++;
+        insertedItems += await insertLessonItem(client, lessonId, 'vocabulary', lessonVocab[j], sortOrder++);
       }
 
-      // Distribute grammar
-      const lessonGrammar = grammarIds.slice(i * grammarPerLesson, (i + 1) * grammarPerLesson);
+      for (let h = 0; h < lessonKanji.length; h++) {
+        insertedItems += await insertLessonItem(client, lessonId, 'kanji', lessonKanji[h], sortOrder++);
+      }
+
       for (let k = 0; k < lessonGrammar.length; k++) {
-        await client.query(
-          `INSERT INTO curriculum.bjt_lesson_item (lesson_id, content_type, content_id, sort_order)
-           VALUES ($1, 'grammar', $2, $3)
-           ON CONFLICT (lesson_id, content_type, content_id) DO NOTHING`,
-          [lessonId, lessonGrammar[k], lessonVocab.length + k + 1]
-        );
-        totalItems++;
+        insertedItems += await insertLessonItem(client, lessonId, 'grammar', lessonGrammar[k], sortOrder++);
       }
+      totalItems += insertedItems;
 
-      console.log(`  ✅ ${slug}: ${lessonVocab.length} vocab + ${lessonGrammar.length} grammar`);
+      console.log(
+        `  ${insertedLesson ? '✅' : '↻'} ${slug}: ${insertedItems} new items (${lessonVocab.length} vocab + ${lessonKanji.length} kanji + ${lessonGrammar.length} grammar)`
+      );
     }
   }
 

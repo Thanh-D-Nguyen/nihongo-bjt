@@ -137,23 +137,23 @@ export function AdminLoginFormClient({
   }
 
   const fieldClass =
-    "mt-1 w-full rounded-xl border border-ink/15 bg-surface px-3 py-2.5 text-sm text-ink outline-none ring-ink/20 transition focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:border-ink/30";
+    "mt-1 w-full rounded-md border border-border bg-surface px-3 py-2.5 text-sm text-ink outline-none transition placeholder:text-muted/70 focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/20";
   const fieldErrorClass =
-    "mt-1 w-full rounded-xl border border-red-300 bg-surface px-3 py-2.5 text-sm text-ink outline-none ring-red-200 transition focus-visible:ring-2 focus-visible:ring-red-300";
+    "mt-1 w-full rounded-md border border-red-300 bg-surface px-3 py-2.5 text-sm text-ink outline-none transition placeholder:text-muted/70 focus-visible:border-red-400 focus-visible:ring-2 focus-visible:ring-red-200";
 
   if (!authReady) {
     return (
       <>
         <button
           aria-describedby="admin-login-auth-unavailable"
-          className="flex min-h-11 w-full cursor-not-allowed items-center justify-center rounded-xl border border-ink/10 bg-ink/40 px-4 py-3 text-sm font-semibold text-paper/90 opacity-90"
+          className="flex min-h-11 w-full cursor-not-allowed items-center justify-center rounded-md border border-border bg-muted px-4 py-3 text-sm font-semibold text-paper opacity-80"
           disabled
           type="button"
         >
           {copy.primaryCta}
         </button>
         <p
-          className="mt-4 rounded-xl border border-amber-200/90 bg-amber-50/90 px-3 py-3 text-sm leading-relaxed text-amber-950"
+          className="mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-3 text-sm leading-relaxed text-amber-950"
           id="admin-login-auth-unavailable"
           role="status"
         >
@@ -207,7 +207,7 @@ export function AdminLoginFormClient({
             aria-controls="admin-login-password"
             aria-label={showPassword ? copy.passwordHide : copy.passwordShow}
             aria-pressed={showPassword}
-            className="rounded-md px-2 py-1 text-xs font-medium text-muted transition hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+            className="rounded-sm px-2 py-1 text-xs font-medium text-muted transition hover:bg-paper hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             onClick={() => setShowPassword((v) => !v)}
             type="button"
           >
@@ -232,7 +232,7 @@ export function AdminLoginFormClient({
           value={password}
         />
         {capsLock ? (
-          <p
+          <div
             aria-live="polite"
             className="mt-1 inline-flex items-center gap-1.5 text-xs font-medium text-amber-700"
             data-testid="admin-login-capslock-hint"
@@ -240,7 +240,7 @@ export function AdminLoginFormClient({
           >
             <span aria-hidden className="inline-block h-1.5 w-1.5 rounded-full bg-amber-500" />
             {copy.capsLockOn}
-          </p>
+          </div>
         ) : null}
       </div>
 
@@ -248,7 +248,7 @@ export function AdminLoginFormClient({
         // Server-rendered errors live in the page; this banner is only for
         // failures from the in-page XHR submit, so we never render two at once.
         <p
-          className="rounded-xl border border-red-200/80 bg-red-50/90 px-3 py-2 text-sm text-red-800 whitespace-pre-wrap break-words"
+          className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 whitespace-pre-wrap break-words"
           id={ERROR_REGION_ID}
           role="alert"
         >
@@ -258,7 +258,7 @@ export function AdminLoginFormClient({
 
       <button
         aria-busy={loading}
-        className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-ink px-4 py-3 text-sm font-semibold text-paper transition hover:bg-ink/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink disabled:cursor-not-allowed disabled:opacity-60"
+        className="flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-ink px-4 py-3 text-sm font-semibold text-paper transition hover:bg-brand-navy focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-60"
         disabled={loading}
         type="submit"
       >

@@ -1630,7 +1630,8 @@
       "satisfactionAxis": "満足度",
       "nextActionLabel": "次のアクション:",
       "nextActionYes": "正しい方向",
-      "nextActionNo": "ずれた方向"
+      "nextActionNo": "ずれた方向",
+      "noScenarioYet": "このチャプターのシナリオは準備中です。"
     },
     "reaction": {
       "smile": "微笑み",
@@ -1713,6 +1714,7 @@
     "loading": "読み込み中...",
     "error": "データを読み込めませんでした。",
     "level": "レベル",
+    "loadMore": "さらに読み込む",
     "senses": "意味"
   },
   "dictionaryDetail": {
@@ -1731,6 +1733,7 @@
     "noResults": "結果が見つかりませんでした。",
     "loading": "読み込み中...",
     "error": "データを読み込めませんでした。",
+    "loadMore": "さらに読み込む",
     "strokeCount": "画数",
     "onyomi": "音読み",
     "kunyomi": "訓読み"
@@ -1754,6 +1757,7 @@
     "noResults": "結果が見つかりませんでした。",
     "loading": "読み込み中...",
     "error": "データを読み込めませんでした。",
+    "loadMore": "さらに読み込む",
     "level": "レベル"
   },
   "grammarDetail": {

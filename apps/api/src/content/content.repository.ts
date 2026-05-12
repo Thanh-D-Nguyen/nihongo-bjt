@@ -24,11 +24,12 @@ export class ContentRepository {
    * For search: uses SQL-level relevance ranking (exact match → starts-with → contains → reading match)
    * to ensure the most relevant results appear first, then fetches senses in a second query.
    */
-  async lexemes(q: string | undefined, limit: number) {
+  async lexemes(q: string | undefined, limit: number, offset = 0) {
     if (!q) {
       return this.prisma.lexeme.findMany({
         include: { senses: { orderBy: { position: "asc" }, take: 3 } },
         orderBy: [{ jlptLevel: "asc" }, { headword: "asc" }],
+        skip: offset,
         take: limit,
         where: { status: "active" }
       });
@@ -57,6 +58,7 @@ export class ContentRepository {
         jlpt_level NULLS LAST,
         headword
       LIMIT ${limit}
+      OFFSET ${offset}
     `;
 
     if (ids.length === 0) return [];
@@ -72,7 +74,7 @@ export class ContentRepository {
     return idList.map((id) => byId.get(id)!).filter(Boolean);
   }
 
-  async kanji(q: string | undefined, limit: number) {
+  async kanji(q: string | undefined, limit: number, offset = 0) {
     if (!q) {
       return this.prisma.kanji.findMany({
         include: {
@@ -80,6 +82,7 @@ export class ContentRepository {
           examples: { orderBy: { position: "asc" }, take: 6 }
         },
         orderBy: [{ level: "asc" }, { frequency: "asc" }],
+        skip: offset,
         take: limit,
         where: { status: "active" }
       });
@@ -106,6 +109,7 @@ export class ContentRepository {
         level NULLS LAST,
         frequency NULLS LAST
       LIMIT ${limit}
+      OFFSET ${offset}
     `;
 
     if (ids.length === 0) return [];
@@ -123,11 +127,12 @@ export class ContentRepository {
     return idList.map((id) => byId.get(id)!).filter(Boolean);
   }
 
-  async grammar(q: string | undefined, limit: number) {
+  async grammar(q: string | undefined, limit: number, offset = 0) {
     if (!q) {
       return this.prisma.grammarPoint.findMany({
         include: { details: { orderBy: { position: "asc" }, take: 2 } },
         orderBy: [{ jlptLevel: "asc" }, { pattern: "asc" }],
+        skip: offset,
         take: limit,
         where: { status: "active" }
       });
@@ -152,6 +157,7 @@ export class ContentRepository {
         jlpt_level NULLS LAST,
         pattern
       LIMIT ${limit}
+      OFFSET ${offset}
     `;
 
     if (ids.length === 0) return [];
@@ -166,10 +172,11 @@ export class ContentRepository {
     return idList.map((id) => byId.get(id)!).filter(Boolean);
   }
 
-  async examples(q: string | undefined, limit: number) {
+  async examples(q: string | undefined, limit: number, offset = 0) {
     if (!q) {
       return this.prisma.exampleSentence.findMany({
         orderBy: { japaneseText: "asc" },
+        skip: offset,
         take: limit,
         where: { status: "active" }
       });
@@ -194,6 +201,7 @@ export class ContentRepository {
         length(japanese_text),
         japanese_text
       LIMIT ${limit}
+      OFFSET ${offset}
     `;
 
     if (ids.length === 0) return [];

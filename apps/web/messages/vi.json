@@ -1630,7 +1630,8 @@
       "satisfactionAxis": "満足度",
       "nextActionLabel": "Hành động kế tiếp:",
       "nextActionYes": "Đúng hướng",
-      "nextActionNo": "Sai hướng"
+      "nextActionNo": "Sai hướng",
+      "noScenarioYet": "Kịch bản của chương này đang được chuẩn bị."
     },
     "reaction": {
       "smile": "微笑み",
@@ -1713,6 +1714,7 @@
     "loading": "Đang tải...",
     "error": "Không thể tải dữ liệu.",
     "level": "Cấp độ",
+    "loadMore": "Tải thêm",
     "senses": "Nghĩa"
   },
   "dictionaryDetail": {
@@ -1731,6 +1733,7 @@
     "noResults": "Không tìm thấy kết quả.",
     "loading": "Đang tải...",
     "error": "Không thể tải dữ liệu.",
+    "loadMore": "Tải thêm",
     "strokeCount": "Số nét",
     "onyomi": "Âm On",
     "kunyomi": "Âm Kun"
@@ -1754,6 +1757,7 @@
     "noResults": "Không tìm thấy kết quả.",
     "loading": "Đang tải...",
     "error": "Không thể tải dữ liệu.",
+    "loadMore": "Tải thêm",
     "level": "Cấp độ"
   },
   "grammarDetail": {

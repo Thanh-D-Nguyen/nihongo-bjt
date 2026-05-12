@@ -172,7 +172,7 @@ export function LessonDetailClient({ slug, levelCode, labels, locale }: {
 
   return (
     <>
-      <div className="mx-auto max-w-3xl px-4 pb-24 pt-6 sm:px-6">
+      <div className="mx-auto max-w-5xl px-4 pb-24 pt-6 sm:px-6">
         {/* ── Breadcrumb ── */}
         <nav className="flex items-center gap-1.5 text-xs text-[#9CA3AF]">
           <Link className="hover:text-[#3B82F6]" href={`/${locale}/levels`}>{labels.breadcrumbLevels}</Link>
@@ -183,23 +183,32 @@ export function LessonDetailClient({ slug, levelCode, labels, locale }: {
         </nav>
 
         {/* ── Lesson header ── */}
-        <div className="mt-4 overflow-hidden rounded-2xl border border-[#E5E7EB] bg-white shadow-sm">
-          <div className="h-2 bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6]" />
-          <div className="p-5">
+        <div className="mt-4 overflow-hidden rounded-[1.5rem] border border-[#D7DFEA] bg-white shadow-sm">
+          <div className="h-2 bg-[#2563EB]" />
+          <div className="grid gap-5 p-5 sm:p-6 lg:grid-cols-[1.1fr_0.9fr]">
             <div className="flex items-start gap-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#3B82F6] text-sm font-bold text-white">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#2563EB] text-base font-black text-white">
                 {lesson.sortOrder}
               </span>
               <div className="min-w-0 flex-1">
-                <h1 className="text-xl font-bold text-[#111827]">{lesson.titleVi}</h1>
+                <h1 className="text-2xl font-black tracking-tight text-[#111827]">{lesson.titleVi}</h1>
                 <p className="mt-0.5 text-sm text-[#6B7280]" lang="ja">{lesson.titleJa}</p>
+                {lesson.descriptionVi ? (
+                  <p className="mt-3 text-sm leading-6 text-[#334155]">{lesson.descriptionVi}</p>
+                ) : null}
               </div>
-              {/* Complete toggle */}
+            </div>
+            <div className="rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-3">
+              <div className="grid grid-cols-3 gap-2">
+                <LessonMetric label={labels.vocabSection} value={vocabs.length} />
+                <LessonMetric label={labels.kanjiSection} value={kanjis.length} />
+                <LessonMetric label={labels.grammarSection} value={grammars.length} />
+              </div>
               <button
-                className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+                className={`mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold transition-all ${
                   isCompleted
                     ? "bg-[#D1FAE5] text-[#065F46]"
-                    : "border border-[#D1D5DB] text-[#6B7280] hover:border-[#10B981] hover:text-[#065F46]"
+                    : "border border-[#CBD5E1] bg-white text-[#475569] hover:border-[#10B981] hover:text-[#065F46]"
                 }`}
                 onClick={handleToggleComplete}
                 type="button"
@@ -211,15 +220,12 @@ export function LessonDetailClient({ slug, levelCode, labels, locale }: {
                 )}
                 {isCompleted ? labels.completed : labels.markComplete}
               </button>
-            </div>
-            {lesson.descriptionVi ? (
-              <p className="mt-3 text-sm leading-relaxed text-[#4B5563]">{lesson.descriptionVi}</p>
-            ) : null}
-            <div className="mt-3 flex items-center gap-4 text-xs text-[#9CA3AF]">
-              <span>{totalItems} {labels.itemsInLesson}</span>
-              <span className="rounded-full bg-[#F3F4F6] px-2 py-0.5 text-[10px] font-medium text-[#6B7280]">
+              <div className="mt-3 flex items-center justify-between text-xs text-[#64748B]">
+                <span>{totalItems} {labels.itemsInLesson}</span>
+                <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-[#475569] ring-1 ring-[#E2E8F0]">
                 {levelCode}
-              </span>
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -344,7 +350,7 @@ export function LessonDetailClient({ slug, levelCode, labels, locale }: {
 
       {/* ── Sticky bottom bar ── */}
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[#E5E7EB] bg-white/95 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3 sm:px-6">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
           <div className="flex items-center gap-2 text-xs text-[#6B7280]">
             <span className="font-medium text-[#111827]">{labels.pageTitle} {lesson.sortOrder}</span>
             <span>·</span>
@@ -396,6 +402,15 @@ function ChevronRight() {
     <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path d="M9 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} />
     </svg>
+  );
+}
+
+function LessonMetric({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-xl bg-white px-3 py-2 text-center ring-1 ring-[#E2E8F0]">
+      <p className="text-lg font-black text-[#111827]">{value}</p>
+      <p className="mt-0.5 truncate text-[10px] font-semibold text-[#64748B]">{label}</p>
+    </div>
   );
 }
 

@@ -505,47 +505,93 @@ function extractNhkArticleKey(url: string): string | null {
   return m ? m[1] : null;
 }
 
-async function fetchNhkApiMetadata(articleKey: string): Promise<{ imageUrl: string | null; topics: string[] } | null> {
+interface NhkApiMetadata {
+  abstract: string | null;
+  canonicalUrl: string | null;
+  description: string | null;
+  imageUrl: string | null;
+  topics: string[];
+}
+
+function bestPublicText(candidates: Array<string | null | undefined>) {
+  return candidates
+    .map((candidate) => cleanText(candidate))
+    .filter(Boolean)
+    .sort((a, b) => b.length - a.length)[0] ?? "";
+}
+
+function textToParagraphHtml(text: string) {
+  const normalized = text
+    .replace(/\r\n?/gu, "\n")
+    .replace(/\n{3,}/gu, "\n\n")
+    .trim();
+  const chunks = normalized.includes("\n\n")
+    ? normalized.split(/\n{2,}/gu)
+    : normalized.split(/(?<=。)\s+/gu);
+  const paragraphs = chunks.map((chunk) => cleanText(chunk)).filter(Boolean);
+  return paragraphs.length > 0
+    ? paragraphs.slice(0, 12).map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join("\n")
+    : "";
+}
+
+function isShortNormalArticleBody(bodyPlain: string | null | undefined) {
+  return cleanText(bodyPlain).length < 90;
+}
+
+function isLegacyNormalArticleUrl(url: string | null | undefined) {
+  return !url?.includes("news.web.nhk/newsweb/na/");
+}
+
+function isRicherBody(next: NhkArticleDetail, currentPlain: string | null | undefined) {
+  return cleanText(next.bodyPlain).length > cleanText(currentPlain).length + 20;
+}
+
+async function fetchNhkApiMetadata(articleKey: string): Promise<NhkApiMetadata | null> {
   try {
     const apiUrl = `https://api.web.nhk/r8/t/newsarticle/na/na-${articleKey}.json`;
     const text = await fetchText(apiUrl);
     const data = JSON.parse(text) as Record<string, unknown>;
     const image = data.image as Record<string, { url?: string }> | undefined;
     const imageUrl = image?.medium?.url ?? image?.icon?.url ?? null;
+    const canonicalUrl = typeof data.canonical === "string" ? data.canonical : null;
+    const description = typeof data.description === "string" ? data.description : null;
+    const abstract = typeof data.abstract === "string" ? data.abstract : null;
     const topicArr = Array.isArray(data.topic) ? data.topic : [];
     const topics = topicArr
       .filter((t): t is { name: string } => typeof t === "object" && t !== null && typeof (t as Record<string, unknown>).name === "string")
       .map((t) => t.name)
       .slice(0, 5);
-    return { imageUrl, topics };
+    return { abstract, canonicalUrl, description, imageUrl, topics };
   } catch {
     return null;
   }
 }
 
 async function enrichNormalArticle(article: CachedArticle): Promise<NhkArticleDetail> {
-  const bodyPlain = article.summaryPlain || article.title;
-  const bodyHtml = article.summaryHtml
+  const rssBodyPlain = article.summaryPlain || article.title;
+  const rssBodyHtml = article.summaryHtml
     ? article.summaryHtml.replace(/<audio\b[\s\S]*?<\/audio>/giu, "").replace(/<ul\b[\s\S]*?<\/ul>/giu, "")
-    : `<p>${escapeHtml(bodyPlain)}</p>`;
-  // Extract paragraphs from summaryHtml
-  const paragraphs = bodyHtml.match(/<p\b[\s\S]*?<\/p>/giu);
-  const cleanBody = paragraphs?.slice(0, 12).join("\n") ?? `<p>${escapeHtml(bodyPlain)}</p>`;
+    : `<p>${escapeHtml(rssBodyPlain)}</p>`;
 
-  // Try NHK JSON API for better image
   const articleKey = extractNhkArticleKey(article.url);
   let betterImage = article.imageUrl;
+  let canonicalUrl = articleKey
+    ? `https://news.web.nhk/newsweb/na/na-${articleKey}`
+    : article.url;
   let topics: string[] = [];
+  let apiBodyPlain = "";
   if (articleKey) {
     const meta = await fetchNhkApiMetadata(articleKey);
     if (meta?.imageUrl) betterImage = meta.imageUrl;
+    if (meta?.canonicalUrl) canonicalUrl = meta.canonicalUrl;
+    apiBodyPlain = bestPublicText([meta?.description, meta?.abstract]);
     if (meta?.topics) topics = meta.topics;
   }
 
-  // Derive canonical URL on news.web.nhk
-  const canonicalUrl = articleKey
-    ? `https://news.web.nhk/newsweb/na/na-${articleKey}`
-    : article.url;
+  const bodyPlain = bestPublicText([apiBodyPlain, rssBodyPlain, article.title]) || article.title;
+  const apiBodyHtml = textToParagraphHtml(bodyPlain);
+  const rssParagraphs = rssBodyHtml.match(/<p\b[\s\S]*?<\/p>/giu);
+  const cleanBody = apiBodyHtml || rssParagraphs?.slice(0, 12).join("\n") || `<p>${escapeHtml(bodyPlain)}</p>`;
 
   const fullText = `${article.title}\n${bodyPlain}`;
   const vocab = extractVocabularyFromText(fullText);
@@ -555,7 +601,7 @@ async function enrichNormalArticle(article: CachedArticle): Promise<NhkArticleDe
     ...article,
     audioUrl: article.audioUrl ?? null,
     bodyHtml: cleanBody + (topics.length > 0
-      ? `\n<div class="nhk-topics"><span>${topics.map(escapeHtml).join("</span><span>")}</span></div>`
+      ? `\n<p class="nhk-topics"><span>${topics.map(escapeHtml).join("</span><span>")}</span></p>`
       : ""),
     bodyPlain,
     imageUrl: betterImage,
@@ -769,7 +815,7 @@ export class NhkNewsRepository implements OnModuleInit {
       if (cachedAudioUrl && !dbArticle.audioUrl) {
         void this.prisma.nhkArticle.update({ where: { id: articleId }, data: { audioUrl: cachedAudioUrl } }).catch(() => {});
       }
-      return {
+      const persistedDetail: NhkArticleDetail = {
         audioUrl: cachedAudioUrl,
         bodyHtml: dbArticle.bodyHtml,
         bodyPlain: dbArticle.bodyPlain ?? "",
@@ -784,6 +830,22 @@ export class NhkNewsRepository implements OnModuleInit {
         url: dbArticle.url,
         vocabulary: (dbArticle.vocabulary as unknown as NhkVocabItem[]) ?? [],
       };
+      if (
+        persistedDetail.sourceType === "normal" &&
+        (isShortNormalArticleBody(persistedDetail.bodyPlain) || isLegacyNormalArticleUrl(persistedDetail.url))
+      ) {
+        const refreshed = await enrichNormalArticle({
+          ...persistedDetail,
+          audioUrl: cachedAudioUrl,
+          summaryHtml: persistedDetail.bodyHtml,
+          summaryPlain: persistedDetail.bodyPlain
+        });
+        if (isRicherBody(refreshed, persistedDetail.bodyPlain) || refreshed.url !== persistedDetail.url) {
+          void this.persistArticle(refreshed).catch(() => {});
+          return refreshed;
+        }
+      }
+      return persistedDetail;
     }
 
     let article = articleCache.get(articleId);
@@ -800,8 +862,8 @@ export class NhkNewsRepository implements OnModuleInit {
     }
     if (!article) return null;
 
-    // For normal NHK articles, don't scrape HTML — full content is behind consent wall.
-    // Use RSS summary + NHK JSON API for metadata enrichment.
+    // Normal NHK public endpoints expose only the article excerpt unless the
+    // reader completes NHK's own usage confirmation/login flow.
     if (article.sourceType === "normal") {
       const enriched = await enrichNormalArticle(article);
       void this.persistArticle(enriched).catch(() => {});
@@ -1003,6 +1065,7 @@ export class NhkNewsRepository implements OnModuleInit {
       },
       update: {
         title: article.title,
+        url: article.url,
         imageUrl: article.imageUrl,
         audioUrl: article.audioUrl,
         bodyHtml: article.bodyHtml,

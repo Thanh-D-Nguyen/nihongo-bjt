@@ -146,9 +146,11 @@ export function LevelDetailClient({ code, labels, locale }: { code: string; labe
     { key: "kanji", label: labels.tabKanji },
     { key: "grammar", label: labels.tabGrammar }
   ];
+  const lessonItemCount = lessons.reduce((sum, lesson) => sum + lesson.vocabCount + lesson.kanjiCount + lesson.grammarCount, 0);
+  const firstLesson = lessons[0] ?? null;
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-1.5 text-xs text-[#9CA3AF]">
         <Link className="hover:text-[#3B82F6]" href={`/${locale}/levels`}>{labels.back}</Link>
@@ -157,34 +159,51 @@ export function LevelDetailClient({ code, labels, locale }: { code: string; labe
       </nav>
 
       {/* Level header */}
-      <div className="mt-4 overflow-hidden rounded-2xl border border-[#E5E7EB] bg-white shadow-sm">
+      <div className="mt-4 overflow-hidden rounded-[1.5rem] border border-[#D7DFEA] bg-white shadow-sm">
         <div className="h-2" style={{ background: level.color }} />
-        <div className="p-5">
-          <div className="flex items-baseline gap-3">
-            <h1 className="text-2xl font-bold text-[#111827]">{level.code}</h1>
-            <span className="text-sm text-[#6B7280]">{level.nameVi}</span>
-            <span className="rounded bg-[#F3F4F6] px-1.5 py-0.5 text-[10px] text-[#9CA3AF]">
-              {level.scoreMin}–{level.scoreMax} · ≈ {level.jlptEquiv}
-            </span>
+        <div className="grid gap-5 p-5 sm:p-6 lg:grid-cols-[1.1fr_0.9fr]">
+          <div>
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-4xl font-black tracking-tight text-[#111827]">{level.code}</h1>
+              <span className="text-sm font-bold text-[#475569]">{level.nameVi}</span>
+              <span className="rounded-full bg-[#F8FAFC] px-2.5 py-1 text-[10px] font-bold text-[#64748B] ring-1 ring-[#E2E8F0]">
+                {level.scoreMin}–{level.scoreMax} · ≈ {level.jlptEquiv}
+              </span>
+            </div>
+            <p className="mt-3 text-sm leading-6 text-[#334155]">{level.descriptionVi}</p>
+            <p className="mt-1 text-sm text-[#64748B]">{level.descriptionJa}</p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {firstLesson ? (
+                <Link
+                  className="inline-flex items-center rounded-lg px-4 py-2 text-xs font-bold text-white shadow-sm hover:opacity-90"
+                  href={`/${locale}/levels/${code}/lessons/${firstLesson.slug}`}
+                  style={{ background: level.color }}
+                >
+                  {labels.tabLessons} 1 →
+                </Link>
+              ) : null}
+              <Link
+                className="inline-flex items-center rounded-lg bg-[#101827] px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-[#0F172A]"
+                href={`/${locale}/quiz`}
+              >
+                {labels.practiceQuiz} →
+              </Link>
+            </div>
           </div>
-          <p className="mt-2 text-sm text-[#4B5563]">{level.descriptionVi}</p>
-          <p className="mt-1 text-sm text-[#6B7280]">{level.descriptionJa}</p>
-          <div className="mt-3 flex gap-2">
-            <Link
-              className="inline-flex items-center rounded-lg bg-[#1B2A4A] px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-[#0F172A]"
-              href={`/${locale}/quiz`}
-            >
-              {labels.practiceQuiz} →
-            </Link>
+          <div className="grid grid-cols-2 gap-2 self-center sm:grid-cols-4 lg:grid-cols-2">
+            <LevelMetric label={labels.tabLessons} value={lessons.length} />
+            <LevelMetric label={labels.vocabShort} value={lessons.reduce((sum, lesson) => sum + lesson.vocabCount, 0)} />
+            <LevelMetric label={labels.kanjiShort} value={lessons.reduce((sum, lesson) => sum + lesson.kanjiCount, 0)} />
+            <LevelMetric label={labels.grammarShort} value={lessons.reduce((sum, lesson) => sum + lesson.grammarCount, 0)} />
           </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="mt-6 flex gap-1 rounded-xl bg-[#F3F4F6] p-1">
+      <div className="mt-6 grid grid-cols-4 gap-1 rounded-xl bg-[#F3F4F6] p-1">
         {tabs.map((t) => (
           <button
-            className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold transition-all ${
+            className={`rounded-lg px-3 py-2 text-xs font-semibold transition-all ${
               tab === t.key
                 ? "bg-white text-[#111827] shadow-sm"
                 : "text-[#6B7280] hover:text-[#111827]"
@@ -201,7 +220,7 @@ export function LevelDetailClient({ code, labels, locale }: { code: string; labe
       {/* Content */}
       <div className="mt-4">
         {tab === "lessons" ? (
-          <LessonsList lessons={lessons} labels={labels} locale={locale} levelCode={code} />
+          <LessonsList lessons={lessons} labels={labels} locale={locale} levelCode={code} totalItems={lessonItemCount} />
         ) : (
           <>
             {/* Search (only for flat content tabs) */}
@@ -250,11 +269,12 @@ export function LevelDetailClient({ code, labels, locale }: { code: string; labe
 
 /* ── Lessons list ────────────────────────────── */
 
-function LessonsList({ lessons, labels, locale, levelCode }: {
+function LessonsList({ lessons, labels, locale, levelCode, totalItems }: {
   lessons: LessonSummary[];
   labels: Labels;
   locale: string;
   levelCode: string;
+  totalItems: number;
 }) {
   const [completed, setCompleted] = useState<Set<string>>(new Set());
   useEffect(() => { setCompleted(getCompletedLessons()); }, []);
@@ -274,6 +294,17 @@ function LessonsList({ lessons, labels, locale, levelCode }: {
 
   return (
     <>
+      <div className="mb-4 grid gap-3 rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-3 sm:grid-cols-[1fr_auto] sm:items-center">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#64748B]">{labels.tabLessons}</p>
+          <p className="mt-1 text-sm text-[#334155]">
+            {lessons.length} {labels.tabLessons.toLowerCase()} · {totalItems} items
+          </p>
+        </div>
+        <div className="h-2 overflow-hidden rounded-full bg-[#E2E8F0] sm:w-56">
+          <div className="h-full rounded-full bg-[#2563EB]" style={{ width: `${Math.max(8, doneCount / lessons.length * 100)}%` }} />
+        </div>
+      </div>
       {/* Progress bar */}
       {doneCount > 0 ? (
         <div className="mb-4 rounded-xl bg-[#F9FAFB] p-3">
@@ -363,6 +394,15 @@ function LessonsList({ lessons, labels, locale, levelCode }: {
         })}
       </ol>
     </>
+  );
+}
+
+function LevelMetric({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3">
+      <p className="text-2xl font-black tracking-tight text-[#111827]">{value}</p>
+      <p className="mt-0.5 text-[10px] font-bold uppercase tracking-wide text-[#64748B]">{label}</p>
+    </div>
   );
 }
 

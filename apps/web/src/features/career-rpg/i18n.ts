@@ -90,6 +90,7 @@ export interface CareerRpgLabels {
     nextActionLabel: string;
     nextActionYes: string;
     nextActionNo: string;
+    noScenarioYet: string;
   };
   reaction: {
     smile: string;

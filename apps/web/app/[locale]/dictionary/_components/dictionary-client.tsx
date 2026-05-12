@@ -21,33 +21,45 @@ interface Labels {
   loading: string;
   error: string;
   level: string;
+  loadMore?: string;
   senses: string;
 }
+
+const PAGE_SIZE = 30;
 
 export function DictionaryClient({ labels, locale }: { labels: Labels; locale: string }) {
   const [query, setQuery] = useState("");
   const [items, setItems] = useState<LexemeItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [offset, setOffset] = useState(0);
   const [error, setError] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
 
-  const load = useCallback(async (q: string) => {
-    setLoading(true);
+  const load = useCallback(async (q: string, nextOffset: number, append = false) => {
+    if (append) setLoadingMore(true);
+    else setLoading(true);
     setError(false);
     try {
-      const params = new URLSearchParams({ limit: "30" });
+      const params = new URLSearchParams({ limit: String(PAGE_SIZE), offset: String(nextOffset) });
       if (q) params.set("q", q);
       const res = await learnerApiFetchOptional(`/api/content/lexemes?${params}`);
-      if (res.ok) setItems(await res.json());
-      else setError(true);
+      if (res.ok) {
+        const data: LexemeItem[] = await res.json();
+        setItems((prev) => append ? [...prev, ...data] : data);
+        setHasMore(data.length === PAGE_SIZE);
+        setOffset(nextOffset);
+      } else setError(true);
     } catch {
       setError(true);
     } finally {
-      setLoading(false);
+      if (append) setLoadingMore(false);
+      else setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    const t = setTimeout(() => void load(query), 300);
+    const t = setTimeout(() => void load(query, 0, false), 300);
     return () => clearTimeout(t);
   }, [query, load]);
 
@@ -81,38 +93,50 @@ export function DictionaryClient({ labels, locale }: { labels: Labels; locale: s
           ) : null}
         </div>
       ) : (
-        <ul className="mt-5 space-y-2">
-          {items.map((item) => (
-            <li key={item.id}>
-              <Link
-                className="block rounded-xl border border-[#E5E7EB] bg-white px-4 py-3 shadow-sm transition-all hover:border-[#3B82F6]/30 hover:shadow-md"
-                href={`/${locale}/dictionary/${item.id}`}
-              >
-                <div className="flex items-baseline gap-2">
-                  <span className="text-lg font-semibold text-[#111827]">{item.headword}</span>
-                  {item.reading ? (
-                    <span className="text-sm text-[#6B7280]">{item.reading}</span>
+        <>
+          <ul className="mt-5 space-y-2">
+            {items.map((item) => (
+              <li key={item.id}>
+                <Link
+                  className="block rounded-xl border border-[#E5E7EB] bg-white px-4 py-3 shadow-sm transition-all hover:border-[#3B82F6]/30 hover:shadow-md"
+                  href={`/${locale}/dictionary/${item.id}`}
+                >
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-lg font-semibold text-[#111827]">{item.headword}</span>
+                    {item.reading ? (
+                      <span className="text-sm text-[#6B7280]">{item.reading}</span>
+                    ) : null}
+                    {item.jlptLevel ? (
+                      <span className="ml-auto rounded-full bg-[#EFF6FF] px-2 py-0.5 text-[10px] font-semibold text-[#1D4ED8]">
+                        {item.jlptLevel}
+                      </span>
+                    ) : null}
+                  </div>
+                  {item.senses.length > 0 ? (
+                    <p className="mt-1 text-sm text-[#4B5563]">
+                      {item.senses
+                        .slice(0, 3)
+                        .map((s, i) => `${i + 1}. ${s.meaningVi ?? ""}`)
+                        .join(" ")}
+                    </p>
+                  ) : item.shortMeaningVi ? (
+                    <p className="mt-1 text-sm text-[#4B5563]">{item.shortMeaningVi}</p>
                   ) : null}
-                  {item.jlptLevel ? (
-                    <span className="ml-auto rounded-full bg-[#EFF6FF] px-2 py-0.5 text-[10px] font-semibold text-[#1D4ED8]">
-                      {item.jlptLevel}
-                    </span>
-                  ) : null}
-                </div>
-                {item.senses.length > 0 ? (
-                  <p className="mt-1 text-sm text-[#4B5563]">
-                    {item.senses
-                      .slice(0, 3)
-                      .map((s, i) => `${i + 1}. ${s.meaningVi ?? ""}`)
-                      .join(" ")}
-                  </p>
-                ) : item.shortMeaningVi ? (
-                  <p className="mt-1 text-sm text-[#4B5563]">{item.shortMeaningVi}</p>
-                ) : null}
-              </Link>
-            </li>
-          ))}
-        </ul>
+                </Link>
+              </li>
+            ))}
+          </ul>
+          {hasMore ? (
+            <button
+              className="mt-4 w-full rounded-xl border border-[#D1D5DB] bg-white px-4 py-3 text-sm font-semibold text-[#374151] transition-colors hover:border-[#3B82F6] hover:text-[#1D4ED8] disabled:opacity-60"
+              disabled={loadingMore}
+              onClick={() => void load(query, offset + PAGE_SIZE, true)}
+              type="button"
+            >
+              {loadingMore ? labels.loading : labels.loadMore ?? "Tải thêm"}
+            </button>
+          ) : null}
+        </>
       )}
     </div>
   );

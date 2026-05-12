@@ -272,7 +272,7 @@ pnpm install
 # 2. Generate Prisma client
 pnpm prisma:generate
 
-# 3. Chạy migrations (tạo tables)
+# 3. Chạy migrations (tạo/cập nhật tables)
 pnpm prisma:migrate
 
 # 4. Seed dữ liệu nền (foundation data)
@@ -291,6 +291,57 @@ pnpm dev
 #   pnpm dev:web     → http://localhost:3000
 #   pnpm dev:admin   → http://localhost:3001
 ```
+
+### 7A. Sau khi pull commit mới có thay đổi database
+
+Commit mới có thêm schema/table cho BJT lessons và NHK article persistence. Khi restart sau khi pull commit mới, chạy theo thứ tự này từ root project:
+
+```powershell
+# 1. Bật các services trước
+# WSL:
+cd ~/nihongo-bjt-docker
+docker compose -f docker-compose.local.yml up -d
+
+# 2. Quay lại root project trên Windows/macOS
+pnpm install
+pnpm prisma:validate
+
+# 3. Apply migration đã có trong repo
+pnpm exec prisma migrate deploy --schema packages/database/prisma/schema.prisma
+
+# 4. Generate lại Prisma client
+pnpm prisma:generate
+
+# 5. Seed/backfill dữ liệu mới của commit này
+node scripts/seed-bjt-lessons.mjs
+node scripts/seed-career-rpg.mjs
+node scripts/seed-daily-content.mjs
+node scripts/seed-daily-content-vi.mjs
+
+# 6. Rebuild projection search
+pnpm search:index
+
+# 7. Chạy app
+pnpm dev:api
+pnpm dev:web
+pnpm dev:admin
+```
+
+Kiểm tra nhanh sau khi chạy:
+
+```powershell
+curl http://localhost:4000/api/health/live
+curl http://localhost:4000/api/health/ready
+curl "http://localhost:4000/api/levels/J5/lessons"
+curl "http://localhost:4000/api/daily/home?locale=vi"
+curl -I http://localhost:3000/vi
+```
+
+Ghi chú migration:
+
+- Dùng `migrate deploy` cho luồng restart/pull commit vì lệnh này apply migration có sẵn và không cần shadow database.
+- Nếu đang phát triển schema mới thì dùng `pnpm prisma:migrate -- --name ten_migration`, nhưng trên DB local hiện tại lệnh `migrate dev` có thể bị chặn bởi shadow database do migration cũ `20260429101000_add_leech_fields` tham chiếu `legal.consent_record` trước migration tạo bảng legal consent.
+- Không dùng `prisma db push` cho luồng bình thường, trừ khi bạn chủ động chấp nhận DB local tạm lệch migration history.
 
 ---
 
@@ -375,9 +426,10 @@ docker logs nihongo-bjt-minio --tail 20
 | `ECONNREFUSED :7700` | Meilisearch chưa start: `docker logs nihongo-bjt-meilisearch` |
 | `ECONNREFUSED :9080` | Keycloak chưa chạy, start lại service |
 | Prisma migrate lỗi | Đảm bảo DATABASE_URL đúng, postgres healthy |
+| `prisma migrate dev` lỗi shadow database `legal.consent_record` | Với restart sau pull commit, dùng `pnpm exec prisma migrate deploy --schema packages/database/prisma/schema.prisma`. Chỉ sửa migration history khi đang phát triển schema mới |
 | Keycloak `HTTPS required` | Set `sslRequired=NONE` cho realm master + nihongo-bjt |
 | MinIO `bucket not found` | Tạo bucket theo bước 9 |
-| Port conflict | Đổi port trong docker-compose.local.yml + .env |
+| Port conflict | Kiểm tra process: `lsof -nP -iTCP:3001 -sTCP:LISTEN`. Nếu process cũ không cần nữa thì tắt nó trước khi chạy `pnpm dev:admin`; nếu đổi port thì cập nhật cả `.env`/`.env.local` tương ứng |
 | WSL không thấy từ Windows | Kiểm tra: `wsl hostname -I` → dùng IP đó hoặc localhost |
 
 ---
@@ -404,9 +456,14 @@ cd ~/nihongo-bjt-docker && docker compose -f docker-compose.local.yml up -d
 
 # 2. Windows: Setup (lần đầu)
 pnpm install
+pnpm prisma:validate
+pnpm exec prisma migrate deploy --schema packages/database/prisma/schema.prisma
 pnpm prisma:generate
-pnpm prisma:migrate
 pnpm seed:foundation
+node scripts/seed-bjt-lessons.mjs
+node scripts/seed-career-rpg.mjs
+node scripts/seed-daily-content.mjs
+node scripts/seed-daily-content-vi.mjs
 pnpm search:index
 
 # 3. Windows: Dev hằng ngày

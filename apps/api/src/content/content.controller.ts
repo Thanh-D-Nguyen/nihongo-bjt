@@ -30,7 +30,7 @@ export class ContentController {
       throw new BadRequestException(parsed.error.flatten());
     }
 
-    return this.contentRepository.lexemes(parsed.data.q, parsed.data.limit);
+    return this.contentRepository.lexemes(parsed.data.q, parsed.data.limit, parsed.data.offset);
   }
 
   @Get("lexemes/:id")
@@ -52,7 +52,7 @@ export class ContentController {
       throw new BadRequestException(parsed.error.flatten());
     }
 
-    return this.contentRepository.kanji(parsed.data.q, parsed.data.limit);
+    return this.contentRepository.kanji(parsed.data.q, parsed.data.limit, parsed.data.offset);
   }
 
   @Get("kanji/:id")
@@ -74,7 +74,7 @@ export class ContentController {
       throw new BadRequestException(parsed.error.flatten());
     }
 
-    return this.contentRepository.grammar(parsed.data.q, parsed.data.limit);
+    return this.contentRepository.grammar(parsed.data.q, parsed.data.limit, parsed.data.offset);
   }
 
   @Get("grammar/:id")
@@ -95,6 +95,6 @@ export class ContentController {
       throw new BadRequestException(parsed.error.flatten());
     }
 
-    return this.contentRepository.examples(parsed.data.q, parsed.data.limit);
+    return this.contentRepository.examples(parsed.data.q, parsed.data.limit, parsed.data.offset);
   }
 }

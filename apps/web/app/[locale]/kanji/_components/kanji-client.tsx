@@ -21,35 +21,47 @@ interface Labels {
   noResults: string;
   loading: string;
   error: string;
+  loadMore?: string;
   strokeCount: string;
   onyomi: string;
   kunyomi: string;
 }
 
+const PAGE_SIZE = 40;
+
 export function KanjiClient({ labels, locale }: { labels: Labels; locale: string }) {
   const [query, setQuery] = useState("");
   const [items, setItems] = useState<KanjiItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [offset, setOffset] = useState(0);
   const [error, setError] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
 
-  const load = useCallback(async (q: string) => {
-    setLoading(true);
+  const load = useCallback(async (q: string, nextOffset: number, append = false) => {
+    if (append) setLoadingMore(true);
+    else setLoading(true);
     setError(false);
     try {
-      const params = new URLSearchParams({ limit: "40" });
+      const params = new URLSearchParams({ limit: String(PAGE_SIZE), offset: String(nextOffset) });
       if (q) params.set("q", q);
       const res = await learnerApiFetchOptional(`/api/content/kanji?${params}`);
-      if (res.ok) setItems(await res.json());
-      else setError(true);
+      if (res.ok) {
+        const data: KanjiItem[] = await res.json();
+        setItems((prev) => append ? [...prev, ...data] : data);
+        setHasMore(data.length === PAGE_SIZE);
+        setOffset(nextOffset);
+      } else setError(true);
     } catch {
       setError(true);
     } finally {
-      setLoading(false);
+      if (append) setLoadingMore(false);
+      else setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    const t = setTimeout(() => void load(query), 300);
+    const t = setTimeout(() => void load(query, 0, false), 300);
     return () => clearTimeout(t);
   }, [query, load]);
 
@@ -83,27 +95,39 @@ export function KanjiClient({ labels, locale }: { labels: Labels; locale: string
           ) : null}
         </div>
       ) : (
-        <div className="mt-5 grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
-          {items.map((item) => (
-            <Link
-              className="flex flex-col items-center rounded-xl border border-[#E5E7EB] bg-white p-3 shadow-sm transition-all hover:border-[#3B82F6]/30 hover:shadow-md"
-              href={`/${locale}/kanji/${item.id}`}
-              key={item.id}
+        <>
+          <div className="mt-5 grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
+            {items.map((item) => (
+              <Link
+                className="flex flex-col items-center rounded-xl border border-[#E5E7EB] bg-white p-3 shadow-sm transition-all hover:border-[#3B82F6]/30 hover:shadow-md"
+                href={`/${locale}/kanji/${item.id}`}
+                key={item.id}
+              >
+                <span className="text-3xl font-bold text-[#111827]">{item.character}</span>
+                <span className="mt-1 truncate text-xs text-[#4B5563]">{item.meaningVi}</span>
+                <div className="mt-1 flex gap-1 text-[10px] text-[#9CA3AF]">
+                  {item.onyomi ? <span>{item.onyomi}</span> : null}
+                  {item.kunyomi ? <span>· {item.kunyomi}</span> : null}
+                </div>
+                {item.level != null ? (
+                  <span className="mt-1 rounded-full bg-[#F3F4F6] px-1.5 py-0.5 text-[9px] font-semibold text-[#6B7280]">
+                    N{item.level}
+                  </span>
+                ) : null}
+              </Link>
+            ))}
+          </div>
+          {hasMore ? (
+            <button
+              className="mt-4 w-full rounded-xl border border-[#D1D5DB] bg-white px-4 py-3 text-sm font-semibold text-[#374151] transition-colors hover:border-[#3B82F6] hover:text-[#1D4ED8] disabled:opacity-60"
+              disabled={loadingMore}
+              onClick={() => void load(query, offset + PAGE_SIZE, true)}
+              type="button"
             >
-              <span className="text-3xl font-bold text-[#111827]">{item.character}</span>
-              <span className="mt-1 truncate text-xs text-[#4B5563]">{item.meaningVi}</span>
-              <div className="mt-1 flex gap-1 text-[10px] text-[#9CA3AF]">
-                {item.onyomi ? <span>{item.onyomi}</span> : null}
-                {item.kunyomi ? <span>· {item.kunyomi}</span> : null}
-              </div>
-              {item.level != null ? (
-                <span className="mt-1 rounded-full bg-[#F3F4F6] px-1.5 py-0.5 text-[9px] font-semibold text-[#6B7280]">
-                  N{item.level}
-                </span>
-              ) : null}
-            </Link>
-          ))}
-        </div>
+              {loadingMore ? labels.loading : labels.loadMore ?? "Tải thêm"}
+            </button>
+          ) : null}
+        </>
       )}
     </div>
   );

@@ -1078,9 +1078,9 @@ export function UsersConsoleClient({
                         </button>
                       ) : null}
                     </AdminDataTableCellActions>
-                    <p className="mt-1 text-[10px] text-slate-500">
+                    <div className="mt-1 text-[10px] text-slate-500">
                       {t("quotaResetUnavailable")}
-                    </p>
+                    </div>
                   </AdminDataTableTd>
                 </AdminDataTableRow>
               ))}

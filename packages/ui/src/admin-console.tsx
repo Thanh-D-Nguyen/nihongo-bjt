@@ -51,7 +51,7 @@ export function AdminSection({
         <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div className="min-w-0">
             {title ? <h2 className="text-sm font-semibold text-slate-950">{title}</h2> : null}
-            {description ? <p className="mt-1 text-sm text-slate-600">{description}</p> : null}
+            {description ? <div className="mt-1 text-sm text-slate-600">{description}</div> : null}
           </div>
           {actions ? <div className="flex shrink-0 flex-wrap gap-2">{actions}</div> : null}
         </div>
