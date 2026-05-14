@@ -12,6 +12,8 @@ import {
   queueSizeForUser
 } from "../../../../lib/offline-review-queue";
 import { learnerApiFetch } from "../../../../lib/learner-api";
+import { FlashcardInteractiveCard } from "./flashcard-interactive-card";
+import type { MentorLabels } from "./flashcard-interactive-card";
 
 const allowedMime = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 const maxBytes = 10 * 1024 * 1024;
@@ -128,6 +130,17 @@ export interface FlashcardLabels {
   statPendingSync: string;
   subtitle: string;
   title: string;
+  mentorName: string;
+  mentorGoodEmoji: string;
+  mentorGoodText: string;
+  mentorHardEmoji: string;
+  mentorHardText: string;
+  mentorAgainEmoji: string;
+  mentorAgainText: string;
+  mentorMilestone5: string;
+  mentorMilestone10: string;
+  mentorMilestone25: string;
+  streakLabel: string;
 }
 
 function imageFlowLabel(step: ImageFlowState["step"], labels: FlashcardLabels): string | null {
@@ -179,6 +192,8 @@ export function FlashcardsClient({
   const [queueStatus, setQueueStatus] = useState<string | null>(null);
   const [revealed, setRevealed] = useState(false);
   const [feedback, setFeedback] = useState<ReviewFeedback | null>(null);
+  const [sessionReviewed, setSessionReviewed] = useState(0);
+  const [sessionInitialTotal, setSessionInitialTotal] = useState(0);
   const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { userId } = useKeycloakAuth();
 
@@ -318,8 +333,11 @@ export function FlashcardsClient({
         if (!response.ok) {
           throw new Error("Due review request failed");
         }
-        setCards((await response.json()) as DueCard[]);
+        const dueCards = (await response.json()) as DueCard[];
+        setCards(dueCards);
         setRevealed(false);
+        setSessionReviewed(0);
+        setSessionInitialTotal(dueCards.length);
         const sum = await learnerApiFetch(
           `/api/learner/monetization/summary?userId=${encodeURIComponent(uid)}`
         );
@@ -373,6 +391,7 @@ export function FlashcardsClient({
         setCards((current) => current.filter((item) => item.id !== card.id));
         setRevealed(false);
         setImageFlow({ step: "idle" });
+        setSessionReviewed((n) => n + 1);
       } catch {
         setError(labels.error);
       }
@@ -424,6 +443,7 @@ export function FlashcardsClient({
           setRevealed(false);
           setImageFlow({ step: "idle" });
           setFeedback(null);
+          setSessionReviewed((n) => n + 1);
           feedbackTimerRef.current = null;
         }, 3000);
       } else {
@@ -431,6 +451,7 @@ export function FlashcardsClient({
         setRevealed(false);
         setImageFlow({ step: "idle" });
         setFeedback(null);
+        setSessionReviewed((n) => n + 1);
       }
     } catch {
       setError(labels.error);
@@ -647,58 +668,17 @@ export function FlashcardsClient({
       ) : null}
 
       {currentCard ? (
-        <div
-          className={cn(
-            "max-w-3xl border border-ink/10 bg-surface",
-            compact
-              ? "rounded-3xl p-5 shadow-md ring-1 ring-ink/[0.05] sm:p-6"
-              : "rounded-2xl p-4 shadow-sm sm:p-5"
-          )}
-        >
-          <article className="space-y-4">
-            {!feedback ? (
-              <p className="text-[11px] font-black uppercase tracking-wider text-leaf">
-                {!revealed ? labels.reviewPhaseQuestion : labels.reviewPhaseAnswer}
-              </p>
-            ) : null}
-
-            <div className="min-h-[7rem]">
-              {currentCard.primaryImage?.readUrl ? (
-                <figure className="mb-3 overflow-hidden rounded-xl bg-paper ring-1 ring-ink/8">
-                  <img
-                    alt={labels.imageAlt.replace("{front}", currentCard.card.frontText)}
-                    className="h-[200px] max-h-[200px] w-full object-contain"
-                    height={200}
-                    src={currentCard.primaryImage.readUrl}
-                    width={400}
-                  />
-                  <figcaption className="sr-only">{currentCard.card.frontText}</figcaption>
-                </figure>
-              ) : null}
-              <p
-                className={`font-bold leading-snug text-ink ${compact ? "text-lg sm:text-xl" : "text-xl sm:text-2xl"}`}
-                lang="ja"
-              >
-                {currentCard.card.frontText}
-              </p>
-              {currentCard.card.reading ? (
-                <p className="mt-2 min-h-[1.25rem] text-sm text-muted" lang="ja">
-                  {currentCard.card.reading}
-                </p>
-              ) : (
-                <div className="min-h-[1.25rem]" />
-              )}
-            </div>
-
-            {revealed ? (
-              <div className="min-h-[7rem] rounded-xl border border-ink/10 bg-paper/50 p-4">
-                <h3 className="text-[11px] font-black uppercase tracking-wide text-muted">{labels.answerHeading}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-ink">{currentCard.card.backText}</p>
-              </div>
-            ) : null}
-
-            {feedback ? (
-              <div className="rounded-xl border border-leaf/25 bg-leaf-soft/60 p-4">
+        <FlashcardInteractiveCard
+          answerContent={
+            <>
+              <h3 className="text-[11px] font-black uppercase tracking-wide text-muted">{labels.answerHeading}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-ink">{currentCard.card.backText}</p>
+            </>
+          }
+          cardId={currentCard.id}
+          comebackContent={
+            feedback ? (
+              <div className="fc-mentor-enter rounded-xl border border-leaf/25 bg-leaf-soft/60 p-4">
                 <p className="text-sm font-bold text-ink">{labels.comebackTitle}</p>
                 {feedback.remediation?.sourceType ? (
                   <p className="mt-1 text-xs font-semibold text-muted">
@@ -708,41 +688,27 @@ export function FlashcardsClient({
                 <p className="mt-2 text-sm leading-relaxed text-ink">{labels.comebackBody}</p>
                 <p className="mt-2 text-xs text-muted">{labels.comebackNext}</p>
               </div>
-            ) : null}
-
-            <div className="flex flex-wrap gap-2 pt-1">
-              {!revealed && !feedback ? (
-                <button className={`${btnPrimary} min-h-11 px-6 text-base sm:min-h-12`} onClick={() => setRevealed(true)} type="button">
-                  {labels.reveal}
-                </button>
-              ) : !feedback ? (
-                <>
-                  <button
-                    className={`${btnNeutral} min-h-10`}
-                    onClick={() => void review(currentCard, "again")}
-                    type="button"
-                  >
-                    {labels.again}
-                  </button>
-                  <button
-                    className={`${btnSecondary} min-h-10`}
-                    onClick={() => void review(currentCard, "hard")}
-                    type="button"
-                  >
-                    {labels.hard}
-                  </button>
-                  <button
-                    className={`${btnPrimary} min-h-10`}
-                    onClick={() => void review(currentCard, "good")}
-                    type="button"
-                  >
-                    {labels.good}
-                  </button>
-                </>
-              ) : null}
-            </div>
-
-            {canAttachImage ? (
+            ) : null
+          }
+          compact={compact}
+          feedbackActive={Boolean(feedback)}
+          frontText={currentCard.card.frontText}
+          imageNode={
+            currentCard.primaryImage?.readUrl ? (
+              <figure className="mb-3 overflow-hidden rounded-xl bg-paper ring-1 ring-ink/8">
+                <img
+                  alt={labels.imageAlt.replace("{front}", currentCard.card.frontText)}
+                  className="h-[200px] max-h-[200px] w-full object-contain"
+                  height={200}
+                  src={currentCard.primaryImage.readUrl}
+                  width={400}
+                />
+                <figcaption className="sr-only">{currentCard.card.frontText}</figcaption>
+              </figure>
+            ) : null
+          }
+          imageUploadNode={
+            canAttachImage ? (
               compact ? (
                 <details className="rounded-xl border border-dashed border-ink/12 bg-paper/30 ring-1 ring-ink/[0.04]">
                   <summary className="min-h-11 cursor-pointer list-none px-3 py-3 text-xs font-bold text-ink outline-none marker:content-none focus-visible:ring-2 focus-visible:ring-accent [&::-webkit-details-marker]:hidden sm:px-4 sm:text-sm">
@@ -804,9 +770,31 @@ export function FlashcardsClient({
                   ) : null}
                 </div>
               )
-            ) : null}
-          </article>
-        </div>
+            ) : null
+          }
+          mentorLabels={{
+            mentorAgainEmoji: labels.mentorAgainEmoji,
+            mentorAgainText: labels.mentorAgainText,
+            mentorGoodEmoji: labels.mentorGoodEmoji,
+            mentorGoodText: labels.mentorGoodText,
+            mentorHardEmoji: labels.mentorHardEmoji,
+            mentorHardText: labels.mentorHardText,
+            mentorMilestone5: labels.mentorMilestone5,
+            mentorMilestone10: labels.mentorMilestone10,
+            mentorMilestone25: labels.mentorMilestone25,
+            mentorName: labels.mentorName,
+            streakLabel: labels.streakLabel,
+          }}
+          onRate={(rating) => void review(currentCard, rating)}
+          onReveal={() => setRevealed(true)}
+          phaseLabel={!revealed ? labels.reviewPhaseQuestion : labels.reviewPhaseAnswer}
+          ratingLabels={{ again: labels.again, good: labels.good, hard: labels.hard }}
+          reading={currentCard.card.reading}
+          revealed={revealed}
+          revealLabel={labels.reveal}
+          sessionReviewed={sessionReviewed}
+          sessionTotal={sessionInitialTotal}
+        />
       ) : null}
 
       {!compact ? (

@@ -81,6 +81,9 @@ temp/
 # - company/
 # - docs/
 
+# Local setup docs
+*.local.md
+
 # Lock files (hàng ngàn dòng, tốn token vô ích)
 package-lock.json
 yarn.lock

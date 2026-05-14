@@ -31,6 +31,7 @@ import type { KeycloakAuthenticatedUser } from "../keycloak/keycloak.types.js";
 import type { AdLearningContext } from "./ads/ad-provider.js";
 import { LocalAdProvider } from "./ads/local-ad.provider.js";
 import { LocalBillingProvider } from "./billing/local-billing.provider.js";
+import { StripeBillingProvider } from "./billing/stripe-billing.provider.js";
 import { EntitlementService } from "./entitlement.service.js";
 import { DocumentedHttpErrors } from "../openapi/common-decorators.js";
 import { RuntimeFeatureGateService } from "../operations/runtime-feature-gate.service.js";
@@ -47,6 +48,7 @@ export class LearnerMonetizationController {
 
   constructor(
     @Inject(LocalBillingProvider) private readonly billing: LocalBillingProvider,
+    @Inject(StripeBillingProvider) private readonly stripeBilling: StripeBillingProvider,
     @Inject(LocalAdProvider) private readonly ads: LocalAdProvider,
     @Inject(EntitlementService) private readonly entitlements: EntitlementService,
     @Inject(QuotaService) private readonly quota: QuotaService,
@@ -97,7 +99,12 @@ export class LearnerMonetizationController {
       throw new BadRequestException(parsed.error.flatten());
     }
     await this.legalConsent.requireCheckoutConsent(parsed.data.userId);
-    const res = await this.billing.startLocalCheckout(parsed.data);
+
+    // Use Stripe if configured, otherwise fall back to local dev provider
+    const useStripe = !!process.env.STRIPE_SECRET_KEY;
+    const res = useStripe
+      ? await this.stripeBilling.startCheckout(parsed.data)
+      : await this.billing.startLocalCheckout(parsed.data);
     await this.prisma.analyticsEvent.create({
       data: {
         eventName: "monetization_checkout_session",

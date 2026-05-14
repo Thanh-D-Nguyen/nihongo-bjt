@@ -11,7 +11,10 @@ import {
   AdminPageHeader,
   AdminSection,
   AdminStatusBadge,
-  cn
+  AdminToastContainer,
+  FormError,
+  cn,
+  useAdminToast
 } from "@nihongo-bjt/ui";
 import {
   ASSESSMENT_BJT_LEVELS,
@@ -25,6 +28,8 @@ import { useCallback, useEffect, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
 import { permsFromMe, type MePayload } from "@/app/_components/admin-client-utils";
+import { AdminAutoFill } from "@/app/_components/admin-auto-fill";
+import { useFormErrors, parseApiError, validateFields, validators } from "@/lib/form-errors";
 
 type CommonLabels = { empty: string; error: string; loading: string; records: string };
 type Labels = Record<string, string>;
@@ -148,7 +153,8 @@ export function QuizTemplatesAdminClient({ common, labels, locale }: { common: C
   const [confirm, setConfirm] = useState<ConfirmAction>(null);
   const [reason, setReason] = useState("");
   const [mutating, setMutating] = useState(false);
-  const [toast, setToast] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const toast = useAdminToast();
+  const fe = useFormErrors();
 
   useEffect(() => { const h = setTimeout(() => setDebounced(search.trim()), 300); return () => clearTimeout(h); }, [search]);
   useEffect(() => { setPage(1); }, [debounced, statusFilter, levelFilter, typeFilter]);
@@ -211,7 +217,13 @@ export function QuizTemplatesAdminClient({ common, labels, locale }: { common: C
 
   async function submitForm() {
     if (!canManage) return;
-    if (reason.trim().length < 3) { setToast({ kind: "err", text: t("reasonRequired") }); return; }
+    fe.clearAll();
+    const errs = validateFields({
+      slug: { value: form.slug, rules: [validators.required(t("slugRequired"))] },
+      titleVi: { value: form.titleVi, rules: [validators.required(t("titleViRequired"))] },
+      reason: { value: reason, rules: [validators.required(t("reasonRequired")), validators.minLength(3, t("reasonRequired"))] },
+    });
+    if (Object.keys(errs).length > 0) { fe.setFieldErrors(errs); return; }
     setMutating(true);
     try {
       const body = {
@@ -233,23 +245,29 @@ export function QuizTemplatesAdminClient({ common, labels, locale }: { common: C
       const url = showForm === "create" ? "/api/admin/assessment/quiz-templates" : `/api/admin/assessment/quiz-templates/${detail?.id}`;
       const method = showForm === "create" ? "POST" : "PATCH";
       const r = await adminApiFetch(url, { method, body: JSON.stringify(body) });
-      if (!r.ok) { const err = await r.text(); setToast({ kind: "err", text: err || t("saveFailed") }); return; }
+      if (!r.ok) {
+        const parsed = await parseApiError(r, t("saveFailed"));
+        fe.setFieldErrors(parsed.fieldErrors);
+        if (parsed.message) fe.setFormError(parsed.message);
+        else toast.error(t("saveFailed"));
+        return;
+      }
       const next = (await r.json()) as Detail;
-      setShowForm(null); setToast({ kind: "ok", text: t("saveOk") });
+      setShowForm(null); toast.success(t("saveOk"));
       void loadList(); setSelectedId(next.id);
     } finally { setMutating(false); }
   }
 
   async function submitConfirm() {
     if (!canManage || !detail || !confirm) return;
-    if (reason.trim().length < 3) { setToast({ kind: "err", text: t("reasonRequired") }); return; }
+    if (reason.trim().length < 3) { fe.setFieldError("reason", t("reasonRequired")); return; }
     setMutating(true);
     try {
       const url = confirm === "delete" ? `/api/admin/assessment/quiz-templates/${detail.id}` : `/api/admin/assessment/quiz-templates/${detail.id}/${confirm}`;
       const method = confirm === "delete" ? "DELETE" : "POST";
       const r = await adminApiFetch(url, { method, body: JSON.stringify({ reason: reason.trim() }) });
-      if (!r.ok) { const err = await r.text(); setToast({ kind: "err", text: err || t(`${confirm}Failed`) }); return; }
-      setToast({ kind: "ok", text: t(`${confirm}Ok`) });
+      if (!r.ok) { const parsed = await parseApiError(r, t(`${confirm}Failed`)); toast.error(parsed.message || t(`${confirm}Failed`)); return; }
+      toast.success(t(`${confirm}Ok`));
       setConfirm(null); setReason("");
       if (confirm === "delete") setSelectedId(null);
       else if (confirm === "duplicate") { const next = (await r.json()) as Detail; setSelectedId(next.id); }
@@ -357,10 +375,10 @@ export function QuizTemplatesAdminClient({ common, labels, locale }: { common: C
               {canManage ? (
                 <div className="flex flex-wrap gap-2">
                   <button className="rounded border border-slate-300 px-3 py-1 text-sm" onClick={openEdit} type="button">{t("edit")}</button>
-                  {detail.status !== "published" ? <button className="rounded bg-emerald-600 px-3 py-1 text-sm text-white" onClick={() => { setReason(""); setConfirm("publish"); }} type="button">{t("publish")}</button> : null}
-                  {detail.status !== "archived" ? <button className="rounded border border-slate-300 px-3 py-1 text-sm" onClick={() => { setReason(""); setConfirm("archive"); }} type="button">{t("archive")}</button> : null}
-                  <button className="rounded border border-slate-300 px-3 py-1 text-sm" onClick={() => { setReason(""); setConfirm("duplicate"); }} type="button">{t("duplicate")}</button>
-                  <button className="rounded border border-red-300 px-3 py-1 text-sm text-red-700" onClick={() => { setReason(""); setConfirm("delete"); }} type="button">{t("delete")}</button>
+                  {detail.status !== "published" ? <button className="rounded bg-emerald-600 px-3 py-1 text-sm text-white" onClick={() => { setReason(""); fe.clearFieldError("reason"); setConfirm("publish"); }} type="button">{t("publish")}</button> : null}
+                  {detail.status !== "archived" ? <button className="rounded border border-slate-300 px-3 py-1 text-sm" onClick={() => { setReason(""); fe.clearFieldError("reason"); setConfirm("archive"); }} type="button">{t("archive")}</button> : null}
+                  <button className="rounded border border-slate-300 px-3 py-1 text-sm" onClick={() => { setReason(""); fe.clearFieldError("reason"); setConfirm("duplicate"); }} type="button">{t("duplicate")}</button>
+                  <button className="rounded border border-red-300 px-3 py-1 text-sm text-red-700" onClick={() => { setReason(""); fe.clearFieldError("reason"); setConfirm("delete"); }} type="button">{t("delete")}</button>
                 </div>
               ) : null}
               {(() => {
@@ -415,9 +433,31 @@ export function QuizTemplatesAdminClient({ common, labels, locale }: { common: C
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="w-full max-w-2xl rounded-lg bg-white p-6 shadow-2xl">
             <h2 className="mb-4 text-lg font-semibold">{showForm === "create" ? t("createHeading") : t("editHeading")}</h2>
+            <div className="mb-3 flex items-center justify-between">
+              <FormError message={fe.errors.form} className="flex-1" />
+              <AdminAutoFill
+                formType="quiz-template"
+                onFill={(fields) => {
+                  const f = fields as Partial<FormState>;
+                  setForm((prev) => ({
+                    ...prev,
+                    ...(f.slug !== undefined && { slug: String(f.slug) }),
+                    ...(f.titleVi !== undefined && { titleVi: String(f.titleVi) }),
+                    ...(f.titleJa !== undefined && { titleJa: String(f.titleJa) }),
+                    ...(f.description !== undefined && { description: String(f.description) }),
+                    ...(f.level !== undefined && { level: String(f.level) }),
+                    ...(f.type !== undefined && { type: String(f.type) }),
+                    ...(f.questionCount !== undefined && { questionCount: Number(f.questionCount) }),
+                    ...(f.timeLimitSec !== undefined && { timeLimitSec: Number(f.timeLimitSec) }),
+                  }));
+                }}
+                labels={{ button: t("autoFill") || "Auto Fill" }}
+                disabled={mutating}
+              />
+            </div>
             <div className="grid grid-cols-2 gap-3 text-sm">
-              <label className="col-span-2 flex flex-col gap-1"><span className="text-xs font-medium text-slate-600">{t("formSlug")}</span><input className="rounded border border-slate-300 px-3 py-2" value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} /></label>
-              <label className="flex flex-col gap-1"><span className="text-xs font-medium text-slate-600">{t("formTitleVi")}</span><input className="rounded border border-slate-300 px-3 py-2" value={form.titleVi} onChange={(e) => setForm({ ...form, titleVi: e.target.value })} /></label>
+              <label className="col-span-2 flex flex-col gap-1"><span className="text-xs font-medium text-slate-600">{t("formSlug")} <span className="text-red-500">*</span></span><input className={cn("rounded border px-3 py-2", fe.fieldError("slug") ? "border-red-400 bg-red-50/50" : "border-slate-300")} value={form.slug} onChange={(e) => { setForm({ ...form, slug: e.target.value }); fe.clearFieldError("slug"); }} />{fe.fieldError("slug") && <p className="text-xs text-red-600">{fe.fieldError("slug")}</p>}</label>
+              <label className="flex flex-col gap-1"><span className="text-xs font-medium text-slate-600">{t("formTitleVi")} <span className="text-red-500">*</span></span><input className={cn("rounded border px-3 py-2", fe.fieldError("titleVi") ? "border-red-400 bg-red-50/50" : "border-slate-300")} value={form.titleVi} onChange={(e) => { setForm({ ...form, titleVi: e.target.value }); fe.clearFieldError("titleVi"); }} />{fe.fieldError("titleVi") && <p className="text-xs text-red-600">{fe.fieldError("titleVi")}</p>}</label>
               <label className="flex flex-col gap-1"><span className="text-xs font-medium text-slate-600">{t("formTitleJa")}</span><input className="rounded border border-slate-300 px-3 py-2" value={form.titleJa} onChange={(e) => setForm({ ...form, titleJa: e.target.value })} /></label>
               <label className="flex flex-col gap-1"><span className="text-xs font-medium text-slate-600">{t("formType")}</span>
                 <select className="rounded border border-slate-300 px-3 py-2" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
@@ -472,10 +512,10 @@ export function QuizTemplatesAdminClient({ common, labels, locale }: { common: C
                 ))}
                 <button type="button" className="rounded border border-slate-300 px-2 py-1 text-xs" onClick={() => setForm({ ...form, topicMix: [...form.topicMix, { topic: "", weight: 0.5 }] })}>+ {t("addRow")}</button>
               </div>
-              <label className="col-span-2 flex flex-col gap-1"><span className="text-xs font-medium text-slate-600">{t("formReason")}</span><input className="rounded border border-slate-300 px-3 py-2" value={reason} onChange={(e) => setReason(e.target.value)} /></label>
+              <label className="col-span-2 flex flex-col gap-1"><span className="text-xs font-medium text-slate-600">{t("formReason")} <span className="text-red-500">*</span></span><input className={cn("rounded border px-3 py-2", fe.fieldError("reason") ? "border-red-400 bg-red-50/50" : "border-slate-300")} value={reason} onChange={(e) => { setReason(e.target.value); fe.clearFieldError("reason"); }} />{fe.fieldError("reason") && <p className="text-xs text-red-600">{fe.fieldError("reason")}</p>}</label>
             </div>
             <div className="mt-4 flex justify-end gap-2">
-              <button className="rounded border border-slate-300 px-3 py-2 text-sm" onClick={() => setShowForm(null)} type="button">{t("cancel")}</button>
+              <button className="rounded border border-slate-300 px-3 py-2 text-sm" onClick={() => { setShowForm(null); fe.clearAll(); }} type="button">{t("cancel")}</button>
               <button className="rounded bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50" disabled={mutating} onClick={submitForm} type="button">{showForm === "create" ? t("createSubmit") : t("editSubmit")}</button>
             </div>
           </div>
@@ -487,18 +527,17 @@ export function QuizTemplatesAdminClient({ common, labels, locale }: { common: C
           <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-2xl">
             <h2 className="mb-2 text-lg font-semibold">{t(`confirmHeading_${confirm}`)}</h2>
             <p className="mb-3 text-sm text-slate-600">{t(`confirmBody_${confirm}`)}</p>
-            <label className="flex flex-col gap-1 text-xs"><span className="font-medium text-slate-600">{t("formReason")}</span><input className="rounded border border-slate-300 px-3 py-2 text-sm" value={reason} onChange={(e) => setReason(e.target.value)} /></label>
+            <label className="flex flex-col gap-1 text-xs"><span className="font-medium text-slate-600">{t("formReason")}</span><input className={cn("rounded border px-3 py-2 text-sm", fe.fieldError("reason") ? "border-red-400 bg-red-50/50 text-red-900" : "border-slate-300")} value={reason} onChange={(e) => { setReason(e.target.value); fe.clearFieldError("reason"); }} /></label>
+            {fe.fieldError("reason") && <p className="mt-1 text-xs text-red-600">{fe.fieldError("reason")}</p>}
             <div className="mt-4 flex justify-end gap-2">
-              <button className="rounded border border-slate-300 px-3 py-2 text-sm" onClick={() => setConfirm(null)} type="button">{t("cancel")}</button>
+              <button className="rounded border border-slate-300 px-3 py-2 text-sm" onClick={() => { setConfirm(null); fe.clearFieldError("reason"); }} type="button">{t("cancel")}</button>
               <button className={cn("rounded px-3 py-2 text-sm font-medium text-white disabled:opacity-50", confirm === "delete" ? "bg-red-600" : "bg-slate-900")} disabled={mutating} onClick={submitConfirm} type="button">{t(`confirmSubmit_${confirm}`)}</button>
             </div>
           </div>
         </div>
       ) : null}
 
-      {toast ? (
-        <div className={cn("fixed bottom-6 right-6 rounded px-4 py-2 text-sm shadow-lg", toast.kind === "ok" ? "bg-emerald-600 text-white" : "bg-red-600 text-white")}>{toast.text}<button className="ml-3 underline" onClick={() => setToast(null)} type="button">×</button></div>
-      ) : null}
+      <AdminToastContainer toasts={toast.toasts} onRemove={toast.removeToast} />
     </div>
   );
 }

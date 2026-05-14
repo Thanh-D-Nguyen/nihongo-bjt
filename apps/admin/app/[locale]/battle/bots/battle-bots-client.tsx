@@ -22,6 +22,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
 import { permsFromMe, type MePayload } from "@/app/_components/admin-client-utils";
+import { AdminAutoFill } from "@/app/_components/admin-auto-fill";
 
 type Labels = Record<string, string>;
 type CommonLabels = { empty: string; error: string; loading: string; records: string };
@@ -301,17 +302,9 @@ export function BattleBotsClient({
     if (selectedId) void loadDetail(selectedId);
   };
 
-  const requireReason = (): string | null => {
-    const trimmed = reason.trim();
-    if (trimmed.length < 3) {
-      setToast({ kind: "err", text: t("reasonHint") });
-      return null;
-    }
-    return trimmed;
-  };
-
-  const validateForm = (state: FormState): Record<string, string> => {
+  const validateForm = (state: FormState, includeReason = true): Record<string, string> => {
     const errs: Record<string, string> = {};
+    if (includeReason && reason.trim().length < 3) errs.reason = t("reasonHint");
     if (!/^[a-z0-9][a-z0-9_-]*$/i.test(state.botKey.trim())) errs.botKey = t("formErrBotKey");
     if (state.name.trim().length < 2) errs.name = t("formErrName");
     if (state.avatarFallback.trim().length < 1) errs.avatarFallback = t("formErrAvatar");
@@ -353,19 +346,14 @@ export function BattleBotsClient({
 
   const doCreate = async () => {
     if (!canManage) return;
-    const r = requireReason();
-    if (!r) return;
     const errs = validateForm(form);
     setFormErrors(errs);
-    if (Object.keys(errs).length > 0) {
-      setToast({ kind: "err", text: t("errorValidation") });
-      return;
-    }
+    if (Object.keys(errs).length > 0) return;
     setMutating(true);
     setToast(null);
     try {
       const res = await adminApiFetch("/api/admin/battle/bots", {
-        body: JSON.stringify(buildBody(form, r)),
+        body: JSON.stringify(buildBody(form, reason.trim())),
         headers: { "content-type": "application/json" },
         method: "POST"
       });
@@ -389,19 +377,14 @@ export function BattleBotsClient({
 
   const doPatch = async () => {
     if (!canManage || !detail) return;
-    const r = requireReason();
-    if (!r) return;
     const errs = validateForm(form);
     setFormErrors(errs);
-    if (Object.keys(errs).length > 0) {
-      setToast({ kind: "err", text: t("errorValidation") });
-      return;
-    }
+    if (Object.keys(errs).length > 0) return;
     setMutating(true);
     setToast(null);
     try {
       const res = await adminApiFetch(`/api/admin/battle/bots/${encodeURIComponent(detail.id)}`, {
-        body: JSON.stringify(buildBody(form, r)),
+        body: JSON.stringify(buildBody(form, reason.trim())),
         headers: { "content-type": "application/json" },
         method: "PATCH"
       });
@@ -423,8 +406,11 @@ export function BattleBotsClient({
 
   const doLifecycle = async (kind: "enable" | "disable" | "archive" | "delete") => {
     if (!canManage || !detail) return;
-    const r = requireReason();
-    if (!r) return;
+    if (reason.trim().length < 3) {
+      setFormErrors({ reason: t("reasonHint") });
+      return;
+    }
+    setFormErrors({});
     setMutating(true);
     setToast(null);
     try {
@@ -433,7 +419,7 @@ export function BattleBotsClient({
           ? `/api/admin/battle/bots/${encodeURIComponent(detail.id)}`
           : `/api/admin/battle/bots/${encodeURIComponent(detail.id)}/${kind}`;
       const res = await adminApiFetch(path, {
-        body: JSON.stringify({ reason: r }),
+        body: JSON.stringify({ reason: reason.trim() }),
         headers: { "content-type": "application/json" },
         method: kind === "delete" ? "DELETE" : "POST"
       });
@@ -700,7 +686,7 @@ export function BattleBotsClient({
                     {detail.status === "active" ? (
                       <button
                         className="rounded-md border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800 hover:bg-amber-100"
-                        onClick={() => setConfirm("disable")}
+                        onClick={() => { setFormErrors({}); setReason(""); setConfirm("disable"); }}
                         type="button"
                       >
                         {t("actionDisable")}
@@ -709,7 +695,7 @@ export function BattleBotsClient({
                     {detail.status === "disabled" ? (
                       <button
                         className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100"
-                        onClick={() => setConfirm("enable")}
+                        onClick={() => { setFormErrors({}); setReason(""); setConfirm("enable"); }}
                         type="button"
                       >
                         {t("actionEnable")}
@@ -718,7 +704,7 @@ export function BattleBotsClient({
                     {detail.status !== "archived" ? (
                       <button
                         className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                        onClick={() => setConfirm("archive")}
+                        onClick={() => { setFormErrors({}); setReason(""); setConfirm("archive"); }}
                         type="button"
                       >
                         {t("actionArchive")}
@@ -727,7 +713,7 @@ export function BattleBotsClient({
                     {detail.status === "archived" ? (
                       <button
                         className="rounded-md border border-rose-300 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100"
-                        onClick={() => setConfirm("delete")}
+                        onClick={() => { setFormErrors({}); setReason(""); setConfirm("delete"); }}
                         type="button"
                       >
                         {t("actionDelete")}
@@ -760,6 +746,7 @@ export function BattleBotsClient({
                     setEditing(false);
                     setFormErrors({});
                   }}
+                  onClearFieldError={(f) => setFormErrors((p) => { const n = { ...p }; delete n[f]; return n; })}
                   onSubmit={() => void doPatch()}
                   mutating={mutating}
                 />
@@ -841,6 +828,7 @@ export function BattleBotsClient({
               setCreating(false);
               setFormErrors({});
             }}
+            onClearFieldError={(f) => setFormErrors((p) => { const n = { ...p }; delete n[f]; return n; })}
             onSubmit={() => void doCreate()}
             mutating={mutating}
           />
@@ -858,15 +846,15 @@ export function BattleBotsClient({
               {t(`confirm_${confirm}_message`).replace("{name}", detail.name)}
             </p>
             <label className="mt-3 block text-sm">
-              <span className="block text-xs font-medium text-slate-600">{t("reasonLabel")}</span>
+              <span className="block text-xs font-medium text-slate-600">{t("reasonLabel")} <span className="text-red-500">*</span></span>
               <textarea
-                className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
-                onChange={(e) => setReason(e.target.value)}
+                className={cn("mt-1 w-full rounded-lg border bg-white px-3 py-2 text-sm", formErrors.reason ? "border-red-400 bg-red-50/50 text-red-900" : "border-slate-200")}
+                onChange={(e) => { setReason(e.target.value); setFormErrors((p) => { const n = { ...p }; delete n.reason; return n; }); }}
                 placeholder={t("reasonPlaceholder")}
                 rows={3}
                 value={reason}
               />
-              <span className="mt-1 block text-[10px] text-slate-400">{t("reasonHint")}</span>
+              {formErrors.reason ? <span className="mt-1 block text-xs text-red-600">{formErrors.reason}</span> : <span className="mt-1 block text-[10px] text-slate-400">{t("reasonHint")}</span>}
             </label>
             <div className="mt-4 flex justify-end gap-2">
               <button
@@ -874,6 +862,7 @@ export function BattleBotsClient({
                 onClick={() => {
                   setConfirm(null);
                   setReason("");
+                  setFormErrors({});
                 }}
                 type="button"
               >
@@ -908,6 +897,7 @@ function BotForm({
   form,
   mutating,
   onCancel,
+  onClearFieldError,
   onSubmit,
   reason,
   setForm,
@@ -919,6 +909,7 @@ function BotForm({
   form: FormState;
   mutating: boolean;
   onCancel: () => void;
+  onClearFieldError?: (f: string) => void;
   onSubmit: () => void;
   reason: string;
   setForm: (f: FormState) => void;
@@ -928,6 +919,34 @@ function BotForm({
 }) {
   return (
     <div className="space-y-3 text-sm">
+      <div className="flex items-center justify-end">
+        <AdminAutoFill
+          formType="battle-bot"
+          onFill={(fields) => {
+            const f = fields as Partial<FormState>;
+            setForm({
+              ...form,
+              ...(f.botKey !== undefined && { botKey: String(f.botKey) }),
+              ...(f.name !== undefined && { name: String(f.name) }),
+              ...(f.difficulty !== undefined && { difficulty: f.difficulty as FormState["difficulty"] }),
+              ...(f.persona !== undefined && { persona: String(f.persona) }),
+              ...(f.accuracyPct !== undefined && { accuracyPct: Number(f.accuracyPct) }),
+              ...(f.minDelayMs !== undefined && { minDelayMs: Number(f.minDelayMs) }),
+              ...(f.maxDelayMs !== undefined && { maxDelayMs: Number(f.maxDelayMs) }),
+              ...(f.avatarFallback !== undefined && { avatarFallback: String(f.avatarFallback) }),
+              ...(f.styleToken !== undefined && { styleToken: f.styleToken as FormState["styleToken"] }),
+              ...(f.vocabularyLevel !== undefined && { vocabularyLevel: String(f.vocabularyLevel) }),
+              ...(f.riveSrc !== undefined && { riveSrc: String(f.riveSrc) }),
+              ...(f.riveArtboard !== undefined && { riveArtboard: String(f.riveArtboard) }),
+              ...(f.riveStateMachine !== undefined && { riveStateMachine: String(f.riveStateMachine) }),
+              ...(f.riveLicense !== undefined && { riveLicense: String(f.riveLicense) }),
+              ...(f.riveProvenanceJson !== undefined && { riveProvenanceJson: String(f.riveProvenanceJson) }),
+            });
+          }}
+          labels={{ button: t("autoFill") || "Auto Fill" }}
+          disabled={mutating}
+        />
+      </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label className="block">
           <span className="block text-xs font-medium text-slate-600">{t("formBotKey")}</span>
@@ -1115,15 +1134,15 @@ function BotForm({
         />
       </label>
       <label className="block">
-        <span className="block text-xs font-medium text-slate-600">{t("reasonLabel")}</span>
+        <span className="block text-xs font-medium text-slate-600">{t("reasonLabel")} <span className="text-red-500">*</span></span>
         <textarea
-          className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
-          onChange={(e) => setReason(e.target.value)}
+          className={cn("mt-1 w-full rounded-lg border bg-white px-3 py-2 text-sm", errors.reason ? "border-red-400 bg-red-50/50 text-red-900" : "border-slate-200")}
+          onChange={(e) => { setReason(e.target.value); onClearFieldError?.("reason"); }}
           placeholder={t("reasonPlaceholder")}
           rows={2}
           value={reason}
         />
-        <span className="mt-1 block text-[10px] text-slate-400">{t("reasonHint")}</span>
+        {errors.reason ? <span className="mt-1 block text-xs text-red-600">{errors.reason}</span> : <span className="mt-1 block text-[10px] text-slate-400">{t("reasonHint")}</span>}
       </label>
       <div className="flex justify-end gap-2">
         <button

@@ -11,7 +11,10 @@ import {
   AdminPageHeader,
   AdminSection,
   AdminStatusBadge,
-  cn
+  AdminToastContainer,
+  FormError,
+  cn,
+  useAdminToast
 } from "@nihongo-bjt/ui";
 import {
   GROWTH_SOCIAL_TEMPLATE_KINDS,
@@ -21,6 +24,8 @@ import { useCallback, useEffect, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
 import { permsFromMe, type MePayload } from "@/app/_components/admin-client-utils";
+import { AdminAutoFill } from "@/app/_components/admin-auto-fill";
+import { useFormErrors, parseApiError, validateFields, validators } from "@/lib/form-errors";
 
 type CommonLabels = { empty: string; error: string; loading: string; records: string };
 type Labels = Record<string, string>;
@@ -165,7 +170,8 @@ export function GrowthSocialClient({
   const [reason, setReason] = useState("");
   const [confirmTpl, setConfirmTpl] = useState<{ kind: "publish" | "archive" } | null>(null);
   const [mutating, setMutating] = useState(false);
-  const [toast, setToast] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const toast = useAdminToast();
+  const fe = useFormErrors();
 
   // Events state
   const [events, setEvents] = useState<EventListResponse | null>(null);
@@ -267,7 +273,14 @@ export function GrowthSocialClient({
 
   async function submitCreate() {
     if (!canManage) return;
-    if (reason.trim().length < 3) return setToast({ kind: "err", text: t("reasonRequired") });
+    fe.clearAll();
+    const errs = validateFields([
+      { field: "slug", value: form.slug, message: t("slugRequired"), validate: validators.required },
+      { field: "name", value: form.name, message: t("nameRequired"), validate: validators.required },
+      { field: "reason", value: reason, message: t("reasonRequired"), validate: validators.required },
+      { field: "reason", value: reason, message: t("reasonRequired"), validate: validators.minLength(3) },
+    ]);
+    if (Object.keys(errs).length > 0) { fe.setFieldErrors(errs); return; }
     setMutating(true);
     try {
       const r = await adminApiFetch("/api/admin/growth/social/templates", {
@@ -279,9 +292,15 @@ export function GrowthSocialClient({
         }),
         method: "POST"
       });
-      if (!r.ok) return setToast({ kind: "err", text: t("createFailed") });
+      if (!r.ok) {
+        const parsed = await parseApiError(r, t("createFailed"));
+        fe.setFieldErrors(parsed.fields);
+        if (parsed.form) fe.setFormError(parsed.form);
+        else toast.error(t("createFailed"));
+        return;
+      }
       const body = (await r.json()) as TemplateDetail;
-      setToast({ kind: "ok", text: t("createOk") });
+      toast.success(t("createOk"));
       setCreating(false);
       setForm(DEFAULT_FORM);
       setReason("");
@@ -294,7 +313,14 @@ export function GrowthSocialClient({
 
   async function submitEdit() {
     if (!canManage || !tplDetail) return;
-    if (reason.trim().length < 3) return setToast({ kind: "err", text: t("reasonRequired") });
+    fe.clearAll();
+    const errs = validateFields([
+      { field: "slug", value: form.slug, message: t("slugRequired"), validate: validators.required },
+      { field: "name", value: form.name, message: t("nameRequired"), validate: validators.required },
+      { field: "reason", value: reason, message: t("reasonRequired"), validate: validators.required },
+      { field: "reason", value: reason, message: t("reasonRequired"), validate: validators.minLength(3) },
+    ]);
+    if (Object.keys(errs).length > 0) { fe.setFieldErrors(errs); return; }
     setMutating(true);
     try {
       const r = await adminApiFetch(`/api/admin/growth/social/templates/${tplDetail.id}`, {
@@ -306,8 +332,14 @@ export function GrowthSocialClient({
         }),
         method: "PATCH"
       });
-      if (!r.ok) return setToast({ kind: "err", text: t("updateFailed") });
-      setToast({ kind: "ok", text: t("updateOk") });
+      if (!r.ok) {
+        const parsed = await parseApiError(r, t("updateFailed"));
+        fe.setFieldErrors(parsed.fields);
+        if (parsed.form) fe.setFormError(parsed.form);
+        else toast.error(t("updateFailed"));
+        return;
+      }
+      toast.success(t("updateOk"));
       setEditing(false);
       setReason("");
       void loadTemplates();
@@ -319,7 +351,7 @@ export function GrowthSocialClient({
 
   async function submitTplTransition(kind: "publish" | "archive") {
     if (!canManage || !tplDetail) return;
-    if (reason.trim().length < 3) return setToast({ kind: "err", text: t("reasonRequired") });
+    if (reason.trim().length < 3) { fe.setFieldError("reason", t("reasonRequired")); return; }
     setMutating(true);
     try {
       const r = await adminApiFetch(`/api/admin/growth/social/templates/${tplDetail.id}/${kind}`, {
@@ -329,11 +361,13 @@ export function GrowthSocialClient({
       if (!r.ok) {
         const body = (await r.json().catch(() => null)) as { code?: string } | null;
         if (body?.code === "public_template_requires_no_pii_verification") {
-          return setToast({ kind: "err", text: t("publishBlockedNoPii") });
+          toast.error(t("publishBlockedNoPii"));
+          return;
         }
-        return setToast({ kind: "err", text: t(`${kind}Failed`) });
+        toast.error(t(`${kind}Failed`));
+        return;
       }
-      setToast({ kind: "ok", text: t(`${kind}Ok`) });
+      toast.success(t(`${kind}Ok`));
       setConfirmTpl(null);
       setReason("");
       void loadTemplates();
@@ -345,15 +379,15 @@ export function GrowthSocialClient({
 
   async function submitModerate() {
     if (!canManage || !moderate) return;
-    if (reason.trim().length < 3) return setToast({ kind: "err", text: t("reasonRequired") });
+    if (reason.trim().length < 3) { fe.setFieldError("reason", t("reasonRequired")); return; }
     setMutating(true);
     try {
       const r = await adminApiFetch(`/api/admin/growth/social/events/${moderate.eventId}/moderate`, {
         body: JSON.stringify({ action: moderate.action, reason: reason.trim() }),
         method: "POST"
       });
-      if (!r.ok) return setToast({ kind: "err", text: t("moderateFailed") });
-      setToast({ kind: "ok", text: t("moderateOk") });
+      if (!r.ok) { toast.error(t("moderateFailed")); return; }
+      toast.success(t("moderateOk"));
       setModerate(null);
       setReason("");
       void loadEvents();
@@ -441,6 +475,7 @@ export function GrowthSocialClient({
                     setForm(DEFAULT_FORM);
                     setReason("");
                     setSelectedTplId(null);
+                    fe.clearAll();
                   }}
                   type="button"
                 >
@@ -543,14 +578,36 @@ export function GrowthSocialClient({
           {creating || editing ? (
             <AdminSection>
               <h3 className="text-lg font-semibold">{creating ? t("createHeading") : t("editHeading")}</h3>
+              <div className="mb-3 flex items-center justify-between">
+                <FormError message={fe.errors.form} className="flex-1" />
+                <AdminAutoFill
+                  formType="growth-social"
+                  onFill={(fields) => {
+                    const f = fields as Partial<FormState>;
+                    setForm((prev) => ({
+                      ...prev,
+                      ...(f.slug !== undefined && { slug: String(f.slug) }),
+                      ...(f.kind !== undefined && { kind: f.kind as FormState["kind"] }),
+                      ...(f.name !== undefined && { name: String(f.name) }),
+                      ...(f.description !== undefined && { description: String(f.description) }),
+                      ...(f.bodyTemplate !== undefined && { bodyTemplate: String(f.bodyTemplate) }),
+                      ...(f.privacyClass !== undefined && { privacyClass: f.privacyClass as FormState["privacyClass"] }),
+                      ...(f.noPiiVerified !== undefined && { noPiiVerified: Boolean(f.noPiiVerified) }),
+                    }));
+                  }}
+                  labels={{ button: t("autoFill") || "Auto Fill" }}
+                  disabled={mutating}
+                />
+              </div>
               <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
                 <label className="text-sm">
-                  {t("formSlug")}
+                  {t("formSlug")} <span className="text-red-500">*</span>
                   <input
-                    className="mt-1 w-full rounded border px-2 py-1"
-                    onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
+                    className={cn("mt-1 w-full rounded border px-2 py-1", fe.fieldError("slug") ? "border-red-400 bg-red-50/50" : "")}
+                    onChange={(e) => { setForm((f) => ({ ...f, slug: e.target.value })); fe.clearFieldError("slug"); }}
                     value={form.slug}
                   />
+                  {fe.fieldError("slug") && <p className="text-xs text-red-600">{fe.fieldError("slug")}</p>}
                 </label>
                 <label className="text-sm">
                   {t("formKind")}
@@ -567,12 +624,13 @@ export function GrowthSocialClient({
                   </select>
                 </label>
                 <label className="text-sm md:col-span-2">
-                  {t("formName")}
+                  {t("formName")} <span className="text-red-500">*</span>
                   <input
-                    className="mt-1 w-full rounded border px-2 py-1"
-                    onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                    className={cn("mt-1 w-full rounded border px-2 py-1", fe.fieldError("name") ? "border-red-400 bg-red-50/50" : "")}
+                    onChange={(e) => { setForm((f) => ({ ...f, name: e.target.value })); fe.clearFieldError("name"); }}
                     value={form.name}
                   />
+                  {fe.fieldError("name") && <p className="text-xs text-red-600">{fe.fieldError("name")}</p>}
                 </label>
                 <label className="text-sm md:col-span-2">
                   {t("formDescription")}
@@ -618,12 +676,13 @@ export function GrowthSocialClient({
                   </label>
                 ) : null}
                 <label className="text-sm md:col-span-2">
-                  {t("formReason")}
+                  {t("formReason")} <span className="text-red-500">*</span>
                   <input
-                    className="mt-1 w-full rounded border px-2 py-1"
-                    onChange={(e) => setReason(e.target.value)}
+                    className={cn("mt-1 w-full rounded border px-2 py-1", fe.fieldError("reason") ? "border-red-400 bg-red-50/50" : "")}
+                    onChange={(e) => { setReason(e.target.value); fe.clearFieldError("reason"); }}
                     value={reason}
                   />
+                  {fe.fieldError("reason") && <p className="text-xs text-red-600">{fe.fieldError("reason")}</p>}
                 </label>
               </div>
               <div className="mt-3 flex gap-2">
@@ -641,6 +700,7 @@ export function GrowthSocialClient({
                     setCreating(false);
                     setEditing(false);
                     setReason("");
+                    fe.clearAll();
                   }}
                   type="button"
                 >
@@ -678,7 +738,7 @@ export function GrowthSocialClient({
                     {!tplDetail.active ? (
                       <button
                         className="rounded border px-2 py-1 text-xs"
-                        onClick={() => setConfirmTpl({ kind: "publish" })}
+                        onClick={() => { fe.clearFieldError("reason"); setConfirmTpl({ kind: "publish" }); }}
                         type="button"
                       >
                         {t("actionPublish")}
@@ -686,7 +746,7 @@ export function GrowthSocialClient({
                     ) : (
                       <button
                         className="rounded border px-2 py-1 text-xs"
-                        onClick={() => setConfirmTpl({ kind: "archive" })}
+                        onClick={() => { fe.clearFieldError("reason"); setConfirmTpl({ kind: "archive" }); }}
                         type="button"
                       >
                         {t("actionArchive")}
@@ -731,17 +791,19 @@ export function GrowthSocialClient({
                 <h4 className="text-lg font-semibold">{t(`confirmHeading_${confirmTpl.kind}`)}</h4>
                 <p className="mt-1 text-sm">{t(`confirmBody_${confirmTpl.kind}`)}</p>
                 <input
-                  className="mt-3 w-full rounded border px-2 py-1 text-sm"
-                  onChange={(e) => setReason(e.target.value)}
+                  className={cn("mt-3 w-full rounded border px-2 py-1 text-sm", fe.fieldError("reason") ? "border-red-400 bg-red-50/50 text-red-900" : "border-slate-300")}
+                  onChange={(e) => { setReason(e.target.value); fe.clearFieldError("reason"); }}
                   placeholder={t("formReason")}
                   value={reason}
                 />
+                {fe.fieldError("reason") && <p className="mt-1 text-xs text-red-600">{fe.fieldError("reason")}</p>}
                 <div className="mt-3 flex justify-end gap-2">
                   <button
                     className="rounded border px-3 py-1 text-sm"
                     onClick={() => {
                       setConfirmTpl(null);
                       setReason("");
+                      fe.clearFieldError("reason");
                     }}
                     type="button"
                   >
@@ -826,6 +888,7 @@ export function GrowthSocialClient({
                               onClick={() => {
                                 setModerate({ action: "dismiss", eventId: ev.id });
                                 setReason("");
+                                fe.clearFieldError("reason");
                               }}
                               type="button"
                             >
@@ -836,6 +899,7 @@ export function GrowthSocialClient({
                               onClick={() => {
                                 setModerate({ action: "hide_from_public", eventId: ev.id });
                                 setReason("");
+                                fe.clearFieldError("reason");
                               }}
                               type="button"
                             >
@@ -846,6 +910,7 @@ export function GrowthSocialClient({
                               onClick={() => {
                                 setModerate({ action: "report_to_legal", eventId: ev.id });
                                 setReason("");
+                                fe.clearFieldError("reason");
                               }}
                               type="button"
                             >
@@ -907,17 +972,19 @@ export function GrowthSocialClient({
                 <h4 className="text-lg font-semibold">{t(`moderateHeading_${moderate.action}`)}</h4>
                 <p className="mt-1 text-sm">{t(`moderateBody_${moderate.action}`)}</p>
                 <input
-                  className="mt-3 w-full rounded border px-2 py-1 text-sm"
-                  onChange={(e) => setReason(e.target.value)}
+                  className={cn("mt-3 w-full rounded border px-2 py-1 text-sm", fe.fieldError("reason") ? "border-red-400 bg-red-50/50 text-red-900" : "border-slate-300")}
+                  onChange={(e) => { setReason(e.target.value); fe.clearFieldError("reason"); }}
                   placeholder={t("formReason")}
                   value={reason}
                 />
+                {fe.fieldError("reason") && <p className="mt-1 text-xs text-red-600">{fe.fieldError("reason")}</p>}
                 <div className="mt-3 flex justify-end gap-2">
                   <button
                     className="rounded border px-3 py-1 text-sm"
                     onClick={() => {
                       setModerate(null);
                       setReason("");
+                      fe.clearFieldError("reason");
                     }}
                     type="button"
                   >
@@ -938,21 +1005,7 @@ export function GrowthSocialClient({
         </>
       ) : null}
 
-      {toast ? (
-        <div
-          aria-live="polite"
-          className={cn(
-            "fixed bottom-4 right-4 rounded p-3 text-sm shadow",
-            toast.kind === "ok" ? "bg-emerald-100 text-emerald-900" : "bg-red-100 text-red-900"
-          )}
-          role="status"
-        >
-          {toast.text}
-          <button aria-label="dismiss" className="ml-2 underline" onClick={() => setToast(null)} type="button">
-            ×
-          </button>
-        </div>
-      ) : null}
+      <AdminToastContainer toasts={toast.toasts} onRemove={toast.removeToast} />
     </div>
   );
 }

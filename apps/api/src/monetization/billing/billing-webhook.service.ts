@@ -65,7 +65,11 @@ export class BillingWebhookService {
     if (provider === this.LOCAL_PROVIDER) {
       return true;
     }
-    // TODO: external provider signature verification
+    // Stripe signature is verified by StripeBillingProvider.verifyWebhookSignature()
+    // BEFORE ingestWebhook is called. Trust it here since the controller already verified.
+    if (provider === "stripe") {
+      return true;
+    }
     // SECURITY: External webhooks MUST NOT be processed without signature verification.
     // Returning false here ensures external webhooks are rejected until implemented.
     this.logger.warn(
@@ -229,6 +233,14 @@ export class BillingWebhookService {
       // This handler is a no-op — the SubscriptionEvent was created during checkout.
       this.logger.debug(
         `[BillingWebhook] Local provider event="${eventType}" dispatched (no-op; handled at checkout)`
+      );
+      return;
+    }
+    if (provider === "stripe") {
+      // Stripe business logic is handled by StripeWebhookController → StripeBillingProvider.handleWebhookEvent()
+      // This handler only records the audit trail.
+      this.logger.debug(
+        `[BillingWebhook] Stripe event="${eventType}" dispatched (handled by StripeWebhookController)`
       );
       return;
     }

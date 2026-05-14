@@ -177,3 +177,7 @@ export function IconGrammar(props: AppIconProps) {
 export function IconLevels(props: AppIconProps) {
   return path("M3 21h18 M5 21V10h4v11 M10 21V6h4v15 M15 21V3h4v18", props);
 }
+
+export function IconExplore(props: AppIconProps) {
+  return path("M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Z M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12Z", props);
+}

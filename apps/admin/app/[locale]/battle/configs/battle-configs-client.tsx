@@ -11,7 +11,10 @@ import {
   AdminPageHeader,
   AdminSection,
   AdminStatusBadge,
-  cn
+  AdminToastContainer,
+  FormError,
+  cn,
+  useAdminToast
 } from "@nihongo-bjt/ui";
 import {
   BATTLE_CONFIG_BOT_DIFFICULTIES,
@@ -24,6 +27,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
 import { permsFromMe, type MePayload } from "@/app/_components/admin-client-utils";
+import { AdminAutoFill } from "@/app/_components/admin-auto-fill";
+import { useFormErrors, parseApiError, validateFields, validators } from "@/lib/form-errors";
 
 type Labels = Record<string, string>;
 type CommonLabels = { empty: string; error: string; loading: string; records: string };
@@ -241,12 +246,12 @@ export function BattleConfigsClient({
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
   const [reason, setReason] = useState("");
   const [mutating, setMutating] = useState(false);
-  const [toast, setToast] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const toast = useAdminToast();
   const [confirm, setConfirm] = useState<
     | { kind: "publish" | "archive" | "duplicate" | "delete" }
     | null
   >(null);
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const fe = useFormErrors();
 
   useEffect(() => {
     const h = setTimeout(() => setDebouncedSearch(search.trim()), 300);
@@ -389,27 +394,20 @@ export function BattleConfigsClient({
     if (selectedId) void loadDetail(selectedId);
   };
 
-  const requireReason = (): string | null => {
-    const trimmed = reason.trim();
-    if (trimmed.length < 3) {
-      setToast({ kind: "err", text: t("reasonHint") });
-      return null;
-    }
-    return trimmed;
-  };
-
-  const validateForm = (state: FormState): Record<string, string> => {
+  const validateForm = (state: FormState, includeReason = true): Record<string, string> => {
     const errs: Record<string, string> = {};
-    if (state.name.trim().length < 2) errs.name = t("formErrName");
-    if (state.questionCount < 5 || state.questionCount > 30) errs.questionCount = t("formErrQuestionCount");
-    if (state.timePerQuestionSec < 10 || state.timePerQuestionSec > 120)
-      errs.timePerQuestionSec = t("formErrTime");
-    if (state.maxParticipants < 2 || state.maxParticipants > 8)
-      errs.maxParticipants = t("formErrParticipants");
-    if (state.botDifficulties.length === 0) errs.botDifficulties = t("formErrBotDifficulties");
-    if (state.scheduleStart && state.scheduleEnd && new Date(state.scheduleEnd) <= new Date(state.scheduleStart))
-      errs.scheduleEnd = t("formErrScheduleEnd");
-    return errs;
+    if (includeReason && reason.trim().length < 3) {
+      errs.reason = t("reasonHint");
+    }
+    const fieldErrs = validateFields([
+      { field: "name", value: state.name, message: t("formErrName"), validate: validators.minLength(2) },
+      { field: "questionCount", value: state.questionCount, message: t("formErrQuestionCount"), validate: (v) => { const n = Number(v); return n >= 5 && n <= 30; } },
+      { field: "timePerQuestionSec", value: state.timePerQuestionSec, message: t("formErrTime"), validate: (v) => { const n = Number(v); return n >= 10 && n <= 120; } },
+      { field: "maxParticipants", value: state.maxParticipants, message: t("formErrParticipants"), validate: (v) => { const n = Number(v); return n >= 2 && n <= 8; } },
+      { field: "botDifficulties", value: state.botDifficulties, message: t("formErrBotDifficulties"), validate: (v) => Array.isArray(v) && v.length > 0 },
+      { field: "scheduleEnd", value: state, message: t("formErrScheduleEnd"), validate: (v) => { const s = v as FormState; return !(s.scheduleStart && s.scheduleEnd && new Date(s.scheduleEnd) <= new Date(s.scheduleStart)); } },
+    ]);
+    return { ...errs, ...fieldErrs };
   };
 
   const buildBody = (state: FormState, withReason: string) => ({
@@ -429,35 +427,36 @@ export function BattleConfigsClient({
 
   const doCreate = async () => {
     if (!canManage) return;
-    const r = requireReason();
-    if (!r) return;
+    fe.clearAll();
     const errs = validateForm(form);
-    setFormErrors(errs);
     if (Object.keys(errs).length > 0) {
-      setToast({ kind: "err", text: t("errorValidation") });
+      fe.setFieldErrors(errs);
       return;
     }
     setMutating(true);
-    setToast(null);
     try {
       const res = await adminApiFetch(`/api/admin/battle/configs`, {
-        body: JSON.stringify(buildBody(form, r)),
+        body: JSON.stringify(buildBody(form, reason.trim())),
         headers: { "content-type": "application/json" },
         method: "POST"
       });
       if (!res.ok) {
-        setToast({ kind: "err", text: t("errorMutation") });
+        const parsed = await parseApiError(res, t("errorMutation"));
+        fe.setFieldErrors(parsed.fields);
+        if (parsed.form) fe.setFormError(parsed.form);
+        else toast.error(t("errorMutation"));
         return;
       }
       const created = (await res.json()) as BattleConfigDetail;
-      setToast({ kind: "ok", text: t("successCreate") });
+      toast.success(t("successCreate"));
       setReason("");
       setForm(DEFAULT_FORM);
       setCreating(false);
+      fe.clearAll();
       setSelectedId(created.id);
       await loadList();
     } catch {
-      setToast({ kind: "err", text: t("errorMutation") });
+      toast.error(t("errorMutation"));
     } finally {
       setMutating(false);
     }
@@ -465,33 +464,34 @@ export function BattleConfigsClient({
 
   const doPatch = async () => {
     if (!canManage || !detail) return;
-    const r = requireReason();
-    if (!r) return;
+    fe.clearAll();
     const errs = validateForm(form);
-    setFormErrors(errs);
     if (Object.keys(errs).length > 0) {
-      setToast({ kind: "err", text: t("errorValidation") });
+      fe.setFieldErrors(errs);
       return;
     }
     setMutating(true);
-    setToast(null);
     try {
       const res = await adminApiFetch(`/api/admin/battle/configs/${encodeURIComponent(detail.id)}`, {
-        body: JSON.stringify(buildBody(form, r)),
+        body: JSON.stringify(buildBody(form, reason.trim())),
         headers: { "content-type": "application/json" },
         method: "PATCH"
       });
       if (!res.ok) {
-        setToast({ kind: "err", text: t("errorMutation") });
+        const parsed = await parseApiError(res, t("errorMutation"));
+        fe.setFieldErrors(parsed.fields);
+        if (parsed.form) fe.setFormError(parsed.form);
+        else toast.error(t("errorMutation"));
         return;
       }
-      setToast({ kind: "ok", text: t("successUpdate") });
+      toast.success(t("successUpdate"));
       setReason("");
       setEditing(false);
+      fe.clearAll();
       await loadDetail(detail.id);
       await loadList();
     } catch {
-      setToast({ kind: "err", text: t("errorMutation") });
+      toast.error(t("errorMutation"));
     } finally {
       setMutating(false);
     }
@@ -499,40 +499,41 @@ export function BattleConfigsClient({
 
   const doLifecycle = async (kind: "publish" | "archive" | "duplicate" | "delete") => {
     if (!canManage || !detail) return;
-    const r = requireReason();
-    if (!r) return;
+    if (reason.trim().length < 3) {
+      fe.setFieldError("reason", t("reasonHint"));
+      return;
+    }
     setMutating(true);
-    setToast(null);
     try {
       const path =
         kind === "delete"
           ? `/api/admin/battle/configs/${encodeURIComponent(detail.id)}`
           : `/api/admin/battle/configs/${encodeURIComponent(detail.id)}/${kind}`;
       const res = await adminApiFetch(path, {
-        body: JSON.stringify({ reason: r }),
+        body: JSON.stringify({ reason: reason.trim() }),
         headers: { "content-type": "application/json" },
         method: kind === "delete" ? "DELETE" : "POST"
       });
       if (!res.ok) {
-        setToast({ kind: "err", text: t("errorMutation") });
+        toast.error(t("errorMutation"));
         return;
       }
       setReason("");
       setConfirm(null);
       if (kind === "delete") {
         setSelectedId(null);
-        setToast({ kind: "ok", text: t("successDelete") });
+        toast.success(t("successDelete"));
       } else if (kind === "duplicate") {
         const created = (await res.json()) as BattleConfigDetail;
         setSelectedId(created.id);
-        setToast({ kind: "ok", text: t("successDuplicate") });
+        toast.success(t("successDuplicate"));
       } else {
-        setToast({ kind: "ok", text: t(kind === "publish" ? "successPublish" : "successArchive") });
+        toast.success(t(kind === "publish" ? "successPublish" : "successArchive"));
         await loadDetail(detail.id);
       }
       await loadList();
     } catch {
-      setToast({ kind: "err", text: t("errorMutation") });
+      toast.error(t("errorMutation"));
     } finally {
       setMutating(false);
     }
@@ -544,25 +545,25 @@ export function BattleConfigsClient({
   const startEdit = () => {
     if (!detail) return;
     setForm(detailToForm(detail));
-    setFormErrors({});
+    fe.clearAll();
     setEditing(true);
   };
 
   const startCreate = () => {
     setForm(DEFAULT_FORM);
-    setFormErrors({});
+    fe.clearAll();
     setSelectedId(null);
     setCreating(true);
   };
 
   const cancelEdit = () => {
     setEditing(false);
-    setFormErrors({});
+    fe.clearAll();
   };
 
   const cancelCreate = () => {
     setCreating(false);
-    setFormErrors({});
+    fe.clearAll();
   };
 
   return (
@@ -575,19 +576,7 @@ export function BattleConfigsClient({
         </div>
       ) : null}
 
-      {toast ? (
-        <div
-          className={cn(
-            "rounded-lg border px-3 py-2 text-xs",
-            toast.kind === "ok"
-              ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-              : "border-rose-200 bg-rose-50 text-rose-900"
-          )}
-          role="status"
-        >
-          {toast.text}
-        </div>
-      ) : null}
+      <AdminToastContainer toasts={toast.toasts} onRemove={toast.removeToast} />
 
       <AdminSection
         description={`${t("countLabel")}: ${total} ${common.records.toLowerCase()}`}
@@ -771,13 +760,41 @@ export function BattleConfigsClient({
 
       {creating ? (
         <AdminSection title={t("createHeading")} description={t("createSubtitle")}>
+          <div className="mb-3 flex items-center justify-between">
+            <FormError message={fe.errors.form} className="flex-1" />
+            <AdminAutoFill
+              formType="battle-config"
+              onFill={(fields) => {
+                const f = fields as Partial<FormState>;
+                setForm((prev) => ({
+                  ...prev,
+                  ...(f.name !== undefined && { name: String(f.name) }),
+                  ...(f.description !== undefined && { description: String(f.description) }),
+                  ...(f.level !== undefined && { level: String(f.level) }),
+                  ...(f.gameType !== undefined && { gameType: String(f.gameType) }),
+                  ...(f.questionPoolKey !== undefined && { questionPoolKey: String(f.questionPoolKey) }),
+                  ...(f.questionCount !== undefined && { questionCount: Number(f.questionCount) }),
+                  ...(f.timePerQuestionSec !== undefined && { timePerQuestionSec: Number(f.timePerQuestionSec) }),
+                  ...(f.maxParticipants !== undefined && { maxParticipants: Number(f.maxParticipants) }),
+                  ...(f.botDifficulties !== undefined && Array.isArray(f.botDifficulties) && { botDifficulties: f.botDifficulties.map(String) }),
+                  ...(f.correctPoints !== undefined && { correctPoints: String(f.correctPoints) }),
+                  ...(f.wrongPenalty !== undefined && { wrongPenalty: String(f.wrongPenalty) }),
+                  ...(f.speedBonusPerSec !== undefined && { speedBonusPerSec: String(f.speedBonusPerSec) }),
+                  ...(f.streakMultiplier !== undefined && { streakMultiplier: String(f.streakMultiplier) }),
+                }));
+              }}
+              labels={{ button: t("autoFill") || "Auto Fill" }}
+              disabled={mutating}
+            />
+          </div>
           <ConfigForm
             form={form}
-            errors={formErrors}
+            errors={fe.errors.fields}
             onChange={setForm}
+            onClearFieldError={fe.clearFieldError}
             t={t}
           />
-          <ReasonInput reason={reason} setReason={setReason} t={t} />
+          <ReasonInput reason={reason} setReason={setReason} t={t} error={fe.fieldError("reason")} onClearError={() => fe.clearFieldError("reason")} />
           <div className="mt-3 flex justify-end gap-2">
             <button
               className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
@@ -845,7 +862,7 @@ export function BattleConfigsClient({
                       </button>
                       <button
                         className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                        onClick={() => setConfirm({ kind: "duplicate" })}
+                        onClick={() => { fe.clearAll(); setReason(""); setConfirm({ kind: "duplicate" }); }}
                         type="button"
                       >
                         {t("actionDuplicate")}
@@ -853,7 +870,7 @@ export function BattleConfigsClient({
                       {detail.status === "draft" ? (
                         <button
                           className="rounded-md border border-emerald-500 bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-500"
-                          onClick={() => setConfirm({ kind: "publish" })}
+                          onClick={() => { fe.clearAll(); setReason(""); setConfirm({ kind: "publish" }); }}
                           type="button"
                         >
                           {t("actionPublish")}
@@ -862,7 +879,7 @@ export function BattleConfigsClient({
                       {detail.status !== "archived" ? (
                         <button
                           className="rounded-md border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-800 hover:bg-amber-50"
-                          onClick={() => setConfirm({ kind: "archive" })}
+                          onClick={() => { fe.clearAll(); setReason(""); setConfirm({ kind: "archive" }); }}
                           type="button"
                         >
                           {t("actionArchive")}
@@ -871,7 +888,7 @@ export function BattleConfigsClient({
                       {detail.status === "draft" ? (
                         <button
                           className="rounded-md border border-rose-300 bg-white px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-50"
-                          onClick={() => setConfirm({ kind: "delete" })}
+                          onClick={() => { fe.clearAll(); setReason(""); setConfirm({ kind: "delete" }); }}
                           type="button"
                         >
                           {t("actionDelete")}
@@ -892,8 +909,9 @@ export function BattleConfigsClient({
               {editing ? (
                 <div className="rounded-lg border border-indigo-200 bg-indigo-50/40 p-4">
                   <h4 className="mb-3 text-sm font-semibold text-slate-800">{t("editHeading")}</h4>
-                  <ConfigForm form={form} errors={formErrors} onChange={setForm} t={t} />
-                  <ReasonInput reason={reason} setReason={setReason} t={t} />
+                  <FormError message={fe.errors.form} className="mb-3" />
+                  <ConfigForm form={form} errors={fe.errors.fields} onChange={setForm} onClearFieldError={fe.clearFieldError} t={t} />
+                  <ReasonInput reason={reason} setReason={setReason} t={t} error={fe.fieldError("reason")} onClearError={() => fe.clearFieldError("reason")} />
                   <div className="mt-3 flex justify-end gap-2">
                     <button
                       className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
@@ -961,29 +979,29 @@ export function BattleConfigsClient({
             </p>
             <div className="mt-2">
               <label className="block text-xs font-medium text-slate-700">
-                {t("reasonLabel")}
+                {t("reasonLabel")} <span className="text-red-500">*</span>
                 <textarea
-                  className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm shadow-sm"
+                  className={`mt-1 block w-full rounded-md border px-2 py-1.5 text-sm shadow-sm focus:outline-none focus:ring-2 ${fe.fieldError("reason") ? "border-red-400 bg-red-50/50 text-red-900 focus:border-red-400 focus:ring-red-100" : "border-slate-300 bg-white focus:border-indigo-400 focus:ring-indigo-100"}`}
                   maxLength={500}
-                  onChange={(e) => setReason(e.target.value)}
+                  onChange={(e) => { setReason(e.target.value); fe.clearFieldError("reason"); }}
                   placeholder={t("reasonPlaceholder")}
                   rows={2}
                   value={reason}
                 />
               </label>
-              <p className="mt-1 text-[11px] text-slate-500">{t("reasonHint")}</p>
+              {fe.fieldError("reason") ? <p className="mt-1 text-xs text-red-600">{fe.fieldError("reason")}</p> : <p className="mt-1 text-[11px] text-slate-500">{t("reasonHint")}</p>}
             </div>
             <div className="mt-4 flex justify-end gap-2">
               <button
                 className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                onClick={() => setConfirm(null)}
+                onClick={() => { fe.clearAll(); setConfirm(null); }}
                 type="button"
               >
                 {t("cancel")}
               </button>
               <button
                 className="rounded-md border border-indigo-500 bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500 disabled:opacity-50"
-                disabled={mutating || reason.trim().length < 3}
+                disabled={mutating}
                 onClick={() => void doLifecycle(confirm.kind)}
                 type="button"
               >
@@ -1000,26 +1018,30 @@ export function BattleConfigsClient({
 function ReasonInput({
   reason,
   setReason,
-  t
+  t,
+  error,
+  onClearError
 }: {
   reason: string;
   setReason: (v: string) => void;
   t: (k: string) => string;
+  error?: string;
+  onClearError?: () => void;
 }) {
   return (
     <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
       <label className="block text-xs font-medium text-slate-700">
-        {t("reasonLabel")}
+        {t("reasonLabel")} <span className="text-red-500">*</span>
         <textarea
-          className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+          className={`mt-1 block w-full rounded-md border px-2 py-1.5 text-sm shadow-sm focus:outline-none focus:ring-2 ${error ? "border-red-400 bg-red-50/50 text-red-900 focus:border-red-400 focus:ring-red-100" : "border-slate-300 bg-white focus:border-indigo-400 focus:ring-indigo-100"}`}
           maxLength={500}
-          onChange={(e) => setReason(e.target.value)}
+          onChange={(e) => { setReason(e.target.value); onClearError?.(); }}
           placeholder={t("reasonPlaceholder")}
           rows={2}
           value={reason}
         />
       </label>
-      <p className="mt-1 text-[11px] text-slate-500">{t("reasonHint")}</p>
+      {error ? <p className="mt-1 text-xs text-red-600">{error}</p> : <p className="mt-1 text-[11px] text-slate-500">{t("reasonHint")}</p>}
     </div>
   );
 }
@@ -1096,21 +1118,26 @@ function ConfigForm({
   form,
   errors,
   onChange,
+  onClearFieldError,
   t
 }: {
   form: FormState;
   errors: Record<string, string>;
   onChange: (next: FormState) => void;
+  onClearFieldError: (field: string) => void;
   t: (k: string) => string;
 }) {
-  const upd = (patch: Partial<FormState>) => onChange({ ...form, ...patch });
+  const upd = (patch: Partial<FormState>, field?: string) => {
+    if (field) onClearFieldError(field);
+    onChange({ ...form, ...patch });
+  };
   return (
     <div className="grid gap-3 md:grid-cols-2">
-      <Field label={t("formName")} error={errors.name}>
+      <Field label={t("formName")} error={errors.name} required>
         <input
-          className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+          className={cn("w-full rounded-md border px-2 py-1.5 text-sm", errors.name ? "border-red-400 bg-red-50/50" : "border-slate-300")}
           maxLength={120}
-          onChange={(e) => upd({ name: e.target.value })}
+          onChange={(e) => upd({ name: e.target.value }, "name")}
           value={form.name}
         />
       </Field>
@@ -1162,7 +1189,7 @@ function ConfigForm({
           ))}
         </select>
       </Field>
-      <Field label={t("formBotDifficulties")} error={errors.botDifficulties}>
+      <Field label={t("formBotDifficulties")} error={errors.botDifficulties} required>
         <div className="flex flex-wrap gap-2">
           {BATTLE_CONFIG_BOT_DIFFICULTIES.map((d) => {
             const checked = form.botDifficulties.includes(d);
@@ -1175,7 +1202,7 @@ function ConfigForm({
                       botDifficulties: e.target.checked
                         ? [...form.botDifficulties, d]
                         : form.botDifficulties.filter((x) => x !== d)
-                    })
+                    }, "botDifficulties")
                   }
                   type="checkbox"
                 />
@@ -1185,32 +1212,32 @@ function ConfigForm({
           })}
         </div>
       </Field>
-      <Field label={t("formQuestionCount")} error={errors.questionCount}>
+      <Field label={t("formQuestionCount")} error={errors.questionCount} required>
         <input
-          className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+          className={cn("w-full rounded-md border px-2 py-1.5 text-sm", errors.questionCount ? "border-red-400 bg-red-50/50" : "border-slate-300")}
           max={30}
           min={5}
-          onChange={(e) => upd({ questionCount: Number(e.target.value) })}
+          onChange={(e) => upd({ questionCount: Number(e.target.value) }, "questionCount")}
           type="number"
           value={form.questionCount}
         />
       </Field>
-      <Field label={t("formTimePerQuestion")} error={errors.timePerQuestionSec}>
+      <Field label={t("formTimePerQuestion")} error={errors.timePerQuestionSec} required>
         <input
-          className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+          className={cn("w-full rounded-md border px-2 py-1.5 text-sm", errors.timePerQuestionSec ? "border-red-400 bg-red-50/50" : "border-slate-300")}
           max={120}
           min={10}
-          onChange={(e) => upd({ timePerQuestionSec: Number(e.target.value) })}
+          onChange={(e) => upd({ timePerQuestionSec: Number(e.target.value) }, "timePerQuestionSec")}
           type="number"
           value={form.timePerQuestionSec}
         />
       </Field>
-      <Field label={t("formMaxParticipants")} error={errors.maxParticipants}>
+      <Field label={t("formMaxParticipants")} error={errors.maxParticipants} required>
         <input
-          className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+          className={cn("w-full rounded-md border px-2 py-1.5 text-sm", errors.maxParticipants ? "border-red-400 bg-red-50/50" : "border-slate-300")}
           max={8}
           min={2}
-          onChange={(e) => upd({ maxParticipants: Number(e.target.value) })}
+          onChange={(e) => upd({ maxParticipants: Number(e.target.value) }, "maxParticipants")}
           type="number"
           value={form.maxParticipants}
         />
@@ -1225,8 +1252,8 @@ function ConfigForm({
       </Field>
       <Field label={t("formScheduleEnd")} error={errors.scheduleEnd}>
         <input
-          className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
-          onChange={(e) => upd({ scheduleEnd: e.target.value })}
+          className={cn("w-full rounded-md border px-2 py-1.5 text-sm", errors.scheduleEnd ? "border-red-400 bg-red-50/50" : "border-slate-300")}
+          onChange={(e) => upd({ scheduleEnd: e.target.value }, "scheduleEnd")}
           type="datetime-local"
           value={form.scheduleEnd}
         />
@@ -1279,16 +1306,18 @@ function Field({
   children,
   className,
   error,
-  label
+  label,
+  required
 }: {
   children: React.ReactNode;
   className?: string;
   error?: string;
   label: string;
+  required?: boolean;
 }) {
   return (
     <label className={cn("block text-xs", className)}>
-      <span className="block text-xs font-medium text-slate-600">{label}</span>
+      <span className="block text-xs font-medium text-slate-600">{label}{required ? <span className="text-red-500"> *</span> : null}</span>
       <div className="mt-1">{children}</div>
       {error ? <span className="mt-1 block text-[11px] text-rose-700">{error}</span> : null}
     </label>

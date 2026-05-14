@@ -11,12 +11,15 @@ import {
   AdminPageHeader,
   AdminSection,
   AdminStatusBadge,
-  cn
+  AdminToastContainer,
+  cn,
+  useAdminToast
 } from "@nihongo-bjt/ui";
 import { ASSESSMENT_QUIZ_SESSION_STATUSES } from "@nihongo-bjt/shared";
 import { useCallback, useEffect, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
+import { parseApiError, useFormErrors } from "@/lib/form-errors";
 import { permsFromMe, type MePayload } from "@/app/_components/admin-client-utils";
 
 type CommonLabels = { empty: string; error: string; loading: string; records: string };
@@ -99,7 +102,8 @@ export function QuizSessionsAdminClient({ common, labels, locale }: { common: Co
   const [extendSeconds, setExtendSeconds] = useState(300);
   const [reason, setReason] = useState("");
   const [mutating, setMutating] = useState(false);
-  const [toast, setToast] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const toast = useAdminToast();
+  const fe = useFormErrors();
 
   useEffect(() => { const h = setTimeout(() => setDebounced(search.trim()), 300); return () => clearTimeout(h); }, [search]);
   useEffect(() => { setPage(1); }, [debounced, statusFilter, userFilter, testFilter, fromDate, toDate]);
@@ -149,25 +153,25 @@ export function QuizSessionsAdminClient({ common, labels, locale }: { common: Co
 
   async function submitAbort() {
     if (!canManage || !detail) return;
-    if (reason.trim().length < 3) { setToast({ kind: "err", text: t("reasonRequired") }); return; }
+    if (reason.trim().length < 3) { fe.setFieldError("reason", t("reasonRequired")); return; }
     setMutating(true);
     try {
       const r = await adminApiFetch(`/api/admin/assessment/quiz-sessions/${detail.id}/abort`, { method: "POST", body: JSON.stringify({ reason: reason.trim() }) });
-      if (!r.ok) { const err = await r.text(); setToast({ kind: "err", text: err || t("abortFailed") }); return; }
-      setToast({ kind: "ok", text: t("abortOk") }); setShowAbort(false); setReason("");
+      if (!r.ok) { const parsed = await parseApiError(r, t("abortFailed")); toast.error(parsed.form || t("abortFailed")); return; }
+      toast.success(t("abortOk")); setShowAbort(false); setReason("");
       void loadList(); void loadDetail(detail.id);
     } finally { setMutating(false); }
   }
 
   async function submitExtend() {
     if (!canManage || !detail) return;
-    if (reason.trim().length < 3) { setToast({ kind: "err", text: t("reasonRequired") }); return; }
-    if (extendSeconds < 30 || extendSeconds > 3600) { setToast({ kind: "err", text: t("extendOutOfRange") }); return; }
+    if (reason.trim().length < 3) { fe.setFieldError("reason", t("reasonRequired")); return; }
+    if (extendSeconds < 30 || extendSeconds > 3600) { toast.error(t("extendOutOfRange")); return; }
     setMutating(true);
     try {
       const r = await adminApiFetch(`/api/admin/assessment/quiz-sessions/${detail.id}/extend-time`, { method: "POST", body: JSON.stringify({ addSeconds: extendSeconds, reason: reason.trim() }) });
-      if (!r.ok) { const err = await r.text(); setToast({ kind: "err", text: err || t("extendFailed") }); return; }
-      setToast({ kind: "ok", text: t("extendOk") }); setShowExtend(false); setReason("");
+      if (!r.ok) { const parsed = await parseApiError(r, t("extendFailed")); toast.error(parsed.form || t("extendFailed")); return; }
+      toast.success(t("extendOk")); setShowExtend(false); setReason("");
       void loadList(); void loadDetail(detail.id);
     } finally { setMutating(false); }
   }
@@ -268,8 +272,8 @@ export function QuizSessionsAdminClient({ common, labels, locale }: { common: Co
               </div>
               {canManage && detail.status === "in_progress" ? (
                 <div className="flex flex-wrap gap-2">
-                  <button className="rounded bg-red-600 px-3 py-1 text-sm text-white" onClick={() => { setReason(""); setShowAbort(true); }} type="button">{t("abort")}</button>
-                  <button className="rounded bg-amber-600 px-3 py-1 text-sm text-white" onClick={() => { setReason(""); setExtendSeconds(300); setShowExtend(true); }} type="button">{t("extendTime")}</button>
+                  <button className="rounded bg-red-600 px-3 py-1 text-sm text-white" onClick={() => { setReason(""); fe.clearFieldError("reason"); setShowAbort(true); }} type="button">{t("abort")}</button>
+                  <button className="rounded bg-amber-600 px-3 py-1 text-sm text-white" onClick={() => { setReason(""); fe.clearFieldError("reason"); setExtendSeconds(300); setShowExtend(true); }} type="button">{t("extendTime")}</button>
                 </div>
               ) : null}
               <div>
@@ -315,8 +319,9 @@ export function QuizSessionsAdminClient({ common, labels, locale }: { common: Co
           <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-2xl">
             <h2 className="mb-2 text-lg font-semibold">{t("abortHeading")}</h2>
             <p className="mb-3 text-sm text-slate-600">{t("abortBody")}</p>
-            <label className="flex flex-col gap-1 text-xs"><span className="font-medium text-slate-600">{t("formReason")}</span><input className="rounded border border-slate-300 px-3 py-2 text-sm" value={reason} onChange={(e) => setReason(e.target.value)} /></label>
-            <div className="mt-4 flex justify-end gap-2"><button className="rounded border border-slate-300 px-3 py-2 text-sm" onClick={() => setShowAbort(false)} type="button">{t("cancel")}</button><button className="rounded bg-red-600 px-3 py-2 text-sm font-medium text-white disabled:opacity-50" disabled={mutating} onClick={submitAbort} type="button">{t("abortSubmit")}</button></div>
+            <label className="flex flex-col gap-1 text-xs"><span className="font-medium text-slate-600">{t("formReason")}</span><input className={cn("rounded border px-3 py-2 text-sm", fe.fieldError("reason") ? "border-red-400 bg-red-50/50 text-red-900" : "border-slate-300")} value={reason} onChange={(e) => { setReason(e.target.value); fe.clearFieldError("reason"); }} /></label>
+            {fe.fieldError("reason") && <p className="mt-1 text-xs text-red-600">{fe.fieldError("reason")}</p>}
+            <div className="mt-4 flex justify-end gap-2"><button className="rounded border border-slate-300 px-3 py-2 text-sm" onClick={() => { setShowAbort(false); fe.clearFieldError("reason"); }} type="button">{t("cancel")}</button><button className="rounded bg-red-600 px-3 py-2 text-sm font-medium text-white disabled:opacity-50" disabled={mutating} onClick={submitAbort} type="button">{t("abortSubmit")}</button></div>
           </div>
         </div>
       ) : null}
@@ -327,15 +332,14 @@ export function QuizSessionsAdminClient({ common, labels, locale }: { common: Co
             <h2 className="mb-2 text-lg font-semibold">{t("extendHeading")}</h2>
             <p className="mb-3 text-sm text-slate-600">{t("extendBody")}</p>
             <label className="mb-2 flex flex-col gap-1 text-xs"><span className="font-medium text-slate-600">{t("extendSeconds")}</span><input type="number" min={30} max={3600} className="rounded border border-slate-300 px-3 py-2 text-sm" value={extendSeconds} onChange={(e) => setExtendSeconds(Number(e.target.value))} /></label>
-            <label className="flex flex-col gap-1 text-xs"><span className="font-medium text-slate-600">{t("formReason")}</span><input className="rounded border border-slate-300 px-3 py-2 text-sm" value={reason} onChange={(e) => setReason(e.target.value)} /></label>
-            <div className="mt-4 flex justify-end gap-2"><button className="rounded border border-slate-300 px-3 py-2 text-sm" onClick={() => setShowExtend(false)} type="button">{t("cancel")}</button><button className="rounded bg-amber-600 px-3 py-2 text-sm font-medium text-white disabled:opacity-50" disabled={mutating} onClick={submitExtend} type="button">{t("extendSubmit")}</button></div>
+            <label className="flex flex-col gap-1 text-xs"><span className="font-medium text-slate-600">{t("formReason")}</span><input className={cn("rounded border px-3 py-2 text-sm", fe.fieldError("reason") ? "border-red-400 bg-red-50/50 text-red-900" : "border-slate-300")} value={reason} onChange={(e) => { setReason(e.target.value); fe.clearFieldError("reason"); }} /></label>
+            {fe.fieldError("reason") && <p className="mt-1 text-xs text-red-600">{fe.fieldError("reason")}</p>}
+            <div className="mt-4 flex justify-end gap-2"><button className="rounded border border-slate-300 px-3 py-2 text-sm" onClick={() => { setShowExtend(false); fe.clearFieldError("reason"); }} type="button">{t("cancel")}</button><button className="rounded bg-amber-600 px-3 py-2 text-sm font-medium text-white disabled:opacity-50" disabled={mutating} onClick={submitExtend} type="button">{t("extendSubmit")}</button></div>
           </div>
         </div>
       ) : null}
 
-      {toast ? (
-        <div className={cn("fixed bottom-6 right-6 rounded px-4 py-2 text-sm shadow-lg", toast.kind === "ok" ? "bg-emerald-600 text-white" : "bg-red-600 text-white")}>{toast.text}<button className="ml-3 underline" onClick={() => setToast(null)} type="button">×</button></div>
-      ) : null}
+      <AdminToastContainer toasts={toast.toasts} onRemove={toast.removeToast} />
     </div>
   );
 }

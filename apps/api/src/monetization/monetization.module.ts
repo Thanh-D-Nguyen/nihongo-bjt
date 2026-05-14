@@ -11,6 +11,8 @@ import { LocalAdProvider } from "./ads/local-ad.provider.js";
 import { BillingWebhookController } from "./billing/billing-webhook.controller.js";
 import { BillingWebhookService } from "./billing/billing-webhook.service.js";
 import { LocalBillingProvider } from "./billing/local-billing.provider.js";
+import { StripeBillingProvider } from "./billing/stripe-billing.provider.js";
+import { StripeWebhookController } from "./billing/stripe-webhook.controller.js";
 import { EntitlementGuard } from "./entitlement.guard.js";
 import { EntitlementService } from "./entitlement.service.js";
 import { LearnerMonetizationController } from "./learner-monetization.controller.js";
@@ -25,7 +27,8 @@ import { QuotaService } from "./quota.service.js";
     AdsRuntimeController,
     BillingWebhookController,
     LearnerMonetizationController,
-    MonetizationAdminController
+    MonetizationAdminController,
+    StripeWebhookController
   ],
   exports: [EntitlementGuard, EntitlementService, MonetizationRepository, QuotaService],
   imports: [AdminModule, LegalModule, OperationsModule],
@@ -37,6 +40,7 @@ import { QuotaService } from "./quota.service.js";
     EntitlementService,
     LocalAdProvider,
     LocalBillingProvider,
+    StripeBillingProvider,
     MonetizationAdminConsoleService,
     MonetizationRepository,
     QuotaService

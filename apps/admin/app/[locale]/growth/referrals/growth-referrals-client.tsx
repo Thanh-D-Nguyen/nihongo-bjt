@@ -11,11 +11,14 @@ import {
   AdminPageHeader,
   AdminSection,
   AdminStatusBadge,
-  cn
+  AdminToastContainer,
+  cn,
+  useAdminToast
 } from "@nihongo-bjt/ui";
 import { useCallback, useEffect, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
+import { parseApiError, useFormErrors } from "@/lib/form-errors";
 import { permsFromMe, type MePayload } from "@/app/_components/admin-client-utils";
 
 type CommonLabels = { empty: string; error: string; loading: string; records: string };
@@ -108,7 +111,8 @@ export function GrowthReferralsClient({
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [reason, setReason] = useState("");
   const [mutating, setMutating] = useState(false);
-  const [toast, setToast] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const toast = useAdminToast();
+  const fe = useFormErrors();
 
   useEffect(() => {
     const h = setTimeout(() => setDebounced(search.trim()), 300);
@@ -180,7 +184,7 @@ export function GrowthReferralsClient({
   async function submitRevoke() {
     if (!canManage || !confirmId) return;
     if (reason.trim().length < 3) {
-      setToast({ kind: "err", text: t("reasonRequired") });
+      fe.setFieldError("reason", t("reasonRequired"));
       return;
     }
     setMutating(true);
@@ -190,10 +194,11 @@ export function GrowthReferralsClient({
         method: "POST"
       });
       if (!r.ok) {
-        setToast({ kind: "err", text: t("revokeFailed") });
+        const parsed = await parseApiError(r, t("revokeFailed"));
+        toast.error(parsed.form || t("revokeFailed"));
         return;
       }
-      setToast({ kind: "ok", text: t("revokeOk") });
+      toast.success(t("revokeOk"));
       setConfirmId(null);
       setReason("");
       setSelectedId(null);
@@ -340,6 +345,7 @@ export function GrowthReferralsClient({
                               e.stopPropagation();
                               setConfirmId(it.id);
                               setReason("");
+                              fe.clearFieldError("reason");
                             }}
                             type="button"
                           >
@@ -451,17 +457,19 @@ export function GrowthReferralsClient({
                 <p className="mt-1 text-sm">{t("confirmBody_revoke")}</p>
                 <input
                   aria-label={t("formReason")}
-                  className="mt-3 w-full rounded border px-2 py-1 text-sm"
-                  onChange={(e) => setReason(e.target.value)}
+                  className={cn("mt-3 w-full rounded border px-2 py-1 text-sm", fe.fieldError("reason") ? "border-red-400 bg-red-50/50 text-red-900" : "border-slate-300")}
+                  onChange={(e) => { setReason(e.target.value); fe.clearFieldError("reason"); }}
                   placeholder={t("formReason")}
                   value={reason}
                 />
+                {fe.fieldError("reason") && <p className="mt-1 text-xs text-red-600">{fe.fieldError("reason")}</p>}
                 <div className="mt-3 flex justify-end gap-2">
                   <button
                     className="rounded border px-3 py-1 text-sm"
                     onClick={() => {
                       setConfirmId(null);
                       setReason("");
+                      fe.clearFieldError("reason");
                     }}
                     type="button"
                   >
@@ -482,21 +490,7 @@ export function GrowthReferralsClient({
         </>
       ) : null}
 
-      {toast ? (
-        <div
-          aria-live="polite"
-          className={cn(
-            "fixed bottom-4 right-4 rounded p-3 text-sm shadow",
-            toast.kind === "ok" ? "bg-emerald-100 text-emerald-900" : "bg-red-100 text-red-900"
-          )}
-          role="status"
-        >
-          {toast.text}
-          <button aria-label="dismiss" className="ml-2 underline" onClick={() => setToast(null)} type="button">
-            ×
-          </button>
-        </div>
-      ) : null}
+      <AdminToastContainer toasts={toast.toasts} onRemove={toast.removeToast} />
     </div>
   );
 }

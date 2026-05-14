@@ -15,6 +15,7 @@ import {
 import { useCallback, useEffect, useState } from "react";
 
 import { permsFromMe, type MePayload } from "@/app/_components/admin-client-utils";
+import { AdminAutoFill } from "@/app/_components/admin-auto-fill";
 import { adminApiFetch } from "@/lib/admin-api";
 
 type CommonLabels = { empty: string; error: string; loading: string; records: string };
@@ -315,6 +316,32 @@ export function DailyRadarAdminClient({ common, labels }: { common: CommonLabels
       {(moduleForm || cardForm) && canWrite ? (
         <AdminSection description={mode === "card" ? t("cardEditorHint") : t("moduleEditorHint")} title={mode === "card" ? t("cardEditor") : t("moduleEditor")}>
           {mode === "module" && moduleForm ? (
+            <div className="space-y-3">
+              <div className="flex justify-end">
+                <AdminAutoFill
+                  formType="daily-radar-module"
+                  onFill={(fields) => {
+                    const f = fields as Partial<ModuleRow>;
+                    setModuleForm((prev) => ({
+                      ...prev!,
+                      ...(f.moduleKey !== undefined && { moduleKey: String(f.moduleKey) }),
+                      ...(f.titleVi !== undefined && { titleVi: String(f.titleVi) }),
+                      ...(f.titleJa !== undefined && { titleJa: String(f.titleJa) }),
+                      ...(f.descriptionVi !== undefined && { descriptionVi: String(f.descriptionVi) }),
+                      ...(f.category !== undefined && { category: String(f.category) }),
+                      ...(f.moduleType !== undefined && { moduleType: String(f.moduleType) }),
+                      ...(f.visualTheme !== undefined && { visualTheme: String(f.visualTheme) }),
+                      ...(f.routePath !== undefined && { routePath: String(f.routePath) }),
+                      ...(f.defaultPriority !== undefined && { defaultPriority: Number(f.defaultPriority) }),
+                      ...(f.status !== undefined && { status: String(f.status) }),
+                      ...(f.isEnabled !== undefined && { isEnabled: Boolean(f.isEnabled) }),
+                      ...(f.isSpotlightEligible !== undefined && { isSpotlightEligible: Boolean(f.isSpotlightEligible) }),
+                    }));
+                  }}
+                  labels={{ button: t("autoFill") || "Auto Fill" }}
+                  disabled={saving}
+                />
+              </div>
             <div className="grid gap-3 lg:grid-cols-2">
               <Field label={t("moduleKey")} value={moduleForm.moduleKey ?? ""} onChange={(v) => setModuleForm({ ...moduleForm, moduleKey: v })} />
               <Field label={t("titleVi")} value={moduleForm.titleVi ?? ""} onChange={(v) => setModuleForm({ ...moduleForm, titleVi: v })} />
@@ -329,9 +356,40 @@ export function DailyRadarAdminClient({ common, labels }: { common: CommonLabels
               <Check label={t("enabled")} checked={Boolean(moduleForm.isEnabled)} onChange={(v) => setModuleForm({ ...moduleForm, isEnabled: v })} />
               <Check label={t("spotlightEligible")} checked={Boolean(moduleForm.isSpotlightEligible)} onChange={(v) => setModuleForm({ ...moduleForm, isSpotlightEligible: v })} />
             </div>
+            </div>
           ) : null}
 
           {mode === "card" && cardForm ? (
+            <div className="space-y-3">
+              <div className="flex justify-end">
+                <AdminAutoFill
+                  formType="daily-radar-card"
+                  onFill={(fields) => {
+                    const f = fields as Partial<CardRow>;
+                    setCardForm((prev) => ({
+                      ...prev!,
+                      ...(f.slug !== undefined && { slug: String(f.slug) }),
+                      ...(f.titleVi !== undefined && { titleVi: String(f.titleVi) }),
+                      ...(f.descriptionVi !== undefined && { descriptionVi: String(f.descriptionVi) }),
+                      ...(f.badgeTextVi !== undefined && { badgeTextVi: f.badgeTextVi == null ? null : String(f.badgeTextVi) }),
+                      ...(f.category !== undefined && { category: String(f.category) }),
+                      ...(f.moduleType !== undefined && { moduleType: String(f.moduleType) }),
+                      ...(f.ctaLabelVi !== undefined && { ctaLabelVi: String(f.ctaLabelVi) }),
+                      ...(f.targetRoute !== undefined && { targetRoute: String(f.targetRoute) }),
+                      ...(f.levelLabel !== undefined && { levelLabel: f.levelLabel == null ? null : String(f.levelLabel) }),
+                      ...(f.estimatedMinutes !== undefined && { estimatedMinutes: Number(f.estimatedMinutes) }),
+                      ...(f.priority !== undefined && { priority: Number(f.priority) }),
+                      ...(f.status !== undefined && { status: String(f.status) }),
+                      ...(f.visualTheme !== undefined && { visualTheme: String(f.visualTheme) }),
+                      ...(f.recommendationReasonVi !== undefined && { recommendationReasonVi: f.recommendationReasonVi == null ? null : String(f.recommendationReasonVi) }),
+                      ...(f.isSpotlight !== undefined && { isSpotlight: Boolean(f.isSpotlight) }),
+                      ...(f.isPinned !== undefined && { isPinned: Boolean(f.isPinned) }),
+                    }));
+                  }}
+                  labels={{ button: t("autoFill") || "Auto Fill" }}
+                  disabled={saving}
+                />
+              </div>
             <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_22rem]">
               <div className="grid gap-3 lg:grid-cols-2">
                 <Select label={t("module")} value={cardForm.moduleConfigId ?? ""} values={modules.map((item) => item.id)} labels={Object.fromEntries(modules.map((item) => [item.id, `${item.moduleKey} · ${item.titleVi}`]))} onChange={(v) => setCardForm({ ...cardForm, moduleConfigId: v })} />
@@ -358,6 +416,7 @@ export function DailyRadarAdminClient({ common, labels }: { common: CommonLabels
                 <Check label={t("pinned")} checked={Boolean(cardForm.isPinned)} onChange={(v) => setCardForm({ ...cardForm, isPinned: v })} />
               </div>
               <Preview card={cardForm} labels={labels} />
+            </div>
             </div>
           ) : null}
           <TextArea label="metadata JSON" value={metadataText} onChange={setMetadataText} />

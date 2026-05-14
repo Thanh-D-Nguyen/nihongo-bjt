@@ -1,5 +1,6 @@
-import { BadRequestException, Body, Controller, Delete, Get, Inject, Param, Patch, Query, Req, UseGuards } from "@nestjs/common";
-import { ApiBearerAuth, ApiBody, ApiOkResponse, ApiOperation, ApiParam, ApiQuery, ApiSecurity, ApiTags } from "@nestjs/swagger";
+import { BadRequestException, Body, Controller, Delete, Get, Inject, Param, Patch, Post, Query, Req, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOkResponse, ApiOperation, ApiParam, ApiQuery, ApiSecurity, ApiTags } from "@nestjs/swagger";
+import { FileInterceptor } from "@nestjs/platform-express";
 import { z } from "zod";
 import type { Request } from "express";
 
@@ -106,5 +107,33 @@ export class MediaAdminController {
       id,
       reason: parsed.data.reason
     });
+  }
+
+  @Post("upload")
+  @UseInterceptors(FileInterceptor("file", { limits: { fileSize: 5 * 1024 * 1024 } }))
+  @ApiOperation({ summary: "Direct file upload for admin content (announcements, etc.). Max 5 MB." })
+  @ApiConsumes("multipart/form-data")
+  @ApiBody({ schema: { type: "object", properties: { file: { type: "string", format: "binary" } } } })
+  @ApiOkResponse({ description: "Uploaded file URL and object key." })
+  async directUpload(
+    @Req() req: Request,
+    @UploadedFile() file: { buffer: Buffer; mimetype: string; originalname: string; size: number } | undefined
+  ) {
+    const principal = await this.adminAuth.requireOneOfPermissions(req, MEDIA_WRITE_PERMS);
+    if (!file) throw new BadRequestException("file is required");
+
+    const allowedMime = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!allowedMime.includes(file.mimetype)) {
+      throw new BadRequestException(`Unsupported file type: ${file.mimetype}. Allowed: ${allowedMime.join(", ")}`);
+    }
+
+    const result = await this.mediaService.adminDirectUpload({
+      buffer: file.buffer,
+      fileName: file.originalname,
+      mimeType: file.mimetype,
+      actorId: principal.actorId,
+    });
+
+    return result;
   }
 }

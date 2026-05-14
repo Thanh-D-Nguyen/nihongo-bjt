@@ -26,6 +26,7 @@ import {
   IconBattle,
   IconDocument,
   IconExercise,
+  IconExplore,
   IconHelp,
   IconDictionary,
   IconGrammar,
@@ -57,6 +58,7 @@ export type LearnerNavLabels = {
   dailyStandup: string;
   dictionary: string;
   exercises: string;
+  explore: string;
   footerCopyright: string;
   footerFeedback: string;
   footerLegal: string;
@@ -229,6 +231,7 @@ export function LearnerAppFrame({
   const mobileNavItems = [
     { href: base, icon: IconHome, label: nav.home },
     { href: `${base}/flashcards`, icon: IconReview, label: nav.review },
+    { href: `${base}/explore`, icon: IconExplore, label: nav.explore },
     { href: `${base}/quiz`, icon: IconQuiz, label: nav.quiz },
     { href: `${base}/battle`, icon: IconBattle, label: nav.battle },
   ];
@@ -298,7 +301,7 @@ export function LearnerAppFrame({
                 <svg aria-hidden className="size-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
                 </svg>
-                <span>Explore</span>
+                <span>{nav.explore}</span>
                 <svg aria-hidden className={cn("size-3 shrink-0 transition-transform duration-150", exploreMenuOpen && "rotate-180")} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                 </svg>
@@ -306,6 +309,20 @@ export function LearnerAppFrame({
               {exploreMenuOpen ? (
                 <div className="absolute left-0 top-12 z-50 w-56 overflow-hidden rounded-2xl border border-ink/10 bg-surface shadow-[0_18px_48px_rgba(23,33,31,0.12)]">
                   <div className="p-1.5">
+                    <Link
+                      className={cn(
+                        "flex min-h-10 items-center gap-2.5 rounded-xl px-3 text-sm font-bold transition-colors",
+                        linkActive(`${base}/explore`)
+                          ? "bg-accent/8 text-accent"
+                          : "text-ink hover:bg-paper"
+                      )}
+                      href={`${base}/explore`}
+                      onClick={() => setExploreMenuOpen(false)}
+                    >
+                      <IconExplore aria-hidden size={18} />
+                      <span>{nav.explore}</span>
+                    </Link>
+                    <div className="my-1 border-t border-ink/6" />
                     {exploreNavItems.map((item) => {
                       const active = linkActive(item.href);
                       return (
@@ -508,7 +525,7 @@ export function LearnerAppFrame({
         aria-label={nav.ariaMain}
         className="fixed inset-x-0 bottom-0 z-40 border-t border-ink/8 bg-paper/95 px-2 pb-[max(0.45rem,env(safe-area-inset-bottom))] pt-1.5 shadow-[0_-8px_28px_rgba(23,33,31,0.06)] backdrop-blur-2xl lg:hidden"
       >
-        <div className="mx-auto grid max-w-lg grid-cols-4 gap-1">
+        <div className="mx-auto grid max-w-lg grid-cols-5 gap-1">
           {mobileNavItems.map((item) => {
             const active = linkActive(item.href);
             return (

@@ -11,6 +11,9 @@ import {
   AdminPageHeader,
   AdminSection,
   AdminStatusBadge,
+  AdminToastContainer,
+  FormError,
+  useAdminToast,
   cn
 } from "@nihongo-bjt/ui";
 import {
@@ -22,6 +25,8 @@ import { useCallback, useEffect, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
 import { permsFromMe, type MePayload } from "@/app/_components/admin-client-utils";
+import { AdminAutoFill } from "@/app/_components/admin-auto-fill";
+import { useFormErrors, parseApiError, validateFields, validators } from "@/lib/form-errors";
 
 type CommonLabels = { empty: string; error: string; loading: string; records: string };
 type Labels = Record<string, string>;
@@ -168,7 +173,8 @@ export function MockExamsAdminClient({
   const [reason, setReason] = useState("");
   const [confirm, setConfirm] = useState<ConfirmAction>(null);
   const [mutating, setMutating] = useState(false);
-  const [toast, setToast] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const toast = useAdminToast();
+  const fe = useFormErrors();
 
   useEffect(() => {
     const h = setTimeout(() => setDebounced(search.trim()), 300);
@@ -240,10 +246,12 @@ export function MockExamsAdminClient({
   function openCreate() {
     setForm(DEFAULT_FORM);
     setReason("");
+    fe.clearAll();
     setShowForm("create");
   }
   function openEdit() {
     if (!detail) return;
+    fe.clearAll();
     setForm({
       slug: detail.slug,
       titleVi: detail.titleVi ?? "",
@@ -265,8 +273,16 @@ export function MockExamsAdminClient({
 
   async function submitForm() {
     if (!canManage) return;
-    if (reason.trim().length < 3) {
-      setToast({ kind: "err", text: t("reasonRequired") });
+    fe.clearAll();
+
+    const fieldErrors = validateFields([
+      { field: "slug", value: form.slug, message: "Slug không được để trống", validate: validators.required },
+      { field: "titleVi", value: form.titleVi, message: "Tiêu đề (Vi) không được để trống", validate: validators.required },
+      { field: "reason", value: reason, message: t("reasonRequired") || "Lý do phải có ít nhất 3 ký tự", validate: validators.minLength(3) },
+    ]);
+
+    if (Object.keys(fieldErrors).length > 0) {
+      fe.setFieldErrors(fieldErrors);
       return;
     }
     setMutating(true);
@@ -297,13 +313,15 @@ export function MockExamsAdminClient({
       const method = showForm === "create" ? "POST" : "PATCH";
       const r = await adminApiFetch(url, { method, body: JSON.stringify(body) });
       if (!r.ok) {
-        const err = await r.text();
-        setToast({ kind: "err", text: err || t("saveFailed") });
+        const apiErr = await parseApiError(r, t("saveFailed") || "Lưu thất bại");
+        if (apiErr.form) fe.setFormError(apiErr.form);
+        if (Object.keys(apiErr.fields).length > 0) fe.setFieldErrors(apiErr.fields);
+        if (!apiErr.form && Object.keys(apiErr.fields).length === 0) fe.setFormError(t("saveFailed"));
         return;
       }
       const next = (await r.json()) as Detail;
       setShowForm(null);
-      setToast({ kind: "ok", text: t("saveOk") });
+      toast.success(t("saveOk") || "Lưu thành công");
       void loadList();
       setSelectedId(next.id);
     } finally {
@@ -314,7 +332,7 @@ export function MockExamsAdminClient({
   async function submitConfirm() {
     if (!canManage || !detail || !confirm) return;
     if (reason.trim().length < 3) {
-      setToast({ kind: "err", text: t("reasonRequired") });
+      fe.setFieldError("reason", t("reasonRequired") || "Lý do phải có ít nhất 3 ký tự");
       return;
     }
     setMutating(true);
@@ -329,11 +347,11 @@ export function MockExamsAdminClient({
         body: JSON.stringify({ reason: reason.trim() })
       });
       if (!r.ok) {
-        const err = await r.text();
-        setToast({ kind: "err", text: err || t(`${confirm}Failed`) });
+        const apiErr = await parseApiError(r, t(`${confirm}Failed`) || "Thao tác thất bại");
+        toast.error("Thao tác thất bại", apiErr.form ?? undefined);
         return;
       }
-      setToast({ kind: "ok", text: t(`${confirm}Ok`) });
+      toast.success(t(`${confirm}Ok`) || "Thao tác thành công");
       setConfirm(null);
       setReason("");
       if (confirm === "delete") setSelectedId(null);
@@ -625,6 +643,7 @@ export function MockExamsAdminClient({
                       className="rounded bg-emerald-600 px-3 py-1 text-sm text-white"
                       onClick={() => {
                         setReason("");
+                        fe.clearFieldError("reason");
                         setConfirm("publish");
                       }}
                       type="button"
@@ -637,6 +656,7 @@ export function MockExamsAdminClient({
                       className="rounded border border-slate-300 px-3 py-1 text-sm"
                       onClick={() => {
                         setReason("");
+                        fe.clearFieldError("reason");
                         setConfirm("archive");
                       }}
                       type="button"
@@ -648,6 +668,7 @@ export function MockExamsAdminClient({
                     className="rounded border border-slate-300 px-3 py-1 text-sm"
                     onClick={() => {
                       setReason("");
+                      fe.clearFieldError("reason");
                       setConfirm("duplicate");
                     }}
                     type="button"
@@ -658,6 +679,7 @@ export function MockExamsAdminClient({
                     className="rounded border border-red-300 px-3 py-1 text-sm text-red-700"
                     onClick={() => {
                       setReason("");
+                      fe.clearFieldError("reason");
                       setConfirm("delete");
                     }}
                     type="button"
@@ -724,22 +746,45 @@ export function MockExamsAdminClient({
             <h2 className="mb-4 text-lg font-semibold">
               {showForm === "create" ? t("createHeading") : t("editHeading")}
             </h2>
+            <div className="mb-3 flex items-center justify-between">
+              <FormError message={fe.errors.form} className="flex-1" />
+              <AdminAutoFill
+                formType="mock-exam"
+                onFill={(fields) => {
+                  const f = fields as Partial<FormState>;
+                  setForm((prev) => ({
+                    ...prev,
+                    ...(f.slug !== undefined && { slug: String(f.slug) }),
+                    ...(f.titleVi !== undefined && { titleVi: String(f.titleVi) }),
+                    ...(f.titleJa !== undefined && { titleJa: String(f.titleJa) }),
+                    ...(f.descriptionVi !== undefined && { descriptionVi: String(f.descriptionVi) }),
+                    ...(f.type !== undefined && { type: String(f.type) }),
+                    ...(f.level !== undefined && { level: String(f.level) }),
+                    ...(f.timeLimitSeconds !== undefined && { timeLimitSeconds: Number(f.timeLimitSeconds) }),
+                  }));
+                }}
+                labels={{ button: t("autoFill") || "Auto Fill" }}
+                disabled={mutating}
+              />
+            </div>
             <div className="grid grid-cols-2 gap-3 text-sm">
               <label className="col-span-2 flex flex-col gap-1">
-                <span className="text-xs font-medium text-slate-600">{t("formSlug")}</span>
+                <span className="text-xs font-medium text-slate-600">{t("formSlug")} <span className="text-red-500">*</span></span>
                 <input
-                  className="rounded border border-slate-300 px-3 py-2"
-                  onChange={(e) => setForm({ ...form, slug: e.target.value })}
+                  className={cn("rounded border px-3 py-2", fe.fieldError("slug") ? "border-red-400 bg-red-50/50" : "border-slate-300")}
+                  onChange={(e) => { setForm({ ...form, slug: e.target.value }); fe.clearFieldError("slug"); }}
                   value={form.slug}
                 />
+                {fe.fieldError("slug") && <p className="text-xs text-red-600">{fe.fieldError("slug")}</p>}
               </label>
               <label className="flex flex-col gap-1">
-                <span className="text-xs font-medium text-slate-600">{t("formTitleVi")}</span>
+                <span className="text-xs font-medium text-slate-600">{t("formTitleVi")} <span className="text-red-500">*</span></span>
                 <input
-                  className="rounded border border-slate-300 px-3 py-2"
-                  onChange={(e) => setForm({ ...form, titleVi: e.target.value })}
+                  className={cn("rounded border px-3 py-2", fe.fieldError("titleVi") ? "border-red-400 bg-red-50/50" : "border-slate-300")}
+                  onChange={(e) => { setForm({ ...form, titleVi: e.target.value }); fe.clearFieldError("titleVi"); }}
                   value={form.titleVi}
                 />
+                {fe.fieldError("titleVi") && <p className="text-xs text-red-600">{fe.fieldError("titleVi")}</p>}
               </label>
               <label className="flex flex-col gap-1">
                 <span className="text-xs font-medium text-slate-600">{t("formTitleJa")}</span>
@@ -895,12 +940,13 @@ export function MockExamsAdminClient({
                 </button>
               </div>
               <label className="col-span-2 flex flex-col gap-1">
-                <span className="text-xs font-medium text-slate-600">{t("formReason")}</span>
+                <span className="text-xs font-medium text-slate-600">{t("formReason")} <span className="text-red-500">*</span></span>
                 <input
-                  className="rounded border border-slate-300 px-3 py-2"
-                  onChange={(e) => setReason(e.target.value)}
+                  className={cn("rounded border px-3 py-2", fe.fieldError("reason") ? "border-red-400 bg-red-50/50" : "border-slate-300")}
+                  onChange={(e) => { setReason(e.target.value); fe.clearFieldError("reason"); }}
                   value={reason}
                 />
+                {fe.fieldError("reason") && <p className="text-xs text-red-600">{fe.fieldError("reason")}</p>}
               </label>
             </div>
             <div className="mt-4 flex justify-end gap-2">
@@ -930,17 +976,18 @@ export function MockExamsAdminClient({
             <h2 className="mb-2 text-lg font-semibold">{t(`confirmHeading_${confirm}`)}</h2>
             <p className="mb-3 text-sm text-slate-600">{t(`confirmBody_${confirm}`)}</p>
             <label className="flex flex-col gap-1 text-xs">
-              <span className="font-medium text-slate-600">{t("formReason")}</span>
+              <span className="font-medium text-slate-600">{t("formReason")} <span className="text-red-500">*</span></span>
               <input
-                className="rounded border border-slate-300 px-3 py-2 text-sm"
-                onChange={(e) => setReason(e.target.value)}
+                className={cn("rounded border px-3 py-2 text-sm", fe.fieldError("reason") ? "border-red-400 bg-red-50/50 text-red-900" : "border-slate-300")}
+                onChange={(e) => { setReason(e.target.value); fe.clearFieldError("reason"); }}
                 value={reason}
               />
+              {fe.fieldError("reason") && <p className="text-xs text-red-600">{fe.fieldError("reason")}</p>}
             </label>
             <div className="mt-4 flex justify-end gap-2">
               <button
                 className="rounded border border-slate-300 px-3 py-2 text-sm"
-                onClick={() => setConfirm(null)}
+                onClick={() => { fe.clearFieldError("reason"); setConfirm(null); }}
                 type="button"
               >
                 {t("cancel")}
@@ -961,20 +1008,7 @@ export function MockExamsAdminClient({
         </div>
       ) : null}
 
-      {toast ? (
-        <div
-          className={cn(
-            "fixed bottom-6 right-6 rounded px-4 py-2 text-sm shadow-lg",
-            toast.kind === "ok" ? "bg-emerald-600 text-white" : "bg-red-600 text-white"
-          )}
-          onAnimationEnd={() => setToast(null)}
-        >
-          {toast.text}
-          <button className="ml-3 underline" onClick={() => setToast(null)} type="button">
-            ×
-          </button>
-        </div>
-      ) : null}
+      <AdminToastContainer onRemove={toast.removeToast} toasts={toast.toasts} />
     </div>
   );
 }

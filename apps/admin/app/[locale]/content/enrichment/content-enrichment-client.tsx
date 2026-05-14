@@ -11,7 +11,9 @@ import {
   AdminPageHeader,
   AdminSection,
   AdminStatusBadge,
-  cn
+  AdminToastContainer,
+  cn,
+  useAdminToast
 } from "@nihongo-bjt/ui";
 import {
   CONTENT_ENRICHMENT_STATUSES,
@@ -20,6 +22,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
+import { parseApiError, useFormErrors } from "@/lib/form-errors";
 import { permsFromMe, type MePayload } from "@/app/_components/admin-client-utils";
 
 type CommonLabels = { empty: string; error: string; loading: string; records: string };
@@ -151,7 +154,8 @@ export function ContentEnrichmentClient({
   const [bulkOpen, setBulkOpen] = useState(false);
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [mutating, setMutating] = useState(false);
-  const [toast, setToast] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const toast = useAdminToast();
+  const fe = useFormErrors();
 
   useEffect(() => {
     const h = setTimeout(() => setDebounced(search.trim()), 300);
@@ -236,7 +240,7 @@ export function ContentEnrichmentClient({
   async function submitConfirm() {
     if (!confirm || !canWrite || !detail) return;
     if (reason.trim().length < 3) {
-      setToast({ kind: "err", text: t("reasonRequired") });
+      fe.setFieldError("reason", t("reasonRequired"));
       return;
     }
     setMutating(true);
@@ -250,11 +254,11 @@ export function ContentEnrichmentClient({
         method: "POST"
       });
       if (!r.ok) {
-        const errText = await r.text();
-        setToast({ kind: "err", text: errText || t(`${confirm.kind}Failed`) });
+        const parsed = await parseApiError(r, t(`${confirm.kind}Failed`));
+        toast.error(parsed.form || t(`${confirm.kind}Failed`));
         return;
       }
-      setToast({ kind: "ok", text: t(`${confirm.kind}Ok`) });
+      toast.success(t(`${confirm.kind}Ok`));
       setConfirm(null);
       setReason("");
       void loadList();
@@ -267,11 +271,11 @@ export function ContentEnrichmentClient({
   async function submitBulkRetry() {
     if (!canWrite) return;
     if (selectedRows.size === 0) {
-      setToast({ kind: "err", text: t("selectAtLeastOne") });
+      toast.error(t("selectAtLeastOne"));
       return;
     }
     if (bulkReason.trim().length < 3) {
-      setToast({ kind: "err", text: t("reasonRequired") });
+      fe.setFieldError("bulkReason", t("reasonRequired"));
       return;
     }
     setMutating(true);
@@ -281,15 +285,14 @@ export function ContentEnrichmentClient({
         method: "POST"
       });
       if (!r.ok) {
-        const errText = await r.text();
-        setToast({ kind: "err", text: errText || t("bulkRetryFailed") });
+        const parsed = await parseApiError(r, t("bulkRetryFailed"));
+        toast.error(parsed.form || t("bulkRetryFailed"));
         return;
       }
       const body = (await r.json()) as { retried: number; total: number };
-      setToast({
-        kind: "ok",
-        text: `${t("bulkRetryOk")} (${body.retried}/${body.total})`
-      });
+      toast.success(
+        `${t("bulkRetryOk")} (${body.retried}/${body.total})`
+      );
       setBulkOpen(false);
       setBulkReason("");
       setSelectedRows(new Set());
@@ -687,7 +690,7 @@ export function ContentEnrichmentClient({
                   <button
                     className="rounded bg-slate-900 px-3 py-2 text-sm text-white hover:bg-slate-800 disabled:opacity-50"
                     disabled={!["failed", "cancelled"].includes(String(detail.status))}
-                    onClick={() => setConfirm({ kind: "retry" })}
+                    onClick={() => { setConfirm({ kind: "retry" }); fe.clearFieldError("reason"); }}
                     type="button"
                   >
                     {t("retry")}
@@ -695,7 +698,7 @@ export function ContentEnrichmentClient({
                   <button
                     className="rounded border border-red-300 px-3 py-2 text-sm text-red-700 hover:bg-red-50 disabled:opacity-50"
                     disabled={!["queued", "running"].includes(String(detail.status))}
-                    onClick={() => setConfirm({ kind: "cancel" })}
+                    onClick={() => { setConfirm({ kind: "cancel" }); fe.clearFieldError("reason"); }}
                     type="button"
                   >
                     {t("cancel")}
@@ -715,19 +718,21 @@ export function ContentEnrichmentClient({
           onCancel={() => {
             setConfirm(null);
             setReason("");
+            fe.clearFieldError("reason");
           }}
           onConfirm={() => void submitConfirm()}
           title={t(`${confirm.kind}Title`)}
           tone={confirm.kind === "cancel" ? "danger" : "default"}
         >
           <textarea
-            className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+            className={cn("w-full rounded border px-3 py-2 text-sm", fe.fieldError("reason") ? "border-red-400 bg-red-50/50 text-red-900" : "border-slate-300")}
             minLength={3}
-            onChange={(e) => setReason(e.target.value)}
+            onChange={(e) => { setReason(e.target.value); fe.clearFieldError("reason"); }}
             placeholder={t("reasonPlaceholder")}
             rows={3}
             value={reason}
           />
+          {fe.fieldError("reason") && <p className="mt-1 text-xs text-red-600">{fe.fieldError("reason")}</p>}
         </Modal>
       ) : null}
 
@@ -736,7 +741,7 @@ export function ContentEnrichmentClient({
         <Modal
           confirmLabel={t("bulkRetryConfirm")}
           confirming={mutating}
-          onCancel={() => setBulkOpen(false)}
+          onCancel={() => { setBulkOpen(false); fe.clearFieldError("bulkReason"); }}
           onConfirm={() => void submitBulkRetry()}
           title={t("bulkRetryTitle")}
         >
@@ -744,34 +749,18 @@ export function ContentEnrichmentClient({
             {t("bulkRetryDesc").replace("{count}", String(selectedRows.size))}
           </p>
           <textarea
-            className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+            className={cn("w-full rounded border px-3 py-2 text-sm", fe.fieldError("bulkReason") ? "border-red-400 bg-red-50/50 text-red-900" : "border-slate-300")}
             minLength={3}
-            onChange={(e) => setBulkReason(e.target.value)}
+            onChange={(e) => { setBulkReason(e.target.value); fe.clearFieldError("bulkReason"); }}
             placeholder={t("reasonPlaceholder")}
             rows={3}
             value={bulkReason}
           />
+          {fe.fieldError("bulkReason") && <p className="mt-1 text-xs text-red-600">{fe.fieldError("bulkReason")}</p>}
         </Modal>
       ) : null}
 
-      {toast ? (
-        <div
-          className={cn(
-            "fixed bottom-6 right-6 z-50 rounded px-4 py-2 text-sm shadow-lg",
-            toast.kind === "ok" ? "bg-emerald-600 text-white" : "bg-red-600 text-white"
-          )}
-          onAnimationEnd={() => setToast(null)}
-        >
-          {toast.text}
-          <button
-            className="ml-3 underline"
-            onClick={() => setToast(null)}
-            type="button"
-          >
-            ×
-          </button>
-        </div>
-      ) : null}
+      <AdminToastContainer toasts={toast.toasts} onRemove={toast.removeToast} />
     </div>
   );
 }

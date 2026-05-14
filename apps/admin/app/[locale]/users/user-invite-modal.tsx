@@ -1,9 +1,10 @@
 "use client";
 
-import { AdminSelect, cn } from "@nihongo-bjt/ui";
+import { AdminSelect, cn, FormError, FormSuccess } from "@nihongo-bjt/ui";
 import { useMemo, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
+import { useFormErrors, parseApiError, validateFields, validators } from "@/lib/form-errors";
 
 const fieldClass =
   "mt-1 w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-ink focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100";
@@ -26,7 +27,7 @@ export function UserInviteModal({
 }: Props) {
   const tLabel = (k: string) => (um as Record<string, string>)[k] ?? k;
   const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
+  const { errors, fieldError, setFieldError, setFieldErrors, setFormError, clearFieldError, clearAll } = useFormErrors();
   const [okHint, setOkHint] = useState<string | null>(null);
 
   const [email, setEmail] = useState("");
@@ -139,27 +140,51 @@ export function UserInviteModal({
   ]);
 
   const submit = async () => {
-    if (!body.email) {
-      setErr(tLabel("inviteErrorEmail"));
-      return;
-    }
-    if (body.displayName.length < 1) {
-      setErr(tLabel("inviteErrorName"));
-      return;
-    }
-    if (body.creationReason.trim().length < 3) {
-      setErr(tLabel("inviteErrorReason"));
-      return;
-    }
-    if (body.planReason.trim().length < 3) {
-      setErr(tLabel("inviteErrorPlanReason"));
-      return;
-    }
+    clearAll();
+
+    // Field-level validation
+    const fieldErrors = validateFields([
+      {
+        field: "email",
+        value: body.email,
+        message: tLabel("inviteErrorEmail") || "Email không được để trống",
+        validate: validators.required,
+      },
+      {
+        field: "email",
+        value: body.email,
+        message: "Email không hợp lệ",
+        validate: validators.isEmail,
+      },
+      {
+        field: "displayName",
+        value: body.displayName,
+        message: tLabel("inviteErrorName") || "Tên hiển thị không được để trống",
+        validate: validators.required,
+      },
+      {
+        field: "creationReason",
+        value: body.creationReason,
+        message: tLabel("inviteErrorReason") || "Lý do tạo phải có ít nhất 3 ký tự",
+        validate: validators.minLength(3),
+      },
+      {
+        field: "planReason",
+        value: body.planReason,
+        message: tLabel("inviteErrorPlanReason") || "Lý do plan phải có ít nhất 3 ký tự",
+        validate: validators.minLength(3),
+      },
+    ]);
+
     if (planLocked) {
-      setErr(tLabel("inviteErrorPlanPerm"));
+      fieldErrors.planSlug = tLabel("inviteErrorPlanPerm") || "Không có quyền chọn plan này";
+    }
+
+    if (Object.keys(fieldErrors).length > 0) {
+      setFieldErrors(fieldErrors);
       return;
     }
-    setErr(null);
+
     setOkHint(null);
     setBusy(true);
     try {
@@ -169,7 +194,7 @@ export function UserInviteModal({
         method: "POST"
       });
       if (res.status === 403) {
-        setErr(tLabel("forbidden"));
+        setFormError(tLabel("forbidden"));
         return;
       }
       if (res.status === 409) {
@@ -183,11 +208,16 @@ export function UserInviteModal({
             ? String((msg as { userId: string }).userId)
             : null;
         const id = (j.userId != null ? String(j.userId) : null) ?? userIdFromMessage;
-        setErr(tLabel("inviteDuplicate").replace("{{id}}", id ?? "—"));
+        setFieldError("email", tLabel("inviteDuplicate").replace("{{id}}", id ?? "—"));
         return;
       }
       if (!res.ok) {
-        setErr(tLabel("inviteErrorGeneric"));
+        const apiErr = await parseApiError(res, tLabel("inviteErrorGeneric") || "Tạo user thất bại");
+        if (apiErr.form) setFormError(apiErr.form);
+        if (Object.keys(apiErr.fields).length > 0) setFieldErrors(apiErr.fields);
+        if (!apiErr.form && Object.keys(apiErr.fields).length === 0) {
+          setFormError(tLabel("inviteErrorGeneric"));
+        }
         return;
       }
       const data = (await res.json()) as {
@@ -214,7 +244,7 @@ export function UserInviteModal({
         onClose();
       }, 2_200);
     } catch {
-      setErr(tLabel("inviteErrorGeneric"));
+      setFormError(tLabel("inviteErrorGeneric"));
     } finally {
       setBusy(false);
     }
@@ -231,42 +261,42 @@ export function UserInviteModal({
           {tLabel("inviteTitle")}
         </h3>
         <p className="mt-1 text-xs text-slate-600">{tLabel("inviteSubtitle")}</p>
-        {err ? (
-          <p className="mt-2 text-sm text-red-800" role="alert">
-            {err}
-          </p>
-        ) : null}
-        {okHint ? (
-          <p className="mt-2 text-sm text-emerald-900" role="status">
-            {okHint}
-          </p>
-        ) : null}
+        <FormError className="mt-2" message={errors.form} />
+        <FormSuccess className="mt-2" message={okHint} />
 
         <fieldset className={section}>
           <legend className={legend}>{tLabel("inviteSectionBasic")}</legend>
           <div className="mt-2 grid gap-3 sm:grid-cols-2">
-            <label className="text-xs text-slate-700">
-              {tLabel("inviteEmail")} *
+            <div className="text-xs text-slate-700">
+              <label>{tLabel("inviteEmail")} <span className="text-red-500">*</span></label>
               <input
-                className={fieldClass}
+                className={cn(fieldClass, fieldError("email") && "!border-red-400 !bg-red-50/50")}
                 onChange={(e) => {
                   setEmail(e.target.value);
+                  clearFieldError("email");
                 }}
                 required
                 type="email"
                 value={email}
               />
-            </label>
-            <label className="text-xs text-slate-700">
-              {tLabel("inviteDisplayName")} *
+              {fieldError("email") && (
+                <p className="mt-0.5 text-xs text-red-600" role="alert">{fieldError("email")}</p>
+              )}
+            </div>
+            <div className="text-xs text-slate-700">
+              <label>{tLabel("inviteDisplayName")} <span className="text-red-500">*</span></label>
               <input
-                className={fieldClass}
+                className={cn(fieldClass, fieldError("displayName") && "!border-red-400 !bg-red-50/50")}
                 onChange={(e) => {
                   setDisplayName(e.target.value);
+                  clearFieldError("displayName");
                 }}
                 value={displayName}
               />
-            </label>
+              {fieldError("displayName") && (
+                <p className="mt-0.5 text-xs text-red-600" role="alert">{fieldError("displayName")}</p>
+              )}
+            </div>
             <label className="text-xs text-slate-700">
               {tLabel("inviteAccountType")}
               <AdminSelect
@@ -525,16 +555,20 @@ export function UserInviteModal({
                 value={trialDays}
               />
             </label>
-            <label className="text-xs sm:col-span-2">
-              {tLabel("invitePlanReason")} * (audit)
+            <div className="text-xs sm:col-span-2">
+              <label>{tLabel("invitePlanReason")} <span className="text-red-500">*</span> (audit)</label>
               <textarea
-                className={cn(fieldClass, "min-h-[64px] font-mono text-[13px] leading-relaxed")}
+                className={cn(fieldClass, "min-h-[64px] font-mono text-[13px] leading-relaxed", fieldError("planReason") && "!border-red-400 !bg-red-50/50")}
                 onChange={(e) => {
                   setPlanReason(e.target.value);
+                  clearFieldError("planReason");
                 }}
                 value={planReason}
               />
-            </label>
+              {fieldError("planReason") && (
+                <p className="mt-0.5 text-xs text-red-600" role="alert">{fieldError("planReason")}</p>
+              )}
+            </div>
             {canMonetizationWrite ? (
               <label className="text-xs sm:col-span-2">
                 {tLabel("inviteQuotaOverride")}
@@ -584,16 +618,20 @@ export function UserInviteModal({
 
         <fieldset className={section}>
           <legend className={legend}>{tLabel("inviteSectionAudit")}</legend>
-          <label className="text-xs text-slate-700">
-            {tLabel("inviteCreationReason")} * (audit)
+          <div className="text-xs text-slate-700">
+            <label>{tLabel("inviteCreationReason")} <span className="text-red-500">*</span> (audit)</label>
             <textarea
-              className={cn(fieldClass, "min-h-[64px] font-mono text-[13px] leading-relaxed")}
+              className={cn(fieldClass, "min-h-[64px] font-mono text-[13px] leading-relaxed", fieldError("creationReason") && "!border-red-400 !bg-red-50/50")}
               onChange={(e) => {
                 setCreationReason(e.target.value);
+                clearFieldError("creationReason");
               }}
               value={creationReason}
             />
-          </label>
+            {fieldError("creationReason") && (
+              <p className="mt-0.5 text-xs text-red-600" role="alert">{fieldError("creationReason")}</p>
+            )}
+          </div>
           <label className="mt-2 text-xs text-slate-700">
             {tLabel("inviteSupportNote")}
             <textarea

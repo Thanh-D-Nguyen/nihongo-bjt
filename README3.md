@@ -477,3 +477,6 @@ pnpm dev
 Username	Password	Role
 testuser	123456	user (learner)
 localadmin	admin	admin
+
+
+docker start myredis nihongo-postgres nihongo-meili nihongo-minio

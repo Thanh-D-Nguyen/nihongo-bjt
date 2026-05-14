@@ -161,10 +161,11 @@ export function SearchDetailPanel({
     return (
       <div
         className={cn(
-          "flex flex-col items-center justify-center rounded-2xl border border-ink/10 bg-surface p-8 text-center",
+          "flex flex-col items-center justify-center gap-3 rounded-2xl border border-ink/8 bg-gradient-to-b from-paper to-surface p-10 text-center",
           variant === "sheet" && "min-h-[40vh]"
         )}
       >
+        <span aria-hidden className="jp-text text-4xl text-ink/10">辞</span>
         <p className="text-sm text-muted">{labels.detailEmpty}</p>
       </div>
     );
@@ -176,7 +177,7 @@ export function SearchDetailPanel({
   return (
     <div
       className={cn(
-        "flex flex-col overflow-hidden rounded-2xl border border-ink/10 bg-surface shadow-sm",
+        "search-detail-entrance flex flex-col overflow-hidden rounded-2xl border border-ink/10 bg-surface shadow-sm",
         variant === "desktop" && "sticky top-24 max-h-[calc(100vh-6rem)]",
         variant === "sheet" && "max-h-[85vh]"
       )}
@@ -240,14 +241,25 @@ export function SearchDetailPanel({
 
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4">
         {detailLoading ? (
-          <p className="text-sm text-muted" role="status">
-            {labels.detailLoading}
-          </p>
+          <div className="space-y-4" role="status" aria-label={labels.detailLoading}>
+            <div className="h-4 w-3/4 rounded search-skeleton-shimmer" />
+            <div className="space-y-2">
+              <div className="h-3 w-full rounded search-skeleton-shimmer" />
+              <div className="h-3 w-[90%] rounded search-skeleton-shimmer" />
+              <div className="h-3 w-[70%] rounded search-skeleton-shimmer" />
+            </div>
+            <div className="h-20 w-full rounded-xl search-skeleton-shimmer" />
+            <div className="space-y-2">
+              <div className="h-3 w-[60%] rounded search-skeleton-shimmer" />
+              <div className="h-3 w-full rounded search-skeleton-shimmer" />
+            </div>
+          </div>
         ) : null}
         {detailError ? (
-          <p className="text-sm text-sakura" role="alert">
-            {labels.detailError}
-          </p>
+          <div className="flex flex-col items-center gap-3 rounded-xl border border-sakura/20 bg-sakura/5 p-6 text-center" role="alert">
+            <span aria-hidden className="text-2xl">⚠</span>
+            <p className="text-sm font-medium text-ink">{labels.detailError}</p>
+          </div>
         ) : null}
 
         {!detailLoading && !detailError && result.kind === "example" ? (
@@ -430,7 +442,7 @@ function LexemeDetailBody({
             {kanjiChars.map((ch, i) => (
               <li key={`${i}-${ch}`}>
                 <Link
-                  className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-lg border border-ink/12 bg-paper px-2 text-lg font-bold text-ink hover:border-accent/30 hover:bg-accent-soft/30"
+                  className="search-kanji-chip inline-flex min-h-9 min-w-9 items-center justify-center rounded-lg border border-ink/12 bg-paper px-2 text-lg font-bold text-ink hover:border-accent/30 hover:bg-accent-soft/30"
                   href={`/${locale}/search?q=${encodeURIComponent(ch)}&scope=kanji`}
                 >
                   {ch}
@@ -516,7 +528,7 @@ function KanjiDetailBody({
               return (
                 <li key={`${ch}-${c.position ?? 0}`}>
                   <Link
-                    className="flex min-h-10 min-w-10 flex-col items-center justify-center rounded-lg border border-ink/12 bg-paper px-2 py-1 text-lg font-bold text-ink hover:border-accent/30"
+                    className="search-kanji-chip flex min-h-10 min-w-10 flex-col items-center justify-center rounded-lg border border-ink/12 bg-paper px-2 py-1 text-lg font-bold text-ink hover:border-accent/30"
                     href={`/${locale}/search?q=${encodeURIComponent(ch)}&scope=kanji`}
                     title={c.hanViet ?? undefined}
                   >
@@ -610,33 +622,33 @@ function DetailActions({
     <section className="mt-6 space-y-3 border-t border-ink/8 pt-4">
       <div className="flex flex-wrap gap-2">
         <Link
-          className="inline-flex min-h-10 flex-1 items-center justify-center rounded-xl bg-accent px-3 text-xs font-bold text-white hover:bg-accent-hover sm:flex-none sm:px-4"
+          className="search-detail-cta inline-flex min-h-10 flex-1 items-center justify-center rounded-xl bg-accent px-3 text-xs font-bold text-white hover:bg-accent-hover sm:flex-none sm:px-4"
           href={`/${locale}/quiz`}
         >
           {labels.bjtCtaQuiz}
         </Link>
         <Link
-          className="inline-flex min-h-10 flex-1 items-center justify-center rounded-xl border border-ink/12 bg-paper px-3 text-xs font-bold text-ink hover:bg-ink/5 sm:flex-none sm:px-4"
+          className="search-detail-cta inline-flex min-h-10 flex-1 items-center justify-center rounded-xl border border-ink/12 bg-paper px-3 text-xs font-bold text-ink hover:bg-ink/5 sm:flex-none sm:px-4"
           href={`/${locale}/flashcards`}
         >
           {labels.bjtCtaFlashcards}
         </Link>
         <Link
-          className="inline-flex min-h-10 flex-1 items-center justify-center rounded-xl border border-ink/12 bg-paper px-3 text-xs font-bold text-ink hover:bg-ink/5 sm:flex-none sm:px-4"
+          className="search-detail-cta inline-flex min-h-10 flex-1 items-center justify-center rounded-xl border border-ink/12 bg-paper px-3 text-xs font-bold text-ink hover:bg-ink/5 sm:flex-none sm:px-4"
           href={`/${locale}/battle`}
         >
           {labels.bjtCtaBattle}
         </Link>
       </div>
       <Link
-        className="inline-flex min-h-10 w-full items-center justify-center rounded-xl border border-dashed border-ink/15 px-3 text-xs font-semibold text-muted hover:text-ink"
+        className="search-detail-cta inline-flex min-h-10 w-full items-center justify-center rounded-xl border border-dashed border-ink/15 px-3 text-xs font-semibold text-muted hover:text-ink"
         href={`/${locale}/flashcards?source=search&q=${q}`}
       >
         {labels.addToFlashcard}
       </Link>
       <p className="text-[10px] leading-relaxed text-muted">{labels.detailActionsFootnote}</p>
       <Link
-        className="inline-flex min-h-10 w-full items-center justify-center rounded-xl border border-ink/10 bg-paper/80 px-3 text-xs font-semibold text-accent hover:bg-accent/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
+        className="search-detail-cta inline-flex min-h-10 w-full items-center justify-center rounded-xl border border-ink/10 bg-paper/80 px-3 text-xs font-semibold text-accent hover:bg-accent/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
         href={`/${locale}/saved`}
       >
         {labels.detailSavedListLink}

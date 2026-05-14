@@ -1,9 +1,9 @@
 "use client";
 
-import { Badge, Button, Card, CardContent, EmptyState, ErrorState, LoadingSkeleton } from "@nihongo-bjt/ui";
+import { Badge, Button, Card, CardContent, cn, EmptyState, ErrorState, LoadingSkeleton } from "@nihongo-bjt/ui";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useId, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
 import { learnerApiFetch } from "../../../../lib/learner-api";
@@ -62,6 +62,8 @@ export function DeckDetailClient({
   const [loading, setLoading] = useState(true);
   const [pendingDelete, setPendingDelete] = useState(false);
   const [deleteSubmitting, setDeleteSubmitting] = useState(false);
+  const [focusIndex, setFocusIndex] = useState<number | null>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
   const deleteTitleId = useId();
   const deleteBodyId = useId();
 
@@ -218,6 +220,8 @@ export function DeckDetailClient({
                 id: row.id,
                 reading: row.card.reading
               }))}
+              focusIndex={focusIndex}
+              onIndexChange={setActiveIndex}
               labels={{
                 deckStudyEyebrow: labels.deckStudyEyebrow,
                 deckStudyFaceBack: labels.deckStudyFaceBack,
@@ -251,7 +255,22 @@ export function DeckDetailClient({
                 exampleSourceKanji: labels.deckStudyExampleSourceKanji,
                 exampleSourceLexeme: labels.deckStudyExampleSourceLexeme,
                 exampleToggleHide: labels.deckStudyExampleToggleHide,
-                exampleToggleShow: labels.deckStudyExampleToggleShow
+                exampleToggleShow: labels.deckStudyExampleToggleShow,
+                deckStudyRateAgain: labels.deckStudyRateAgain,
+                deckStudyRateHard: labels.deckStudyRateHard,
+                deckStudyRateGood: labels.deckStudyRateGood,
+                deckStudyRateHint: labels.deckStudyRateHint,
+                mentorName: labels.mentorName,
+                mentorGoodEmoji: labels.mentorGoodEmoji,
+                mentorGoodText: labels.mentorGoodText,
+                mentorHardEmoji: labels.mentorHardEmoji,
+                mentorHardText: labels.mentorHardText,
+                mentorAgainEmoji: labels.mentorAgainEmoji,
+                mentorAgainText: labels.mentorAgainText,
+                mentorMilestone5: labels.mentorMilestone5,
+                mentorMilestone10: labels.mentorMilestone10,
+                mentorMilestone25: labels.mentorMilestone25,
+                streakLabel: labels.streakLabel
               }}
             />
           ) : (
@@ -276,8 +295,10 @@ export function DeckDetailClient({
           </Card>
 
           <CardListCollapsible
+            activeIndex={activeIndex}
             cards={sortedCards}
             labels={labels}
+            onGoToCard={(i) => setFocusIndex(i)}
           />
         </aside>
       </div>
@@ -334,13 +355,25 @@ export function DeckDetailClient({
 
 /* ── Collapsible card list sidebar ── */
 function CardListCollapsible({
+  activeIndex,
   cards,
-  labels
+  labels,
+  onGoToCard,
 }: {
+  activeIndex: number;
   cards: DeckDetailCardRow[];
   labels: DeckLabels;
+  onGoToCard: (index: number) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const listRef = useRef<HTMLUListElement>(null);
+
+  // Auto-scroll to active card in the list
+  useEffect(() => {
+    if (!open || !listRef.current) return;
+    const el = listRef.current.children[activeIndex] as HTMLElement | undefined;
+    el?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [activeIndex, open]);
 
   return (
     <section aria-labelledby="deck-cards-heading">
@@ -360,11 +393,33 @@ function CardListCollapsible({
             cards.length === 0 ? (
               <p className="px-4 py-8 text-center text-sm text-muted">{labels.empty}</p>
             ) : (
-              <ul className="max-h-[32rem] divide-y divide-ink/6 overflow-y-auto overscroll-contain">
+              <ul ref={listRef} className="max-h-[32rem] divide-y divide-ink/6 overflow-y-auto overscroll-contain">
                 {cards.map((row, i) => (
-                  <li className="px-4 py-3 transition hover:bg-paper/60" key={row.id}>
+                  <li
+                    className={cn(
+                      "cursor-pointer px-4 py-3 transition hover:bg-paper/60",
+                      i === activeIndex && "bg-accent-soft/30 ring-1 ring-inset ring-accent/20"
+                    )}
+                    key={row.id}
+                    onClick={() => onGoToCard(i)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        onGoToCard(i);
+                      }
+                    }}
+                  >
                     <div className="flex items-start gap-3">
-                      <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-paper text-xs font-semibold tabular-nums text-muted">
+                      <span
+                        className={cn(
+                          "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-xs font-semibold tabular-nums",
+                          i === activeIndex
+                            ? "bg-accent text-white shadow-sm"
+                            : "bg-paper text-muted"
+                        )}
+                      >
                         {i + 1}
                       </span>
                       <div className="min-w-0">

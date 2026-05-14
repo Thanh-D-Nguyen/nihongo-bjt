@@ -197,6 +197,34 @@ export class MediaService {
 
   /* ── Admin listing ── */
 
+  /**
+   * Direct upload from admin: receives a Buffer, puts it in MinIO, returns a public URL.
+   * Used for announcement hero images and other admin content where presigned flow is overkill.
+   */
+  async adminDirectUpload(input: {
+    buffer: Buffer;
+    fileName: string;
+    mimeType: string;
+    actorId: string;
+  }): Promise<{ url: string; objectKey: string }> {
+    await this.ensureBucket();
+    const safe = input.fileName.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 80);
+    const objectKey = `admin/${input.actorId}/${randomUUID()}-${safe}`;
+    const bucket = this.env.MINIO_BUCKET;
+
+    await this.minio.putObject(bucket, objectKey, input.buffer, input.buffer.length, {
+      "Content-Type": input.mimeType,
+    });
+
+    // Build a public-accessible URL. In dev, MinIO is at localhost:19000.
+    const proto = this.env.MINIO_USE_SSL ? "https" : "http";
+    const host = this.env.MINIO_ENDPOINT;
+    const port = this.env.MINIO_PORT;
+    const url = `${proto}://${host}:${port}/${bucket}/${objectKey}`;
+
+    return { url, objectKey };
+  }
+
   async adminListAssets(params: {
     limit: number;
     mimeType?: string;

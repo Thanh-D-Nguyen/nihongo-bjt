@@ -13,11 +13,16 @@ import {
   AdminPageHeader,
   AdminSection,
   AdminSelect,
-  AdminStatusBadge
+  AdminStatusBadge,
+  AdminToastContainer,
+  FormError,
+  cn,
+  useAdminToast
 } from "@nihongo-bjt/ui";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
+import { useFormErrors, parseApiError } from "@/lib/form-errors";
 import { permsFromMe, type MePayload } from "@/app/_components/admin-client-utils";
 
 type CommonLabels = { empty: string; error: string; loading: string; records: string };
@@ -153,7 +158,8 @@ export function MediaAdminClient({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteReason, setDeleteReason] = useState("");
 
-  const [toast, setToast] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const toast = useAdminToast();
+  const fe = useFormErrors();
 
   useEffect(() => {
     const h = setTimeout(() => setDebouncedSearch(search.trim()), 300);
@@ -281,7 +287,7 @@ export function MediaAdminClient({
   async function submitMetadata() {
     if (!detail || !canWrite) return;
     if (editReason.trim().length < 3) {
-      setToast({ kind: "err", text: t("metadataReason") });
+      toast.error(t("metadataReason"));
       return;
     }
     let provenance: Record<string, unknown> | null | undefined;
@@ -289,14 +295,14 @@ export function MediaAdminClient({
     try {
       provenance = editProvenance.trim() === "" ? null : (JSON.parse(editProvenance) as Record<string, unknown>);
     } catch {
-      setToast({ kind: "err", text: `${t("drawerProvenance")}: ${t("metadataInvalidJson")}` });
+      toast.error(`${t("drawerProvenance")}: ${t("metadataInvalidJson")}`);
       return;
     }
     try {
       accessibility =
         editAccessibility.trim() === "" ? null : (JSON.parse(editAccessibility) as Record<string, unknown>);
     } catch {
-      setToast({ kind: "err", text: `${t("drawerAccessibility")}: ${t("metadataInvalidJson")}` });
+      toast.error(`${t("drawerAccessibility")}: ${t("metadataInvalidJson")}`);
       return;
     }
     const body: Record<string, unknown> = { reason: editReason.trim() };
@@ -313,16 +319,16 @@ export function MediaAdminClient({
         method: "PATCH"
       });
       if (!r.ok) {
-        const txt = await r.text();
-        setToast({ kind: "err", text: txt || t("errorSave") });
+        const parsed = await parseApiError(r, t("errorSave"));
+        toast.error(parsed.form || t("errorSave"));
         return;
       }
-      setToast({ kind: "ok", text: t("successSave") });
+      toast.success(t("successSave"));
       setEditOpen(false);
       await loadDetail(detail.id);
       void loadList();
     } catch {
-      setToast({ kind: "err", text: t("errorSave") });
+      toast.error(t("errorSave"));
     } finally {
       setMutating(false);
     }
@@ -331,7 +337,7 @@ export function MediaAdminClient({
   async function submitDelete() {
     if (!detail || !canWrite) return;
     if (deleteReason.trim().length < 3) {
-      setToast({ kind: "err", text: t("deleteReason") });
+      toast.error(t("deleteReason"));
       return;
     }
     setMutating(true);
@@ -342,16 +348,16 @@ export function MediaAdminClient({
         method: "DELETE"
       });
       if (!r.ok) {
-        const txt = await r.text();
-        setToast({ kind: "err", text: txt || t("errorDelete") });
+        const parsed = await parseApiError(r, t("errorDelete"));
+        toast.error(parsed.form || t("errorDelete"));
         return;
       }
-      setToast({ kind: "ok", text: t("successDelete") });
+      toast.success(t("successDelete"));
       setDeleteOpen(false);
       await loadDetail(detail.id);
       void loadList();
     } catch {
-      setToast({ kind: "err", text: t("errorDelete") });
+      toast.error(t("errorDelete"));
     } finally {
       setMutating(false);
     }
@@ -700,6 +706,7 @@ export function MediaAdminClient({
               <h3 className="text-base font-semibold text-slate-950">{t("metadataModalTitle")}</h3>
             </div>
             <div className="space-y-3 p-4 text-sm">
+              <FormError message={fe.errors.form} className="mb-3" />
               <label className="block">
                 <span className="text-xs font-medium text-slate-700">{t("metadataLicense")}</span>
                 <input
@@ -753,7 +760,7 @@ export function MediaAdminClient({
               <label className="block">
                 <span className="text-xs font-medium text-slate-700">{t("metadataReason")}</span>
                 <input
-                  className="mt-1 w-full rounded-md border border-slate-200 px-3 py-1.5"
+                  className={cn("mt-1 w-full rounded border px-3 py-2", fe.fieldError("reason") ? "border-red-400 bg-red-50/50" : "border-slate-300")}
                   minLength={3}
                   onChange={(e) => setEditReason(e.target.value)}
                   type="text"
@@ -823,20 +830,7 @@ export function MediaAdminClient({
         </div>
       ) : null}
 
-      {toast ? (
-        <div
-          className={`fixed bottom-4 right-4 z-50 rounded-md px-4 py-2 text-sm shadow-lg ${
-            toast.kind === "ok" ? "bg-emerald-600 text-white" : "bg-red-600 text-white"
-          }`}
-          onAnimationEnd={() => setToast(null)}
-          role="status"
-        >
-          {toast.text}
-          <button className="ml-3 underline" onClick={() => setToast(null)} type="button">
-            ✕
-          </button>
-        </div>
-      ) : null}
+      <AdminToastContainer toasts={toast.toasts} onRemove={toast.removeToast} />
     </div>
   );
 }

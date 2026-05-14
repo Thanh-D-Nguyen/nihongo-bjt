@@ -170,6 +170,88 @@ input.learner-topbar-search[type="search"] {
   padding: clamp(16px, 4vw, 32px);
 }
 
+/* ── Announcement modal sparkle animation ── */
+@keyframes ann-sparkle-float {
+  0%, 100% { opacity: 0; transform: translateY(0) scale(0.6) rotate(0deg); }
+  20% { opacity: 1; transform: translateY(-8px) scale(1) rotate(45deg); }
+  50% { opacity: 0.7; transform: translateY(-16px) scale(0.9) rotate(90deg); }
+  80% { opacity: 0.3; transform: translateY(-24px) scale(0.7) rotate(135deg); }
+}
+
+.ann-sparkle {
+  animation: ann-sparkle-float 3s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+/* ── Announcement effect: Confetti ── */
+@keyframes ann-confetti-fall {
+  0% { opacity: 0; transform: translateY(-20px) rotate(0deg); }
+  10% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(100vh) rotate(720deg); }
+}
+.ann-confetti-piece {
+  animation: ann-confetti-fall 4s ease-in infinite;
+  will-change: transform, opacity;
+}
+
+/* ── Announcement effect: Particles ── */
+@keyframes ann-particle-float {
+  0%, 100% { opacity: 0; transform: translateY(0) scale(0.5); }
+  30% { opacity: 0.8; transform: translateY(-30px) scale(1); }
+  70% { opacity: 0.4; transform: translateY(-60px) scale(0.8); }
+}
+.ann-particle {
+  animation: ann-particle-float 6s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+/* ── Announcement effect: Shimmer sweep ── */
+@keyframes ann-shimmer-sweep {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.ann-shimmer-sweep {
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 50%, transparent 100%);
+  background-size: 50% 100%;
+  animation: ann-shimmer-sweep 3s ease-in-out infinite;
+}
+
+/* ── Announcement effect: Aurora ── */
+@keyframes ann-aurora-shift {
+  0% { transform: rotate(0deg) scale(1.5); }
+  50% { transform: rotate(180deg) scale(1.8); }
+  100% { transform: rotate(360deg) scale(1.5); }
+}
+.ann-aurora {
+  background: conic-gradient(from 0deg, #60a5fa, #a78bfa, #f472b6, #34d399, #60a5fa);
+  filter: blur(60px);
+  animation: ann-aurora-shift 12s linear infinite;
+  will-change: transform;
+}
+
+/* ── Announcement effect: Sakura petals ── */
+@keyframes ann-sakura-fall {
+  0% { opacity: 0; transform: translateY(-20px) translateX(0) rotate(0deg); }
+  10% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(100vh) translateX(40px) rotate(360deg); }
+}
+.ann-sakura-petal {
+  animation: ann-sakura-fall 6s ease-in infinite;
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ann-sparkle,
+  .ann-confetti-piece,
+  .ann-particle,
+  .ann-shimmer-sweep,
+  .ann-aurora,
+  .ann-sakura-petal {
+    animation: none;
+    opacity: 0.3;
+  }
+}
+
 /* ── Homepage visual keyframes ── */
 @keyframes fadeSlideUp {
   from {
@@ -780,4 +862,566 @@ button.primary:disabled {
 
 .battle-firework-particle {
   animation: battle-firework-particle 1.15s ease-out forwards;
+}
+
+/* ─── Battle: Shimmer skeleton ─── */
+@keyframes battle-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.battle-skeleton {
+  background: linear-gradient(90deg, rgba(0,0,0,0.04) 25%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0.04) 75%);
+  background-size: 200% 100%;
+  animation: battle-shimmer 1.5s ease-in-out infinite;
+  border-radius: 12px;
+}
+
+/* ─── Battle: Bot card hover/select ─── */
+@keyframes battle-card-select {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+.battle-bot-card {
+  transition: transform 150ms ease-out, box-shadow 150ms ease-out, border-color 150ms ease-out;
+}
+.battle-bot-card:active {
+  transform: scale(0.97);
+}
+.battle-bot-card-selected {
+  animation: battle-card-select 300ms ease-out;
+  box-shadow: 0 4px 16px -2px rgba(59,130,246,0.15), 0 0 0 1px rgba(59,130,246,0.12);
+}
+
+/* ─── Battle: Answer option press ─── */
+.battle-answer-btn {
+  transition: transform 120ms ease-out, box-shadow 120ms ease-out, border-color 120ms ease-out, background-color 120ms ease-out;
+}
+.battle-answer-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px -3px rgba(0,0,0,0.08);
+}
+.battle-answer-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* ─── Battle: Correct/wrong answer flash ─── */
+@keyframes battle-correct-flash {
+  0% { background-color: rgba(5,150,105,0.15); }
+  100% { background-color: rgba(5,150,105,0.06); }
+}
+@keyframes battle-wrong-flash {
+  0% { background-color: rgba(220,38,38,0.15); }
+  100% { background-color: rgba(220,38,38,0.06); }
+}
+.battle-answer-correct {
+  animation: battle-correct-flash 600ms ease-out;
+}
+.battle-answer-wrong {
+  animation: battle-wrong-flash 600ms ease-out;
+}
+
+/* ─── Battle: Score pulse on change ─── */
+@keyframes battle-score-bump {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+.battle-score-bump {
+  animation: battle-score-bump 350ms ease-out;
+}
+
+/* ─── Battle: Progress bar animated fill ─── */
+.battle-progress-fill {
+  transition: width 350ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ─── Battle: Timer urgency pulse ─── */
+@keyframes battle-timer-urgent {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+.battle-timer-urgent {
+  animation: battle-timer-urgent 0.8s ease-in-out infinite;
+}
+
+/* ─── Battle: Active question glow ring ─── */
+@keyframes battle-question-glow {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(59,130,246,0.15); }
+  50% { box-shadow: 0 0 0 4px rgba(59,130,246,0.1); }
+}
+.battle-question-active {
+  animation: battle-question-glow 2s ease-in-out infinite;
+}
+
+/* ─── Battle: reduce motion ─── */
+@media (prefers-reduced-motion: reduce) {
+  .battle-skeleton { animation: none; }
+  .battle-bot-card, .battle-bot-card:active,
+  .battle-answer-btn, .battle-answer-btn:hover, .battle-answer-btn:active { transform: none; animation: none; }
+  .battle-answer-correct, .battle-answer-wrong { animation: none; }
+  .battle-score-bump { animation: none; }
+  .battle-timer-urgent { animation: none; }
+  .battle-question-active { animation: none; }
+  .battle-progress-fill { transition: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════ */
+/* Exercises page                                                        */
+/* ═══════════════════════════════════════════════════════════════════════ */
+
+/* ─── Exercise: Shimmer skeleton ─── */
+.exercise-skeleton {
+  background: rgba(0,0,0,0.02);
+}
+.exercise-skeleton-shimmer {
+  background: linear-gradient(90deg, rgba(0,0,0,0.04) 25%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0.04) 75%);
+  background-size: 200% 100%;
+  animation: battle-shimmer 1.5s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+/* ─── Exercise: Type card selection ─── */
+.exercise-type-card {
+  transition: transform 150ms ease-out, box-shadow 150ms ease-out, border-color 150ms ease-out;
+}
+.exercise-type-card:active {
+  transform: scale(0.97);
+}
+
+/* ─── Exercise: Level pill ─── */
+.exercise-level-pill {
+  transition: background-color 120ms ease-out, color 120ms ease-out, transform 120ms ease-out;
+}
+.exercise-level-pill:active {
+  transform: scale(0.95);
+}
+
+/* ─── Exercise: Progress bar ─── */
+.exercise-progress-fill {
+  transition: width 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ─── Exercise: Answer buttons ─── */
+.exercise-answer-btn {
+  transition: transform 120ms ease-out, box-shadow 120ms ease-out, border-color 120ms ease-out, background-color 120ms ease-out;
+}
+.exercise-answer-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+.exercise-answer-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* ─── Exercise: Correct / wrong flash ─── */
+@keyframes exercise-correct-flash {
+  0% { box-shadow: 0 0 0 4px rgba(5,150,105,0.2); }
+  100% { box-shadow: 0 0 0 0 rgba(5,150,105,0); }
+}
+@keyframes exercise-wrong-flash {
+  0% { box-shadow: 0 0 0 4px rgba(220,38,38,0.2); }
+  100% { box-shadow: 0 0 0 0 rgba(220,38,38,0); }
+}
+.exercise-answer-correct { animation: exercise-correct-flash 500ms ease-out; }
+.exercise-answer-wrong { animation: exercise-wrong-flash 500ms ease-out; }
+
+/* ─── Exercise: Feedback slide-in ─── */
+@keyframes exercise-feedback-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.exercise-feedback {
+  animation: exercise-feedback-in 300ms ease-out;
+}
+
+/* ─── Exercise: Next button pulse ─── */
+@keyframes exercise-next-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(17,24,39,0.15); }
+  50% { box-shadow: 0 0 0 4px rgba(17,24,39,0.08); }
+}
+.exercise-next-btn {
+  animation: exercise-next-pulse 1.5s ease-in-out 0.5s 2;
+}
+
+/* ─── Exercise: Question card entrance ─── */
+@keyframes exercise-card-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.exercise-question-card {
+  animation: exercise-card-in 350ms ease-out;
+}
+
+/* ─── Exercise: Word token press ─── */
+.exercise-word-token {
+  transition: transform 100ms ease-out, background-color 100ms ease-out;
+}
+.exercise-word-token:active:not(:disabled) {
+  transform: scale(0.92);
+}
+
+/* ─── Exercise: Complete card entrance ─── */
+@keyframes exercise-complete-in {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.exercise-complete-card {
+  animation: exercise-complete-in 400ms ease-out;
+}
+
+/* ─── Exercise: reduce motion ─── */
+@media (prefers-reduced-motion: reduce) {
+  .exercise-skeleton-shimmer { animation: none; }
+  .exercise-type-card, .exercise-type-card:active,
+  .exercise-level-pill, .exercise-level-pill:active { transform: none; }
+  .exercise-answer-btn, .exercise-answer-btn:hover, .exercise-answer-btn:active { transform: none; }
+  .exercise-answer-correct, .exercise-answer-wrong { animation: none; }
+  .exercise-feedback { animation: none; }
+  .exercise-next-btn { animation: none; }
+  .exercise-question-card { animation: none; }
+  .exercise-word-token, .exercise-word-token:active { transform: none; }
+  .exercise-complete-card { animation: none; }
+  .exercise-progress-fill { transition: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════ */
+/* Explore hub page                                                      */
+/* ═══════════════════════════════════════════════════════════════════════ */
+
+/* ─── Explore: shimmer skeleton ─── */
+.explore-skeleton-shimmer {
+  background: linear-gradient(90deg, rgba(0,0,0,0.04) 25%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0.04) 75%);
+  background-size: 200% 100%;
+  animation: battle-shimmer 1.5s ease-in-out infinite;
+}
+
+/* ─── Explore: bento card ─── */
+.explore-card {
+  transition: transform 180ms ease-out, box-shadow 180ms ease-out, border-color 180ms ease-out;
+}
+.explore-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+}
+.explore-card:active {
+  transform: scale(0.98);
+}
+
+/* ─── Explore: stats entrance ─── */
+@keyframes explore-stats-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.explore-stats-ribbon {
+  animation: explore-stats-in 350ms ease-out;
+}
+
+/* ─── Explore: reduce motion ─── */
+@media (prefers-reduced-motion: reduce) {
+  .explore-skeleton-shimmer { animation: none; }
+  .explore-card, .explore-card:hover, .explore-card:active { transform: none; box-shadow: none; }
+  .explore-stats-ribbon { animation: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════ */
+/* Search page                                                           */
+/* ═══════════════════════════════════════════════════════════════════════ */
+
+/* ─── Search: shimmer skeleton ─── */
+.search-skeleton-shimmer {
+  background: linear-gradient(90deg, rgba(0,0,0,0.04) 25%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0.04) 75%);
+  background-size: 200% 100%;
+  animation: battle-shimmer 1.5s ease-in-out infinite;
+}
+
+/* ─── Search: result row ─── */
+.search-result-btn {
+  transition: background-color 120ms ease-out, box-shadow 120ms ease-out, transform 80ms ease-out;
+}
+.search-result-btn:hover {
+  background-color: rgba(59,130,246,0.03);
+}
+.search-result-btn:active {
+  transform: scale(0.995);
+}
+
+/* ─── Search: filter pill ─── */
+.search-filter-pill {
+  transition: background-color 120ms ease-out, color 120ms ease-out, transform 100ms ease-out, box-shadow 120ms ease-out;
+}
+.search-filter-pill:active {
+  transform: scale(0.95);
+}
+
+/* ─── Search: level pill ─── */
+.search-level-pill {
+  transition: background-color 120ms ease-out, color 120ms ease-out, transform 100ms ease-out;
+}
+.search-level-pill:active {
+  transform: scale(0.92);
+}
+
+/* ─── Search: submit button ─── */
+.search-submit-btn {
+  transition: background-color 120ms ease-out, transform 100ms ease-out;
+}
+.search-submit-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* ─── Search: example chip ─── */
+.search-example-chip {
+  transition: border-color 150ms ease-out, color 150ms ease-out, transform 120ms ease-out, box-shadow 150ms ease-out;
+}
+.search-example-chip:hover {
+  border-color: rgba(17,24,39,0.15);
+  color: var(--color-ink);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.search-example-chip:active {
+  transform: scale(0.96);
+}
+
+/* ─── Search: landing entrance ─── */
+@keyframes search-landing-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.search-landing {
+  animation: search-landing-in 400ms ease-out;
+}
+
+/* ─── Search: empty state entrance ─── */
+@keyframes search-empty-in {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+.search-empty-state {
+  animation: search-empty-in 300ms ease-out;
+}
+
+/* ─── Search: reduce motion ─── */
+@media (prefers-reduced-motion: reduce) {
+  .search-skeleton-shimmer { animation: none; }
+  .search-result-btn, .search-result-btn:active { transform: none; }
+  .search-filter-pill, .search-filter-pill:active { transform: none; }
+  .search-level-pill, .search-level-pill:active { transform: none; }
+  .search-submit-btn, .search-submit-btn:active { transform: none; }
+  .search-example-chip, .search-example-chip:active { transform: none; }
+  .search-landing { animation: none; }
+  .search-empty-state { animation: none; }
+  .search-detail-entrance { animation: none; }
+  .search-detail-cta, .search-detail-cta:active { transform: none; }
+  .search-kanji-chip, .search-kanji-chip:active { transform: none; }
+}
+
+/* ─── Search detail: entrance ─── */
+@keyframes search-detail-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.search-detail-entrance {
+  animation: search-detail-in 250ms ease-out;
+}
+
+/* ─── Search detail: CTA buttons ─── */
+.search-detail-cta {
+  transition: background-color 120ms ease-out, color 120ms ease-out, border-color 120ms ease-out, transform 100ms ease-out, box-shadow 120ms ease-out;
+}
+.search-detail-cta:active {
+  transform: scale(0.97);
+}
+
+/* ─── Search detail: kanji chips ─── */
+.search-kanji-chip {
+  transition: border-color 120ms ease-out, background-color 120ms ease-out, transform 100ms ease-out, box-shadow 120ms ease-out;
+}
+.search-kanji-chip:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.search-kanji-chip:active {
+  transform: scale(0.94);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Flashcard Interactive Card — animations
+   ═══════════════════════════════════════════════════════════ */
+
+/* Card reveal: subtle 3D lift + expand */
+@keyframes fc-reveal-lift {
+  0%   { transform: perspective(800px) rotateX(0deg) scale(1); }
+  40%  { transform: perspective(800px) rotateX(-3deg) scale(1.01); }
+  100% { transform: perspective(800px) rotateX(0deg) scale(1); }
+}
+.fc-card-reveal {
+  animation: fc-reveal-lift 500ms var(--ease-spring) both;
+}
+
+/* Answer section entrance */
+@keyframes fc-answer-in {
+  0%   { opacity: 0; transform: translateY(12px) scale(0.97); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.fc-answer-enter {
+  animation: fc-answer-in 400ms var(--ease-spring) both;
+  animation-delay: 120ms;
+}
+
+/* Card slide out to left (after rating) */
+@keyframes fc-slide-out {
+  0%   { opacity: 1; transform: translateX(0) scale(1); }
+  100% { opacity: 0; transform: translateX(-80px) scale(0.95); }
+}
+.fc-card-exit {
+  animation: fc-slide-out 300ms var(--ease-default) both;
+  pointer-events: none;
+}
+
+/* Card slide in from right (new card) */
+@keyframes fc-slide-in {
+  0%   { opacity: 0; transform: translateX(40px) scale(0.97); }
+  100% { opacity: 1; transform: translateX(0) scale(1); }
+}
+.fc-card-enter {
+  animation: fc-slide-in 350ms var(--ease-spring) both;
+  animation-delay: 80ms;
+}
+
+/* Mentor bubble entrance */
+@keyframes fc-mentor-in {
+  0%   { opacity: 0; transform: translateY(8px) scale(0.9); }
+  50%  { transform: translateY(-2px) scale(1.03); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.fc-mentor-enter {
+  animation: fc-mentor-in 400ms var(--ease-bounce) both;
+  animation-delay: 100ms;
+}
+
+/* Mentor bubble exit */
+@keyframes fc-mentor-out {
+  0%   { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.9) translateY(4px); }
+}
+.fc-mentor-exit {
+  animation: fc-mentor-out 250ms var(--ease-default) both;
+}
+
+/* Rating buttons stagger entrance */
+@keyframes fc-btn-in {
+  0%   { opacity: 0; transform: translateY(6px) scale(0.92); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.fc-btn-stagger > * {
+  animation: fc-btn-in 300ms var(--ease-spring) both;
+}
+.fc-btn-stagger > *:nth-child(1) { animation-delay: 50ms; }
+.fc-btn-stagger > *:nth-child(2) { animation-delay: 120ms; }
+.fc-btn-stagger > *:nth-child(3) { animation-delay: 190ms; }
+
+/* Streak badge pop */
+@keyframes fc-streak-pop {
+  0%   { transform: scale(0.5); opacity: 0; }
+  60%  { transform: scale(1.25); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.fc-streak-pop {
+  animation: fc-streak-pop 400ms var(--ease-bounce) both;
+}
+
+/* Streak milestone burst */
+@keyframes fc-milestone-burst {
+  0%   { transform: scale(0.6); opacity: 0; }
+  30%  { transform: scale(1.4); opacity: 1; }
+  60%  { transform: scale(0.95); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.fc-milestone-burst {
+  animation: fc-milestone-burst 600ms var(--ease-bounce) both;
+}
+
+/* Mini confetti particles */
+@keyframes fc-confetti-1 {
+  0%   { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
+  100% { opacity: 0; transform: translate(-20px, -30px) rotate(-120deg) scale(0.4); }
+}
+@keyframes fc-confetti-2 {
+  0%   { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
+  100% { opacity: 0; transform: translate(25px, -25px) rotate(160deg) scale(0.4); }
+}
+@keyframes fc-confetti-3 {
+  0%   { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
+  100% { opacity: 0; transform: translate(-10px, -35px) rotate(80deg) scale(0.4); }
+}
+@keyframes fc-confetti-4 {
+  0%   { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
+  100% { opacity: 0; transform: translate(15px, -20px) rotate(-200deg) scale(0.4); }
+}
+.fc-confetti { position: relative; }
+.fc-confetti::before,
+.fc-confetti::after,
+.fc-confetti > .fc-confetti-extra::before,
+.fc-confetti > .fc-confetti-extra::after {
+  content: "";
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  pointer-events: none;
+}
+.fc-confetti::before {
+  background: var(--color-accent, #3B82F6);
+  animation: fc-confetti-1 700ms ease-out both;
+}
+.fc-confetti::after {
+  background: var(--color-leaf, #22C55E);
+  animation: fc-confetti-2 700ms ease-out 50ms both;
+}
+.fc-confetti > .fc-confetti-extra::before {
+  background: var(--color-sun, #F59E0B);
+  animation: fc-confetti-3 700ms ease-out 100ms both;
+}
+.fc-confetti > .fc-confetti-extra::after {
+  background: var(--color-sakura, #EC4899);
+  animation: fc-confetti-4 700ms ease-out 75ms both;
+}
+
+/* Progress ring animation */
+@keyframes fc-ring-fill {
+  from { stroke-dashoffset: var(--fc-ring-circumference, 251); }
+  to   { stroke-dashoffset: var(--fc-ring-offset, 0); }
+}
+.fc-progress-ring-track {
+  fill: none;
+  stroke: var(--color-ink, #111827);
+  opacity: 0.08;
+}
+.fc-progress-ring-fill {
+  fill: none;
+  stroke: var(--color-leaf, #22C55E);
+  stroke-linecap: round;
+  stroke-dasharray: var(--fc-ring-circumference, 251);
+  stroke-dashoffset: var(--fc-ring-offset, 0);
+  animation: fc-ring-fill 600ms var(--ease-spring) both;
+  transform: rotate(-90deg);
+  transform-origin: center;
+}
+
+/* Mentor avatar pulse */
+@keyframes fc-avatar-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+  50%      { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+}
+.fc-avatar-pulse {
+  animation: fc-avatar-pulse 1.5s ease-in-out;
+}
+
+/* Button press feedback */
+.fc-btn-press {
+  transition: transform 100ms ease-out, box-shadow 100ms ease-out;
+}
+.fc-btn-press:active {
+  transform: scale(0.95);
 }

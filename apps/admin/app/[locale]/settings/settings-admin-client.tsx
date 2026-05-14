@@ -10,11 +10,15 @@ import {
   AdminEmptyState,
   AdminPageHeader,
   AdminSection,
-  AdminStatusBadge
+  AdminStatusBadge,
+  AdminToastContainer,
+  cn,
+  useAdminToast
 } from "@nihongo-bjt/ui";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
+import { parseApiError, useFormErrors } from "@/lib/form-errors";
 import { permsFromMe, type MePayload } from "@/app/_components/admin-client-utils";
 
 type CommonLabels = { empty: string; error: string; loading: string; records: string };
@@ -90,7 +94,8 @@ export function SettingsAdminClient({
   const [reason, setReason] = useState<string>("");
   const [confirmation, setConfirmation] = useState<string>("");
   const [mutating, setMutating] = useState(false);
-  const [toast, setToast] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const toast = useAdminToast();
+  const fe = useFormErrors();
 
   useEffect(() => {
     let cancelled = false;
@@ -157,6 +162,7 @@ export function SettingsAdminClient({
     setRulesError(null);
     setReason("");
     setConfirmation("");
+    fe.clearFieldError("reason");
   }
 
   function toggleCollapsed(ns: string) {
@@ -186,12 +192,12 @@ export function SettingsAdminClient({
     }
     setRulesError(null);
     if (reason.trim().length < 3) {
-      setToast({ kind: "err", text: t("reasonRequired") });
+      fe.setFieldError("reason", t("reasonRequired"));
       return;
     }
     const highRisk = isHighRisk(editing) || killSwitch;
     if (highRisk && confirmation !== editing.key) {
-      setToast({ kind: "err", text: t("confirmationMismatch") });
+      toast.error(t("confirmationMismatch"));
       return;
     }
     setMutating(true);
@@ -210,13 +216,13 @@ export function SettingsAdminClient({
       if (!r.ok) {
         const body = (await r.json().catch(() => null)) as { code?: string } | null;
         if (body?.code === "high_risk_confirmation_required") {
-          setToast({ kind: "err", text: t("confirmationRequired") });
+          toast.error(t("confirmationRequired"));
         } else {
-          setToast({ kind: "err", text: t("updateFailed") });
+          toast.error(t("updateFailed"));
         }
         return;
       }
-      setToast({ kind: "ok", text: t("updateOk") });
+      toast.success(t("updateOk"));
       setEditing(null);
       void loadFlags();
     } finally {
@@ -434,11 +440,12 @@ export function SettingsAdminClient({
                   {t("fieldReason")}
                 </label>
                 <input
-                  className="mt-1 w-full rounded border px-2 py-1 text-sm"
-                  onChange={(e) => setReason(e.target.value)}
+                  className={cn("mt-1 w-full rounded border px-2 py-1 text-sm", fe.fieldError("reason") ? "border-red-400 bg-red-50/50 text-red-900" : "border-slate-300")}
+                  onChange={(e) => { setReason(e.target.value); fe.clearFieldError("reason"); }}
                   placeholder={t("reasonPlaceholder")}
                   value={reason}
                 />
+                {fe.fieldError("reason") && <p className="mt-1 text-xs text-red-600">{fe.fieldError("reason")}</p>}
               </div>
               {isHighRisk(editing) || killSwitch ? (
                 <div>
@@ -462,7 +469,7 @@ export function SettingsAdminClient({
             <div className="mt-5 flex justify-end gap-2">
               <button
                 className="rounded border px-3 py-1 text-sm"
-                onClick={() => setEditing(null)}
+                onClick={() => { setEditing(null); fe.clearFieldError("reason"); }}
                 type="button"
               >
                 {t("cancel")}
@@ -480,17 +487,7 @@ export function SettingsAdminClient({
         </div>
       ) : null}
 
-      {toast ? (
-        <div
-          className={`fixed bottom-4 right-4 rounded px-3 py-2 text-sm text-white shadow ${toast.kind === "ok" ? "bg-emerald-600" : "bg-red-600"}`}
-          role="status"
-        >
-          {toast.text}
-          <button className="ml-3 underline" onClick={() => setToast(null)} type="button">
-            ✕
-          </button>
-        </div>
-      ) : null}
+      <AdminToastContainer toasts={toast.toasts} onRemove={toast.removeToast} />
     </div>
   );
 }

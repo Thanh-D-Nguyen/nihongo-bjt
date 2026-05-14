@@ -11,5 +11,6 @@ export interface BillingCheckoutResult {
 }
 
 export interface BillingProvider {
-  startLocalCheckout(input: { planSlug: string; userId: string }): Promise<BillingCheckoutResult>;
+  startLocalCheckout?(input: { planSlug: string; userId: string }): Promise<BillingCheckoutResult>;
+  startCheckout?(input: { planSlug: string; userId: string }): Promise<BillingCheckoutResult>;
 }

@@ -11,12 +11,15 @@ import {
   AdminPageHeader,
   AdminSection,
   AdminStatusBadge,
-  cn
+  AdminToastContainer,
+  cn,
+  useAdminToast
 } from "@nihongo-bjt/ui";
 import { CONTENT_VERSION_STATUSES } from "@nihongo-bjt/shared";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
+import { parseApiError, useFormErrors } from "@/lib/form-errors";
 import { permsFromMe, type MePayload } from "@/app/_components/admin-client-utils";
 
 type CommonLabels = { empty: string; error: string; loading: string; records: string };
@@ -151,7 +154,8 @@ export function ContentVersionsClient({
   const [confirmRevert, setConfirmRevert] = useState(false);
   const [reason, setReason] = useState("");
   const [mutating, setMutating] = useState(false);
-  const [toast, setToast] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const toast = useAdminToast();
+  const fe = useFormErrors();
 
   useEffect(() => {
     const h = setTimeout(() => setDebounced(search.trim()), 300);
@@ -232,7 +236,7 @@ export function ContentVersionsClient({
   async function compareWithCurrent() {
     if (!detail) return;
     if (!detail.currentPublishedVersionId || detail.currentPublishedVersionId === detail.id) {
-      setToast({ kind: "err", text: t("noCurrentToCompare") });
+      toast.error(t("noCurrentToCompare"));
       return;
     }
     const params = new URLSearchParams({
@@ -241,7 +245,7 @@ export function ContentVersionsClient({
     });
     const r = await adminApiFetch(`/api/admin/content/versions/diff?${params.toString()}`);
     if (!r.ok) {
-      setToast({ kind: "err", text: common.error });
+      toast.error(common.error);
       return;
     }
     setDiff((await r.json()) as DiffResponse);
@@ -250,7 +254,7 @@ export function ContentVersionsClient({
   async function submitRevert() {
     if (!detail || !canWrite) return;
     if (reason.trim().length < 3) {
-      setToast({ kind: "err", text: t("reasonRequired") });
+      fe.setFieldError("reason", t("reasonRequired"));
       return;
     }
     setMutating(true);
@@ -260,12 +264,12 @@ export function ContentVersionsClient({
         method: "POST"
       });
       if (!r.ok) {
-        const errText = await r.text();
-        setToast({ kind: "err", text: errText || t("revertFailed") });
+        const parsed = await parseApiError(r, t("revertFailed"));
+        toast.error(parsed.form || t("revertFailed"));
         return;
       }
       const newVersion = (await r.json()) as Detail;
-      setToast({ kind: "ok", text: t("revertOk") });
+      toast.success(t("revertOk"));
       setConfirmRevert(false);
       setReason("");
       void loadList();
@@ -629,7 +633,7 @@ export function ContentVersionsClient({
                   <button
                     className="rounded border border-red-300 px-3 py-2 text-sm text-red-700 hover:bg-red-50 disabled:opacity-50"
                     disabled={detail.status === "published"}
-                    onClick={() => setConfirmRevert(true)}
+                    onClick={() => { setConfirmRevert(true); fe.clearFieldError("reason"); }}
                     type="button"
                   >
                     {t("revert")}
@@ -651,6 +655,7 @@ export function ContentVersionsClient({
           onCancel={() => {
             setConfirmRevert(false);
             setReason("");
+            fe.clearFieldError("reason");
           }}
           onConfirm={() => void submitRevert()}
           title={t("revertTitle")}
@@ -658,29 +663,18 @@ export function ContentVersionsClient({
         >
           <p className="mb-2 text-sm text-slate-600">{t("revertDesc")}</p>
           <textarea
-            className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+            className={cn("w-full rounded border px-3 py-2 text-sm", fe.fieldError("reason") ? "border-red-400 bg-red-50/50 text-red-900" : "border-slate-300")}
             minLength={3}
-            onChange={(e) => setReason(e.target.value)}
+            onChange={(e) => { setReason(e.target.value); fe.clearFieldError("reason"); }}
             placeholder={t("reasonPlaceholder")}
             rows={3}
             value={reason}
           />
+          {fe.fieldError("reason") && <p className="mt-1 text-xs text-red-600">{fe.fieldError("reason")}</p>}
         </Modal>
       ) : null}
 
-      {toast ? (
-        <div
-          className={cn(
-            "fixed bottom-6 right-6 z-50 rounded px-4 py-2 text-sm shadow-lg",
-            toast.kind === "ok" ? "bg-emerald-600 text-white" : "bg-red-600 text-white"
-          )}
-        >
-          {toast.text}
-          <button className="ml-3 underline" onClick={() => setToast(null)} type="button">
-            ×
-          </button>
-        </div>
-      ) : null}
+      <AdminToastContainer toasts={toast.toasts} onRemove={toast.removeToast} />
     </div>
   );
 }

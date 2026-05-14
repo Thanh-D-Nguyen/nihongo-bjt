@@ -11,7 +11,10 @@ import {
   AdminPageHeader,
   AdminSection,
   AdminStatusBadge,
-  cn
+  AdminToastContainer,
+  FormError,
+  cn,
+  useAdminToast
 } from "@nihongo-bjt/ui";
 import {
   ASSESSMENT_BJT_LEVELS,
@@ -23,6 +26,8 @@ import { useCallback, useEffect, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
 import { permsFromMe, type MePayload } from "@/app/_components/admin-client-utils";
+import { AdminAutoFill } from "@/app/_components/admin-auto-fill";
+import { useFormErrors, parseApiError, validateFields, validators } from "@/lib/form-errors";
 
 type CommonLabels = { empty: string; error: string; loading: string; records: string };
 type Labels = Record<string, string>;
@@ -155,7 +160,8 @@ export function QuestionBankAdminClient({ common, labels, locale }: { common: Co
   const [sections, setSections] = useState<SectionChoice[]>([]);
   const [reason, setReason] = useState("");
   const [mutating, setMutating] = useState(false);
-  const [toast, setToast] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const toast = useAdminToast();
+  const fe = useFormErrors();
 
   useEffect(() => { const h = setTimeout(() => setDebounced(search.trim()), 300); return () => clearTimeout(h); }, [search]);
   useEffect(() => { setPage(1); setSelectedIds(new Set()); }, [debounced, statusFilter, levelFilter, difficultyFilter, topicFilter, tagFilter]);
@@ -250,13 +256,17 @@ export function QuestionBankAdminClient({ common, labels, locale }: { common: Co
 
   async function submitQuestion() {
     if (!canManage) return;
-    if (reason.trim().length < 3) { setToast({ kind: "err", text: t("reasonRequired") }); return; }
-    if (!qForm.sectionId) { setToast({ kind: "err", text: t("sectionRequired") }); return; }
-    if (!qForm.prompt.trim()) { setToast({ kind: "err", text: t("promptRequired") }); return; }
+    fe.clearAll();
     const correctCount = qForm.options.filter((o) => o.isCorrect).length;
-    if (correctCount !== 1) { setToast({ kind: "err", text: t("exactlyOneCorrect") }); return; }
     const emptyOption = qForm.options.some((o) => !o.text.trim());
-    if (emptyOption) { setToast({ kind: "err", text: t("optionTextRequired") }); return; }
+    const errs = validateFields([
+      { field: "sectionId", value: qForm.sectionId, message: t("sectionRequired"), validate: validators.required },
+      { field: "prompt", value: qForm.prompt, message: t("promptRequired"), validate: validators.required },
+      { field: "reason", value: reason, message: t("reasonRequired"), validate: validators.minLength(3) },
+    ]);
+    if (correctCount !== 1) errs.options = t("exactlyOneCorrect");
+    if (emptyOption) errs.options = t("optionTextRequired");
+    if (Object.keys(errs).length > 0) { fe.setFieldErrors(errs); return; }
     setMutating(true);
     try {
       const body: Record<string, unknown> = {
@@ -277,10 +287,16 @@ export function QuestionBankAdminClient({ common, labels, locale }: { common: Co
       const url = showForm === "create" ? "/api/admin/assessment/question-bank" : `/api/admin/assessment/question-bank/${detail?.id}`;
       const method = showForm === "create" ? "POST" : "PATCH";
       const r = await adminApiFetch(url, { method, body: JSON.stringify(body) });
-      if (!r.ok) { const err = await r.text(); setToast({ kind: "err", text: err || t("saveFailed") }); return; }
+      if (!r.ok) {
+        const parsed = await parseApiError(r, t("saveFailed"));
+        fe.setFieldErrors(parsed.fields);
+        if (parsed.form) fe.setFormError(parsed.form);
+        else toast.error(t("saveFailed"));
+        return;
+      }
       const saved = (await r.json()) as { id: string };
       setShowForm(null);
-      setToast({ kind: "ok", text: t("saveOk") });
+      toast.success(t("saveOk"));
       void loadList();
       setSelectedId(saved.id);
     } finally { setMutating(false); }
@@ -296,9 +312,9 @@ export function QuestionBankAdminClient({ common, labels, locale }: { common: Co
 
   async function submitBulk() {
     if (!canManage || !showBulk || selectedIds.size === 0) return;
-    if (reason.trim().length < 3) { setToast({ kind: "err", text: t("reasonRequired") }); return; }
+    if (reason.trim().length < 3) { fe.setFieldError("reason", t("reasonRequired")); return; }
     if ((showBulk === "tag" || showBulk === "untag") && bulkTags.trim().length === 0) {
-      setToast({ kind: "err", text: t("tagsRequired") }); return;
+      toast.error(t("tagsRequired")); return;
     }
     setMutating(true);
     try {
@@ -313,8 +329,8 @@ export function QuestionBankAdminClient({ common, labels, locale }: { common: Co
       const r = await adminApiFetch("/api/admin/assessment/question-bank/bulk", {
         method: "POST", body: JSON.stringify(body)
       });
-      if (!r.ok) { const err = await r.text(); setToast({ kind: "err", text: err || t("bulkFailed") }); return; }
-      setToast({ kind: "ok", text: t("bulkOk") });
+      if (!r.ok) { const parsed = await parseApiError(r, t("bulkFailed")); toast.error(parsed.form || t("bulkFailed")); return; }
+      toast.success(t("bulkOk"));
       setShowBulk(null); setReason(""); setBulkTags(""); setSelectedIds(new Set());
       void loadList();
     } finally { setMutating(false); }
@@ -322,8 +338,8 @@ export function QuestionBankAdminClient({ common, labels, locale }: { common: Co
 
   async function submitSuggest() {
     if (!canReview || !detail) return;
-    if (reason.trim().length < 3) { setToast({ kind: "err", text: t("reasonRequired") }); return; }
-    if (suggestRationale.trim().length < 8) { setToast({ kind: "err", text: t("rationaleRequired") }); return; }
+    if (reason.trim().length < 3) { fe.setFieldError("reason", t("reasonRequired")); return; }
+    if (suggestRationale.trim().length < 8) { fe.setFieldError("rationale", t("rationaleRequired")); return; }
     setMutating(true);
     try {
       const proposed = suggestField === "tags"
@@ -333,8 +349,8 @@ export function QuestionBankAdminClient({ common, labels, locale }: { common: Co
         method: "POST",
         body: JSON.stringify({ field: suggestField, proposedValue: proposed, rationale: suggestRationale.trim(), reason: reason.trim() })
       });
-      if (!r.ok) { const err = await r.text(); setToast({ kind: "err", text: err || t("suggestFailed") }); return; }
-      setToast({ kind: "ok", text: t("suggestOk") });
+      if (!r.ok) { const parsed = await parseApiError(r, t("suggestFailed")); toast.error(parsed.form || t("suggestFailed")); return; }
+      toast.success(t("suggestOk"));
       setShowSuggest(false); setReason(""); setSuggestRationale(""); setSuggestValue("");
       void loadDetail(detail.id);
     } finally { setMutating(false); }
@@ -342,14 +358,14 @@ export function QuestionBankAdminClient({ common, labels, locale }: { common: Co
 
   async function submitRemove() {
     if (!canManage || !detail) return;
-    if (reason.trim().length < 3) { setToast({ kind: "err", text: t("reasonRequired") }); return; }
+    if (reason.trim().length < 3) { fe.setFieldError("reason", t("reasonRequired")); return; }
     setMutating(true);
     try {
       const r = await adminApiFetch(`/api/admin/assessment/question-bank/${detail.id}`, {
         method: "DELETE", body: JSON.stringify({ reason: reason.trim() })
       });
-      if (!r.ok) { const err = await r.text(); setToast({ kind: "err", text: err || t("removeFailed") }); return; }
-      setToast({ kind: "ok", text: t("removeOk") });
+      if (!r.ok) { const parsed = await parseApiError(r, t("removeFailed")); toast.error(parsed.form || t("removeFailed")); return; }
+      toast.success(t("removeOk"));
       setShowRemove(false); setReason(""); setSelectedId(null);
       void loadList();
     } finally { setMutating(false); }
@@ -403,10 +419,10 @@ export function QuestionBankAdminClient({ common, labels, locale }: { common: Co
           <span>{selectedIds.size} {t("selected")}</span>
           {canManage ? (
             <div className="flex gap-2">
-              <button className="rounded bg-emerald-600 px-3 py-1 text-xs" onClick={() => { setReason(""); setShowBulk("publish"); }} type="button">{t("bulkPublish")}</button>
-              <button className="rounded bg-slate-700 px-3 py-1 text-xs" onClick={() => { setReason(""); setShowBulk("archive"); }} type="button">{t("bulkArchive")}</button>
-              <button className="rounded bg-slate-700 px-3 py-1 text-xs" onClick={() => { setReason(""); setBulkTags(""); setShowBulk("tag"); }} type="button">{t("bulkTag")}</button>
-              <button className="rounded bg-slate-700 px-3 py-1 text-xs" onClick={() => { setReason(""); setBulkTags(""); setShowBulk("untag"); }} type="button">{t("bulkUntag")}</button>
+              <button className="rounded bg-emerald-600 px-3 py-1 text-xs" onClick={() => { setReason(""); fe.clearFieldError("reason"); setShowBulk("publish"); }} type="button">{t("bulkPublish")}</button>
+              <button className="rounded bg-slate-700 px-3 py-1 text-xs" onClick={() => { setReason(""); fe.clearFieldError("reason"); setShowBulk("archive"); }} type="button">{t("bulkArchive")}</button>
+              <button className="rounded bg-slate-700 px-3 py-1 text-xs" onClick={() => { setReason(""); fe.clearFieldError("reason"); setBulkTags(""); setShowBulk("tag"); }} type="button">{t("bulkTag")}</button>
+              <button className="rounded bg-slate-700 px-3 py-1 text-xs" onClick={() => { setReason(""); fe.clearFieldError("reason"); setBulkTags(""); setShowBulk("untag"); }} type="button">{t("bulkUntag")}</button>
               <button className="rounded border border-white/30 px-3 py-1 text-xs" onClick={() => setSelectedIds(new Set())} type="button">{t("clearSelection")}</button>
             </div>
           ) : null}
@@ -501,8 +517,8 @@ export function QuestionBankAdminClient({ common, labels, locale }: { common: Co
               {canReview ? (
                 <div className="flex flex-wrap gap-2">
                   {canManage ? <button className="rounded border border-slate-300 px-3 py-1 text-sm" onClick={openEdit} type="button">{t("editQuestion")}</button> : null}
-                  <button className="rounded bg-amber-600 px-3 py-1 text-sm text-white" onClick={() => { setReason(""); setSuggestField("prompt"); setSuggestValue(detail.prompt); setSuggestRationale(""); setShowSuggest(true); }} type="button">{t("suggestEdit")}</button>
-                  {canManage ? <button className="rounded border border-red-300 px-3 py-1 text-sm text-red-700" onClick={() => { setReason(""); setShowRemove(true); }} type="button">{t("delete")}</button> : null}
+                  <button className="rounded bg-amber-600 px-3 py-1 text-sm text-white" onClick={() => { setReason(""); fe.clearFieldError("reason"); setSuggestField("prompt"); setSuggestValue(detail.prompt); setSuggestRationale(""); setShowSuggest(true); }} type="button">{t("suggestEdit")}</button>
+                  {canManage ? <button className="rounded border border-red-300 px-3 py-1 text-sm text-red-700" onClick={() => { setReason(""); fe.clearFieldError("reason"); setShowRemove(true); }} type="button">{t("delete")}</button> : null}
                 </div>
               ) : null}
               <div>
@@ -566,9 +582,10 @@ export function QuestionBankAdminClient({ common, labels, locale }: { common: Co
             {showBulk === "tag" || showBulk === "untag" ? (
               <label className="mb-2 flex flex-col gap-1 text-xs"><span className="font-medium text-slate-600">{t("formTags")}</span><input className="rounded border border-slate-300 px-3 py-2 text-sm" placeholder="bjt,verb" value={bulkTags} onChange={(e) => setBulkTags(e.target.value)} /></label>
             ) : null}
-            <label className="flex flex-col gap-1 text-xs"><span className="font-medium text-slate-600">{t("formReason")}</span><input className="rounded border border-slate-300 px-3 py-2 text-sm" value={reason} onChange={(e) => setReason(e.target.value)} /></label>
+            <label className="flex flex-col gap-1 text-xs"><span className="font-medium text-slate-600">{t("formReason")}</span><input className={cn("rounded border px-3 py-2 text-sm", fe.fieldError("reason") ? "border-red-400 bg-red-50/50 text-red-900" : "border-slate-300")} value={reason} onChange={(e) => { setReason(e.target.value); fe.clearFieldError("reason"); }} /></label>
+            {fe.fieldError("reason") && <p className="mt-1 text-xs text-red-600">{fe.fieldError("reason")}</p>}
             <div className="mt-4 flex justify-end gap-2">
-              <button className="rounded border border-slate-300 px-3 py-2 text-sm" onClick={() => setShowBulk(null)} type="button">{t("cancel")}</button>
+              <button className="rounded border border-slate-300 px-3 py-2 text-sm" onClick={() => { setShowBulk(null); fe.clearFieldError("reason"); }} type="button">{t("cancel")}</button>
               <button className="rounded bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50" disabled={mutating} onClick={submitBulk} type="button">{t("submit")}</button>
             </div>
           </div>
@@ -589,9 +606,10 @@ export function QuestionBankAdminClient({ common, labels, locale }: { common: Co
               <textarea className="rounded border border-slate-300 px-3 py-2 text-sm" rows={3} value={suggestValue} onChange={(e) => setSuggestValue(e.target.value)} />
             </label>
             <label className="mb-2 flex flex-col gap-1 text-xs"><span className="font-medium text-slate-600">{t("suggestRationale")}</span><textarea className="rounded border border-slate-300 px-3 py-2 text-sm" rows={2} value={suggestRationale} onChange={(e) => setSuggestRationale(e.target.value)} /></label>
-            <label className="flex flex-col gap-1 text-xs"><span className="font-medium text-slate-600">{t("formReason")}</span><input className="rounded border border-slate-300 px-3 py-2 text-sm" value={reason} onChange={(e) => setReason(e.target.value)} /></label>
+            <label className="flex flex-col gap-1 text-xs"><span className="font-medium text-slate-600">{t("formReason")}</span><input className={cn("rounded border px-3 py-2 text-sm", fe.fieldError("reason") ? "border-red-400 bg-red-50/50 text-red-900" : "border-slate-300")} value={reason} onChange={(e) => { setReason(e.target.value); fe.clearFieldError("reason"); }} /></label>
+            {fe.fieldError("reason") && <p className="mt-1 text-xs text-red-600">{fe.fieldError("reason")}</p>}
             <div className="mt-4 flex justify-end gap-2">
-              <button className="rounded border border-slate-300 px-3 py-2 text-sm" onClick={() => setShowSuggest(false)} type="button">{t("cancel")}</button>
+              <button className="rounded border border-slate-300 px-3 py-2 text-sm" onClick={() => { setShowSuggest(false); fe.clearFieldError("reason"); }} type="button">{t("cancel")}</button>
               <button className="rounded bg-amber-600 px-3 py-2 text-sm font-medium text-white disabled:opacity-50" disabled={mutating} onClick={submitSuggest} type="button">{t("suggestSubmit")}</button>
             </div>
           </div>
@@ -603,9 +621,10 @@ export function QuestionBankAdminClient({ common, labels, locale }: { common: Co
           <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-2xl">
             <h2 className="mb-2 text-lg font-semibold">{t("removeHeading")}</h2>
             <p className="mb-3 text-sm text-slate-600">{t("removeBody")}</p>
-            <label className="flex flex-col gap-1 text-xs"><span className="font-medium text-slate-600">{t("formReason")}</span><input className="rounded border border-slate-300 px-3 py-2 text-sm" value={reason} onChange={(e) => setReason(e.target.value)} /></label>
+            <label className="flex flex-col gap-1 text-xs"><span className="font-medium text-slate-600">{t("formReason")}</span><input className={cn("rounded border px-3 py-2 text-sm", fe.fieldError("reason") ? "border-red-400 bg-red-50/50 text-red-900" : "border-slate-300")} value={reason} onChange={(e) => { setReason(e.target.value); fe.clearFieldError("reason"); }} /></label>
+            {fe.fieldError("reason") && <p className="mt-1 text-xs text-red-600">{fe.fieldError("reason")}</p>}
             <div className="mt-4 flex justify-end gap-2">
-              <button className="rounded border border-slate-300 px-3 py-2 text-sm" onClick={() => setShowRemove(false)} type="button">{t("cancel")}</button>
+              <button className="rounded border border-slate-300 px-3 py-2 text-sm" onClick={() => { setShowRemove(false); fe.clearFieldError("reason"); }} type="button">{t("cancel")}</button>
               <button className="rounded bg-red-600 px-3 py-2 text-sm font-medium text-white disabled:opacity-50" disabled={mutating} onClick={submitRemove} type="button">{t("removeSubmit")}</button>
             </div>
           </div>
@@ -616,19 +635,47 @@ export function QuestionBankAdminClient({ common, labels, locale }: { common: Co
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-lg bg-white p-6 shadow-2xl">
             <h2 className="mb-4 text-lg font-semibold">{showForm === "create" ? t("createHeading") : t("editHeading")}</h2>
+            <div className="mb-3 flex items-center justify-between">
+              <FormError message={fe.errors.form} className="flex-1" />
+              <AdminAutoFill
+                formType="question-bank"
+                onFill={(fields) => {
+                  const f = fields as Partial<QuestionForm>;
+                  setQForm((prev) => ({
+                    ...prev,
+                    ...(f.sectionId !== undefined && { sectionId: String(f.sectionId) }),
+                    ...(f.prompt !== undefined && { prompt: String(f.prompt) }),
+                    ...(f.scenario !== undefined && { scenario: String(f.scenario) }),
+                    ...(f.explanationVi !== undefined && { explanationVi: String(f.explanationVi) }),
+                    ...(f.skillTag !== undefined && { skillTag: String(f.skillTag) }),
+                    ...(f.difficulty !== undefined && { difficulty: String(f.difficulty) }),
+                    ...(f.tags !== undefined && { tags: String(f.tags) }),
+                    ...(f.imageUrl !== undefined && { imageUrl: String(f.imageUrl) }),
+                    ...(f.imageAlt !== undefined && { imageAlt: String(f.imageAlt) }),
+                    ...(f.audioUrl !== undefined && { audioUrl: String(f.audioUrl) }),
+                    ...(f.audioScript !== undefined && { audioScript: String(f.audioScript) }),
+                    ...(f.options !== undefined && Array.isArray(f.options) && { options: f.options }),
+                  }));
+                }}
+                labels={{ button: t("autoFill") || "Auto Fill" }}
+                disabled={mutating}
+              />
+            </div>
             <div className="grid grid-cols-2 gap-3 text-sm">
               <label className="col-span-2 flex flex-col gap-1">
-                <span className="text-xs font-medium text-slate-600">{t("formSection")}</span>
-                <select className="rounded border border-slate-300 px-3 py-2" value={qForm.sectionId} onChange={(e) => setQForm({ ...qForm, sectionId: e.target.value })}>
+                <span className="text-xs font-medium text-slate-600">{t("formSection")} <span className="text-red-500">*</span></span>
+                <select className={cn("rounded border px-3 py-2", fe.fieldError("sectionId") ? "border-red-400 bg-red-50/50" : "border-slate-300")} value={qForm.sectionId} onChange={(e) => { setQForm({ ...qForm, sectionId: e.target.value }); fe.clearFieldError("sectionId"); }}>
                   <option value="">{t("selectSection")}</option>
                   {sections.map((s) => (
                     <option key={s.id} value={s.id}>{s.testSlug} / {s.code} {ASSESSMENT_BJT_SECTION_LABELS[s.code] ?? s.titleVi ?? ""} {s.testLevel ? `(${s.testLevel})` : ""}</option>
                   ))}
                 </select>
+                {fe.fieldError("sectionId") && <p className="text-xs text-red-600">{fe.fieldError("sectionId")}</p>}
               </label>
               <label className="col-span-2 flex flex-col gap-1">
-                <span className="text-xs font-medium text-slate-600">{t("formPrompt")}</span>
-                <textarea className="rounded border border-slate-300 px-3 py-2" rows={3} value={qForm.prompt} onChange={(e) => setQForm({ ...qForm, prompt: e.target.value })} />
+                <span className="text-xs font-medium text-slate-600">{t("formPrompt")} <span className="text-red-500">*</span></span>
+                <textarea className={cn("rounded border px-3 py-2", fe.fieldError("prompt") ? "border-red-400 bg-red-50/50" : "border-slate-300")} rows={3} value={qForm.prompt} onChange={(e) => { setQForm({ ...qForm, prompt: e.target.value }); fe.clearFieldError("prompt"); }} />
+                {fe.fieldError("prompt") && <p className="text-xs text-red-600">{fe.fieldError("prompt")}</p>}
               </label>
               <label className="col-span-2 flex flex-col gap-1">
                 <span className="text-xs font-medium text-slate-600">{t("formScenario")} ({t("optional")})</span>
@@ -685,6 +732,7 @@ export function QuestionBankAdminClient({ common, labels, locale }: { common: Co
                     }}>+ {t("addOption")}</button>
                   ) : null}
                 </div>
+                {fe.fieldError("options") && <p className="mb-2 text-xs text-red-600">{fe.fieldError("options")}</p>}
                 <div className="space-y-2">
                   {qForm.options.map((opt, idx) => (
                     <div key={idx} className="grid grid-cols-12 gap-2 items-center">
@@ -703,24 +751,20 @@ export function QuestionBankAdminClient({ common, labels, locale }: { common: Co
               </div>
 
               <label className="col-span-2 flex flex-col gap-1">
-                <span className="text-xs font-medium text-slate-600">{t("formReason")}</span>
-                <input className="rounded border border-slate-300 px-3 py-2" value={reason} onChange={(e) => setReason(e.target.value)} />
+                <span className="text-xs font-medium text-slate-600">{t("formReason")} <span className="text-red-500">*</span></span>
+                <input className={cn("rounded border px-3 py-2", fe.fieldError("reason") ? "border-red-400 bg-red-50/50" : "border-slate-300")} value={reason} onChange={(e) => { setReason(e.target.value); fe.clearFieldError("reason"); }} />
+                {fe.fieldError("reason") && <p className="text-xs text-red-600">{fe.fieldError("reason")}</p>}
               </label>
             </div>
             <div className="mt-4 flex justify-end gap-2">
-              <button className="rounded border border-slate-300 px-3 py-2 text-sm" onClick={() => setShowForm(null)} type="button">{t("cancel")}</button>
+              <button className="rounded border border-slate-300 px-3 py-2 text-sm" onClick={() => { setShowForm(null); fe.clearAll(); }} type="button">{t("cancel")}</button>
               <button className="rounded bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50" disabled={mutating} onClick={submitQuestion} type="button">{showForm === "create" ? t("createSubmit") : t("editSubmit")}</button>
             </div>
           </div>
         </div>
       ) : null}
 
-      {toast ? (
-        <div className={cn("fixed bottom-6 right-6 rounded px-4 py-2 text-sm shadow-lg", toast.kind === "ok" ? "bg-emerald-600 text-white" : "bg-red-600 text-white")}>
-          {toast.text}
-          <button className="ml-3 underline" onClick={() => setToast(null)} type="button">×</button>
-        </div>
-      ) : null}
+      <AdminToastContainer toasts={toast.toasts} onRemove={toast.removeToast} />
     </div>
   );
 }

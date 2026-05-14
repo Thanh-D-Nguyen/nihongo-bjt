@@ -4,6 +4,7 @@ import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 
 import { AdminModule } from "./admin/admin.module.js";
 import { AnnouncementModule } from "./announcement/announcement.module.js";
+import { AutofillModule } from "./autofill/autofill.module.js";
 import { KeycloakModule } from "./keycloak/keycloak.module.js";
 import { AnalyticsModule } from "./analytics/analytics.module.js";
 import { AssessmentModule } from "./assessment/assessment.module.js";
@@ -58,6 +59,7 @@ import { SearchModule } from "./search/search.module.js";
     FlashcardsModule,
     QuizModule,
     AdminModule,
+    AutofillModule,
     AnalyticsModule,
     AssessmentModule,
     DailyModule,

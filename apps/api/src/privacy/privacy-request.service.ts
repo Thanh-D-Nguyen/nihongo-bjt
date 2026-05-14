@@ -3,10 +3,13 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
+  Inject,
   Injectable,
   Logger,
   NotFoundException
 } from "@nestjs/common";
+
+import { PrivacyRequestProcessor } from "./privacy-request.processor.js";
 
 /**
  * Privacy request service — manages GDPR/privacy export and account deletion requests.
@@ -26,6 +29,10 @@ import {
 export class PrivacyRequestService {
   private readonly logger = new Logger(PrivacyRequestService.name);
   private readonly prisma: PrismaClient = createPrismaClient();
+
+  constructor(
+    @Inject(PrivacyRequestProcessor) private readonly processor: PrivacyRequestProcessor
+  ) {}
 
   /**
    * Create a privacy request (export or delete).
@@ -65,8 +72,12 @@ export class PrivacyRequestService {
       `[Privacy] Created ${kind} request id=${request.id} userId=${userId}`
     );
 
-    // TODO: emit a BullMQ job event here once job processor is wired up
-    // await this.jobQueue.add('privacy.process', { requestId: request.id, kind, userId });
+    // Dispatch async processing (fire-and-forget; errors handled by processor)
+    this.processor.process(request.id).catch((err) => {
+      this.logger.error(
+        `[Privacy] Processor failed for request ${request.id}: ${err instanceof Error ? err.message : String(err)}`
+      );
+    });
 
     return {
       id: request.id,

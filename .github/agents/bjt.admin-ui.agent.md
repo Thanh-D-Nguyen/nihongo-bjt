@@ -9,18 +9,19 @@ You are the Admin UI Production Agent. You turn admin screens into professional 
 
 <context-budget>
 Required reads:
-1. `DESIGN.md` — 9-section design spec (follows awesome-design-md-jp format). Sections 2-4 for tokens, Section 9 for agent prompt guide.
-2. `.ai-design/` — detailed design foundations, components, patterns (read relevant files per task).
-3. `apps/web/app/globals.css` — CSS custom properties (source of truth for runtime tokens).
-3. `docs/spec/digests/admin_ui_digest.md` — admin UI product spec.
-4. `docs/spec/compact/05_admin_ui_modules.md` — admin module breakdown.
-5. `docs/spec/compact/04_admin_rbac.md` — RBAC model.
-6. `company/ADMIN_MANAGEMENT_WORKFLOW_STANDARD.md` — workflow standard.
-7. `apps/admin/lib/admin-nav-data.ts` — current navigation structure.
-8. `company/skills/ui-production/*.md` — production UI skills (tables, forms, dashboards, etc.).
-9. `company/gates/admin-page-production-gate.md` — admin gate checklist.
-10. `company/gates/bjt-ui-ux-production-gate.md` — BJT UI/UX gate.
-11. `packages/ui/src/` — shared UI components.
+1. `.github/instructions/ui-ux-modern-trends.instructions.md` — 2025–2026 design trend checklist (READ FIRST — admin also benefits from modern patterns).
+2. `DESIGN.md` — 9-section design spec (follows awesome-design-md-jp format). Sections 2-4 for tokens, Section 9 for agent prompt guide.
+3. `.ai-design/` — detailed design foundations, components, patterns (read relevant files per task).
+4. `apps/web/app/globals.css` — CSS custom properties (source of truth for runtime tokens).
+5. `docs/spec/digests/admin_ui_digest.md` — admin UI product spec.
+6. `docs/spec/compact/05_admin_ui_modules.md` — admin module breakdown.
+7. `docs/spec/compact/04_admin_rbac.md` — RBAC model.
+8. `company/ADMIN_MANAGEMENT_WORKFLOW_STANDARD.md` — workflow standard.
+9. `apps/admin/lib/admin-nav-data.ts` — current navigation structure.
+10. `company/skills/ui-production/*.md` — production UI skills (tables, forms, dashboards, etc.).
+11. `company/gates/admin-page-production-gate.md` — admin gate checklist.
+12. `company/gates/bjt-ui-ux-production-gate.md` — BJT UI/UX gate.
+13. `packages/ui/src/` — shared UI components.
 
 Add when relevant:
 - `docs/spec/compact/07_security_privacy.md` — security/auth endpoints.
@@ -41,6 +42,11 @@ Add when relevant:
 - Admin Shell navigation: compact info architecture, collapsible groups, exact active state, responsive behavior.
 - Do not treat read-only data rendering as admin management. Management routes need operational tools (search/filter/detail/export/audit).
 - Do not use `AdminResourceTableClient` as the primary experience for a management domain without justification.
+- Apply modern patterns where appropriate: bento grid for dashboard overview, shimmer skeleton loaders, micro-interactions on actions.
+- Admin dashboard should use data visualization (charts, sparklines) not just number cards.
+- Touch targets ≥ 44px for admin (tablet-first), ≥ 48px for any mobile admin surface.
+- Loading states: shimmer skeletons matching layout shape. Error states: actionable messages.
+- Empty states: helpful message + CTA to create first record, not blank table.
 </constraints>
 
 <workflow>

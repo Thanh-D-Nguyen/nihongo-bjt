@@ -2166,16 +2166,70 @@ model ContentEnrichment {
 }
 
 model Announcement {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  type      String   @default("info") @db.Text
-  message   String   @db.Text
-  href      String?  @db.Text
-  active    Boolean  @default(true)
-  sortOrder Int      @default(0) @map("sort_order")
+  id        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type      String  @default("info") @db.Text
+  message   String  @db.Text
+  href      String? @db.Text
+  active    Boolean @default(true)
+  sortOrder Int     @default(0) @map("sort_order")
+
+  /// banner | modal
+  format   String @default("banner") @db.VarChar(32)
+  /// all | free_only | premium_only
+  target   String @default("all") @db.VarChar(32)
+  priority Int    @default(0)
+
+  /// i18n title/body – Vi is canonical, En/Ja optional
+  titleVi String? @map("title_vi") @db.Text
+  titleEn String? @map("title_en") @db.Text
+  titleJa String? @map("title_ja") @db.Text
+  bodyVi  String? @map("body_vi") @db.Text
+  bodyEn  String? @map("body_en") @db.Text
+  bodyJa  String? @map("body_ja") @db.Text
+
+  ctaLabel String? @map("cta_label") @db.Text
+  ctaUrl   String? @map("cta_url") @db.Text
+
+  /// Hero image URL for modal announcements
+  imageUrl String? @map("image_url") @db.Text
+
+  /// Modal visual config — admin-selectable presets
+  /// none | confetti | particles | shimmer | aurora | sakura
+  effect   String @default("none") @db.VarChar(32)
+  /// default | gradient-blue | gradient-violet | gradient-warm | gradient-dark | image-only
+  bgPreset String @default("default") @map("bg_preset") @db.VarChar(32)
+
+  /// Dismiss behaviour
+  allowCloseButton  Boolean @default(true) @map("allow_close_button")
+  allowClickOutside Boolean @default(true) @map("allow_click_outside")
+  /// Seconds before close button appears (0 = immediate)
+  dismissDelay      Int     @default(0) @map("dismiss_delay")
+  /// every_visit | once_per_day | once_ever
+  showFrequency     String  @default("once_ever") @map("show_frequency") @db.VarChar(32)
+
+  startsAt  DateTime? @map("starts_at") @db.Timestamptz(6)
+  endsAt    DateTime? @map("ends_at") @db.Timestamptz(6)
+  createdBy String?   @map("created_by") @db.Text
+
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
+  dismissals AnnouncementDismissal[]
+
   @@map("announcement")
+  @@schema("content")
+}
+
+model AnnouncementDismissal {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  announcementId String   @map("announcement_id") @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  dismissedAt    DateTime @default(now()) @map("dismissed_at") @db.Timestamptz(6)
+
+  announcement Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+
+  @@unique([announcementId, userId])
+  @@map("announcement_dismissal")
   @@schema("content")
 }
 

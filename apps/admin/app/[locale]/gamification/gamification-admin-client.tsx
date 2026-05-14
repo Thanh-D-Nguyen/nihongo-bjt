@@ -10,12 +10,18 @@ import {
   AdminEmptyState,
   AdminPageHeader,
   AdminSection,
-  AdminStatusBadge
+  AdminStatusBadge,
+  AdminToastContainer,
+  FormError,
+  FormField,
+  FormInput,
+  useAdminToast
 } from "@nihongo-bjt/ui";
 import { useCallback, useEffect, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
 import { permsFromMe, type MePayload } from "@/app/_components/admin-client-utils";
+import { useFormErrors, parseApiError, validateFields, validators } from "@/lib/form-errors";
 
 type Labels = Record<string, unknown>;
 
@@ -71,7 +77,9 @@ export function GamificationAdminClient({ labels }: { labels: Labels }) {
   const [achievements, setAchievements] = useState<AchievementDef[]>([]);
   const [leaderboards, setLeaderboards] = useState<LeaderboardConfig[]>([]);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const toast = useAdminToast();
+  const streakFe = useFormErrors();
+  const lbFe = useFormErrors();
 
   // Streak form
   const [streakModal, setStreakModal] = useState(false);
@@ -117,16 +125,25 @@ export function GamificationAdminClient({ labels }: { labels: Labels }) {
   function openStreakCreate() {
     setStreakEditId(null);
     setStreakForm({ name: "", activityType: "", minActions: 1, freezesAllowed: 0, enabled: true });
+    streakFe.clearAll();
     setStreakModal(true);
   }
 
   function openStreakEdit(s: StreakConfig) {
     setStreakEditId(s.id);
     setStreakForm({ name: s.name, activityType: s.activityType, minActions: s.minActions, freezesAllowed: s.freezesAllowed, enabled: s.enabled });
+    streakFe.clearAll();
     setStreakModal(true);
   }
 
   async function saveStreak() {
+    streakFe.clearAll();
+    const fieldErrors = validateFields([
+      { field: "name", value: streakForm.name, message: "Tên streak không được để trống", validate: validators.required },
+      { field: "activityType", value: streakForm.activityType, message: "Loại hoạt động không được để trống", validate: validators.required },
+      { field: "minActions", value: streakForm.minActions, message: "Số hành động tối thiểu phải > 0", validate: validators.isPositiveInt },
+    ]);
+    if (Object.keys(fieldErrors).length > 0) { streakFe.setFieldErrors(fieldErrors); return; }
     try {
       const url = streakEditId ? `/api/admin/gamification/streaks/${streakEditId}` : "/api/admin/gamification/streaks";
       const r = await adminApiFetch(url, {
@@ -134,11 +151,17 @@ export function GamificationAdminClient({ labels }: { labels: Labels }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify(streakForm)
       });
-      if (!r.ok) { setToast({ kind: "err", text: t("error") }); return; }
-      setToast({ kind: "ok", text: t("saveOk") });
+      if (!r.ok) {
+        const apiErr = await parseApiError(r, "Lưu streak thất bại");
+        if (apiErr.form) streakFe.setFormError(apiErr.form);
+        if (Object.keys(apiErr.fields).length > 0) streakFe.setFieldErrors(apiErr.fields);
+        if (!apiErr.form && Object.keys(apiErr.fields).length === 0) streakFe.setFormError(t("error"));
+        return;
+      }
+      toast.success(streakEditId ? "Cập nhật streak thành công" : "Tạo streak thành công");
       setStreakModal(false);
       void loadAll();
-    } catch { setToast({ kind: "err", text: t("error") }); }
+    } catch { streakFe.setFormError(t("error")); }
   }
 
   /* ── Leaderboard CRUD ────────────────────────────────────────────────── */
@@ -146,16 +169,25 @@ export function GamificationAdminClient({ labels }: { labels: Labels }) {
   function openLbCreate() {
     setLbEditId(null);
     setLbForm({ name: "", metricType: "xp", period: "weekly", maxEntries: 100, enabled: true });
+    lbFe.clearAll();
     setLbModal(true);
   }
 
   function openLbEdit(lb: LeaderboardConfig) {
     setLbEditId(lb.id);
     setLbForm({ name: lb.name, metricType: lb.metricType, period: lb.period, maxEntries: lb.maxEntries, enabled: lb.enabled });
+    lbFe.clearAll();
     setLbModal(true);
   }
 
   async function saveLb() {
+    lbFe.clearAll();
+    const fieldErrors = validateFields([
+      { field: "name", value: lbForm.name, message: "Tên leaderboard không được để trống", validate: validators.required },
+      { field: "metricType", value: lbForm.metricType, message: "Loại metric không được để trống", validate: validators.required },
+      { field: "maxEntries", value: lbForm.maxEntries, message: "Số lượng tối đa phải > 0", validate: validators.isPositiveInt },
+    ]);
+    if (Object.keys(fieldErrors).length > 0) { lbFe.setFieldErrors(fieldErrors); return; }
     try {
       const url = lbEditId ? `/api/admin/gamification/leaderboards/${lbEditId}` : "/api/admin/gamification/leaderboards";
       const r = await adminApiFetch(url, {
@@ -163,11 +195,17 @@ export function GamificationAdminClient({ labels }: { labels: Labels }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify(lbForm)
       });
-      if (!r.ok) { setToast({ kind: "err", text: t("error") }); return; }
-      setToast({ kind: "ok", text: t("saveOk") });
+      if (!r.ok) {
+        const apiErr = await parseApiError(r, "Lưu leaderboard thất bại");
+        if (apiErr.form) lbFe.setFormError(apiErr.form);
+        if (Object.keys(apiErr.fields).length > 0) lbFe.setFieldErrors(apiErr.fields);
+        if (!apiErr.form && Object.keys(apiErr.fields).length === 0) lbFe.setFormError(t("error"));
+        return;
+      }
+      toast.success(lbEditId ? "Cập nhật leaderboard thành công" : "Tạo leaderboard thành công");
       setLbModal(false);
       void loadAll();
-    } catch { setToast({ kind: "err", text: t("error") }); }
+    } catch { lbFe.setFormError(t("error")); }
   }
 
   /* ── Delete ──────────────────────────────────────────────────────────── */
@@ -176,11 +214,15 @@ export function GamificationAdminClient({ labels }: { labels: Labels }) {
     if (!deleteConfirm) return;
     try {
       const r = await adminApiFetch(`/api/admin/gamification/${deleteConfirm.type}/${deleteConfirm.id}`, { method: "DELETE" });
-      if (!r.ok) { setToast({ kind: "err", text: t("error") }); return; }
-      setToast({ kind: "ok", text: t("deleteOk") });
+      if (!r.ok) {
+        const apiErr = await parseApiError(r, "Xóa thất bại");
+        toast.error("Xóa thất bại", apiErr.form ?? undefined);
+        return;
+      }
+      toast.success("Đã xóa thành công");
       setDeleteConfirm(null);
       void loadAll();
-    } catch { setToast({ kind: "err", text: t("error") }); }
+    } catch { toast.error("Xóa thất bại"); }
   }
 
   /* ── Render ──────────────────────────────────────────────────────────── */
@@ -193,12 +235,7 @@ export function GamificationAdminClient({ labels }: { labels: Labels }) {
         <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">{t("readOnlyNotice")}</div>
       )}
 
-      {toast && (
-        <div className={`rounded-md border p-3 text-sm ${toast.kind === "ok" ? "border-green-300 bg-green-50 text-green-900" : "border-red-300 bg-red-50 text-red-900"}`} role="alert">
-          {toast.text}
-          <button className="ml-4 text-xs underline" onClick={() => setToast(null)} type="button">×</button>
-        </div>
-      )}
+      <AdminToastContainer onRemove={toast.removeToast} toasts={toast.toasts} />
 
       {/* Tabs */}
       <div className="flex gap-1 border-b border-slate-200">
@@ -369,24 +406,21 @@ export function GamificationAdminClient({ labels }: { labels: Labels }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
           <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
             <h3 className="mb-4 text-sm font-semibold text-slate-800">{streakEditId ? t("edit") : t("create")}</h3>
+            <FormError message={streakFe.errors.form} className="mb-3" />
             <div className="space-y-3">
-              <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600">{t("name")}</label>
-                <input className="w-full rounded border px-2 py-1.5 text-sm" value={streakForm.name} onChange={(e) => setStreakForm({ ...streakForm, name: e.target.value })} />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600">{t("activityType")}</label>
-                <input className="w-full rounded border px-2 py-1.5 text-sm" value={streakForm.activityType} onChange={(e) => setStreakForm({ ...streakForm, activityType: e.target.value })} />
-              </div>
+              <FormField label={t("name")} required error={streakFe.fieldError("name")}>
+                <FormInput error={streakFe.fieldError("name")} value={streakForm.name} onChange={(e) => { setStreakForm({ ...streakForm, name: e.target.value }); streakFe.clearFieldError("name"); }} />
+              </FormField>
+              <FormField label={t("activityType")} required error={streakFe.fieldError("activityType")}>
+                <FormInput error={streakFe.fieldError("activityType")} value={streakForm.activityType} onChange={(e) => { setStreakForm({ ...streakForm, activityType: e.target.value }); streakFe.clearFieldError("activityType"); }} />
+              </FormField>
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-slate-600">{t("minActions")}</label>
-                  <input type="number" className="w-full rounded border px-2 py-1.5 text-sm" value={streakForm.minActions} onChange={(e) => setStreakForm({ ...streakForm, minActions: Number(e.target.value) })} />
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-slate-600">{t("freezesAllowed")}</label>
-                  <input type="number" className="w-full rounded border px-2 py-1.5 text-sm" value={streakForm.freezesAllowed} onChange={(e) => setStreakForm({ ...streakForm, freezesAllowed: Number(e.target.value) })} />
-                </div>
+                <FormField label={t("minActions")} error={streakFe.fieldError("minActions")}>
+                  <FormInput type="number" error={streakFe.fieldError("minActions")} value={streakForm.minActions} onChange={(e) => { setStreakForm({ ...streakForm, minActions: Number(e.target.value) }); streakFe.clearFieldError("minActions"); }} />
+                </FormField>
+                <FormField label={t("freezesAllowed")}>
+                  <FormInput type="number" value={streakForm.freezesAllowed} onChange={(e) => setStreakForm({ ...streakForm, freezesAllowed: Number(e.target.value) })} />
+                </FormField>
               </div>
               <div className="flex items-center gap-2">
                 <input type="checkbox" checked={streakForm.enabled} onChange={(e) => setStreakForm({ ...streakForm, enabled: e.target.checked })} id="streak-en" />
@@ -406,29 +440,26 @@ export function GamificationAdminClient({ labels }: { labels: Labels }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
           <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
             <h3 className="mb-4 text-sm font-semibold text-slate-800">{lbEditId ? t("edit") : t("create")}</h3>
+            <FormError message={lbFe.errors.form} className="mb-3" />
             <div className="space-y-3">
-              <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600">{t("name")}</label>
-                <input className="w-full rounded border px-2 py-1.5 text-sm" value={lbForm.name} onChange={(e) => setLbForm({ ...lbForm, name: e.target.value })} />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600">{t("metricType")}</label>
-                <input className="w-full rounded border px-2 py-1.5 text-sm" value={lbForm.metricType} onChange={(e) => setLbForm({ ...lbForm, metricType: e.target.value })} />
-              </div>
+              <FormField label={t("name")} required error={lbFe.fieldError("name")}>
+                <FormInput error={lbFe.fieldError("name")} value={lbForm.name} onChange={(e) => { setLbForm({ ...lbForm, name: e.target.value }); lbFe.clearFieldError("name"); }} />
+              </FormField>
+              <FormField label={t("metricType")} required error={lbFe.fieldError("metricType")}>
+                <FormInput error={lbFe.fieldError("metricType")} value={lbForm.metricType} onChange={(e) => { setLbForm({ ...lbForm, metricType: e.target.value }); lbFe.clearFieldError("metricType"); }} />
+              </FormField>
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-slate-600">{t("period")}</label>
-                  <select className="w-full rounded border px-2 py-1.5 text-sm" value={lbForm.period} onChange={(e) => setLbForm({ ...lbForm, period: e.target.value })}>
+                <FormField label={t("period")}>
+                  <select className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value={lbForm.period} onChange={(e) => setLbForm({ ...lbForm, period: e.target.value })}>
                     <option value="daily">Daily</option>
                     <option value="weekly">Weekly</option>
                     <option value="monthly">Monthly</option>
                     <option value="all_time">All Time</option>
                   </select>
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-slate-600">{t("maxEntries")}</label>
-                  <input type="number" className="w-full rounded border px-2 py-1.5 text-sm" value={lbForm.maxEntries} onChange={(e) => setLbForm({ ...lbForm, maxEntries: Number(e.target.value) })} />
-                </div>
+                </FormField>
+                <FormField label={t("maxEntries")} error={lbFe.fieldError("maxEntries")}>
+                  <FormInput type="number" error={lbFe.fieldError("maxEntries")} value={lbForm.maxEntries} onChange={(e) => { setLbForm({ ...lbForm, maxEntries: Number(e.target.value) }); lbFe.clearFieldError("maxEntries"); }} />
+                </FormField>
               </div>
               <div className="flex items-center gap-2">
                 <input type="checkbox" checked={lbForm.enabled} onChange={(e) => setLbForm({ ...lbForm, enabled: e.target.checked })} id="lb-en" />

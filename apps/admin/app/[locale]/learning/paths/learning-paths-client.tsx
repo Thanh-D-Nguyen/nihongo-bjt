@@ -11,12 +11,16 @@ import {
   AdminPageHeader,
   AdminSection,
   AdminStatusBadge,
-  cn
+  AdminToastContainer,
+  FormError,
+  cn,
+  useAdminToast
 } from "@nihongo-bjt/ui";
 import { LEARNING_PATH_STATUSES } from "@nihongo-bjt/shared";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
+import { useFormErrors, parseApiError, validateFields, validators } from "@/lib/form-errors";
 import { permsFromMe, type MePayload } from "@/app/_components/admin-client-utils";
 
 type Labels = Record<string, string>;
@@ -134,8 +138,9 @@ export function LearningPathsAdminClient({
   const [drawerLoading, setDrawerLoading] = useState(false);
   const [editing, setEditing] = useState<"create" | "edit" | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
-  const [formError, setFormError] = useState<string | null>(null);
+  const fe = useFormErrors();
   const [submitting, setSubmitting] = useState(false);
+  const toast = useAdminToast();
 
   const [reasonModal, setReasonModal] = useState<{
     action: "publish" | "archive" | "duplicate" | "delete";
@@ -195,7 +200,7 @@ export function LearningPathsAdminClient({
     setDetail(null);
     setEditing("create");
     setForm(EMPTY_FORM);
-    setFormError(null);
+    fe.clearAll();
     setDrawerOpen(true);
   };
 
@@ -211,24 +216,30 @@ export function LearningPathsAdminClient({
       titleJa: detail.titleJa ?? "",
       titleVi: detail.titleVi
     });
-    setFormError(null);
+    fe.clearAll();
   };
 
   const closeDrawer = () => {
     setDrawerOpen(false);
     setDetail(null);
     setEditing(null);
-    setFormError(null);
+    fe.clearAll();
   };
 
   const submitForm = async () => {
+    fe.clearAll();
+    const errs = validateFields([
+      { field: "slug", value: form.slug, message: t("errorSlugRequired"), validate: validators.required },
+      { field: "titleVi", value: form.titleVi, message: t("errorTitleViRequired"), validate: validators.required },
+    ]);
+    if (Object.keys(errs).length > 0) { fe.setFieldErrors(errs); return; }
+
     const reasonText = window.prompt(t("promptReason") ?? "Reason");
     if (!reasonText || reasonText.trim().length < 3) {
-      setFormError(t("errorReasonRequired"));
+      fe.setFormError(t("errorReasonRequired"));
       return;
     }
     setSubmitting(true);
-    setFormError(null);
     try {
       const payload: Record<string, unknown> = {
         descriptionJa: form.descriptionJa || null,
@@ -250,16 +261,19 @@ export function LearningPathsAdminClient({
         method
       });
       if (!r.ok) {
-        const err = (await r.json().catch(() => null)) as { code?: string } | null;
-        setFormError(err?.code ?? t("errorSave"));
+        const parsed = await parseApiError(r, t("errorSave"));
+        fe.setFieldErrors(parsed.fields);
+        if (parsed.form) fe.setFormError(parsed.form);
+        else toast.error(t("errorSave"));
         return;
       }
       const saved = (await r.json()) as LearningPathDetail;
       setDetail(saved);
       setEditing(null);
+      toast.success(t("saved"));
       await load();
     } catch {
-      setFormError(t("errorSave"));
+      toast.error(t("errorSave"));
     } finally {
       setSubmitting(false);
     }
@@ -492,18 +506,15 @@ export function LearningPathsAdminClient({
 
               {editing && !drawerLoading ? (
                 <div className="space-y-3">
-                  {formError ? (
-                    <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-                      {formError}
-                    </div>
-                  ) : null}
+                  <FormError message={fe.errors.form} className="mb-3" />
                   <div className="grid grid-cols-2 gap-3">
-                    <FormField label={t("formSlug")}>
+                    <FormField label={<>{t("formSlug")} <span className="text-red-500">*</span></>}>
                       <input
-                        className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
-                        onChange={(e) => setForm({ ...form, slug: e.target.value })}
+                        className={cn("w-full rounded-md px-2 py-1.5 text-sm", fe.fieldError("slug") ? "border border-red-400 bg-red-50/50" : "border border-slate-300")}
+                        onChange={(e) => { fe.clearFieldError("slug"); setForm({ ...form, slug: e.target.value }); }}
                         value={form.slug}
                       />
+                      {fe.fieldError("slug") && <p className="text-xs text-red-600">{fe.fieldError("slug")}</p>}
                     </FormField>
                     <FormField label={t("formTargetLevel")}>
                       <select
@@ -519,12 +530,13 @@ export function LearningPathsAdminClient({
                         ))}
                       </select>
                     </FormField>
-                    <FormField label={t("formTitleVi")}>
+                    <FormField label={<>{t("formTitleVi")} <span className="text-red-500">*</span></>}>
                       <input
-                        className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
-                        onChange={(e) => setForm({ ...form, titleVi: e.target.value })}
+                        className={cn("w-full rounded-md px-2 py-1.5 text-sm", fe.fieldError("titleVi") ? "border border-red-400 bg-red-50/50" : "border border-slate-300")}
+                        onChange={(e) => { fe.clearFieldError("titleVi"); setForm({ ...form, titleVi: e.target.value }); }}
                         value={form.titleVi}
                       />
+                      {fe.fieldError("titleVi") && <p className="text-xs text-red-600">{fe.fieldError("titleVi")}</p>}
                     </FormField>
                     <FormField label={t("formTitleJa")}>
                       <input
@@ -561,7 +573,7 @@ export function LearningPathsAdminClient({
                   <div className="flex justify-end gap-2">
                     <button
                       className="rounded-md border border-slate-200 px-3 py-1.5 text-sm"
-                      onClick={() => setEditing(null)}
+                      onClick={() => { fe.clearAll(); setEditing(null); }}
                       type="button"
                     >
                       {t("formCancel")}
@@ -692,11 +704,13 @@ export function LearningPathsAdminClient({
           </div>
         </div>
       ) : null}
+
+      <AdminToastContainer toasts={toast.toasts} onRemove={toast.removeToast} />
     </div>
   );
 }
 
-function FormField({ children, label }: { children: React.ReactNode; label: string }) {
+function FormField({ children, label }: { children: React.ReactNode; label: React.ReactNode }) {
   return (
     <label className="flex flex-col text-xs">
       <span className="mb-1 font-medium text-slate-600">{label}</span>

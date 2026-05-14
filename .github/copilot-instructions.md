@@ -39,15 +39,27 @@ For context, start from:
 
 ## UI/UX Standards
 
+- **MANDATORY**: Read `.github/instructions/ui-ux-modern-trends.instructions.md` before ANY UI work. This is the 2025–2026 design trend bible.
 - Read `DESIGN.md` for the current design system.
 - Use `.ai-design/` and `docs/design/` for active visual references.
 - Apply `.cursor/rules/06-ui-ux-production.mdc`.
 - Apply `.cursor/rules/07-ui-visual-production-upgrade.mdc`.
 
+### UI/UX Non-Negotiables (Every Screen)
+1. **Trend-current**: UI must reflect 2025–2026 patterns (bento grids, micro-interactions, depth layering, shimmer skeletons, contextual color).
+2. **Competitive edge**: Every screen must be better than equivalent in Duolingo/Bunpo/WaniKani/Anki. If it looks like generic SaaS, reject it.
+3. **NihonGo BJT identity**: Professional BJT focus, Japanese text excellence (furigana toggle, line-height ≥1.8), calm focus mode during study, editorial content feel.
+4. **Mobile-first**: Design for 375px first. Touch targets ≥ 48px. Bottom navigation for primary actions.
+5. **No card-grid walls**: Use bento grid with size variation. Hero card + supporting cards.
+6. **Micro-interactions**: Every user action has a response (button scale, progress animation, answer feedback).
+7. **States complete**: Shimmer skeleton loading, encouraging empty states with CTA, gentle error states.
+8. **Accessibility**: WCAG AA contrast, `prefers-reduced-motion` respected, max 3 simultaneous animations.
+
 ## Key Paths
 
 - AI project brief: `AI_CONTEXT.md`
 - Project operating guide: `AGENTS.md`
+- **UI/UX trends**: `.github/instructions/ui-ux-modern-trends.instructions.md`
 - Spec index: `docs/spec/index.md`
 - Canonical spec: `docs/spec/nihongo_bjt_cursor_master_spec_final_completed_v2.md`
 - Runtime setup: `README.md`

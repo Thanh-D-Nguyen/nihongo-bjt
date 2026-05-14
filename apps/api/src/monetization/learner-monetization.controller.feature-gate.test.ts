@@ -16,8 +16,11 @@ describe("LearnerMonetizationController feature gate", () => {
       requireEnabled: vi.fn().mockRejectedValue(new ServiceUnavailableException("disabled"))
     };
 
+    const stripeBilling = { startCheckout: vi.fn() };
+
     const controller = new LearnerMonetizationController(
       billing as any,
+      stripeBilling as any,
       ads as any,
       entitlements as any,
       quota as any,
@@ -46,8 +49,11 @@ describe("LearnerMonetizationController feature gate", () => {
         .mockRejectedValue(new ForbiddenException({ code: "CONSENT_REQUIRED" }))
     };
 
+    const stripeBilling = { startCheckout: vi.fn() };
+
     const controller = new LearnerMonetizationController(
       billing as any,
+      stripeBilling as any,
       ads as any,
       entitlements as any,
       quota as any,

@@ -91,6 +91,7 @@
     "brand": "NihonGo BJT",
     "cardgen": "カード生成",
     "exercises": "練習",
+    "explore": "探索",
     "home": "ホーム",
     "more": "その他",
     "quiz": "BJT",
@@ -707,7 +708,18 @@
     "emptyCtaSearch": "検索",
     "emptyCtaDaily": "今日の日本語",
     "subtitle": "間隔反復で語彙を復習 — 毎日数分だけ。",
-    "title": "期限到来カードを復習"
+    "title": "期限到来カードを復習",
+    "mentorName": "先生",
+    "mentorGoodEmoji": "🎉",
+    "mentorGoodText": "素晴らしい！記憶がしっかり定着しています。このペースを保ちましょう。",
+    "mentorHardEmoji": "💪",
+    "mentorHardText": "少し難しかったですね。大丈夫、次はもっとスムーズに思い出せますよ。",
+    "mentorAgainEmoji": "🌱",
+    "mentorAgainText": "心配いりません。ここからもう一度。すぐにまた出てきますよ。",
+    "mentorMilestone5": "{n}枚連続正解！いいペースです！",
+    "mentorMilestone10": "🔥 {n}枚連続 — 絶好調ですね！",
+    "mentorMilestone25": "🏆 {n}枚！素晴らしい記録です！",
+    "streakLabel": "連続"
   },
   "decks": {
     "title": "デッキ",
@@ -770,6 +782,21 @@
     "deckStudyExampleSourceLexeme": "語彙",
     "deckStudyExampleSourceGrammar": "文法",
     "deckStudyExampleSourceKanji": "漢字",
+    "deckStudyRateAgain": "もう一度",
+    "deckStudyRateHard": "難しい",
+    "deckStudyRateGood": "よし",
+    "deckStudyRateHint": "自己評価 → よし/難しいは次のカードへ、「もう一度」はこのカードに残る",
+    "mentorName": "先生",
+    "mentorGoodEmoji": "🎉",
+    "mentorGoodText": "素晴らしい！記憶力がとても良いですね",
+    "mentorHardEmoji": "💪",
+    "mentorHardText": "ちょっと難しいですね — 大丈夫、次は覚えますよ",
+    "mentorAgainEmoji": "🌱",
+    "mentorAgainText": "大丈夫、ここからもう一度始めましょう",
+    "mentorMilestone5": "{n}枚連続！すごい！",
+    "mentorMilestone10": "🔥 {n}枚連続 — 絶好調！",
+    "mentorMilestone25": "🏆 {n}枚！素晴らしい記録 — 続けましょう！",
+    "streakLabel": "連続",
     "deckDetailAllCardsToggleTpl": "全カード一覧（{count}枚）",
     "deckDetailAllCardsHint": "照会するときに開く · 学習は上のカードで行います",
     "deckDetailNotFound": "デッキが見つからないか、閲覧権限がありません。",
@@ -1435,6 +1462,27 @@
     "success": "フィードバックありがとうございます！できるだけ早く確認します。",
     "error": "送信できませんでした。後でもう一度お試しください。"
   },
+  "explore": {
+    "title": "探索",
+    "subtitle": "語彙・漢字・文法を調べて日本語を練習しましょう",
+    "dictionary": "辞書",
+    "dictionaryDesc": "語彙、意味、読み方、例文を検索",
+    "kanji": "漢字",
+    "kanjiDesc": "画数・読み・JLPTレベルで漢字を検索",
+    "grammar": "文法",
+    "grammarDesc": "レベル別の日本語文法パターン",
+    "exercises": "練習",
+    "exercisesDesc": "知識を復習するインタラクティブ練習",
+    "levels": "BJTレベル",
+    "levelsDesc": "BJT J1〜J5レベル別の学習内容",
+    "search": "総合検索",
+    "searchDesc": "語彙・漢字・文法・例文を一括検索",
+    "statsWords": "語彙",
+    "statsKanji": "漢字",
+    "statsGrammar": "文法",
+    "recentTitle": "最近の検索",
+    "recentEmpty": "検索履歴がありません"
+  },
   "exercises": {
     "title": "練習",
     "eyebrow": "インタラクティブ練習",
@@ -1862,5 +1910,10 @@
     "sessionOf": "/",
     "tapToReveal": "タップまたはSpaceキー",
     "reading": "読み方"
+  },
+  "announcements": {
+    "close": "閉じる",
+    "learnMore": "詳しく見る",
+    "dismiss": "閉じる"
   }
 }

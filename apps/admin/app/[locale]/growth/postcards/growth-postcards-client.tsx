@@ -11,7 +11,10 @@ import {
   AdminPageHeader,
   AdminSection,
   AdminStatusBadge,
-  cn
+  AdminToastContainer,
+  FormError,
+  cn,
+  useAdminToast
 } from "@nihongo-bjt/ui";
 import {
   GROWTH_POSTCARD_EVENT_KINDS,
@@ -20,7 +23,9 @@ import {
 import { useCallback, useEffect, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
+import { useFormErrors, parseApiError, validateFields, validators } from "@/lib/form-errors";
 import { permsFromMe, type MePayload } from "@/app/_components/admin-client-utils";
+import { AdminAutoFill } from "@/app/_components/admin-auto-fill";
 
 type CommonLabels = { empty: string; error: string; loading: string; records: string };
 type Labels = Record<string, string>;
@@ -184,7 +189,8 @@ export function GrowthPostcardsClient({
   const [reason, setReason] = useState("");
   const [mutating, setMutating] = useState(false);
   const [confirm, setConfirm] = useState<{ kind: "publish" | "archive" } | null>(null);
-  const [toast, setToast] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const toast = useAdminToast();
+  const fe = useFormErrors();
 
   useEffect(() => {
     const h = setTimeout(() => setDebounced(search.trim()), 300);
@@ -255,10 +261,14 @@ export function GrowthPostcardsClient({
 
   async function submitCreate() {
     if (!canManage) return;
-    if (reason.trim().length < 3) {
-      setToast({ kind: "err", text: t("reasonRequired") });
-      return;
-    }
+    fe.clearAll();
+    const errs = validateFields([
+      { field: "slug", value: form.slug, message: t("slugRequired"), validate: validators.required },
+      { field: "name", value: form.name, message: t("nameRequired"), validate: validators.required },
+      { field: "reason", value: reason, message: t("reasonRequired"), validate: validators.required },
+      { field: "reason", value: reason, message: t("reasonRequired"), validate: validators.minLength(3) },
+    ]);
+    if (Object.keys(errs).length > 0) { fe.setFieldErrors(errs); return; }
     setMutating(true);
     try {
       const r = await adminApiFetch("/api/admin/growth/postcards", {
@@ -271,11 +281,14 @@ export function GrowthPostcardsClient({
         method: "POST"
       });
       if (!r.ok) {
-        setToast({ kind: "err", text: t("createFailed") });
+        const parsed = await parseApiError(r, t("createFailed"));
+        fe.setFieldErrors(parsed.fields);
+        if (parsed.form) fe.setFormError(parsed.form);
+        else toast.error(t("createFailed"));
         return;
       }
       const body = (await r.json()) as Detail;
-      setToast({ kind: "ok", text: t("createOk") });
+      toast.success(t("createOk"));
       setCreating(false);
       setForm(DEFAULT_FORM);
       setReason("");
@@ -288,10 +301,14 @@ export function GrowthPostcardsClient({
 
   async function submitEdit() {
     if (!canManage || !detail) return;
-    if (reason.trim().length < 3) {
-      setToast({ kind: "err", text: t("reasonRequired") });
-      return;
-    }
+    fe.clearAll();
+    const errs = validateFields([
+      { field: "slug", value: form.slug, message: t("slugRequired"), validate: validators.required },
+      { field: "name", value: form.name, message: t("nameRequired"), validate: validators.required },
+      { field: "reason", value: reason, message: t("reasonRequired"), validate: validators.required },
+      { field: "reason", value: reason, message: t("reasonRequired"), validate: validators.minLength(3) },
+    ]);
+    if (Object.keys(errs).length > 0) { fe.setFieldErrors(errs); return; }
     setMutating(true);
     try {
       const r = await adminApiFetch(`/api/admin/growth/postcards/${detail.id}`, {
@@ -304,10 +321,13 @@ export function GrowthPostcardsClient({
         method: "PATCH"
       });
       if (!r.ok) {
-        setToast({ kind: "err", text: t("updateFailed") });
+        const parsed = await parseApiError(r, t("updateFailed"));
+        fe.setFieldErrors(parsed.fields);
+        if (parsed.form) fe.setFormError(parsed.form);
+        else toast.error(t("updateFailed"));
         return;
       }
-      setToast({ kind: "ok", text: t("updateOk") });
+      toast.success(t("updateOk"));
       setEditing(false);
       setReason("");
       void loadList();
@@ -320,7 +340,7 @@ export function GrowthPostcardsClient({
   async function submitTransition(kind: "publish" | "archive") {
     if (!canManage || !detail) return;
     if (reason.trim().length < 3) {
-      setToast({ kind: "err", text: t("reasonRequired") });
+      fe.setFieldError("reason", t("reasonRequired"));
       return;
     }
     setMutating(true);
@@ -332,13 +352,13 @@ export function GrowthPostcardsClient({
       if (!r.ok) {
         const body = (await r.json().catch(() => null)) as { code?: string } | null;
         if (body?.code === "public_template_requires_no_pii_verification") {
-          setToast({ kind: "err", text: t("publishBlockedNoPii") });
+          toast.error(t("publishBlockedNoPii"));
         } else {
-          setToast({ kind: "err", text: t(`${kind}Failed`) });
+          toast.error(t(`${kind}Failed`));
         }
         return;
       }
-      setToast({ kind: "ok", text: t(`${kind}Ok`) });
+      toast.success(t(`${kind}Ok`));
       setConfirm(null);
       setReason("");
       void loadList();
@@ -525,15 +545,39 @@ export function GrowthPostcardsClient({
       {creating || editing ? (
         <AdminSection>
           <h3 className="text-lg font-semibold">{creating ? t("createHeading") : t("editHeading")}</h3>
+          <div className="mb-3 flex items-center justify-between">
+            <FormError message={fe.errors.form} className="flex-1" />
+            <AdminAutoFill
+              formType="growth-postcard"
+              onFill={(fields) => {
+                const f = fields as Partial<FormState>;
+                setForm((prev) => ({
+                  ...prev,
+                  ...(f.slug !== undefined && { slug: String(f.slug) }),
+                  ...(f.kind !== undefined && { kind: f.kind as FormState["kind"] }),
+                  ...(f.name !== undefined && { name: String(f.name) }),
+                  ...(f.description !== undefined && { description: String(f.description) }),
+                  ...(f.bodyTemplate !== undefined && { bodyTemplate: String(f.bodyTemplate) }),
+                  ...(f.variables !== undefined && { variables: String(f.variables) }),
+                  ...(f.thumbnailKey !== undefined && { thumbnailKey: String(f.thumbnailKey) }),
+                  ...(f.privacyClass !== undefined && { privacyClass: f.privacyClass as FormState["privacyClass"] }),
+                  ...(f.noPiiVerified !== undefined && { noPiiVerified: Boolean(f.noPiiVerified) }),
+                }));
+              }}
+              labels={{ button: t("autoFill") || "Auto Fill" }}
+              disabled={mutating}
+            />
+          </div>
           <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
             <label className="text-sm">
-              {t("formSlug")}
+              {t("formSlug")} <span className="text-red-500">*</span>
               <input
-                className="mt-1 w-full rounded border px-2 py-1"
-                onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
+                className={cn("mt-1 w-full rounded border px-2 py-1", fe.fieldError("slug") ? "border-red-400 bg-red-50/50" : "border-slate-300")}
+                onChange={(e) => { setForm((f) => ({ ...f, slug: e.target.value })); fe.clearFieldError("slug"); }}
                 pattern="[a-zA-Z0-9_\-]+"
                 value={form.slug}
               />
+              {fe.fieldError("slug") && <p className="text-xs text-red-600">{fe.fieldError("slug")}</p>}
             </label>
             <label className="text-sm">
               {t("formKind")}
@@ -550,12 +594,13 @@ export function GrowthPostcardsClient({
               </select>
             </label>
             <label className="text-sm md:col-span-2">
-              {t("formName")}
+              {t("formName")} <span className="text-red-500">*</span>
               <input
-                className="mt-1 w-full rounded border px-2 py-1"
-                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                className={cn("mt-1 w-full rounded border px-2 py-1", fe.fieldError("name") ? "border-red-400 bg-red-50/50" : "border-slate-300")}
+                onChange={(e) => { setForm((f) => ({ ...f, name: e.target.value })); fe.clearFieldError("name"); }}
                 value={form.name}
               />
+              {fe.fieldError("name") && <p className="text-xs text-red-600">{fe.fieldError("name")}</p>}
             </label>
             <label className="text-sm md:col-span-2">
               {t("formDescription")}
@@ -631,12 +676,13 @@ export function GrowthPostcardsClient({
               </div>
             </div>
             <label className="text-sm md:col-span-2">
-              {t("formReason")}
+              {t("formReason")} <span className="text-red-500">*</span>
               <input
-                className="mt-1 w-full rounded border px-2 py-1"
-                onChange={(e) => setReason(e.target.value)}
+                className={cn("mt-1 w-full rounded border px-2 py-1", fe.fieldError("reason") ? "border-red-400 bg-red-50/50" : "border-slate-300")}
+                onChange={(e) => { setReason(e.target.value); fe.clearFieldError("reason"); }}
                 value={reason}
               />
+              {fe.fieldError("reason") && <p className="text-xs text-red-600">{fe.fieldError("reason")}</p>}
             </label>
           </div>
           <div className="mt-3 flex gap-2">
@@ -654,6 +700,7 @@ export function GrowthPostcardsClient({
                 setCreating(false);
                 setEditing(false);
                 setReason("");
+                fe.clearAll();
               }}
               type="button"
             >
@@ -694,7 +741,7 @@ export function GrowthPostcardsClient({
                 {!detail.active ? (
                   <button
                     className="rounded border px-2 py-1 text-xs"
-                    onClick={() => setConfirm({ kind: "publish" })}
+                    onClick={() => { fe.clearFieldError("reason"); setConfirm({ kind: "publish" }); }}
                     type="button"
                   >
                     {t("actionPublish")}
@@ -702,7 +749,7 @@ export function GrowthPostcardsClient({
                 ) : (
                   <button
                     className="rounded border px-2 py-1 text-xs"
-                    onClick={() => setConfirm({ kind: "archive" })}
+                    onClick={() => { fe.clearFieldError("reason"); setConfirm({ kind: "archive" }); }}
                     type="button"
                   >
                     {t("actionArchive")}
@@ -746,17 +793,19 @@ export function GrowthPostcardsClient({
             <p className="mt-1 text-sm">{t(`confirmBody_${confirm.kind}`)}</p>
             <input
               aria-label={t("formReason")}
-              className="mt-3 w-full rounded border px-2 py-1 text-sm"
-              onChange={(e) => setReason(e.target.value)}
+              className={cn("mt-3 w-full rounded border px-2 py-1 text-sm", fe.fieldError("reason") ? "border-red-400 bg-red-50/50 text-red-900" : "border-slate-300")}
+              onChange={(e) => { setReason(e.target.value); fe.clearFieldError("reason"); }}
               placeholder={t("formReason")}
               value={reason}
             />
+            {fe.fieldError("reason") && <p className="mt-1 text-xs text-red-600">{fe.fieldError("reason")}</p>}
             <div className="mt-3 flex justify-end gap-2">
               <button
                 className="rounded border px-3 py-1 text-sm"
                 onClick={() => {
                   setConfirm(null);
                   setReason("");
+                  fe.clearFieldError("reason");
                 }}
                 type="button"
               >
@@ -775,21 +824,7 @@ export function GrowthPostcardsClient({
         </div>
       ) : null}
 
-      {toast ? (
-        <div
-          aria-live="polite"
-          className={cn(
-            "fixed bottom-4 right-4 rounded p-3 text-sm shadow",
-            toast.kind === "ok" ? "bg-emerald-100 text-emerald-900" : "bg-red-100 text-red-900"
-          )}
-          role="status"
-        >
-          {toast.text}
-          <button aria-label="dismiss" className="ml-2 underline" onClick={() => setToast(null)} type="button">
-            ×
-          </button>
-        </div>
-      ) : null}
+      <AdminToastContainer toasts={toast.toasts} onRemove={toast.removeToast} />
     </div>
   );
 }

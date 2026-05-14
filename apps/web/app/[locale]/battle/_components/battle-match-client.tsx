@@ -13,17 +13,26 @@ import { botName, localizeDifficulty, metricWidth } from "./battle-types";
 function StatTile({
   label,
   tone = "dark",
-  value
+  value,
+  hero = false
 }: {
+  hero?: boolean;
   label: string;
   tone?: "amber" | "dark" | "green";
   value: string;
 }) {
   const toneClass = tone === "green" ? "text-leaf" : tone === "amber" ? "text-amber" : "text-ink";
+  const toneRing = tone === "green" ? "ring-leaf/10" : tone === "amber" ? "ring-amber/10" : "ring-ink/5";
+  const toneBg = tone === "green" ? "from-leaf/5 to-transparent" : tone === "amber" ? "from-amber/5 to-transparent" : "from-ink/[0.02] to-transparent";
   return (
-    <div className="rounded-2xl border border-ink/10 bg-white/78 p-3 shadow-sm">
-      <p className="text-[11px] font-bold uppercase text-muted">{label}</p>
-      <p className={`mt-1 text-lg font-black ${toneClass}`}>{value}</p>
+    <div className={`relative overflow-hidden rounded-2xl border border-ink/10 bg-white/78 p-3.5 shadow-sm ring-1 ${toneRing} ${
+      hero ? "sm:col-span-2 lg:col-span-2" : ""
+    }`}>
+      <div className={`absolute inset-0 bg-gradient-to-br ${toneBg}`} aria-hidden />
+      <p className="relative text-[10px] font-black uppercase tracking-wider text-muted">{label}</p>
+      <p className={`relative mt-1.5 font-black tabular-nums ${toneClass} ${
+        hero ? "text-2xl sm:text-3xl" : "text-xl"
+      }`}>{value}</p>
     </div>
   );
 }
@@ -223,10 +232,10 @@ export function BattleMatchClient() {
             <div className="flex flex-wrap items-center gap-2">
               <div
                 aria-live="polite"
-                className="min-w-[12rem] rounded-2xl border border-ink/10 bg-paper/90 px-4 py-2"
+                className="min-w-[12rem] rounded-2xl border border-ink/10 bg-white/90 px-4 py-2.5 shadow-sm"
               >
-                <p className="text-[10px] font-bold uppercase text-muted">{labels.finalScore}</p>
-                <p className="text-lg font-bold text-ink">{scoreLabel}</p>
+                <p className="text-[10px] font-black uppercase tracking-wider text-muted">{labels.finalScore}</p>
+                <p className="mt-0.5 text-xl font-black tabular-nums text-ink">{scoreLabel}</p>
               </div>
               <button
                 className="inline-flex min-h-10 items-center rounded-xl border border-ink/15 bg-white px-4 text-sm font-bold text-ink hover:bg-paper"
@@ -240,6 +249,7 @@ export function BattleMatchClient() {
 
           <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <StatTile
+              hero
               label={labels.questionProgress}
               tone="green"
               value={
@@ -261,7 +271,7 @@ export function BattleMatchClient() {
                     : "--"
               }
             />
-            <StatTile label={labels.combo} value={String(combo)} />
+            <StatTile label={labels.combo} value={`×${combo}`} />
             <StatTile
               label={labels.opponent}
               value={isPvp ? (opponentName ?? labels.opponent) : botName(labels, displayedBot.label)}
@@ -304,7 +314,7 @@ export function BattleMatchClient() {
 
           <section
             className={`relative mt-6 overflow-hidden rounded-2xl border border-ink/10 bg-white/90 shadow-sm ${
-              round && !answerResult ? "ring-2 ring-accent/25 ring-offset-2" : ""
+              round && !answerResult ? "battle-question-active" : ""
             }`}
           >
             <div className="border-b border-ink/10 p-4 sm:p-5">
@@ -346,18 +356,22 @@ export function BattleMatchClient() {
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 <div>
                   <span className="sr-only">{labels.progressBarLabel}</span>
-                  <div className="h-2 overflow-hidden rounded-full bg-ink/10">
+                  <div className="h-2.5 overflow-hidden rounded-full bg-ink/8">
                     <div
-                      className="h-full rounded-full bg-leaf"
+                      className="battle-progress-fill h-full rounded-full bg-gradient-to-r from-leaf to-emerald-400"
                       style={{ width: metricWidth(roundProgress) }}
                     />
                   </div>
                 </div>
                 <div>
                   <span className="sr-only">{labels.timeBarLabel}</span>
-                  <div className="h-2 overflow-hidden rounded-full bg-ink/10">
+                  <div className="h-2.5 overflow-hidden rounded-full bg-ink/8">
                     <div
-                      className="h-full rounded-full bg-amber"
+                      className={`battle-progress-fill h-full rounded-full ${
+                        round && timeLeft !== null && timeLeft <= 5
+                          ? "battle-timer-urgent bg-gradient-to-r from-red-500 to-amber-500"
+                          : "bg-gradient-to-r from-amber to-yellow-400"
+                      }`}
                       style={{ width: metricWidth(timeProgress) }}
                     />
                   </div>
@@ -384,10 +398,13 @@ export function BattleMatchClient() {
               ) : null}
 
               {!round && !outcome ? (
-                <div className="grid min-h-[12rem] place-items-center rounded-2xl border border-dashed border-ink/12 bg-paper/70 p-6 text-center">
-                  <p className="max-w-md text-sm font-semibold leading-6 text-muted">
-                    {showCountdownOverlay ? labels.countdownPreparing : labels.notStartedHint}
-                  </p>
+                <div className="grid min-h-[12rem] place-items-center rounded-2xl border border-dashed border-ink/10 bg-gradient-to-b from-paper/80 to-white/60 p-8 text-center">
+                  <div className="flex flex-col items-center gap-3">
+                    <span className="grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-indigo-50 to-blue-50 text-2xl shadow-sm" aria-hidden>⚔️</span>
+                    <p className="max-w-md text-sm font-semibold leading-6 text-muted">
+                      {showCountdownOverlay ? labels.countdownPreparing : labels.notStartedHint}
+                    </p>
+                  </div>
                 </div>
               ) : null}
 
@@ -433,21 +450,32 @@ export function BattleMatchClient() {
                     {round.question.options.map((option) => {
                       const picked = selectedOptionKey === option.optionKey;
                       const correct = answerResult?.correctOptionKey === option.optionKey;
+                      const wrong = picked && answerResult && !answerResult.userCorrect;
                       return (
                         <button
-                          className={`min-h-16 rounded-2xl border px-4 py-3 text-left text-sm font-bold leading-6 transition disabled:cursor-not-allowed ${
+                          className={`battle-answer-btn min-h-16 rounded-2xl border px-4 py-3 text-left text-sm font-bold leading-6 ${
                             correct
-                              ? "border-leaf/30 bg-leaf-soft text-leaf"
-                              : picked
-                                ? "border-ink/30 bg-paper text-ink"
-                                : "border-ink/10 bg-white text-ink hover:bg-paper"
-                          }`}
+                              ? "battle-answer-correct border-leaf/30 bg-leaf-soft text-leaf shadow-sm shadow-leaf/10"
+                              : wrong
+                                ? "battle-answer-wrong border-sakura/30 bg-sakura-soft text-sakura"
+                                : picked
+                                  ? "border-accent/30 bg-accent/5 text-ink shadow-sm"
+                                  : "border-ink/10 bg-white text-ink"
+                          } ${!canAnswer ? "cursor-not-allowed opacity-75" : ""}`}
                           disabled={!canAnswer}
                           key={option.optionKey}
                           onClick={() => submitAnswer(option.optionKey)}
                           type="button"
                         >
-                          <span className="mr-2 text-muted">{option.optionKey}.</span>
+                          <span className={`mr-2 inline-flex h-6 w-6 items-center justify-center rounded-md text-xs font-black ${
+                            correct
+                              ? "bg-leaf/15 text-leaf"
+                              : wrong
+                                ? "bg-sakura/15 text-sakura"
+                                : picked
+                                  ? "bg-accent/10 text-accent"
+                                  : "bg-ink/5 text-muted"
+                          }`}>{option.optionKey}</span>
                           {option.text}
                         </button>
                       );
@@ -457,20 +485,21 @@ export function BattleMatchClient() {
               ) : null}
 
               {outcome ? (
-                <div className="relative overflow-hidden rounded-2xl border border-ink/10 bg-paper/70 p-4">
+                <div className="relative overflow-hidden rounded-2xl border border-ink/10 bg-gradient-to-br from-paper/90 to-white p-5">
                   <BattlePvpOutcomeEffects fireworks={showPvpVictoryFireworks} />
-                  <p className="relative z-[2] text-lg font-black text-ink" role="status">
-                    {isPvp ? pvpOutcomeHeadline : outcomeText}
-                  </p>
-                  {isPvp && pvpOutcomeBody ? (
-                    <p className="relative z-[2] mt-2 text-sm font-semibold leading-relaxed text-muted">
-                      {pvpOutcomeBody}
+                  <div className="relative z-[2]">
+                    <p className="text-2xl font-black tracking-tight text-ink" role="status">
+                      {isPvp ? pvpOutcomeHeadline : outcomeText}
                     </p>
-                  ) : null}
-                  <p className="relative z-[2] mt-2 text-sm font-bold text-muted">
-                    {labels.finalScore}: {userScore} - {opponentScore}
-                  </p>
-                  <div className="mt-4 flex flex-wrap gap-2">
+                    {isPvp && pvpOutcomeBody ? (
+                      <p className="mt-2 text-sm font-semibold leading-relaxed text-muted">
+                        {pvpOutcomeBody}
+                      </p>
+                    ) : null}
+                    <p className="mt-3 inline-flex items-center gap-2 rounded-xl border border-ink/10 bg-white px-4 py-2 text-base font-black tabular-nums text-ink shadow-sm">
+                      <span className="text-muted">{labels.finalScore}:</span> {userScore} - {opponentScore}
+                    </p>
+                    <div className="mt-5 flex flex-wrap gap-2">
                     {isPvp ? (
                       <Link
                         className="inline-flex min-h-10 items-center rounded-xl bg-ink px-4 text-sm font-bold text-surface hover:bg-ink/90"
@@ -515,6 +544,7 @@ export function BattleMatchClient() {
                   {shareUrl ? (
                     <p className="mt-3 text-sm font-bold text-leaf">{labels.shareSuccess}</p>
                   ) : null}
+                  </div>
                 </div>
               ) : null}
             </div>

@@ -603,7 +603,7 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
                 />
               </div>
               <button
-                className="min-h-11 w-full shrink-0 rounded-xl bg-ink px-5 py-3 text-sm font-semibold text-surface shadow-sm transition-colors hover:bg-ink/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:opacity-40 sm:w-auto"
+                className="search-submit-btn min-h-11 w-full shrink-0 rounded-xl bg-ink px-5 py-3 text-sm font-semibold text-surface shadow-sm hover:bg-ink/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:opacity-40 sm:w-auto"
                 disabled={loading || !query.trim()}
                 type="submit"
               >
@@ -646,7 +646,7 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
                 <button
                   key={lvl}
                   className={cn(
-                    "inline-flex min-h-10 min-w-10 items-center justify-center rounded-md px-2 py-1.5 text-[11px] font-semibold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30",
+                    "search-level-pill inline-flex min-h-10 min-w-10 items-center justify-center rounded-md px-2 py-1.5 text-[11px] font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30",
                     levelFilter === lvl
                       ? "bg-accent text-surface shadow-sm"
                       : "text-muted hover:bg-ink/5 hover:text-ink"
@@ -709,9 +709,13 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
         )}
 
         {!loading && !error && hasSearched && results.length === 0 && (
-          <EmptyState className="mx-4 mt-12 sm:mx-0" title={labels.empty}>
-            <IconSearch aria-hidden className="mt-4 text-muted/30" size={44} />
-          </EmptyState>
+          <div className="search-empty-state mx-4 mt-12 flex flex-col items-center gap-4 rounded-2xl border border-ink/6 bg-gradient-to-b from-paper to-surface p-8 text-center sm:mx-0">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/8">
+              <IconSearch aria-hidden className="text-accent/50" size={28} />
+            </div>
+            <p className="text-sm font-semibold text-ink">{labels.empty}</p>
+            <p className="max-w-xs text-xs text-muted">{labels.subtitle}</p>
+          </div>
         )}
 
         {!loading && !error && hasSearched && results.length > 0 && visibleResults.length === 0 && (
@@ -719,21 +723,25 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
         )}
 
         {!hasSearched && !loading && (
-          <div className="mt-20 flex flex-col items-center gap-4 px-4 text-center">
-            <span aria-hidden className="jp-text select-none text-5xl opacity-20">
-              {labels.landingHeroGlyph}
-            </span>
-            <h2 className="text-lg font-bold text-ink">{labels.title}</h2>
-            <p className="max-w-sm text-sm text-muted">{labels.subtitle}</p>
+          <div className="search-landing mt-12 flex flex-col items-center gap-5 px-4 text-center sm:mt-16">
+            {/* Hero glyph with gradient glow */}
+            <div className="relative">
+              <span className="absolute inset-0 -z-10 mx-auto h-20 w-20 rounded-full bg-accent/8 blur-2xl" aria-hidden />
+              <span aria-hidden className="jp-text select-none text-6xl font-bold text-ink/15 sm:text-7xl">
+                {labels.landingHeroGlyph}
+              </span>
+            </div>
+            <h2 className="text-xl font-bold text-ink sm:text-2xl">{labels.title}</h2>
+            <p className="max-w-md text-sm leading-relaxed text-muted">{labels.subtitle}</p>
             <div
-              className="mt-4 flex flex-wrap justify-center gap-2"
+              className="mt-2 flex flex-wrap justify-center gap-2"
               role="group"
               aria-label={labels.exampleChipsAriaLabel}
             >
               {labels.exampleChips.map((example) => (
                 <button
                   key={example}
-                  className="min-h-10 rounded-full border border-ink/8 bg-surface px-3 py-2 text-xs text-muted transition-colors hover:border-ink/15 hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
+                  className="search-example-chip min-h-10 rounded-full border border-ink/8 bg-surface px-4 py-2 text-sm text-muted shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
                   type="button"
                   onClick={() => {
                     setQuery(example);
@@ -880,23 +888,23 @@ function SearchResultsLoadingSkeleton() {
         {Array.from({ length: 6 }, (_, i) => (
           <div
             key={i}
-            className="flex gap-3 border-b border-ink/5 py-3.5 pl-4 pr-3 last:border-b-0 motion-reduce:animate-none animate-pulse"
+            className="flex gap-3 border-b border-ink/5 py-3.5 pl-4 pr-3 last:border-b-0"
           >
-            <div className="mt-0.5 h-6 w-6 shrink-0 rounded bg-ink/10" />
+            <div className="mt-0.5 h-6 w-6 shrink-0 rounded search-skeleton-shimmer" />
             <div className="min-w-0 flex-1 space-y-2 py-0.5">
-              <div className="h-4 max-w-[12rem] rounded bg-ink/10" />
-              <div className="h-3 max-w-[18rem] rounded bg-ink/8" />
+              <div className="h-4 max-w-[12rem] rounded search-skeleton-shimmer" />
+              <div className="h-3 max-w-[18rem] rounded search-skeleton-shimmer" />
             </div>
           </div>
         ))}
       </div>
-      <div className="mt-4 hidden min-h-[20rem] animate-pulse rounded-2xl border border-ink/8 bg-surface/90 p-4 motion-reduce:animate-none lg:mt-0 lg:block">
-        <div className="mb-4 h-5 max-w-[10rem] rounded bg-ink/10" />
+      <div className="mt-4 hidden min-h-[20rem] rounded-2xl border border-ink/8 bg-surface/90 p-4 lg:mt-0 lg:block">
+        <div className="mb-4 h-5 max-w-[10rem] rounded search-skeleton-shimmer" />
         <div className="space-y-2">
-          <div className="h-3 w-full rounded bg-ink/8" />
-          <div className="h-3 w-full rounded bg-ink/8" />
-          <div className="h-3 w-[92%] rounded bg-ink/8" />
-          <div className="h-3 w-[88%] rounded bg-ink/8" />
+          <div className="h-3 w-full rounded search-skeleton-shimmer" />
+          <div className="h-3 w-full rounded search-skeleton-shimmer" />
+          <div className="h-3 w-[92%] rounded search-skeleton-shimmer" />
+          <div className="h-3 w-[88%] rounded search-skeleton-shimmer" />
         </div>
       </div>
     </div>
@@ -923,9 +931,11 @@ function ResultEntry({
     <li>
       <button
         className={cn(
-          "group flex w-full gap-3 border-l-[3px] py-3.5 pl-4 pr-3 text-left transition-colors hover:bg-accent/[0.03] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/30",
+          "search-result-btn group flex w-full gap-3 border-l-[3px] py-3.5 pl-4 pr-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/30",
           config.border,
-          selected ? "bg-accent/[0.06]" : "bg-surface"
+          selected
+            ? "bg-accent/[0.06] shadow-[inset_0_0_0_1px_rgba(59,130,246,0.12)]"
+            : "bg-surface"
         )}
         type="button"
         onClick={onSelect}
@@ -1002,7 +1012,7 @@ function FilterPill({
   return (
     <button
       className={cn(
-        "inline-flex min-h-9 items-center gap-1 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30",
+        "search-filter-pill inline-flex min-h-9 items-center gap-1 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30",
         active ? "bg-ink text-surface shadow-sm" : "text-muted hover:bg-ink/5 hover:text-ink"
       )}
       type="button"

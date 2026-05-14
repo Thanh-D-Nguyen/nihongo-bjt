@@ -11,13 +11,18 @@ import {
   AdminPageHeader,
   AdminSection,
   AdminStatusBadge,
-  cn
+  AdminToastContainer,
+  FormError,
+  cn,
+  useAdminToast
 } from "@nihongo-bjt/ui";
 import { ASSESSMENT_BJT_LEVELS } from "@nihongo-bjt/shared";
 import { useCallback, useEffect, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
 import { permsFromMe, type MePayload } from "@/app/_components/admin-client-utils";
+import { AdminAutoFill } from "@/app/_components/admin-auto-fill";
+import { useFormErrors, parseApiError, validateFields, validators } from "@/lib/form-errors";
 
 type CommonLabels = { empty: string; error: string; loading: string; records: string };
 type Labels = Record<string, string>;
@@ -104,7 +109,8 @@ export function RemediationAdminClient({ common, labels, locale }: { common: Com
   const [confirm, setConfirm] = useState<ConfirmAction>(null);
   const [reason, setReason] = useState("");
   const [mutating, setMutating] = useState(false);
-  const [toast, setToast] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const toast = useAdminToast();
+  const fe = useFormErrors();
 
   useEffect(() => { const h = setTimeout(() => setDebounced(search.trim()), 300); return () => clearTimeout(h); }, [search]);
   useEffect(() => { setPage(1); }, [debounced, topicFilter, levelFilter, activeFilter]);
@@ -170,31 +176,44 @@ export function RemediationAdminClient({ common, labels, locale }: { common: Com
 
   async function submitForm() {
     if (!canManage) return;
-    if (reason.trim().length < 3) { setToast({ kind: "err", text: t("reasonRequired") }); return; }
-    if (form.thresholdFailedCount > form.thresholdWindowQuestions) { setToast({ kind: "err", text: t("thresholdInvalid") }); return; }
+    fe.clearAll();
+    const errs = validateFields({
+      name: { value: form.name, rules: [validators.required(t("nameRequired"))] },
+      topicSkillTag: { value: form.topicSkillTag, rules: [validators.required(t("topicRequired"))] },
+      recommendedContentId: { value: form.recommendedContentId, rules: [validators.required(t("contentIdRequired"))] },
+      reason: { value: reason, rules: [validators.required(t("reasonRequired")), validators.minLength(3, t("reasonRequired"))] },
+    });
+    if (form.thresholdFailedCount > form.thresholdWindowQuestions) errs.thresholdFailedCount = t("thresholdInvalid");
+    if (Object.keys(errs).length > 0) { fe.setFieldErrors(errs); return; }
     setMutating(true);
     try {
       const body = { ...form, name: form.name.trim(), description: form.description.trim() || null, topicSkillTag: form.topicSkillTag.trim(), recommendedContentId: form.recommendedContentId.trim(), reason: reason.trim() };
       const url = showForm === "create" ? "/api/admin/assessment/remediation/rules" : `/api/admin/assessment/remediation/rules/${detail?.id}`;
       const method = showForm === "create" ? "POST" : "PATCH";
       const r = await adminApiFetch(url, { method, body: JSON.stringify(body) });
-      if (!r.ok) { const err = await r.text(); setToast({ kind: "err", text: err || t("saveFailed") }); return; }
+      if (!r.ok) {
+        const parsed = await parseApiError(r, t("saveFailed"));
+        fe.setFieldErrors(parsed.fieldErrors);
+        if (parsed.message) fe.setFormError(parsed.message);
+        else toast.error(t("saveFailed"));
+        return;
+      }
       const next = (await r.json()) as RuleDetail;
-      setShowForm(null); setToast({ kind: "ok", text: t("saveOk") });
+      setShowForm(null); toast.success(t("saveOk"));
       void loadRules(); setSelectedId(next.id);
     } finally { setMutating(false); }
   }
 
   async function submitConfirm() {
     if (!canManage || !detail || !confirm) return;
-    if (reason.trim().length < 3) { setToast({ kind: "err", text: t("reasonRequired") }); return; }
+    if (reason.trim().length < 3) { fe.setFieldError("reason", t("reasonRequired")); return; }
     setMutating(true);
     try {
       const url = confirm === "delete" ? `/api/admin/assessment/remediation/rules/${detail.id}` : `/api/admin/assessment/remediation/rules/${detail.id}/${confirm}`;
       const method = confirm === "delete" ? "DELETE" : "POST";
       const r = await adminApiFetch(url, { method, body: JSON.stringify({ reason: reason.trim() }) });
-      if (!r.ok) { const err = await r.text(); setToast({ kind: "err", text: err || t(`${confirm}Failed`) }); return; }
-      setToast({ kind: "ok", text: t(`${confirm}Ok`) });
+      if (!r.ok) { const parsed = await parseApiError(r, t(`${confirm}Failed`)); toast.error(parsed.message || t(`${confirm}Failed`)); return; }
+      toast.success(t(`${confirm}Ok`));
       setConfirm(null); setReason("");
       if (confirm === "delete") setSelectedId(null);
       void loadRules(); if (selectedId) void loadDetail(selectedId);
@@ -362,9 +381,9 @@ export function RemediationAdminClient({ common, labels, locale }: { common: Com
                 <div className="flex flex-wrap gap-2">
                   <button className="rounded border border-slate-300 px-3 py-1 text-sm" onClick={openEdit} type="button">{t("edit")}</button>
                   {detail.active
-                    ? <button className="rounded border border-slate-300 px-3 py-1 text-sm" onClick={() => { setReason(""); setConfirm("disable"); }} type="button">{t("disable")}</button>
-                    : <button className="rounded bg-emerald-600 px-3 py-1 text-sm text-white" onClick={() => { setReason(""); setConfirm("enable"); }} type="button">{t("enable")}</button>}
-                  <button className="rounded border border-red-300 px-3 py-1 text-sm text-red-700" onClick={() => { setReason(""); setConfirm("delete"); }} type="button">{t("delete")}</button>
+                    ? <button className="rounded border border-slate-300 px-3 py-1 text-sm" onClick={() => { setReason(""); fe.clearFieldError("reason"); setConfirm("disable"); }} type="button">{t("disable")}</button>
+                    : <button className="rounded bg-emerald-600 px-3 py-1 text-sm text-white" onClick={() => { setReason(""); fe.clearFieldError("reason"); setConfirm("enable"); }} type="button">{t("enable")}</button>}
+                  <button className="rounded border border-red-300 px-3 py-1 text-sm text-red-700" onClick={() => { setReason(""); fe.clearFieldError("reason"); setConfirm("delete"); }} type="button">{t("delete")}</button>
                 </div>
               ) : null}
               {detail.description ? <p className="text-sm text-slate-700 whitespace-pre-wrap">{detail.description}</p> : null}
@@ -401,27 +420,49 @@ export function RemediationAdminClient({ common, labels, locale }: { common: Com
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="w-full max-w-xl rounded-lg bg-white p-6 shadow-2xl">
             <h2 className="mb-4 text-lg font-semibold">{showForm === "create" ? t("createHeading") : t("editHeading")}</h2>
+            <div className="mb-3 flex items-center justify-between">
+              <FormError message={fe.errors.form} className="flex-1" />
+              <AdminAutoFill
+                formType="remediation"
+                onFill={(fields) => {
+                  const f = fields as Partial<FormState>;
+                  setForm((prev) => ({
+                    ...prev,
+                    ...(f.name !== undefined && { name: String(f.name) }),
+                    ...(f.description !== undefined && { description: String(f.description) }),
+                    ...(f.topicSkillTag !== undefined && { topicSkillTag: String(f.topicSkillTag) }),
+                    ...(f.level !== undefined && { level: String(f.level) }),
+                    ...(f.thresholdFailedCount !== undefined && { thresholdFailedCount: Number(f.thresholdFailedCount) }),
+                    ...(f.thresholdWindowQuestions !== undefined && { thresholdWindowQuestions: Number(f.thresholdWindowQuestions) }),
+                    ...(f.recommendedContentType !== undefined && { recommendedContentType: String(f.recommendedContentType) }),
+                    ...(f.recommendedContentId !== undefined && { recommendedContentId: String(f.recommendedContentId) }),
+                  }));
+                }}
+                labels={{ button: t("autoFill") || "Auto Fill" }}
+                disabled={mutating}
+              />
+            </div>
             <div className="grid grid-cols-2 gap-3 text-sm">
-              <label className="col-span-2 flex flex-col gap-1"><span className="text-xs font-medium text-slate-600">{t("formName")}</span><input className="rounded border border-slate-300 px-3 py-2" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></label>
+              <label className="col-span-2 flex flex-col gap-1"><span className="text-xs font-medium text-slate-600">{t("formName")} <span className="text-red-500">*</span></span><input className={cn("rounded border px-3 py-2", fe.fieldError("name") ? "border-red-400 bg-red-50/50" : "border-slate-300")} value={form.name} onChange={(e) => { setForm({ ...form, name: e.target.value }); fe.clearFieldError("name"); }} />{fe.fieldError("name") && <p className="text-xs text-red-600">{fe.fieldError("name")}</p>}</label>
               <label className="col-span-2 flex flex-col gap-1"><span className="text-xs font-medium text-slate-600">{t("formDescription")}</span><textarea className="rounded border border-slate-300 px-3 py-2" rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></label>
-              <label className="flex flex-col gap-1"><span className="text-xs font-medium text-slate-600">{t("formTopic")}</span><input className="rounded border border-slate-300 px-3 py-2" placeholder="vocab.verb" value={form.topicSkillTag} onChange={(e) => setForm({ ...form, topicSkillTag: e.target.value })} /></label>
+              <label className="flex flex-col gap-1"><span className="text-xs font-medium text-slate-600">{t("formTopic")} <span className="text-red-500">*</span></span><input className={cn("rounded border px-3 py-2", fe.fieldError("topicSkillTag") ? "border-red-400 bg-red-50/50" : "border-slate-300")} placeholder="vocab.verb" value={form.topicSkillTag} onChange={(e) => { setForm({ ...form, topicSkillTag: e.target.value }); fe.clearFieldError("topicSkillTag"); }} />{fe.fieldError("topicSkillTag") && <p className="text-xs text-red-600">{fe.fieldError("topicSkillTag")}</p>}</label>
               <label className="flex flex-col gap-1"><span className="text-xs font-medium text-slate-600">{t("formLevel")}</span>
                 <select className="rounded border border-slate-300 px-3 py-2" value={form.level} onChange={(e) => setForm({ ...form, level: e.target.value })}>
                   {ASSESSMENT_BJT_LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
                 </select>
               </label>
-              <label className="flex flex-col gap-1"><span className="text-xs font-medium text-slate-600">{t("formFailedCount")}</span><input type="number" min={1} max={50} className="rounded border border-slate-300 px-3 py-2" value={form.thresholdFailedCount} onChange={(e) => setForm({ ...form, thresholdFailedCount: Number(e.target.value) })} /></label>
+              <label className="flex flex-col gap-1"><span className="text-xs font-medium text-slate-600">{t("formFailedCount")}</span><input type="number" min={1} max={50} className={cn("rounded border px-3 py-2", fe.fieldError("thresholdFailedCount") ? "border-red-400 bg-red-50/50" : "border-slate-300")} value={form.thresholdFailedCount} onChange={(e) => { setForm({ ...form, thresholdFailedCount: Number(e.target.value) }); fe.clearFieldError("thresholdFailedCount"); }} />{fe.fieldError("thresholdFailedCount") && <p className="text-xs text-red-600">{fe.fieldError("thresholdFailedCount")}</p>}</label>
               <label className="flex flex-col gap-1"><span className="text-xs font-medium text-slate-600">{t("formWindow")}</span><input type="number" min={1} max={500} className="rounded border border-slate-300 px-3 py-2" value={form.thresholdWindowQuestions} onChange={(e) => setForm({ ...form, thresholdWindowQuestions: Number(e.target.value) })} /></label>
               <label className="flex flex-col gap-1"><span className="text-xs font-medium text-slate-600">{t("formContentType")}</span>
                 <select className="rounded border border-slate-300 px-3 py-2" value={form.recommendedContentType} onChange={(e) => setForm({ ...form, recommendedContentType: e.target.value })}>
                   {RECOMMENDED_TYPES.map((tt) => <option key={tt} value={tt}>{tt}</option>)}
                 </select>
               </label>
-              <label className="flex flex-col gap-1"><span className="text-xs font-medium text-slate-600">{t("formContentId")}</span><input className="rounded border border-slate-300 px-3 py-2 font-mono text-xs" placeholder="uuid…" value={form.recommendedContentId} onChange={(e) => setForm({ ...form, recommendedContentId: e.target.value })} /></label>
-              <label className="col-span-2 flex flex-col gap-1"><span className="text-xs font-medium text-slate-600">{t("formReason")}</span><input className="rounded border border-slate-300 px-3 py-2" value={reason} onChange={(e) => setReason(e.target.value)} /></label>
+              <label className="flex flex-col gap-1"><span className="text-xs font-medium text-slate-600">{t("formContentId")} <span className="text-red-500">*</span></span><input className={cn("rounded border px-3 py-2 font-mono text-xs", fe.fieldError("recommendedContentId") ? "border-red-400 bg-red-50/50" : "border-slate-300")} placeholder="uuid…" value={form.recommendedContentId} onChange={(e) => { setForm({ ...form, recommendedContentId: e.target.value }); fe.clearFieldError("recommendedContentId"); }} />{fe.fieldError("recommendedContentId") && <p className="text-xs text-red-600">{fe.fieldError("recommendedContentId")}</p>}</label>
+              <label className="col-span-2 flex flex-col gap-1"><span className="text-xs font-medium text-slate-600">{t("formReason")} <span className="text-red-500">*</span></span><input className={cn("rounded border px-3 py-2", fe.fieldError("reason") ? "border-red-400 bg-red-50/50" : "border-slate-300")} value={reason} onChange={(e) => { setReason(e.target.value); fe.clearFieldError("reason"); }} />{fe.fieldError("reason") && <p className="text-xs text-red-600">{fe.fieldError("reason")}</p>}</label>
             </div>
             <div className="mt-4 flex justify-end gap-2">
-              <button className="rounded border border-slate-300 px-3 py-2 text-sm" onClick={() => setShowForm(null)} type="button">{t("cancel")}</button>
+              <button className="rounded border border-slate-300 px-3 py-2 text-sm" onClick={() => { setShowForm(null); fe.clearAll(); }} type="button">{t("cancel")}</button>
               <button className="rounded bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50" disabled={mutating} onClick={submitForm} type="button">{showForm === "create" ? t("createSubmit") : t("editSubmit")}</button>
             </div>
           </div>
@@ -433,18 +474,17 @@ export function RemediationAdminClient({ common, labels, locale }: { common: Com
           <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-2xl">
             <h2 className="mb-2 text-lg font-semibold">{t(`confirmHeading_${confirm}`)}</h2>
             <p className="mb-3 text-sm text-slate-600">{t(`confirmBody_${confirm}`)}</p>
-            <label className="flex flex-col gap-1 text-xs"><span className="font-medium text-slate-600">{t("formReason")}</span><input className="rounded border border-slate-300 px-3 py-2 text-sm" value={reason} onChange={(e) => setReason(e.target.value)} /></label>
+            <label className="flex flex-col gap-1 text-xs"><span className="font-medium text-slate-600">{t("formReason")}</span><input className={cn("rounded border px-3 py-2 text-sm", fe.fieldError("reason") ? "border-red-400 bg-red-50/50 text-red-900" : "border-slate-300")} value={reason} onChange={(e) => { setReason(e.target.value); fe.clearFieldError("reason"); }} /></label>
+            {fe.fieldError("reason") && <p className="mt-1 text-xs text-red-600">{fe.fieldError("reason")}</p>}
             <div className="mt-4 flex justify-end gap-2">
-              <button className="rounded border border-slate-300 px-3 py-2 text-sm" onClick={() => setConfirm(null)} type="button">{t("cancel")}</button>
+              <button className="rounded border border-slate-300 px-3 py-2 text-sm" onClick={() => { setConfirm(null); fe.clearFieldError("reason"); }} type="button">{t("cancel")}</button>
               <button className={cn("rounded px-3 py-2 text-sm font-medium text-white disabled:opacity-50", confirm === "delete" ? "bg-red-600" : "bg-slate-900")} disabled={mutating} onClick={submitConfirm} type="button">{t(`confirmSubmit_${confirm}`)}</button>
             </div>
           </div>
         </div>
       ) : null}
 
-      {toast ? (
-        <div className={cn("fixed bottom-6 right-6 rounded px-4 py-2 text-sm shadow-lg", toast.kind === "ok" ? "bg-emerald-600 text-white" : "bg-red-600 text-white")}>{toast.text}<button className="ml-3 underline" onClick={() => setToast(null)} type="button">×</button></div>
-      ) : null}
+      <AdminToastContainer toasts={toast.toasts} onRemove={toast.removeToast} />
     </div>
   );
 }

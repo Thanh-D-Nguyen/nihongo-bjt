@@ -11,6 +11,10 @@ import {
   AdminPageHeader,
   AdminSection,
   AdminStatusBadge,
+  AdminToastContainer,
+  FormError,
+  FormField,
+  useAdminToast,
   cn
 } from "@nihongo-bjt/ui";
 import {
@@ -21,6 +25,8 @@ import { useCallback, useEffect, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
 import { permsFromMe, type MePayload } from "@/app/_components/admin-client-utils";
+import { AdminAutoFill } from "@/app/_components/admin-auto-fill";
+import { useFormErrors, parseApiError, validateFields, validators } from "@/lib/form-errors";
 
 type Labels = Record<string, string>;
 type CommonLabels = { empty: string; error: string; loading: string; records: string };
@@ -187,7 +193,8 @@ export function DailyItemsAdminClient({
   const [detail, setDetail] = useState<DailyItemDetail | null>(null);
   const [editing, setEditing] = useState<"create" | "edit" | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
-  const [formError, setFormError] = useState<string | null>(null);
+  const fe = useFormErrors();
+  const toast = useAdminToast();
   const [submitting, setSubmitting] = useState(false);
 
   const [reasonModal, setReasonModal] = useState<{
@@ -249,7 +256,7 @@ export function DailyItemsAdminClient({
     setDetail(null);
     setEditing("create");
     setForm(EMPTY_FORM);
-    setFormError(null);
+    fe.clearAll();
     setDrawerOpen(true);
   };
 
@@ -269,28 +276,51 @@ export function DailyItemsAdminClient({
       sourceProvider: detail.sourceProvider ?? "",
       sourceRef: detail.sourceRef ?? ""
     });
-    setFormError(null);
+    fe.clearAll();
   };
 
   const closeDrawer = () => {
     setDrawerOpen(false);
     setDetail(null);
     setEditing(null);
-    setFormError(null);
+    fe.clearAll();
   };
 
   const submitForm = async () => {
-    if (!form.title.trim()) {
-      setFormError(t("errorTitleRequired"));
+    fe.clearAll();
+
+    const fieldErrors = validateFields([
+      {
+        field: "title",
+        value: form.title,
+        message: t("errorTitleRequired") || "Tiêu đề không được để trống",
+        validate: validators.required,
+      },
+      {
+        field: "contentDate",
+        value: form.contentDate,
+        message: "Ngày nội dung không được để trống",
+        validate: validators.required,
+      },
+      {
+        field: "imageUrl",
+        value: form.imageUrl,
+        message: "URL hình ảnh không hợp lệ",
+        validate: validators.isUrl,
+      },
+    ]);
+
+    if (Object.keys(fieldErrors).length > 0) {
+      fe.setFieldErrors(fieldErrors);
       return;
     }
+
     const reasonText = window.prompt(t("promptReason") ?? "Reason");
     if (!reasonText || reasonText.trim().length < 3) {
-      setFormError(t("errorReasonRequired"));
+      fe.setFormError(t("errorReasonRequired") || "Lý do phải có ít nhất 3 ký tự");
       return;
     }
     setSubmitting(true);
-    setFormError(null);
     try {
       const body: Record<string, unknown> = {
         contentDate: form.contentDate,
@@ -316,13 +346,18 @@ export function DailyItemsAdminClient({
         method
       });
       if (!r.ok) {
-        const err = (await r.json().catch(() => null)) as { code?: string } | null;
-        setFormError(err?.code ?? t("errorSave"));
+        const apiErr = await parseApiError(r, t("errorSave") || "Lưu thất bại");
+        if (apiErr.form) fe.setFormError(apiErr.form);
+        if (Object.keys(apiErr.fields).length > 0) fe.setFieldErrors(apiErr.fields);
+        if (!apiErr.form && Object.keys(apiErr.fields).length === 0) {
+          fe.setFormError(t("errorSave"));
+        }
         return;
       }
       const saved = (await r.json()) as DailyItemDetail;
       setDetail(saved);
       setEditing(null);
+      toast.success(editing === "create" ? "Tạo nội dung thành công" : "Cập nhật nội dung thành công");
       await load();
     } finally {
       setSubmitting(false);
@@ -591,16 +626,36 @@ export function DailyItemsAdminClient({
 
               {editing && !drawerLoading ? (
                 <div className="space-y-3">
-                  {formError ? (
-                    <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-                      {formError}
-                    </div>
-                  ) : null}
+                  <div className="flex items-center justify-between">
+                    <FormError message={fe.errors.form} />
+                    <AdminAutoFill
+                      formType="daily-hub"
+                      onFill={(fields) => {
+                        const f = fields as Partial<FormState>;
+                        setForm((prev) => ({
+                          ...prev,
+                          ...(f.contentDate !== undefined && { contentDate: String(f.contentDate) }),
+                          ...(f.locale !== undefined && { locale: String(f.locale) }),
+                          ...(f.widgetKind !== undefined && { widgetKind: String(f.widgetKind) }),
+                          ...(f.title !== undefined && { title: String(f.title) }),
+                          ...(f.bodyMd !== undefined && { bodyMd: String(f.bodyMd) }),
+                          ...(f.japaneseText !== undefined && { japaneseText: String(f.japaneseText) }),
+                          ...(f.readingText !== undefined && { readingText: String(f.readingText) }),
+                          ...(f.explanationText !== undefined && { explanationText: String(f.explanationText) }),
+                          ...(f.imageUrl !== undefined && { imageUrl: String(f.imageUrl) }),
+                          ...(f.sourceProvider !== undefined && { sourceProvider: String(f.sourceProvider) }),
+                          ...(f.sourceRef !== undefined && { sourceRef: String(f.sourceRef) }),
+                        }));
+                      }}
+                      labels={{ button: t("autoFill") || "Auto Fill" }}
+                      disabled={submitting}
+                    />
+                  </div>
                   <div className="grid grid-cols-2 gap-3">
-                    <FormField label={t("formContentDate")}>
+                    <FormField label={t("formContentDate")} error={fe.fieldError("contentDate")} required>
                       <input
-                        className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
-                        onChange={(e) => setForm({ ...form, contentDate: e.target.value })}
+                        className={cn("w-full rounded-md border px-2 py-1.5 text-sm", fe.fieldError("contentDate") ? "border-red-400 bg-red-50/50" : "border-slate-300")}
+                        onChange={(e) => { setForm({ ...form, contentDate: e.target.value }); fe.clearFieldError("contentDate"); }}
                         type="date"
                         value={form.contentDate}
                       />
@@ -633,10 +688,10 @@ export function DailyItemsAdminClient({
                         ))}
                       </select>
                     </FormField>
-                    <FormField label={t("formTitle")}>
+                    <FormField label={t("formTitle")} error={fe.fieldError("title")} required>
                       <input
-                        className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
-                        onChange={(e) => setForm({ ...form, title: e.target.value })}
+                        className={cn("w-full rounded-md border px-2 py-1.5 text-sm", fe.fieldError("title") ? "border-red-400 bg-red-50/50" : "border-slate-300")}
+                        onChange={(e) => { setForm({ ...form, title: e.target.value }); fe.clearFieldError("title"); }}
                         placeholder={t("formTitlePlaceholder")}
                         value={form.title}
                       />
@@ -918,16 +973,8 @@ export function DailyItemsAdminClient({
       ) : null}
       </>
       )}
+      <AdminToastContainer onRemove={toast.removeToast} toasts={toast.toasts} />
     </div>
-  );
-}
-
-function FormField({ children, label }: { children: React.ReactNode; label: string }) {
-  return (
-    <label className="flex flex-col text-xs">
-      <span className="mb-1 font-medium text-slate-600">{label}</span>
-      {children}
-    </label>
   );
 }
 

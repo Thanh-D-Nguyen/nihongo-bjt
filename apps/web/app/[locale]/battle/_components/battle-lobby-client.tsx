@@ -87,7 +87,7 @@ function LobbyRosterColumn({
 }: LobbyRosterColumnProps) {
   const sectionClass =
     variant === "desktop"
-      ? "hidden min-h-[22rem] rounded-[1.5rem] border border-ink/10 bg-surface shadow-sm lg:flex lg:min-h-[28rem] lg:flex-col"
+      ? "hidden min-h-[22rem] overflow-hidden rounded-[1.5rem] border border-ink/10 bg-surface shadow-sm lg:flex lg:min-h-[28rem] lg:flex-col"
       : "flex h-full min-h-0 flex-col bg-surface";
 
   return (
@@ -115,7 +115,18 @@ function LobbyRosterColumn({
         </p>
       </div>
       {botChoicesLoading ? (
-        <p className="p-3 text-xs font-bold text-muted">{labels.connecting}</p>
+        <div className="space-y-2 p-3" aria-busy="true" aria-label={labels.connecting}>
+          {[0, 1, 2, 3].map((i) => (
+            <div className="grid grid-cols-[40px_1fr_auto] items-center gap-2.5 rounded-xl border border-ink/5 p-2" key={i}>
+              <div className="battle-skeleton h-10 w-10 rounded-lg" />
+              <div className="space-y-1.5">
+                <div className="battle-skeleton h-3.5 w-24 rounded" />
+                <div className="battle-skeleton h-2.5 w-16 rounded" />
+              </div>
+              <div className="battle-skeleton h-5 w-12 rounded-full" />
+            </div>
+          ))}
+        </div>
       ) : null}
       <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto p-3">
         {botChoices.map((bot) => {
@@ -123,8 +134,10 @@ function LobbyRosterColumn({
           const style = styleFor(bot.styleToken);
           return (
             <button
-              className={`grid w-full grid-cols-[40px_1fr_auto] items-center gap-2.5 rounded-xl border p-2 text-left transition hover:bg-paper ${
-                selected ? `${style.border} bg-paper shadow-sm` : "border-ink/10 bg-white/75"
+              className={`battle-bot-card grid w-full grid-cols-[40px_1fr_auto] items-center gap-2.5 rounded-xl border p-2.5 text-left ${
+                selected
+                  ? `battle-bot-card-selected ${style.border} bg-gradient-to-r from-blue-50/60 to-indigo-50/40 shadow-md`
+                  : "border-ink/10 bg-white/75 hover:bg-paper hover:shadow-sm"
               }`}
               key={bot.key}
               onClick={(e) => {
@@ -135,22 +148,33 @@ function LobbyRosterColumn({
               onMouseLeave={rowLeave}
               type="button"
             >
-              <BattleBotAvatar
-                className="h-10 w-10 rounded-lg"
-                fallback={bot.avatarFallback}
-                rive={bot.rive}
-                state={selected ? botState : "idle"}
-                variant="card"
-              />
+              <div className="relative">
+                <BattleBotAvatar
+                  className="h-10 w-10 rounded-lg"
+                  fallback={bot.avatarFallback}
+                  rive={bot.rive}
+                  state={selected ? botState : "idle"}
+                  variant="card"
+                />
+                {selected ? (
+                  <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-accent" aria-hidden />
+                ) : null}
+              </div>
               <span className="min-w-0">
                 <span className="block truncate text-sm font-black text-ink">
                   {botName(labels, bot.label)}
                 </span>
-                <span className="mt-0.5 block truncate text-[11px] font-semibold text-muted">
-                  {localizeVocab(labels, bot.vocabularyLevel) ?? labels.battleDeck}
+                <span className="mt-0.5 flex items-center gap-1.5 text-[11px] font-semibold text-muted">
+                  <span className="truncate">{localizeVocab(labels, bot.vocabularyLevel) ?? labels.battleDeck}</span>
+                  <span className={`inline-block h-1 w-1 shrink-0 rounded-full ${style.accent}`} aria-hidden />
+                  <span className="shrink-0">{localizeDifficulty(labels, bot.difficulty)}</span>
                 </span>
               </span>
-              <span className="flex items-center gap-1 rounded-full border border-ink/10 bg-white px-2 py-0.5 text-[10px] font-black text-muted">
+              <span className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-black tabular-nums ${
+                selected
+                  ? "border-accent/25 bg-accent/10 text-accent"
+                  : "border-ink/10 bg-white text-muted"
+              }`}>
                 <span className={`h-1.5 w-1.5 rounded-full ${style.accent}`} aria-hidden />
                 {bot.accuracyPct ?? "--"}%
               </span>
@@ -158,10 +182,13 @@ function LobbyRosterColumn({
           );
         })}
 
-        {presence.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-ink/10 bg-paper p-3 text-xs font-semibold leading-5 text-muted">
-            {labels.lobbyConnectionOffline}
-          </p>
+        {presence.length === 0 && !botChoicesLoading ? (
+          <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-ink/10 bg-gradient-to-b from-paper to-white p-5 text-center">
+            <span className="grid h-10 w-10 place-items-center rounded-full bg-ink/5 text-lg" aria-hidden>👥</span>
+            <p className="text-xs font-bold text-muted">
+              {labels.lobbyConnectionOffline}
+            </p>
+          </div>
         ) : null}
         {presence.map((user) => {
           const mine = user.userId === userId;
@@ -250,7 +277,7 @@ function LobbyRosterColumn({
               </div>
             </div>
             <button
-              className="mt-3 flex w-full min-h-11 items-center justify-center rounded-xl bg-ink px-4 text-sm font-black text-surface transition hover:bg-ink/90 disabled:pointer-events-none disabled:opacity-45"
+              className="mt-3 flex w-full min-h-12 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 px-5 text-sm font-black text-white shadow-md shadow-indigo-500/20 transition hover:from-indigo-700 hover:to-blue-700 hover:shadow-lg hover:shadow-indigo-500/25 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none"
               disabled={startDisabled || startBusy}
               onClick={() => {
                 connectAndStart();
@@ -259,7 +286,17 @@ function LobbyRosterColumn({
               title={startDisabled ? labels.startBotDisabledHint : undefined}
               type="button"
             >
-              {startBusy ? labels.connecting : labels.start}
+              {startBusy ? (
+                <>
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" aria-hidden />
+                  {labels.connecting}
+                </>
+              ) : (
+                <>
+                  <span aria-hidden>⚔️</span>
+                  {labels.start}
+                </>
+              )}
             </button>
           </>
         )}
@@ -562,8 +599,8 @@ export function BattleLobbyClient() {
         title={labels.title}
         description={labels.pickBot}
         actions={
-          <Badge className="min-h-9 gap-2 px-3">
-            <span className={`h-2 w-2 rounded-full ${socketConnected ? "bg-leaf" : "bg-amber"}`} />
+          <Badge className="min-h-9 gap-2 px-3 shadow-sm">
+            <span className={`h-2.5 w-2.5 rounded-full ring-2 ${socketConnected ? "bg-leaf ring-leaf/20" : "bg-amber ring-amber/20"}`} />
             {liveStatus}
           </Badge>
         }
@@ -609,7 +646,8 @@ export function BattleLobbyClient() {
       </aside>
 
       <div className="relative mt-4 grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)]">
-        <section className="flex min-h-[22rem] flex-col rounded-[1.5rem] border border-ink/10 bg-surface shadow-sm lg:min-h-[28rem]">
+        <section className="relative flex min-h-[22rem] flex-col overflow-hidden rounded-[1.5rem] border border-indigo-200/30 bg-gradient-to-br from-surface via-surface to-indigo-50/20 shadow-sm lg:min-h-[28rem]">
+          <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-blue-500/60 via-indigo-500/40 to-transparent" aria-hidden />
           <div className="border-b border-ink/10 p-3">
             <div className="flex items-center justify-between gap-2">
               <div className="flex min-w-0 flex-1 items-center gap-2">
@@ -646,9 +684,12 @@ export function BattleLobbyClient() {
             ref={chatScrollRef}
           >
             {lobbyMessages.length === 0 ? (
-              <p className="rounded-xl border border-dashed border-ink/15 bg-paper p-3 text-xs font-semibold leading-5 text-muted">
-                {labels.lobbyEmpty}
-              </p>
+              <div className="flex min-h-[10rem] flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-ink/10 bg-gradient-to-b from-paper/80 to-white/60 p-6 text-center">
+                <span className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-indigo-50 to-blue-50 text-2xl shadow-sm" aria-hidden>💬</span>
+                <p className="max-w-[18rem] text-xs font-semibold leading-5 text-muted">
+                  {labels.lobbyEmpty}
+                </p>
+              </div>
             ) : (
               lobbyMessages.map((message) => {
                 const mine = message.userId === userId;

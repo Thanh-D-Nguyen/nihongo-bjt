@@ -1526,8 +1526,36 @@ exports.Prisma.AnnouncementScalarFieldEnum = {
   href: 'href',
   active: 'active',
   sortOrder: 'sortOrder',
+  format: 'format',
+  target: 'target',
+  priority: 'priority',
+  titleVi: 'titleVi',
+  titleEn: 'titleEn',
+  titleJa: 'titleJa',
+  bodyVi: 'bodyVi',
+  bodyEn: 'bodyEn',
+  bodyJa: 'bodyJa',
+  ctaLabel: 'ctaLabel',
+  ctaUrl: 'ctaUrl',
+  imageUrl: 'imageUrl',
+  effect: 'effect',
+  bgPreset: 'bgPreset',
+  allowCloseButton: 'allowCloseButton',
+  allowClickOutside: 'allowClickOutside',
+  dismissDelay: 'dismissDelay',
+  showFrequency: 'showFrequency',
+  startsAt: 'startsAt',
+  endsAt: 'endsAt',
+  createdBy: 'createdBy',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
+};
+
+exports.Prisma.AnnouncementDismissalScalarFieldEnum = {
+  id: 'id',
+  announcementId: 'announcementId',
+  userId: 'userId',
+  dismissedAt: 'dismissedAt'
 };
 
 exports.Prisma.ExerciseConfigScalarFieldEnum = {
@@ -1913,6 +1941,7 @@ exports.Prisma.ModelName = {
   ContentVersion: 'ContentVersion',
   ContentEnrichment: 'ContentEnrichment',
   Announcement: 'Announcement',
+  AnnouncementDismissal: 'AnnouncementDismissal',
   ExerciseConfig: 'ExerciseConfig',
   Exercise: 'Exercise',
   ExerciseSession: 'ExerciseSession',

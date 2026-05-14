@@ -26,7 +26,8 @@ async function bootstrap() {
     throw error;
   }
   const app = await NestFactory.create(AppModule, {
-    bufferLogs: true
+    bufferLogs: true,
+    rawBody: true
   });
   app.useWebSocketAdapter(new IoAdapter(app));
 

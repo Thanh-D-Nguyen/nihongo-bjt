@@ -88,6 +88,7 @@
     "ariaMain": "Điều hướng chính",
     "battle": "Đấu trí",
     "brand": "NihonGo BJT",
+    "explore": "Explore",
     "home": "Trang chủ",
     "more": "Thêm",
     "quiz": "BJT",
@@ -717,6 +718,21 @@
     "deckStudyNext": "Next",
     "deckStudyKeyboardHint": "← → switch card · Space or Enter to flip",
     "deckDetailAllCardsToggleTpl": "Full list ({count} cards)",
+    "deckStudyRateAgain": "Again",
+    "deckStudyRateHard": "Hard",
+    "deckStudyRateGood": "Good",
+    "deckStudyRateHint": "Self-assess → good/hard advances, «again» stays on this card",
+    "mentorName": "Sensei",
+    "mentorGoodEmoji": "🎉",
+    "mentorGoodText": "Excellent! Your memory is sharp",
+    "mentorHardEmoji": "💪",
+    "mentorHardText": "This one's tricky — don't worry, it'll stick next time",
+    "mentorAgainEmoji": "🌱",
+    "mentorAgainText": "No worries, let's start again from here",
+    "mentorMilestone5": "{n} cards in a row! Great!",
+    "mentorMilestone10": "🔥 {n} straight — you're on fire!",
+    "mentorMilestone25": "🏆 {n} cards! Impressive streak — keep going!",
+    "streakLabel": "Streak",
     "deckDetailAllCardsHint": "Expand when you need to scan; study with the card above.",
     "deckDetailNotFound": "Không tìm thấy bộ thẻ hoặc bạn không có quyền xem.",
     "deckDetailLoading": "Đang tải bộ thẻ…",
@@ -1339,5 +1355,10 @@
     "submit": "Gửi góp ý",
     "success": "Cảm ơn bạn đã góp ý! Chúng tôi sẽ xem xét sớm nhất.",
     "error": "Chưa thể gửi. Vui lòng thử lại sau."
+  },
+  "announcements": {
+    "close": "Close",
+    "learnMore": "Learn more",
+    "dismiss": "Dismiss"
   }
 }

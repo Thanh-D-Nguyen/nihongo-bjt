@@ -11,11 +11,14 @@ import {
   AdminPageHeader,
   AdminSection,
   AdminStatusBadge,
-  cn
+  AdminToastContainer,
+  cn,
+  useAdminToast
 } from "@nihongo-bjt/ui";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
+import { parseApiError, useFormErrors } from "@/lib/form-errors";
 import { permsFromMe, type MePayload } from "@/app/_components/admin-client-utils";
 
 type Labels = Record<string, string>;
@@ -143,7 +146,8 @@ export function BattleMatchesClient({
 
   const [reason, setReason] = useState("");
   const [mutating, setMutating] = useState(false);
-  const [toast, setToast] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const toast = useAdminToast();
+  const fe = useFormErrors();
   const [confirm, setConfirm] = useState<"abort" | "rerun" | null>(null);
 
   useEffect(() => {
@@ -263,40 +267,32 @@ export function BattleMatchesClient({
     if (selectedId) void loadDetail(selectedId);
   };
 
-  const requireReason = (): string | null => {
-    const trimmed = reason.trim();
-    if (trimmed.length < 3) {
-      setToast({ kind: "err", text: t("reasonHint") });
-      return null;
-    }
-    return trimmed;
-  };
-
   const doAction = async (kind: "abort" | "rerun") => {
     if (!canManage || !detail) return;
-    const r = requireReason();
-    if (!r) return;
+    if (reason.trim().length < 3) {
+      fe.setFieldError("reason", t("reasonHint"));
+      return;
+    }
     setMutating(true);
-    setToast(null);
     try {
       const res = await adminApiFetch(
         `/api/admin/battle/matches/${encodeURIComponent(detail.id)}/${kind}`,
         {
-          body: JSON.stringify({ reason: r }),
+          body: JSON.stringify({ reason: reason.trim() }),
           headers: { "content-type": "application/json" },
           method: "POST"
         }
       );
       if (!res.ok) {
-        setToast({ kind: "err", text: t("errorMutation") });
+        const parsed = await parseApiError(res, t("errorMutation"));
+        toast.error(parsed.form || t("errorMutation"));
         return;
       }
       setReason("");
       setConfirm(null);
-      setToast({
-        kind: "ok",
-        text: kind === "abort" ? t("successAbort") : t("successRerun")
-      });
+      toast.success(
+        kind === "abort" ? t("successAbort") : t("successRerun")
+      );
       if (kind === "rerun") {
         const created = (await res.json()) as MatchDetail;
         setSelectedId(created.id);
@@ -305,7 +301,7 @@ export function BattleMatchesClient({
       }
       await loadList();
     } catch {
-      setToast({ kind: "err", text: t("errorMutation") });
+      toast.error(t("errorMutation"));
     } finally {
       setMutating(false);
     }
@@ -324,19 +320,7 @@ export function BattleMatchesClient({
         </div>
       ) : null}
 
-      {toast ? (
-        <div
-          className={cn(
-            "rounded-lg border px-3 py-2 text-xs",
-            toast.kind === "ok"
-              ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-              : "border-rose-200 bg-rose-50 text-rose-900"
-          )}
-          role="status"
-        >
-          {toast.text}
-        </div>
-      ) : null}
+      <AdminToastContainer toasts={toast.toasts} onRemove={toast.removeToast} />
 
       <AdminSection
         description={`${t("countLabel")}: ${total} ${common.records.toLowerCase()}`}
@@ -497,7 +481,7 @@ export function BattleMatchesClient({
                 {canManage && detail.status === "in_progress" ? (
                   <button
                     className="rounded-md border border-rose-300 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100"
-                    onClick={() => setConfirm("abort")}
+                    onClick={() => { fe.clearFieldError("reason"); setReason(""); setConfirm("abort"); }}
                     type="button"
                   >
                     {t("actionAbort")}
@@ -506,7 +490,7 @@ export function BattleMatchesClient({
                 {canManage && detail.status !== "in_progress" ? (
                   <button
                     className="rounded-md border border-indigo-300 bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-100"
-                    onClick={() => setConfirm("rerun")}
+                    onClick={() => { fe.clearFieldError("reason"); setReason(""); setConfirm("rerun"); }}
                     type="button"
                   >
                     {t("actionRerun")}
@@ -637,15 +621,15 @@ export function BattleMatchesClient({
               {confirm === "abort" ? t("confirm_abort_message") : t("confirm_rerun_message")}
             </p>
             <label className="mt-3 block text-sm">
-              <span className="block text-xs font-medium text-slate-600">{t("reasonLabel")}</span>
+              <span className="block text-xs font-medium text-slate-600">{t("reasonLabel")} <span className="text-red-500">*</span></span>
               <textarea
-                className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
-                onChange={(e) => setReason(e.target.value)}
+                className={cn("mt-1 w-full rounded-lg border bg-white px-3 py-2 text-sm", fe.fieldError("reason") ? "border-red-400 bg-red-50/50 text-red-900" : "border-slate-200")}
+                onChange={(e) => { setReason(e.target.value); fe.clearFieldError("reason"); }}
                 placeholder={t("reasonPlaceholder")}
                 rows={3}
                 value={reason}
               />
-              <span className="mt-1 block text-[10px] text-slate-400">{t("reasonHint")}</span>
+              {fe.fieldError("reason") ? <span className="mt-1 block text-xs text-red-600">{fe.fieldError("reason")}</span> : <span className="mt-1 block text-[10px] text-slate-400">{t("reasonHint")}</span>}
             </label>
             <div className="mt-4 flex justify-end gap-2">
               <button
@@ -653,6 +637,7 @@ export function BattleMatchesClient({
                 onClick={() => {
                   setConfirm(null);
                   setReason("");
+                  fe.clearFieldError("reason");
                 }}
                 type="button"
               >

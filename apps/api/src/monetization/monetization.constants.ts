@@ -13,5 +13,6 @@ export const EntitlementKey = {
 } as const;
 
 export const FeatureFlagKey = {
+  billing_stripe: "billing.stripe.enabled",
   quiz_official_simulation: "quiz.official_simulation.enabled"
 } as const;

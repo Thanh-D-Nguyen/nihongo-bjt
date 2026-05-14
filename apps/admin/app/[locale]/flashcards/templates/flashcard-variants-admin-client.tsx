@@ -10,11 +10,15 @@ import {
   AdminEmptyState,
   AdminPageHeader,
   AdminSection,
-  AdminStatusBadge
+  AdminStatusBadge,
+  AdminToastContainer,
+  cn,
+  useAdminToast
 } from "@nihongo-bjt/ui";
 import { useCallback, useEffect, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
+import { parseApiError, useFormErrors } from "@/lib/form-errors";
 import { permsFromMe, type MePayload } from "@/app/_components/admin-client-utils";
 import {
   LexemeExamplesSubrow,
@@ -125,7 +129,8 @@ export function FlashcardVariantsAdminClient({
   const [transitioning, setTransitioning] = useState<"active" | "archived" | "draft" | null>(null);
   const [reason, setReason] = useState("");
   const [mutating, setMutating] = useState(false);
-  const [toast, setToast] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const toast = useAdminToast();
+  const fe = useFormErrors();
 
   useEffect(() => {
     const h = setTimeout(() => setDebounced(search.trim()), 300);
@@ -196,6 +201,7 @@ export function FlashcardVariantsAdminClient({
     setSourceForm(null);
     setTransitioning(null);
     setReason("");
+    fe.clearFieldError("reason");
     void loadDetail(v.id);
   }
   function closeDrawer() {
@@ -220,7 +226,7 @@ export function FlashcardVariantsAdminClient({
   async function submitEdit() {
     if (!detail || !editForm) return;
     if (reason.trim().length < 3) {
-      setToast({ kind: "err", text: t("reasonRequired") });
+      fe.setFieldError("reason", t("reasonRequired"));
       return;
     }
     setMutating(true);
@@ -236,13 +242,14 @@ export function FlashcardVariantsAdminClient({
         method: "PATCH"
       });
       if (!r.ok) {
-        setToast({ kind: "err", text: t("updateFailed") });
+        const parsed = await parseApiError(r, t("updateFailed"));
+        toast.error(parsed.form || t("updateFailed"));
         return;
       }
       setDetail((await r.json()) as Detail);
       setEditForm(null);
       setReason("");
-      setToast({ kind: "ok", text: t("updateOk") });
+      toast.success(t("updateOk"));
       void loadList();
     } finally {
       setMutating(false);
@@ -252,7 +259,7 @@ export function FlashcardVariantsAdminClient({
   async function submitTransition(next: "active" | "archived" | "draft") {
     if (!detail) return;
     if (reason.trim().length < 3) {
-      setToast({ kind: "err", text: t("reasonRequired") });
+      fe.setFieldError("reason", t("reasonRequired"));
       return;
     }
     setMutating(true);
@@ -263,13 +270,14 @@ export function FlashcardVariantsAdminClient({
         method: "POST"
       });
       if (!r.ok) {
-        setToast({ kind: "err", text: t("transitionFailed") });
+        const parsed = await parseApiError(r, t("transitionFailed"));
+        toast.error(parsed.form || t("transitionFailed"));
         return;
       }
       setDetail((await r.json()) as Detail);
       setTransitioning(null);
       setReason("");
-      setToast({ kind: "ok", text: t("transitionOk") });
+      toast.success(t("transitionOk"));
       void loadList();
     } finally {
       setMutating(false);
@@ -285,12 +293,13 @@ export function FlashcardVariantsAdminClient({
     setEditForm(null);
     setTransitioning(null);
     setReason("");
+    fe.clearFieldError("reason");
   }
 
   async function submitSourceRemap() {
     if (!detail || !sourceForm) return;
     if (reason.trim().length < 3) {
-      setToast({ kind: "err", text: t("reasonRequired") });
+      fe.setFieldError("reason", t("reasonRequired"));
       return;
     }
     setMutating(true);
@@ -305,13 +314,14 @@ export function FlashcardVariantsAdminClient({
         method: "PATCH"
       });
       if (!r.ok) {
-        setToast({ kind: "err", text: t("sourceRemapFailed") });
+        const parsed = await parseApiError(r, t("sourceRemapFailed"));
+        toast.error(parsed.form || t("sourceRemapFailed"));
         return;
       }
       setDetail((await r.json()) as Detail);
       setSourceForm(null);
       setReason("");
-      setToast({ kind: "ok", text: t("sourceRemapOk") });
+      toast.success(t("sourceRemapOk"));
       void loadList();
     } finally {
       setMutating(false);
@@ -513,6 +523,7 @@ export function FlashcardVariantsAdminClient({
                           setTransitioning("active");
                           setEditForm(null);
                           setReason("");
+                          fe.clearFieldError("reason");
                         }}
                         type="button"
                       >
@@ -526,6 +537,7 @@ export function FlashcardVariantsAdminClient({
                           setTransitioning("archived");
                           setEditForm(null);
                           setReason("");
+                          fe.clearFieldError("reason");
                         }}
                         type="button"
                       >
@@ -539,6 +551,7 @@ export function FlashcardVariantsAdminClient({
                           setTransitioning("draft");
                           setEditForm(null);
                           setReason("");
+                          fe.clearFieldError("reason");
                         }}
                         type="button"
                       >
@@ -588,11 +601,12 @@ export function FlashcardVariantsAdminClient({
                       />
                     </div>
                     <input
-                      className="w-full rounded border px-2 py-1 text-sm"
-                      onChange={(e) => setReason(e.target.value)}
+                      className={cn("w-full rounded border px-2 py-1 text-sm", fe.fieldError("reason") ? "border-red-400 bg-red-50/50 text-red-900" : "border-slate-300")}
+                      onChange={(e) => { setReason(e.target.value); fe.clearFieldError("reason"); }}
                       placeholder={t("reasonPlaceholder")}
                       value={reason}
                     />
+                    {fe.fieldError("reason") && <p className="mt-1 text-xs text-red-600">{fe.fieldError("reason")}</p>}
                     <div className="flex justify-end gap-2">
                       <button
                         className="rounded border px-3 py-1 text-sm"
@@ -619,11 +633,12 @@ export function FlashcardVariantsAdminClient({
                       {t(`confirm_${transitioning}`)}
                     </div>
                     <input
-                      className="w-full rounded border px-2 py-1 text-sm"
-                      onChange={(e) => setReason(e.target.value)}
+                      className={cn("w-full rounded border px-2 py-1 text-sm", fe.fieldError("reason") ? "border-red-400 bg-red-50/50 text-red-900" : "border-slate-300")}
+                      onChange={(e) => { setReason(e.target.value); fe.clearFieldError("reason"); }}
                       placeholder={t("reasonPlaceholder")}
                       value={reason}
                     />
+                    {fe.fieldError("reason") && <p className="mt-1 text-xs text-red-600">{fe.fieldError("reason")}</p>}
                     <div className="flex justify-end gap-2">
                       <button
                         className="rounded border px-3 py-1 text-sm"
@@ -746,11 +761,12 @@ export function FlashcardVariantsAdminClient({
                         </label>
                       </div>
                       <input
-                        className="w-full rounded border px-2 py-1 text-sm"
-                        onChange={(e) => setReason(e.target.value)}
+                        className={cn("w-full rounded border px-2 py-1 text-sm", fe.fieldError("reason") ? "border-red-400 bg-red-50/50 text-red-900" : "border-slate-300")}
+                        onChange={(e) => { setReason(e.target.value); fe.clearFieldError("reason"); }}
                         placeholder={t("reasonPlaceholder")}
                         value={reason}
                       />
+                      {fe.fieldError("reason") && <p className="mt-1 text-xs text-red-600">{fe.fieldError("reason")}</p>}
                       <div className="flex justify-end gap-2">
                         <button
                           className="rounded border px-3 py-1 text-sm"
@@ -840,17 +856,7 @@ export function FlashcardVariantsAdminClient({
         </div>
       ) : null}
 
-      {toast ? (
-        <div
-          className={`fixed bottom-4 right-4 rounded px-3 py-2 text-sm text-white shadow ${toast.kind === "ok" ? "bg-emerald-600" : "bg-red-600"}`}
-          role="status"
-        >
-          {toast.text}
-          <button className="ml-3 underline" onClick={() => setToast(null)} type="button">
-            ✕
-          </button>
-        </div>
-      ) : null}
+      <AdminToastContainer toasts={toast.toasts} onRemove={toast.removeToast} />
     </div>
   );
 }
