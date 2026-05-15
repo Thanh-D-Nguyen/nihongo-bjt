@@ -2,6 +2,8 @@ import { Module } from "@nestjs/common";
 
 import { AdminModule } from "../admin/admin.module.js";
 import { MediaModule } from "../media/media.module.js";
+import { BusinessScenarioController } from "./business-scenario.controller.js";
+import { BusinessScenarioService } from "./business-scenario.service.js";
 import { ContentEnrichmentAdminController } from "./content-enrichment-admin.controller.js";
 import { ContentEnrichmentAdminRepository } from "./content-enrichment-admin.repository.js";
 import { ContentVersionsAdminController } from "./content-versions-admin.controller.js";
@@ -21,6 +23,7 @@ import {
     ContentController,
     ContentEnrichmentAdminController,
     ContentVersionsAdminController,
+    BusinessScenarioController,
     DictionaryController,
     KanjiController,
     GrammarController,
@@ -28,7 +31,7 @@ import {
     VijaController
   ],
   imports: [AdminModule, MediaModule],
-  providers: [ContentRepository, ContentEnrichmentAdminRepository, ContentVersionsAdminRepository],
-  exports: [ContentRepository]
+  providers: [ContentRepository, ContentEnrichmentAdminRepository, ContentVersionsAdminRepository, BusinessScenarioService],
+  exports: [ContentRepository, BusinessScenarioService]
 })
 export class ContentModule {}

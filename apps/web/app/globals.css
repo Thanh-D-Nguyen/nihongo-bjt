@@ -90,6 +90,40 @@
     sans-serif;
 }
 
+/* ── Dark mode overrides ── */
+.dark {
+  --color-ink: #F1F5F9;
+  --color-muted: #94A3B8;
+  --color-subtle: #64748B;
+  --color-paper: #0F172A;
+  --color-surface: #1E293B;
+  --color-border: #334155;
+  --color-border-hover: #475569;
+  --color-accent-soft: #1E3A5F;
+  --color-focus-surface: #1E293B;
+  --color-brand-sky: #1E293B;
+  --color-leaf-soft: #064E3B;
+  --color-sakura-soft: #7F1D1D;
+  --color-amber-soft: #78350F;
+  color: #F1F5F9;
+  background: #0F172A;
+}
+.dark body {
+  background: linear-gradient(180deg, #0F172A 0%, #1E293B 100%);
+}
+
+/* ── Japanese font-size tiers ── */
+[data-jp-font-size="small"] [lang="ja"],
+[data-jp-font-size="small"] .jp-text { font-size: 0.875rem; }
+[data-jp-font-size="large"] [lang="ja"],
+[data-jp-font-size="large"] .jp-text { font-size: 1.125rem; }
+[data-jp-font-size="xl"] [lang="ja"],
+[data-jp-font-size="xl"] .jp-text { font-size: 1.25rem; }
+
+/* ── Density tiers ── */
+[data-density="compact"] .card-content { padding: 0.75rem; }
+[data-density="compact"] .stat-card { padding: 0.5rem; }
+
 * {
   box-sizing: border-box;
 }
@@ -1247,6 +1281,25 @@ button.primary:disabled {
    Flashcard Interactive Card — animations
    ═══════════════════════════════════════════════════════════ */
 
+/* Card shell: premium depth with layered shadows */
+.fc-card-shell {
+  background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(248,250,252,0.95) 50%, rgba(241,245,249,0.9) 100%);
+  border: 1px solid rgba(0,0,0,0.06);
+  box-shadow:
+    0 1px 2px rgba(0,0,0,0.04),
+    0 4px 12px rgba(0,0,0,0.06),
+    0 16px 40px -8px rgba(0,0,0,0.10),
+    inset 0 1px 0 rgba(255,255,255,0.9);
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
+}
+.fc-card-shell:hover {
+  box-shadow:
+    0 1px 2px rgba(0,0,0,0.04),
+    0 8px 20px rgba(0,0,0,0.08),
+    0 24px 56px -8px rgba(0,0,0,0.14),
+    inset 0 1px 0 rgba(255,255,255,0.9);
+}
+
 /* Card reveal: subtle 3D lift + expand */
 @keyframes fc-reveal-lift {
   0%   { transform: perspective(800px) rotateX(0deg) scale(1); }
@@ -1424,4 +1477,41 @@ button.primary:disabled {
 }
 .fc-btn-press:active {
   transform: scale(0.95);
+}
+
+/* ── Shiba companion animations ── */
+
+@keyframes fc-shiba-in {
+  0%   { opacity: 0; transform: translateX(24px) scale(0.8); }
+  60%  { transform: translateX(-3px) scale(1.04); }
+  100% { opacity: 1; transform: translateX(0) scale(1); }
+}
+.fc-shiba-enter {
+  animation: fc-shiba-in 450ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes fc-shiba-out {
+  0%   { opacity: 1; transform: translateX(0) scale(1); }
+  100% { opacity: 0; transform: translateX(20px) scale(0.85); }
+}
+.fc-shiba-exit {
+  animation: fc-shiba-out 250ms ease-in both;
+}
+
+@keyframes fc-shiba-bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-2.5px); }
+}
+.fc-shiba-bob {
+  animation: fc-shiba-bob 2.5s ease-in-out infinite;
+  animation-delay: 400ms;
+}
+
+@keyframes fc-shiba-bubble-in {
+  0%   { opacity: 0; transform: scale(0.85) translateY(4px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+.fc-shiba-bubble {
+  animation: fc-shiba-bubble-in 300ms var(--ease-spring) both;
+  animation-delay: 150ms;
 }

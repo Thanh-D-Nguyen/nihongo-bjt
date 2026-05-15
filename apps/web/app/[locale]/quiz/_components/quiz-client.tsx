@@ -14,6 +14,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "re
 import { AnnotatedJapaneseText } from "../../../../components/reading-assist/annotated-japanese-text";
 import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
 import { learnerApiFetch } from "../../../../lib/learner-api";
+import { ShareDrawer } from "../../_components/share-drawer";
 import { BjtAudioPlayer, isAudioSection } from "./bjt-audio-player";
 import { BjtFormatGuidePanel } from "./bjt-format-guide";
 import { QuizResultsBreakdown } from "./quiz-results-breakdown";
@@ -304,6 +305,26 @@ const BAND_COLORS: Record<string, string> = {
 };
 
 const LEVEL_ORDER = ["J5", "J4", "J3", "J2", "J1", "J1+"];
+
+const SHARE_LABELS = {
+  title: "Share",
+  selectTemplate: "Choose a style",
+  preview: "Preview",
+  share: "Share",
+  copyLink: "Copy Link",
+  download: "Download",
+  cancel: "Cancel",
+  consentTitle: "Share your progress?",
+  consentMessage: "This creates a public page with your learning result. No private data is exposed.",
+  consentAccept: "Accept & Share",
+  consentDecline: "Not now",
+  loading: "Loading...",
+  noTemplates: "No templates available",
+  shareSuccess: "Shared!",
+  copied: "Link copied!",
+  error: "Something went wrong",
+  retry: "Retry",
+};
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -1072,6 +1093,7 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
             onViewBreakdown={() => setShowBreakdown(true)}
             results={results}
             showBreakdownBtn={!showBreakdown && !breakdownLoading}
+            userId={userId ?? ""}
           />
 
           {/* Skill breakdown + section scores (show when breakdown loaded) */}
@@ -1654,7 +1676,8 @@ function ResultsSummary({
   onRetry,
   onViewBreakdown,
   results,
-  showBreakdownBtn
+  showBreakdownBtn,
+  userId
 }: {
   confidenceMap: Record<string, "sure" | "guessing">;
   flaggedCount: number;
@@ -1664,6 +1687,7 @@ function ResultsSummary({
   onViewBreakdown: () => void;
   results: SessionPayload;
   showBreakdownBtn: boolean;
+  userId: string;
 }) {
   const accuracy =
     results.totalQuestions > 0
@@ -1679,6 +1703,7 @@ function ResultsSummary({
 
   // Band reveal delay
   const [bandVisible, setBandVisible] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   useEffect(() => {
     const t = setTimeout(() => setBandVisible(true), 1600);
     return () => clearTimeout(t);
@@ -1805,6 +1830,22 @@ function ResultsSummary({
           >
             {labels.retryQuiz ?? "Làm bài khác"}
           </button>
+          <button
+            className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[hsl(var(--border))] px-5 text-sm font-medium text-[hsl(var(--muted))] hover:text-[hsl(var(--ink))] transition-colors"
+            onClick={() => setShareOpen(true)}
+            type="button"
+          >
+            Share Result
+          </button>
+          <ShareDrawer
+            hasOptedIn={false}
+            kind="bjt_result"
+            labels={SHARE_LABELS}
+            onClose={() => setShareOpen(false)}
+            open={shareOpen}
+            payload={{ band: results.estimatedBjtBand ?? "" }}
+            userId={userId}
+          />
         </div>
       </div>
 

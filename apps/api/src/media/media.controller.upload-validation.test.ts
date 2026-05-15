@@ -4,10 +4,12 @@ import { describe, expect, it, vi } from "vitest";
 import { MediaController } from "./media.controller.js";
 
 describe("MediaController upload validation", () => {
+  const imageSearch = { search: vi.fn() };
+
   it("rejects presign when file extension does not match mime type", async () => {
     const mediaService = { presignUpload: vi.fn() };
     const featureGate = { requireEnabled: vi.fn().mockResolvedValue(undefined) };
-    const controller = new MediaController(mediaService as any, featureGate as any);
+    const controller = new MediaController(mediaService as any, featureGate as any, imageSearch as any);
 
     await expect(
       controller.presign(
@@ -31,7 +33,7 @@ describe("MediaController upload validation", () => {
       })
     };
     const featureGate = { requireEnabled: vi.fn().mockResolvedValue(undefined) };
-    const controller = new MediaController(mediaService as any, featureGate as any);
+    const controller = new MediaController(mediaService as any, featureGate as any, imageSearch as any);
 
     await expect(
       controller.presign(

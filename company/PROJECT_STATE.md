@@ -18,6 +18,31 @@ Update this file after every major agent cycle.
 - Final production launch remains blocked by explicit human/Release Director approval.
 - Active phase risks: PH07-R02 open (growth-social), PH07-R03 open (security), PH08-R01 open (qa), PH08-R02 open (devops).
 
+## Retention & Engagement Features (2026-05-15)
+
+13 learner-facing features implemented (backend + frontend + DB migrations). Full registry: `docs/RETENTION_ENGAGEMENT_FEATURES.md`.
+
+**Wave 1 — Retention (6 features):**
+1. Daily Study Goal — gamification schema, 3 endpoints, homepage widget
+2. Login Bonus Chain — gamification schema, 2 endpoints, homepage widget + share
+3. Push Notifications — analytics schema, 3 endpoints, service worker, prompt banner
+4. Weekly Report Card — analytics schema, 2 endpoints, homepage widget
+5. Revenge Mode Quiz — gamification schema, 3 endpoints, homepage widget
+6. Study Timer / Focus Mode — analytics schema, 3 endpoints, homepage widget
+
+**Wave 2 — Engagement (7 features):**
+1. Learning Heatmap — aggregation query on existing tables, 1 endpoint, GitHub-style grid
+2. Daily Mystery Box / Gacha — gamification schema (2 models), 3 endpoints, animated widget
+3. Companion Pet Evolution — gamification schema (1 model), 3 endpoints, Tamagotchi widget
+4. Achievement Share Postcards — reuses share infra, 3 endpoints, share hooks on pet + streak
+5. Seasonal Events — gamification schema (4 models), 3 endpoints, event banner + challenge list
+6. Business Scenario Simulator — content schema (4 models), 5 endpoints, dedicated `/scenarios` route
+7. Ambient Study Mode (Café Tokyo) — frontend-only, provider + overlay + widget, 4 sound options
+
+**New DB models:** 20 models across gamification/analytics/content schemas.
+**New endpoints:** ~31 learner API endpoints.
+**Pending integrations:** auto-feed pet from study actions, auto-update event progress, admin CRUD for events/scenarios.
+
 ## PHASE-07 Mid-Phase Checkpoint
 
 - Decision: `APPROVE_PHASE` (delegated unattended checkpoint after PH07-T03).

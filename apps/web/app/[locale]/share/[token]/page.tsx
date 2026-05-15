@@ -1,103 +1,145 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { getServerApiBaseUrl } from "@/lib/server-api-url";
 
-import ja from "../../../../messages/ja.json";
-import vi from "../../../../messages/vi.json";
-
-const messages = { ja, vi };
-
-const apiBase = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/$/, "");
-
-type ShareJson = {
-  description: string;
-  imageUrl: string;
+interface ShareSnapshot {
+  kind: string;
   title: string;
-};
+  summary: string;
+  asset: {
+    objectKey: string;
+    width: number;
+    height: number;
+    mimeType: string;
+  };
+}
 
-export async function generateMetadata({
-  params
-}: {
-  params: Promise<{ locale: keyof typeof messages; token: string }>;
-}): Promise<Metadata> {
-  const { locale, token } = await params;
-  const t = messages[locale] ?? messages.vi;
+interface PageProps {
+  params: Promise<{ locale: string; token: string }>;
+}
+
+async function fetchSnapshot(token: string): Promise<ShareSnapshot | null> {
+  const base = getServerApiBaseUrl();
   try {
-    const r = await fetch(`${apiBase}/api/public/shares/${encodeURIComponent(token)}`, {
-      next: { revalidate: 120 }
-    });
-    if (!r.ok) {
-      return { title: t.sharePublic.title };
-    }
-    const j = (await r.json()) as ShareJson;
-    return {
-      description: j.description,
-      openGraph: {
-        description: j.description,
-        images: [{ url: j.imageUrl }],
-        title: j.title
-      },
-      title: j.title
-    };
+    const res = await fetch(
+      `${base}/api/public/shares/${encodeURIComponent(token)}`,
+      { next: { revalidate: 60 } },
+    );
+    if (!res.ok) return null;
+    return (await res.json()) as ShareSnapshot;
   } catch {
-    return { title: t.sharePublic.title };
+    return null;
   }
 }
 
-export default async function PublicSharePage({
-  params
-}: {
-  params: Promise<{ locale: keyof typeof messages; token: string }>;
-}) {
-  const { locale, token } = await params;
-  const t = messages[locale] ?? messages.vi;
-  let data: ShareJson | null = null;
-  try {
-    const r = await fetch(`${apiBase}/api/public/shares/${encodeURIComponent(token)}`, {
-      cache: "no-store"
-    });
-    if (r.ok) {
-      data = (await r.json()) as ShareJson;
-    }
-  } catch {
-    data = null;
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { token } = await params;
+  const snapshot = await fetchSnapshot(token);
+  const base = getServerApiBaseUrl();
+  const imageUrl = `${base}/api/public/shares/${encodeURIComponent(token)}/image`;
+
+  if (!snapshot) {
+    return {
+      title: "NihonGo BJT",
+      description: "Học tiếng Nhật cho BJT cùng NihonGo BJT",
+    };
   }
 
-  if (!data) {
+  return {
+    title: snapshot.title,
+    description: "Shared from NihonGo BJT",
+    openGraph: {
+      title: snapshot.title,
+      description: "Shared from NihonGo BJT",
+      images: [{ url: imageUrl, width: 1200, height: 630 }],
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: snapshot.title,
+      images: [imageUrl],
+    },
+  };
+}
+
+export default async function PublicSharePage({ params }: PageProps) {
+  const { token, locale } = await params;
+  const snapshot = await fetchSnapshot(token);
+  const base = getServerApiBaseUrl();
+  const imageUrl = `${base}/api/public/shares/${encodeURIComponent(token)}/image`;
+
+  if (!snapshot) {
     return (
-      <main className="mx-auto max-w-2xl px-4 py-16 text-center">
-        <p className="text-sm text-muted" role="alert">{t.sharePublic.notFound}</p>
+      <main className="flex min-h-dvh flex-col items-center justify-center bg-[var(--color-paper)] px-4 py-12">
+        <div className="mx-auto w-full max-w-2xl text-center">
+          <p className="text-sm text-[var(--color-muted)]">NihonGo BJT</p>
+
+          <div className="mt-12 space-y-4">
+            <p className="text-xl font-bold text-[var(--color-ink)]">
+              Nội dung không tồn tại
+            </p>
+            <p className="text-sm text-[var(--color-muted)]">
+              Link chia sẻ này không còn hiệu lực hoặc đã bị xoá.
+            </p>
+          </div>
+
+          <Link
+            href={`/${locale}`}
+            className="mt-8 inline-flex h-12 items-center rounded-xl bg-[var(--color-accent)] px-8 text-sm font-semibold text-white transition-transform active:scale-[0.97]"
+          >
+            Về trang chủ →
+          </Link>
+
+          <footer className="mt-16 text-xs text-[var(--color-muted)]">
+            © NihonGo BJT
+          </footer>
+        </div>
       </main>
     );
   }
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-8">
-      <section className="rounded-2xl border border-ink/10 bg-surface p-6 shadow-sm">
-        <h1 className="text-2xl font-bold leading-tight text-ink">{data.title}</h1>
-        <p className="mt-1 text-sm text-muted">{t.sharePublic.subtitle}</p>
+    <main className="flex min-h-dvh flex-col items-center bg-[var(--color-paper)] px-4 py-12">
+      <div className="mx-auto w-full max-w-2xl">
+        <p className="text-center text-sm text-[var(--color-muted)]">
+          NihonGo BJT
+        </p>
 
-        {data.imageUrl ? (
-          <figure className="mt-6">
-            <img
-              alt={data.title}
-              className="w-full rounded-xl border border-ink/8"
-              height={400}
-              src={data.imageUrl}
-              width={800}
-            />
-          </figure>
-        ) : null}
-
-        <div className="mt-6 flex flex-wrap items-center gap-3">
-          <a
-            className="inline-flex items-center gap-2 rounded-xl border border-ink/12 bg-surface px-4 py-2 text-sm font-medium text-ink transition-colors hover:bg-ink/5"
-            href={data.imageUrl}
-            rel="noreferrer"
-            target="_blank"
-          >
-            {t.sharePublic.openImage}
-          </a>
+        {/* Postcard image */}
+        <div className="mt-6">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={imageUrl}
+            alt={snapshot.title}
+            width={1200}
+            height={630}
+            className="aspect-[1200/630] w-full rounded-xl object-cover shadow-lg"
+          />
         </div>
-      </section>
+
+        {/* Title */}
+        <h1 className="mt-6 text-center text-xl font-bold text-[var(--color-ink)]">
+          {snapshot.title}
+        </h1>
+
+        {/* CTA */}
+        <div className="mt-8 text-center">
+          <p className="text-sm text-[var(--color-muted)]">
+            Bạn cũng muốn học tiếng Nhật cho BJT?
+          </p>
+          <Link
+            href={`/${locale}`}
+            className="mt-4 inline-flex h-12 items-center rounded-xl bg-[var(--color-accent)] px-8 text-sm font-semibold text-white transition-transform active:scale-[0.97]"
+          >
+            Bắt đầu miễn phí →
+          </Link>
+        </div>
+
+        {/* Footer */}
+        <footer className="mt-16 text-center text-xs text-[var(--color-muted)]">
+          © NihonGo BJT
+        </footer>
+      </div>
     </main>
   );
 }

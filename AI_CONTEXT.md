@@ -61,9 +61,13 @@ Recent work expanded several production slices. Before editing them, inspect the
 - Card generation and cardgen admin workflows.
 - Practice exercises, sessions, attempts, and learner progress.
 - Gamification, XP, streaks, leaderboards, companion state, and achievements.
+- Retention features: daily study goal, login bonus chain, push notifications, weekly report, revenge mode quiz, study timer/focus mode.
+- Engagement features: learning heatmap, daily mystery box/gacha, companion pet evolution, achievement share postcards, seasonal events, business scenario simulator, ambient study mode.
 - Learner homepage and practice UI refreshes.
 - NHK/news ingestion and learner-facing news sections.
 - Admin management screens for practice/content operations.
+
+Full implementation registry: `docs/RETENTION_ENGAGEMENT_FEATURES.md`.
 
 ## Token-Efficient Change Workflow
 

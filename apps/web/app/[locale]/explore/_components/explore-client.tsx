@@ -35,6 +35,10 @@ interface ExploreStats {
   grammar: number;
 }
 
+interface ContentListSummary {
+  total?: number;
+}
+
 /* ── Constants ─────────────────────────────────────────────────────────── */
 
 const SECTIONS = [
@@ -98,9 +102,9 @@ export function ExploreClient({ labels, locale }: { labels: ExploreLabels; local
     async function load() {
       try {
         const [lexRes, kanjiRes, gramRes] = await Promise.all([
-          learnerApiFetch("/api/content/lexemes?limit=0").catch(() => null),
-          learnerApiFetch("/api/content/kanji?limit=0").catch(() => null),
-          learnerApiFetch("/api/content/grammar?limit=0").catch(() => null),
+          loadContentSummary("/api/content/lexemes?limit=0"),
+          loadContentSummary("/api/content/kanji?limit=0"),
+          loadContentSummary("/api/content/grammar?limit=0"),
         ]);
         if (cancelled) return;
         setStats({
@@ -127,7 +131,7 @@ export function ExploreClient({ labels, locale }: { labels: ExploreLabels; local
 
   return (
     <div className="mx-auto max-w-3xl space-y-8">
-      <PageHeader subtitle={labels.subtitle} title={labels.title} />
+      <PageHeader description={labels.subtitle} title={labels.title} />
 
       {/* ── Stats ribbon ── */}
       {stats ? (
@@ -192,6 +196,16 @@ export function ExploreClient({ labels, locale }: { labels: ExploreLabels; local
 }
 
 /* ── Helpers ────────────────────────────────────────────────────────────── */
+
+async function loadContentSummary(path: string): Promise<ContentListSummary | null> {
+  try {
+    const response = await learnerApiFetch(path);
+    if (!response.ok) return null;
+    return (await response.json()) as ContentListSummary;
+  } catch {
+    return null;
+  }
+}
 
 function StatChip({ label, value }: { label: string; value: number }) {
   return (

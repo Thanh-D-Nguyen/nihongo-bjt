@@ -19,6 +19,10 @@ import { AnalyticsSearchAdminController } from "./analytics-search-admin.control
 import { AnalyticsSearchAdminRepository } from "./analytics-search-admin.repository.js";
 import { AnalyticsSystemAdminController } from "./analytics-system-admin.controller.js";
 import { AnalyticsSystemAdminRepository } from "./analytics-system-admin.repository.js";
+import { LearningHeatmapController } from "./learning-heatmap.controller.js";
+import { LearningHeatmapService } from "./learning-heatmap.service.js";
+import { WeeklyReportController } from "./weekly-report.controller.js";
+import { WeeklyReportService } from "./weekly-report.service.js";
 
 @Module({
   controllers: [
@@ -31,7 +35,9 @@ import { AnalyticsSystemAdminRepository } from "./analytics-system-admin.reposit
     AnalyticsGrowthAdminController,
     AnalyticsLearningAdminController,
     AnalyticsSearchAdminController,
-    AnalyticsSystemAdminController
+    AnalyticsSystemAdminController,
+    LearningHeatmapController,
+    WeeklyReportController
   ],
   exports: [AnalyticsRepository],
   imports: [AdminModule],
@@ -44,7 +50,9 @@ import { AnalyticsSystemAdminRepository } from "./analytics-system-admin.reposit
     AnalyticsGrowthAdminRepository,
     AnalyticsLearningAdminRepository,
     AnalyticsSearchAdminRepository,
-    AnalyticsSystemAdminRepository
+    AnalyticsSystemAdminRepository,
+    LearningHeatmapService,
+    WeeklyReportService
   ]
 })
 export class AnalyticsModule {}

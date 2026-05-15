@@ -40,6 +40,7 @@ type DeckDetailPayload = {
   descriptionVi?: string | null;
   id: string;
   ownerUserId: string | null;
+  shareToken?: string | null;
   status: string;
   titleJa?: string | null;
   titleVi: string;
@@ -64,6 +65,9 @@ export function DeckDetailClient({
   const [deleteSubmitting, setDeleteSubmitting] = useState(false);
   const [focusIndex, setFocusIndex] = useState<number | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [shareLoading, setShareLoading] = useState(false);
+  const [shareToken, setShareToken] = useState<string | null>(null);
+  const [shareCopied, setShareCopied] = useState(false);
   const deleteTitleId = useId();
   const deleteBodyId = useId();
 
@@ -80,6 +84,7 @@ export function DeckDetailClient({
       }
       const raw = (await r.json()) as DeckDetailPayload;
       setDeck(raw);
+      setShareToken(raw.shareToken ?? null);
     } catch {
       setDeck(null);
       setError(labels.error);
@@ -110,6 +115,49 @@ export function DeckDetailClient({
       setDeleteSubmitting(false);
     }
   }, [userId, deck, locale, router, labels.deleteOwnedDeckError]);
+
+  const handleShare = useCallback(async () => {
+    if (!userId || !deck) return;
+    setShareLoading(true);
+    try {
+      const r = await learnerApiFetch(
+        `/api/flashcards/decks/${encodeURIComponent(deck.id)}/share`,
+        { method: "POST" }
+      );
+      if (!r.ok) throw new Error("share_failed");
+      const data = (await r.json()) as { shareToken: string };
+      setShareToken(data.shareToken);
+    } catch {
+      setError("Không thể chia sẻ bộ thẻ");
+    } finally {
+      setShareLoading(false);
+    }
+  }, [userId, deck]);
+
+  const handleUnshare = useCallback(async () => {
+    if (!userId || !deck) return;
+    setShareLoading(true);
+    try {
+      const r = await learnerApiFetch(
+        `/api/flashcards/decks/${encodeURIComponent(deck.id)}/share`,
+        { method: "DELETE" }
+      );
+      if (!r.ok) throw new Error("unshare_failed");
+      setShareToken(null);
+    } catch {
+      setError("Không thể hủy chia sẻ");
+    } finally {
+      setShareLoading(false);
+    }
+  }, [userId, deck]);
+
+  const handleCopyLink = useCallback(async () => {
+    if (!shareToken) return;
+    const url = `${window.location.origin}/${locale}/decks/shared/${encodeURIComponent(shareToken)}`;
+    await navigator.clipboard.writeText(url);
+    setShareCopied(true);
+    setTimeout(() => setShareCopied(false), 2000);
+  }, [shareToken, locale]);
 
   useEffect(() => {
     void load();
@@ -199,6 +247,35 @@ export function DeckDetailClient({
             >
               {labels.reviewDeck}
             </Link>
+            {isOwner && !shareToken && (
+              <Button
+                disabled={shareLoading}
+                onClick={() => void handleShare()}
+                type="button"
+                variant="secondary"
+              >
+                {shareLoading ? "Đang tạo link…" : "Chia sẻ bộ thẻ"}
+              </Button>
+            )}
+            {isOwner && shareToken && (
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={() => void handleCopyLink()}
+                  type="button"
+                  variant="secondary"
+                >
+                  {shareCopied ? "Đã copy ✓" : "Copy link"}
+                </Button>
+                <Button
+                  disabled={shareLoading}
+                  onClick={() => void handleUnshare()}
+                  type="button"
+                  variant="secondary"
+                >
+                  Hủy chia sẻ
+                </Button>
+              </div>
+            )}
             {isOwner ? (
               <Button onClick={() => setPendingDelete(true)} type="button" variant="secondary">
                 {labels.deleteOwnedDeck}

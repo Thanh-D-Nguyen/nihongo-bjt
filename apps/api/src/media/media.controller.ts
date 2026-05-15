@@ -2,6 +2,7 @@ import {
   completeMediaUploadSchema,
   mediaReadUrlQuerySchema,
   presignMediaUploadSchema,
+  searchImagesSchema,
   updateMediaRightsMetadataSchema
 } from "@nihongo-bjt/shared";
 import {
@@ -35,6 +36,7 @@ import {
   MediaRightsMetadataUpdateRequestOpenApiDto
 } from "../openapi/dto/backend-api-openapi.dto.js";
 import { RuntimeFeatureGateService } from "../operations/runtime-feature-gate.service.js";
+import { ImageSearchService } from "./image-search.service.js";
 import { MediaService } from "./media.service.js";
 
 const mediaMimeToExtensions: Record<string, string[]> = {
@@ -65,8 +67,22 @@ function assertUploadFileNameMatchesMimeType(fileName: string, mimeType: string)
 export class MediaController {
   constructor(
     @Inject(MediaService) private readonly mediaService: MediaService,
-    @Inject(RuntimeFeatureGateService) private readonly featureGate: RuntimeFeatureGateService
+    @Inject(RuntimeFeatureGateService) private readonly featureGate: RuntimeFeatureGateService,
+    @Inject(ImageSearchService) private readonly imageSearch: ImageSearchService
   ) {}
+
+  @Post("search-images")
+  @ApiOperation({ summary: "Search images from external providers (Unsplash, Pixabay, Google). Daily quota enforced." })
+  async searchImages(@CurrentUser() user: KeycloakAuthenticatedUser | undefined, @Body() body: unknown) {
+    const raw = body as Record<string, unknown>;
+    const userId = resolveLearnerUserId(user, raw.userId as string | undefined, { required: true })!;
+    const parsed = searchImagesSchema.safeParse({ ...raw, userId });
+    if (!parsed.success) {
+      throw new BadRequestException(parsed.error.flatten());
+    }
+    const images = await this.imageSearch.search(userId, parsed.data.query, parsed.data.limit);
+    return { images };
+  }
 
   @Post("presign-upload")
   @ApiOperation({

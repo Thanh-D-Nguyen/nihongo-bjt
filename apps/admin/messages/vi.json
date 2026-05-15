@@ -150,6 +150,7 @@
       "audit": "Nhật ký kiểm toán",
       "securityAudit": "Kiểm toán bảo mật",
       "settings": "Cài đặt",
+      "companionSettings": "Bot đồng hành",
       "legalDocs": "Văn bản pháp lý",
       "legalTerms": "Điều khoản / Quyền riêng tư",
       "consent": "Bản ghi đồng ý",
@@ -2818,6 +2819,23 @@
       "actionRefresh": "Làm mới",
       "actionExportCsv": "Xuất CSV",
       "errorLoad": "Không tải được leaderboard."
+    },
+    "companionSettings": {
+      "title": "Bot đồng hành",
+      "subtitle": "Quản lý bot đồng hành (Shiba) — tài nguyên Rive, mẹo, hành vi.",
+      "configSection": "Cấu hình",
+      "riveAsset": "Tài nguyên Rive",
+      "tipCount": "Mẹo",
+      "behavior": "Hành vi",
+      "riveAssets": "Tài nguyên Rive có sẵn",
+      "tipsSection": "Mẹo của bot đồng hành",
+      "validationRequired": "Nội dung tiếng Nhật và tiếng Việt là bắt buộc.",
+      "createFailed": "Tạo mẹo thất bại.",
+      "createOk": "Đã tạo mẹo.",
+      "updateFailed": "Cập nhật mẹo thất bại.",
+      "updateOk": "Đã cập nhật mẹo.",
+      "deleteFailed": "Xóa mẹo thất bại.",
+      "deleteOk": "Đã xóa mẹo."
     },
     "battleBots": {
       "title": "Bot Profiles",

@@ -218,11 +218,12 @@ export function QuizTemplatesAdminClient({ common, labels, locale }: { common: C
   async function submitForm() {
     if (!canManage) return;
     fe.clearAll();
-    const errs = validateFields({
-      slug: { value: form.slug, rules: [validators.required(t("slugRequired"))] },
-      titleVi: { value: form.titleVi, rules: [validators.required(t("titleViRequired"))] },
-      reason: { value: reason, rules: [validators.required(t("reasonRequired")), validators.minLength(3, t("reasonRequired"))] },
-    });
+    const errs = validateFields([
+      { field: "slug", value: form.slug, message: t("slugRequired"), validate: validators.required },
+      { field: "titleVi", value: form.titleVi, message: t("titleViRequired"), validate: validators.required },
+      { field: "reason", value: reason, message: t("reasonRequired"), validate: validators.required },
+      { field: "reason", value: reason, message: t("reasonRequired"), validate: validators.minLength(3) },
+    ]);
     if (Object.keys(errs).length > 0) { fe.setFieldErrors(errs); return; }
     setMutating(true);
     try {
@@ -247,8 +248,8 @@ export function QuizTemplatesAdminClient({ common, labels, locale }: { common: C
       const r = await adminApiFetch(url, { method, body: JSON.stringify(body) });
       if (!r.ok) {
         const parsed = await parseApiError(r, t("saveFailed"));
-        fe.setFieldErrors(parsed.fieldErrors);
-        if (parsed.message) fe.setFormError(parsed.message);
+        fe.setFieldErrors(parsed.fields);
+        if (parsed.form) fe.setFormError(parsed.form);
         else toast.error(t("saveFailed"));
         return;
       }
@@ -266,7 +267,7 @@ export function QuizTemplatesAdminClient({ common, labels, locale }: { common: C
       const url = confirm === "delete" ? `/api/admin/assessment/quiz-templates/${detail.id}` : `/api/admin/assessment/quiz-templates/${detail.id}/${confirm}`;
       const method = confirm === "delete" ? "DELETE" : "POST";
       const r = await adminApiFetch(url, { method, body: JSON.stringify({ reason: reason.trim() }) });
-      if (!r.ok) { const parsed = await parseApiError(r, t(`${confirm}Failed`)); toast.error(parsed.message || t(`${confirm}Failed`)); return; }
+      if (!r.ok) { const parsed = await parseApiError(r, t(`${confirm}Failed`)); toast.error(parsed.form || t(`${confirm}Failed`)); return; }
       toast.success(t(`${confirm}Ok`));
       setConfirm(null); setReason("");
       if (confirm === "delete") setSelectedId(null);

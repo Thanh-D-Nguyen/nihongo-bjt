@@ -4,6 +4,7 @@ import { Prisma, PrismaClient } from "../generated/client/index.js";
 
 export { Prisma, PrismaClient };
 export type {
+  CompanionPet,
   ContentImportBatch,
   ContentImportError,
   ContentImportMapping,

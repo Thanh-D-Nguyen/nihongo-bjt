@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type JSX } from "react";
+import { createPortal } from "react-dom";
 
 import { IconClose, IconNotice } from "./app-icons";
 
@@ -272,7 +273,7 @@ function AnnouncementModal({
     ? "bg-white/10 text-white/70 hover:bg-white/20 hover:text-white"
     : "bg-black/5 text-ink/40 hover:bg-black/10 hover:text-ink";
 
-  return (
+  const modalContent = (
     <div
       className={`fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-5 transition-all duration-400 ${
         visible ? "bg-black/60 backdrop-blur-xl" : "bg-black/0 backdrop-blur-none"
@@ -384,6 +385,9 @@ function AnnouncementModal({
       </div>
     </div>
   );
+
+  if (typeof document === "undefined") return null;
+  return createPortal(modalContent, document.body);
 }
 
 /* ── Banner Strip Component ── */

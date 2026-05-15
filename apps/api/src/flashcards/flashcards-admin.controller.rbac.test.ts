@@ -26,7 +26,7 @@ function createController(opts: { canManage: boolean; canRead: boolean }) {
   };
   return {
     auth,
-    controller: new FlashcardsAdminController(auth as never, repo as never),
+    controller: new FlashcardsAdminController(auth as never, repo as never, {} as never),
     repo
   };
 }

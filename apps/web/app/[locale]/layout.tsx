@@ -6,6 +6,8 @@ import vi from "../../messages/vi.json";
 import { learnerKcCookies } from "../../lib/kc-cookies";
 import { KeycloakAuthShell } from "./_components/keycloak-auth-shell";
 import { PwaRegister } from "../_components/pwa-register";
+import { AmbientProvider } from "../_hooks/use-ambient-mode";
+import { AmbientOverlay } from "../_components/ambient-overlay";
 
 const skipLabels: Record<"ja" | "vi", string> = {
   ja: ja.a11y.skipToContent,
@@ -43,17 +45,20 @@ export default async function LearnerLayout({
         {skipLabel}
       </a>
       <PwaRegister />
-      <KeycloakAuthShell
-        companionLabels={t.nav.companion}
-        kcAccessCookiePresent={kcAccessCookiePresent}
-        locale={locale}
-        nav={t.nav}
-        searchLabels={t.search}
-      >
-        <div className="site-root" id="main" tabIndex={-1}>
-          {children}
-        </div>
-      </KeycloakAuthShell>
+      <AmbientProvider>
+        <AmbientOverlay />
+        <KeycloakAuthShell
+          companionLabels={t.nav.companion}
+          kcAccessCookiePresent={kcAccessCookiePresent}
+          locale={locale}
+          nav={t.nav}
+          searchLabels={t.search}
+        >
+          <div className="site-root" id="main" tabIndex={-1}>
+            {children}
+          </div>
+        </KeycloakAuthShell>
+      </AmbientProvider>
     </div>
   );
 }

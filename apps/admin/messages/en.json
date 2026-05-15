@@ -150,6 +150,7 @@
       "audit": "Audit log",
       "securityAudit": "Security audit",
       "settings": "Settings",
+      "companionSettings": "Companion Bot",
       "legalDocs": "Legal documents",
       "legalTerms": "Terms / privacy versions",
       "consent": "Consent records",
@@ -1556,6 +1557,23 @@
       "actionRefresh": "Refresh",
       "actionExportCsv": "Export CSV",
       "errorLoad": "Failed to load leaderboard."
+    },
+    "companionSettings": {
+      "title": "Companion Bot",
+      "subtitle": "Manage the companion bot (Shiba) — Rive asset, tips, behavior.",
+      "configSection": "Configuration",
+      "riveAsset": "Rive Asset",
+      "tipCount": "Tips",
+      "behavior": "Behavior",
+      "riveAssets": "Available Rive Assets",
+      "tipsSection": "Companion Tips",
+      "validationRequired": "Japanese and Vietnamese content are required.",
+      "createFailed": "Failed to create tip.",
+      "createOk": "Tip created.",
+      "updateFailed": "Failed to update tip.",
+      "updateOk": "Tip updated.",
+      "deleteFailed": "Failed to delete tip.",
+      "deleteOk": "Tip deleted."
     },
     "battleBots": {
       "title": "Bot Profiles",

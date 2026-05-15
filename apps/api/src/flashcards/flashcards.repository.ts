@@ -1,6 +1,6 @@
 import { createPrismaClient, type Prisma } from "@nihongo-bjt/database";
 import { scheduleSrsReview, type SrsRating } from "@nihongo-bjt/shared";
-import { randomUUID } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { BadRequestException, Injectable, Logger, NotFoundException } from "@nestjs/common";
 
 function parseAccessibilityMetadata(value: Prisma.JsonValue | null | undefined): {
@@ -874,6 +874,124 @@ export class FlashcardsRepository {
     if (lexeme) return { sourceId: lexeme.id, sourceType: "lexeme" };
 
     return null;
+  }
+
+  // ─── Deck Sharing ────────────────────────────────────────────
+
+  async findDeckByShareToken(token: string) {
+    return this.prisma.deck.findFirst({
+      where: { shareToken: token, status: "active" },
+      include: { _count: { select: { cards: true } } },
+    });
+  }
+
+  async generateShareToken(userId: string, deckId: string) {
+    const deck = await this.prisma.deck.findFirst({
+      where: { id: deckId, ownerUserId: userId, status: "active" },
+    });
+    if (!deck) throw new NotFoundException({ code: "deck_not_found", message: "Deck not found" });
+
+    const token = randomBytes(18).toString("base64url");
+    await this.prisma.deck.update({
+      where: { id: deckId },
+      data: { shareToken: token, visibility: "public" },
+    });
+    return { shareToken: token };
+  }
+
+  async revokeShareToken(userId: string, deckId: string) {
+    const deck = await this.prisma.deck.findFirst({
+      where: { id: deckId, ownerUserId: userId, status: "active" },
+    });
+    if (!deck) throw new NotFoundException({ code: "deck_not_found", message: "Deck not found" });
+
+    await this.prisma.deck.update({
+      where: { id: deckId },
+      data: { shareToken: null, visibility: "private" },
+    });
+    return { status: "revoked" as const };
+  }
+
+  async publicDeckPreview(token: string) {
+    const deck = await this.prisma.deck.findFirst({
+      where: { shareToken: token, status: "active" },
+      include: {
+        cards: {
+          include: { card: true },
+          orderBy: { position: "asc" },
+          take: 5,
+        },
+        _count: { select: { cards: true } },
+      },
+    });
+    if (!deck) throw new NotFoundException({ code: "deck_not_found", message: "Shared deck not found" });
+
+    return {
+      id: deck.id,
+      titleVi: deck.titleVi,
+      titleJa: deck.titleJa,
+      descriptionVi: deck.descriptionVi,
+      descriptionJa: deck.descriptionJa,
+      cardCount: deck._count.cards,
+      cloneCount: deck.cloneCount,
+      sampleCards: deck.cards.map((dc) => ({
+        frontText: dc.card.frontText,
+        reading: dc.card.reading,
+      })),
+    };
+  }
+
+  async cloneDeck(token: string, targetUserId: string) {
+    const source = await this.prisma.deck.findFirst({
+      where: { shareToken: token, status: "active" },
+      include: {
+        cards: {
+          include: { card: true },
+          orderBy: { position: "asc" },
+        },
+      },
+    });
+    if (!source) throw new NotFoundException({ code: "deck_not_found", message: "Shared deck not found" });
+
+    return this.prisma.$transaction(async (tx) => {
+      const cloned = await tx.deck.create({
+        data: {
+          ownerUserId: targetUserId,
+          titleVi: source.titleVi,
+          titleJa: source.titleJa,
+          descriptionVi: source.descriptionVi,
+          descriptionJa: source.descriptionJa,
+          visibility: "private",
+          sourceDeckId: source.id,
+        },
+      });
+
+      for (const dc of source.cards) {
+        const newCard = await tx.flashcardVariant.create({
+          data: {
+            sourceType: dc.card.sourceType,
+            sourceId: dc.card.sourceId,
+            frontText: dc.card.frontText,
+            backText: dc.card.backText,
+            reading: dc.card.reading,
+          },
+        });
+        await tx.deckCard.create({
+          data: {
+            deckId: cloned.id,
+            cardId: newCard.id,
+            position: dc.position,
+          },
+        });
+      }
+
+      await tx.deck.update({
+        where: { id: source.id },
+        data: { cloneCount: { increment: 1 } },
+      });
+
+      return { newDeckId: cloned.id, cardCount: source.cards.length };
+    });
   }
 }
 

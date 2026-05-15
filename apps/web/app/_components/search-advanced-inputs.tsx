@@ -8,24 +8,68 @@ import { useCallback, useEffect, useRef, useState } from "react";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SpeechRecognitionAny = any;
 
+type VoiceError = "not-allowed" | "no-speech" | "network" | "generic" | null;
+
+const speechLangMap: Record<string, string> = {
+  ja: "ja-JP",
+  vi: "vi-VN",
+  en: "en-US",
+};
+
+export interface VoiceSearchLabels {
+  listening?: string;
+  title?: string;
+  permissionDenied?: string;
+  noSpeech?: string;
+  networkError?: string;
+  genericError?: string;
+}
+
+const defaultVoiceLabels: Required<VoiceSearchLabels> = {
+  listening: "Đang nghe...",
+  title: "Tìm bằng giọng nói",
+  permissionDenied: "Vui lòng cho phép microphone",
+  noSpeech: "Không nghe thấy. Thử lại.",
+  networkError: "Lỗi mạng. Thử lại.",
+  genericError: "Không nhận giọng. Thử lại.",
+};
+
 export function VoiceSearchButton({
   onResult,
-  className
+  className,
+  locale = "ja",
+  labels: labelsProp,
 }: {
   onResult: (text: string) => void;
   className?: string;
+  locale?: string;
+  labels?: VoiceSearchLabels;
 }) {
+  const labels = { ...defaultVoiceLabels, ...labelsProp };
   const [listening, setListening] = useState(false);
   const [speechSupportChecked, setSpeechSupportChecked] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
+  const [error, setError] = useState<VoiceError>(null);
   const recognitionRef = useRef<SpeechRecognitionAny>(null);
+  const errorTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
 
   useEffect(() => {
     setSpeechSupported("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
     setSpeechSupportChecked(true);
   }, []);
 
+  // Auto-clear error after 3s
+  useEffect(() => {
+    if (!error) return;
+    errorTimerRef.current = setTimeout(() => setError(null), 3000);
+    return () => {
+      if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+    };
+  }, [error]);
+
   const toggle = useCallback(() => {
+    setError(null);
+
     if (listening && recognitionRef.current) {
       recognitionRef.current.stop();
       setListening(false);
@@ -37,44 +81,99 @@ export function VoiceSearchButton({
     if (!SpeechRecognitionCtor) return;
 
     const recognition = new (SpeechRecognitionCtor as new () => SpeechRecognitionAny)();
-    recognition.lang = "ja-JP";
+    recognition.lang = speechLangMap[locale] ?? "ja-JP";
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
 
+    let gotResult = false;
+    let gotError = false;
+
     recognition.onresult = (event: { results: { 0: { 0: { transcript: string } } } }) => {
       const transcript = event.results[0]?.[0]?.transcript;
+      gotResult = true;
       if (transcript) {
         onResult(transcript);
       }
       setListening(false);
     };
 
-    recognition.onerror = () => setListening(false);
-    recognition.onend = () => setListening(false);
+    recognition.onerror = (event: { error?: string }) => {
+      gotError = true;
+      setListening(false);
+      const code = event.error ?? "";
+      if (code === "not-allowed" || code === "service-not-allowed") {
+        setError("not-allowed");
+      } else if (code === "no-speech") {
+        setError("no-speech");
+      } else if (code === "network") {
+        setError("network");
+      } else if (code === "aborted") {
+        // User cancelled — no error
+        gotError = false;
+      } else {
+        setError("generic");
+      }
+    };
+
+    recognition.onend = () => {
+      setListening(false);
+      if (!gotResult && !gotError) {
+        // Recognition ended without result and without explicit error (e.g. silence timeout)
+        setError("no-speech");
+      }
+    };
 
     recognitionRef.current = recognition;
-    recognition.start();
-    setListening(true);
-  }, [listening, onResult]);
+    try {
+      recognition.start();
+      setListening(true);
+    } catch {
+      setError("generic");
+    }
+  }, [listening, onResult, locale]);
 
   if (speechSupportChecked && !speechSupported) return null;
 
+  const errorMessage =
+    error === "not-allowed"
+      ? labels.permissionDenied
+      : error === "no-speech"
+        ? labels.noSpeech
+        : error === "network"
+          ? labels.networkError
+          : error === "generic"
+            ? labels.genericError
+            : null;
+
   return (
-    <button
-      type="button"
-      className={cn(
-        "flex items-center justify-center rounded-md border border-ink/10 p-1.5 transition-colors",
-        listening
-          ? "border-sakura bg-sakura/10 text-sakura"
-          : "text-muted hover:border-ink/20 hover:text-ink",
-        className
+    <div className="relative shrink-0">
+      <button
+        type="button"
+        className={cn(
+          "flex items-center justify-center rounded-md border p-1.5 transition-colors",
+          listening
+            ? "border-sakura bg-sakura/10 text-sakura"
+            : error
+              ? "border-sakura/40 text-sakura"
+              : "border-ink/10 text-muted hover:border-ink/20 hover:text-ink",
+          className
+        )}
+        onClick={toggle}
+        disabled={!speechSupported}
+        title={listening ? labels.listening : labels.title}
+        aria-label={listening ? labels.listening : labels.title}
+      >
+        <MicIcon listening={listening} />
+      </button>
+      {errorMessage && (
+        <span
+          role="alert"
+          className="absolute right-0 top-full z-30 mt-1.5 w-max max-w-[200px] rounded-lg border border-sakura/20 bg-paper px-2.5 py-1.5 text-[11px] font-medium text-sakura shadow-lg"
+        >
+          {errorMessage}
+        </span>
       )}
-      onClick={toggle}
-      disabled={!speechSupported}
-      title={listening ? "Đang nghe..." : "Tìm bằng giọng nói"}
-    >
-      <MicIcon listening={listening} />
-    </button>
+    </div>
   );
 }
 

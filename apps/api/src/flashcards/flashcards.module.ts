@@ -3,6 +3,7 @@ import { Module } from "@nestjs/common";
 import { AdminModule } from "../admin/admin.module.js";
 import { MediaModule } from "../media/media.module.js";
 import { MonetizationModule } from "../monetization/monetization.module.js";
+import { FlashcardGenService } from "./flashcard-gen.service.js";
 import { FlashcardsAdminController } from "./flashcards-admin.controller.js";
 import { FlashcardsAdminRepository } from "./flashcards-admin.repository.js";
 import { FlashcardsController } from "./flashcards.controller.js";
@@ -14,6 +15,6 @@ import { FlashcardsService } from "./flashcards.service.js";
   controllers: [FlashcardsController, DecksController, ReviewController, FlashcardsAdminController],
   exports: [FlashcardsRepository],
   imports: [AdminModule, MediaModule, MonetizationModule],
-  providers: [FlashcardsRepository, FlashcardsService, FlashcardsAdminRepository]
+  providers: [FlashcardsRepository, FlashcardsService, FlashcardsAdminRepository, FlashcardGenService]
 })
 export class FlashcardsModule {}

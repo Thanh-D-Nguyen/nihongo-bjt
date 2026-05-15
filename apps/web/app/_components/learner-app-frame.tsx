@@ -20,7 +20,6 @@ import { AnnouncementStrip } from "./announcement-strip";
 import { BrandFull } from "./brand-logo";
 import { CompanionBot, type CompanionBotLabels } from "./companion-bot";
 import {
-  IconAccount,
   IconAchievement,
   IconAnalytics,
   IconBattle,
@@ -472,15 +471,6 @@ export function LearnerAppFrame({
                       {/* Account section */}
                       <div className="my-1.5 border-t border-ink/8" />
                       <p className="px-3 pb-1 pt-2 text-[10px] font-bold uppercase tracking-widest text-muted/60">Account</p>
-                      <Link
-                        className="flex min-h-10 items-center gap-2.5 rounded-xl px-3 text-sm font-semibold text-muted hover:bg-paper hover:text-ink"
-                        href={`${base}/account`}
-                        role="menuitem"
-                        onClick={() => setUserMenuOpen(false)}
-                      >
-                        <IconAccount aria-hidden size={16} />
-                        {nav.account}
-                      </Link>
                       <Link
                         className="flex min-h-10 items-center gap-2.5 rounded-xl px-3 text-sm font-semibold text-muted hover:bg-paper hover:text-ink"
                         href={`${base}/settings`}

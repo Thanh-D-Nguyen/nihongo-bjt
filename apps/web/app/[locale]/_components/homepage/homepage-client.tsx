@@ -7,10 +7,21 @@ import { learnerApiFetchOptional } from "../../../../lib/learner-api";
 import { FeaturedNewsSection } from "./featured-news-section";
 import { HeroSection } from "./hero-section";
 import { ProgressSection } from "./progress-section";
+import { LoginBonusWidget } from "./login-bonus-widget";
+import { StudyGoalWidget } from "./study-goal-widget";
 import { QuickActionsStrip } from "./quick-actions-strip";
 import type { HomepageLabels, LearnerAnalytics, NhkArticle } from "./types";
 import { DailyRadarSection } from "@/src/features/daily-radar/daily-radar-section";
 import { BjtLevelsSection } from "./bjt-levels-section";
+import { PushPromptBanner } from "./push-prompt-banner";
+import { MysteryBoxWidget } from "./mystery-box-widget";
+import { RevengeModeWidget } from "./revenge-mode-widget";
+import { WeeklyReportCard } from "./weekly-report-card";
+import { FocusTimerWidget } from "./focus-timer-widget";
+import { LearningHeatmap } from "./learning-heatmap";
+import { CompanionPetWidget } from "./companion-pet-widget";
+import { SeasonalEventBanner } from "./seasonal-event-banner";
+import { AmbientModeWidget } from "./ambient-mode-widget";
 
 interface DailyHubPayload {
   dueReviews: number;
@@ -107,6 +118,7 @@ export function HomepageClient({ labels, locale }: { labels: HomepageLabels; loc
 
   return (
     <main className="space-y-8 overflow-x-hidden pb-12 pt-2 sm:pt-6">
+      <PushPromptBanner />
       <div className="hp-enter">
         <HeroSection
           displayName={displayName}
@@ -126,6 +138,14 @@ export function HomepageClient({ labels, locale }: { labels: HomepageLabels; loc
               labels={labels}
               locale={locale}
             />
+          </div>
+
+          <div className="hp-enter hp-enter-d1">
+            <SeasonalEventBanner locale={locale} />
+          </div>
+
+          <div className="hp-enter hp-enter-d1">
+            <LearningHeatmap locale={locale} />
           </div>
 
           <div className="hp-enter hp-enter-d2">
@@ -153,6 +173,27 @@ export function HomepageClient({ labels, locale }: { labels: HomepageLabels; loc
         </div>
 
         <div className="space-y-6 lg:sticky lg:top-20">
+          <div className="hp-enter hp-enter-d1">
+            <CompanionPetWidget locale={locale} />
+          </div>
+          <div className="hp-enter hp-enter-d2">
+            <StudyGoalWidget locale={locale} />
+          </div>
+          <div className="hp-enter hp-enter-d2">
+            <LoginBonusWidget locale={locale} />
+          </div>
+          <div className="hp-enter hp-enter-d2">
+            <MysteryBoxWidget locale={locale} />
+          </div>
+          <div className="hp-enter hp-enter-d2">
+            <WeeklyReportCard locale={locale} />
+          </div>
+          <div className="hp-enter hp-enter-d2">
+            <RevengeModeWidget locale={locale} />
+          </div>
+          <div className="hp-enter hp-enter-d2">
+            <FocusTimerWidget locale={locale} />
+          </div>
           <div className="hp-enter hp-enter-d2">
             <ProgressSection
               analytics={analytics}
@@ -161,6 +202,9 @@ export function HomepageClient({ labels, locale }: { labels: HomepageLabels; loc
               labels={labels}
               locale={locale}
             />
+          </div>
+          <div className="hp-enter hp-enter-d2">
+            <AmbientModeWidget />
           </div>
         </div>
       </div>

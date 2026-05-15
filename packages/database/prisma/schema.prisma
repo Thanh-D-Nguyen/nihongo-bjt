@@ -387,6 +387,9 @@ model Deck {
   descriptionJa String?    @map("description_ja")
   visibility    String     @default("private") @db.VarChar(32)
   status        String     @default("active") @db.VarChar(32)
+  shareToken    String?    @unique @map("share_token") @db.VarChar(64)
+  sourceDeckId  String?    @map("source_deck_id") @db.Uuid
+  cloneCount    Int        @default(0) @map("clone_count")
   createdAt     DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt     DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
   cards         DeckCard[]
@@ -911,6 +914,28 @@ model AnalyticsRollupRun {
   @@index([name, startedAt], map: "idx_rollup_run_name_started_at")
   @@index([status], map: "idx_rollup_run_status")
   @@map("rollup_run")
+  @@schema("analytics")
+}
+
+model WeeklyReport {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String    @map("user_id") @db.Uuid
+  weekStart       DateTime  @map("week_start") @db.Date
+  weekEnd         DateTime  @map("week_end") @db.Date
+  totalReviews    Int       @default(0) @map("total_reviews")
+  accuracyPct     Float     @default(0) @map("accuracy_pct")
+  streakDays      Int       @default(0) @map("streak_days")
+  quizSessions    Int       @default(0) @map("quiz_sessions")
+  newCardsLearned Int       @default(0) @map("new_cards_learned")
+  weakSkills      String[]  @map("weak_skills")
+  prevWeekReviews Int?      @map("prev_week_reviews")
+  prevWeekAccuracy Float?   @map("prev_week_accuracy")
+  emailSentAt     DateTime? @map("email_sent_at") @db.Timestamptz(6)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([userId, weekStart], map: "uq_weekly_report_user_week")
+  @@index([userId, weekStart], map: "idx_weekly_report_user_week")
+  @@map("weekly_report")
   @@schema("analytics")
 }
 
@@ -2495,6 +2520,215 @@ model LeaderboardEntry {
   @@schema("gamification")
 }
 
+/// Per-user daily study goal preference (5/10/20 minutes).
+model DailyStudyGoal {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String   @map("user_id") @db.Uuid
+  targetMinutes Int      @map("target_minutes") @db.SmallInt
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([userId], map: "uq_daily_study_goal_user")
+  @@map("daily_study_goal")
+  @@schema("gamification")
+}
+
+/// Auto-generated daily study plan tied to user's goal.
+model DailyStudyPlan {
+  id            String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String           @map("user_id") @db.Uuid
+  planDate      DateTime         @map("plan_date") @db.Date
+  targetMinutes Int              @map("target_minutes") @db.SmallInt
+  tasks         DailyStudyTask[]
+  completedAt   DateTime?        @map("completed_at") @db.Timestamptz(6)
+  createdAt     DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([userId, planDate], map: "uq_daily_study_plan_user_date")
+  @@index([userId, planDate], map: "idx_daily_study_plan_user_date")
+  @@map("daily_study_plan")
+  @@schema("gamification")
+}
+
+/// Individual task within a daily study plan.
+model DailyStudyTask {
+  id          String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  planId      String         @map("plan_id") @db.Uuid
+  plan        DailyStudyPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  taskType    String         @map("task_type") @db.VarChar(32)
+  targetCount Int            @map("target_count") @db.SmallInt
+  doneCount   Int            @default(0) @map("done_count") @db.SmallInt
+  sortOrder   Int            @default(0) @map("sort_order") @db.SmallInt
+  completedAt DateTime?      @map("completed_at") @db.Timestamptz(6)
+  createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([planId], map: "idx_daily_study_task_plan")
+  @@map("daily_study_task")
+  @@schema("gamification")
+}
+
+/// Tracks a user's 7-day login bonus chain progress.
+model LoginBonusChain {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  chainDay       Int       @default(1) @map("chain_day") @db.SmallInt
+  lastClaimDate  DateTime? @map("last_claim_date") @db.Date
+  chainStartDate DateTime  @map("chain_start_date") @db.Date
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([userId], map: "uq_login_bonus_chain_user")
+  @@map("login_bonus_chain")
+  @@schema("gamification")
+}
+
+/// Individual login bonus claim record.
+model LoginBonusClaim {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  chainDay    Int      @map("chain_day") @db.SmallInt
+  rewardType  String   @map("reward_type") @db.VarChar(32)
+  rewardValue String   @map("reward_value") @db.VarChar(255)
+  claimedAt   DateTime @default(now()) @map("claimed_at") @db.Timestamptz(6)
+
+  @@index([userId, claimedAt], map: "idx_login_bonus_claim_user")
+  @@map("login_bonus_claim")
+  @@schema("gamification")
+}
+
+/// Defines possible rewards that can appear in the daily mystery box.
+model MysteryBoxReward {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug        String   @unique @db.VarChar(50)
+  nameVi      String   @map("name_vi") @db.VarChar(100)
+  nameJa      String?  @map("name_ja") @db.VarChar(100)
+  description String?  @db.VarChar(255)
+  rewardType  String   @map("reward_type") @db.VarChar(30)
+  rewardValue Int      @default(0) @map("reward_value")
+  rarity      String   @default("common") @db.VarChar(20)
+  iconEmoji   String   @default("🎁") @map("icon_emoji") @db.VarChar(10)
+  weight      Int      @default(100)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  claims MysteryBoxClaim[]
+
+  @@index([active, weight], map: "idx_mystery_reward_active")
+  @@map("mystery_box_reward")
+  @@schema("gamification")
+}
+
+/// Tracks each user's daily mystery box claim (one per day).
+model MysteryBoxClaim {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  rewardId  String   @map("reward_id") @db.Uuid
+  claimedAt DateTime @default(now()) @map("claimed_at") @db.Timestamptz(6)
+  claimDate DateTime @map("claim_date") @db.Date
+
+  reward MysteryBoxReward @relation(fields: [rewardId], references: [id])
+
+  @@unique([userId, claimDate], map: "uq_mystery_claim_user_day")
+  @@index([userId, claimedAt], map: "idx_mystery_claim_user")
+  @@map("mystery_box_claim")
+  @@schema("gamification")
+}
+
+/// Virtual companion pet that evolves through study consistency (Tamagotchi-style).
+model CompanionPet {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String   @unique @map("user_id") @db.Uuid
+  name          String   @default("Shiba") @db.VarChar(30)
+  stage         String   @default("egg") @db.VarChar(20)
+  xp            Int      @default(0)
+  happiness     Int      @default(100)
+  mood          String   @default("happy") @db.VarChar(20)
+  totalFeedings Int      @default(0) @map("total_feedings")
+  lastFedAt     DateTime? @map("last_fed_at") @db.Timestamptz(6)
+  evolvedAt     DateTime? @map("evolved_at") @db.Timestamptz(6)
+  costumeSlug   String?  @map("costume_slug") @db.VarChar(50)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("companion_pet")
+  @@schema("gamification")
+}
+
+/// Time-limited seasonal event (e.g. "Sakura Sprint", "Tanabata Challenge").
+model SeasonalEvent {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug        String   @unique @db.VarChar(60)
+  nameVi      String   @map("name_vi") @db.VarChar(100)
+  nameJa      String?  @map("name_ja") @db.VarChar(100)
+  description String?  @db.VarChar(500)
+  iconEmoji   String   @default("🎏") @map("icon_emoji") @db.VarChar(10)
+  bannerColor String   @default("#f0abfc") @map("banner_color") @db.VarChar(20)
+  startDate   DateTime @map("start_date") @db.Date
+  endDate     DateTime @map("end_date") @db.Date
+  active      Boolean  @default(true)
+  createdBy   String?  @map("created_by") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  challenges   EventChallenge[]
+  participants EventParticipant[]
+
+  @@index([startDate, endDate, active], map: "idx_seasonal_event_dates")
+  @@map("seasonal_event")
+  @@schema("gamification")
+}
+
+/// A challenge within a seasonal event (e.g. "Review 50 cards", "Complete 3 quizzes").
+model EventChallenge {
+  id            String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  eventId       String  @map("event_id") @db.Uuid
+  title         String  @db.VarChar(200)
+  description   String? @db.VarChar(500)
+  challengeType String  @map("challenge_type") @db.VarChar(30)
+  targetValue   Int     @map("target_value")
+  rewardXp      Int     @default(0) @map("reward_xp")
+  rewardBadge   String? @map("reward_badge") @db.VarChar(50)
+  sortOrder     Int     @default(0) @map("sort_order")
+
+  event    SeasonalEvent            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  progress EventChallengeProgress[]
+
+  @@index([eventId, sortOrder], map: "idx_event_challenge_order")
+  @@map("event_challenge")
+  @@schema("gamification")
+}
+
+/// Tracks that a user has joined a seasonal event.
+model EventParticipant {
+  id       String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  eventId  String   @map("event_id") @db.Uuid
+  userId   String   @map("user_id") @db.Uuid
+  joinedAt DateTime @default(now()) @map("joined_at") @db.Timestamptz(6)
+
+  event SeasonalEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId], map: "uq_event_participant")
+  @@map("event_participant")
+  @@schema("gamification")
+}
+
+/// User progress on a specific event challenge.
+model EventChallengeProgress {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  challengeId  String    @map("challenge_id") @db.Uuid
+  userId       String    @map("user_id") @db.Uuid
+  currentValue Int       @default(0) @map("current_value")
+  completed    Boolean   @default(false)
+  completedAt  DateTime? @map("completed_at") @db.Timestamptz(6)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  challenge EventChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  @@unique([challengeId, userId], map: "uq_event_challenge_progress")
+  @@index([userId, completed], map: "idx_event_progress_user")
+  @@map("event_challenge_progress")
+  @@schema("gamification")
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // ── Auto Flashcard Generation ───────────────────────────────────────────────────
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -2650,4 +2884,141 @@ model NhkBookmark {
   @@index([userId, createdAt(sort: Desc)], map: "idx_nhk_bookmark_user")
   @@map("nhk_bookmark")
   @@schema("learning")
+}
+
+model CompanionTip {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  category    String   @db.VarChar(32)
+  contentJa   String   @map("content_ja")
+  contentVi   String   @map("content_vi")
+  exampleJa   String?  @map("example_ja")
+  exampleVi   String?  @map("example_vi")
+  jlptLevel   String?  @map("jlpt_level") @db.VarChar(8)
+  active      Boolean  @default(true)
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([category, active], map: "idx_companion_tip_category_active")
+  @@map("companion_tip")
+  @@schema("content")
+}
+
+model PushSubscription {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  endpoint  String
+  p256dh    String   @db.VarChar(255)
+  auth      String   @db.VarChar(255)
+  userAgent String?  @map("user_agent") @db.VarChar(500)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([userId, endpoint], map: "uq_push_sub_user_endpoint")
+  @@index([userId], map: "idx_push_sub_user")
+  @@map("push_subscription")
+  @@schema("ops")
+}
+
+model RevengeAttempt {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  questionId String   @map("question_id") @db.Uuid
+  isCorrect  Boolean  @map("is_correct")
+  answeredAt DateTime @default(now()) @map("answered_at") @db.Timestamptz(6)
+
+  @@index([userId, answeredAt], map: "idx_revenge_attempt_user")
+  @@index([userId, questionId], map: "idx_revenge_attempt_user_question")
+  @@map("revenge_attempt")
+  @@schema("learning")
+}
+
+model StudySession {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String    @map("user_id") @db.Uuid
+  mode            String    @default("focus") @map("mode") @db.VarChar(20)
+  durationMinutes Int       @map("duration_minutes")
+  startedAt       DateTime  @default(now()) @map("started_at") @db.Timestamptz(6)
+  endedAt         DateTime? @map("ended_at") @db.Timestamptz(6)
+  reviewsDone     Int       @default(0) @map("reviews_done")
+  quizzesDone     Int       @default(0) @map("quizzes_done")
+  xpEarned        Int       @default(0) @map("xp_earned")
+  completed       Boolean   @default(false)
+
+  @@index([userId, startedAt], map: "idx_study_session_user")
+  @@map("study_session")
+  @@schema("learning")
+}
+
+// ── Business Scenario Simulator ──────────────────────────────────
+
+model BusinessScenario {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug          String   @unique @db.VarChar(60)
+  titleVi       String   @map("title_vi") @db.VarChar(200)
+  titleJa       String?  @map("title_ja") @db.VarChar(200)
+  descriptionVi String?  @map("description_vi") @db.VarChar(500)
+  difficulty    String   @default("intermediate") @db.VarChar(20)
+  category      String   @default("email") @db.VarChar(30)
+  iconEmoji     String   @default("💼") @map("icon_emoji") @db.VarChar(10)
+  estimatedMin  Int      @default(5) @map("estimated_min")
+  active        Boolean  @default(true)
+  sortOrder     Int      @default(0) @map("sort_order")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  steps    ScenarioStep[]
+  attempts UserScenarioAttempt[]
+
+  @@index([active, category, sortOrder], map: "idx_scenario_active")
+  @@map("business_scenario")
+  @@schema("content")
+}
+
+model ScenarioStep {
+  id          String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  scenarioId  String  @map("scenario_id") @db.Uuid
+  stepOrder   Int     @map("step_order")
+  situationVi String  @map("situation_vi") @db.Text
+  situationJa String? @map("situation_ja") @db.Text
+  speakerName String? @map("speaker_name") @db.VarChar(50)
+  speakerRole String? @map("speaker_role") @db.VarChar(50)
+
+  scenario BusinessScenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+  choices  ScenarioChoice[]
+
+  @@unique([scenarioId, stepOrder], map: "uq_scenario_step_order")
+  @@map("scenario_step")
+  @@schema("content")
+}
+
+model ScenarioChoice {
+  id            String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  stepId        String  @map("step_id") @db.Uuid
+  choiceKey     String  @map("choice_key") @db.VarChar(5)
+  textVi        String  @map("text_vi") @db.VarChar(500)
+  textJa        String? @map("text_ja") @db.VarChar(500)
+  isOptimal     Boolean @default(false) @map("is_optimal")
+  feedbackVi    String? @map("feedback_vi") @db.VarChar(500)
+  pointsAwarded Int     @default(0) @map("points_awarded")
+
+  step ScenarioStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
+
+  @@index([stepId], map: "idx_scenario_choice_step")
+  @@map("scenario_choice")
+  @@schema("content")
+}
+
+model UserScenarioAttempt {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  scenarioId  String   @map("scenario_id") @db.Uuid
+  totalPoints Int      @default(0) @map("total_points")
+  maxPoints   Int      @default(0) @map("max_points")
+  choices     Json     @default("[]")
+  completedAt DateTime @default(now()) @map("completed_at") @db.Timestamptz(6)
+
+  scenario BusinessScenario @relation(fields: [scenarioId], references: [id])
+
+  @@index([userId, scenarioId], map: "idx_scenario_attempt_user")
+  @@map("user_scenario_attempt")
+  @@schema("content")
 }

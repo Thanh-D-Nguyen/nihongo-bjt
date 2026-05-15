@@ -10,27 +10,29 @@ import { setTokenCookies } from "@/lib/kc-cookies";
 import { getKcAdminBootstrap, getKcWebConfig } from "@/lib/kc-server-config";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/u;
+const USERNAME_RE = /^[A-Za-z0-9_]+$/u;
 
-function readRegisterBody(body: unknown): { email: string; password: string; username: string } | null {
+function readRegisterBody(
+  body: unknown
+): { fields: { email: string; password: string; username: string } } | { field: "email" | "password" | "username" } {
   if (!body || typeof body !== "object") {
-    return null;
+    return { field: "username" };
   }
   const o = body as Record<string, unknown>;
   const username = typeof o.username === "string" ? o.username.trim() : "";
   const email = typeof o.email === "string" ? o.email.trim().toLowerCase() : "";
   const password = typeof o.password === "string" ? o.password : "";
-  if (
-    username.length < 2 ||
-    username.length > 64 ||
-    email.length < 5 ||
-    email.length > 254 ||
-    password.length < 8 ||
-    password.length > 4096 ||
-    !EMAIL_RE.test(email)
-  ) {
-    return null;
+
+  if (username.length < 2 || username.length > 64 || !USERNAME_RE.test(username)) {
+    return { field: "username" };
   }
-  return { email, password, username };
+  if (email.length < 5 || email.length > 254 || !EMAIL_RE.test(email)) {
+    return { field: "email" };
+  }
+  if (password.length < 8 || password.length > 4096) {
+    return { field: "password" };
+  }
+  return { fields: { email, password, username } };
 }
 
 export async function POST(request: Request) {
@@ -48,10 +50,11 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ error: "bad_request" }, { status: 400 });
   }
-  const fields = readRegisterBody(parsed);
-  if (!fields) {
-    return NextResponse.json({ error: "validation" }, { status: 400 });
+  const parsedFields = readRegisterBody(parsed);
+  if ("field" in parsedFields) {
+    return NextResponse.json({ error: "validation", field: parsedFields.field }, { status: 400 });
   }
+  const { fields } = parsedFields;
 
   try {
     const adminToken = await fetchMasterAdminAccessToken({

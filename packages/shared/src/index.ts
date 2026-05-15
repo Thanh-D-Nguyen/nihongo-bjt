@@ -260,6 +260,10 @@ export const createDeckSchema = z
     }))
   }));
 
+export const cloneDeckSchema = z.object({
+  userId: z.uuid(),
+});
+
 export const createCardFromContentSchema = z.object({
   backText: z.string().trim().min(1).max(1000),
   deckId: z.uuid(),
@@ -267,6 +271,46 @@ export const createCardFromContentSchema = z.object({
   reading: z.string().trim().max(300).optional(),
   sourceId: z.uuid(),
   sourceType: contentKindSchema.exclude(["example"]),
+  userId: z.uuid()
+});
+
+export const generateDeckSchema = z.object({
+  level: z.string().trim().min(1).max(8),
+  sourceTypes: z.array(z.enum(["lexeme", "kanji", "grammar"])).min(1).max(3).default(["lexeme"]),
+  direction: z.enum(["jp_to_vn", "vn_to_jp", "both"]).default("jp_to_vn"),
+  cardCount: z.number().int().min(5).max(50).default(20),
+  topics: z.array(z.string().trim().min(1).max(64)).max(10).optional(),
+  adaptive: z.boolean().default(false),
+  userId: z.uuid()
+});
+
+export const generateDeckAdminSchema = z.object({
+  level: z.string().trim().min(1).max(8),
+  sourceTypes: z.array(z.enum(["lexeme", "kanji", "grammar"])).min(1).max(3).default(["lexeme"]),
+  direction: z.enum(["jp_to_vn", "vn_to_jp", "both"]).default("jp_to_vn"),
+  cardCount: z.number().int().min(5).max(200).default(30),
+  topics: z.array(z.string().trim().min(1).max(64)).max(10).optional(),
+  titleVi: z.string().trim().min(1).max(120),
+  titleJa: z.string().trim().max(120).optional()
+});
+
+export const previewGenCountSchema = z.object({
+  level: z.string().trim().min(1).max(8),
+  sourceTypes: z.array(z.enum(["lexeme", "kanji", "grammar"])).min(1).max(3).default(["lexeme"]),
+  topics: z.array(z.string().trim().min(1).max(64)).max(10).optional(),
+  userId: z.uuid()
+});
+
+export const suggestCardsSchema = z.object({
+  level: z.string().trim().min(1).max(8),
+  sourceTypes: z.array(z.enum(["lexeme", "kanji", "grammar"])).min(1).max(3).default(["lexeme"]),
+  count: z.number().int().min(1).max(30).default(10),
+  userId: z.uuid()
+});
+
+export const searchImagesSchema = z.object({
+  query: z.string().trim().min(1).max(120),
+  limit: z.coerce.number().int().min(1).max(20).default(6),
   userId: z.uuid()
 });
 

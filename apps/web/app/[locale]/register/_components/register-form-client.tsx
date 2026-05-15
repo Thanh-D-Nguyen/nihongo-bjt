@@ -77,8 +77,11 @@ export type RegisterFormCopy = {
   passwordLabel: string;
   passwordPlaceholder: string;
   passwordsMismatch: string;
+  passwordTooShort: string;
   primaryCta: string;
   privacyLink: string;
+  invalidEmail: string;
+  invalidUsername: string;
   registrationFailed: string;
   registrationUnavailable: string;
   submitting: string;
@@ -95,6 +98,9 @@ type SocialProvider = {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
 };
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/u;
+const USERNAME_RE = /^[A-Za-z0-9_]{2,64}$/u;
 
 /* ─── Component ─── */
 
@@ -141,6 +147,20 @@ export function RegisterFormClient({
   const onSubmit = useCallback(async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
+    const normalizedUsername = username.trim();
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!USERNAME_RE.test(normalizedUsername)) {
+      setError(copy.invalidUsername);
+      return;
+    }
+    if (!EMAIL_RE.test(normalizedEmail)) {
+      setError(copy.invalidEmail);
+      return;
+    }
+    if (password.length < 8) {
+      setError(copy.passwordTooShort);
+      return;
+    }
     if (password !== confirm) {
       setError(copy.passwordsMismatch);
       return;
@@ -148,19 +168,22 @@ export function RegisterFormClient({
     setLoading(true);
     try {
       const res = await fetch("/api/auth/keycloak/register", {
-        body: JSON.stringify({ email, password, username }),
+        body: JSON.stringify({ email: normalizedEmail, password, username: normalizedUsername }),
         credentials: "same-origin",
         headers: { "content-type": "application/json" },
         method: "POST"
       });
-      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      const data = (await res.json().catch(() => ({}))) as { error?: string; field?: string };
       if (!res.ok) {
         if (data.error === "user_exists") {
           setError(copy.userExists);
         } else if (data.error === "registration_unavailable") {
           setError(copy.registrationUnavailable);
         } else if (data.error === "validation") {
-          setError(copy.genericFormError);
+          if (data.field === "username") setError(copy.invalidUsername);
+          else if (data.field === "email") setError(copy.invalidEmail);
+          else if (data.field === "password") setError(copy.passwordTooShort);
+          else setError(copy.genericFormError);
         } else {
           setError(copy.registrationFailed);
         }
@@ -245,8 +268,10 @@ export function RegisterFormClient({
             autoComplete="username"
             className={fieldClass}
             id="register-username"
+            minLength={2}
             name="username"
             onChange={(ev) => setUsername(ev.target.value)}
+            pattern="[A-Za-z0-9_]{2,64}"
             placeholder={copy.usernamePlaceholder}
             required
             type="text"
@@ -278,6 +303,7 @@ export function RegisterFormClient({
               autoComplete="new-password"
               className={`${fieldClass} pr-11`}
               id="register-password"
+              minLength={8}
               name="password"
               onChange={(ev) => setPassword(ev.target.value)}
               placeholder={copy.passwordPlaceholder}
@@ -304,6 +330,7 @@ export function RegisterFormClient({
               autoComplete="new-password"
               className={`${fieldClass} pr-11`}
               id="register-confirm"
+              minLength={8}
               name="confirmPassword"
               onChange={(ev) => setConfirm(ev.target.value)}
               placeholder={copy.confirmPasswordPlaceholder}

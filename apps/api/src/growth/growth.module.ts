@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 
 import { AdminModule } from "../admin/admin.module.js";
+import { FlashcardsModule } from "../flashcards/flashcards.module.js";
 import { OperationsModule } from "../operations/operations.module.js";
 import { GrowthAdminController } from "./growth-admin.controller.js";
 import { GrowthAnalyticsService } from "./growth-analytics.service.js";
@@ -28,7 +29,7 @@ import { ShareService } from "./share.service.js";
     PublicGrowthController
   ],
   exports: [GrowthAnalyticsService, ReferralService, ShareService],
-  imports: [AdminModule, OperationsModule],
+  imports: [AdminModule, FlashcardsModule, OperationsModule],
   providers: [
     GrowthAnalyticsService,
     GrowthCampaignsAdminRepository,

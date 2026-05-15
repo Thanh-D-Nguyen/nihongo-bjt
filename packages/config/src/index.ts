@@ -92,7 +92,11 @@ export const serverEnvSchema = z.object({
     .string()
     .optional()
     .default("true")
-    .transform((v) => v !== "false" && v !== "0")
+    .transform((v) => v !== "false" && v !== "0"),
+  UNSPLASH_ACCESS_KEY: z.string().optional(),
+  PIXABAY_API_KEY: z.string().optional(),
+  GOOGLE_CSE_KEY: z.string().optional(),
+  GOOGLE_CSE_CX: z.string().optional()
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;

@@ -368,6 +368,9 @@ exports.Prisma.DeckScalarFieldEnum = {
   descriptionJa: 'descriptionJa',
   visibility: 'visibility',
   status: 'status',
+  shareToken: 'shareToken',
+  sourceDeckId: 'sourceDeckId',
+  cloneCount: 'cloneCount',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -705,6 +708,23 @@ exports.Prisma.AnalyticsRollupRunScalarFieldEnum = {
   details: 'details',
   startedAt: 'startedAt',
   completedAt: 'completedAt'
+};
+
+exports.Prisma.WeeklyReportScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  weekStart: 'weekStart',
+  weekEnd: 'weekEnd',
+  totalReviews: 'totalReviews',
+  accuracyPct: 'accuracyPct',
+  streakDays: 'streakDays',
+  quizSessions: 'quizSessions',
+  newCardsLearned: 'newCardsLearned',
+  weakSkills: 'weakSkills',
+  prevWeekReviews: 'prevWeekReviews',
+  prevWeekAccuracy: 'prevWeekAccuracy',
+  emailSentAt: 'emailSentAt',
+  createdAt: 'createdAt'
 };
 
 exports.Prisma.AdminActorScalarFieldEnum = {
@@ -1705,6 +1725,137 @@ exports.Prisma.LeaderboardEntryScalarFieldEnum = {
   computedAt: 'computedAt'
 };
 
+exports.Prisma.DailyStudyGoalScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  targetMinutes: 'targetMinutes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.DailyStudyPlanScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  planDate: 'planDate',
+  targetMinutes: 'targetMinutes',
+  completedAt: 'completedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.DailyStudyTaskScalarFieldEnum = {
+  id: 'id',
+  planId: 'planId',
+  taskType: 'taskType',
+  targetCount: 'targetCount',
+  doneCount: 'doneCount',
+  sortOrder: 'sortOrder',
+  completedAt: 'completedAt',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.LoginBonusChainScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  chainDay: 'chainDay',
+  lastClaimDate: 'lastClaimDate',
+  chainStartDate: 'chainStartDate',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.LoginBonusClaimScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  chainDay: 'chainDay',
+  rewardType: 'rewardType',
+  rewardValue: 'rewardValue',
+  claimedAt: 'claimedAt'
+};
+
+exports.Prisma.MysteryBoxRewardScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  nameVi: 'nameVi',
+  nameJa: 'nameJa',
+  description: 'description',
+  rewardType: 'rewardType',
+  rewardValue: 'rewardValue',
+  rarity: 'rarity',
+  iconEmoji: 'iconEmoji',
+  weight: 'weight',
+  active: 'active',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.MysteryBoxClaimScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  rewardId: 'rewardId',
+  claimedAt: 'claimedAt',
+  claimDate: 'claimDate'
+};
+
+exports.Prisma.CompanionPetScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  name: 'name',
+  stage: 'stage',
+  xp: 'xp',
+  happiness: 'happiness',
+  mood: 'mood',
+  totalFeedings: 'totalFeedings',
+  lastFedAt: 'lastFedAt',
+  evolvedAt: 'evolvedAt',
+  costumeSlug: 'costumeSlug',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.SeasonalEventScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  nameVi: 'nameVi',
+  nameJa: 'nameJa',
+  description: 'description',
+  iconEmoji: 'iconEmoji',
+  bannerColor: 'bannerColor',
+  startDate: 'startDate',
+  endDate: 'endDate',
+  active: 'active',
+  createdBy: 'createdBy',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.EventChallengeScalarFieldEnum = {
+  id: 'id',
+  eventId: 'eventId',
+  title: 'title',
+  description: 'description',
+  challengeType: 'challengeType',
+  targetValue: 'targetValue',
+  rewardXp: 'rewardXp',
+  rewardBadge: 'rewardBadge',
+  sortOrder: 'sortOrder'
+};
+
+exports.Prisma.EventParticipantScalarFieldEnum = {
+  id: 'id',
+  eventId: 'eventId',
+  userId: 'userId',
+  joinedAt: 'joinedAt'
+};
+
+exports.Prisma.EventChallengeProgressScalarFieldEnum = {
+  id: 'id',
+  challengeId: 'challengeId',
+  userId: 'userId',
+  currentValue: 'currentValue',
+  completed: 'completed',
+  completedAt: 'completedAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.FlashcardGenRuleScalarFieldEnum = {
   id: 'id',
   name: 'name',
@@ -1794,6 +1945,97 @@ exports.Prisma.NhkBookmarkScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.CompanionTipScalarFieldEnum = {
+  id: 'id',
+  category: 'category',
+  contentJa: 'contentJa',
+  contentVi: 'contentVi',
+  exampleJa: 'exampleJa',
+  exampleVi: 'exampleVi',
+  jlptLevel: 'jlptLevel',
+  active: 'active',
+  sortOrder: 'sortOrder',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.PushSubscriptionScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  endpoint: 'endpoint',
+  p256dh: 'p256dh',
+  auth: 'auth',
+  userAgent: 'userAgent',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.RevengeAttemptScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  questionId: 'questionId',
+  isCorrect: 'isCorrect',
+  answeredAt: 'answeredAt'
+};
+
+exports.Prisma.StudySessionScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  mode: 'mode',
+  durationMinutes: 'durationMinutes',
+  startedAt: 'startedAt',
+  endedAt: 'endedAt',
+  reviewsDone: 'reviewsDone',
+  quizzesDone: 'quizzesDone',
+  xpEarned: 'xpEarned',
+  completed: 'completed'
+};
+
+exports.Prisma.BusinessScenarioScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  titleVi: 'titleVi',
+  titleJa: 'titleJa',
+  descriptionVi: 'descriptionVi',
+  difficulty: 'difficulty',
+  category: 'category',
+  iconEmoji: 'iconEmoji',
+  estimatedMin: 'estimatedMin',
+  active: 'active',
+  sortOrder: 'sortOrder',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.ScenarioStepScalarFieldEnum = {
+  id: 'id',
+  scenarioId: 'scenarioId',
+  stepOrder: 'stepOrder',
+  situationVi: 'situationVi',
+  situationJa: 'situationJa',
+  speakerName: 'speakerName',
+  speakerRole: 'speakerRole'
+};
+
+exports.Prisma.ScenarioChoiceScalarFieldEnum = {
+  id: 'id',
+  stepId: 'stepId',
+  choiceKey: 'choiceKey',
+  textVi: 'textVi',
+  textJa: 'textJa',
+  isOptimal: 'isOptimal',
+  feedbackVi: 'feedbackVi',
+  pointsAwarded: 'pointsAwarded'
+};
+
+exports.Prisma.UserScenarioAttemptScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  scenarioId: 'scenarioId',
+  totalPoints: 'totalPoints',
+  maxPoints: 'maxPoints',
+  choices: 'choices',
+  completedAt: 'completedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1871,6 +2113,7 @@ exports.Prisma.ModelName = {
   AnalyticsEvent: 'AnalyticsEvent',
   AnalyticsDailyMetric: 'AnalyticsDailyMetric',
   AnalyticsRollupRun: 'AnalyticsRollupRun',
+  WeeklyReport: 'WeeklyReport',
   AdminActor: 'AdminActor',
   AdminRole: 'AdminRole',
   AdminPermission: 'AdminPermission',
@@ -1953,13 +2196,33 @@ exports.Prisma.ModelName = {
   UserAchievement: 'UserAchievement',
   LeaderboardConfig: 'LeaderboardConfig',
   LeaderboardEntry: 'LeaderboardEntry',
+  DailyStudyGoal: 'DailyStudyGoal',
+  DailyStudyPlan: 'DailyStudyPlan',
+  DailyStudyTask: 'DailyStudyTask',
+  LoginBonusChain: 'LoginBonusChain',
+  LoginBonusClaim: 'LoginBonusClaim',
+  MysteryBoxReward: 'MysteryBoxReward',
+  MysteryBoxClaim: 'MysteryBoxClaim',
+  CompanionPet: 'CompanionPet',
+  SeasonalEvent: 'SeasonalEvent',
+  EventChallenge: 'EventChallenge',
+  EventParticipant: 'EventParticipant',
+  EventChallengeProgress: 'EventChallengeProgress',
   FlashcardGenRule: 'FlashcardGenRule',
   FlashcardGenJob: 'FlashcardGenJob',
   BjtLesson: 'BjtLesson',
   BjtLessonItem: 'BjtLessonItem',
   NhkArticle: 'NhkArticle',
   NhkReadingProgress: 'NhkReadingProgress',
-  NhkBookmark: 'NhkBookmark'
+  NhkBookmark: 'NhkBookmark',
+  CompanionTip: 'CompanionTip',
+  PushSubscription: 'PushSubscription',
+  RevengeAttempt: 'RevengeAttempt',
+  StudySession: 'StudySession',
+  BusinessScenario: 'BusinessScenario',
+  ScenarioStep: 'ScenarioStep',
+  ScenarioChoice: 'ScenarioChoice',
+  UserScenarioAttempt: 'UserScenarioAttempt'
 };
 
 /**

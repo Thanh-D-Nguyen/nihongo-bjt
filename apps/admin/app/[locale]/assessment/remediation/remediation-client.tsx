@@ -177,12 +177,13 @@ export function RemediationAdminClient({ common, labels, locale }: { common: Com
   async function submitForm() {
     if (!canManage) return;
     fe.clearAll();
-    const errs = validateFields({
-      name: { value: form.name, rules: [validators.required(t("nameRequired"))] },
-      topicSkillTag: { value: form.topicSkillTag, rules: [validators.required(t("topicRequired"))] },
-      recommendedContentId: { value: form.recommendedContentId, rules: [validators.required(t("contentIdRequired"))] },
-      reason: { value: reason, rules: [validators.required(t("reasonRequired")), validators.minLength(3, t("reasonRequired"))] },
-    });
+    const errs = validateFields([
+      { field: "name", value: form.name, message: t("nameRequired"), validate: validators.required },
+      { field: "topicSkillTag", value: form.topicSkillTag, message: t("topicRequired"), validate: validators.required },
+      { field: "recommendedContentId", value: form.recommendedContentId, message: t("contentIdRequired"), validate: validators.required },
+      { field: "reason", value: reason, message: t("reasonRequired"), validate: validators.required },
+      { field: "reason", value: reason, message: t("reasonRequired"), validate: validators.minLength(3) },
+    ]);
     if (form.thresholdFailedCount > form.thresholdWindowQuestions) errs.thresholdFailedCount = t("thresholdInvalid");
     if (Object.keys(errs).length > 0) { fe.setFieldErrors(errs); return; }
     setMutating(true);
@@ -193,8 +194,8 @@ export function RemediationAdminClient({ common, labels, locale }: { common: Com
       const r = await adminApiFetch(url, { method, body: JSON.stringify(body) });
       if (!r.ok) {
         const parsed = await parseApiError(r, t("saveFailed"));
-        fe.setFieldErrors(parsed.fieldErrors);
-        if (parsed.message) fe.setFormError(parsed.message);
+        fe.setFieldErrors(parsed.fields);
+        if (parsed.form) fe.setFormError(parsed.form);
         else toast.error(t("saveFailed"));
         return;
       }
@@ -212,7 +213,7 @@ export function RemediationAdminClient({ common, labels, locale }: { common: Com
       const url = confirm === "delete" ? `/api/admin/assessment/remediation/rules/${detail.id}` : `/api/admin/assessment/remediation/rules/${detail.id}/${confirm}`;
       const method = confirm === "delete" ? "DELETE" : "POST";
       const r = await adminApiFetch(url, { method, body: JSON.stringify({ reason: reason.trim() }) });
-      if (!r.ok) { const parsed = await parseApiError(r, t(`${confirm}Failed`)); toast.error(parsed.message || t(`${confirm}Failed`)); return; }
+      if (!r.ok) { const parsed = await parseApiError(r, t(`${confirm}Failed`)); toast.error(parsed.form || t(`${confirm}Failed`)); return; }
       toast.success(t(`${confirm}Ok`));
       setConfirm(null); setReason("");
       if (confirm === "delete") setSelectedId(null);

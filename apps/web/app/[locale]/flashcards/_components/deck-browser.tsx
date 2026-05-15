@@ -9,6 +9,7 @@ import {
   TabsList
 } from "@nihongo-bjt/ui";
 import { useCallback, useEffect, useId, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
 import { learnerApiFetch } from "../../../../lib/learner-api";
@@ -149,12 +150,17 @@ export function DeckBrowser({
   searchQuery: string;
 }) {
   const { userId } = useKeycloakAuth();
+  const searchParams = useSearchParams();
+  const cloneToken = searchParams.get("cloneToken");
   const [decks, setDecks] = useState<DeckApiRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [pendingDeleteDeck, setPendingDeleteDeck] = useState<DeckApiRow | null>(null);
   const [deleteSubmitting, setDeleteSubmitting] = useState(false);
+  const [cloning, setCloning] = useState(false);
+  const [cloneResult, setCloneResult] = useState<{ newDeckId: string; cardCount: number } | null>(null);
+  const [cloneError, setCloneError] = useState<string | null>(null);
 
   const loadDecks = useCallback(async () => {
     if (!userId) return;
@@ -177,6 +183,32 @@ export function DeckBrowser({
   useEffect(() => {
     if (userId) void loadDecks();
   }, [userId, loadDecks]);
+
+  useEffect(() => {
+    if (!cloneToken || !userId || cloning || cloneResult) return;
+    setCloning(true);
+    setCloneError(null);
+    learnerApiFetch(`/api/flashcards/decks/clone/${encodeURIComponent(cloneToken)}`, {
+      method: "POST",
+    })
+      .then(async (r) => {
+        if (!r.ok) {
+          const body = await r.json().catch(() => ({})) as Record<string, unknown>;
+          throw new Error(body?.code === "QUOTA_EXCEEDED" ? "quota" : "clone_failed");
+        }
+        const data = (await r.json()) as { newDeckId: string; cardCount: number };
+        setCloneResult(data);
+        void loadDecks();
+      })
+      .catch((e: Error) => {
+        setCloneError(
+          e.message === "quota"
+            ? "Bạn đã đạt giới hạn clone bộ thẻ trong tháng này. Nâng cấp Premium để clone không giới hạn."
+            : "Không thể clone bộ thẻ. Vui lòng thử lại."
+        );
+      })
+      .finally(() => setCloning(false));
+  }, [cloneToken, userId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const filteredByScope = useMemo(() => {
     if (!userId) return [];
@@ -283,6 +315,21 @@ export function DeckBrowser({
 
   return (
     <section aria-label={labels.title} className="space-y-4">
+      {cloning && (
+        <div className="rounded-xl border border-accent/20 bg-accent/5 p-4 text-center text-sm font-medium text-accent">
+          Đang clone bộ thẻ…
+        </div>
+      )}
+      {cloneResult && (
+        <div className="rounded-xl border border-[var(--color-matcha)]/20 bg-[var(--color-matcha)]/5 p-4 text-center text-sm font-medium text-[var(--color-matcha)]">
+          Clone thành công! Đã thêm {cloneResult.cardCount} thẻ vào thư viện.
+        </div>
+      )}
+      {cloneError && (
+        <div className="rounded-xl border border-[var(--color-sakura)]/20 bg-[var(--color-sakura)]/5 p-4 text-center text-sm font-medium text-[var(--color-sakura)]">
+          {cloneError}
+        </div>
+      )}
       <div
         aria-label={labels.ariaToolbar}
         className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"

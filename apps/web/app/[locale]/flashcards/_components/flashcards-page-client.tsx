@@ -21,6 +21,7 @@ import { learnerApiFetch } from "../../../../lib/learner-api";
 import { DeckBrowser, type DeckLabels, type LibraryDeckFilter } from "./deck-browser";
 import { FlashcardsClient, type FlashcardLabels } from "./flashcards-client";
 import { ReviewSession, type ReviewSessionLabels } from "./review-session";
+import { AutoGenDialog, type CardgenLabels } from "./auto-gen-dialog";
 
 type MainView = "review" | "library";
 
@@ -31,12 +32,14 @@ function isDeckScopeId(raw: string | null): raw is string {
 }
 
 export function FlashcardsPageClient({
+  cardgenLabels,
   deckLabels,
   flashcardLabels,
   initialMain,
   locale,
   reviewSessionLabels
 }: {
+  cardgenLabels: CardgenLabels;
   deckLabels: DeckLabels;
   flashcardLabels: FlashcardLabels;
   initialMain: MainView;
@@ -57,6 +60,7 @@ export function FlashcardsPageClient({
   const [heroDue, setHeroDue] = useState<number | null>(null);
   const [heroPending, setHeroPending] = useState<number | null>(null);
   const [sessionActive, setSessionActive] = useState(false);
+  const [autoGenOpen, setAutoGenOpen] = useState(false);
 
   const refreshDueHero = useCallback(async () => {
     if (!userId) return;
@@ -193,6 +197,14 @@ export function FlashcardsPageClient({
             {heroDue !== null && heroDue > 0 ? (
               <span className="ml-0.5 rounded-full bg-white/20 px-2 py-0.5 text-xs font-black tabular-nums">{heroDue}</span>
             ) : null}
+          </button>
+          <button
+            className="inline-flex min-h-11 items-center gap-2 rounded-2xl bg-gradient-to-r from-violet-500 to-purple-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-violet-500/15 transition-all hover:scale-[1.03] hover:shadow-violet-500/30 active:scale-[0.98]"
+            onClick={() => setAutoGenOpen(true)}
+            type="button"
+          >
+            <IconSpark aria-hidden size={16} />
+            Auto
           </button>
           <div className="flex items-center gap-3 rounded-xl border border-ink/8 bg-surface px-3 py-2 text-xs font-semibold text-muted">
             <span className="tabular-nums">{flashcardLabels.statDueSession}: <span className="font-black text-ink">{heroDue ?? "—"}</span></span>
@@ -392,6 +404,7 @@ export function FlashcardsPageClient({
           }}
         />
       ) : null}
+      <AutoGenDialog open={autoGenOpen} onClose={() => setAutoGenOpen(false)} locale={locale} labels={cardgenLabels} />
     </main>
   );
 }

@@ -14,6 +14,7 @@ import { ReferralService } from "./referral.service.js";
 import { parseServerEnv } from "@nihongo-bjt/config";
 import { DocumentedHttpErrors } from "../openapi/common-decorators.js";
 import { RuntimeFeatureGateService } from "../operations/runtime-feature-gate.service.js";
+import { FlashcardsRepository } from "../flashcards/flashcards.repository.js";
 
 @Controller("public")
 @ApiTags("Social Sharing")
@@ -24,7 +25,8 @@ export class PublicGrowthController {
   constructor(
     @Inject(ShareService) private readonly share: ShareService,
     @Inject(ReferralService) private readonly referral: ReferralService,
-    @Inject(RuntimeFeatureGateService) private readonly featureGate: RuntimeFeatureGateService
+    @Inject(RuntimeFeatureGateService) private readonly featureGate: RuntimeFeatureGateService,
+    @Inject(FlashcardsRepository) private readonly flashcardsRepository: FlashcardsRepository
   ) {}
 
   @Get("shares/:token")
@@ -79,5 +81,12 @@ export class PublicGrowthController {
       302,
       `${this.env.WEB_PUBLIC_URL}/vi?ref=${encodeURIComponent(code.toLowerCase())}`
     );
+  }
+
+  @Get("decks/:token")
+  @ApiOperation({ summary: "Public deck preview (no auth). Returns metadata + sample cards." })
+  @ApiParam({ name: "token", description: "Opaque deck share token" })
+  async publicDeckPreview(@Param("token") token: string) {
+    return this.flashcardsRepository.publicDeckPreview(token.trim());
   }
 }

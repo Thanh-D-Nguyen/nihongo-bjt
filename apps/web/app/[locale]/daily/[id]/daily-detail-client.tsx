@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
+import { ShareDrawer } from "../../_components/share-drawer";
 import { AnnotatedJapaneseText } from "../../../../components/reading-assist/annotated-japanese-text";
 import { learnerApiFetch, learnerApiFetchOptional } from "../../../../lib/learner-api";
 
@@ -67,6 +68,26 @@ function kindLabel(kind: string) {
   return k ? `${k.emoji} ${k.vi}` : kind;
 }
 
+const SHARE_LABELS = {
+  title: "Share",
+  selectTemplate: "Choose a style",
+  preview: "Preview",
+  share: "Share",
+  copyLink: "Copy Link",
+  download: "Download",
+  cancel: "Cancel",
+  consentTitle: "Share your progress?",
+  consentMessage: "This creates a public page with your learning result. No private data is exposed.",
+  consentAccept: "Accept & Share",
+  consentDecline: "Not now",
+  loading: "Loading...",
+  noTemplates: "No templates available",
+  shareSuccess: "Shared!",
+  copied: "Link copied!",
+  error: "Something went wrong",
+  retry: "Retry",
+};
+
 export function DailyDetailClient({
   dailyLabels,
   detailLabels,
@@ -88,6 +109,7 @@ export function DailyDetailClient({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionMsg, setActionMsg] = useState<string | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
 
   /* load item */
   useEffect(() => {
@@ -330,6 +352,22 @@ export function DailyDetailClient({
           >
             {dailyLabels.markUseful}
           </button>
+          <button
+            className="rounded-xl border border-[hsl(var(--border))] min-h-[40px] px-4 text-sm font-medium text-[hsl(var(--muted))] hover:text-[hsl(var(--ink))] transition-colors"
+            type="button"
+            onClick={() => setShareOpen(true)}
+          >
+            Share
+          </button>
+          <ShareDrawer
+            hasOptedIn={false}
+            kind="daily_phrase"
+            labels={SHARE_LABELS}
+            onClose={() => setShareOpen(false)}
+            open={shareOpen}
+            payload={{ phraseLabel: item.title || item.japaneseText || "" }}
+            userId={userId}
+          />
         </section>
       ) : null}
 

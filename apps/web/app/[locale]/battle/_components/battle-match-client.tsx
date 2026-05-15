@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { BattleBotAvatar } from "../../../_components/battle-bot-avatar";
@@ -9,6 +9,27 @@ import { BattleCountdownOverlay } from "./battle-countdown-overlay";
 import { BattlePvpOutcomeEffects } from "./battle-pvp-outcome-effects";
 import { readBattlePending, useBattleRuntime } from "./battle-runtime-provider";
 import { botName, localizeDifficulty, metricWidth } from "./battle-types";
+import { ShareDrawer } from "../../_components/share-drawer";
+
+const SHARE_LABELS = {
+  title: "Share",
+  selectTemplate: "Choose a style",
+  preview: "Preview",
+  share: "Share",
+  copyLink: "Copy Link",
+  download: "Download",
+  cancel: "Cancel",
+  consentTitle: "Share your progress?",
+  consentMessage: "This creates a public page with your learning result. No private data is exposed.",
+  consentAccept: "Accept & Share",
+  consentDecline: "Not now",
+  loading: "Loading...",
+  noTemplates: "No templates available",
+  shareSuccess: "Shared!",
+  copied: "Link copied!",
+  error: "Something went wrong",
+  retry: "Retry",
+};
 
 function StatTile({
   label,
@@ -75,6 +96,8 @@ export function BattleMatchClient() {
     error,
     botState
   } = useBattleRuntime();
+
+  const [shareDrawerOpen, setShareDrawerOpen] = useState(false);
 
   const answerFeedback = useMemo(() => {
     if (!answerResult) return null;
@@ -535,6 +558,23 @@ export function BattleMatchClient() {
                         {shareLoading ? labels.connecting : labels.shareResult}
                       </button>
                     ) : null}
+                    <button
+                      className="inline-flex min-h-10 items-center rounded-xl border border-[hsl(var(--border))] px-4 text-sm font-medium text-[hsl(var(--muted))] hover:text-[hsl(var(--ink))] transition-colors"
+                      disabled={!userId}
+                      onClick={() => setShareDrawerOpen(true)}
+                      type="button"
+                    >
+                      Share
+                    </button>
+                    <ShareDrawer
+                      hasOptedIn={false}
+                      kind="battle"
+                      labels={SHARE_LABELS}
+                      onClose={() => setShareDrawerOpen(false)}
+                      open={shareDrawerOpen}
+                      payload={{ outcome: outcome ?? "", score: String(userScore ?? 0), opponent: opponentName ?? "" }}
+                      userId={userId ?? ""}
+                    />
                   </div>
                   {labels.sharePrivacyNotice && labels.shareResult && !shareUrl ? (
                     <p className="mt-3 text-xs font-semibold leading-5 text-muted">

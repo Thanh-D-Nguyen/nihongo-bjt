@@ -12,11 +12,12 @@ describe("MediaController feature gate", () => {
   const createDisabledGate = () => ({
     requireEnabled: vi.fn().mockRejectedValue(new ServiceUnavailableException("disabled"))
   });
+  const imageSearch = { search: vi.fn() };
 
   it("blocks presign when external media uploads are disabled", async () => {
     const mediaService = { presignUpload: vi.fn() };
     const disabledGate = createDisabledGate();
-    const controller = new MediaController(mediaService as any, disabledGate as any);
+    const controller = new MediaController(mediaService as any, disabledGate as any, imageSearch as any);
 
     await expect(controller.presign(undefined, {})).rejects.toBeInstanceOf(ServiceUnavailableException);
     expect(disabledGate.requireEnabled).toHaveBeenCalledWith(...expectedGateArgs);
@@ -26,7 +27,7 @@ describe("MediaController feature gate", () => {
   it("blocks complete-upload when external media uploads are disabled", async () => {
     const mediaService = { completeUpload: vi.fn() };
     const disabledGate = createDisabledGate();
-    const controller = new MediaController(mediaService as any, disabledGate as any);
+    const controller = new MediaController(mediaService as any, disabledGate as any, imageSearch as any);
 
     await expect(controller.completeUpload(undefined, {})).rejects.toBeInstanceOf(
       ServiceUnavailableException
@@ -38,7 +39,7 @@ describe("MediaController feature gate", () => {
   it("blocks rights-metadata updates when external media uploads are disabled", async () => {
     const mediaService = { updateRightsMetadata: vi.fn() };
     const disabledGate = createDisabledGate();
-    const controller = new MediaController(mediaService as any, disabledGate as any);
+    const controller = new MediaController(mediaService as any, disabledGate as any, imageSearch as any);
 
     await expect(controller.updateRightsMetadata(undefined, "asset-1", {})).rejects.toBeInstanceOf(
       ServiceUnavailableException
@@ -50,7 +51,7 @@ describe("MediaController feature gate", () => {
   it("blocks read-url when external media uploads are disabled", async () => {
     const mediaService = { getReadUrlForAsset: vi.fn() };
     const disabledGate = createDisabledGate();
-    const controller = new MediaController(mediaService as any, disabledGate as any);
+    const controller = new MediaController(mediaService as any, disabledGate as any, imageSearch as any);
 
     await expect(controller.readUrl(undefined, "asset-1", {})).rejects.toBeInstanceOf(
       ServiceUnavailableException

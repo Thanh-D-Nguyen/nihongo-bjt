@@ -5,6 +5,7 @@ import { FormEvent, useCallback, useEffect, useState } from "react";
 
 import { useKeycloakAuth } from "../../../../../components/auth/keycloak-auth-provider";
 import { learnerApiFetch } from "../../../../../lib/learner-api";
+import { usePushSubscription } from "../../../../_hooks/use-push-subscription";
 
 export type NotificationsLabels = {
   email: string;
@@ -44,6 +45,7 @@ export function NotificationsSettingsClient({ labels }: { labels: NotificationsL
   const [feed, setFeed] = useState<Feed[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const push = usePushSubscription(userId);
 
   const loadAll = useCallback(async () => {
     const uid = userId;
@@ -184,6 +186,36 @@ export function NotificationsSettingsClient({ labels }: { labels: NotificationsL
               ) : null}
             </form>
           ) : null}
+          <section className="space-y-3 rounded-xl border border-ink/10 bg-paper/50 p-4">
+            <SectionHeader heading="h3" title="Push Notifications" />
+            {!push.isSupported ? (
+              <p className="text-sm text-muted">Trình duyệt không hỗ trợ thông báo đẩy</p>
+            ) : push.loading ? (
+              <p className="text-sm text-muted">…</p>
+            ) : push.isSubscribed ? (
+              <div className="flex items-center gap-3">
+                <p className="text-sm text-muted">✅ Đang nhận thông báo</p>
+                <button
+                  className="rounded-lg border border-ink/12 px-3 py-1.5 text-xs font-semibold text-ink hover:bg-paper"
+                  onClick={() => void push.unsubscribe()}
+                  type="button"
+                >
+                  Tắt
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3">
+                <p className="text-sm text-muted">Nhận thông báo Kanji mỗi ngày</p>
+                <button
+                  className="rounded-lg bg-ink px-3 py-1.5 text-xs font-semibold text-surface hover:bg-ink/90"
+                  onClick={() => void push.subscribe()}
+                  type="button"
+                >
+                  Bật
+                </button>
+              </div>
+            )}
+          </section>
           <section>
             <SectionHeader heading="h2" title={labels.feedTitle} />
             {feed.length === 0 ? <p className="text-sm text-muted">{labels.emptyFeed}</p> : null}

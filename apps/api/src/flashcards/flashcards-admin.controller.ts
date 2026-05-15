@@ -20,7 +20,9 @@ import { AdminRbacGuard } from "../admin/admin-rbac.guard.js";
 import { LogAdminAction } from "../admin/admin-audit.decorator.js";
 import { RequireAdminPermissions } from "../admin/admin.rbac.js";
 import { DocumentedHttpErrors } from "../openapi/common-decorators.js";
+import { FlashcardGenService } from "./flashcard-gen.service.js";
 import { FlashcardsAdminRepository } from "./flashcards-admin.repository.js";
+import { generateDeckAdminSchema } from "@nihongo-bjt/shared";
 
 const listQuerySchema = z.object({
   page: z.coerce.number().int().min(1).optional().default(1),
@@ -86,7 +88,8 @@ const variantSourcePatchSchema = z.object({
 export class FlashcardsAdminController {
   constructor(
     @Inject(AdminAuthService) private readonly auth: AdminAuthService,
-    @Inject(FlashcardsAdminRepository) private readonly repo: FlashcardsAdminRepository
+    @Inject(FlashcardsAdminRepository) private readonly repo: FlashcardsAdminRepository,
+    @Inject(FlashcardGenService) private readonly genService: FlashcardGenService
   ) {}
 
   /* ----- Decks ("generated") ----- */
@@ -107,6 +110,16 @@ export class FlashcardsAdminController {
     const parsed = deckListQuerySchema.safeParse(query);
     if (!parsed.success) throw new BadRequestException(parsed.error.flatten());
     return this.repo.listDecks(parsed.data);
+  }
+
+  @Post("decks/generate")
+  @ApiOperation({ summary: "Auto-generate a curated public deck from dictionary content." })
+  @LogAdminAction({ action: "deck_auto_generate", resourceType: "deck" })
+  async generateDeck(@Req() req: Request, @Body() body: unknown) {
+    await this.auth.requirePermission(req, "admin.content.write");
+    const parsed = generateDeckAdminSchema.safeParse(body);
+    if (!parsed.success) throw new BadRequestException(parsed.error.flatten());
+    return this.genService.generateForAdmin(parsed.data);
   }
 
   @Get("decks/:id")

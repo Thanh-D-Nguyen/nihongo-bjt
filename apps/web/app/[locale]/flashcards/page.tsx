@@ -39,6 +39,7 @@ export default async function FlashcardsPage({
         }
       >
         <FlashcardsPageClient
+          cardgenLabels={t.cardgen}
           deckLabels={t.decks}
           flashcardLabels={t.flashcards}
           initialMain={initialMain}

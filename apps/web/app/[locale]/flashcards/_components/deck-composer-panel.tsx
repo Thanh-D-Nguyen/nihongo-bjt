@@ -61,12 +61,39 @@ export interface DeckComposerLabels {
   composerUploadImage: string;
   composerUploading: string;
   composerVisibilityLabel: string;
+  imgSearchBtn: string;
+  imgSearching: string;
+  imgSearchEmpty: string;
+  imgSearchRefresh: string;
+  imgSearchQuotaTitle: string;
+  imgSearchQuotaBody: string;
+  imgSearchQuotaCta: string;
+  imgSearchCredit: string;
   composerEmojiLabel: string;
   composerTemplateVocab: string;
   composerTemplateKanji: string;
   composerTemplateGrammar: string;
   composerTemplateSentence: string;
   composerShortcuts: string;
+  suggestBtn: string;
+  suggestTitle: string;
+  suggestSubtitle: string;
+  suggestLevel: string;
+  suggestSource: string;
+  suggestSourceLexeme: string;
+  suggestSourceKanji: string;
+  suggestSourceGrammar: string;
+  suggestFetch: string;
+  suggestFetching: string;
+  suggestAddSelected: string;
+  suggestEmpty: string;
+  suggestSelectAll: string;
+  suggestDeselectAll: string;
+  suggestCount: string;
+  suggestPremiumTitle: string;
+  suggestPremiumBody: string;
+  suggestPremiumCta: string;
+  suggestClose: string;
   createDeckTitle: string;
   descLabel: string;
   descPlaceholder: string;
@@ -159,6 +186,49 @@ export function DeckComposerPanel({
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const [deckEmoji, setDeckEmoji] = useState("📚");
   const [previewRowId, setPreviewRowId] = useState<string | null>(null);
+
+  // ── Suggest Cards state ──
+  const [suggestOpen, setSuggestOpen] = useState(false);
+  const [suggestLevel, setSuggestLevel] = useState("J5");
+  const [suggestSources, setSuggestSources] = useState<("lexeme" | "kanji" | "grammar")[]>(["lexeme"]);
+  const [suggestLoading, setSuggestLoading] = useState(false);
+  const [suggestions, setSuggestions] = useState<{ front: string; back: string; reading?: string; sourceType: string }[]>([]);
+  const [selectedSuggest, setSelectedSuggest] = useState<Set<number>>(new Set());
+  const [suggestPremiumLocked, setSuggestPremiumLocked] = useState(false);
+  const [suggestFetched, setSuggestFetched] = useState(false);
+
+  // ── Image Search state (per row) ──
+  type ImgSuggestion = { id: string; thumbUrl: string; fullUrl: string; source: string };
+  const [imgSearchResults, setImgSearchResults] = useState<Record<string, ImgSuggestion[]>>({});
+  const [imgSearchLoading, setImgSearchLoading] = useState<Record<string, boolean>>({});
+  const [imgSearchQuotaHit, setImgSearchQuotaHit] = useState(false);
+  const imgSearchLastQuery = useRef<Record<string, string>>({});
+
+  const searchImagesForRow = useCallback(async (rowId: string, query: string) => {
+    if (!query.trim() || query.trim().length < 2) return;
+    if (imgSearchLastQuery.current[rowId] === query.trim()) return;
+    imgSearchLastQuery.current[rowId] = query.trim();
+    setImgSearchLoading((p) => ({ ...p, [rowId]: true }));
+    try {
+      const res = await learnerApiFetch("/api/media/search-images", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: query.trim(), limit: 6, userId }),
+      });
+      if (res.status === 403) {
+        const data = await res.json().catch(() => ({}));
+        if (data?.code === "QUOTA_EXCEEDED") {
+          setImgSearchQuotaHit(true);
+          return;
+        }
+      }
+      if (!res.ok) return;
+      const data = await res.json();
+      setImgSearchResults((p) => ({ ...p, [rowId]: data.images ?? [] }));
+    } catch { /* silent */ } finally {
+      setImgSearchLoading((p) => ({ ...p, [rowId]: false }));
+    }
+  }, [userId]);
 
   // ── Progress: count filled cards ──
   const filledCount = useMemo(() => rows.filter((r) => r.front.trim() && r.back.trim()).length, [rows]);
@@ -589,6 +659,13 @@ export function DeckComposerPanel({
         <button className={`${btnSecondary} min-h-9 px-3 text-xs font-bold`} onClick={swapAll} type="button">
           {labels.composerSwapSides}
         </button>
+        <button
+          className={`${btnSecondary} min-h-9 px-3 text-xs font-bold bg-gradient-to-r from-accent/10 to-leaf/10 border-accent/30 hover:from-accent/20 hover:to-leaf/20`}
+          onClick={() => setSuggestOpen((v) => !v)}
+          type="button"
+        >
+          {labels.suggestBtn}
+        </button>
         <div className="flex-1" />
         <input
           aria-label={labels.composerSearchPlaceholder}
@@ -613,6 +690,207 @@ export function DeckComposerPanel({
           {labels.composerDeleteAll}
         </button>
       </div>
+
+      {/* ── Suggest Cards Panel ── */}
+      {suggestOpen ? (
+        <div className="rounded-xl border border-accent/20 bg-gradient-to-br from-accent/5 to-leaf/5 p-4 space-y-3">
+          {suggestPremiumLocked ? (
+            <div className="text-center space-y-2 py-4">
+              <p className="text-sm font-bold text-ink">{labels.suggestPremiumTitle}</p>
+              <p className="text-xs text-muted">{labels.suggestPremiumBody}</p>
+              <button className={`${btnPrimary} min-h-9 px-6 text-xs font-bold`} type="button">
+                {labels.suggestPremiumCta}
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-bold text-ink">{labels.suggestTitle}</p>
+                  <p className="text-xs text-muted">{labels.suggestSubtitle}</p>
+                </div>
+                <button
+                  className="text-xs text-muted hover:text-ink transition-colors"
+                  onClick={() => setSuggestOpen(false)}
+                  type="button"
+                >
+                  {labels.suggestClose}
+                </button>
+              </div>
+
+              {/* Level pills */}
+              <div className="space-y-1.5">
+                <p className="text-xs font-bold text-muted">{labels.suggestLevel}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {["J5", "J4", "J3", "J2", "J1", "J1+"].map((lv) => (
+                    <button
+                      className={`rounded-lg px-3 py-1 text-xs font-bold transition-all ${
+                        suggestLevel === lv
+                          ? "bg-accent text-white shadow-sm"
+                          : "bg-ink/6 text-muted hover:bg-ink/12"
+                      }`}
+                      key={lv}
+                      onClick={() => setSuggestLevel(lv)}
+                      type="button"
+                    >
+                      {lv}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Source pills */}
+              <div className="space-y-1.5">
+                <p className="text-xs font-bold text-muted">{labels.suggestSource}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {(["lexeme", "kanji", "grammar"] as const).map((src) => {
+                    const label = src === "lexeme" ? labels.suggestSourceLexeme : src === "kanji" ? labels.suggestSourceKanji : labels.suggestSourceGrammar;
+                    const active = suggestSources.includes(src);
+                    return (
+                      <button
+                        className={`rounded-lg px-3 py-1 text-xs font-bold transition-all ${
+                          active
+                            ? "bg-leaf text-white shadow-sm"
+                            : "bg-ink/6 text-muted hover:bg-ink/12"
+                        }`}
+                        key={src}
+                        onClick={() =>
+                          setSuggestSources((prev) =>
+                            active ? prev.filter((s) => s !== src) : [...prev, src]
+                          )
+                        }
+                        type="button"
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Fetch button */}
+              <button
+                className={`${btnPrimary} min-h-9 w-full text-xs font-bold`}
+                disabled={suggestLoading || suggestSources.length === 0}
+                onClick={async () => {
+                  setSuggestLoading(true);
+                  setSuggestPremiumLocked(false);
+                  setSuggestions([]);
+                  setSelectedSuggest(new Set());
+                  try {
+                    const res = await learnerApiFetch("/api/flashcards/cards/suggest", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ level: suggestLevel, sourceTypes: suggestSources, count: 10, userId }),
+                    });
+                    if (res.status === 403) {
+                      setSuggestPremiumLocked(true);
+                      return;
+                    }
+                    if (!res.ok) throw new Error("suggest failed");
+                    const data = await res.json();
+                    setSuggestions(data.suggestions ?? []);
+                    setSuggestFetched(true);
+                  } catch {
+                    setError("Suggest failed");
+                  } finally {
+                    setSuggestLoading(false);
+                  }
+                }}
+                type="button"
+              >
+                {suggestLoading ? labels.suggestFetching : labels.suggestFetch}
+              </button>
+
+              {/* Results */}
+              {suggestFetched && suggestions.length === 0 ? (
+                <p className="text-xs text-muted text-center py-2">{labels.suggestEmpty}</p>
+              ) : null}
+
+              {suggestions.length > 0 ? (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-muted">
+                      {labels.suggestCount.replace("{n}", String(suggestions.length))}
+                    </span>
+                    <button
+                      className="text-xs text-accent hover:underline"
+                      onClick={() => {
+                        if (selectedSuggest.size === suggestions.length) {
+                          setSelectedSuggest(new Set());
+                        } else {
+                          setSelectedSuggest(new Set(suggestions.map((_, i) => i)));
+                        }
+                      }}
+                      type="button"
+                    >
+                      {selectedSuggest.size === suggestions.length ? labels.suggestDeselectAll : labels.suggestSelectAll}
+                    </button>
+                  </div>
+
+                  <div className="max-h-60 overflow-y-auto space-y-1.5 rounded-lg border border-ink/8 bg-white/60 p-2">
+                    {suggestions.map((s, i) => (
+                      <label
+                        className={`flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 transition-colors ${
+                          selectedSuggest.has(i) ? "bg-leaf/10" : "hover:bg-ink/4"
+                        }`}
+                        key={i}
+                      >
+                        <input
+                          checked={selectedSuggest.has(i)}
+                          className="accent-leaf"
+                          onChange={() =>
+                            setSelectedSuggest((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(i)) next.delete(i);
+                              else next.add(i);
+                              return next;
+                            })
+                          }
+                          type="checkbox"
+                        />
+                        <span className="flex-1 text-xs">
+                          <span className="font-bold text-ink">{s.front}</span>
+                          {s.reading ? <span className="ml-1 text-muted">({s.reading})</span> : null}
+                          <span className="ml-2 text-muted">— {s.back}</span>
+                        </span>
+                        <span className="shrink-0 rounded bg-ink/6 px-1.5 py-0.5 text-[10px] text-muted">
+                          {s.sourceType}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+
+                  <button
+                    className={`${btnPrimary} min-h-9 w-full text-xs font-bold`}
+                    disabled={selectedSuggest.size === 0}
+                    onClick={() => {
+                      const newRows: DraftRow[] = Array.from(selectedSuggest)
+                        .sort()
+                        .map((i) => ({
+                          back: suggestions[i]!.back,
+                          front: suggestions[i]!.front,
+                          id: crypto.randomUUID(),
+                          imageAssetId: null,
+                          imageUrl: "",
+                          reading: suggestions[i]!.reading ?? "",
+                        }));
+                      setRows((prev) => [...prev, ...newRows].slice(0, 200));
+                      setSuggestions([]);
+                      setSelectedSuggest(new Set());
+                      setSuggestOpen(false);
+                      setSuggestFetched(false);
+                    }}
+                    type="button"
+                  >
+                    {labels.suggestAddSelected} ({selectedSuggest.size})
+                  </button>
+                </div>
+              ) : null}
+            </>
+          )}
+        </div>
+      ) : null}
 
       {/* ── Progress bar ── */}
       <div className="flex items-center gap-3">
@@ -751,6 +1029,11 @@ export function DeckComposerPanel({
                       id={`${formId}-f-${r.id}`}
                       lang="ja"
                       maxLength={500}
+                      onBlur={() => {
+                        if (r.front.trim().length >= 2 && !r.imageUrl.trim() && !r.imageAssetId) {
+                          void searchImagesForRow(r.id, r.front);
+                        }
+                      }}
                       onChange={(e) => {
                         const v = e.target.value;
                         setRows((prev) => {
@@ -884,7 +1167,82 @@ export function DeckComposerPanel({
                     value={r.imageUrl}
                   />
                   <span className="text-[10px] font-bold text-muted/50">{labels.composerImageUrlLabel}</span>
+                  <button
+                    className="rounded-md bg-ink/6 px-2 py-1 text-[10px] font-bold text-muted hover:bg-ink/12 transition-colors"
+                    onClick={() => void searchImagesForRow(r.id, r.front)}
+                    disabled={r.front.trim().length < 2 || imgSearchLoading[r.id]}
+                    type="button"
+                  >
+                    {imgSearchLoading[r.id] ? labels.imgSearching : labels.imgSearchBtn}
+                  </button>
                 </div>
+
+                {/* ── Image search suggestions ── */}
+                {imgSearchQuotaHit && !imgSearchResults[r.id]?.length ? (
+                  <div className="mt-2 rounded-lg border border-amber-300/40 bg-amber-50/60 p-2.5 text-center">
+                    <p className="text-xs font-bold text-amber-700">{labels.imgSearchQuotaTitle}</p>
+                    <p className="mt-0.5 text-[10px] text-amber-600">{labels.imgSearchQuotaBody}</p>
+                    <button className={`${btnPrimary} mt-1.5 min-h-7 px-4 text-[10px] font-bold`} type="button">
+                      {labels.imgSearchQuotaCta}
+                    </button>
+                  </div>
+                ) : null}
+
+                {imgSearchResults[r.id]?.length ? (
+                  <div className="mt-2 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-muted">{labels.imgSearchCredit.replace("{source}", "Unsplash / Pixabay / Google")}</span>
+                      <button
+                        className="text-[10px] text-accent hover:underline"
+                        onClick={() => {
+                          imgSearchLastQuery.current[r.id] = "";
+                          void searchImagesForRow(r.id, r.front);
+                        }}
+                        type="button"
+                      >
+                        {labels.imgSearchRefresh}
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-6">
+                      {imgSearchResults[r.id]!.map((img) => (
+                        <button
+                          className={`group/img relative aspect-square overflow-hidden rounded-lg border transition-all duration-150 hover:ring-2 hover:ring-leaf/40 ${
+                            r.imageUrl === img.fullUrl ? "border-leaf ring-2 ring-leaf/30" : "border-ink/10"
+                          }`}
+                          key={img.id}
+                          onClick={() => {
+                            setRows((prev) => {
+                              const next = [...prev];
+                              const x = next[rowIndex];
+                              if (x) next[rowIndex] = { ...x, imageAssetId: null, imageUrl: img.fullUrl };
+                              return next;
+                            });
+                          }}
+                          type="button"
+                        >
+                          <img
+                            alt=""
+                            className="h-full w-full object-cover transition-transform duration-200 group-hover/img:scale-105"
+                            loading="lazy"
+                            src={img.thumbUrl}
+                          />
+                          {r.imageUrl === img.fullUrl ? (
+                            <div className="absolute inset-0 flex items-center justify-center bg-leaf/20">
+                              <svg className="h-4 w-4 text-white drop-shadow" fill="currentColor" viewBox="0 0 20 20">
+                                <path clipRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" fillRule="evenodd" />
+                              </svg>
+                            </div>
+                          ) : null}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : imgSearchLoading[r.id] ? (
+                  <div className="mt-2 flex items-center gap-2 text-xs text-muted">
+                    <div className="h-3 w-3 animate-spin rounded-full border-2 border-leaf/30 border-t-leaf" />
+                    {labels.imgSearching}
+                  </div>
+                ) : null}
               </div>
             );
           })}

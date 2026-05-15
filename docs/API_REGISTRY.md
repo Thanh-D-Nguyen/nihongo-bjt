@@ -45,6 +45,104 @@ Release-decision rule:
 
 Every endpoint must include DTOs, validation, OpenAPI decorators, auth requirement, permission requirement where admin-only, and auditable writes where applicable.
 
+## Retention & Engagement Learner APIs (2026-05-15)
+
+Added 2026-05-15. Full implementation details: `docs/RETENTION_ENGAGEMENT_FEATURES.md`.
+
+### Gamification — Daily Study Goal
+
+| Method | Path | Auth | Controller |
+|--------|------|------|------------|
+| GET | `/gamification/study-goal/today` | learner | DailyStudyGoalController |
+| POST | `/gamification/study-goal` | learner | DailyStudyGoalController |
+| POST | `/gamification/study-goal/tasks/:taskId/complete` | learner | DailyStudyGoalController |
+
+### Gamification — Login Bonus
+
+| Method | Path | Auth | Controller |
+|--------|------|------|------------|
+| GET | `/gamification/login-bonus/status` | learner | LoginBonusController |
+| POST | `/gamification/login-bonus/claim` | learner | LoginBonusController |
+
+### Notifications — Push
+
+| Method | Path | Auth | Controller |
+|--------|------|------|------------|
+| POST | `/notifications/push/subscribe` | learner | PushNotificationController |
+| DELETE | `/notifications/push/unsubscribe` | learner | PushNotificationController |
+| GET | `/notifications/push/status` | learner | PushNotificationController |
+
+### Analytics — Weekly Report
+
+| Method | Path | Auth | Controller |
+|--------|------|------|------------|
+| GET | `/analytics/weekly-report` | learner | WeeklyReportController |
+| POST | `/analytics/weekly-report/generate` | learner | WeeklyReportController |
+
+### Gamification — Revenge Mode
+
+| Method | Path | Auth | Controller |
+|--------|------|------|------------|
+| GET | `/gamification/revenge/pending` | learner | RevengeModeController |
+| POST | `/gamification/revenge/attempt` | learner | RevengeModeController |
+| GET | `/gamification/revenge/stats` | learner | RevengeModeController |
+
+### Analytics — Study Timer
+
+| Method | Path | Auth | Controller |
+|--------|------|------|------------|
+| POST | `/analytics/study-timer/start` | learner | StudyTimerController |
+| POST | `/analytics/study-timer/stop` | learner | StudyTimerController |
+| GET | `/analytics/study-timer/today` | learner | StudyTimerController |
+
+### Analytics — Learning Heatmap
+
+| Method | Path | Auth | Controller |
+|--------|------|------|------------|
+| GET | `/analytics/heatmap?days=365` | learner | LearningHeatmapController |
+
+### Gamification — Mystery Box
+
+| Method | Path | Auth | Controller |
+|--------|------|------|------------|
+| GET | `/gamification/mystery-box/status` | learner | MysteryBoxController |
+| POST | `/gamification/mystery-box/open` | learner | MysteryBoxController |
+| GET | `/gamification/mystery-box/history` | learner | MysteryBoxController |
+
+### Gamification — Companion Pet
+
+| Method | Path | Auth | Controller |
+|--------|------|------|------------|
+| GET | `/gamification/pet` | learner | CompanionPetController |
+| POST | `/gamification/pet/feed` | learner | CompanionPetController |
+| POST | `/gamification/pet/rename` | learner | CompanionPetController |
+
+### Growth — Share Postcards
+
+| Method | Path | Auth | Controller |
+|--------|------|------|------------|
+| POST | `/learner/shares/achievement` | learner | LearnerGrowthController |
+| POST | `/learner/shares/streak` | learner | LearnerGrowthController |
+| POST | `/learner/shares/pet-evolution` | learner | LearnerGrowthController |
+
+### Gamification — Seasonal Events
+
+| Method | Path | Auth | Controller |
+|--------|------|------|------------|
+| GET | `/gamification/events` | learner | SeasonalEventController |
+| GET | `/gamification/events/:eventId` | learner | SeasonalEventController |
+| POST | `/gamification/events/:eventId/join` | learner | SeasonalEventController |
+
+### Content — Business Scenarios
+
+| Method | Path | Auth | Controller |
+|--------|------|------|------------|
+| GET | `/scenarios` | learner | BusinessScenarioController |
+| GET | `/scenarios/:scenarioId` | learner | BusinessScenarioController |
+| POST | `/scenarios/steps/:stepId/answer` | learner | BusinessScenarioController |
+| POST | `/scenarios/:scenarioId/complete` | learner | BusinessScenarioController |
+| GET | `/scenarios/:scenarioId/attempts` | learner | BusinessScenarioController |
+
 ## Admin Infrastructure Registry (PHASE-10 Days 3-5)
 
 - Admin endpoints tracked: 83

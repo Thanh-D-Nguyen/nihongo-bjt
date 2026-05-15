@@ -193,6 +193,18 @@ export class QuotaService {
     });
   }
 
+  async consumeFlashcardGen(userId: string): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      const limit = await this.effectiveDailyLimitForQuotaKey(
+        userId,
+        Quota.flashcard_gen_per_day,
+        3,
+        tx
+      );
+      await this.consumeQuotaInTransaction(tx, userId, Quota.flashcard_gen_per_day, limit, "flashcard_gen");
+    });
+  }
+
   /**
    * Learner status for meters (read-only, does not increment).
    */

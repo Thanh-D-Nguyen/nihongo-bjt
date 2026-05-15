@@ -4,10 +4,12 @@ import { describe, expect, it, vi } from "vitest";
 import { MediaController } from "./media.controller.js";
 
 describe("MediaController rights metadata validation", () => {
+  const imageSearch = { search: vi.fn() };
+
   it("rejects sourceUrl when it does not use http(s)", async () => {
     const mediaService = { updateRightsMetadata: vi.fn() };
     const featureGate = { requireEnabled: vi.fn().mockResolvedValue(undefined) };
-    const controller = new MediaController(mediaService as any, featureGate as any);
+    const controller = new MediaController(mediaService as any, featureGate as any, imageSearch as any);
 
     await expect(
       controller.updateRightsMetadata(
@@ -40,7 +42,7 @@ describe("MediaController rights metadata validation", () => {
       })
     };
     const featureGate = { requireEnabled: vi.fn().mockResolvedValue(undefined) };
-    const controller = new MediaController(mediaService as any, featureGate as any);
+    const controller = new MediaController(mediaService as any, featureGate as any, imageSearch as any);
 
     await expect(
       controller.updateRightsMetadata(
@@ -80,7 +82,7 @@ describe("MediaController rights metadata validation", () => {
   it("rejects accessibility payload without altText", async () => {
     const mediaService = { updateRightsMetadata: vi.fn() };
     const featureGate = { requireEnabled: vi.fn().mockResolvedValue(undefined) };
-    const controller = new MediaController(mediaService as any, featureGate as any);
+    const controller = new MediaController(mediaService as any, featureGate as any, imageSearch as any);
 
     await expect(
       controller.updateRightsMetadata(

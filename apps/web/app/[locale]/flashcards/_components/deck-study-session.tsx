@@ -1,7 +1,10 @@
 "use client";
 
+import type { BattleBotAnimationState } from "@nihongo-bjt/shared";
 import { cn } from "@nihongo-bjt/ui";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+import { BattleBotAvatar } from "../../../_components/battle-bot-avatar";
 
 type StudyMode = "flip" | "shuffle" | "quiz";
 type Rating = "again" | "hard" | "good";
@@ -219,16 +222,16 @@ export function DeckStudySession({
     setMentorState(null);
   }, [safeIndex]);
 
+  // Notify parent of index changes outside setState updater (avoids render-during-render)
+  useEffect(() => {
+    onIndexChange?.(safeIndex);
+  }, [safeIndex, onIndexChange]);
+
   const goPrev = useCallback(() => {
-    setIndex((i) => {
-      if (i <= 0) return 0;
-      const next = i - 1;
-      onIndexChange?.(next);
-      return next;
-    });
+    setIndex((i) => (i <= 0 ? 0 : i - 1));
     setFlipped(false);
     setCardAnim("enter");
-  }, [onIndexChange]);
+  }, []);
 
   const goNext = useCallback(() => {
     if (index >= total - 1) {
@@ -237,15 +240,11 @@ export function DeckStudySession({
     }
     setCardAnim("exit");
     setTimeout(() => {
-      setIndex((i) => {
-        const next = i + 1;
-        onIndexChange?.(next);
-        return next;
-      });
+      setIndex((i) => i + 1);
       setFlipped(false);
       setCardAnim("enter");
     }, 300);
-  }, [index, total, onIndexChange]);
+  }, [index, total]);
 
   const toggleFlip = useCallback(() => {
     if (total === 0) return;
@@ -458,35 +457,36 @@ export function DeckStudySession({
           /* ── Quiz mode: show front + 4 options ── */
           <div
             className={cn(
-              "rounded-3xl border border-ink/10 bg-paper/50 p-6 text-center shadow-inner sm:p-8",
+              "fc-card-shell rounded-[1.75rem] p-6 text-center sm:p-8",
               cardAnim === "enter" && "fc-card-enter",
               cardAnim === "exit" && "fc-card-exit"
             )}
             key={current.id}
-          >            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted/80">
+          >
+            <p className="text-[11px] font-bold uppercase tracking-widest text-muted/70">
               {labels.deckStudyQuizPrompt}
             </p>
-            <p className="jp-text mt-4 text-3xl font-black leading-snug tracking-tight text-ink sm:text-4xl" lang="ja">
+            <p className="jp-text mt-5 text-4xl font-black leading-[1.3] tracking-tight text-ink sm:text-5xl" lang="ja">
               {current.frontText}
             </p>
             {current.reading ? (
-              <p className="jp-text mt-2 text-base font-medium text-muted" lang="ja">
+              <p className="jp-text mt-3 text-base font-medium text-muted/80 sm:text-lg" lang="ja">
                 {current.reading}
               </p>
             ) : null}
-            <div className="mt-6 grid gap-2.5 sm:grid-cols-2">
+            <div className="mt-7 grid gap-3 sm:grid-cols-2">
               {quizOptions.map((opt) => {
                 const correct = current.backText;
-                let cls = "border-ink/12 bg-surface hover:bg-paper hover:border-ink/20";
+                let cls = "border-ink/10 bg-white shadow-sm hover:bg-paper hover:border-ink/20 hover:shadow-md";
                 if (quizSelected) {
-                  if (opt === correct) cls = "border-emerald-400/50 bg-emerald-50";
-                  else if (opt === quizSelected) cls = "border-red-400/50 bg-red-50";
-                  else cls = "border-ink/8 bg-paper/50 opacity-50";
+                  if (opt === correct) cls = "border-emerald-400/60 bg-emerald-50 shadow-emerald-100/50 shadow-md ring-1 ring-emerald-400/30";
+                  else if (opt === quizSelected) cls = "border-red-400/60 bg-red-50 shadow-red-100/50 shadow-md ring-1 ring-red-400/30";
+                  else cls = "border-ink/6 bg-paper/40 opacity-40";
                 }
                 return (
                   <button
                     key={opt}
-                    className={`rounded-xl border px-4 py-3 text-sm font-semibold text-ink transition ${cls}`}
+                    className={`rounded-2xl border-2 px-5 py-4 text-base font-semibold text-ink transition-all duration-200 ${cls}`}
                     onClick={() => handleQuizAnswer(opt)}
                     disabled={quizSelected !== null}
                     type="button"
@@ -514,7 +514,7 @@ export function DeckStudySession({
               <button
                 aria-label={flipAriaLabel}
                 className={cn(
-                  "relative min-h-[17rem] w-full rounded-3xl border border-ink/10 bg-paper/50 p-1 text-left shadow-inner outline-none ring-offset-2 transition-[box-shadow,transform] duration-200 hover:shadow-md active:scale-[0.99] motion-reduce:active:scale-100 focus-visible:ring-2 focus-visible:ring-accent sm:min-h-[19rem] sm:p-1.5",
+                  "fc-card-shell relative min-h-[20rem] w-full rounded-[1.75rem] p-1.5 text-left outline-none ring-offset-2 transition-[box-shadow,transform] duration-300 hover:shadow-[0_20px_60px_-12px_rgba(0,0,0,0.18)] active:scale-[0.985] motion-reduce:active:scale-100 focus-visible:ring-2 focus-visible:ring-accent sm:min-h-[22rem] sm:p-2",
                   "[transform-style:preserve-3d]"
                 )}
                 onClick={toggleFlip}
@@ -522,52 +522,62 @@ export function DeckStudySession({
               >
                 <div
                   className={cn(
-                    "relative min-h-[15.5rem] w-full motion-reduce:transition-none motion-safe:transition-transform motion-safe:duration-500 motion-safe:[transition-timing-function:cubic-bezier(0.22,1,0.36,1)] motion-safe:ease-out [transform-style:preserve-3d] sm:min-h-[17rem]",
+                    "relative min-h-[17.5rem] w-full motion-reduce:transition-none motion-safe:transition-transform motion-safe:duration-600 motion-safe:[transition-timing-function:cubic-bezier(0.22,1,0.36,1)] [transform-style:preserve-3d] sm:min-h-[19rem]",
                     flipped && "motion-safe:[transform:rotateY(180deg)]"
                   )}
                 >
-                  <div className="absolute inset-0 flex flex-col justify-between rounded-[1.35rem] border border-ink/8 bg-gradient-to-br from-paper via-paper to-paper/95 p-5 shadow-sm backface-hidden sm:p-7">
+                  {/* ── Front face ── */}
+                  <div className="absolute inset-0 flex flex-col justify-between rounded-[1.25rem] border border-ink/[0.06] bg-gradient-to-br from-white via-paper to-blue-50/40 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] backface-hidden sm:p-8">
                     <div>
-                      <span className="inline-flex rounded-full border border-accent/25 bg-accent-soft/50 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-accent">
-                        {labels.deckStudyFaceFront}
-                      </span>
-                      <p className="mt-3 text-[11px] font-semibold uppercase tracking-wide text-muted/90">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-accent">
+                          {labels.deckStudyFaceFront}
+                        </span>
+                      </div>
+                      <p className="mt-4 text-[11px] font-bold uppercase tracking-widest text-muted/70">
                         {labels.deckStudyFlipPrompt}
                       </p>
-                      <p className="jp-text mt-2 text-2xl font-black leading-snug tracking-tight text-ink sm:text-3xl" lang="ja">
+                      <p className="jp-text mt-3 text-4xl font-black leading-[1.3] tracking-tight text-ink sm:text-5xl" lang="ja">
                         {current.frontText}
                       </p>
                       {current.reading ? (
-                        <p className="jp-text mt-3 text-sm font-medium text-muted sm:text-base" lang="ja">
+                        <p className="jp-text mt-3 text-base font-medium text-muted/80 sm:text-lg" lang="ja">
                           {current.reading}
                         </p>
                       ) : null}
                     </div>
-                    <p className="mt-4 border-t border-ink/8 pt-3 text-center text-[11px] font-semibold text-muted">
-                      {labels.deckStudyTapToFlip}
-                    </p>
+                    <div className="mt-4 flex items-center justify-center gap-2 border-t border-ink/[0.06] pt-3">
+                      <span className="text-xs text-muted/50">↻</span>
+                      <p className="text-[11px] font-semibold text-muted/60">
+                        {labels.deckStudyTapToFlip}
+                      </p>
+                    </div>
                   </div>
-                  <div className="absolute inset-0 flex flex-col justify-between rounded-[1.35rem] border border-leaf/25 bg-gradient-to-br from-leaf-soft/80 via-leaf-soft/50 to-paper/90 p-5 shadow-sm [transform:rotateY(180deg)] backface-hidden sm:p-7">
+                  {/* ── Back face ── */}
+                  <div className="absolute inset-0 flex flex-col justify-between rounded-[1.25rem] border border-leaf/20 bg-gradient-to-br from-emerald-50 via-leaf-soft/60 to-white p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] [transform:rotateY(180deg)] backface-hidden sm:p-8">
                     <div>
-                      <span className="inline-flex rounded-full border border-leaf/35 bg-leaf/15 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-leaf">
+                      <span className="inline-flex rounded-full border border-leaf/30 bg-leaf/15 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-leaf">
                         {labels.deckStudyFaceBack}
                       </span>
                       {/* Answer with slide-in animation */}
                       <div className={flipped ? "fc-answer-enter" : ""}>
-                        <p className="mt-4 text-base font-semibold leading-relaxed text-ink sm:text-lg">{current.backText}</p>
+                        <p className="mt-5 text-xl font-bold leading-relaxed text-ink sm:text-2xl">{current.backText}</p>
                       </div>
                     </div>
-                    <p className="mt-4 border-t border-leaf/20 pt-3 text-center text-[11px] font-semibold text-muted">
-                      {labels.deckStudyTapToFlip}
-                    </p>
+                    <div className="mt-4 flex items-center justify-center gap-2 border-t border-leaf/15 pt-3">
+                      <span className="text-xs text-muted/50">↻</span>
+                      <p className="text-[11px] font-semibold text-muted/60">
+                        {labels.deckStudyTapToFlip}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </button>
             </div>
 
-            {/* ── Mentor bubble ── */}
+            {/* ── Shiba companion ── */}
             {mentorState ? (
-              <MentorBubble
+              <ShibaCompanion
                 exiting={mentorState.exiting}
                 labels={labels}
                 milestone={milestone}
@@ -577,27 +587,27 @@ export function DeckStudySession({
 
             {/* ── Rating buttons (appear after flip) ── */}
             {flipped ? (
-              <div className="fc-btn-stagger mt-4 flex flex-wrap items-center justify-center gap-2.5">
+              <div className="fc-btn-stagger mt-5 flex flex-wrap items-center justify-center gap-3">
                 <button
-                  className="fc-btn-press inline-flex min-h-11 items-center justify-center rounded-xl border border-ink/12 bg-paper/80 px-4 text-sm font-bold text-ink outline-none ring-offset-2 transition hover:bg-paper focus-visible:ring-2 focus-visible:ring-accent"
+                  className="fc-btn-press inline-flex min-h-[3.25rem] items-center justify-center gap-2 rounded-2xl border-2 border-sakura/25 bg-gradient-to-b from-sakura/10 to-sakura/5 px-5 text-sm font-bold text-sakura shadow-sm outline-none ring-offset-2 transition-all hover:border-sakura/40 hover:from-sakura/15 hover:shadow-md focus-visible:ring-2 focus-visible:ring-sakura/50"
                   onClick={() => handleRate("again")}
                   type="button"
                 >
-                  🌱 {labels.deckStudyRateAgain}
+                  <span className="text-base">🌱</span> {labels.deckStudyRateAgain}
                 </button>
                 <button
-                  className="fc-btn-press inline-flex min-h-11 items-center justify-center rounded-xl border border-ink/15 bg-surface px-4 text-sm font-bold text-ink outline-none ring-offset-2 transition hover:border-ink/25 hover:bg-paper focus-visible:ring-2 focus-visible:ring-accent"
+                  className="fc-btn-press inline-flex min-h-[3.25rem] items-center justify-center gap-2 rounded-2xl border-2 border-sun/25 bg-gradient-to-b from-sun/10 to-sun/5 px-5 text-sm font-bold text-amber-700 shadow-sm outline-none ring-offset-2 transition-all hover:border-sun/40 hover:from-sun/15 hover:shadow-md focus-visible:ring-2 focus-visible:ring-sun/50"
                   onClick={() => handleRate("hard")}
                   type="button"
                 >
-                  💪 {labels.deckStudyRateHard}
+                  <span className="text-base">💪</span> {labels.deckStudyRateHard}
                 </button>
                 <button
-                  className="fc-btn-press inline-flex min-h-11 items-center justify-center rounded-xl bg-leaf px-4 text-sm font-bold text-white outline-none ring-offset-2 transition hover:bg-leaf/90 focus-visible:ring-2 focus-visible:ring-accent"
+                  className="fc-btn-press inline-flex min-h-[3.25rem] items-center justify-center gap-2 rounded-2xl border-2 border-leaf/30 bg-gradient-to-b from-leaf to-emerald-600 px-6 text-sm font-bold text-white shadow-md shadow-leaf/20 outline-none ring-offset-2 transition-all hover:from-leaf/90 hover:shadow-lg hover:shadow-leaf/25 focus-visible:ring-2 focus-visible:ring-leaf/50"
                   onClick={() => handleRate("good")}
                   type="button"
                 >
-                  🎉 {labels.deckStudyRateGood}
+                  <span className="text-base">🎉</span> {labels.deckStudyRateGood}
                 </button>
               </div>
             ) : null}
@@ -608,21 +618,21 @@ export function DeckStudySession({
             ) : null}
 
             {/* ── Prev/Next buttons ── */}
-            <div className="mt-4 flex flex-wrap items-stretch justify-between gap-3 sm:gap-4">
+            <div className="mt-5 flex flex-wrap items-stretch justify-between gap-3 sm:gap-4">
               <button
-                className="inline-flex min-h-12 min-w-[7rem] flex-1 items-center justify-center rounded-2xl border border-ink/12 bg-paper px-4 text-sm font-black text-ink shadow-sm outline-none ring-offset-2 transition-colors hover:bg-white hover:shadow focus-visible:ring-2 focus-visible:ring-accent disabled:pointer-events-none disabled:opacity-35 sm:flex-none"
+                className="inline-flex min-h-[3rem] min-w-[7.5rem] flex-1 items-center justify-center gap-1.5 rounded-2xl border-2 border-ink/10 bg-white px-5 text-sm font-black text-ink shadow-sm outline-none ring-offset-2 transition-all hover:border-ink/20 hover:bg-paper hover:shadow-md focus-visible:ring-2 focus-visible:ring-accent disabled:pointer-events-none disabled:opacity-30 sm:flex-none"
                 disabled={atStart}
                 onClick={goPrev}
                 type="button"
               >
-                {labels.deckStudyPrev}
+                <span aria-hidden className="text-xs">←</span> {labels.deckStudyPrev}
               </button>
               <button
-                className="inline-flex min-h-12 min-w-[7rem] flex-1 items-center justify-center rounded-2xl bg-ink px-4 text-sm font-black text-surface shadow-md outline-none ring-offset-2 transition-[background-color,transform] hover:bg-ink/92 active:scale-[0.98] motion-reduce:active:scale-100 focus-visible:ring-2 focus-visible:ring-accent disabled:pointer-events-none disabled:opacity-35 sm:flex-none"
+                className="inline-flex min-h-[3rem] min-w-[7.5rem] flex-1 items-center justify-center gap-1.5 rounded-2xl bg-ink px-5 text-sm font-black text-surface shadow-lg shadow-ink/20 outline-none ring-offset-2 transition-all hover:bg-ink/90 hover:shadow-xl hover:shadow-ink/25 active:scale-[0.98] motion-reduce:active:scale-100 focus-visible:ring-2 focus-visible:ring-accent disabled:pointer-events-none disabled:opacity-30 sm:flex-none"
                 onClick={goNext}
                 type="button"
               >
-                {labels.deckStudyNext}
+                {labels.deckStudyNext} <span aria-hidden className="text-xs">→</span>
               </button>
             </div>
           </div>
@@ -842,38 +852,44 @@ function ProgressRing({
 
 /* ─── Mentor Bubble ─── */
 
-type MentorBubbleLabels = Pick<
+type ShibaCompanionLabels = Pick<
   DeckStudySessionLabels,
   | "mentorName"
-  | "mentorGoodEmoji"
   | "mentorGoodText"
-  | "mentorHardEmoji"
   | "mentorHardText"
-  | "mentorAgainEmoji"
   | "mentorAgainText"
   | "mentorMilestone5"
   | "mentorMilestone10"
   | "mentorMilestone25"
 >;
 
-function MentorBubble({
+/* ─── Rive companion asset (same as global companion bot) ─── */
+
+const companionRive = {
+  artboard: null,
+  src: "/assets/battle/bots/18912-35694-lil-guy.riv",
+  stateMachine: null,
+};
+
+const ratingToRiveState: Record<Rating, BattleBotAnimationState> = {
+  good: "correct",
+  hard: "thinking",
+  again: "wrong",
+};
+
+/* ─── Shiba Companion (Rive-animated) ─── */
+
+function ShibaCompanion({
   exiting,
   labels,
   milestone,
   rating,
 }: {
   exiting: boolean;
-  labels: MentorBubbleLabels;
+  labels: ShibaCompanionLabels;
   milestone: number | null;
   rating: Rating;
 }) {
-  const emoji =
-    rating === "good"
-      ? labels.mentorGoodEmoji
-      : rating === "hard"
-        ? labels.mentorHardEmoji
-        : labels.mentorAgainEmoji;
-
   const text =
     rating === "good"
       ? labels.mentorGoodText
@@ -890,33 +906,38 @@ function MentorBubble({
           ? labels.mentorMilestone25
           : null;
 
-  const borderColor =
+  const bubbleBg =
     rating === "good"
-      ? "border-leaf/30 bg-leaf-soft/50"
+      ? "bg-gradient-to-br from-white to-emerald-50 ring-leaf/20"
       : rating === "hard"
-        ? "border-sun/30 bg-sun/10"
-        : "border-sakura/25 bg-sakura/8";
+        ? "bg-gradient-to-br from-white to-amber-50 ring-sun/20"
+        : "bg-gradient-to-br from-white to-pink-50 ring-sakura/20";
 
   return (
     <div
       className={cn(
-        "relative mt-3 flex items-start gap-3 rounded-2xl border px-4 py-3",
-        borderColor,
-        exiting ? "fc-mentor-exit" : "fc-mentor-enter"
+        "mt-4 flex items-end gap-3",
+        exiting ? "fc-shiba-exit" : "fc-shiba-enter"
       )}
       role="status"
       aria-live="polite"
     >
-      <div className="fc-avatar-pulse flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-lg shadow-sm ring-1 ring-ink/10">
-        {emoji}
+      {/* Rive companion avatar */}
+      <div className="fc-shiba-bob h-14 w-14 shrink-0 drop-shadow-md sm:h-16 sm:w-16">
+        <BattleBotAvatar
+          fallback="🐕"
+          rive={companionRive}
+          showSignal={false}
+          state={ratingToRiveState[rating]}
+          variant="companion"
+        />
       </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-[10px] font-bold uppercase tracking-wider text-muted">
-          {labels.mentorName}
-        </p>
-        <p className="mt-0.5 text-sm leading-relaxed text-ink">{text}</p>
+      {/* Speech bubble */}
+      <div className={cn("fc-shiba-bubble relative min-w-0 flex-1 rounded-2xl px-4 py-3 shadow-md ring-1", bubbleBg)}>
+        <div className="absolute -left-1.5 bottom-3 h-3 w-3 rotate-45 bg-white" />
+        <p className="relative text-sm font-semibold leading-relaxed text-ink">{text}</p>
         {milestoneText && milestone ? (
-          <div className="fc-milestone-burst mt-2 inline-flex items-center gap-1.5 rounded-lg bg-white/80 px-2.5 py-1 text-xs font-bold text-leaf shadow-sm ring-1 ring-leaf/20">
+          <div className="fc-milestone-burst relative mt-1.5 inline-flex items-center gap-1.5 rounded-lg bg-white/80 px-2.5 py-1 text-xs font-bold text-leaf shadow-sm ring-1 ring-leaf/20">
             <span className="fc-confetti">
               🔥
               <span className="fc-confetti-extra" aria-hidden />

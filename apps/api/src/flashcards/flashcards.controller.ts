@@ -6,9 +6,12 @@ import {
   createDeckSchema,
   flashcardsDueQuerySchema,
   flashcardsUserScopedQuerySchema,
+  generateDeckSchema,
   linkCardMediaSchema,
+  previewGenCountSchema,
   reviewBatchSchema,
-  submitReviewSchema
+  submitReviewSchema,
+  suggestCardsSchema
 } from "@nihongo-bjt/shared";
 import {
   BadRequestException,
@@ -29,6 +32,7 @@ import { KeycloakAuthGuard } from "../keycloak/keycloak-auth.guard.js";
 import { resolveLearnerUserId } from "../keycloak/learner-identity.util.js";
 import type { KeycloakAuthenticatedUser } from "../keycloak/keycloak.types.js";
 import { DocumentedHttpErrors } from "../openapi/common-decorators.js";
+import { FlashcardGenService } from "./flashcard-gen.service.js";
 import { FlashcardsRepository } from "./flashcards.repository.js";
 import { FlashcardsService } from "./flashcards.service.js";
 
@@ -40,7 +44,8 @@ import { FlashcardsService } from "./flashcards.service.js";
 export class FlashcardsController {
   constructor(
     @Inject(FlashcardsRepository) private readonly flashcardsRepository: FlashcardsRepository,
-    @Inject(FlashcardsService) private readonly flashcardsService: FlashcardsService
+    @Inject(FlashcardsService) private readonly flashcardsService: FlashcardsService,
+    @Inject(FlashcardGenService) private readonly genService: FlashcardGenService
   ) {}
 
   @Get("decks")
@@ -112,6 +117,42 @@ export class FlashcardsController {
     }
 
     return this.flashcardsRepository.createDeck(parsed.data);
+  }
+
+  @Post("decks/generate")
+  @ApiOperation({ summary: "Auto-generate a flashcard deck from dictionary content." })
+  generateDeck(@CurrentUser() user: KeycloakAuthenticatedUser | undefined, @Body() body: unknown) {
+    const raw = body as Record<string, unknown>;
+    const userId = resolveLearnerUserId(user, raw.userId as string | undefined, { required: true })!;
+    const parsed = generateDeckSchema.safeParse({ ...raw, userId });
+    if (!parsed.success) {
+      throw new BadRequestException(parsed.error.flatten());
+    }
+    return this.genService.generateForLearner(parsed.data);
+  }
+
+  @Post("decks/generate/preview")
+  @ApiOperation({ summary: "Preview count of available content for auto-gen filters." })
+  previewGenCount(@CurrentUser() user: KeycloakAuthenticatedUser | undefined, @Body() body: unknown) {
+    const raw = body as Record<string, unknown>;
+    const userId = resolveLearnerUserId(user, raw.userId as string | undefined, { required: true })!;
+    const parsed = previewGenCountSchema.safeParse({ ...raw, userId });
+    if (!parsed.success) {
+      throw new BadRequestException(parsed.error.flatten());
+    }
+    return this.genService.previewCount(parsed.data);
+  }
+
+  @Post("cards/suggest")
+  @ApiOperation({ summary: "Suggest cards for manual deck composition (premium)." })
+  suggestCards(@CurrentUser() user: KeycloakAuthenticatedUser | undefined, @Body() body: unknown) {
+    const raw = body as Record<string, unknown>;
+    const userId = resolveLearnerUserId(user, raw.userId as string | undefined, { required: true })!;
+    const parsed = suggestCardsSchema.safeParse({ ...raw, userId });
+    if (!parsed.success) {
+      throw new BadRequestException(parsed.error.flatten());
+    }
+    return this.genService.suggestCards(parsed.data);
   }
 
   @Post("cards/from-content")
@@ -231,5 +272,40 @@ export class FlashcardsController {
       reviewedAt: parsed.data.reviewedAt ? new Date(parsed.data.reviewedAt) : new Date(),
       userFlashcardId
     });
+  }
+
+  // ─── Deck Sharing ────────────────────────────────────────────────
+
+  @Post("decks/:deckId/share")
+  @ApiOperation({ summary: "Generate share link for a deck (owner only)." })
+  @ApiParam({ name: "deckId" })
+  async shareDeck(
+    @CurrentUser() user: KeycloakAuthenticatedUser | undefined,
+    @Param("deckId") deckId: string,
+  ) {
+    const userId = resolveLearnerUserId(user, undefined, { required: true })!;
+    return this.flashcardsRepository.generateShareToken(userId, deckId.trim());
+  }
+
+  @Delete("decks/:deckId/share")
+  @ApiOperation({ summary: "Revoke share link for a deck (owner only)." })
+  @ApiParam({ name: "deckId" })
+  async unshareDeck(
+    @CurrentUser() user: KeycloakAuthenticatedUser | undefined,
+    @Param("deckId") deckId: string,
+  ) {
+    const userId = resolveLearnerUserId(user, undefined, { required: true })!;
+    return this.flashcardsRepository.revokeShareToken(userId, deckId.trim());
+  }
+
+  @Post("decks/clone/:token")
+  @ApiOperation({ summary: "Clone a shared deck to own account." })
+  @ApiParam({ name: "token", description: "Share token from the share link" })
+  async cloneDeck(
+    @CurrentUser() user: KeycloakAuthenticatedUser | undefined,
+    @Param("token") token: string,
+  ) {
+    const userId = resolveLearnerUserId(user, undefined, { required: true })!;
+    return this.flashcardsRepository.cloneDeck(token.trim(), userId);
   }
 }

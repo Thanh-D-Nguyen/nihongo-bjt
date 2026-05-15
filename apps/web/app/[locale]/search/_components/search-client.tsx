@@ -14,7 +14,7 @@ import {
   useState
 } from "react";
 
-import { VoiceSearchButton } from "../../../_components/search-advanced-inputs";
+import { VoiceSearchButton, type VoiceSearchLabels } from "../../../_components/search-advanced-inputs";
 import { IconSearch } from "../../../_components/nav-icons";
 import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
 import {
@@ -67,6 +67,13 @@ export interface SearchLabels extends SearchDetailLabels {
   detailRegionLabel: string;
   /** Mobile sticky CTA to open bottom sheet */
   openDetail: string;
+  /* ─── Voice search labels ─── */
+  voiceListening?: string;
+  voiceTitle?: string;
+  voicePermissionDenied?: string;
+  voiceNoSpeech?: string;
+  voiceNetworkError?: string;
+  voiceGenericError?: string;
 }
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
@@ -594,6 +601,15 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
                 </div>
                 <VoiceSearchButton
                   className="shrink-0"
+                  locale={locale}
+                  labels={{
+                    listening: labels.voiceListening,
+                    title: labels.voiceTitle,
+                    permissionDenied: labels.voicePermissionDenied,
+                    noSpeech: labels.voiceNoSpeech,
+                    networkError: labels.voiceNetworkError,
+                    genericError: labels.voiceGenericError,
+                  }}
                   onResult={(text) => {
                     setQuery(text);
                     pendingEntryRef.current = null;

@@ -82,14 +82,24 @@ type FormState = {
   thumbnailKey: string;
   privacyClass: PrivacyClass;
   noPiiVerified: boolean;
+  brandBg: string;
+  brandBgEnd: string;
+  brandFg: string;
+  brandAccent: string;
+  pattern: string;
 };
 
 const DEFAULT_FORM: FormState = {
   bodyTemplate: "",
+  brandAccent: "#38bdf8",
+  brandBg: "#0f172a",
+  brandBgEnd: "",
+  brandFg: "#e2e8f0",
   description: "",
   kind: "streak",
   name: "",
   noPiiVerified: false,
+  pattern: "none",
   privacyClass: "anonymized",
   slug: "",
   thumbnailKey: "",
@@ -130,9 +140,14 @@ function downloadCsv(filename: string, header: string[], rows: string[][]) {
 function buildConfig(form: FormState) {
   return {
     bodyTemplate: form.bodyTemplate,
+    brandAccent: form.brandAccent || undefined,
+    brandBg: form.brandBg || undefined,
+    brandBgEnd: form.brandBgEnd || undefined,
+    brandFg: form.brandFg || undefined,
     description: form.description || undefined,
     name: form.name,
     noPiiVerified: form.noPiiVerified,
+    pattern: form.pattern !== "none" ? form.pattern : undefined,
     privacyClass: form.privacyClass,
     surface: "postcard" as const,
     thumbnailKey: form.thumbnailKey || undefined,
@@ -145,10 +160,15 @@ function buildConfig(form: FormState) {
 function detailToForm(d: Detail): FormState {
   return {
     bodyTemplate: d.config.bodyTemplate ?? "",
+    brandAccent: (d.config as any).brandAccent ?? "#38bdf8",
+    brandBg: (d.config as any).brandBg ?? "#0f172a",
+    brandBgEnd: (d.config as any).brandBgEnd ?? "",
+    brandFg: (d.config as any).brandFg ?? "#e2e8f0",
     description: d.config.description ?? "",
     kind: d.kind,
     name: d.config.name ?? d.name,
     noPiiVerified: d.config.noPiiVerified === true,
+    pattern: (d.config as any).pattern ?? "none",
     privacyClass: d.config.privacyClass,
     slug: d.slug,
     thumbnailKey: d.config.thumbnailKey ?? "",
@@ -189,6 +209,8 @@ export function GrowthPostcardsClient({
   const [reason, setReason] = useState("");
   const [mutating, setMutating] = useState(false);
   const [confirm, setConfirm] = useState<{ kind: "publish" | "archive" } | null>(null);
+  const [previewSrc, setPreviewSrc] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
   const toast = useAdminToast();
   const fe = useFormErrors();
 
@@ -368,6 +390,38 @@ export function GrowthPostcardsClient({
     }
   }
 
+  async function loadPreview() {
+    setPreviewLoading(true);
+    try {
+      const r = await adminApiFetch("/api/admin/growth/share-template/preview", {
+        method: "POST",
+        body: JSON.stringify({
+          headline: form.name || "Sample Headline",
+          sub: form.description || "Sample subtitle",
+          kind: form.kind,
+          config: {
+            brandBg: form.brandBg,
+            brandBgEnd: form.brandBgEnd,
+            brandFg: form.brandFg,
+            brandAccent: form.brandAccent,
+            badgeKey: "NihonGo BJT",
+            pattern: form.pattern !== "none" ? form.pattern : undefined,
+          },
+        }),
+      });
+      if (!r.ok) {
+        toast.error(t("previewFailed") || "Preview failed");
+        return;
+      }
+      const body = await r.json() as { base64Png: string };
+      setPreviewSrc(`data:image/png;base64,${body.base64Png}`);
+    } catch {
+      toast.error(t("previewFailed") || "Preview failed");
+    } finally {
+      setPreviewLoading(false);
+    }
+  }
+
   function exportCsv() {
     if (!list) return;
     const header = ["id", "slug", "kind", "name", "privacyClass", "noPiiVerified", "active", "version", "updatedAt"];
@@ -443,6 +497,7 @@ export function GrowthPostcardsClient({
                 setForm(DEFAULT_FORM);
                 setReason("");
                 setSelectedId(null);
+                setPreviewSrc(null);
               }}
               type="button"
             >
@@ -562,6 +617,11 @@ export function GrowthPostcardsClient({
                   ...(f.thumbnailKey !== undefined && { thumbnailKey: String(f.thumbnailKey) }),
                   ...(f.privacyClass !== undefined && { privacyClass: f.privacyClass as FormState["privacyClass"] }),
                   ...(f.noPiiVerified !== undefined && { noPiiVerified: Boolean(f.noPiiVerified) }),
+                  ...(f.brandBg !== undefined && { brandBg: String(f.brandBg) }),
+                  ...(f.brandBgEnd !== undefined && { brandBgEnd: String(f.brandBgEnd) }),
+                  ...(f.brandFg !== undefined && { brandFg: String(f.brandFg) }),
+                  ...(f.brandAccent !== undefined && { brandAccent: String(f.brandAccent) }),
+                  ...(f.pattern !== undefined && { pattern: String(f.pattern) }),
                 }));
               }}
               labels={{ button: t("autoFill") || "Auto Fill" }}
@@ -665,15 +725,101 @@ export function GrowthPostcardsClient({
               </label>
             ) : null}
             <div className="md:col-span-2">
-              <h4 className="text-sm font-semibold">{t("previewHeading")}</h4>
-              <div className="mt-1 rounded border bg-slate-50 p-3 text-sm">
-                {renderPreview(form.bodyTemplate, {
-                  user_name: t("sampleUserName"),
-                  streak_days: "30",
-                  level: "N3",
-                  score: "85"
-                })}
+              <h4 className="mb-2 text-sm font-semibold">{t("brandColors") || "Brand Colors"}</h4>
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                <label className="text-sm">
+                  {t("brandBgLabel") || "Background"}
+                  <div className="mt-1 flex items-center gap-2">
+                    <input
+                      type="color"
+                      className="h-8 w-8 cursor-pointer rounded border p-0"
+                      value={form.brandBg}
+                      onChange={(e) => setForm((f) => ({ ...f, brandBg: e.target.value }))}
+                    />
+                    <span className="font-mono text-xs">{form.brandBg}</span>
+                  </div>
+                </label>
+                <label className="text-sm">
+                  {t("brandBgEndLabel") || "Gradient End"}
+                  <div className="mt-1 flex items-center gap-2">
+                    <input
+                      type="color"
+                      className="h-8 w-8 cursor-pointer rounded border p-0"
+                      value={form.brandBgEnd || "#000000"}
+                      onChange={(e) => setForm((f) => ({ ...f, brandBgEnd: e.target.value }))}
+                    />
+                    <span className="font-mono text-xs">{form.brandBgEnd || "—"}</span>
+                  </div>
+                </label>
+                <label className="text-sm">
+                  {t("brandFgLabel") || "Text Color"}
+                  <div className="mt-1 flex items-center gap-2">
+                    <input
+                      type="color"
+                      className="h-8 w-8 cursor-pointer rounded border p-0"
+                      value={form.brandFg}
+                      onChange={(e) => setForm((f) => ({ ...f, brandFg: e.target.value }))}
+                    />
+                    <span className="font-mono text-xs">{form.brandFg}</span>
+                  </div>
+                </label>
+                <label className="text-sm">
+                  {t("brandAccentLabel") || "Accent"}
+                  <div className="mt-1 flex items-center gap-2">
+                    <input
+                      type="color"
+                      className="h-8 w-8 cursor-pointer rounded border p-0"
+                      value={form.brandAccent}
+                      onChange={(e) => setForm((f) => ({ ...f, brandAccent: e.target.value }))}
+                    />
+                    <span className="font-mono text-xs">{form.brandAccent}</span>
+                  </div>
+                </label>
               </div>
+              <label className="mt-3 block text-sm">
+                {t("patternLabel") || "Pattern"}
+                <select
+                  className="mt-1 w-full rounded border px-2 py-1 md:w-48"
+                  value={form.pattern}
+                  onChange={(e) => setForm((f) => ({ ...f, pattern: e.target.value }))}
+                >
+                  <option value="none">{t("pattern_none") || "None"}</option>
+                  <option value="dots">{t("pattern_dots") || "Dots"}</option>
+                  <option value="waves">{t("pattern_waves") || "Waves"}</option>
+                  <option value="grid">{t("pattern_grid") || "Grid"}</option>
+                  <option value="stripes">{t("pattern_stripes") || "Stripes"}</option>
+                </select>
+              </label>
+            </div>
+            <div className="md:col-span-2">
+              <div className="flex items-center gap-2">
+                <h4 className="text-sm font-semibold">{t("previewHeading")}</h4>
+                <button
+                  className="rounded border px-2 py-1 text-xs bg-slate-100 hover:bg-slate-200 disabled:opacity-50"
+                  disabled={previewLoading || mutating}
+                  onClick={() => void loadPreview()}
+                  type="button"
+                >
+                  {previewLoading ? t("loading") || "Loading..." : t("actionPreview") || "Preview PNG"}
+                </button>
+              </div>
+              {previewSrc ? (
+                <img
+                  src={previewSrc}
+                  alt="Postcard preview"
+                  className="mt-2 w-full max-w-[600px] rounded border shadow-sm"
+                  style={{ aspectRatio: "1200/630" }}
+                />
+              ) : (
+                <div className="mt-1 rounded border bg-slate-50 p-3 text-sm">
+                  {renderPreview(form.bodyTemplate, {
+                    user_name: t("sampleUserName") || "Learner",
+                    streak_days: "30",
+                    level: "N3",
+                    score: "85"
+                  })}
+                </div>
+              )}
             </div>
             <label className="text-sm md:col-span-2">
               {t("formReason")} <span className="text-red-500">*</span>
@@ -700,6 +846,7 @@ export function GrowthPostcardsClient({
                 setCreating(false);
                 setEditing(false);
                 setReason("");
+                setPreviewSrc(null);
                 fe.clearAll();
               }}
               type="button"
@@ -733,6 +880,7 @@ export function GrowthPostcardsClient({
                     setEditing(true);
                     setForm(detailToForm(detail));
                     setReason("");
+                    setPreviewSrc(null);
                   }}
                   type="button"
                 >

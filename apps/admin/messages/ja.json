@@ -150,6 +150,7 @@
       "audit": "監査ログ",
       "securityAudit": "セキュリティ監査",
       "settings": "設定",
+      "companionSettings": "コンパニオンボット",
       "legalDocs": "法務ドキュメント",
       "legalTerms": "利用規約 / プライバシー版",
       "consent": "同意記録",
@@ -1624,6 +1625,23 @@
       "actionRefresh": "更新",
       "actionExportCsv": "CSV出力",
       "errorLoad": "リーダーボードを読み込めませんでした。"
+    },
+    "companionSettings": {
+      "title": "コンパニオンボット",
+      "subtitle": "コンパニオンボット（柴犬）の管理 — Riveアセット、ヒント、動作。",
+      "configSection": "設定",
+      "riveAsset": "Riveアセット",
+      "tipCount": "ヒント",
+      "behavior": "動作",
+      "riveAssets": "利用可能なRiveアセット",
+      "tipsSection": "コンパニオンヒント",
+      "validationRequired": "日本語とベトナム語のコンテンツは必須です。",
+      "createFailed": "ヒントの作成に失敗しました。",
+      "createOk": "ヒントを作成しました。",
+      "updateFailed": "ヒントの更新に失敗しました。",
+      "updateOk": "ヒントを更新しました。",
+      "deleteFailed": "ヒントの削除に失敗しました。",
+      "deleteOk": "ヒントを削除しました。"
     },
     "battleBots": {
       "title": "ボットプロフィール",
