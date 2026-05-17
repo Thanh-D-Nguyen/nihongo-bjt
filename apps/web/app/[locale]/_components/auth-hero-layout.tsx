@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { BrandFull } from "../../_components/brand-logo";
+
 /**
  * Shared 2-column auth wrapper — Quizlet-style.
  * Left: colorful hero panel with brand + tagline.
@@ -48,10 +50,10 @@ export function AuthHeroLayout({
         {/* Bottom brand */}
         <div className="relative z-10 px-12 pb-10 xl:px-16">
           <Link
-            className="text-lg font-bold text-white/80 no-underline hover:text-white"
+            className="inline-flex no-underline transition hover:scale-[1.02]"
             href={`/${locale}`}
           >
-            NihonGo BJT
+            <BrandFull markSize={34} tone="light" />
           </Link>
         </div>
       </aside>

@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 
 import ja from "../../../messages/ja.json";
 import vi from "../../../messages/vi.json";
+import { BrandFull } from "../../_components/brand-logo";
 import { AuthHeroLayout } from "../_components/auth-hero-layout";
 import { ForgotPasswordFormClient } from "./_components/forgot-password-form-client";
 
@@ -46,10 +47,8 @@ export default async function ForgotPasswordPage({
     <AuthHeroLayout locale={locale}>
       {/* Brand — mobile only */}
       <div className="mb-8 text-center lg:hidden">
-        <Link href={localePrefix} className="no-underline">
-          <p className="text-xl font-bold tracking-tight text-ink">
-            {messages[loc].nav.brand}
-          </p>
+        <Link href={localePrefix} className="inline-flex justify-center no-underline">
+          <BrandFull markSize={36} />
         </Link>
       </div>
 

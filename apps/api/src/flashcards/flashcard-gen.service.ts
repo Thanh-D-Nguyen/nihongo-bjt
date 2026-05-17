@@ -1,8 +1,9 @@
-import { createPrismaClient } from "@nihongo-bjt/database";
+import { createPrismaClient, type Prisma } from "@nihongo-bjt/database";
 import { randomUUID } from "node:crypto";
 import {
   BadRequestException,
   ForbiddenException,
+  Inject,
   Injectable,
   Logger
 } from "@nestjs/common";
@@ -55,8 +56,8 @@ export class FlashcardGenService {
   private readonly prisma = createPrismaClient();
 
   constructor(
-    private readonly quotaService: QuotaService,
-    private readonly entitlementService: EntitlementService
+    @Inject(QuotaService) private readonly quotaService: QuotaService,
+    @Inject(EntitlementService) private readonly entitlementService: EntitlementService
   ) {}
 
   /** Preview how many cards can be generated for given filters. */
@@ -158,13 +159,7 @@ export class FlashcardGenService {
         userId: input.userId,
         mode: input.adaptive ? "by_weak_area" : input.topics?.length ? "by_topic" : "by_level",
         status: "completed",
-        params: {
-          level: input.level,
-          sourceTypes: input.sourceTypes,
-          direction: input.direction,
-          topics: input.topics,
-          adaptive: input.adaptive
-        },
+        params: this.buildLearnerJobParams(input),
         cardsGenerated: deck.cardCount,
         deckId: deck.id
       }
@@ -204,6 +199,16 @@ export class FlashcardGenService {
   }
 
   // ── Internal ──
+
+  private buildLearnerJobParams(input: GenerateDeckInput): Prisma.InputJsonValue {
+    return {
+      adaptive: input.adaptive,
+      direction: input.direction,
+      level: input.level,
+      sourceTypes: input.sourceTypes,
+      ...(input.topics?.length ? { topics: input.topics } : {})
+    };
+  }
 
   private async gatherCandidates(input: {
     level: string;

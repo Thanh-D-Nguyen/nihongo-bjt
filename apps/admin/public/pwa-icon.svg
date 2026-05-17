@@ -1,4 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <rect width="512" height="512" rx="96" fill="#1e293b"/>
-  <text x="256" y="340" text-anchor="middle" font-size="260" fill="#f8fafc" font-family="system-ui,sans-serif" font-weight="700">A</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="NihonGo BJT Admin">
+  <defs>
+    <linearGradient id="bg" x1="64" y1="48" x2="464" y2="480" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0F172A"/>
+      <stop offset="0.55" stop-color="#12322F"/>
+      <stop offset="1" stop-color="#0D9488"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="136" y1="372" x2="384" y2="128" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5EEAD4"/>
+      <stop offset="1" stop-color="#F9A8D4"/>
+    </linearGradient>
+    <filter id="shadow" x="72" y="72" width="368" height="368" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="28" flood-color="#020617" flood-opacity="0.26" stdDeviation="22"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="120" fill="url(#bg)"/>
+  <path d="M112 396C163 361 205 315 238 258C275 197 321 153 376 126" fill="none" stroke="url(#accent)" stroke-linecap="round" stroke-width="43"/>
+  <g filter="url(#shadow)">
+    <rect x="160" y="120" width="200" height="272" rx="40" fill="none" stroke="#F8FAFC" stroke-width="34"/>
+    <path d="M172 220H348M172 300H348" fill="none" stroke="#F8FAFC" stroke-linecap="round" stroke-width="27"/>
+  </g>
+  <circle cx="388" cy="124" r="34" fill="#F472B6"/>
+  <path d="M128 132V380" fill="none" stroke="#F8FAFC" stroke-linecap="round" stroke-opacity="0.82" stroke-width="34"/>
 </svg>

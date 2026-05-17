@@ -8,6 +8,7 @@ import { getKcWebConfig } from "@/lib/kc-server-config";
 
 import ja from "../../../messages/ja.json";
 import vi from "../../../messages/vi.json";
+import { BrandFull } from "../../_components/brand-logo";
 import { AuthHeroLayout } from "../_components/auth-hero-layout";
 import { LoginFormClient } from "./_components/login-form-client";
 
@@ -43,7 +44,6 @@ export default async function LoginPage({
   }
   const loc = locale as "ja" | "vi";
   const t = messages[loc].auth.login;
-  const nav = messages[loc].nav;
   const cfg = getKcWebConfig();
   const authReady = Boolean(cfg?.clientSecret);
   const errMapped = userFacingAuthError(sp.authError, messages[loc].auth.errors);
@@ -73,8 +73,8 @@ export default async function LoginPage({
     <AuthHeroLayout locale={locale}>
       {/* Brand — mobile only */}
       <div className="mb-8 text-center lg:hidden">
-        <Link href={localePrefix} className="no-underline">
-          <p className="text-xl font-bold tracking-tight text-ink">{nav.brand}</p>
+        <Link href={localePrefix} className="inline-flex justify-center no-underline">
+          <BrandFull markSize={36} />
         </Link>
         <p className="mt-1 text-xs font-medium text-muted">{t.brandTagline}</p>
       </div>
