@@ -2,6 +2,21 @@
   "a11y": {
     "skipToContent": "メインコンテンツへスキップ"
   },
+  "ambient": {
+    "ariaLabel": "集中サウンドのコントロール",
+    "collapse": "サウンドコントロールを閉じる",
+    "expand": "サウンドコントロールを開く",
+    "error": "このブラウザではサウンドを開始できませんでした。",
+    "focusMode": "集中モード",
+    "muted": "音量を下げています",
+    "pause": "集中サウンドを一時停止",
+    "play": "集中サウンドを再開",
+    "soundCafe": "カフェ",
+    "soundLofi": "Lo-fi",
+    "soundNature": "森",
+    "soundRain": "雨",
+    "volume": "音量"
+  },
   "auth": {
     "errors": {
       "generic": "ログインできませんでした。しばらくしてからもう一度お試しください。",

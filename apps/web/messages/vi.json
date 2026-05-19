@@ -2,6 +2,21 @@
   "a11y": {
     "skipToContent": "Bỏ qua đến nội dung chính"
   },
+  "ambient": {
+    "ariaLabel": "Điều khiển âm thanh tập trung",
+    "collapse": "Thu gọn điều khiển âm thanh",
+    "expand": "Mở rộng điều khiển âm thanh",
+    "error": "Không thể bật âm thanh trên trình duyệt này.",
+    "focusMode": "Chế độ tập trung",
+    "muted": "Đang hạ âm",
+    "pause": "Tạm dừng âm thanh tập trung",
+    "play": "Tiếp tục âm thanh tập trung",
+    "soundCafe": "Café",
+    "soundLofi": "Lo-fi",
+    "soundNature": "Rừng",
+    "soundRain": "Mưa",
+    "volume": "Âm lượng"
+  },
   "auth": {
     "errors": {
       "generic": "Không thể đăng nhập lúc này. Vui lòng thử lại.",

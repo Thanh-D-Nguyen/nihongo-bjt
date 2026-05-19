@@ -2,6 +2,7 @@
 
 import { cn } from "@nihongo-bjt/ui";
 import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
 import { learnerApiFetch } from "../../../../lib/learner-api";
 
@@ -30,6 +31,23 @@ const LEVEL_COLORS = [
 ];
 
 const MONTHS = ["T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8", "T9", "T10", "T11", "T12"];
+const TOOLTIP_WIDTH = 180;
+const TOOLTIP_HEIGHT = 68;
+const TOOLTIP_GAP = 10;
+
+function heatmapTooltipPosition(rect: DOMRect) {
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+  const preferredLeft = rect.left + rect.width / 2 - TOOLTIP_WIDTH / 2;
+  const left = Math.max(8, Math.min(preferredLeft, viewportWidth - TOOLTIP_WIDTH - 8));
+  const preferredTop = rect.top - TOOLTIP_HEIGHT - TOOLTIP_GAP;
+  const top =
+    preferredTop >= 8
+      ? preferredTop
+      : Math.min(rect.bottom + TOOLTIP_GAP, viewportHeight - TOOLTIP_HEIGHT - 8);
+
+  return { left, top };
+}
 
 export function LearningHeatmap({ locale }: { locale: string }) {
   const { userId } = useKeycloakAuth();
@@ -149,8 +167,17 @@ export function LearningHeatmap({ locale }: { locale: string }) {
                   onMouseEnter={(e) => {
                     if (!day) return;
                     const rect = e.currentTarget.getBoundingClientRect();
-                    setTooltip({ day, x: rect.left, y: rect.top - 60 });
+                    const pos = heatmapTooltipPosition(rect);
+                    setTooltip({ day, x: pos.left, y: pos.top });
                   }}
+                  onFocus={(e) => {
+                    if (!day) return;
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const pos = heatmapTooltipPosition(rect);
+                    setTooltip({ day, x: pos.left, y: pos.top });
+                  }}
+                  onBlur={() => setTooltip(null)}
+                  tabIndex={day ? 0 : undefined}
                 />
               ))}
             </div>
@@ -168,16 +195,20 @@ export function LearningHeatmap({ locale }: { locale: string }) {
       </div>
 
       {/* Tooltip */}
-      {tooltip && (
-        <div
-          className="fixed z-50 rounded-lg bg-ink px-3 py-2 text-[10px] text-white shadow-lg pointer-events-none"
-          style={{ left: tooltip.x, top: tooltip.y }}
-        >
-          <div className="font-bold">{tooltip.day.date}</div>
-          <div>Ôn tập: {tooltip.day.reviews} · Quiz: {tooltip.day.quizzes}</div>
-          {tooltip.day.focusMinutes > 0 && <div>Focus: {tooltip.day.focusMinutes} phút</div>}
-        </div>
-      )}
+      {tooltip
+        ? createPortal(
+            <div
+              className="pointer-events-none fixed z-[9999] rounded-lg bg-ink px-3 py-2 text-[10px] text-white shadow-lg"
+              role="tooltip"
+              style={{ left: tooltip.x, top: tooltip.y, width: TOOLTIP_WIDTH }}
+            >
+              <div className="font-bold">{tooltip.day.date}</div>
+              <div>Ôn tập: {tooltip.day.reviews} · Quiz: {tooltip.day.quizzes}</div>
+              {tooltip.day.focusMinutes > 0 && <div>Focus: {tooltip.day.focusMinutes} phút</div>}
+            </div>,
+            document.body
+          )
+        : null}
     </div>
   );
 }

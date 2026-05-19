@@ -2,30 +2,46 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 
-type AmbientSound = "none" | "lofi" | "rain" | "cafe" | "nature";
+export type AmbientSound = "none" | "lofi" | "rain" | "cafe" | "nature";
 
 interface AmbientState {
   active: boolean;
+  ducked: boolean;
   sound: AmbientSound;
   volume: number; // 0-100
   error: boolean;
 }
 
 interface AmbientContextValue extends AmbientState {
+  pause: () => void;
+  play: () => void;
   toggle: () => void;
   setSound: (sound: AmbientSound) => void;
+  setDucked: (ducked: boolean) => void;
   setVolume: (volume: number) => void;
 }
 
 const AmbientContext = createContext<AmbientContextValue>({
   active: false,
+  ducked: false,
   sound: "none",
   volume: 40,
   error: false,
+  pause: () => {},
+  play: () => {},
   toggle: () => {},
   setSound: () => {},
+  setDucked: () => {},
   setVolume: () => {},
 });
+
+const AMBIENT_PREF_KEY = "nihongo-bjt:ambient-preferences:v1";
+const DUCKING_FACTOR = 0.18;
+
+interface AmbientPreferences {
+  sound?: AmbientSound;
+  volume?: number;
+}
 
 interface AmbientEngine {
   context: AudioContext;
@@ -131,12 +147,21 @@ function stopEngine(engine: AmbientEngine | null) {
   void engine.context.close();
 }
 
-function createAmbientEngine(sound: AmbientSound, volume: number) {
+function effectiveVolume(volume: number, ducked: boolean) {
+  return (volume / 100) * (ducked ? DUCKING_FACTOR : 1);
+}
+
+function setEngineVolume(engine: AmbientEngine | null, volume: number, ducked: boolean) {
+  if (!engine) return;
+  engine.master.gain.value = effectiveVolume(volume, ducked);
+}
+
+function createAmbientEngine(sound: AmbientSound, volume: number, ducked: boolean) {
   const context = createAudioContext();
   const master = context.createGain();
   const engine: AmbientEngine = { context, master, nodes: [], timers: [] };
 
-  master.gain.value = volume / 100;
+  master.gain.value = effectiveVolume(volume, ducked);
   master.connect(context.destination);
 
   if (sound === "lofi") {
@@ -161,65 +186,118 @@ function createAmbientEngine(sound: AmbientSound, volume: number) {
   return engine;
 }
 
+function readPreferences(): AmbientPreferences {
+  try {
+    const raw = window.localStorage.getItem(AMBIENT_PREF_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as AmbientPreferences;
+    const sound = parsed.sound;
+    const volume = typeof parsed.volume === "number" ? parsed.volume : undefined;
+    return {
+      sound:
+        sound === "lofi" || sound === "rain" || sound === "cafe" || sound === "nature"
+          ? sound
+          : undefined,
+      volume: typeof volume === "number" ? Math.max(0, Math.min(100, volume)) : undefined
+    };
+  } catch {
+    return {};
+  }
+}
+
+function writePreferences(preferences: AmbientPreferences) {
+  try {
+    window.localStorage.setItem(AMBIENT_PREF_KEY, JSON.stringify(preferences));
+  } catch {
+    // Private browsing or storage restrictions should not break focus mode.
+  }
+}
+
 export function AmbientProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AmbientState>({
     active: false,
+    ducked: false,
     sound: "lofi",
     volume: 40,
     error: false,
   });
   const engineRef = useRef<AmbientEngine | null>(null);
+  const stateRef = useRef(state);
 
-  const playAudio = useCallback((sound: AmbientSound, volume: number) => {
-    if (sound === "none") return;
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
+
+  useEffect(() => {
+    const preferences = readPreferences();
+    if (!preferences.sound && typeof preferences.volume !== "number") return;
+    setState((s) => ({
+      ...s,
+      sound: preferences.sound ?? s.sound,
+      volume: preferences.volume ?? s.volume
+    }));
+  }, []);
+
+  const startEngine = useCallback((sound: AmbientSound, volume: number, ducked: boolean) => {
+    if (sound === "none") return false;
     try {
       stopEngine(engineRef.current);
-      const engine = createAmbientEngine(sound, volume);
+      const engine = createAmbientEngine(sound, volume, ducked);
       engineRef.current = engine;
       void engine.context.resume();
-      setState((s) => ({ ...s, error: false }));
+      return true;
     } catch {
-      setState((s) => ({ ...s, error: true, active: false }));
+      return false;
     }
   }, []);
 
-  const pauseAudio = useCallback(() => {
+  const pause = useCallback(() => {
     stopEngine(engineRef.current);
     engineRef.current = null;
+    setState((s) => ({ ...s, active: false, error: false }));
   }, []);
 
-  // Toggle must trigger play directly (user gesture)
+  const play = useCallback(() => {
+    const current = stateRef.current;
+    const ok = startEngine(current.sound, current.volume, current.ducked);
+    setState((s) => ({ ...s, active: ok, error: !ok }));
+  }, [startEngine]);
+
   const toggle = useCallback(() => {
-    setState((s) => {
-      const next = !s.active;
-      if (next && s.sound !== "none") {
-        // Play immediately in click context
-        playAudio(s.sound, s.volume);
-      } else {
-        pauseAudio();
-      }
-      return { ...s, active: next, error: false };
-    });
-  }, [playAudio, pauseAudio]);
+    if (stateRef.current.active) {
+      pause();
+    } else {
+      play();
+    }
+  }, [pause, play]);
 
   // setSound must also trigger play directly (user gesture)
   const setSound = useCallback((sound: AmbientSound) => {
-    setState((s) => {
-      if (s.active && sound !== "none") {
-        playAudio(sound, s.volume);
-      } else if (sound === "none") {
-        pauseAudio();
-      }
-      return { ...s, sound };
-    });
-  }, [playAudio, pauseAudio]);
+    const current = stateRef.current;
+    writePreferences({ sound, volume: current.volume });
+    if (current.active && sound !== "none") {
+      const ok = startEngine(sound, current.volume, current.ducked);
+      setState((s) => ({ ...s, active: ok, error: !ok, sound }));
+    } else if (sound === "none") {
+      stopEngine(engineRef.current);
+      engineRef.current = null;
+      setState((s) => ({ ...s, active: false, error: false, sound }));
+    } else {
+      setState((s) => ({ ...s, sound }));
+    }
+  }, [startEngine]);
 
   const setVolume = useCallback((volume: number) => {
     const clamped = Math.max(0, Math.min(100, volume));
-    if (engineRef.current) {
-      engineRef.current.master.gain.value = clamped / 100;
-    }
+    const current = stateRef.current;
+    writePreferences({ sound: current.sound, volume: clamped });
+    setEngineVolume(engineRef.current, clamped, current.ducked);
     setState((s) => ({ ...s, volume: clamped }));
+  }, []);
+
+  const setDucked = useCallback((ducked: boolean) => {
+    setEngineVolume(engineRef.current, stateRef.current.volume, ducked);
+    setState((s) => ({ ...s, ducked }));
   }, []);
 
   // Cleanup on unmount
@@ -231,7 +309,7 @@ export function AmbientProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AmbientContext.Provider value={{ ...state, toggle, setSound, setVolume }}>
+    <AmbientContext.Provider value={{ ...state, pause, play, toggle, setDucked, setSound, setVolume }}>
       {children}
     </AmbientContext.Provider>
   );

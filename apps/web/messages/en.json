@@ -2,6 +2,21 @@
   "a11y": {
     "skipToContent": "Skip to main content"
   },
+  "ambient": {
+    "ariaLabel": "Focus sound controls",
+    "collapse": "Collapse sound controls",
+    "expand": "Expand sound controls",
+    "error": "Sound could not start in this browser.",
+    "focusMode": "Focus mode",
+    "muted": "Ducked",
+    "pause": "Pause focus sound",
+    "play": "Resume focus sound",
+    "soundCafe": "Cafe",
+    "soundLofi": "Lo-fi",
+    "soundNature": "Forest",
+    "soundRain": "Rain",
+    "volume": "Volume"
+  },
   "auth": {
     "errors": {
       "generic": "Can't sign in right now. Please try again.",

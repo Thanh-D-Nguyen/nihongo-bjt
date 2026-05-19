@@ -8,6 +8,7 @@ import { KeycloakAuthShell } from "./_components/keycloak-auth-shell";
 import { PwaRegister } from "../_components/pwa-register";
 import { AmbientProvider } from "../_hooks/use-ambient-mode";
 import { AmbientOverlay } from "../_components/ambient-overlay";
+import { AmbientMiniPlayer } from "../_components/ambient-mini-player";
 
 const skipLabels: Record<"ja" | "vi", string> = {
   ja: ja.a11y.skipToContent,
@@ -47,6 +48,7 @@ export default async function LearnerLayout({
       <PwaRegister />
       <AmbientProvider>
         <AmbientOverlay />
+        <AmbientMiniPlayer labels={t.ambient} />
         <KeycloakAuthShell
           companionLabels={t.nav.companion}
           kcAccessCookiePresent={kcAccessCookiePresent}
