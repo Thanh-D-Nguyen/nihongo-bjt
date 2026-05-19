@@ -6,6 +6,7 @@ interface AmbientState {
   active: boolean;
   sound: "none" | "lofi" | "rain" | "cafe" | "nature";
   volume: number; // 0-100
+  error: boolean;
 }
 
 interface AmbientContextValue extends AmbientState {
@@ -18,6 +19,7 @@ const AmbientContext = createContext<AmbientContextValue>({
   active: false,
   sound: "none",
   volume: 40,
+  error: false,
   toggle: () => {},
   setSound: () => {},
   setVolume: () => {},
@@ -31,48 +33,79 @@ const SOUND_URLS: Record<string, string> = {
   nature: "https://cdn.pixabay.com/audio/2022/03/17/audio_636d9aadd1.mp3",
 };
 
+function getOrCreateAudio(ref: React.MutableRefObject<HTMLAudioElement | null>) {
+  if (!ref.current) {
+    ref.current = new Audio();
+    ref.current.loop = true;
+    ref.current.preload = "none";
+  }
+  return ref.current;
+}
+
 export function AmbientProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AmbientState>({
     active: false,
     sound: "lofi",
     volume: 40,
+    error: false,
   });
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const toggle = useCallback(() => {
-    setState((s) => ({ ...s, active: !s.active }));
+  // Play audio — must be called from user-gesture context (click handler)
+  const playAudio = useCallback((sound: string, volume: number) => {
+    const url = SOUND_URLS[sound];
+    if (!url) return;
+    const audio = getOrCreateAudio(audioRef);
+    if (audio.src !== url) {
+      audio.src = url;
+    }
+    audio.volume = volume / 100;
+    audio.play().then(() => {
+      setState((s) => ({ ...s, error: false }));
+    }).catch(() => {
+      setState((s) => ({ ...s, error: true, active: false }));
+    });
   }, []);
 
-  const setSound = useCallback((sound: AmbientState["sound"]) => {
-    setState((s) => ({ ...s, sound }));
+  const pauseAudio = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
   }, []);
+
+  // Toggle must trigger play directly (user gesture)
+  const toggle = useCallback(() => {
+    setState((s) => {
+      const next = !s.active;
+      if (next && s.sound !== "none") {
+        // Play immediately in click context
+        playAudio(s.sound, s.volume);
+      } else {
+        pauseAudio();
+      }
+      return { ...s, active: next, error: false };
+    });
+  }, [playAudio, pauseAudio]);
+
+  // setSound must also trigger play directly (user gesture)
+  const setSound = useCallback((sound: AmbientState["sound"]) => {
+    setState((s) => {
+      if (s.active && sound !== "none") {
+        playAudio(sound, s.volume);
+      } else if (sound === "none") {
+        pauseAudio();
+      }
+      return { ...s, sound };
+    });
+  }, [playAudio, pauseAudio]);
 
   const setVolume = useCallback((volume: number) => {
-    setState((s) => ({ ...s, volume: Math.max(0, Math.min(100, volume)) }));
-  }, []);
-
-  // Audio management
-  useEffect(() => {
-    if (state.active && state.sound !== "none") {
-      const url = SOUND_URLS[state.sound];
-      if (!url) return;
-
-      if (!audioRef.current) {
-        audioRef.current = new Audio();
-        audioRef.current.loop = true;
-      }
-
-      if (audioRef.current.src !== url) {
-        audioRef.current.src = url;
-      }
-      audioRef.current.volume = state.volume / 100;
-      audioRef.current.play().catch(() => {});
-    } else {
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
+    const clamped = Math.max(0, Math.min(100, volume));
+    if (audioRef.current) {
+      audioRef.current.volume = clamped / 100;
     }
-  }, [state.active, state.sound, state.volume]);
+    setState((s) => ({ ...s, volume: clamped }));
+  }, []);
 
   // Cleanup on unmount
   useEffect(() => {

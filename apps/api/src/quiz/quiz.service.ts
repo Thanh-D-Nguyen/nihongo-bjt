@@ -28,16 +28,19 @@ export class QuizService {
       await this.featureGate.requireEnabled(FeatureFlagKey.quiz_official_simulation, {
         message: "Official BJT simulation is temporarily closed"
       });
-      const { entitlements, planSlug } =
-        await this.entitlementService.listEntitlementKeysForUser(userId);
-      if (!entitlements.includes(EntitlementKey.quiz_official_simulation)) {
-        throw new ForbiddenException({
-          code: "ENTITLEMENT_DENIED",
-          entitlementKey: EntitlementKey.quiz_official_simulation,
-          message: "Your current plan does not include official BJT simulation",
-          planSlug,
-          upgradeRequired: true
-        });
+      const enforcement = await this.featureGate.status(FeatureFlagKey.monetization_enforcement, { missingBehavior: "allow" });
+      if (enforcement.enabled) {
+        const { entitlements, planSlug } =
+          await this.entitlementService.listEntitlementKeysForUser(userId);
+        if (!entitlements.includes(EntitlementKey.quiz_official_simulation)) {
+          throw new ForbiddenException({
+            code: "ENTITLEMENT_DENIED",
+            entitlementKey: EntitlementKey.quiz_official_simulation,
+            message: "Your current plan does not include official BJT simulation",
+            planSlug,
+            upgradeRequired: true
+          });
+        }
       }
     }
 
@@ -52,17 +55,22 @@ export class QuizService {
   }
 
   async officialSimulationStatus(userId: string) {
-    const [feature, resolved, availableTemplates] = await Promise.all([
+    const [feature, enforcement, resolved, availableTemplates] = await Promise.all([
       this.featureGate.status(FeatureFlagKey.quiz_official_simulation),
+      this.featureGate.status(FeatureFlagKey.monetization_enforcement, { missingBehavior: "allow" }),
       this.entitlementService.listEntitlementKeysForUser(userId),
       this.prisma.bjtMockTest.count({ where: { status: "published", type: "official" } })
     ]);
 
+    // When monetization enforcement is off, treat user as entitled (free mode)
+    const entitled = !enforcement.enabled || resolved.entitlements.includes(EntitlementKey.quiz_official_simulation);
+
     return {
       availableTemplates,
       enabled: feature.enabled,
+      enforcementEnabled: enforcement.enabled,
       entitlementKey: EntitlementKey.quiz_official_simulation,
-      entitled: resolved.entitlements.includes(EntitlementKey.quiz_official_simulation),
+      entitled,
       featureFlag: FeatureFlagKey.quiz_official_simulation,
       planSlug: resolved.planSlug
     };

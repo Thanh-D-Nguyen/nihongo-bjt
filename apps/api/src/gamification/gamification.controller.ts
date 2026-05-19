@@ -84,7 +84,15 @@ export class GamificationController {
   async getAchievementDefinitions() {
     return this.svc.getAllAchievementDefinitions();
   }
-
+  @Get("achievements/browse")
+  @ApiOperation({ summary: "Browse all achievements with user progress overlay." })
+  async browseAchievements(
+    @CurrentUser() user: KeycloakAuthenticatedUser | undefined,
+    @Query("userId") userId: string | undefined
+  ) {
+    const resolved = resolveLearnerUserId(user, userId, { required: true })!;
+    return this.svc.browseAllAchievements(resolved);
+  }
   @Get("achievements/me")
   @ApiOperation({ summary: "Get the current user's achievement progress and earned tiers." })
   async getMyAchievements(
@@ -103,6 +111,27 @@ export class GamificationController {
   ) {
     const resolved = resolveLearnerUserId(user, userId, { required: true })!;
     return this.svc.getUserEarnedAchievements(resolved);
+  }
+
+  @Get("achievements/me/pending")
+  @ApiOperation({ summary: "Get newly earned achievements not yet shown to user." })
+  async getPendingAchievements(
+    @CurrentUser() user: KeycloakAuthenticatedUser | undefined,
+    @Query("userId") userId: string | undefined
+  ) {
+    const resolved = resolveLearnerUserId(user, userId, { required: true })!;
+    return this.svc.getPendingNotifications(resolved);
+  }
+
+  @Post("achievements/me/acknowledge")
+  @ApiOperation({ summary: "Mark achievements as acknowledged/shown." })
+  async acknowledgeAchievements(
+    @CurrentUser() user: KeycloakAuthenticatedUser | undefined,
+    @Query("userId") userId: string | undefined,
+    @Body() body: { ids: string[] }
+  ) {
+    const resolved = resolveLearnerUserId(user, userId, { required: true })!;
+    return this.svc.acknowledgeNotifications(resolved, body.ids);
   }
 
   /* ── Leaderboards ────────────────────────────────────────────────────── */

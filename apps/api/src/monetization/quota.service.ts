@@ -1,9 +1,10 @@
 import { createPrismaClient, type Prisma, type PrismaClient } from "@nihongo-bjt/database";
 import { HttpException, Inject, Injectable } from "@nestjs/common";
 
-import { Quota } from "./monetization.constants.js";
+import { FeatureFlagKey, Quota } from "./monetization.constants.js";
 import { MonetizationRepository } from "./monetization.repository.js";
 import { utcDateKey } from "./quota-window.util.js";
+import { RuntimeFeatureGateService } from "../operations/runtime-feature-gate.service.js";
 
 /**
  * **Central quota enforcement** for monetization: reads effective limits from plan + optional referral
@@ -14,7 +15,18 @@ import { utcDateKey } from "./quota-window.util.js";
 export class QuotaService {
   private readonly prisma: PrismaClient = createPrismaClient();
 
-  constructor(@Inject(MonetizationRepository) private readonly repository: MonetizationRepository) {}
+  constructor(
+    @Inject(MonetizationRepository) private readonly repository: MonetizationRepository,
+    private readonly featureGate: RuntimeFeatureGateService
+  ) {}
+
+  /** When monetization.enforcement flag is disabled, skip all quota checks (free mode). */
+  private async isEnforcementEnabled(): Promise<boolean> {
+    const { enabled } = await this.featureGate.status(FeatureFlagKey.monetization_enforcement, {
+      missingBehavior: "allow"  // flag missing = don't enforce (free by default)
+    });
+    return enabled;
+  }
 
   /**
    * Count one flashcard review against the per-day plan quota, inside a DB transaction.
@@ -81,6 +93,8 @@ export class QuotaService {
     limit: number,
     reason: string
   ): Promise<void> {
+    if (!(await this.isEnforcementEnabled())) return; // free mode — skip quota
+
     const windowKey = utcDateKey();
     if (limit <= 0) {
       await this.logQuotaExceededEvent(tx, { limit, quotaKey, userId, windowKey });

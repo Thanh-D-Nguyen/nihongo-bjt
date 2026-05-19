@@ -7,11 +7,12 @@ import { ExerciseController } from "./exercise.controller.js";
 import { ExerciseGeneratorService } from "./exercise-generator.service.js";
 import { ExerciseRepository } from "./exercise.repository.js";
 import { ExerciseService } from "./exercise.service.js";
+import { TtsService } from "./tts.service.js";
 
 @Module({
   controllers: [ExerciseController, ExerciseAdminController],
-  exports: [ExerciseService],
+  exports: [ExerciseService, TtsService],
   imports: [AdminModule, GamificationModule],
-  providers: [ExerciseRepository, ExerciseService, ExerciseGeneratorService]
+  providers: [ExerciseRepository, ExerciseService, ExerciseGeneratorService, TtsService]
 })
 export class ExerciseModule {}

@@ -5,6 +5,7 @@ import { GamificationRepository } from "./gamification.repository.js";
 @Injectable()
 export class GamificationService {
   private readonly logger = new Logger(GamificationService.name);
+  private readonly recentActivity = new Map<string, number>();
 
   constructor(
     @Inject(GamificationRepository) private readonly repo: GamificationRepository
@@ -18,6 +19,11 @@ export class GamificationService {
    * Called from exercise/quiz/review/battle completion hooks.
    */
   async recordActivity(userId: string, activityType: string): Promise<void> {
+    const dedupKey = `${userId}:${activityType}`;
+    const lastTime = this.recentActivity.get(dedupKey) ?? 0;
+    if (Date.now() - lastTime < 5000) return; // Dedup same activity within 5s
+    this.recentActivity.set(dedupKey, Date.now());
+
     const configs = await this.repo.enabledStreakConfigs();
     const today = startOfDay(new Date());
 
@@ -158,9 +164,13 @@ export class GamificationService {
           break;
         }
         // For other metrics (words_learned, exercises_completed, battles_won, etc.)
-        // we'd query the respective tables. For now, skip unsupported metrics.
-        default:
-          continue;
+        // resolve from actual database tables.
+        default: {
+          const resolved = await this.repo.resolveMetricValue(userId, def.metricKey);
+          if (resolved === null) continue;
+          metricValue = resolved;
+          break;
+        }
       }
 
       // Check each tier
@@ -232,6 +242,34 @@ export class GamificationService {
     return this.repo.enabledAchievementDefinitions();
   }
 
+  /** Browse all achievements with user progress overlay. */
+  async browseAllAchievements(userId: string) {
+    const definitions = await this.repo.enabledAchievementDefinitions();
+    const userProgress = await this.repo.userAchievements(userId);
+    const progressMap = new Map(userProgress.map((p: any) => [p.tierId, p]));
+
+    return definitions.map((def: any) => ({
+      ...def,
+      tiers: def.tiers.map((tier: any) => ({
+        ...tier,
+        userProgress: progressMap.get(tier.id) ?? null
+      }))
+    }));
+  }
+
+  /** Get newly earned achievements not yet shown to user. */
+  async getPendingNotifications(userId: string) {
+    return this.repo.pendingAchievementNotifications(userId);
+  }
+
+  /** Mark achievements as acknowledged/shown. */
+  async acknowledgeNotifications(userId: string, ids: string[]) {
+    const pending = await this.repo.pendingAchievementNotifications(userId);
+    const validIds = pending.map((p: any) => p.id).filter((id: string) => ids.includes(id));
+    if (validIds.length > 0) await this.repo.markAchievementsNotified(validIds);
+    return { acknowledged: validIds.length };
+  }
+
   /* ═══════════════════════════════════════════════════════════════════════
    * ── Leaderboard Engine ─────────────────────────────────────────────── */
 
@@ -296,11 +334,13 @@ export class GamificationService {
     await this.repo.upsertLeaderboardEntry({
       leaderboardId: data.leaderboardId,
       userId: data.userId,
-      rank: 0, // Rank will be recomputed by batch job
+      rank: 0, // Rank will be recomputed
       score: newScore,
       periodStart: start,
       periodEnd: end
     });
+
+    await this.repo.recomputeLeaderboardRanks(data.leaderboardId, start);
   }
 }
 

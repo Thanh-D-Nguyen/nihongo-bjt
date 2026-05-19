@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, UseGuards } from "@nestjs/common";
+import { Controller, Get, Inject, Post, Param, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 
 import { CurrentUser } from "../keycloak/current-user.decorator.js";
@@ -14,7 +14,7 @@ import { SeasonalEventService } from "./seasonal-event.service.js";
 @ApiBearerAuth("bearer")
 @DocumentedHttpErrors()
 export class SeasonalEventController {
-  constructor(private readonly eventService: SeasonalEventService) {}
+  constructor(@Inject(SeasonalEventService) private readonly eventService: SeasonalEventService) {}
 
   @Get()
   @ApiOperation({ summary: "Get active seasonal events." })

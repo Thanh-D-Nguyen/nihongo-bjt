@@ -1,5 +1,5 @@
 import { createPrismaClient, type PrismaClient } from "@nihongo-bjt/database";
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Inject, Injectable, NotFoundException } from "@nestjs/common";
 
 import { EntitlementKey } from "../monetization.constants.js";
 import { EntitlementService } from "../entitlement.service.js";
@@ -11,7 +11,7 @@ const IMPRESSION_KIND = "impression";
 export class LocalAdProvider implements AdProvider {
   private readonly prisma: PrismaClient = createPrismaClient();
 
-  constructor(private readonly entitlements: EntitlementService) {}
+  constructor(@Inject(EntitlementService) private readonly entitlements: EntitlementService) {}
 
   async decide(input: AdDecideInput): Promise<AdDecision> {
     const placement = await this.prisma.adPlacement.findFirst({

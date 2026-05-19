@@ -343,6 +343,7 @@ export function FlashcardsClient({
         );
         if (sum.ok) {
           const j = (await sum.json()) as {
+            enforcementEnabled?: boolean;
             flashcardDay: {
               limit: number;
               planSlug: string;
@@ -351,13 +352,17 @@ export function FlashcardsClient({
               windowKey: string;
             };
           };
-          setQuotaLine(
-            labels.quotaLine
-              .replace("{used}", String(j.flashcardDay.used))
-              .replace("{limit}", String(j.flashcardDay.limit))
-              .replace("{remaining}", String(j.flashcardDay.remaining))
-              .replace("{plan}", j.flashcardDay.planSlug)
-          );
+          if (j.enforcementEnabled !== false) {
+            setQuotaLine(
+              labels.quotaLine
+                .replace("{used}", String(j.flashcardDay.used))
+                .replace("{limit}", String(j.flashcardDay.limit))
+                .replace("{remaining}", String(j.flashcardDay.remaining))
+                .replace("{plan}", j.flashcardDay.planSlug)
+            );
+          } else {
+            setQuotaLine(null);
+          }
         } else {
           setQuotaLine(null);
         }

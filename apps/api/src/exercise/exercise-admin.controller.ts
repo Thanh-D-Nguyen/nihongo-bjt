@@ -9,7 +9,9 @@ import {
   Get,
   Inject,
   Param,
+  Post,
   Put,
+  Query,
   Req,
   UseGuards
 } from "@nestjs/common";
@@ -17,6 +19,7 @@ import {
   ApiBearerAuth,
   ApiOperation,
   ApiParam,
+  ApiQuery,
   ApiSecurity,
   ApiTags
 } from "@nestjs/swagger";
@@ -89,5 +92,100 @@ export class ExerciseAdminController {
   async deleteConfig(@Req() req: Request, @Param("id") id: string) {
     await this.adminAuth.requirePermission(req, "content.manage");
     return this.repo.deleteConfig(id);
+  }
+
+  /* ── Exercise CRUD ───────────────────────────────────────────────────── */
+
+  @Get()
+  @ApiOperation({ summary: "List exercises with pagination and filters." })
+  @ApiQuery({ name: "type", required: false })
+  @ApiQuery({ name: "level", required: false })
+  @ApiQuery({ name: "page", required: false, schema: { type: "integer", default: 1 } })
+  @ApiQuery({ name: "pageSize", required: false, schema: { type: "integer", default: 20 } })
+  async listExercises(
+    @Req() req: Request,
+    @Query("type") type?: string,
+    @Query("level") level?: string,
+    @Query("page") pageStr?: string,
+    @Query("pageSize") pageSizeStr?: string
+  ) {
+    await this.adminAuth.requireOneOfPermissions(req, ["content.manage", "viewer.audit"]);
+    const page = Math.max(parseInt(pageStr ?? "1", 10) || 1, 1);
+    const pageSize = Math.min(Math.max(parseInt(pageSizeStr ?? "20", 10) || 20, 1), 100);
+    return this.repo.listExercisesAdmin({ exerciseType: type, level, page, pageSize });
+  }
+
+  @Get(":id")
+  @ApiOperation({ summary: "Get a single exercise by ID." })
+  @ApiParam({ name: "id", description: "Exercise ID (UUID)" })
+  async getExercise(@Req() req: Request, @Param("id") id: string) {
+    await this.adminAuth.requireOneOfPermissions(req, ["content.manage", "viewer.audit"]);
+    const exercise = await this.repo.findExerciseById(id);
+    if (!exercise) throw new BadRequestException("Exercise not found");
+    return exercise;
+  }
+
+  @Post()
+  @ApiOperation({ summary: "Create a new exercise manually." })
+  async createExercise(@Req() req: Request, @Body() body: Record<string, unknown>) {
+    await this.adminAuth.requirePermission(req, "content.manage");
+    const { exerciseType, sourceType, sourceId, level, prompt, choices, correctAnswer, explanation, difficulty, tags } = body;
+    if (!exerciseType || !prompt || !correctAnswer) {
+      throw new BadRequestException("exerciseType, prompt, and correctAnswer are required");
+    }
+    return this.repo.createExercise({
+      exerciseType: String(exerciseType),
+      sourceType: String(sourceType ?? "manual"),
+      sourceId: String(sourceId ?? "admin"),
+      level: level ? String(level) : null,
+      prompt,
+      choices: choices ?? [],
+      correctAnswer,
+      explanation: explanation ? String(explanation) : null,
+      difficulty: String(difficulty ?? "medium"),
+      tags: Array.isArray(tags) ? tags.map(String) : []
+    });
+  }
+
+  @Put(":id")
+  @ApiOperation({ summary: "Update an exercise." })
+  @ApiParam({ name: "id", description: "Exercise ID (UUID)" })
+  async updateExercise(@Req() req: Request, @Param("id") id: string, @Body() body: Record<string, unknown>) {
+    await this.adminAuth.requirePermission(req, "content.manage");
+    return this.repo.updateExercise(id, {
+      prompt: body.prompt,
+      choices: body.choices,
+      correctAnswer: body.correctAnswer,
+      explanation: body.explanation !== undefined ? (body.explanation ? String(body.explanation) : null) : undefined,
+      difficulty: body.difficulty ? String(body.difficulty) : undefined,
+      tags: Array.isArray(body.tags) ? body.tags.map(String) : undefined,
+      level: body.level !== undefined ? (body.level ? String(body.level) : null) : undefined
+    });
+  }
+
+  @Delete(":id")
+  @ApiOperation({ summary: "Delete an exercise." })
+  @ApiParam({ name: "id", description: "Exercise ID (UUID)" })
+  async deleteExercise(@Req() req: Request, @Param("id") id: string) {
+    await this.adminAuth.requirePermission(req, "content.manage");
+    return this.repo.deleteExercise(id);
+  }
+
+  /* ── Performance Analytics ───────────────────────────────────────────── */
+
+  @Get("analytics/performance")
+  @ApiOperation({
+    summary: "Get aggregated exercise performance analytics.",
+    description: "Returns accuracy, time, and attempt statistics grouped by exercise type and level."
+  })
+  @ApiQuery({ name: "type", required: false })
+  @ApiQuery({ name: "level", required: false })
+  async getPerformanceAnalytics(
+    @Req() req: Request,
+    @Query("type") type?: string,
+    @Query("level") level?: string
+  ) {
+    await this.adminAuth.requireOneOfPermissions(req, ["content.manage", "viewer.audit"]);
+    return this.repo.getPerformanceAnalytics({ exerciseType: type, level });
   }
 }

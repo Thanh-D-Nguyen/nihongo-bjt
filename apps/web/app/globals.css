@@ -20,6 +20,8 @@
   --color-sakura-soft: #FEF2F2;
   --color-amber: #D97706;
   --color-amber-soft: #FFFBEB;
+  --color-matcha: #22c55e;
+  --color-matcha-soft: #F0FDF4;
   --color-focus-surface: #EFF6FF;
 
   /* ── Brand extended ── */
@@ -103,6 +105,7 @@
   --color-focus-surface: #1E293B;
   --color-brand-sky: #1E293B;
   --color-leaf-soft: #064E3B;
+  --color-matcha-soft: #064E3B;
   --color-sakura-soft: #7F1D1D;
   --color-amber-soft: #78350F;
   color: #F1F5F9;
@@ -283,6 +286,16 @@ input.learner-topbar-search[type="search"] {
   .ann-sakura-petal {
     animation: none;
     opacity: 0.3;
+  }
+}
+
+/* ── Analytics bar chart animation ── */
+@keyframes bar-grow-up {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
   }
 }
 
@@ -910,6 +923,20 @@ button.primary:disabled {
   border-radius: 12px;
 }
 
+/* ─── ForYou Feed: Shimmer skeleton ─── */
+@keyframes foryou-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.foryou-skeleton {
+  background: linear-gradient(90deg, rgba(0,0,0,0.04) 25%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0.04) 75%);
+  background-size: 200% 100%;
+  animation: foryou-shimmer 1.5s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .foryou-skeleton { animation: none; background: rgba(0,0,0,0.06); }
+}
+
 /* ─── Battle: Bot card hover/select ─── */
 @keyframes battle-card-select {
   0% { transform: scale(1); }
@@ -988,6 +1015,87 @@ button.primary:disabled {
   animation: battle-question-glow 2s ease-in-out infinite;
 }
 
+/* ─── Battle: Combo streak glow escalation ─── */
+@keyframes battle-combo-pulse {
+  0%, 100% { transform: scale(1); text-shadow: 0 0 0 transparent; }
+  50% { transform: scale(1.08); text-shadow: 0 0 12px rgba(251,191,36,0.5); }
+}
+.battle-combo-fire {
+  animation: battle-combo-pulse 0.6s ease-in-out infinite;
+  color: #f59e0b;
+}
+.battle-combo-blaze {
+  animation: battle-combo-pulse 0.45s ease-in-out infinite;
+  color: #ef4444;
+  text-shadow: 0 0 16px rgba(239,68,68,0.4);
+}
+
+/* ─── Battle: Wrong answer screen shake ─── */
+@keyframes battle-shake {
+  0%, 100% { transform: translateX(0); }
+  15% { transform: translateX(-4px); }
+  30% { transform: translateX(4px); }
+  45% { transform: translateX(-3px); }
+  60% { transform: translateX(3px); }
+  75% { transform: translateX(-2px); }
+  90% { transform: translateX(2px); }
+}
+.battle-shake {
+  animation: battle-shake 0.4s ease-out;
+}
+
+/* ─── Battle: Bot victory confetti (solo play celebration) ─── */
+@keyframes battle-confetti-fall {
+  0% {
+    opacity: 1;
+    transform: translateY(var(--start-y, -20px)) translateX(0) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(var(--end-y, 120px)) translateX(var(--drift-x, 30px)) rotate(var(--spin, 720deg));
+  }
+}
+.battle-confetti-piece {
+  animation: battle-confetti-fall var(--fall-duration, 1.8s) ease-out forwards;
+  animation-delay: var(--delay, 0s);
+}
+
+/* ─── Battle: Hype text slide-in ─── */
+@keyframes battle-hype-in {
+  0% { opacity: 0; transform: translateY(10px) scale(0.85); }
+  30% { opacity: 1; transform: translateY(-3px) scale(1.05); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes battle-hype-out {
+  0% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-8px) scale(0.9); }
+}
+.battle-hype-text {
+  animation: battle-hype-in 0.35s ease-out forwards;
+}
+.battle-hype-text-exit {
+  animation: battle-hype-out 0.25s ease-in forwards;
+}
+
+/* ─── Battle: Intensity ring (arena border glow) ─── */
+@keyframes battle-intensity-ring {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(239,68,68,0.15), 0 0 20px rgba(239,68,68,0.08); }
+  50% { box-shadow: 0 0 0 3px rgba(239,68,68,0.25), 0 0 30px rgba(239,68,68,0.12); }
+}
+.battle-intensity-high {
+  animation: battle-intensity-ring 1.5s ease-in-out infinite;
+}
+
+/* ─── Battle: Correct answer streak spark ─── */
+@keyframes battle-spark {
+  0% { opacity: 1; transform: scale(0.5) rotate(0deg); }
+  50% { opacity: 0.8; transform: scale(1.2) rotate(180deg); }
+  100% { opacity: 0; transform: scale(0.3) rotate(360deg); }
+}
+.battle-spark {
+  animation: battle-spark 0.6s ease-out forwards;
+}
+
 /* ─── Battle: reduce motion ─── */
 @media (prefers-reduced-motion: reduce) {
   .battle-skeleton { animation: none; }
@@ -998,6 +1106,12 @@ button.primary:disabled {
   .battle-timer-urgent { animation: none; }
   .battle-question-active { animation: none; }
   .battle-progress-fill { transition: none; }
+  .battle-combo-fire, .battle-combo-blaze { animation: none; }
+  .battle-shake { animation: none; }
+  .battle-confetti-piece { animation: none; }
+  .battle-hype-text, .battle-hype-text-exit { animation: none; }
+  .battle-intensity-high { animation: none; }
+  .battle-spark { animation: none; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════ */
@@ -1116,6 +1230,12 @@ button.primary:disabled {
   .exercise-word-token, .exercise-word-token:active { transform: none; }
   .exercise-complete-card { animation: none; }
   .exercise-progress-fill { transition: none; }
+}
+
+/* ─── Exercise: TTS wave animation ─── */
+@keyframes tts-wave {
+  from { transform: scaleY(0.6); }
+  to { transform: scaleY(1.4); }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════ */

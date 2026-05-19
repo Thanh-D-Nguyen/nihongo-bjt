@@ -19,6 +19,13 @@ import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 
 
 import { adminApiFetch } from "@/lib/admin-api";
 import { permsFromMe } from "@/app/_components/admin-client-utils";
+import { SubscriptionsTab } from "./_components/subscriptions-tab";
+import { EntitlementsTab } from "./_components/entitlements-tab";
+import { QuotasTab } from "./_components/quotas-tab";
+import { BillingEventsTab } from "./_components/billing-events-tab";
+import { WebhookDlqTab } from "./_components/webhook-dlq-tab";
+import { ProviderConfigTab } from "./_components/provider-config-tab";
+import { RefundsTab } from "./_components/refunds-tab";
 
 type MeResponse = {
   roles?: Array<{ role?: { permissions?: Array<{ permission?: { code?: string } }> } }>;
@@ -38,6 +45,7 @@ type Labels = {
   ctas: { newPlan: string; refresh: string };
   desc: string;
   empty: string;
+  enforcement?: { active: string; freeMode: string; toggleHint: string };
   kpiActiveSubs: string;
   kpiAds: string;
   kpiFree: string;
@@ -70,10 +78,10 @@ const TAB_ORDER = [
   "entitlements",
   "quotas",
   "subscriptions",
-  "trials",
-  "ads",
-  "analytics",
-  "audit"
+  "billing-events",
+  "refunds",
+  "provider-config",
+  "webhook-dlq"
 ] as const;
 type TabId = (typeof TAB_ORDER)[number];
 
@@ -97,24 +105,21 @@ function planTone(
   return "neutral";
 }
 
-export function MonetizationConsoleClient({ common, labels }: { common: Common; labels: Labels }) {
-  const [tab, setTab] = useState<TabId>("overview");
+export function MonetizationConsoleClient({ common, labels, initialTab = "overview" }: { common: Common; labels: Labels; initialTab?: TabId }) {
+  const [tab, setTab] = useState<TabId>(initialTab);
   const [perms, setPerms] = useState<Set<string> | null>(null);
   const [overview, setOverview] = useState<unknown>(null);
   const [overviewErr, setOverviewErr] = useState<string | null>(null);
   const [lastSync, setLastSync] = useState<string | null>(null);
   const [planRows, setPlanRows] = useState<unknown[] | null>(null);
-  const [entRows, setEntRows] = useState<unknown[] | null>(null);
-  const [quotaData, setQuotaData] = useState<unknown>(null);
-  const [subs, setSubs] = useState<{ items: unknown[]; total: number } | null>(null);
-  const [coupons, setCoupons] = useState<unknown[] | null>(null);
-  const [ads, setAds] = useState<unknown[] | null>(null);
-  const [analytics, setAnalytics] = useState<unknown>(null);
-  const [audit, setAudit] = useState<unknown[] | null>(null);
-  const [qOverrides, setQOverrides] = useState<unknown[] | null>(null);
   const [loadErr, setLoadErr] = useState<string | null>(null);
   const [editPlan, setEditPlan] = useState<Record<string, unknown> | null>(null);
   const [editReason, setEditReason] = useState("");
+  const [showCreatePlan, setShowCreatePlan] = useState(false);
+  const [newPlanSlug, setNewPlanSlug] = useState("");
+  const [newPlanNameKey, setNewPlanNameKey] = useState("");
+  const [newPlanStatus, setNewPlanStatus] = useState("draft");
+  const [newPlanReason, setNewPlanReason] = useState("");
 
   const can = useCallback(
     (candidates: string[]) => {
@@ -187,58 +192,6 @@ export function MonetizationConsoleClient({ common, labels }: { common: Common; 
         if (!r.ok) {
           setLoadErr(common.error);
         }
-      } else if (tab === "entitlements") {
-        const r = await adminApiFetch("/api/admin/monetization/entitlements");
-        setEntRows(r.ok ? ((await r.json()) as unknown[]) : []);
-        if (!r.ok) {
-          setLoadErr(common.error);
-        }
-      } else if (tab === "quotas") {
-        const r = await adminApiFetch("/api/admin/monetization/quotas");
-        setQuotaData(r.ok ? await r.json() : null);
-        const o = await adminApiFetch("/api/admin/monetization/quota-overrides");
-        setQOverrides(o.ok ? ((await o.json()) as unknown[]) : []);
-        if (!r.ok) {
-          setLoadErr(common.error);
-        }
-      } else if (tab === "subscriptions") {
-        const r = await adminApiFetch("/api/admin/monetization/subscriptions?limit=40");
-        setSubs(
-          r.ok
-            ? ((await r.json()) as { items: unknown[]; total: number })
-            : { items: [], total: 0 }
-        );
-        if (!r.ok) {
-          setLoadErr(common.error);
-        }
-      } else if (tab === "trials") {
-        const r = await adminApiFetch("/api/admin/monetization/coupons");
-        setCoupons(r.ok ? ((await r.json()) as unknown[]) : []);
-        if (!r.ok) {
-          setLoadErr(common.error);
-        }
-      } else if (tab === "ads") {
-        const r = await adminApiFetch("/api/admin/monetization/ads/placements");
-        setAds(r.ok ? ((await r.json()) as unknown[]) : []);
-        if (!r.ok) {
-          setLoadErr(common.error);
-        }
-      } else if (tab === "analytics") {
-        const r = await adminApiFetch("/api/admin/monetization/analytics");
-        setAnalytics(r.ok ? await r.json() : null);
-        if (!r.ok) {
-          setLoadErr(common.error);
-        }
-      } else if (tab === "audit") {
-        const r = await adminApiFetch("/api/admin/monetization/audit");
-        setAudit(
-          r.ok
-            ? ((await r.json()) as { items: unknown[] }).items
-            : []
-        );
-        if (!r.ok) {
-          setLoadErr(common.error);
-        }
       }
     } catch {
       setLoadErr(common.error);
@@ -303,6 +256,28 @@ export function MonetizationConsoleClient({ common, labels }: { common: Common; 
     }
   };
 
+  const createPlan = async () => {
+    if (!newPlanSlug.trim() || !newPlanNameKey.trim() || newPlanReason.trim().length < 3) return;
+    const res = await adminApiFetch("/api/admin/monetization/plans", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        slug: newPlanSlug.trim(),
+        nameKey: newPlanNameKey.trim(),
+        status: newPlanStatus,
+        reason: newPlanReason.trim(),
+      }),
+    });
+    if (res.ok) {
+      setShowCreatePlan(false);
+      setNewPlanSlug(""); setNewPlanNameKey(""); setNewPlanStatus("draft"); setNewPlanReason("");
+      void loadTab();
+      void loadOverview();
+    } else {
+      setLoadErr(common.error);
+    }
+  };
+
   if (perms === null) {
     return (
       <div className="p-6 text-sm text-ink-muted">
@@ -338,7 +313,7 @@ export function MonetizationConsoleClient({ common, labels }: { common: Common; 
             {canManage && (
               <button
                 className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-500"
-                onClick={() => setTab("plans")}
+                onClick={() => setShowCreatePlan(true)}
                 type="button"
               >
                 {labels.ctas.newPlan}
@@ -347,6 +322,21 @@ export function MonetizationConsoleClient({ common, labels }: { common: Common; 
           </div>
         }
       />
+      {/* Enforcement mode badge */}
+      {overview !== null && (
+        <div className="flex items-center gap-2">
+          <span className={cn(
+            "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium",
+            (overview as { enforcementEnabled?: boolean }).enforcementEnabled
+              ? "bg-green-50 text-green-700 ring-1 ring-green-200"
+              : "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
+          )}>
+            <span className={cn("h-2 w-2 rounded-full", (overview as { enforcementEnabled?: boolean }).enforcementEnabled ? "bg-green-500" : "bg-amber-400")} />
+            {(overview as { enforcementEnabled?: boolean }).enforcementEnabled ? (labels.enforcement?.active ?? "Enforcement Active") : (labels.enforcement?.freeMode ?? "Free Mode")}
+          </span>
+          <span className="text-xs text-ink-muted">{labels.enforcement?.toggleHint ?? "Toggle in Settings → Feature Flags"}</span>
+        </div>
+      )}
       {lastSync && <p className="text-xs text-ink-muted">{labels.lastSync}: {new Date(lastSync).toLocaleString()}</p>}
 
       <div className="flex flex-wrap gap-2">
@@ -486,6 +476,17 @@ export function MonetizationConsoleClient({ common, labels }: { common: Common; 
 
       {tab === "plans" && (
         <AdminSection title={labels.tab.plans}>
+          {canManage && (
+            <div className="flex justify-end">
+              <button
+                className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-500"
+                onClick={() => setShowCreatePlan(true)}
+                type="button"
+              >
+                {labels.ctas.newPlan}
+              </button>
+            </div>
+          )}
           {loadErr && <p className="text-sm text-rose-600">{loadErr}</p>}
           {!planRows && <p className="text-sm text-ink-muted">{common.loading}…</p>}
           {planRows && planRows.length === 0 && (
@@ -555,8 +556,8 @@ export function MonetizationConsoleClient({ common, labels }: { common: Common; 
       )}
 
       {editPlan && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 p-4 sm:items-center">
-          <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-ivory p-4 shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 p-4 backdrop-blur-[2px] sm:items-center">
+          <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-5 shadow-xl">
             <h3 className="text-sm font-semibold text-ink">{labels.planActions}</h3>
             <p className="mt-1 text-xs text-ink-muted">{labels.planConfigHint}</p>
             <label className="mt-2 block text-xs text-ink-muted">
@@ -617,118 +618,107 @@ export function MonetizationConsoleClient({ common, labels }: { common: Common; 
         </div>
       )}
 
-      {tab === "entitlements" && (
-        <AdminSection title={labels.tab.entitlements}>
-          {loadErr && <p className="text-sm text-rose-600">{loadErr}</p>}
-          {!entRows && <p className="text-sm text-ink-muted">{common.loading}…</p>}
-          {entRows && entRows.length === 0 && (
-            <AdminEmptyState title={labels.tab.entitlements}>{labels.empty}</AdminEmptyState>
-          )}
-          {entRows && entRows.length > 0 && (
-            <div className="max-w-full overflow-x-auto">
-              <AdminDataTable>
-                <AdminDataTableHead>
-                  <AdminDataTableRow>
-                    {["key", "category", "plans", "description"].map((h) => (
-                      <AdminDataTableTh className="whitespace-nowrap" key={h}>
-                        {h}
-                      </AdminDataTableTh>
-                    ))}
-                  </AdminDataTableRow>
-                </AdminDataTableHead>
-                <AdminDataTableBody>
-                  {entRows.map((e) => {
-                    const r = e as { _count: { plans: number }; category: string | null; description: string | null; key: string };
-                    return (
-                      <AdminDataTableRow key={r.key}>
-                        <AdminDataTableTd className="font-mono text-xs">{r.key}</AdminDataTableTd>
-                        <AdminDataTableTd className="text-xs">{r.category ?? "—"}</AdminDataTableTd>
-                        <AdminDataTableTd>{r._count.plans}</AdminDataTableTd>
-                        <AdminDataTableTd className="text-xs" muted>
-                          {r.description ?? "—"}
-                        </AdminDataTableTd>
-                      </AdminDataTableRow>
-                    );
-                  })}
-                </AdminDataTableBody>
-              </AdminDataTable>
+      {showCreatePlan && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 p-4 backdrop-blur-[2px] sm:items-center">
+          <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-5 shadow-xl">
+            <h3 className="text-base font-semibold text-ink">{labels.ctas.newPlan}</h3>
+            <label className="mt-3 block text-xs text-ink-muted">
+              Slug *
+              <input
+                className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
+                onChange={(e) => setNewPlanSlug(e.target.value)}
+                placeholder="e.g. premium-monthly"
+                value={newPlanSlug}
+              />
+            </label>
+            <label className="mt-2 block text-xs text-ink-muted">
+              Name Key *
+              <input
+                className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
+                onChange={(e) => setNewPlanNameKey(e.target.value)}
+                placeholder="e.g. plan.premium_monthly"
+                value={newPlanNameKey}
+              />
+            </label>
+            <label className="mt-2 block text-xs text-ink-muted">
+              Status
+              <select
+                className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
+                onChange={(e) => setNewPlanStatus(e.target.value)}
+                value={newPlanStatus}
+              >
+                {["draft", "active", "archived"].map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </label>
+            <label className="mt-2 block text-xs text-rose-700">
+              {labels.reasonLabel} *
+              <input
+                className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
+                onChange={(e) => setNewPlanReason(e.target.value)}
+                value={newPlanReason}
+              />
+            </label>
+            <div className="mt-3 flex justify-end gap-2">
+              <button
+                className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm"
+                onClick={() => setShowCreatePlan(false)}
+                type="button"
+              >
+                {labels.cancel}
+              </button>
+              <button
+                className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm text-white disabled:opacity-50"
+                disabled={!newPlanSlug.trim() || !newPlanNameKey.trim() || newPlanReason.trim().length < 3}
+                onClick={() => void createPlan()}
+                type="button"
+              >
+                {labels.save}
+              </button>
             </div>
-          )}
-        </AdminSection>
+          </div>
+        </div>
+      )}
+
+      {tab === "entitlements" && (
+        <EntitlementsTab
+          common={common}
+          canRead={canRead}
+          canManage={canManage}
+          labels={labels as unknown as Record<string, string>}
+          plans={(planRows ?? []).map((p) => { const r = p as { id: string; slug: string }; return { id: r.id, slug: r.slug }; })}
+        />
       )}
 
       {tab === "quotas" && (
-        <div className="space-y-4">
-          <AdminSection title={labels.tab.quotas}>
-            {loadErr && <p className="text-sm text-rose-600">{loadErr}</p>}
-            {quotaData == null && <p className="text-sm text-ink-muted">{common.loading}…</p>}
-            {quotaData != null && (
-              <p className="text-xs text-ink-muted">{labels.quotaMvpNote}</p>
-            )}
-          </AdminSection>
-          <AdminSection title="Overrides">
-            {!qOverrides && <p className="text-sm text-ink-muted">{common.loading}…</p>}
-            {qOverrides && qOverrides.length === 0 && <AdminEmptyState title="Overrides">{labels.empty}</AdminEmptyState>}
-          </AdminSection>
-        </div>
+        <QuotasTab
+          common={common}
+          canRead={canRead}
+          canManage={canManage}
+          labels={labels as unknown as Record<string, string>}
+          plans={(planRows ?? []).map((p) => { const r = p as { id: string; slug: string }; return { id: r.id, slug: r.slug }; })}
+        />
       )}
 
       {tab === "subscriptions" && (
-        <AdminSection title={labels.tab.subscriptions}>
-          {loadErr && <p className="text-sm text-rose-600">{loadErr}</p>}
-          {!subs && <p className="text-sm text-ink-muted">{common.loading}…</p>}
-          {subs && (
-            <p className="text-xs text-ink-muted">
-              {labels.subTotal}: {subs.total}
-            </p>
-          )}
-        </AdminSection>
+        <SubscriptionsTab common={common} canRead={canRead} canManage={canManage} labels={labels as unknown as Record<string, string>} />
       )}
 
-      {tab === "trials" && (
-        <AdminSection title={labels.tab.trials}>
-          {loadErr && <p className="text-sm text-rose-600">{loadErr}</p>}
-          {!coupons && <p className="text-sm text-ink-muted">{common.loading}…</p>}
-          {coupons && coupons.length === 0 && (
-            <AdminEmptyState title={labels.couponCreate}>{labels.empty}</AdminEmptyState>
-          )}
-        </AdminSection>
+      {tab === "billing-events" && (
+        <BillingEventsTab common={common} canRead={canRead} canManage={canManage} labels={labels as unknown as Record<string, string>} />
       )}
 
-      {tab === "ads" && (
-        <div className="space-y-3">
-          <p className="text-xs text-ink-muted">{labels.adsUxRule}</p>
-          <p className="text-xs text-amber-800">{labels.adsWarning}</p>
-          <AdminSection title={labels.tab.ads}>
-            {loadErr && <p className="text-sm text-rose-600">{loadErr}</p>}
-            {!ads && <p className="text-sm text-ink-muted">{common.loading}…</p>}
-            {ads && ads.length === 0 && <AdminEmptyState title={labels.tab.ads}>{labels.empty}</AdminEmptyState>}
-          </AdminSection>
-        </div>
+      {tab === "refunds" && (
+        <RefundsTab common={common} canRead={canRead} canManage={canManage} labels={labels as unknown as Record<string, string>} />
       )}
 
-      {tab === "analytics" && (
-        <AdminSection title={labels.tab.analytics}>
-          {loadErr && <p className="text-sm text-rose-600">{loadErr}</p>}
-          {analytics == null && <p className="text-sm text-ink-muted">{common.loading}…</p>}
-          {analytics != null && (
-            <p className="text-xs text-ink-muted">
-              {(analytics as { billingProviderConnected?: boolean }).billingProviderConnected
-                ? "events"
-                : labels.billingNotConnected}
-            </p>
-          )}
-        </AdminSection>
+      {tab === "provider-config" && (
+        <ProviderConfigTab common={common} canRead={canRead} canManage={canManage} labels={labels as unknown as Record<string, string>} />
       )}
 
-      {tab === "audit" && (
-        <AdminSection title={labels.tab.audit}>
-          {loadErr && <p className="text-sm text-rose-600">{loadErr}</p>}
-          {!audit && <p className="text-sm text-ink-muted">{common.loading}…</p>}
-          {audit && audit.length === 0 && (
-            <AdminEmptyState title={labels.tab.audit}>{labels.auditEmpty}</AdminEmptyState>
-          )}
-        </AdminSection>
+      {tab === "webhook-dlq" && (
+        <WebhookDlqTab common={common} canRead={canRead} canManage={canManage} labels={labels as unknown as Record<string, string>} />
       )}
     </div>
   );

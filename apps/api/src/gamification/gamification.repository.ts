@@ -323,6 +323,54 @@ export class GamificationRepository {
     });
   }
 
+  /** Generic metric resolver — returns count for any supported metric */
+  async resolveMetricValue(userId: string, metricKey: string): Promise<number | null> {
+    switch (metricKey) {
+      case "exercises_completed":
+        return this.prisma.exerciseSession.count({
+          where: { userId, completedAt: { not: null } }
+        });
+      case "words_learned":
+        return this.prisma.userFlashcard.count({
+          where: { userId, repetitions: { gte: 4 } }
+        });
+      case "quizzes_completed":
+        return this.prisma.quizSession.count({
+          where: { userId, completedAt: { not: null } }
+        });
+      case "battles_won":
+        return this.prisma.$queryRaw<[{ count: number }]>`
+          SELECT COUNT(*)::int as count FROM learning.battle_session
+          WHERE user_id = ${userId}::uuid
+            AND completed_at IS NOT NULL
+            AND user_score > opponent_score
+        `.then(r => Number(r[0]?.count ?? 0));
+      case "reviews_completed":
+        return this.prisma.reviewEvent.count({
+          where: { userId }
+        });
+      default:
+        return null;
+    }
+  }
+
+  /** Get newly earned achievements not yet shown to user */
+  async pendingAchievementNotifications(userId: string) {
+    return this.prisma.userAchievement.findMany({
+      where: { userId, earnedAt: { not: null }, notifiedAt: null },
+      include: { tier: { include: { achievement: true } } },
+      orderBy: { earnedAt: "desc" }
+    });
+  }
+
+  /** Mark achievements as notified */
+  async markAchievementsNotified(ids: string[]): Promise<void> {
+    await this.prisma.userAchievement.updateMany({
+      where: { id: { in: ids } },
+      data: { notifiedAt: new Date() }
+    });
+  }
+
   /* ═══════════════════════════════════════════════════════════════════════
    * ── Leaderboard Config (admin) ─────────────────────────────────────── */
 
@@ -397,11 +445,27 @@ export class GamificationRepository {
     periodStart: Date,
     limit: number
   ) {
+    // TODO: Add user relation include once LeaderboardEntry has a UserProfile relation in schema
     return this.prisma.leaderboardEntry.findMany({
       where: { leaderboardId, periodStart },
       orderBy: { rank: "asc" },
       take: limit
     });
+  }
+
+  /** Recompute ranks for a leaderboard period using window function */
+  async recomputeLeaderboardRanks(leaderboardId: string, periodStart: Date): Promise<void> {
+    await this.prisma.$executeRaw`
+      UPDATE gamification.leaderboard_entry le
+      SET rank = ranked.new_rank, computed_at = NOW()
+      FROM (
+        SELECT id, ROW_NUMBER() OVER (ORDER BY score DESC) as new_rank
+        FROM gamification.leaderboard_entry
+        WHERE leaderboard_id = ${leaderboardId}::uuid
+          AND period_start = ${periodStart}
+      ) ranked
+      WHERE le.id = ranked.id
+    `;
   }
 
   async upsertLeaderboardEntry(data: {

@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from "@nestjs/common";
+import { Controller, Get, Inject, Query, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 
 import { CurrentUser } from "../keycloak/current-user.decorator.js";
@@ -14,7 +14,7 @@ import { LearningHeatmapService } from "./learning-heatmap.service.js";
 @ApiBearerAuth("bearer")
 @DocumentedHttpErrors()
 export class LearningHeatmapController {
-  constructor(private readonly heatmapService: LearningHeatmapService) {}
+  constructor(@Inject(LearningHeatmapService) private readonly heatmapService: LearningHeatmapService) {}
 
   @Get()
   @ApiOperation({ summary: "Get learning heatmap data (last 365 days)." })

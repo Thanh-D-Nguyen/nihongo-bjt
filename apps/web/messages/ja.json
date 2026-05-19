@@ -1246,6 +1246,12 @@
     "score": "推定スコア（800）",
     "correct": "正解数"
   },
+  "pushBanner": {
+    "prompt": "毎日漢字の通知を受け取りますか？",
+    "enable": "オン",
+    "dismiss": "閉じる",
+    "error": "通知を有効にできませんでした。ブラウザの権限を確認してください。"
+  },
   "notificationsPage": {
     "title": "通知",
     "subtitle": "復習リマインダー、アプリ内通知、メールを管理します。",
@@ -1293,6 +1299,8 @@
     "readingAssistDesc": "ふりがなと読みサポート。",
     "appearance": "外観",
     "appearanceDesc": "テーマ、フォントサイズ、表示密度。",
+    "subscription": "サブスクリプション",
+    "subscriptionDesc": "プラン、特典、お支払いの管理。",
     "settingsArea": "設定エリア",
     "backToHome": "ホームに戻る",
     "signOut": "ログアウト"
@@ -1434,7 +1442,10 @@
     "learningPathsDescription": "パスエンジンは拡張中です。現状は公開カタログを表示 — 個別の進捗はエンロールメント実装後に追加します。",
     "learningPathsEmpty": "公開パスはまだありません。",
     "learningPathsCta": "BJT演習へ",
-    "learningPathsLevel": "目標: {level}"
+    "learningPathsLevel": "目標: {level}",
+    "heatmapLabel": "活動ヒートマップ（12週間）",
+    "shareProgress": "進捗をシェア",
+    "trendVsPrevious": "前の{n}日間との比較"
   },
   "helpPage": {
     "metaTitle": "ヘルプ — NihonGo BJT",
@@ -1592,7 +1603,18 @@
       "mastery": "マスタリー",
       "battle": "バトル"
     },
-    "error": "エラーが発生しました。もう一度お試しください。"
+    "error": "エラーが発生しました。もう一度お試しください。",
+    "recentlyEarned": "新しく獲得",
+    "browseAll": "すべての実績",
+    "myProgress": "進捗状況",
+    "share": "シェア",
+    "celebration": "新しい実績！",
+    "celebrationCta": "すごい！",
+    "allCategories": "すべて",
+    "streakCalendar": "学習カレンダー",
+    "noLeaderboards": "ランキングがありません",
+    "myRank": "あなたの順位",
+    "viewAll": "すべて見る"
   },
   "cardgen": {
     "title": "自動カード作成",
@@ -1974,5 +1996,42 @@
     "close": "閉じる",
     "learnMore": "詳しく見る",
     "dismiss": "閉じる"
+  },
+  "pricing": {
+    "title": "料金プラン",
+    "subtitle": "BJT学習に最適なプランをお選びください",
+    "current": "現在のプラン",
+    "upgrade": "アップグレード",
+    "free": "無料",
+    "features": "機能",
+    "perMonth": "/月",
+    "unlimited": "無制限",
+    "quotaFormat": "{limit}/{window}",
+    "loading": "読み込み中...",
+    "error": "プラン情報を読み込めませんでした。再度お試しください。",
+    "backHome": "← ホームに戻る",
+    "enforcementOff": "現在は完全無料モードです。すべての機能がご利用いただけます。"
+  },
+  "subscription": {
+    "title": "サブスクリプション",
+    "subtitle": "現在のプラン、特典、お支払いの管理",
+    "currentPlan": "現在のプラン",
+    "status": "ステータス",
+    "renewsOn": "更新日",
+    "cancelsOn": "終了日",
+    "entitlements": "特典",
+    "quotas": "利用制限",
+    "unlimited": "無制限",
+    "cancelButton": "解約する",
+    "cancelConfirm": "本当に解約しますか？現在の期間が終了するまでご利用いただけます。",
+    "cancelSuccess": "解約リクエストが完了しました。",
+    "freePlanNote": "現在は無料プランをご利用中です。",
+    "upgradeCta": "アップグレード",
+    "backToSettings": "設定",
+    "loading": "読み込み中...",
+    "error": "サブスクリプション情報を読み込めませんでした。",
+    "active": "アクティブ",
+    "trialing": "トライアル中",
+    "canceled": "解約済み"
   }
 }

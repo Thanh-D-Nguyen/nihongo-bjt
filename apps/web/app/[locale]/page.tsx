@@ -27,6 +27,7 @@ export default async function LearnerHome({
     <HomepageClient
       labels={t.homepage}
       locale={locale}
+      pushBannerLabels={t.pushBanner}
     />
   );
 }

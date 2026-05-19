@@ -281,7 +281,7 @@ export const ADMIN_NAV_DATA: AdminNavGroupDefinition[] = [
       item({ href: "/ops/notifications", icon: "cog", id: "op.notif", labelKey: "shell.navItems.notifications", permissions: ["iam.manage", "admin.content.read"], status: "implemented" }),
       item({ href: "/audit", icon: "shield", id: "op.audit", labelKey: "shell.navItems.audit", permissions: ["viewer.audit", "iam.manage"], status: "implemented" }),
       item({ href: "/ops/security", icon: "shield", id: "op.sec", labelKey: "shell.navItems.securityAudit", permissions: ["viewer.audit", "iam.manage"], status: "implemented" }),
-      item({ href: "/settings", icon: "cog", id: "op.settings", labelKey: "shell.navItems.settings", permissions: ["iam.manage"], status: "implemented" }),
+      item({ activeMatch: "exact", href: "/settings", icon: "cog", id: "op.settings", labelKey: "shell.navItems.settings", permissions: ["iam.manage"], status: "implemented" }),
       item({ href: "/settings/companion", icon: "cog", id: "op.companionSettings", labelKey: "shell.navItems.companionSettings", permissions: ["admin.content.read"], status: "implemented" })
     ],
     labelKey: "shell.navGroups.operations",

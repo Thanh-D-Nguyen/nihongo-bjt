@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { createPrismaClient } from "@nihongo-bjt/database";
 
 export interface HeatmapDay {
@@ -17,8 +17,14 @@ export interface HeatmapResult {
   currentStreak: number;
 }
 
+function toDateStr(val: unknown): string {
+  if (val instanceof Date) return val.toISOString().slice(0, 10);
+  return String(val).slice(0, 10);
+}
+
 @Injectable()
 export class LearningHeatmapService {
+  private readonly logger = new Logger(LearningHeatmapService.name);
   private readonly prisma = createPrismaClient();
 
   async getHeatmap(userId: string, days = 365): Promise<HeatmapResult> {
@@ -26,37 +32,45 @@ export class LearningHeatmapService {
     startDate.setDate(startDate.getDate() - days);
     startDate.setHours(0, 0, 0, 0);
 
-    const [reviewsByDay, quizzesByDay, focusByDay] = await Promise.all([
-      this.prisma.$queryRawUnsafe<{ day: string; count: bigint }[]>(
-        `SELECT DATE(reviewed_at AT TIME ZONE 'UTC') as day, COUNT(*)::bigint as count
-         FROM learning.review_event
-         WHERE user_id = $1::uuid AND reviewed_at >= $2
-         GROUP BY day ORDER BY day`,
-        userId,
-        startDate,
-      ),
-      this.prisma.$queryRawUnsafe<{ day: string; count: bigint }[]>(
-        `SELECT DATE(started_at AT TIME ZONE 'UTC') as day, COUNT(*)::bigint as count
-         FROM assessment.quiz_session
-         WHERE user_id = $1::uuid AND started_at >= $2 AND status = 'completed'
-         GROUP BY day ORDER BY day`,
-        userId,
-        startDate,
-      ),
-      this.prisma.$queryRawUnsafe<{ day: string; minutes: string }[]>(
-        `SELECT DATE(started_at AT TIME ZONE 'UTC') as day, SUM(duration_minutes)::text as minutes
-         FROM learning.study_session
-         WHERE user_id = $1::uuid AND started_at >= $2 AND completed = true
-         GROUP BY day ORDER BY day`,
-        userId,
-        startDate,
-      ),
-    ]);
+    let reviewsByDay: { day: unknown; count: bigint }[] = [];
+    let quizzesByDay: { day: unknown; count: bigint }[] = [];
+    let focusByDay: { day: unknown; minutes: string }[] = [];
+
+    try {
+      [reviewsByDay, quizzesByDay, focusByDay] = await Promise.all([
+        this.prisma.$queryRawUnsafe<{ day: unknown; count: bigint }[]>(
+          `SELECT DATE(reviewed_at AT TIME ZONE 'UTC') as day, COUNT(*)::bigint as count
+           FROM learning.review_event
+           WHERE user_id = $1::uuid AND reviewed_at >= $2
+           GROUP BY day ORDER BY day`,
+          userId,
+          startDate,
+        ),
+        this.prisma.$queryRawUnsafe<{ day: unknown; count: bigint }[]>(
+          `SELECT DATE(started_at AT TIME ZONE 'UTC') as day, COUNT(*)::bigint as count
+           FROM assessment.quiz_session
+           WHERE user_id = $1::uuid AND started_at >= $2 AND status = 'completed'
+           GROUP BY day ORDER BY day`,
+          userId,
+          startDate,
+        ),
+        this.prisma.$queryRawUnsafe<{ day: unknown; minutes: string }[]>(
+          `SELECT DATE(started_at AT TIME ZONE 'UTC') as day, SUM(duration_minutes)::text as minutes
+           FROM learning.study_session
+           WHERE user_id = $1::uuid AND started_at >= $2 AND completed = true
+           GROUP BY day ORDER BY day`,
+          userId,
+          startDate,
+        ),
+      ]);
+    } catch (err) {
+      this.logger.error(`Heatmap query failed for user ${userId}`, err instanceof Error ? err.stack : err);
+    }
 
     // Build lookup maps
-    const reviewMap = new Map(reviewsByDay.map((r) => [String(r.day).slice(0, 10), Number(r.count)]));
-    const quizMap = new Map(quizzesByDay.map((r) => [String(r.day).slice(0, 10), Number(r.count)]));
-    const focusMap = new Map(focusByDay.map((r) => [String(r.day).slice(0, 10), Number(r.minutes)]));
+    const reviewMap = new Map(reviewsByDay.map((r) => [toDateStr(r.day), Number(r.count)]));
+    const quizMap = new Map(quizzesByDay.map((r) => [toDateStr(r.day), Number(r.count)]));
+    const focusMap = new Map(focusByDay.map((r) => [toDateStr(r.day), Number(r.minutes)]));
 
     // Build day array
     const heatmapDays: HeatmapDay[] = [];

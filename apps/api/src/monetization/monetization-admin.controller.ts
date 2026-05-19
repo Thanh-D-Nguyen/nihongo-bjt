@@ -22,6 +22,7 @@ import { LogAdminAction } from "../admin/admin-audit.decorator.js";
 import { AdminRbacGuard } from "../admin/admin-rbac.guard.js";
 import { RequireAdminPermissions } from "../admin/admin.rbac.js";
 import { DocumentedHttpErrors } from "../openapi/common-decorators.js";
+import { RuntimeFeatureGateService } from "../operations/runtime-feature-gate.service.js";
 import { LocalBillingProvider } from "./billing/local-billing.provider.js";
 import { BILLING_PERMS } from "./monetization-billing-permissions.js";
 import { MonetizationAdminConsoleService } from "./monetization-admin-console.service.js";
@@ -63,7 +64,8 @@ export class MonetizationAdminController {
   constructor(
     @Inject(AdminAuthService) private readonly adminAuth: AdminAuthService,
     @Inject(LocalBillingProvider) private readonly localBilling: LocalBillingProvider,
-    @Inject(MonetizationAdminConsoleService) private readonly console: MonetizationAdminConsoleService
+    @Inject(MonetizationAdminConsoleService) private readonly console: MonetizationAdminConsoleService,
+    @Inject(RuntimeFeatureGateService) private readonly featureGate: RuntimeFeatureGateService
   ) {}
 
   @Get("summary")
@@ -82,7 +84,11 @@ export class MonetizationAdminController {
   @ApiOperation({ summary: "KPIs, charts, task flags for monetization console" })
   async overview(@Req() req: Request) {
     await this.adminAuth.requireOneOfPermissions(req, [...BILLING_PERMS.readOverview]);
-    return this.console.overview();
+    const [data, enforcement] = await Promise.all([
+      this.console.overview(),
+      this.featureGate.status("monetization.enforcement", { missingBehavior: "allow" })
+    ]);
+    return { ...data, enforcementEnabled: enforcement.enabled };
   }
 
   @Get("analytics")

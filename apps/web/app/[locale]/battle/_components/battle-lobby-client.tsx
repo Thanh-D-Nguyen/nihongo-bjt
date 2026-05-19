@@ -7,6 +7,7 @@ import type { BattleBotAnimationState } from "@nihongo-bjt/shared";
 import { Badge, Button, Input, PageHeader } from "@nihongo-bjt/ui";
 
 import { BattleBotAvatar } from "../../../_components/battle-bot-avatar";
+import { BattleConfigsPanel, type BattleConfigItem } from "./battle-configs-panel";
 import { BotDetailPopover } from "./bot-detail-popover";
 import { BattleLobbyLeaderboardPanel } from "./battle-lobby-leaderboard";
 import { useBattleRuntime } from "./battle-runtime-provider";
@@ -307,6 +308,7 @@ function LobbyRosterColumn({
 
 export function BattleLobbyClient() {
   const {
+    accessToken,
     battleMode,
     botChoices,
     botChoicesLoading,
@@ -331,8 +333,15 @@ export function BattleLobbyClient() {
     socketConnected,
     status,
     userId,
-    displayedBot
+    displayedBot,
+    setSelectedConfigId
   } = useBattleRuntime();
+
+  const [selectedConfig, setSelectedConfig] = useState<BattleConfigItem | null>(null);
+  // Sync local config selection to runtime context
+  useEffect(() => {
+    setSelectedConfigId(selectedConfig?.id ?? null);
+  }, [selectedConfig, setSelectedConfigId]);
 
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
   const didInitialChatScrollRef = useRef(false);
@@ -617,6 +626,27 @@ export function BattleLobbyClient() {
           </Link>
         </div>
       ) : null}
+
+      {/* Available battle configs from admin */}
+      <div className="mt-4">
+        <BattleConfigsPanel
+          accessToken={accessToken}
+          labels={labels}
+          locale={locale}
+          onSelectConfig={setSelectedConfig}
+          selectedConfigId={selectedConfig?.id ?? null}
+        />
+        {selectedConfig && (
+          <div className="mt-2 rounded-xl border border-accent/20 bg-accent/5 px-3 py-2">
+            <p className="text-[11px] font-black text-accent">
+              Selected: {selectedConfig.name}
+            </p>
+            <p className="text-[10px] font-semibold text-muted">
+              {selectedConfig.questionCount} questions · {selectedConfig.timePerQuestionSec}s/question · {selectedConfig.maxParticipants} players max
+            </p>
+          </div>
+        )}
+      </div>
 
       <button
         aria-hidden={!rosterOpen}

@@ -11,7 +11,7 @@ const SOUND_OPTIONS = [
 ];
 
 export function AmbientModeWidget() {
-  const { active, sound, volume, toggle, setSound, setVolume } = useAmbientMode();
+  const { active, sound, volume, error, toggle, setSound, setVolume } = useAmbientMode();
 
   return (
     <div className={cn(
@@ -26,7 +26,7 @@ export function AmbientModeWidget() {
       >
         <span className="text-lg">{active ? "🎧" : "🎵"}</span>
         <h3 className="text-sm font-bold text-ink flex-1 text-left">
-          {active ? "Café Tokyo" : "Chế độ tập trung"}
+          Âm thanh tập trung
         </h3>
         <div className={cn(
           "h-5 w-9 rounded-full transition-colors relative",
@@ -77,6 +77,11 @@ export function AmbientModeWidget() {
           <p className="text-[9px] text-muted text-center italic">
             Tập trung vào bài học, để âm thanh dẫn lối 🍵
           </p>
+          {error && (
+            <p className="text-[9px] text-[var(--color-sakura)] text-center">
+              Không thể phát nhạc. Hãy thử nhấn lại hoặc kiểm tra kết nối mạng.
+            </p>
+          )}
         </div>
       )}
     </div>

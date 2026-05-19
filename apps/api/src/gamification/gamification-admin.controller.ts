@@ -14,6 +14,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
   Req,
   UseGuards
 } from "@nestjs/common";
@@ -21,6 +22,7 @@ import {
   ApiBearerAuth,
   ApiOperation,
   ApiParam,
+  ApiQuery,
   ApiSecurity,
   ApiTags
 } from "@nestjs/swagger";
@@ -31,6 +33,7 @@ import { AdminRbacGuard } from "../admin/admin-rbac.guard.js";
 import { LogAdminAction } from "../admin/admin-audit.decorator.js";
 import { RequireAdminPermissions } from "../admin/admin.rbac.js";
 import { DocumentedHttpErrors } from "../openapi/common-decorators.js";
+import { CompanionPetService } from "./companion-pet.service.js";
 import { GamificationRepository } from "./gamification.repository.js";
 
 @Controller("admin/gamification")
@@ -44,7 +47,8 @@ import { GamificationRepository } from "./gamification.repository.js";
 export class GamificationAdminController {
   constructor(
     @Inject(GamificationRepository) private readonly repo: GamificationRepository,
-    @Inject(AdminAuthService) private readonly adminAuth: AdminAuthService
+    @Inject(AdminAuthService) private readonly adminAuth: AdminAuthService,
+    @Inject(CompanionPetService) private readonly petService: CompanionPetService
   ) {}
 
   /* ═══════════════════════════════════════════════════════════════════════
@@ -283,5 +287,65 @@ export class GamificationAdminController {
   async deleteLeaderboard(@Req() req: Request, @Param("id") id: string) {
     await this.adminAuth.requirePermission(req, "content.manage");
     return this.repo.deleteLeaderboardConfig(id);
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+   * ── Companion Pets ─────────────────────────────────────────────────── */
+
+  @Get("pets")
+  @ApiOperation({ summary: "List all companion pets with user info." })
+  @ApiQuery({ name: "stage", required: false, description: "Filter by stage" })
+  @ApiQuery({ name: "search", required: false, description: "Search by pet name or user ID" })
+  async listPets(
+    @Req() req: Request,
+    @Query("stage") stage?: string,
+    @Query("search") search?: string
+  ) {
+    await this.adminAuth.requireOneOfPermissions(req, [
+      "content.manage",
+      "viewer.audit"
+    ]);
+    return this.petService.adminListPets({ stage, search });
+  }
+
+  @Get("pets/stats")
+  @ApiOperation({ summary: "Get companion pet aggregate stats." })
+  async petStats(@Req() req: Request) {
+    await this.adminAuth.requireOneOfPermissions(req, [
+      "content.manage",
+      "viewer.audit"
+    ]);
+    return this.petService.adminGetStats();
+  }
+
+  @Get("pets/:id")
+  @ApiOperation({ summary: "Get a specific pet by ID." })
+  @ApiParam({ name: "id", description: "Pet ID" })
+  async getPet(@Req() req: Request, @Param("id") id: string) {
+    await this.adminAuth.requireOneOfPermissions(req, [
+      "content.manage",
+      "viewer.audit"
+    ]);
+    return this.petService.adminGetPet(id);
+  }
+
+  @Put("pets/:id")
+  @ApiOperation({ summary: "Update pet (stage, xp, happiness override)." })
+  @ApiParam({ name: "id", description: "Pet ID" })
+  async updatePet(
+    @Req() req: Request,
+    @Param("id") id: string,
+    @Body() body: { stage?: string; xp?: number; happiness?: number; name?: string }
+  ) {
+    await this.adminAuth.requirePermission(req, "content.manage");
+    return this.petService.adminUpdatePet(id, body);
+  }
+
+  @Post("pets/:id/reset")
+  @ApiOperation({ summary: "Reset a pet to egg stage." })
+  @ApiParam({ name: "id", description: "Pet ID" })
+  async resetPet(@Req() req: Request, @Param("id") id: string) {
+    await this.adminAuth.requirePermission(req, "content.manage");
+    return this.petService.adminResetPet(id);
   }
 }

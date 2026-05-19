@@ -1246,6 +1246,12 @@
     "score": "Điểm ước tính",
     "correct": "Số câu đúng"
   },
+  "pushBanner": {
+    "prompt": "Nhận thông báo Kanji mỗi ngày?",
+    "enable": "Bật",
+    "dismiss": "Đóng",
+    "error": "Không bật được thông báo. Hãy kiểm tra quyền trình duyệt."
+  },
   "notificationsPage": {
     "title": "Thông báo & nhắc nhở",
     "subtitle": "Quản lý nhắc nhở ôn tập, thông báo trong ứng dụng và email.",
@@ -1293,6 +1299,8 @@
     "readingAssistDesc": "Furigana và chế độ đọc.",
     "appearance": "Giao diện",
     "appearanceDesc": "Chế độ sáng/tối, cỡ chữ, mật độ hiển thị.",
+    "subscription": "Gói đăng ký",
+    "subscriptionDesc": "Quản lý gói, quyền lợi và thanh toán.",
     "settingsArea": "Khu vực cài đặt",
     "backToHome": "Về trang chủ",
     "signOut": "Đăng xuất"
@@ -1434,7 +1442,10 @@
     "learningPathsDescription": "Engine lộ trình đang mở rộng — hiện hiển thị danh mục gợi ý; tiến độ cá nhân từng path sẽ bổ sung khi enrollment sẵn sàng.",
     "learningPathsEmpty": "Chưa có lộ trình công khai.",
     "learningPathsCta": "Đi tới luyện BJT",
-    "learningPathsLevel": "Mục tiêu: {level}"
+    "learningPathsLevel": "Mục tiêu: {level}",
+    "heatmapLabel": "Bản đồ nhiệt hoạt động (12 tuần)",
+    "shareProgress": "Chia sẻ tiến bộ",
+    "trendVsPrevious": "So với {n} ngày trước đó"
   },
   "helpPage": {
     "metaTitle": "Trợ giúp — NihonGo BJT",
@@ -1592,7 +1603,18 @@
       "mastery": "Thành thạo",
       "battle": "Đối kháng"
     },
-    "error": "Có lỗi xảy ra. Vui lòng thử lại."
+    "error": "Có lỗi xảy ra. Vui lòng thử lại.",
+    "recentlyEarned": "Mới đạt được",
+    "browseAll": "Tất cả thành tích",
+    "myProgress": "Tiến trình của tôi",
+    "share": "Chia sẻ",
+    "celebration": "Thành tích mới!",
+    "celebrationCta": "Tuyệt vời!",
+    "allCategories": "Tất cả",
+    "streakCalendar": "Lịch học tập",
+    "noLeaderboards": "Chưa có bảng xếp hạng",
+    "myRank": "Hạng của bạn",
+    "viewAll": "Xem tất cả"
   },
   "cardgen": {
     "title": "Tạo thẻ tự động",
@@ -1974,5 +1996,42 @@
     "close": "Đóng",
     "learnMore": "Xem thêm",
     "dismiss": "Bỏ qua"
+  },
+  "pricing": {
+    "title": "Gói dịch vụ",
+    "subtitle": "Chọn gói phù hợp với nhu cầu học tập BJT của bạn",
+    "current": "Gói hiện tại",
+    "upgrade": "Nâng cấp",
+    "free": "Miễn phí",
+    "features": "Tính năng",
+    "perMonth": "/tháng",
+    "unlimited": "Không giới hạn",
+    "quotaFormat": "{limit}/{window}",
+    "loading": "Đang tải...",
+    "error": "Không thể tải thông tin gói. Vui lòng thử lại.",
+    "backHome": "← Về trang chủ",
+    "enforcementOff": "Hệ thống đang ở chế độ miễn phí toàn diện. Tất cả tính năng đều mở."
+  },
+  "subscription": {
+    "title": "Gói đăng ký",
+    "subtitle": "Quản lý gói hiện tại, quyền lợi và thanh toán",
+    "currentPlan": "Gói hiện tại",
+    "status": "Trạng thái",
+    "renewsOn": "Gia hạn vào",
+    "cancelsOn": "Hết hạn vào",
+    "entitlements": "Quyền lợi",
+    "quotas": "Hạn mức",
+    "unlimited": "Không giới hạn",
+    "cancelButton": "Huỷ gói",
+    "cancelConfirm": "Bạn có chắc muốn huỷ gói? Gói sẽ duy trì đến hết chu kỳ hiện tại.",
+    "cancelSuccess": "Đã yêu cầu huỷ gói thành công.",
+    "freePlanNote": "Bạn đang dùng gói miễn phí.",
+    "upgradeCta": "Nâng cấp",
+    "backToSettings": "Cài đặt",
+    "loading": "Đang tải...",
+    "error": "Không thể tải thông tin đăng ký.",
+    "active": "Đang hoạt động",
+    "trialing": "Dùng thử",
+    "canceled": "Đã huỷ"
   }
 }

@@ -83,6 +83,8 @@ type BattleRuntimeContextValue = {
   displayedBot: BattleBotStageProfile;
   isMatchUiActive: boolean;
   pvpEndReason: PvpEndReason | null;
+  selectedConfigId: string | null;
+  setSelectedConfigId: (id: string | null) => void;
   setPvpChallenge: (c: UserChallenge | null) => void;
   connectAndStart: () => void;
   submitAnswer: (optionKey: string) => void;
@@ -175,6 +177,7 @@ export function BattleRuntimeProvider({
   const [pvpChallenge, setPvpChallenge] = useState<UserChallenge | null>(null);
   const [pvpOpponentAnswered, setPvpOpponentAnswered] = useState(false);
   const [pvpEndReason, setPvpEndReason] = useState<PvpEndReason | null>(null);
+  const [selectedConfigId, setSelectedConfigId] = useState<string | null>(null);
 
   const pathname = usePathname();
   const learnerDisplayName = displayName || email || labels.userLabel;
@@ -556,13 +559,13 @@ export function BattleRuntimeProvider({
       return;
     }
     if (s.connected) {
-      s.emit("battle:challenge_bot", { botKey, userId: uid });
+      s.emit("battle:challenge_bot", { botKey, configId: selectedConfigId ?? undefined, userId: uid });
       return;
     }
     s.once("connect", () => {
-      s.emit("battle:challenge_bot", { botKey, userId: uid });
+      s.emit("battle:challenge_bot", { botKey, configId: selectedConfigId ?? undefined, userId: uid });
     });
-  }, [botKey, ensureSocket, labels.connecting, selectedBot, userId]);
+  }, [botKey, ensureSocket, labels.connecting, selectedBot, selectedConfigId, userId]);
 
   const submitAnswer = useCallback(
     (optionKey: string) => {
@@ -827,6 +830,8 @@ export function BattleRuntimeProvider({
         displayedBot,
         isMatchUiActive,
         pvpEndReason,
+        selectedConfigId,
+        setSelectedConfigId,
         setPvpChallenge,
         connectAndStart,
         submitAnswer,
@@ -880,6 +885,8 @@ export function BattleRuntimeProvider({
       displayedBot,
       isMatchUiActive,
       pvpEndReason,
+      selectedConfigId,
+      setSelectedConfigId,
       connectAndStart,
       submitAnswer,
       acceptPvpChallenge,

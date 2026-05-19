@@ -2,6 +2,7 @@ import { createPrismaClient, Prisma, type PrismaClient } from "@nihongo-bjt/data
 import { Body, BadRequestException, Controller, Get, Inject, Post, Query, Req, UseGuards } from "@nestjs/common";
 import type { Request } from "express";
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiSecurity, ApiTags } from "@nestjs/swagger";
+import { GROWTH_POSTCARD_EVENT_KINDS } from "@nihongo-bjt/shared";
 import { z } from "zod";
 
 import { AdminAuthService } from "../admin/admin-auth.service.js";
@@ -14,7 +15,7 @@ import { GrowthAnalyticsService } from "./growth-analytics.service.js";
 const previewSchema = z.object({
   config: z.record(z.string(), z.any()).optional(),
   headline: z.string().min(1).max(200),
-  kind: z.enum(["streak", "bjt_result", "daily_phrase"]),
+  kind: z.enum(GROWTH_POSTCARD_EVENT_KINDS),
   sub: z.string().min(1).max(200)
 });
 

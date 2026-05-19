@@ -20,7 +20,7 @@ import {
   GROWTH_POSTCARD_EVENT_KINDS,
   GROWTH_TEMPLATE_PRIVACY_CLASSES
 } from "@nihongo-bjt/shared";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
 import { useFormErrors, parseApiError, validateFields, validators } from "@/lib/form-errors";
@@ -104,6 +104,16 @@ const DEFAULT_FORM: FormState = {
   slug: "",
   thumbnailKey: "",
   variables: ""
+};
+
+/** Kind-specific color presets so the preview matches the renderer defaults */
+const KIND_COLOR_PRESETS: Record<Kind, Pick<FormState, "brandBg" | "brandBgEnd" | "brandFg" | "brandAccent">> = {
+  streak: { brandBg: "#1a0a00", brandBgEnd: "#7c2d12", brandFg: "#e2e8f0", brandAccent: "#f97316" },
+  level_up: { brandBg: "#1a0a00", brandBgEnd: "#7c2d12", brandFg: "#e2e8f0", brandAccent: "#38bdf8" },
+  bjt_pass: { brandBg: "#0f172a", brandBgEnd: "#1e293b", brandFg: "#e2e8f0", brandAccent: "#38bdf8" },
+  bjt_result: { brandBg: "#0f172a", brandBgEnd: "#1e293b", brandFg: "#e2e8f0", brandAccent: "#38bdf8" },
+  battle_win: { brandBg: "#1e1b4b", brandBgEnd: "#312e81", brandFg: "#e2e8f0", brandAccent: "#a78bfa" },
+  daily_phrase: { brandBg: "#fefce8", brandBgEnd: "", brandFg: "#1c1917", brandAccent: "#38bdf8" },
 };
 
 const PAGE_SIZE = 25;
@@ -300,6 +310,7 @@ export function GrowthPostcardsClient({
           reason: reason.trim(),
           slug: form.slug
         }),
+        headers: { "content-type": "application/json" },
         method: "POST"
       });
       if (!r.ok) {
@@ -340,6 +351,7 @@ export function GrowthPostcardsClient({
           reason: reason.trim(),
           slug: form.slug
         }),
+        headers: { "content-type": "application/json" },
         method: "PATCH"
       });
       if (!r.ok) {
@@ -369,6 +381,7 @@ export function GrowthPostcardsClient({
     try {
       const r = await adminApiFetch(`/api/admin/growth/postcards/${detail.id}/${kind}`, {
         body: JSON.stringify({ reason: reason.trim() }),
+        headers: { "content-type": "application/json" },
         method: "POST"
       });
       if (!r.ok) {
@@ -393,11 +406,26 @@ export function GrowthPostcardsClient({
   async function loadPreview() {
     setPreviewLoading(true);
     try {
+      // Render bodyTemplate with sample variables for a realistic preview
+      const sampleVars: Record<string, string> = {
+        user_name: t("sampleUserName") || "Learner",
+        streak_days: "30",
+        level: "N3",
+        score: "85",
+        rank: "1",
+        wins: "5",
+        phrase: "お疲れ様です",
+      };
+      const renderedBody = form.bodyTemplate
+        ? renderPreview(form.bodyTemplate, sampleVars)
+        : form.name || "Sample Headline";
+
       const r = await adminApiFetch("/api/admin/growth/share-template/preview", {
         method: "POST",
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          headline: form.name || "Sample Headline",
-          sub: form.description || "Sample subtitle",
+          headline: renderedBody.slice(0, 200) || "Sample Headline",
+          sub: form.description || form.name || "Sample subtitle",
           kind: form.kind,
           config: {
             brandBg: form.brandBg,
@@ -421,6 +449,20 @@ export function GrowthPostcardsClient({
       setPreviewLoading(false);
     }
   }
+
+  // Auto-refresh preview on form changes (debounced 800ms)
+  const previewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!creating && !editing) return;
+    if (previewTimerRef.current) clearTimeout(previewTimerRef.current);
+    previewTimerRef.current = setTimeout(() => {
+      void loadPreview();
+    }, 800);
+    return () => {
+      if (previewTimerRef.current) clearTimeout(previewTimerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [creating, editing, form.name, form.bodyTemplate, form.description, form.kind, form.brandBg, form.brandBgEnd, form.brandFg, form.brandAccent, form.pattern]);
 
   function exportCsv() {
     if (!list) return;
@@ -643,7 +685,11 @@ export function GrowthPostcardsClient({
               {t("formKind")}
               <select
                 className="mt-1 w-full rounded border px-2 py-1"
-                onChange={(e) => setForm((f) => ({ ...f, kind: e.target.value as Kind }))}
+                onChange={(e) => {
+                  const newKind = e.target.value as Kind;
+                  const preset = KIND_COLOR_PRESETS[newKind];
+                  setForm((f) => ({ ...f, kind: newKind, ...preset }));
+                }}
                 value={form.kind}
               >
                 {GROWTH_POSTCARD_EVENT_KINDS.map((k) => (
@@ -788,6 +834,11 @@ export function GrowthPostcardsClient({
                   <option value="waves">{t("pattern_waves") || "Waves"}</option>
                   <option value="grid">{t("pattern_grid") || "Grid"}</option>
                   <option value="stripes">{t("pattern_stripes") || "Stripes"}</option>
+                  <option value="diamonds">{t("pattern_diamonds") || "Diamonds"}</option>
+                  <option value="circles">{t("pattern_circles") || "Circles"}</option>
+                  <option value="zigzag">{t("pattern_zigzag") || "Zigzag"}</option>
+                  <option value="crosshatch">{t("pattern_crosshatch") || "Crosshatch"}</option>
+                  <option value="sakura">{t("pattern_sakura") || "Sakura"}</option>
                 </select>
               </label>
             </div>
@@ -800,8 +851,9 @@ export function GrowthPostcardsClient({
                   onClick={() => void loadPreview()}
                   type="button"
                 >
-                  {previewLoading ? t("loading") || "Loading..." : t("actionPreview") || "Preview PNG"}
+                  {previewLoading ? "⟳" : "↻"} {t("actionRefresh") || "Refresh"}
                 </button>
+                {previewLoading && <span className="text-xs text-muted-foreground animate-pulse">{t("loading") || "Loading..."}</span>}
               </div>
               {previewSrc ? (
                 <img

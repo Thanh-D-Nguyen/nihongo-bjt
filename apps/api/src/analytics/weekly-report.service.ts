@@ -8,10 +8,15 @@ export class WeeklyReportService {
 
   /** Get the most recent weekly report for a user */
   async getLatest(userId: string) {
-    return this.prisma.weeklyReport.findFirst({
-      where: { userId },
-      orderBy: { weekStart: "desc" },
-    });
+    try {
+      return await this.prisma.weeklyReport.findFirst({
+        where: { userId },
+        orderBy: { weekStart: "desc" },
+      });
+    } catch (err) {
+      this.logger.error(`getLatest failed for user ${userId}`, err instanceof Error ? err.stack : err);
+      return null;
+    }
   }
 
   /** Get report history */

@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { BattleBotAvatar } from "../../../_components/battle-bot-avatar";
 import { BattleCountdownOverlay } from "./battle-countdown-overlay";
+import { BattleHypeLayer, BattleVictoryConfetti, BattleComboIndicator } from "./battle-hype-layer";
 import { BattlePvpOutcomeEffects } from "./battle-pvp-outcome-effects";
 import { readBattlePending, useBattleRuntime } from "./battle-runtime-provider";
 import { botName, localizeDifficulty, metricWidth } from "./battle-types";
@@ -98,6 +99,22 @@ export function BattleMatchClient() {
   } = useBattleRuntime();
 
   const [shareDrawerOpen, setShareDrawerOpen] = useState(false);
+  const [shaking, setShaking] = useState(false);
+  const [lastAnswerCorrect, setLastAnswerCorrect] = useState<boolean | null>(null);
+  const prevAnswerResultRef = useRef(answerResult);
+
+  // Trigger shake on wrong answer and track lastAnswerCorrect for hype
+  useEffect(() => {
+    if (answerResult && answerResult !== prevAnswerResultRef.current) {
+      setLastAnswerCorrect(answerResult.userCorrect);
+      if (!answerResult.userCorrect) {
+        setShaking(true);
+        const t = window.setTimeout(() => setShaking(false), 450);
+        return () => clearTimeout(t);
+      }
+    }
+    prevAnswerResultRef.current = answerResult;
+  }, [answerResult]);
 
   const answerFeedback = useMemo(() => {
     if (!answerResult) return null;
@@ -204,6 +221,7 @@ export function BattleMatchClient() {
   }, [isPvp, outcome, pvpEndReason, labels]);
 
   const showPvpVictoryFireworks = isPvp && outcome === "win";
+  const showBotVictoryConfetti = !isPvp && outcome === "win";
   const arenaShell = isPvp
     ? "border-rose-200/50 bg-gradient-to-br from-rose-50/90 via-surface to-indigo-50/50 shadow-[0_0_0_1px_rgba(244,63,94,0.08)]"
     : "border-indigo-200/40 bg-gradient-to-br from-indigo-50/70 via-surface to-emerald-50/40 shadow-[0_0_0_1px_rgba(79,70,229,0.06)]";
@@ -213,6 +231,13 @@ export function BattleMatchClient() {
   const canAnswer = Boolean(round) && !answerPending && !answerResult;
   const showOutcomeActions = Boolean(outcome);
   const rematchBusy = status === labels.connecting;
+
+  // Intensity escalation: close score in late rounds
+  const isIntense =
+    round &&
+    round.totalRounds > 0 &&
+    round.roundIndex >= round.totalRounds * 0.7 &&
+    Math.abs(userScore - opponentScore) <= 1;
 
   return (
     <main className="w-full pb-12">
@@ -232,7 +257,16 @@ export function BattleMatchClient() {
         visible={showCountdownOverlay}
       />
 
-      <div className={`relative overflow-hidden rounded-[1.75rem] border p-1 ${arenaShell}`}>
+      <div className={`relative overflow-hidden rounded-[1.75rem] border p-1 ${arenaShell} ${shaking ? "battle-shake" : ""} ${isIntense ? "battle-intensity-high" : ""}`}>
+        {/* Hype commentary layer */}
+        <BattleHypeLayer
+          combo={combo}
+          lastAnswerCorrect={lastAnswerCorrect}
+          opponentScore={opponentScore}
+          roundIndex={round?.roundIndex ?? null}
+          totalRounds={round?.totalRounds ?? null}
+          userScore={userScore}
+        />
         <div
           className={`absolute inset-x-0 top-0 h-1 rounded-t-[1.6rem] bg-gradient-to-r ${vsStrip} opacity-90`}
           aria-hidden
@@ -295,6 +329,11 @@ export function BattleMatchClient() {
               }
             />
             <StatTile label={labels.combo} value={`×${combo}`} />
+            {combo >= 2 && (
+              <div className="flex items-center sm:col-span-1 lg:col-span-1">
+                <BattleComboIndicator combo={combo} />
+              </div>
+            )}
             <StatTile
               label={labels.opponent}
               value={isPvp ? (opponentName ?? labels.opponent) : botName(labels, displayedBot.label)}
@@ -510,6 +549,7 @@ export function BattleMatchClient() {
               {outcome ? (
                 <div className="relative overflow-hidden rounded-2xl border border-ink/10 bg-gradient-to-br from-paper/90 to-white p-5">
                   <BattlePvpOutcomeEffects fireworks={showPvpVictoryFireworks} />
+                  <BattleVictoryConfetti active={showBotVictoryConfetti} />
                   <div className="relative z-[2]">
                     <p className="text-2xl font-black tracking-tight text-ink" role="status">
                       {isPvp ? pvpOutcomeHeadline : outcomeText}

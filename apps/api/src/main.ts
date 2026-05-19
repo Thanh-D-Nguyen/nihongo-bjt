@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 import "reflect-metadata";
 
 import { AppModule } from "./app.module.js";
+import { GlobalExceptionFilter } from "./global-exception.filter.js";
 import { setupSwagger } from "./openapi/setup-swagger.js";
 
 loadEnv({ path: resolve(dirname(fileURLToPath(import.meta.url)), "../../../.env") });
@@ -30,7 +31,7 @@ async function bootstrap() {
     rawBody: true
   });
   app.useWebSocketAdapter(new IoAdapter(app));
-
+  app.useGlobalFilters(new GlobalExceptionFilter());
   app.use(
     helmet({
       crossOriginResourcePolicy: { policy: "cross-origin" },

@@ -139,10 +139,11 @@ export class AnalyticsRepository {
   async learner(days: number, userId: string | undefined, locale?: string) {
     if (userId) {
       const s = await loadLearnerStudySignals(this.prisma, userId, days);
-      const [dailyActivity, dueFlashcards, learningPaths] = await Promise.all([
+      const [dailyActivity, dueFlashcards, learningPaths, prev] = await Promise.all([
         loadLearnerDailyActivity(this.prisma, userId, s.range.start, s.range.end),
         countLearnerDueFlashcards(this.prisma, userId),
-        this.publishedLearningPaths(8)
+        this.publishedLearningPaths(8),
+        this.previousPeriodTotals(userId, days)
       ]);
       return {
         dailyActivity,
@@ -152,6 +153,7 @@ export class AnalyticsRepository {
           locale
         ),
         learningPaths,
+        previousTotals: prev,
         range: { days, end: s.range.end, start: s.range.start },
         totals: {
           bjtAccuracyPct: s.bjtAccuracyPct,
@@ -203,6 +205,7 @@ export class AnalyticsRepository {
       dueFlashcards: null,
       insight: coachingInsight({ bjtAccuracyPct, reviewCount: reviews.length, streakDays }, locale),
       learningPaths,
+      previousTotals: null,
       range: { days, end, start },
       totals: {
         bjtAccuracyPct,
@@ -236,6 +239,35 @@ export class AnalyticsRepository {
   /** Shared windowed signals for companion hint + any consumer needing consistent definitions. */
   learnerStudySignals(userId: string, days: number) {
     return loadLearnerStudySignals(this.prisma, userId, days);
+  }
+
+  /** Compute totals for the previous equivalent period (for trend comparison). */
+  private async previousPeriodTotals(userId: string, days: number) {
+    const end = new Date();
+    end.setUTCDate(end.getUTCDate() - days);
+    const start = new Date(end);
+    start.setUTCDate(start.getUTCDate() - days);
+
+    const [reviews, answers, sessions] = await Promise.all([
+      this.prisma.reviewEvent.count({
+        where: { reviewedAt: { gte: start, lt: end }, userId }
+      }),
+      this.prisma.quizAnswer.findMany({
+        select: { isCorrect: true },
+        where: { answeredAt: { gte: start, lt: end }, session: { userId } }
+      }),
+      this.prisma.quizSession.count({
+        where: { startedAt: { gte: start, lt: end }, status: "completed", userId }
+      })
+    ]);
+
+    const correctAnswers = answers.filter((a) => a.isCorrect).length;
+
+    return {
+      bjtAccuracyPct: percentage(correctAnswers, answers.length),
+      completedBjtSessions: sessions,
+      reviewCount: reviews
+    };
   }
 
   private weakSkillsFromAnswers(

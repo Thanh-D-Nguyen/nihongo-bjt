@@ -145,4 +145,14 @@ export class BattleController {
 
     return this.battleRepository.listRecentForUser(parsed.data.userId, parsed.data.limit);
   }
+
+  @Get("configs/available")
+  @ApiOperation({
+    summary: "List published battle configs available for learners",
+    description:
+      "Returns battle configs with status=published that are currently active (within schedule window or no schedule)."
+  })
+  availableConfigs() {
+    return this.battleRepository.listPublishedConfigs();
+  }
 }

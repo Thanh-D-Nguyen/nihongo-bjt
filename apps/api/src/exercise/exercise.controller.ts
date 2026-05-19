@@ -52,17 +52,22 @@ export class ExerciseController {
   @ApiQuery({ name: "count", required: false, schema: { type: "integer", default: 5 } })
   @ApiQuery({ name: "sourceType", required: false, schema: { type: "string", enum: ["lexeme", "grammar", "kanji"] } })
   @ApiQuery({ name: "placement", required: false, schema: { type: "string", enum: ["practice_tab", "post_review", "daily_hub"] } })
-  async generate(@Query() query: Record<string, string | undefined>) {
+  async generate(
+    @CurrentUser() user: KeycloakAuthenticatedUser | undefined,
+    @Query() query: Record<string, string | undefined>
+  ) {
     const parsed = generateExercisesQuerySchema.safeParse(query);
     if (!parsed.success) {
       throw new BadRequestException(parsed.error.flatten());
     }
+    const userId = user?.sub;
     return this.exerciseService.generateExercises({
       type: parsed.data.type,
       level: parsed.data.level,
       count: parsed.data.count,
       sourceType: parsed.data.sourceType,
-      placement: parsed.data.placement
+      placement: parsed.data.placement,
+      userId
     });
   }
 
@@ -150,5 +155,116 @@ export class ExerciseController {
     const resolved = resolveLearnerUserId(user, userId, { required: true })!;
     const limit = Math.min(Math.max(parseInt(limitStr ?? "20", 10) || 20, 1), 100);
     return this.repo.userSessionHistory(resolved, limit);
+  }
+
+  @Get("performance")
+  @ApiOperation({
+    summary: "Get user's adaptive performance data per exercise type.",
+    description: "Returns the user's running accuracy, current difficulty level, and performance stats for each exercise type and level combination."
+  })
+  @ApiQuery({ name: "exerciseType", required: false, schema: { type: "string" } })
+  async getPerformance(
+    @CurrentUser() user: KeycloakAuthenticatedUser | undefined,
+    @Query("userId") userId: string | undefined,
+    @Query("exerciseType") exerciseType: string | undefined
+  ) {
+    const resolved = resolveLearnerUserId(user, userId, { required: true })!;
+    if (exerciseType) {
+      return this.repo.getUserPerformanceByType(resolved, exerciseType);
+    }
+    // Return all performance records for this user
+    return this.repo.getAllUserPerformance(resolved);
+  }
+
+  @Get("remediations")
+  @ApiOperation({
+    summary: "Get remediation flashcards created from failed exercises.",
+    description: "Returns recent auto-generated flashcards that were created when the user answered incorrectly."
+  })
+  @ApiQuery({ name: "limit", required: false, schema: { type: "integer", default: 20 } })
+  async getRemediations(
+    @CurrentUser() user: KeycloakAuthenticatedUser | undefined,
+    @Query("userId") userId: string | undefined,
+    @Query("limit") limitStr: string | undefined
+  ) {
+    const resolved = resolveLearnerUserId(user, userId, { required: true })!;
+    const limit = Math.min(Math.max(parseInt(limitStr ?? "20", 10) || 20, 1), 50);
+    return this.repo.getUserRemediations(resolved, limit);
+  }
+
+  @Get("daily-progress")
+  @ApiOperation({
+    summary: "Get today's exercise progress vs daily goal.",
+    description: "Returns the count of exercises completed today and the daily goal target."
+  })
+  async getDailyProgress(
+    @CurrentUser() user: KeycloakAuthenticatedUser | undefined,
+    @Query("userId") userId: string | undefined
+  ) {
+    const resolved = resolveLearnerUserId(user, userId, { required: true })!;
+    const [completed, goal] = await Promise.all([
+      this.repo.countTodayExercises(resolved),
+      this.repo.getDailyGoalExercises(resolved)
+    ]);
+    return {
+      completed,
+      goal,
+      progress: goal > 0 ? Math.min(completed / goal, 1.0) : 1.0,
+      isComplete: completed >= goal
+    };
+  }
+
+  @Post("remediate/:exerciseId")
+  @ApiOperation({
+    summary: "Manually create a remediation flashcard from an exercise.",
+    description: "Creates a flashcard from a specific exercise and adds it to the user's SRS queue."
+  })
+  @ApiParam({ name: "exerciseId", description: "Exercise ID to create flashcard from" })
+  async manualRemediate(
+    @CurrentUser() user: KeycloakAuthenticatedUser | undefined,
+    @Param("exerciseId") exerciseId: string,
+    @Query("userId") userId: string | undefined
+  ) {
+    const resolved = resolveLearnerUserId(user, userId, { required: true })!;
+    return this.exerciseService.manualRemediate(resolved, exerciseId);
+  }
+
+  @Get("review/due")
+  @ApiOperation({
+    summary: "Get exercises due for SRS review.",
+    description: "Returns exercises that are scheduled for review based on the SM-2 spaced repetition algorithm."
+  })
+  @ApiQuery({ name: "limit", required: false, schema: { type: "integer", default: 20 } })
+  async getDueReviews(
+    @CurrentUser() user: KeycloakAuthenticatedUser | undefined,
+    @Query("userId") userId: string | undefined,
+    @Query("limit") limitStr: string | undefined
+  ) {
+    const resolved = resolveLearnerUserId(user, userId, { required: true })!;
+    const limit = Math.min(Math.max(parseInt(limitStr ?? "20", 10) || 20, 1), 50);
+    return this.exerciseService.getDueReviews(resolved, limit);
+  }
+
+  @Post("review/:exerciseId")
+  @ApiOperation({
+    summary: "Submit a review rating for an exercise (SRS).",
+    description: "Rates how well the user recalled an exercise. Updates the SRS scheduling. Ratings: again, hard, good, easy."
+  })
+  @ApiParam({ name: "exerciseId", description: "Exercise ID being reviewed" })
+  async reviewExercise(
+    @CurrentUser() user: KeycloakAuthenticatedUser | undefined,
+    @Param("exerciseId") exerciseId: string,
+    @Body() body: { rating: string; userId?: string }
+  ) {
+    const resolved = resolveLearnerUserId(user, body.userId, { required: true })!;
+    const validRatings = ["again", "hard", "good", "easy"];
+    if (!validRatings.includes(body.rating)) {
+      throw new BadRequestException(`Rating must be one of: ${validRatings.join(", ")}`);
+    }
+    return this.exerciseService.reviewExercise(
+      resolved,
+      exerciseId,
+      body.rating as "again" | "hard" | "good" | "easy"
+    );
   }
 }

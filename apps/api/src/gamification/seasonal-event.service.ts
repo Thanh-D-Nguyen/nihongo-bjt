@@ -1,26 +1,32 @@
-import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
+import { Injectable, NotFoundException, BadRequestException, Logger } from "@nestjs/common";
 import { createPrismaClient } from "@nihongo-bjt/database";
 
 @Injectable()
 export class SeasonalEventService {
+  private readonly logger = new Logger(SeasonalEventService.name);
   private readonly prisma = createPrismaClient();
 
   /** Get active events (currently running) */
   async getActiveEvents() {
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    return this.prisma.seasonalEvent.findMany({
-      where: {
-        active: true,
-        startDate: { lte: today },
-        endDate: { gte: today },
-      },
-      include: {
-        challenges: { orderBy: { sortOrder: "asc" } },
-        _count: { select: { participants: true } },
-      },
-      orderBy: { endDate: "asc" },
-    });
+    try {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      return await this.prisma.seasonalEvent.findMany({
+        where: {
+          active: true,
+          startDate: { lte: today },
+          endDate: { gte: today },
+        },
+        include: {
+          challenges: { orderBy: { sortOrder: "asc" } },
+          _count: { select: { participants: true } },
+        },
+        orderBy: { endDate: "asc" },
+      });
+    } catch (err) {
+      this.logger.error("getActiveEvents failed", err instanceof Error ? err.stack : err);
+      return [];
+    }
   }
 
   /** Get event detail with user progress */

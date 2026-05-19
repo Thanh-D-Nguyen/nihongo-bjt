@@ -17,6 +17,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useKeycloakAuth } from "../../../components/auth/keycloak-auth-provider";
 import { learnerApiFetch } from "../../../lib/learner-api";
+import { ActivityBarChart } from "./_components/activity-bar-chart";
+import { ActivityHeatmap } from "./_components/activity-heatmap";
+import { RadialProgress } from "./_components/radial-progress";
+import { TrendMetricCard } from "./_components/trend-metric-card";
+
+/* ─────────────────────────── Types ─────────────────────────── */
 
 export interface AnalyticsLabels {
   accuracy: string;
@@ -38,6 +44,7 @@ export interface AnalyticsLabels {
   emptyTitle: string;
   error: string;
   eyebrow: string;
+  heatmapLabel: string;
   insight: string;
   learningPathsCta: string;
   learningPathsDescription: string;
@@ -67,11 +74,13 @@ export interface AnalyticsLabels {
   refresh: string;
   refreshing: string;
   reviews: string;
+  shareProgress: string;
   streak: string;
   subtitle: string;
   summaryTitle: string;
   summaryTitleDynamic: string;
   title: string;
+  trendVsPrevious: string;
   weakSkillChip: string;
   weakSkillsColAttempts: string;
   weakSkillsColMiss: string;
@@ -99,11 +108,18 @@ interface LearningPathRow {
   titleVi: string;
 }
 
+interface PreviousTotals {
+  bjtAccuracyPct: number;
+  completedBjtSessions: number;
+  reviewCount: number;
+}
+
 interface LearnerAnalyticsPayload {
   dailyActivity: DailyActivityPoint[];
   dueFlashcards: number | null;
   insight: string;
   learningPaths: LearningPathRow[];
+  previousTotals: PreviousTotals | null;
   range: { days: number; end: string; start: string };
   totals: {
     bjtAccuracyPct: number;
@@ -119,6 +135,8 @@ interface LearnerAnalyticsPayload {
   }>;
 }
 
+/* ─────────────────────────── Helpers ─────────────────────────── */
+
 function normalizeLearnerAnalyticsPayload(raw: unknown): LearnerAnalyticsPayload {
   const r = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
   const totalsRaw =
@@ -133,6 +151,10 @@ function normalizeLearnerAnalyticsPayload(raw: unknown): LearnerAnalyticsPayload
   const n = (v: unknown, fallback: number) =>
     typeof v === "number" && !Number.isNaN(v) ? v : fallback;
 
+  const prevRaw = r.previousTotals && typeof r.previousTotals === "object"
+    ? (r.previousTotals as Record<string, unknown>)
+    : null;
+
   return {
     dailyActivity: dailyActivity as DailyActivityPoint[],
     dueFlashcards:
@@ -143,6 +165,13 @@ function normalizeLearnerAnalyticsPayload(raw: unknown): LearnerAnalyticsPayload
           : null,
     insight: typeof r.insight === "string" ? r.insight : "",
     learningPaths: learningPaths as LearningPathRow[],
+    previousTotals: prevRaw
+      ? {
+          bjtAccuracyPct: n(prevRaw.bjtAccuracyPct, 0),
+          completedBjtSessions: n(prevRaw.completedBjtSessions, 0),
+          reviewCount: n(prevRaw.reviewCount, 0)
+        }
+      : null,
     range: {
       days: n(rangeRaw.days, 7),
       end: typeof rangeRaw.end === "string" ? rangeRaw.end : "",
@@ -163,9 +192,7 @@ const PERIOD_OPTIONS = [7, 30, 90] as const;
 function formatUtcRangeLabel(dateIso: string, locale: string): string {
   const raw = dateIso.includes("T") ? dateIso : `${dateIso}T00:00:00.000Z`;
   const d = new Date(raw);
-  if (Number.isNaN(d.getTime())) {
-    return dateIso.slice(0, 10);
-  }
+  if (Number.isNaN(d.getTime())) return dateIso.slice(0, 10);
   return new Intl.DateTimeFormat(locale === "ja" ? "ja-JP" : "vi-VN", {
     day: "2-digit",
     month: "short",
@@ -183,18 +210,10 @@ function pickPrimaryAction(input: {
 }): "flashcards" | "quiz" {
   const { accuracyPct, completedSessions, dueFlashcards, reviewCount, weakCount } = input;
   const activity = reviewCount + completedSessions;
-  if (dueFlashcards >= 4) {
-    return "flashcards";
-  }
-  if (weakCount >= 1 && dueFlashcards <= 2) {
-    return "quiz";
-  }
-  if (accuracyPct < 62 && activity >= 4) {
-    return "quiz";
-  }
-  if (dueFlashcards >= 1) {
-    return "flashcards";
-  }
+  if (dueFlashcards >= 4) return "flashcards";
+  if (weakCount >= 1 && dueFlashcards <= 2) return "quiz";
+  if (accuracyPct < 62 && activity >= 4) return "quiz";
+  if (dueFlashcards >= 1) return "flashcards";
   return activity < 2 ? "flashcards" : "quiz";
 }
 
@@ -202,17 +221,13 @@ function pickNudgeMessage(
   labels: AnalyticsLabels,
   input: { due: number; streak: number; weakCount: number }
 ): string {
-  if (input.due > 0) {
-    return labels.nudgeDue.replace("{n}", String(input.due));
-  }
-  if (input.weakCount > 0) {
-    return labels.nudgeWeak;
-  }
-  if (input.streak >= 2) {
-    return labels.nudgeStreak.replace("{n}", String(input.streak));
-  }
+  if (input.due > 0) return labels.nudgeDue.replace("{n}", String(input.due));
+  if (input.weakCount > 0) return labels.nudgeWeak;
+  if (input.streak >= 2) return labels.nudgeStreak.replace("{n}", String(input.streak));
   return labels.nudgeCalm;
 }
+
+/* ─────────────────────────── Main Component ─────────────────────────── */
 
 export function LearnerAnalyticsClient({
   labels,
@@ -229,18 +244,14 @@ export function LearnerAnalyticsClient({
 
   const loadAnalytics = useCallback(async () => {
     const uid = userId;
-    if (!uid) {
-      return;
-    }
+    if (!uid) return;
     setLoading(true);
     setError(false);
     try {
       const response = await learnerApiFetch(
         `/api/analytics/learner?days=${days}&userId=${encodeURIComponent(uid)}&locale=${locale}`
       );
-      if (!response.ok) {
-        throw new Error("Learner analytics request failed");
-      }
+      if (!response.ok) throw new Error("Learner analytics request failed");
       setAnalytics(normalizeLearnerAnalyticsPayload(await response.json()));
     } catch {
       setError(true);
@@ -258,9 +269,7 @@ export function LearnerAnalyticsClient({
     : false;
 
   const primaryKind = useMemo(() => {
-    if (!analytics?.totals || analytics.dueFlashcards == null) {
-      return "flashcards" as const;
-    }
+    if (!analytics?.totals || analytics.dueFlashcards == null) return "flashcards" as const;
     return pickPrimaryAction({
       accuracyPct: analytics.totals.bjtAccuracyPct,
       completedSessions: analytics.totals.completedBjtSessions,
@@ -271,44 +280,25 @@ export function LearnerAnalyticsClient({
   }, [analytics]);
 
   const primaryHint = useMemo(() => {
-    if (!analytics?.totals || analytics.dueFlashcards == null) {
-      return labels.primaryHintMaintain;
-    }
+    if (!analytics?.totals || analytics.dueFlashcards == null) return labels.primaryHintMaintain;
     if (primaryKind === "flashcards") {
-      if (analytics.dueFlashcards > 0) {
+      if (analytics.dueFlashcards > 0)
         return labels.primaryHintFlashcardsDue.replace("{n}", String(analytics.dueFlashcards));
-      }
       return labels.primaryHintMaintain;
     }
-    if (analytics.weakSkills.length > 0) {
-      return labels.primaryHintQuizSkills;
-    }
-    if (analytics.totals.bjtAccuracyPct < 70) {
-      return labels.primaryHintQuizAccuracy;
-    }
+    if (analytics.weakSkills.length > 0) return labels.primaryHintQuizSkills;
+    if (analytics.totals.bjtAccuracyPct < 70) return labels.primaryHintQuizAccuracy;
     return labels.primaryHintMaintain;
   }, [analytics, labels, primaryKind]);
 
   const nudgeLine = useMemo(() => {
-    if (!analytics?.totals || analytics.dueFlashcards == null) {
-      return "";
-    }
+    if (!analytics?.totals || analytics.dueFlashcards == null) return "";
     return pickNudgeMessage(labels, {
       due: analytics.dueFlashcards,
       streak: analytics.totals.streakDays,
       weakCount: analytics.weakSkills.length
     });
   }, [analytics, labels]);
-
-  const activityMax = useMemo(() => {
-    if (!analytics?.dailyActivity?.length) {
-      return 1;
-    }
-    return Math.max(
-      1,
-      ...analytics.dailyActivity.map((p) => p.reviews + p.quizAnswers + p.quizSessionsCompleted)
-    );
-  }, [analytics]);
 
   const rangeHint =
     analytics?.range?.start && analytics?.range?.end
@@ -319,33 +309,32 @@ export function LearnerAnalyticsClient({
 
   return (
     <main className="w-full space-y-6 pb-12">
+      {/* ─── Header ─── */}
       <PageHeader
         actions={
           <div className="flex flex-wrap items-center justify-end gap-2">
             <fieldset
               aria-label={labels.periodFilterAria}
-              className="flex flex-wrap items-center gap-1 rounded-full border border-ink/10 bg-paper p-1"
+              className="flex items-center gap-1 rounded-full border border-ink/10 bg-paper p-1 dark:border-ink/20 dark:bg-gray-800/50"
             >
               {PERIOD_OPTIONS.map((d) => (
                 <button
                   key={d}
-                  className={`rounded-full px-3 py-1.5 text-xs font-bold outline-none ring-offset-2 transition focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-45 ${
-                    days === d ? "bg-accent text-white" : "text-muted hover:bg-ink/5"
+                  className={`rounded-full px-3 py-1.5 text-xs font-bold outline-none ring-offset-2 transition-all focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-45 ${
+                    days === d
+                      ? "bg-accent text-white shadow-sm shadow-accent/25"
+                      : "text-muted hover:bg-ink/5 dark:hover:bg-ink/10"
                   }`}
                   disabled={loading || !userId}
                   type="button"
                   onClick={() => setDays(d)}
                 >
-                  {d === 7
-                    ? labels.periodDays7
-                    : d === 30
-                      ? labels.periodDays30
-                      : labels.periodDays90}
+                  {d === 7 ? labels.periodDays7 : d === 30 ? labels.periodDays30 : labels.periodDays90}
                 </button>
               ))}
             </fieldset>
             <button
-              className="inline-flex min-h-10 items-center justify-center rounded-xl border border-ink/12 bg-surface px-4 text-sm font-bold text-ink outline-none ring-offset-2 hover:bg-paper focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50"
+              className="inline-flex min-h-10 items-center justify-center rounded-xl border border-ink/12 bg-surface px-4 text-sm font-bold text-ink outline-none ring-offset-2 transition hover:bg-paper hover:shadow-sm focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50 dark:border-ink/20 dark:bg-gray-800/50 dark:hover:bg-gray-700/50"
               disabled={loading || !userId}
               type="button"
               onClick={() => void loadAnalytics()}
@@ -359,36 +348,42 @@ export function LearnerAnalyticsClient({
         title={labels.title}
       />
 
+      {/* ─── Period hint ─── */}
       <p className="text-xs font-semibold text-muted">
         {labels.periodLabelDynamic.replace("{n}", String(days))}
         {rangeHint ? ` · ${rangeHint}` : ""}
       </p>
 
-      {error ? <ErrorState className="py-5" title={labels.error} /> : null}
+      {/* ─── Error ─── */}
+      {error && <ErrorState className="py-5" title={labels.error} />}
 
-      {loading && !analytics ? (
+      {/* ─── Loading skeleton ─── */}
+      {loading && !analytics && (
         <div className="space-y-4" aria-busy>
-          <LoadingSkeleton className="h-36" />
+          <LoadingSkeleton className="h-36 rounded-2xl" />
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {[1, 2, 3, 4].map((i) => (
-              <LoadingSkeleton className="h-24" key={i} />
+              <LoadingSkeleton className="h-28 rounded-2xl" key={i} />
             ))}
           </div>
+          <LoadingSkeleton className="h-48 rounded-2xl" />
         </div>
-      ) : null}
+      )}
 
-      {analytics && hasData ? (
+      {/* ─── Primary Action Card ─── */}
+      {analytics && hasData && (
         <section
           aria-labelledby="analytics-primary-step"
-          className="rounded-2xl border border-ink/10 bg-surface p-4 shadow-sm sm:p-5"
+          className="relative overflow-hidden rounded-2xl border border-accent/15 bg-gradient-to-br from-accent/5 via-surface to-accent/3 p-5 shadow-sm dark:border-accent/25 dark:from-accent/10 dark:via-gray-900 dark:to-accent/5"
         >
+          <div className="absolute -right-4 -top-4 size-24 rounded-full bg-accent/5 blur-2xl" aria-hidden />
           <h2 className="text-base font-semibold text-ink" id="analytics-primary-step">
             {labels.primaryStepTitle}
           </h2>
-          <p className="mt-1 text-sm text-muted">{primaryHint}</p>
+          <p className="mt-1 text-sm text-muted leading-relaxed">{primaryHint}</p>
           <div className="mt-4">
             <Link
-              className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-accent px-5 text-sm font-bold text-white outline-none ring-offset-2 hover:bg-accent-hover focus-visible:ring-2 focus-visible:ring-accent sm:w-auto"
+              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-accent px-6 text-sm font-bold text-white shadow-sm shadow-accent/20 outline-none ring-offset-2 transition-all hover:bg-accent-hover hover:shadow-md hover:shadow-accent/25 focus-visible:ring-2 focus-visible:ring-accent active:scale-[0.98]"
               href={
                 primaryKind === "flashcards"
                   ? `/${locale}/flashcards?tab=review`
@@ -399,38 +394,40 @@ export function LearnerAnalyticsClient({
             </Link>
           </div>
         </section>
-      ) : null}
+      )}
 
-      {analytics && hasData && nudgeLine ? (
-        <div className="rounded-2xl border border-leaf/25 bg-leaf/10 p-4">
-          <p className="text-xs font-bold uppercase tracking-wide text-muted">
+      {/* ─── Nudge Card ─── */}
+      {analytics && hasData && nudgeLine && (
+        <div className="rounded-2xl border border-emerald-200/40 bg-gradient-to-r from-emerald-50/80 to-emerald-50/40 p-4 dark:border-emerald-700/30 dark:from-emerald-950/30 dark:to-emerald-950/10">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600/80 dark:text-emerald-400/80">
             {labels.nudgeTitle}
           </p>
           <p className="mt-2 text-sm leading-relaxed text-ink">{nudgeLine}</p>
         </div>
-      ) : null}
+      )}
 
-      {analytics ? (
-        <Card className="border-ink/10 shadow-sm">
-          <CardHeader className="space-y-1 pb-2">
+      {/* ─── Main Analytics Content ─── */}
+      {analytics && (
+        <Card className="overflow-hidden border-ink/8 shadow-sm dark:border-ink/15">
+          <CardHeader className="space-y-1 pb-3">
             <CardTitle className="text-base font-semibold text-ink">
               {labels.summaryTitleDynamic.replace("{n}", String(days))}
             </CardTitle>
-            {!hasData ? <CardDescription>{labels.emptyTitle}</CardDescription> : null}
+            {!hasData && <CardDescription>{labels.emptyTitle}</CardDescription>}
           </CardHeader>
-          <CardContent className="space-y-6 pt-2">
+          <CardContent className="space-y-8 pt-2">
             {!hasData ? (
               <EmptyState
                 action={
                   <div className="flex flex-wrap justify-center gap-2">
                     <Link
-                      className="inline-flex min-h-10 items-center justify-center rounded-xl bg-leaf px-4 text-sm font-bold text-white outline-none ring-offset-2 hover:bg-leaf/90 focus-visible:ring-2 focus-visible:ring-accent"
+                      className="inline-flex min-h-10 items-center justify-center rounded-xl bg-emerald-600 px-5 text-sm font-bold text-white shadow-sm outline-none ring-offset-2 transition-all hover:bg-emerald-700 hover:shadow-md focus-visible:ring-2 focus-visible:ring-accent active:scale-[0.98]"
                       href={`/${locale}/flashcards`}
                     >
                       {labels.emptyCtaFlashcards}
                     </Link>
                     <Link
-                      className="inline-flex min-h-10 items-center justify-center rounded-xl border border-ink/12 bg-surface px-4 text-sm font-bold text-ink outline-none ring-offset-2 hover:bg-paper focus-visible:ring-2 focus-visible:ring-accent"
+                      className="inline-flex min-h-10 items-center justify-center rounded-xl border border-ink/12 bg-surface px-5 text-sm font-bold text-ink outline-none ring-offset-2 transition hover:bg-paper hover:shadow-sm focus-visible:ring-2 focus-visible:ring-accent dark:border-ink/20"
                       href={`/${locale}/quiz`}
                     >
                       {labels.emptyCtaQuiz}
@@ -442,23 +439,65 @@ export function LearnerAnalyticsClient({
               />
             ) : (
               <>
-                <SectionHeader heading="h3" title={labels.metricsTitle} variant="overline" />
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-                  <Metric label={labels.reviews} value={analytics.totals.reviewCount} />
-                  <Metric label={labels.accuracy} value={`${analytics.totals.bjtAccuracyPct}%`} />
-                  <Metric
-                    label={labels.completedSessions}
-                    value={analytics.totals.completedBjtSessions}
-                  />
-                  <Metric label={labels.streak} value={analytics.totals.streakDays} />
-                  {analytics.dueFlashcards != null && analytics.dueFlashcards > 0 ? (
-                    <Metric label={labels.dueCardsLabel} value={analytics.dueFlashcards} />
-                  ) : null}
-                </div>
+                {/* ─── Bento Metric Cards ─── */}
+                <section>
+                  <SectionHeader heading="h3" title={labels.metricsTitle} variant="overline" />
+                  {analytics.previousTotals && (
+                    <p className="mb-3 text-[10px] font-medium text-muted">
+                      {labels.trendVsPrevious.replace("{n}", String(days))}
+                    </p>
+                  )}
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+                    <TrendMetricCard
+                      label={labels.reviews}
+                      value={analytics.totals.reviewCount}
+                      previousValue={analytics.previousTotals?.reviewCount}
+                      icon={<span>📝</span>}
+                      accentClass="from-emerald-500/10 to-emerald-500/5 dark:from-emerald-500/20 dark:to-emerald-500/10"
+                    />
+                    <div className="col-span-1 flex items-center justify-center rounded-2xl border border-ink/8 bg-gradient-to-br from-blue-500/5 to-blue-500/3 p-4 shadow-sm dark:border-ink/15 dark:from-blue-500/15 dark:to-blue-500/5">
+                      <RadialProgress
+                        value={analytics.totals.bjtAccuracyPct}
+                        label={labels.accuracy}
+                        colorClass="stroke-blue-500 dark:stroke-blue-400"
+                      />
+                    </div>
+                    <TrendMetricCard
+                      label={labels.completedSessions}
+                      value={analytics.totals.completedBjtSessions}
+                      previousValue={analytics.previousTotals?.completedBjtSessions}
+                      icon={<span>🎯</span>}
+                      accentClass="from-amber-500/10 to-amber-500/5 dark:from-amber-500/20 dark:to-amber-500/10"
+                    />
+                    <TrendMetricCard
+                      label={labels.streak}
+                      value={analytics.totals.streakDays}
+                      icon={<span>🔥</span>}
+                      accentClass="from-orange-500/10 to-orange-500/5 dark:from-orange-500/20 dark:to-orange-500/10"
+                    />
+                    {analytics.dueFlashcards != null && analytics.dueFlashcards > 0 && (
+                      <TrendMetricCard
+                        label={labels.dueCardsLabel}
+                        value={analytics.dueFlashcards}
+                        icon={<span>📚</span>}
+                        accentClass="from-purple-500/10 to-purple-500/5 dark:from-purple-500/20 dark:to-purple-500/10"
+                      />
+                    )}
+                  </div>
+                </section>
 
-                <div className="rounded-xl border border-ink/10 bg-paper/60 p-4">
+                {/* ─── Activity Heatmap ─── */}
+                <section className="rounded-2xl border border-ink/8 bg-paper/50 p-4 dark:border-ink/15 dark:bg-gray-800/30">
+                  <ActivityHeatmap
+                    dailyActivity={analytics.dailyActivity}
+                    label={labels.heatmapLabel}
+                  />
+                </section>
+
+                {/* ─── Daily Activity Chart ─── */}
+                <section className="rounded-2xl border border-ink/8 bg-paper/50 p-5 dark:border-ink/15 dark:bg-gray-800/30">
                   <SectionHeader heading="h3" title={labels.activityTitle} variant="overline" />
-                  <p className="mb-4 text-xs text-muted">{labels.activityDescription}</p>
+                  <p className="mb-5 text-xs text-muted">{labels.activityDescription}</p>
                   {analytics.dailyActivity.length === 0 ||
                   analytics.dailyActivity.every(
                     (p) => p.reviews + p.quizAnswers + p.quizSessionsCompleted === 0
@@ -466,139 +505,79 @@ export function LearnerAnalyticsClient({
                     <p className="text-sm text-muted">{labels.activityEmpty}</p>
                   ) : (
                     <>
-                      <div aria-hidden className="mb-4 flex h-32 items-end gap-1 sm:gap-1.5">
-                        {analytics.dailyActivity.map((p) => {
-                          const total = p.reviews + p.quizAnswers + p.quizSessionsCompleted;
-                          const barPx = Math.max(
-                            total === 0 ? 0 : 4,
-                            Math.round((total / activityMax) * 120)
-                          );
-                          return (
-                            <div
-                              className="flex min-w-0 flex-1 flex-col items-center gap-1"
-                              key={p.date}
-                              title={`${p.date}: SRS ${p.reviews}, BJT ${p.quizAnswers}, ${p.quizSessionsCompleted}`}
-                            >
-                              <div
-                                className="flex w-full max-w-[16px] flex-col justify-end sm:max-w-[20px]"
-                                style={{ height: 120 }}
-                              >
-                                {total === 0 ? (
-                                  <div className="h-1 w-full rounded-sm bg-ink/10" />
-                                ) : (
-                                  <div
-                                    className="flex w-full flex-col justify-end overflow-hidden rounded-md bg-ink/5"
-                                    style={{ height: barPx }}
-                                  >
-                                    {p.reviews > 0 ? (
-                                      <div
-                                        className="w-full min-h-[2px] bg-leaf/85"
-                                        style={{ flexGrow: p.reviews }}
-                                      />
-                                    ) : null}
-                                    {p.quizAnswers > 0 ? (
-                                      <div
-                                        className="w-full min-h-[2px] bg-accent/80"
-                                        style={{ flexGrow: p.quizAnswers }}
-                                      />
-                                    ) : null}
-                                    {p.quizSessionsCompleted > 0 ? (
-                                      <div
-                                        className="w-full min-h-[2px] bg-amber-500/75"
-                                        style={{ flexGrow: p.quizSessionsCompleted }}
-                                      />
-                                    ) : null}
-                                  </div>
-                                )}
-                              </div>
-                              <span className="max-w-full truncate text-[9px] font-medium text-muted tabular-nums sm:text-[10px]">
-                                {p.date.slice(5)}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                      <div className="mb-3 flex flex-wrap gap-3 text-[10px] text-muted sm:text-xs">
-                        <span className="inline-flex items-center gap-1">
-                          <span aria-hidden className="inline-block size-2 rounded-sm bg-leaf/85" />
-                          {labels.activityReviewsShort}
-                        </span>
-                        <span className="inline-flex items-center gap-1">
-                          <span
-                            aria-hidden
-                            className="inline-block size-2 rounded-sm bg-accent/80"
-                          />
-                          {labels.activityQuizShort}
-                        </span>
-                        <span className="inline-flex items-center gap-1">
-                          <span
-                            aria-hidden
-                            className="inline-block size-2 rounded-sm bg-amber-500/75"
-                          />
-                          {labels.activitySessionsShort}
-                        </span>
-                      </div>
-                      <div className="overflow-x-auto rounded-lg border border-ink/8">
-                        <table className="w-full min-w-[320px] text-left text-xs sm:text-sm">
-                          <caption className="px-2 py-2 text-left text-xs font-semibold text-muted">
-                            {labels.activityTableCaption}
-                          </caption>
-                          <thead>
-                            <tr className="border-b border-ink/10 bg-surface">
-                              <th className="px-3 py-2 font-semibold text-ink" scope="col">
-                                {labels.activityColDateUtc}
-                              </th>
-                              <th className="px-3 py-2 font-semibold text-ink" scope="col">
-                                {labels.activityReviewsShort}
-                              </th>
-                              <th className="px-3 py-2 font-semibold text-ink" scope="col">
-                                {labels.activityQuizShort}
-                              </th>
-                              <th className="px-3 py-2 font-semibold text-ink" scope="col">
-                                {labels.activitySessionsShort}
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {analytics.dailyActivity.map((p) => (
-                              <tr className="border-b border-ink/5" key={p.date}>
-                                <td className="px-3 py-2 tabular-nums text-muted">{p.date}</td>
-                                <td className="px-3 py-2 tabular-nums">{p.reviews}</td>
-                                <td className="px-3 py-2 tabular-nums">{p.quizAnswers}</td>
-                                <td className="px-3 py-2 tabular-nums">
-                                  {p.quizSessionsCompleted}
-                                </td>
+                      <ActivityBarChart
+                        data={analytics.dailyActivity}
+                        labels={{
+                          reviews: labels.activityReviewsShort,
+                          quiz: labels.activityQuizShort,
+                          sessions: labels.activitySessionsShort
+                        }}
+                      />
+
+                      {/* Collapsible table */}
+                      <details className="mt-4">
+                        <summary className="cursor-pointer text-xs font-semibold text-muted hover:text-ink transition">
+                          {labels.activityTableCaption}
+                        </summary>
+                        <div className="mt-2 overflow-x-auto rounded-lg border border-ink/8 dark:border-ink/15">
+                          <table className="w-full min-w-[320px] text-left text-xs sm:text-sm">
+                            <thead>
+                              <tr className="border-b border-ink/10 bg-surface dark:bg-gray-800/50">
+                                <th className="px-3 py-2 font-semibold text-ink" scope="col">
+                                  {labels.activityColDateUtc}
+                                </th>
+                                <th className="px-3 py-2 font-semibold text-ink" scope="col">
+                                  {labels.activityReviewsShort}
+                                </th>
+                                <th className="px-3 py-2 font-semibold text-ink" scope="col">
+                                  {labels.activityQuizShort}
+                                </th>
+                                <th className="px-3 py-2 font-semibold text-ink" scope="col">
+                                  {labels.activitySessionsShort}
+                                </th>
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
+                            </thead>
+                            <tbody>
+                              {analytics.dailyActivity.map((p) => (
+                                <tr className="border-b border-ink/5 dark:border-ink/10" key={p.date}>
+                                  <td className="px-3 py-2 tabular-nums text-muted">{p.date}</td>
+                                  <td className="px-3 py-2 tabular-nums">{p.reviews}</td>
+                                  <td className="px-3 py-2 tabular-nums">{p.quizAnswers}</td>
+                                  <td className="px-3 py-2 tabular-nums">{p.quizSessionsCompleted}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </details>
                     </>
                   )}
-                </div>
+                </section>
 
-                <div className="rounded-xl border border-amber-200/50 bg-amber-soft/35 p-4">
-                  <p className="text-xs font-bold uppercase tracking-wide text-muted">
+                {/* ─── Coaching Insight ─── */}
+                <section className="rounded-2xl border border-amber-200/40 bg-gradient-to-r from-amber-50/60 to-amber-50/30 p-5 dark:border-amber-700/30 dark:from-amber-950/20 dark:to-amber-950/10">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700/70 dark:text-amber-400/80">
                     {labels.insight}
                   </p>
                   <p className="mt-2 text-sm leading-relaxed text-ink">{analytics.insight}</p>
-                </div>
+                </section>
 
-                <div className="rounded-xl border border-ink/10 bg-surface p-4">
+                {/* ─── Weak Skills ─── */}
+                <section className="rounded-2xl border border-ink/8 bg-surface p-5 dark:border-ink/15 dark:bg-gray-800/40">
                   <SectionHeader
                     description={labels.weakSkillsHint}
                     heading="h3"
                     title={labels.weakSkillsTitle}
                   />
                   {analytics.weakSkills.length === 0 ? (
-                    <p className="mt-2 text-sm text-muted">{labels.weakSkillsEmpty}</p>
+                    <p className="mt-3 text-sm text-muted">{labels.weakSkillsEmpty}</p>
                   ) : (
                     <>
-                      <ul className="mt-3 flex flex-wrap gap-2">
+                      <ul className="mt-4 flex flex-wrap gap-2">
                         {analytics.weakSkills.map((skill) => (
                           <li key={skill.skillTag}>
                             <Link
-                              className="inline-flex min-h-9 items-center rounded-xl border border-ink/12 bg-paper/80 px-3 text-xs font-bold text-ink outline-none ring-offset-2 hover:border-accent/30 hover:bg-accent-soft/40 focus-visible:ring-2 focus-visible:ring-accent"
+                              className="inline-flex min-h-9 items-center rounded-xl border border-red-200/50 bg-red-50/50 px-3 text-xs font-bold text-red-700 outline-none ring-offset-2 transition-all hover:border-red-300 hover:bg-red-100/60 hover:shadow-sm focus-visible:ring-2 focus-visible:ring-accent active:scale-[0.97] dark:border-red-800/40 dark:bg-red-950/30 dark:text-red-300 dark:hover:border-red-700 dark:hover:bg-red-950/50"
                               href={`/${locale}/flashcards?source=analytics&skill=${encodeURIComponent(skill.skillTag)}`}
                             >
                               {labels.weakSkillChip
@@ -608,13 +587,13 @@ export function LearnerAnalyticsClient({
                           </li>
                         ))}
                       </ul>
-                      <div className="mt-4 overflow-x-auto rounded-lg border border-ink/8">
+                      <div className="mt-4 overflow-x-auto rounded-lg border border-ink/8 dark:border-ink/15">
                         <table className="w-full min-w-[280px] text-left text-xs sm:text-sm">
-                          <caption className="px-2 py-2 text-left text-xs font-semibold text-muted">
+                          <caption className="px-3 py-2 text-left text-xs font-semibold text-muted">
                             {labels.weakSkillsTableCaption}
                           </caption>
                           <thead>
-                            <tr className="border-b border-ink/10 bg-paper/80">
+                            <tr className="border-b border-ink/10 bg-paper/80 dark:bg-gray-800/50">
                               <th className="px-3 py-2 font-semibold text-ink" scope="col">
                                 {labels.weakSkillsColSkill}
                               </th>
@@ -628,10 +607,12 @@ export function LearnerAnalyticsClient({
                           </thead>
                           <tbody>
                             {analytics.weakSkills.map((skill) => (
-                              <tr className="border-b border-ink/5" key={`row-${skill.skillTag}`}>
+                              <tr className="border-b border-ink/5 dark:border-ink/10" key={`row-${skill.skillTag}`}>
                                 <td className="px-3 py-2 font-medium text-ink">{skill.skillTag}</td>
                                 <td className="px-3 py-2 tabular-nums">{skill.attempts}</td>
-                                <td className="px-3 py-2 tabular-nums">{skill.failureRate}%</td>
+                                <td className="px-3 py-2 tabular-nums text-red-600 dark:text-red-400">
+                                  {skill.failureRate}%
+                                </td>
                               </tr>
                             ))}
                           </tbody>
@@ -639,17 +620,47 @@ export function LearnerAnalyticsClient({
                       </div>
                     </>
                   )}
-                </div>
+                </section>
+
+                {/* ─── Learning Paths ─── */}
+                <LearningPathsPanel labels={labels} locale={locale} paths={analytics.learningPaths} />
               </>
             )}
-
-            <LearningPathsPanel labels={labels} locale={locale} paths={analytics.learningPaths} />
           </CardContent>
         </Card>
-      ) : null}
+      )}
+
+      {/* ─── Share Button (sticky mobile) ─── */}
+      {analytics && hasData && (
+        <div className="fixed bottom-6 right-6 z-40 sm:static sm:flex sm:justify-end">
+          <button
+            className="inline-flex min-h-11 items-center gap-2 rounded-full bg-ink px-5 text-sm font-bold text-white shadow-lg transition-all hover:shadow-xl hover:scale-105 focus-visible:ring-2 focus-visible:ring-accent active:scale-[0.97] dark:bg-white dark:text-gray-900"
+            type="button"
+            onClick={() => {
+              if (navigator.share) {
+                navigator.share({
+                  title: labels.title,
+                  text: `${labels.streak}: ${analytics.totals.streakDays} · ${labels.accuracy}: ${analytics.totals.bjtAccuracyPct}%`
+                }).catch(() => {/* user cancelled */});
+              } else {
+                navigator.clipboard.writeText(
+                  `${labels.title}\n${labels.streak}: ${analytics.totals.streakDays}\n${labels.accuracy}: ${analytics.totals.bjtAccuracyPct}%\n${labels.reviews}: ${analytics.totals.reviewCount}`
+                ).catch(() => {/* ignore */});
+              }
+            }}
+          >
+            <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+            </svg>
+            {labels.shareProgress}
+          </button>
+        </div>
+      )}
     </main>
   );
 }
+
+/* ─────────────────────────── Sub-components ─────────────────────────── */
 
 function LearningPathsPanel({
   labels,
@@ -662,16 +673,16 @@ function LearningPathsPanel({
 }) {
   const list = paths ?? [];
   return (
-    <div className="rounded-xl border border-ink/10 bg-paper/50 p-4">
+    <section className="rounded-2xl border border-ink/8 bg-paper/40 p-5 dark:border-ink/15 dark:bg-gray-800/20">
       <SectionHeader
         description={labels.learningPathsDescription}
         heading="h3"
         title={labels.learningPathsTitle}
       />
       {list.length === 0 ? (
-        <p className="mt-2 text-sm text-muted">{labels.learningPathsEmpty}</p>
+        <p className="mt-3 text-sm text-muted">{labels.learningPathsEmpty}</p>
       ) : (
-        <ul className="mt-3 space-y-3">
+        <ul className="mt-4 grid gap-3 sm:grid-cols-2">
           {list.map((path) => {
             const title = locale === "ja" && path.titleJa?.trim() ? path.titleJa : path.titleVi;
             const desc =
@@ -679,19 +690,24 @@ function LearningPathsPanel({
                 ? path.descriptionJa
                 : path.descriptionVi;
             return (
-              <li className="rounded-xl border border-ink/8 bg-surface p-3 shadow-sm" key={path.id}>
-                <p className="text-sm font-semibold text-ink">{title}</p>
-                {path.targetLevel ? (
+              <li
+                className="group rounded-xl border border-ink/8 bg-surface p-4 shadow-sm transition-all hover:border-accent/20 hover:shadow-md dark:border-ink/15 dark:bg-gray-800/40 dark:hover:border-accent/30"
+                key={path.id}
+              >
+                <p className="text-sm font-semibold text-ink group-hover:text-accent transition-colors">
+                  {title}
+                </p>
+                {path.targetLevel && (
                   <p className="mt-0.5 text-xs text-muted">
                     {(labels.learningPathsLevel ?? "").replace("{level}", path.targetLevel)}
                   </p>
-                ) : null}
-                {desc ? (
-                  <p className="mt-2 text-xs leading-relaxed text-muted line-clamp-3">{desc}</p>
-                ) : null}
+                )}
+                {desc && (
+                  <p className="mt-2 text-xs leading-relaxed text-muted line-clamp-2">{desc}</p>
+                )}
                 <div className="mt-3">
                   <Link
-                    className="inline-flex min-h-9 items-center justify-center rounded-lg border border-ink/12 bg-paper px-3 text-xs font-bold text-ink hover:bg-ink/5"
+                    className="inline-flex min-h-8 items-center justify-center rounded-lg border border-ink/12 bg-paper px-3 text-xs font-bold text-ink transition hover:bg-ink/5 dark:border-ink/20 dark:bg-gray-700/50 dark:hover:bg-gray-700"
                     href={`/${locale}/quiz`}
                   >
                     {labels.learningPathsCta}
@@ -702,15 +718,6 @@ function LearningPathsPanel({
           })}
         </ul>
       )}
-    </div>
-  );
-}
-
-function Metric({ label, value }: { label: string; value: number | string }) {
-  return (
-    <div className="rounded-xl border border-ink/10 bg-surface p-3 shadow-sm">
-      <p className="text-xs font-semibold text-muted">{label}</p>
-      <p className="mt-1 text-lg font-bold tabular-nums text-ink">{value}</p>
-    </div>
+    </section>
   );
 }

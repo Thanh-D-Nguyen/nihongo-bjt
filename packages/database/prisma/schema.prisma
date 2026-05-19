@@ -1060,6 +1060,7 @@ model UserProfile {
   authSyncStatus           String                    @default("not_linked") @map("auth_sync_status") @db.VarChar(32)
   targetBjtBand            String?                   @map("target_bjt_band") @db.VarChar(16)
   dailyGoalCards           Int                       @default(20) @map("daily_goal_cards")
+  dailyGoalExercises       Int                       @default(10) @map("daily_goal_exercises")
   /// Study time target (optional; cards quota still uses dailyGoalCards in MVP).
   dailyStudyMinutes        Int?                      @map("daily_study_minutes")
   learningPurpose          String?                   @map("learning_purpose") @db.VarChar(200)
@@ -2361,6 +2362,84 @@ model ExerciseAnswer {
   @@index([sessionId, answeredAt], map: "idx_exercise_answer_session")
   @@index([exerciseId], map: "idx_exercise_answer_exercise")
   @@map("exercise_answer")
+  @@schema("exercise")
+}
+
+/// Links failed exercises to auto-generated remediation flashcards.
+/// When a user answers incorrectly, a flashcard is created from the source content.
+model ExerciseRemediation {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  exerciseId  String   @map("exercise_id") @db.Uuid
+  /// The FlashcardVariant created as remediation
+  cardId      String   @map("card_id") @db.Uuid
+  /// Source content that generated the exercise (lexeme, grammar, kanji)
+  sourceType  String   @map("source_type") @db.VarChar(32)
+  sourceId    String   @map("source_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([userId, exerciseId], map: "uq_exercise_remediation_user_exercise")
+  @@index([userId, createdAt], map: "idx_exercise_remediation_user")
+  @@index([cardId], map: "idx_exercise_remediation_card")
+  @@map("exercise_remediation")
+  @@schema("exercise")
+}
+
+/// Tracks a user's running performance per exercise type and level.
+/// Used by the adaptive difficulty algorithm to select appropriate difficulty.
+model UserExercisePerformance {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String   @map("user_id") @db.Uuid
+  /// word_order | cloze | translation | meaning_match | listening
+  exerciseType    String   @map("exercise_type") @db.VarChar(32)
+  /// N5 | N4 | N3 | N2 | N1 | "all" (all levels combined)
+  level           String   @default("all") @db.VarChar(8)
+  /// Total exercises attempted in this type+level
+  totalAttempts   Int      @default(0) @map("total_attempts")
+  /// Total correct answers
+  totalCorrect    Int      @default(0) @map("total_correct")
+  /// Rolling accuracy of last 20 answers (0.0–1.0)
+  recentAccuracy  Float    @default(0.5) @map("recent_accuracy")
+  /// Current adaptive difficulty: easy | medium | hard
+  currentDifficulty String @default("medium") @map("current_difficulty") @db.VarChar(16)
+  /// Average time spent per question (ms)
+  avgTimeMs       Int      @default(0) @map("avg_time_ms")
+  /// Last 20 answers as JSON array of booleans [true, false, true, ...]
+  recentWindow    Json     @default("[]") @map("recent_window")
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([userId, exerciseType, level], map: "uq_user_exercise_perf")
+  @@index([userId, exerciseType], map: "idx_user_exercise_perf_type")
+  @@map("user_exercise_performance")
+  @@schema("exercise")
+}
+
+/// Tracks SRS (spaced repetition) state for individual exercises per user.
+/// When a user answers an exercise incorrectly, an SRS entry is created
+/// so the exercise is scheduled for future review.
+model ExerciseReviewState {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  exerciseId   String   @map("exercise_id") @db.Uuid
+  /// new | learning | review | graduated
+  state        String   @default("new") @db.VarChar(16)
+  /// SM-2 ease factor (default 2.5)
+  easeFactor   Float    @default(2.5) @map("ease_factor")
+  /// Current interval in days
+  intervalDays Int      @default(0) @map("interval_days")
+  /// Number of successful consecutive reviews
+  repetitions  Int      @default(0)
+  /// Number of times answer was wrong after graduating
+  lapses       Int      @default(0)
+  /// Next scheduled review date
+  dueAt        DateTime @default(now()) @map("due_at") @db.Timestamptz(6)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([userId, exerciseId], map: "uq_exercise_review_state")
+  @@index([userId, dueAt], map: "idx_exercise_review_due")
+  @@index([userId, state], map: "idx_exercise_review_state")
+  @@map("exercise_review_state")
   @@schema("exercise")
 }
 

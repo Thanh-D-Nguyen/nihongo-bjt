@@ -1,6 +1,8 @@
 import { Inject, Injectable, Logger } from "@nestjs/common";
 
+import { tokenizeJapanese as morphTokenize } from "../reading-assist/japanese-morphology.js";
 import { ExerciseRepository } from "./exercise.repository.js";
+import { TtsService } from "./tts.service.js";
 
 interface GeneratedExercise {
   exerciseType: string;
@@ -20,7 +22,8 @@ export class ExerciseGeneratorService {
   private readonly logger = new Logger(ExerciseGeneratorService.name);
 
   constructor(
-    @Inject(ExerciseRepository) private readonly repo: ExerciseRepository
+    @Inject(ExerciseRepository) private readonly repo: ExerciseRepository,
+    @Inject(TtsService) private readonly tts: TtsService
   ) {}
 
   async generate(params: {
@@ -28,22 +31,23 @@ export class ExerciseGeneratorService {
     level?: string;
     count: number;
     sourceType?: string;
+    difficulty?: string;
   }): Promise<GeneratedExercise[]> {
-    const { exerciseType, level, count, sourceType } = params;
+    const { exerciseType, level, count, sourceType, difficulty } = params;
 
     switch (exerciseType) {
       case "meaning_match":
-        return this.generateMeaningMatch(level, count, sourceType);
+        return this.generateMeaningMatch(level, count, sourceType, difficulty);
       case "cloze":
-        return this.generateCloze(level, count);
+        return this.generateCloze(level, count, difficulty);
       case "word_order":
-        return this.generateWordOrder(level, count);
+        return this.generateWordOrder(level, count, difficulty);
       case "translation":
-        return this.generateTranslation(level, count);
+        return this.generateTranslation(level, count, difficulty);
       case "listening":
-        return this.generateListening(level, count);
+        return this.generateListening(level, count, difficulty);
       default:
-        return this.generateMeaningMatch(level, count, sourceType);
+        return this.generateMeaningMatch(level, count, sourceType, difficulty);
     }
   }
 
@@ -52,8 +56,10 @@ export class ExerciseGeneratorService {
   private async generateMeaningMatch(
     level: string | undefined,
     count: number,
-    sourceType?: string
+    sourceType?: string,
+    difficulty?: string
   ): Promise<GeneratedExercise[]> {
+    const diff = difficulty ?? "medium";
     const effectiveSourceType = sourceType ?? "lexeme";
     const exercises: GeneratedExercise[] = [];
 
@@ -86,7 +92,7 @@ export class ExerciseGeneratorService {
           choices: options.map((o) => ({ key: o.key, text: o.text })),
           correctAnswer: { key: options.find((o) => o.correct)!.key },
           explanation: `${point.pattern} → ${point.meaningVi}`,
-          difficulty: "medium",
+          difficulty: diff,
           tags: point.category ? [point.category] : []
         });
       }
@@ -137,7 +143,7 @@ export class ExerciseGeneratorService {
           choices: options.map((o) => ({ key: o.key, text: o.text })),
           correctAnswer: { key: options.find((o) => o.correct)!.key },
           explanation: `${lex.headword}（${lex.reading ?? ""}）→ ${correctMeaning}`,
-          difficulty: "medium",
+          difficulty: diff,
           tags: sense.partOfSpeech ? [sense.partOfSpeech] : []
         });
       }
@@ -150,8 +156,10 @@ export class ExerciseGeneratorService {
 
   private async generateCloze(
     level: string | undefined,
-    count: number
+    count: number,
+    difficulty?: string
   ): Promise<GeneratedExercise[]> {
+    const diff = difficulty ?? "medium";
     const lexemes = await this.repo.randomLexemesWithExamples(level, count);
     const exercises: GeneratedExercise[] = [];
 
@@ -203,7 +211,7 @@ export class ExerciseGeneratorService {
         choices: options.map((o) => ({ key: o.key, text: o.text })),
         correctAnswer: { key: options.find((o) => o.correct)!.key, text: lex.headword },
         explanation: `${example.japaneseText}\n→ ${example.translationVi}`,
-        difficulty: "medium",
+        difficulty: diff,
         tags: []
       });
     }
@@ -215,7 +223,8 @@ export class ExerciseGeneratorService {
 
   private async generateWordOrder(
     level: string | undefined,
-    count: number
+    count: number,
+    difficulty?: string
   ): Promise<GeneratedExercise[]> {
     const lexemes = await this.repo.randomLexemesWithExamples(level, count);
     const exercises: GeneratedExercise[] = [];
@@ -228,8 +237,8 @@ export class ExerciseGeneratorService {
       const example = exLink?.exampleSentence;
       if (!example?.japaneseText || !example.translationVi) continue;
 
-      // Simple tokenization by common particles and boundaries
-      const tokens = tokenizeJapanese(example.japaneseText);
+      // Morphological tokenization via kuromoji
+      const tokens = await tokenizeForWordOrder(example.japaneseText);
       if (tokens.length < 3 || tokens.length > 12) continue;
 
       const shuffledTokens = shuffleArray([...tokens]);
@@ -247,7 +256,7 @@ export class ExerciseGeneratorService {
         choices: shuffledTokens,
         correctAnswer: { orderedTokens: tokens },
         explanation: `${example.japaneseText}\n→ ${example.translationVi}`,
-        difficulty: tokens.length <= 5 ? "easy" : tokens.length <= 8 ? "medium" : "hard",
+        difficulty: difficulty ?? (tokens.length <= 5 ? "easy" : tokens.length <= 8 ? "medium" : "hard"),
         tags: []
       });
     }
@@ -259,8 +268,10 @@ export class ExerciseGeneratorService {
 
   private async generateTranslation(
     level: string | undefined,
-    count: number
+    count: number,
+    difficulty?: string
   ): Promise<GeneratedExercise[]> {
+    const diff = difficulty ?? "medium";
     const lexemes = await this.repo.randomLexemesWithExamples(level, count);
     const exercises: GeneratedExercise[] = [];
     const usedSentences: Set<string> = new Set();
@@ -316,7 +327,7 @@ export class ExerciseGeneratorService {
         choices: options.map((o) => ({ key: o.key, text: o.text })),
         correctAnswer: { key: options.find((o) => o.correct)!.key },
         explanation: `${example.japaneseText}\n→ ${example.translationVi}`,
-        difficulty: "medium",
+        difficulty: diff,
         tags: []
       });
     }
@@ -328,22 +339,42 @@ export class ExerciseGeneratorService {
 
   private async generateListening(
     level: string | undefined,
-    count: number
+    count: number,
+    difficulty?: string
   ): Promise<GeneratedExercise[]> {
-    // Listening exercises use the same structure as meaning_match but prompt is audio-oriented.
-    // Without TTS, we show the sentence and ask for the correct translation.
-    // When audio is available, the prompt would include an audioUrl.
-    return this.generateTranslation(level, count).then((exercises) =>
-      exercises.map((e) => ({
+    const baseExercises = await this.generateTranslation(level, count, difficulty);
+
+    const listeningExercises: GeneratedExercise[] = [];
+    for (const e of baseExercises) {
+      const prompt = e.prompt as Record<string, unknown>;
+      const jaText = (prompt.japaneseSentence as string) ?? "";
+
+      // Generate TTS audio URL for the Japanese text
+      let audioUrl: string | null = null;
+      if (jaText) {
+        try {
+          const ttsResult = await this.tts.synthesize(jaText, {
+            languageCode: "ja-JP",
+            speakingRate: 0.85
+          });
+          audioUrl = ttsResult.audioUrl;
+        } catch (err) {
+          this.logger.warn(`TTS failed for listening exercise: ${err}`);
+        }
+      }
+
+      listeningExercises.push({
         ...e,
         exerciseType: "listening",
         prompt: {
-          ...(e.prompt as Record<string, unknown>),
+          ...prompt,
           type: "listening",
-          audioUrl: null // placeholder until TTS is available
+          audioUrl
         }
-      }))
-    );
+      });
+    }
+
+    return listeningExercises;
   }
 }
 
@@ -359,23 +390,25 @@ function shuffleArray<T>(arr: T[]): T[] {
 }
 
 /**
- * Simple Japanese tokenizer that splits on common particle boundaries.
- * Uses regex to split around particles (は, が, を, に, で, と, も, の, へ, から, まで, より).
- * For production, this should be replaced by kuromoji/ReadingTextAnalysis.
+ * Tokenize Japanese text using kuromoji morphological analysis.
+ * Merges particles onto preceding content words for natural chunking.
  */
-function tokenizeJapanese(text: string): string[] {
-  // Split around particles while keeping them as separate tokens
-  const particlePattern = /(は|が|を|に|で|と|も|の|へ|から|まで|より|けど|ので|のに|ながら|て|た|ます|です|ました|ません)/g;
-  const parts = text.split(particlePattern).filter((p) => p.length > 0);
+async function tokenizeForWordOrder(text: string): Promise<string[]> {
+  const { spans } = await morphTokenize(text);
+  if (spans.length === 0) return [];
 
-  // If split produced too few tokens, try character-level chunking
-  if (parts.length < 3) {
-    const chunks: string[] = [];
-    for (let i = 0; i < text.length; i += 2) {
-      chunks.push(text.slice(i, Math.min(i + 2, text.length)));
+  // Merge single-char particles (助詞) onto preceding token for natural chunks
+  const merged: string[] = [];
+  for (const { token } of spans) {
+    const surface = token.surface_form;
+    if (!surface) continue;
+    if (token.pos === "助詞" && merged.length > 0 && surface.length <= 2) {
+      merged[merged.length - 1] += surface;
+    } else {
+      merged.push(surface);
     }
-    return chunks;
   }
 
-  return parts;
+  // Filter out whitespace-only tokens
+  return merged.filter((t) => t.trim().length > 0);
 }

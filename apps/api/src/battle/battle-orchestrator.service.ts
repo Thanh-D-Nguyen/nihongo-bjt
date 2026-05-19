@@ -23,6 +23,7 @@ const pvpOpponentAbsentWinMs = 45_000;
 type RoomState = {
   botKey: string;
   botProfile: PlayableBattleBot;
+  configTimeSec: number;
   idempotency: Set<string>;
   maxRounds: number;
   opponentScore: number;
@@ -1101,11 +1102,23 @@ export class BattleOrchestratorService {
       .map(([skillTag]) => skillTag);
   }
 
-  async startBotBattle(client: Socket, input: { botKey: string; userId: string }) {
+  async startBotBattle(client: Socket, input: { botKey: string; configId?: string; userId: string }) {
     const playableBot = await this.battleRepository.getPlayableBot(input.botKey);
     if (!playableBot) {
       throw new BadRequestException("invalid_bot_key");
     }
+
+    // Load config params if configId provided
+    let configMaxRounds: number | undefined;
+    let configTimeSec: number | undefined;
+    if (input.configId) {
+      const config = await this.battleRepository.getPublishedConfig(input.configId);
+      if (config) {
+        configMaxRounds = config.questionCount;
+        configTimeSec = config.timePerQuestionSec;
+      }
+    }
+
     this.matchmaking.releaseUser(input.userId);
     const previous = this.userActiveRoom.get(input.userId);
     if (previous) {
@@ -1118,6 +1131,7 @@ export class BattleOrchestratorService {
       created = await this.battleRepository.createBotBattle({
         botKey: input.botKey,
         fairnessSeed,
+        maxRounds: configMaxRounds,
         userId: input.userId
       });
     } catch (e) {
@@ -1130,6 +1144,7 @@ export class BattleOrchestratorService {
     const room: RoomState = {
       botKey: input.botKey,
       botProfile: playableBot,
+      configTimeSec: configTimeSec ?? Math.round(roundTimeMs / 1000),
       idempotency: new Set(),
       maxRounds: created.questions.length,
       opponentScore: 0,
@@ -1216,11 +1231,11 @@ export class BattleOrchestratorService {
         return;
       }
       void this.settleRound(client, roomCode, { timeout: true });
-    }, roundTimeMs);
+    }, room.configTimeSec * 1000);
     client.emit("battle:question", {
       roundIndex: room.whichRound,
       roomCode,
-      timeLimitSec: 45,
+      timeLimitSec: room.configTimeSec,
       totalRounds: room.maxRounds,
       question: {
         options: this.safeOptionsForClient(q),
@@ -1324,11 +1339,11 @@ export class BattleOrchestratorService {
       let userOptionKey: string | null;
       let userCorrect: boolean;
       if (params.timeout) {
-        userResponseMs = roundTimeMs;
+        userResponseMs = room.configTimeSec * 1000;
         userOptionKey = null;
         userCorrect = false;
       } else {
-        userResponseMs = Math.max(0, Math.min(roundTimeMs, now - room.roundStartMs));
+        userResponseMs = Math.max(0, Math.min(room.configTimeSec * 1000, now - room.roundStartMs));
         userOptionKey = params.optionKey;
         userCorrect = params.optionKey === correct;
         if (userResponseMs <= suspiciousAnswerThresholdMs) {

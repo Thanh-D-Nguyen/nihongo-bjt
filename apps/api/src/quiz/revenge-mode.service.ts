@@ -11,6 +11,15 @@ export class RevengeModeService {
    * Returns up to `limit` questions with their options.
    */
   async getRevengeQueue(userId: string, limit = 5) {
+    try {
+      return await this._getRevengeQueueInner(userId, limit);
+    } catch (err) {
+      this.logger.error(`getRevengeQueue failed for user ${userId}`, err instanceof Error ? err.stack : err);
+      return { questions: [], totalPending: 0 };
+    }
+  }
+
+  private async _getRevengeQueueInner(userId: string, limit: number) {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 

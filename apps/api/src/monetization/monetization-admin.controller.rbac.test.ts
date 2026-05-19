@@ -32,7 +32,8 @@ describe("MonetizationAdminController RBAC — local provider non-production mar
     const controller = new MonetizationAdminController(
       adminAuth as any,
       localBilling as any,
-      console_ as any
+      console_ as any,
+      { status: vi.fn().mockResolvedValue({ configured: true, enabled: false, key: "monetization.enforcement", killSwitch: false }) } as any
     );
     return { adminAuth, controller, console_ };
   }

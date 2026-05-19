@@ -1337,8 +1337,13 @@
       "cancel": "Hủy",
       "save": "Lưu",
       "ctas": {
-        "newPlan": "Mở tab Plans",
+        "newPlan": "New Plan",
         "refresh": "Làm mới"
+      },
+      "enforcement": {
+        "active": "Enforcement Active",
+        "freeMode": "Free Mode",
+        "toggleHint": "Toggle in Settings → Feature Flags"
       },
       "subTotal": "Tổng",
       "empty": "Chưa có dữ liệu.",

@@ -11,6 +11,7 @@ export default async function Page({ params }: { params: Promise<{ locale: keyof
     <MonetizationConsoleClient
       common={t.adminConsole.common}
       labels={t.adminConsole.monetizationConsole}
+      initialTab="billing-events"
     />
   );
 }

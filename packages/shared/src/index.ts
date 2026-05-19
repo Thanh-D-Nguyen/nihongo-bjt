@@ -1527,6 +1527,7 @@ export const dailyQuickQuizCompleteSchema = z.object({
 
 export const battleChallengeBotSchema = z.object({
   botKey: z.string().trim().min(1).max(64),
+  configId: z.string().uuid().optional(),
   userId: z.uuid()
 });
 

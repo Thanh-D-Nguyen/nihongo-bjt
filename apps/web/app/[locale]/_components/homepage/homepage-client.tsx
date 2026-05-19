@@ -13,7 +13,7 @@ import { QuickActionsStrip } from "./quick-actions-strip";
 import type { HomepageLabels, LearnerAnalytics, NhkArticle } from "./types";
 import { DailyRadarSection } from "@/src/features/daily-radar/daily-radar-section";
 import { BjtLevelsSection } from "./bjt-levels-section";
-import { PushPromptBanner } from "./push-prompt-banner";
+import { PushPromptBanner, type PushBannerLabels } from "./push-prompt-banner";
 import { MysteryBoxWidget } from "./mystery-box-widget";
 import { RevengeModeWidget } from "./revenge-mode-widget";
 import { WeeklyReportCard } from "./weekly-report-card";
@@ -22,6 +22,9 @@ import { LearningHeatmap } from "./learning-heatmap";
 import { CompanionPetWidget } from "./companion-pet-widget";
 import { SeasonalEventBanner } from "./seasonal-event-banner";
 import { AmbientModeWidget } from "./ambient-mode-widget";
+import { AdBanner } from "./ad-banner";
+import { ForYouFeedWidget } from "./for-you-feed-widget";
+import { OnboardingFlow } from "./onboarding-flow";
 
 interface DailyHubPayload {
   dueReviews: number;
@@ -29,7 +32,7 @@ interface DailyHubPayload {
   today: string;
 }
 
-export function HomepageClient({ labels, locale }: { labels: HomepageLabels; locale: string }) {
+export function HomepageClient({ labels, locale, pushBannerLabels }: { labels: HomepageLabels; locale: string; pushBannerLabels: PushBannerLabels }) {
   const auth = useKeycloakAuth();
   const userId = auth.userId ?? "";
   const isLoggedIn = Boolean(userId);
@@ -45,6 +48,8 @@ export function HomepageClient({ labels, locale }: { labels: HomepageLabels; loc
   const [nhkError, setNhkError] = useState(false);
   const [analytics, setAnalytics] = useState<LearnerAnalytics | null>(null);
   const [analyticsReady, setAnalyticsReady] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingJustCompleted, setOnboardingJustCompleted] = useState(false);
   const loadData = useCallback(() => {
     setHubReady(false);
     setNhkReady(false);
@@ -93,6 +98,19 @@ export function HomepageClient({ labels, locale }: { labels: HomepageLabels; loc
 
   }, [locale, userId]);
 
+  // Check onboarding status for logged-in users
+  useEffect(() => {
+    if (!userId) return;
+    void learnerApiFetchOptional("/api/recommendation/onboarding/status")
+      .then(async (r) => {
+        if (r?.ok) {
+          const data = await r.json();
+          if (!data.completed) setShowOnboarding(true);
+        }
+      })
+      .catch(() => {});
+  }, [userId]);
+
   useEffect(() => {
     loadData();
   }, [loadData]);
@@ -118,7 +136,13 @@ export function HomepageClient({ labels, locale }: { labels: HomepageLabels; loc
 
   return (
     <main className="space-y-8 overflow-x-hidden pb-12 pt-2 sm:pt-6">
-      <PushPromptBanner />
+      {showOnboarding && (
+        <OnboardingFlow onComplete={() => {
+          setShowOnboarding(false);
+          setOnboardingJustCompleted(true);
+        }} />
+      )}
+      <PushPromptBanner labels={pushBannerLabels} />
       <div className="hp-enter">
         <HeroSection
           displayName={displayName}
@@ -145,6 +169,10 @@ export function HomepageClient({ labels, locale }: { labels: HomepageLabels; loc
           </div>
 
           <div className="hp-enter hp-enter-d1">
+            <ForYouFeedWidget locale={locale} refreshKey={onboardingJustCompleted ? 1 : 0} />
+          </div>
+
+          <div className="hp-enter hp-enter-d1">
             <LearningHeatmap locale={locale} />
           </div>
 
@@ -158,6 +186,8 @@ export function HomepageClient({ labels, locale }: { labels: HomepageLabels; loc
           <div className="hp-enter hp-enter-d3">
             <DailyRadarSection labels={labels.dailyRadar} locale={locale} />
           </div>
+
+          <AdBanner locale={locale} />
 
           <div className="hp-enter hp-enter-d4">
             <FeaturedNewsSection

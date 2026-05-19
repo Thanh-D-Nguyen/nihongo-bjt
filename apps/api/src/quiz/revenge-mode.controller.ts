@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Get,
+  Inject,
   Post,
   Query,
   UseGuards,
@@ -26,7 +27,7 @@ import { RevengeModeService } from "./revenge-mode.service.js";
 @ApiBearerAuth("bearer")
 @DocumentedHttpErrors()
 export class RevengeModeController {
-  constructor(private readonly revengeService: RevengeModeService) {}
+  constructor(@Inject(RevengeModeService) private readonly revengeService: RevengeModeService) {}
 
   @Get("queue")
   @ApiOperation({

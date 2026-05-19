@@ -33,6 +33,7 @@ import { LocalAdProvider } from "./ads/local-ad.provider.js";
 import { LocalBillingProvider } from "./billing/local-billing.provider.js";
 import { StripeBillingProvider } from "./billing/stripe-billing.provider.js";
 import { EntitlementService } from "./entitlement.service.js";
+import { MonetizationRepository } from "./monetization.repository.js";
 import { DocumentedHttpErrors } from "../openapi/common-decorators.js";
 import { RuntimeFeatureGateService } from "../operations/runtime-feature-gate.service.js";
 import { LegalConsentService } from "../legal/legal-consent.service.js";
@@ -53,7 +54,8 @@ export class LearnerMonetizationController {
     @Inject(EntitlementService) private readonly entitlements: EntitlementService,
     @Inject(QuotaService) private readonly quota: QuotaService,
     @Inject(RuntimeFeatureGateService) private readonly featureGate: RuntimeFeatureGateService,
-    @Inject(LegalConsentService) private readonly legalConsent: LegalConsentService
+    @Inject(LegalConsentService) private readonly legalConsent: LegalConsentService,
+    @Inject(MonetizationRepository) private readonly monetizationRepo: MonetizationRepository
   ) {}
 
   @Get("monetization/summary")
@@ -73,7 +75,33 @@ export class LearnerMonetizationController {
     }
     const flash = await this.quota.getFlashcardDaySummary(parsed.data.userId);
     const ent = await this.entitlements.listEntitlementKeysForUser(parsed.data.userId);
-    return { entitlements: ent.entitlements, flashcardDay: flash, planSlug: ent.planSlug };
+    const enforcement = await this.featureGate.status("monetization.enforcement", { missingBehavior: "allow" });
+    return { enforcementEnabled: enforcement.enabled, entitlements: ent.entitlements, flashcardDay: flash, planSlug: ent.planSlug };
+  }
+
+  @Get("monetization/plans")
+  @ApiOperation({ summary: "List active plans for learner pricing page" })
+  async listPlans() {
+    const plans = await this.prisma.plan.findMany({
+      where: { status: "active" },
+      include: {
+        entitlements: { include: { entitlement: true } },
+        planQuotas: { include: { quotaPolicy: true } }
+      },
+      orderBy: { sortOrder: "asc" }
+    });
+    return plans.map((p) => ({
+      id: p.id,
+      slug: p.slug,
+      nameKey: p.nameKey,
+      config: p.config,
+      entitlements: p.entitlements.map((e) => e.entitlement.key),
+      quotas: p.planQuotas.map((q) => ({
+        key: q.quotaPolicy.key,
+        limit: q.limitValue,
+        window: q.quotaPolicy.windowCode
+      }))
+    }));
   }
 
   @Post("monetization/checkout")
@@ -202,5 +230,59 @@ export class LearnerMonetizationController {
       }
     });
     return { ok: true };
+  }
+
+  @Get("monetization/subscription")
+  @ApiOperation({ summary: "Get current subscription details for the learner" })
+  @ApiQuery({ name: "userId", required: true })
+  async subscription(
+    @CurrentUser() user: KeycloakAuthenticatedUser | undefined,
+    @Query() query: Record<string, string | undefined>
+  ) {
+    const userId = resolveLearnerUserId(user, query.userId, { required: true })!;
+    const resolved = await this.monetizationRepo.resolvePlanForUser(userId);
+    const planConfig = resolved.plan.config as Record<string, unknown> | null;
+    return {
+      planSlug: resolved.plan.slug,
+      planName: planConfig?.displayName ?? resolved.plan.nameKey,
+      source: resolved.source,
+      status: resolved.subscription?.status ?? null,
+      currentPeriodEnd: resolved.subscription?.currentPeriodEnd ?? null,
+      cancelAtPeriodEnd: resolved.subscription?.cancelAtPeriodEnd ?? false,
+      entitlements: resolved.plan.entitlements.map((e) => e.entitlement.key),
+      quotas: resolved.plan.planQuotas.map((q) => ({
+        key: q.quotaPolicy.key,
+        limit: q.limitValue,
+        window: q.quotaPolicy.windowCode
+      }))
+    };
+  }
+
+  @Post("monetization/subscription/cancel")
+  @ApiOperation({ summary: "Request subscription cancellation at period end" })
+  @ApiBody({ description: "Must include resolvable `userId`" })
+  async cancelSubscription(
+    @CurrentUser() user: KeycloakAuthenticatedUser | undefined,
+    @Body() body: unknown
+  ) {
+    const raw = body as Record<string, unknown>;
+    const userId = resolveLearnerUserId(user, raw.userId as string | undefined, { required: true })!;
+    const resolved = await this.monetizationRepo.resolvePlanForUser(userId);
+    if (!resolved.subscription) {
+      throw new BadRequestException("No active subscription to cancel");
+    }
+    await this.prisma.userSubscription.update({
+      where: { id: resolved.subscription.id },
+      data: { cancelAtPeriodEnd: true }
+    });
+    await this.prisma.analyticsEvent.create({
+      data: {
+        eventName: "monetization_subscription_cancel_requested",
+        payload: { planSlug: resolved.plan.slug } as Prisma.InputJsonValue,
+        source: "api",
+        userId
+      }
+    });
+    return { ok: true, cancelAtPeriodEnd: true };
   }
 }

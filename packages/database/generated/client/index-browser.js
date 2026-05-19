@@ -804,6 +804,7 @@ exports.Prisma.UserProfileScalarFieldEnum = {
   authSyncStatus: 'authSyncStatus',
   targetBjtBand: 'targetBjtBand',
   dailyGoalCards: 'dailyGoalCards',
+  dailyGoalExercises: 'dailyGoalExercises',
   dailyStudyMinutes: 'dailyStudyMinutes',
   learningPurpose: 'learningPurpose',
   learningPersonality: 'learningPersonality',
@@ -1634,6 +1635,44 @@ exports.Prisma.ExerciseAnswerScalarFieldEnum = {
   answeredAt: 'answeredAt'
 };
 
+exports.Prisma.ExerciseRemediationScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  exerciseId: 'exerciseId',
+  cardId: 'cardId',
+  sourceType: 'sourceType',
+  sourceId: 'sourceId',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.UserExercisePerformanceScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  exerciseType: 'exerciseType',
+  level: 'level',
+  totalAttempts: 'totalAttempts',
+  totalCorrect: 'totalCorrect',
+  recentAccuracy: 'recentAccuracy',
+  currentDifficulty: 'currentDifficulty',
+  avgTimeMs: 'avgTimeMs',
+  recentWindow: 'recentWindow',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.ExerciseReviewStateScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  exerciseId: 'exerciseId',
+  state: 'state',
+  easeFactor: 'easeFactor',
+  intervalDays: 'intervalDays',
+  repetitions: 'repetitions',
+  lapses: 'lapses',
+  dueAt: 'dueAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.StreakConfigScalarFieldEnum = {
   id: 'id',
   name: 'name',
@@ -2189,6 +2228,9 @@ exports.Prisma.ModelName = {
   Exercise: 'Exercise',
   ExerciseSession: 'ExerciseSession',
   ExerciseAnswer: 'ExerciseAnswer',
+  ExerciseRemediation: 'ExerciseRemediation',
+  UserExercisePerformance: 'UserExercisePerformance',
+  ExerciseReviewState: 'ExerciseReviewState',
   StreakConfig: 'StreakConfig',
   UserStreak: 'UserStreak',
   AchievementDefinition: 'AchievementDefinition',

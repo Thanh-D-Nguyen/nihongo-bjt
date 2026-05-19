@@ -7,12 +7,14 @@ export function AdminPageHeader({
   breadcrumbs,
   className,
   description,
+  help,
   title,
   ...props
 }: HTMLAttributes<HTMLDivElement> & {
   actions?: ReactNode;
   breadcrumbs?: ReactNode;
   description?: ReactNode;
+  help?: ReactNode;
   title: ReactNode;
 }) {
   return (
@@ -20,9 +22,12 @@ export function AdminPageHeader({
       {breadcrumbs ? <div className="text-xs font-medium text-slate-500">{breadcrumbs}</div> : null}
       <div className="flex flex-col gap-3 border-b border-slate-200 pb-5 md:flex-row md:items-end md:justify-between">
         <div className="min-w-0 space-y-1">
-          <h1 className="text-xl font-semibold tracking-tight text-slate-950 md:text-2xl">
-            {title}
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-semibold tracking-tight text-slate-950 md:text-2xl">
+              {title}
+            </h1>
+            {help}
+          </div>
           {description ? (
             <p className="max-w-3xl text-sm leading-6 text-slate-600">{description}</p>
           ) : null}

@@ -43,6 +43,7 @@ export { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./car
 /** Alias for design-system docs (same as `Card`). */
 export { Card as BaseCard } from "./card";
 export { cn } from "./cn";
+export { ContextualHelpButton, type HelpContent, type HelpStep } from "./contextual-help";
 export { Dialog } from "./dialog";
 export { EmptyState } from "./empty-state";
 export { ErrorState } from "./error-state";

@@ -254,9 +254,11 @@ export function CompanionSettingsClient({
           <AdminSection title={t("riveAssets") === "riveAssets" ? "Available Rive Assets" : t("riveAssets")}>
             <AdminDataTable>
               <AdminDataTableHead>
-                <AdminDataTableTh>File</AdminDataTableTh>
-                <AdminDataTableTh>Label</AdminDataTableTh>
-                <AdminDataTableTh>Status</AdminDataTableTh>
+                <AdminDataTableRow>
+                  <AdminDataTableTh>File</AdminDataTableTh>
+                  <AdminDataTableTh>Label</AdminDataTableTh>
+                  <AdminDataTableTh>Status</AdminDataTableTh>
+                </AdminDataTableRow>
               </AdminDataTableHead>
               <AdminDataTableBody>
                 {config?.availableRiveAssets.map((asset) => (
@@ -401,11 +403,13 @@ export function CompanionSettingsClient({
             {filteredTips && filteredTips.length > 0 ? (
               <AdminDataTable>
                 <AdminDataTableHead>
+                <AdminDataTableRow>
                   <AdminDataTableTh>Category</AdminDataTableTh>
                   <AdminDataTableTh>Japanese</AdminDataTableTh>
                   <AdminDataTableTh>Vietnamese</AdminDataTableTh>
                   <AdminDataTableTh>Status</AdminDataTableTh>
                   {canWrite ? <AdminDataTableTh>Actions</AdminDataTableTh> : null}
+                </AdminDataTableRow>
                 </AdminDataTableHead>
                 <AdminDataTableBody>
                   {filteredTips.map((tip) => (

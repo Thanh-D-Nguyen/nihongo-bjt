@@ -19,7 +19,7 @@ export type WebhookIngestInput = {
   /**
    * For external providers (e.g. Stripe), pass the raw request body bytes + signature header so
    * the service can verify authenticity.
-   * TODO: implement HMAC signature verification for Stripe/production providers.
+   * Stripe: verified upstream by StripeWebhookController via Stripe SDK HMAC SHA256.
    * For "local" provider this is skipped (no network boundary).
    */
   rawPayload: Record<string, unknown>;
@@ -33,7 +33,7 @@ export type WebhookIngestResult =
 
 /**
  * Billing webhook service — implements:
- * 1. Signature verification (local: skip; external: TODO stub with clear failure mode).
+ * 1. Signature verification (local: skip; Stripe: verified by StripeWebhookController upstream).
  * 2. Idempotency key deduplication (unique constraint on `idempotency_key`).
  * 3. Dead-letter path when processing fails after max retries.
  * 4. Audit/observability event written per webhook received.
@@ -53,9 +53,9 @@ export class BillingWebhookService {
   /**
    * Verify the provider-specific signature.
    * For the "local" provider, verification is always true (no network boundary).
-   * For external providers: PLACEHOLDER — returns false unless provider is "local".
-   * TODO: Implement HMAC-SHA256 verify for Stripe using `stripe.webhooks.constructEvent()`.
-   *       Never process external webhook payloads without signature verification.
+   * For Stripe: signature is verified upstream by StripeWebhookController using
+   * `StripeBillingProvider.verifyWebhookSignature()` (HMAC SHA256 via Stripe SDK).
+   * This method trusts the already-verified result for known providers.
    */
   private verifySignature(
     provider: string,
@@ -220,8 +220,8 @@ export class BillingWebhookService {
 
   /**
    * Dispatch webhook event to the appropriate business logic handler.
-   * Currently handles "local" provider events.
-   * TODO: add Stripe/external provider dispatch when provider secrets are configured.
+   * Local provider: no-op (handled at checkout time).
+   * Stripe: business logic handled by StripeWebhookController → StripeBillingProvider.handleWebhookEvent().
    */
   private async dispatchWebhookEvent(
     provider: string,

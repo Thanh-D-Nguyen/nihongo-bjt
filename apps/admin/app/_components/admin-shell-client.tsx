@@ -12,6 +12,7 @@ import { ADMIN_NAV_DATA } from "@/lib/admin-nav-data";
 import { readClientAdminFeatureFlags } from "@/lib/admin-feature-flags";
 import { buildResolvedAdminNav, getShellNavLabel } from "@/lib/resolve-admin-nav";
 import { adminApiFetch } from "@/lib/admin-api";
+import { AdminContextualHelp } from "./admin-contextual-help";
 
 function AdminShellWithPath({
   children,
@@ -87,6 +88,9 @@ function AdminShellWithPath({
   return (
     <AdminShell chrome={chrome} locale={locale} navGroups={navGroups} normalizedPath={normalized}>
       {children}
+      <div className="fixed bottom-5 right-5 z-40">
+        <AdminContextualHelp locale={locale} />
+      </div>
     </AdminShell>
   );
 }

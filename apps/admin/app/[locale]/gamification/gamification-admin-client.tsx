@@ -61,7 +61,30 @@ type LeaderboardConfig = {
   enabled: boolean;
 };
 
-type Tab = "streaks" | "achievements" | "leaderboards";
+type PetEntry = {
+  id: string;
+  userId: string;
+  name: string;
+  stage: string;
+  xp: number;
+  happiness: number;
+  mood: string;
+  totalFeedings: number;
+  lastFedAt: string | null;
+  evolvedAt: string | null;
+};
+
+type PetStats = {
+  total: number;
+  byStage: Array<{ stage: string; count: number }>;
+  avgHappiness: number;
+  avgXp: number;
+};
+
+const STAGE_EMOJI: Record<string, string> = { egg: "🥚", baby: "🐣", teen: "🐕", adult: "🐕\u200D🦺", master: "👑🐕" };
+const MOOD_EMOJI: Record<string, string> = { happy: "😊", neutral: "😐", sad: "😢", sick: "🤒" };
+
+type Tab = "streaks" | "achievements" | "leaderboards" | "pets";
 
 /* ── Component ─────────────────────────────────────────────────────────── */
 
@@ -93,6 +116,15 @@ export function GamificationAdminClient({ labels }: { labels: Labels }) {
 
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: string; id: string } | null>(null);
 
+  // Pets state
+  const [pets, setPets] = useState<PetEntry[]>([]);
+  const [petStats, setPetStats] = useState<PetStats | null>(null);
+  const [petFilter, setPetFilter] = useState("");
+  const [petStageFilter, setPetStageFilter] = useState("");
+  const [petEditModal, setPetEditModal] = useState(false);
+  const [petEditTarget, setPetEditTarget] = useState<PetEntry | null>(null);
+  const [petEditForm, setPetEditForm] = useState({ name: "", stage: "egg", xp: 0, happiness: 100 });
+
   useEffect(() => {
     void (async () => {
       try {
@@ -106,14 +138,18 @@ export function GamificationAdminClient({ labels }: { labels: Labels }) {
   const loadAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [sRes, aRes, lRes] = await Promise.all([
+      const [sRes, aRes, lRes, pRes, psRes] = await Promise.all([
         adminApiFetch("/api/admin/gamification/streaks"),
         adminApiFetch("/api/admin/gamification/achievements"),
-        adminApiFetch("/api/admin/gamification/leaderboards")
+        adminApiFetch("/api/admin/gamification/leaderboards"),
+        adminApiFetch("/api/admin/gamification/pets"),
+        adminApiFetch("/api/admin/gamification/pets/stats")
       ]);
       if (sRes.ok) setStreakConfigs((await sRes.json()) as StreakConfig[]);
       if (aRes.ok) setAchievements((await aRes.json()) as AchievementDef[]);
       if (lRes.ok) setLeaderboards((await lRes.json()) as LeaderboardConfig[]);
+      if (pRes.ok) setPets((await pRes.json()) as PetEntry[]);
+      if (psRes.ok) setPetStats((await psRes.json()) as PetStats);
     } catch { /* handled */ }
     setLoading(false);
   }, []);
@@ -213,16 +249,21 @@ export function GamificationAdminClient({ labels }: { labels: Labels }) {
   async function handleDelete() {
     if (!deleteConfirm) return;
     try {
-      const r = await adminApiFetch(`/api/admin/gamification/${deleteConfirm.type}/${deleteConfirm.id}`, { method: "DELETE" });
+      const isReset = deleteConfirm.type === "pets/reset";
+      const url = isReset
+        ? `/api/admin/gamification/pets/${deleteConfirm.id}/reset`
+        : `/api/admin/gamification/${deleteConfirm.type}/${deleteConfirm.id}`;
+      const method = isReset ? "POST" : "DELETE";
+      const r = await adminApiFetch(url, { method });
       if (!r.ok) {
-        const apiErr = await parseApiError(r, "Xóa thất bại");
-        toast.error("Xóa thất bại", apiErr.form ?? undefined);
+        const apiErr = await parseApiError(r, "Thao tác thất bại");
+        toast.error("Thao tác thất bại", apiErr.form ?? undefined);
         return;
       }
-      toast.success("Đã xóa thành công");
+      toast.success(isReset ? t("petResetOk") : t("deleteOk"));
       setDeleteConfirm(null);
       void loadAll();
-    } catch { toast.error("Xóa thất bại"); }
+    } catch { toast.error("Thao tác thất bại"); }
   }
 
   /* ── Render ──────────────────────────────────────────────────────────── */
@@ -239,7 +280,7 @@ export function GamificationAdminClient({ labels }: { labels: Labels }) {
 
       {/* Tabs */}
       <div className="flex gap-1 border-b border-slate-200">
-        {(["streaks", "achievements", "leaderboards"] as Tab[]).map((tb) => (
+        {(["streaks", "achievements", "leaderboards", "pets"] as Tab[]).map((tb) => (
           <button
             key={tb}
             className={`px-4 py-2 text-sm font-medium ${tab === tb ? "border-b-2 border-indigo-600 text-indigo-700" : "text-slate-500 hover:text-slate-700"}`}
@@ -385,6 +426,124 @@ export function GamificationAdminClient({ labels }: { labels: Labels }) {
               )}
             </AdminSection>
           )}
+
+          {/* ── Companion Pets Tab ───────────────────────────────── */}
+          {tab === "pets" && (
+            <AdminSection>
+              {/* Stats bar */}
+              {petStats && (
+                <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 text-center">
+                    <div className="text-lg font-bold text-slate-800">{petStats.total}</div>
+                    <div className="text-xs text-slate-500">{t("petTotal")}</div>
+                  </div>
+                  <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 text-center">
+                    <div className="text-lg font-bold text-slate-800">{petStats.avgXp}</div>
+                    <div className="text-xs text-slate-500">{t("petAvgXp")}</div>
+                  </div>
+                  <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 text-center">
+                    <div className="text-lg font-bold text-slate-800">{petStats.avgHappiness}%</div>
+                    <div className="text-xs text-slate-500">{t("petAvgHappiness")}</div>
+                  </div>
+                  <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 text-center">
+                    <div className="flex flex-wrap justify-center gap-1 text-xs">
+                      {petStats.byStage.map((s) => (
+                        <span key={s.stage} className="rounded bg-white px-1.5 py-0.5 shadow-sm">
+                          {STAGE_EMOJI[s.stage] ?? s.stage} {s.count}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="mt-1 text-xs text-slate-500">{t("petByStage")}</div>
+                  </div>
+                </div>
+              )}
+
+              {/* Filters */}
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <input
+                  className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm"
+                  placeholder={t("petSearchPlaceholder")}
+                  value={petFilter}
+                  onChange={(e) => setPetFilter(e.target.value)}
+                />
+                <select
+                  className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm"
+                  value={petStageFilter}
+                  onChange={(e) => setPetStageFilter(e.target.value)}
+                >
+                  <option value="">{t("petAllStages")}</option>
+                  <option value="egg">🥚 Egg</option>
+                  <option value="baby">🐣 Baby</option>
+                  <option value="teen">🐕 Teen</option>
+                  <option value="adult">🐕‍🦺 Adult</option>
+                  <option value="master">👑🐕 Master</option>
+                </select>
+              </div>
+
+              {/* Table */}
+              {pets.length === 0 ? (
+                <AdminEmptyState title={t("empty")} />
+              ) : (
+                <AdminDataTable>
+                  <AdminDataTableHead>
+                    <AdminDataTableTh>{t("petName")}</AdminDataTableTh>
+                    <AdminDataTableTh>{t("petStage")}</AdminDataTableTh>
+                    <AdminDataTableTh>XP</AdminDataTableTh>
+                    <AdminDataTableTh>{t("petHappiness")}</AdminDataTableTh>
+                    <AdminDataTableTh>{t("petMood")}</AdminDataTableTh>
+                    <AdminDataTableTh>{t("petFeedings")}</AdminDataTableTh>
+                    {canWrite && <AdminDataTableTh />}
+                  </AdminDataTableHead>
+                  <AdminDataTableBody>
+                    {pets
+                      .filter((p) => {
+                        if (petStageFilter && p.stage !== petStageFilter) return false;
+                        if (petFilter && !p.name.toLowerCase().includes(petFilter.toLowerCase()) && !p.userId.toLowerCase().includes(petFilter.toLowerCase())) return false;
+                        return true;
+                      })
+                      .map((p) => (
+                        <AdminDataTableRow key={p.id}>
+                          <AdminDataTableTd>
+                            <div className="flex items-center gap-1.5">
+                              <span>{STAGE_EMOJI[p.stage] ?? "?"}</span>
+                              <span className="font-medium">{p.name}</span>
+                            </div>
+                            <div className="text-[10px] text-slate-400 font-mono">{p.userId.slice(0, 8)}…</div>
+                          </AdminDataTableTd>
+                          <AdminDataTableTd>
+                            <AdminStatusBadge tone={p.stage === "master" ? "good" : p.stage === "adult" ? "neutral" : "warning"}>
+                              {p.stage}
+                            </AdminStatusBadge>
+                          </AdminDataTableTd>
+                          <AdminDataTableTd>{p.xp}</AdminDataTableTd>
+                          <AdminDataTableTd>
+                            <div className="flex items-center gap-1">
+                              <div className="h-2 w-16 overflow-hidden rounded-full bg-slate-200">
+                                <div
+                                  className={`h-full rounded-full ${p.happiness >= 70 ? "bg-green-500" : p.happiness >= 40 ? "bg-yellow-500" : "bg-red-500"}`}
+                                  style={{ width: `${p.happiness}%` }}
+                                />
+                              </div>
+                              <span className="text-xs">{p.happiness}%</span>
+                            </div>
+                          </AdminDataTableTd>
+                          <AdminDataTableTd>{MOOD_EMOJI[p.mood] ?? p.mood} {p.mood}</AdminDataTableTd>
+                          <AdminDataTableTd>{p.totalFeedings}</AdminDataTableTd>
+                          {canWrite && (
+                            <AdminDataTableTd>
+                              <div className="flex gap-2">
+                                <button className="text-xs text-indigo-600 hover:underline" onClick={() => { setPetEditTarget(p); setPetEditForm({ name: p.name, stage: p.stage, xp: p.xp, happiness: p.happiness }); setPetEditModal(true); }} type="button">{t("edit")}</button>
+                                <button className="text-xs text-red-600 hover:underline" onClick={() => setDeleteConfirm({ type: "pets/reset", id: p.id })} type="button">{t("petReset")}</button>
+                              </div>
+                            </AdminDataTableTd>
+                          )}
+                        </AdminDataTableRow>
+                      ))}
+                  </AdminDataTableBody>
+                </AdminDataTable>
+              )}
+            </AdminSection>
+          )}
         </>
       )}
 
@@ -469,6 +628,56 @@ export function GamificationAdminClient({ labels }: { labels: Labels }) {
             <div className="mt-5 flex justify-end gap-2">
               <button className="rounded border px-3 py-1.5 text-xs" onClick={() => setLbModal(false)} type="button">{t("cancel")}</button>
               <button className="rounded bg-indigo-600 px-3 py-1.5 text-xs text-white hover:bg-indigo-700" onClick={saveLb} type="button">{t("save")}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Pet Edit Modal ───────────────────────────────────────── */}
+      {petEditModal && petEditTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+            <h3 className="mb-4 text-sm font-semibold text-slate-800">{t("petEditTitle")}</h3>
+            <div className="space-y-3">
+              <FormField label={t("petName")}>
+                <FormInput value={petEditForm.name} onChange={(e) => setPetEditForm({ ...petEditForm, name: e.target.value })} />
+              </FormField>
+              <FormField label={t("petStage")}>
+                <select className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value={petEditForm.stage} onChange={(e) => setPetEditForm({ ...petEditForm, stage: e.target.value })}>
+                  <option value="egg">🥚 Egg</option>
+                  <option value="baby">🐣 Baby</option>
+                  <option value="teen">🐕 Teen</option>
+                  <option value="adult">🐕‍🦺 Adult</option>
+                  <option value="master">👑🐕 Master</option>
+                </select>
+              </FormField>
+              <div className="grid grid-cols-2 gap-3">
+                <FormField label="XP">
+                  <FormInput type="number" value={petEditForm.xp} onChange={(e) => setPetEditForm({ ...petEditForm, xp: Number(e.target.value) })} />
+                </FormField>
+                <FormField label={t("petHappiness")}>
+                  <FormInput type="number" value={petEditForm.happiness} onChange={(e) => setPetEditForm({ ...petEditForm, happiness: Math.min(100, Math.max(0, Number(e.target.value))) })} />
+                </FormField>
+              </div>
+            </div>
+            <div className="mt-5 flex justify-end gap-2">
+              <button className="rounded border px-3 py-1.5 text-xs" onClick={() => setPetEditModal(false)} type="button">{t("cancel")}</button>
+              <button className="rounded bg-indigo-600 px-3 py-1.5 text-xs text-white hover:bg-indigo-700" onClick={async () => {
+                try {
+                  const r = await adminApiFetch(`/api/admin/gamification/pets/${petEditTarget.id}`, {
+                    method: "PUT",
+                    headers: { "content-type": "application/json" },
+                    body: JSON.stringify(petEditForm)
+                  });
+                  if (r.ok) {
+                    toast.success(t("saveOk"));
+                    setPetEditModal(false);
+                    void loadAll();
+                  } else {
+                    toast.error(t("error"));
+                  }
+                } catch { toast.error(t("error")); }
+              }} type="button">{t("save")}</button>
             </div>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from "@nestjs/common";
+import { Controller, Get, Inject, Query, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from "@nestjs/swagger";
 
 import { CurrentUser } from "../keycloak/current-user.decorator.js";
@@ -14,7 +14,7 @@ import { WeeklyReportService } from "./weekly-report.service.js";
 @ApiBearerAuth("bearer")
 @DocumentedHttpErrors()
 export class WeeklyReportController {
-  constructor(private readonly weeklyReportService: WeeklyReportService) {}
+  constructor(@Inject(WeeklyReportService) private readonly weeklyReportService: WeeklyReportService) {}
 
   @Get("latest")
   @ApiOperation({ summary: "Get the most recent weekly report for the authenticated learner." })

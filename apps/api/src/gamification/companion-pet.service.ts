@@ -139,4 +139,69 @@ export class CompanionPetService {
       data: { happiness: newHappiness, mood: getMood(newHappiness) },
     });
   }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+   * ── Admin Methods ──────────────────────────────────────────────────── */
+
+  /** Admin: list all pets with optional filters */
+  async adminListPets(filters: { stage?: string; search?: string }) {
+    const where: Record<string, unknown> = {};
+    if (filters.stage && STAGES.includes(filters.stage as (typeof STAGES)[number])) {
+      where.stage = filters.stage;
+    }
+    if (filters.search) {
+      where.OR = [
+        { name: { contains: filters.search, mode: "insensitive" } },
+        { userId: { contains: filters.search, mode: "insensitive" } },
+      ];
+    }
+    return this.prisma.companionPet.findMany({
+      where,
+      orderBy: { xp: "desc" },
+      take: 200,
+    });
+  }
+
+  /** Admin: get aggregate stats */
+  async adminGetStats() {
+    const [total, byStage, avgHappiness] = await Promise.all([
+      this.prisma.companionPet.count(),
+      this.prisma.companionPet.groupBy({ by: ["stage"], _count: true }),
+      this.prisma.companionPet.aggregate({ _avg: { happiness: true, xp: true } }),
+    ]);
+    return {
+      total,
+      byStage: byStage.map((s) => ({ stage: s.stage, count: s._count })),
+      avgHappiness: Math.round(avgHappiness._avg.happiness ?? 0),
+      avgXp: Math.round(avgHappiness._avg.xp ?? 0),
+    };
+  }
+
+  /** Admin: get single pet */
+  async adminGetPet(id: string) {
+    return this.prisma.companionPet.findUnique({ where: { id } });
+  }
+
+  /** Admin: update pet fields */
+  async adminUpdatePet(id: string, data: { stage?: string; xp?: number; happiness?: number; name?: string }) {
+    const update: Record<string, unknown> = {};
+    if (data.stage && STAGES.includes(data.stage as (typeof STAGES)[number])) {
+      update.stage = data.stage;
+    }
+    if (data.xp != null && data.xp >= 0) update.xp = data.xp;
+    if (data.happiness != null && data.happiness >= 0 && data.happiness <= 100) {
+      update.happiness = data.happiness;
+      update.mood = getMood(data.happiness);
+    }
+    if (data.name) update.name = data.name.trim().slice(0, 30);
+    return this.prisma.companionPet.update({ where: { id }, data: update });
+  }
+
+  /** Admin: reset pet to egg */
+  async adminResetPet(id: string) {
+    return this.prisma.companionPet.update({
+      where: { id },
+      data: { stage: "egg", xp: 0, happiness: 100, mood: "happy", totalFeedings: 0, lastFedAt: null, evolvedAt: null, costumeSlug: null },
+    });
+  }
 }

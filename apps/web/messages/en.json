@@ -1246,6 +1246,12 @@
     "score": "Estimated score (800)",
     "correct": "Number of correct answers"
   },
+  "pushBanner": {
+    "prompt": "Get daily Kanji notifications?",
+    "enable": "Enable",
+    "dismiss": "Dismiss",
+    "error": "Could not enable notifications. Please check browser permissions."
+  },
   "notificationsPage": {
     "title": "notification",
     "subtitle": "Manage review reminders, in-app notifications, and emails.",
@@ -1434,7 +1440,10 @@
     "learningPathsDescription": "Pass Engine is expanding. Currently showing public catalog — individual progress will be added after enrollment is implemented.",
     "learningPathsEmpty": "There are no public passes yet.",
     "learningPathsCta": "BJT practice",
-    "learningPathsLevel": "Goal: {level}"
+    "learningPathsLevel": "Goal: {level}",
+    "heatmapLabel": "Activity heatmap (12 weeks)",
+    "shareProgress": "Share progress",
+    "trendVsPrevious": "Compared to previous {n} days"
   },
   "helpPage": {
     "metaTitle": "Help — NihonGo BJT",
@@ -1592,7 +1601,18 @@
       "mastery": "mastery",
       "battle": "battle"
     },
-    "error": "An error has occurred. Please try again."
+    "error": "An error has occurred. Please try again.",
+    "recentlyEarned": "Recently Earned",
+    "browseAll": "All Achievements",
+    "myProgress": "My Progress",
+    "share": "Share",
+    "celebration": "New Achievement!",
+    "celebrationCta": "Awesome!",
+    "allCategories": "All",
+    "streakCalendar": "Study Calendar",
+    "noLeaderboards": "No leaderboards available",
+    "myRank": "Your Rank",
+    "viewAll": "View All"
   },
   "cardgen": {
     "title": "Auto-generate cards",

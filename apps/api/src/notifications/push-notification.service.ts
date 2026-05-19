@@ -86,7 +86,7 @@ export class PushNotificationService {
     return { sent, failed };
   }
 
-  /** Send daily kanji/vocab notification to ALL subscribed users */
+  /** Send daily kanji/vocab notification to subscribed users who opted in */
   async sendDailyKanjiToAll() {
     const count = await this.prisma.kanji.count({
       where: { status: "active" },
@@ -107,18 +107,30 @@ export class PushNotificationService {
     const payload = {
       title,
       body,
-      url: "/daily",
+      url: "/kanji",
       icon: "/icons/icon-192x192.png",
     };
 
-    // Get all distinct user IDs with subscriptions
+    // Get distinct user IDs with active push subscriptions
+    // who have NOT disabled study reminders
     const users = await this.prisma.pushSubscription.findMany({
       select: { userId: true },
       distinct: ["userId"],
     });
 
+    // Filter out users who explicitly disabled study reminders
+    const prefs = await this.prisma.notificationPreference.findMany({
+      where: {
+        userId: { in: users.map((u) => u.userId) },
+        studyRemindersEnabled: false,
+      },
+      select: { userId: true },
+    });
+    const disabledSet = new Set(prefs.map((p) => p.userId));
+    const eligibleUsers = users.filter((u) => !disabledSet.has(u.userId));
+
     let totalSent = 0;
-    for (const { userId } of users) {
+    for (const { userId } of eligibleUsers) {
       try {
         const r = await this.sendToUser(userId, payload);
         totalSent += r.sent;

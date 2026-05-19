@@ -29,7 +29,10 @@ const namespaces = [
 ];
 
 const featureFlags = [
+  ["ads.enabled", "Enable ad serving for learner app.", false],
+  ["billing.stripe.enabled", "Enable Stripe checkout and subscription management.", false],
   ["learning_path_engine", "Enable learner/admin learning path contracts and UI.", false],
+  ["monetization.enforcement", "When enabled, quota limits and billing are enforced. Disable for free-for-all mode.", false],
   ["reading_assist", "Enable reusable Japanese reading assist APIs and UI affordances.", true],
   ["quiz.official_simulation.enabled", "Enable paid official-format BJT simulation.", false],
   ["social_growth", "Enable social login, referrals, share pages, and postcards.", false],

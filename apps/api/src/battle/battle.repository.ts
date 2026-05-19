@@ -417,6 +417,57 @@ export class BattleRepository {
     return rows.reverse();
   }
 
+  /** Published configs available for learners — within schedule window or no schedule set */
+  async listPublishedConfigs() {
+    const now = new Date();
+    const rows = await this.prisma.battleConfig.findMany({
+      orderBy: [{ scheduleStart: "asc" }, { updatedAt: "desc" }],
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        level: true,
+        questionCount: true,
+        timePerQuestionSec: true,
+        maxParticipants: true,
+        botDifficulties: true,
+        scoringRules: true,
+        scheduleStart: true,
+        scheduleEnd: true,
+        publishedAt: true
+      },
+      where: {
+        status: "published",
+        OR: [
+          { scheduleStart: null },
+          { scheduleStart: { lte: now }, scheduleEnd: null },
+          { scheduleStart: { lte: now }, scheduleEnd: { gte: now } },
+          { scheduleStart: { gt: now } } // upcoming — show but mark as scheduled
+        ]
+      }
+    });
+    return rows.map((r) => ({
+      ...r,
+      isUpcoming: r.scheduleStart ? r.scheduleStart > now : false,
+      isActive: !r.scheduleStart || (r.scheduleStart <= now && (!r.scheduleEnd || r.scheduleEnd >= now))
+    }));
+  }
+
+  /** Get a single published config by ID (for match params resolution) */
+  async getPublishedConfig(id: string) {
+    return this.prisma.battleConfig.findFirst({
+      select: {
+        id: true,
+        questionCount: true,
+        timePerQuestionSec: true,
+        maxParticipants: true,
+        botDifficulties: true,
+        scoringRules: true
+      },
+      where: { id, status: "published" }
+    });
+  }
+
   createChatMessage(input: {
     displayName?: string | null;
     kind?: string;

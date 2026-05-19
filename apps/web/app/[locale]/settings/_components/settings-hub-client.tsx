@@ -30,6 +30,8 @@ type SettingsLabels = {
   readingAssistDesc: string;
   appearance: string;
   appearanceDesc: string;
+  subscription: string;
+  subscriptionDesc: string;
   settingsArea: string;
   backToHome: string;
   signOut: string;
@@ -292,6 +294,12 @@ export function SettingsHubClient({
             icon="🔒"
             title={s.privacy}
             description={s.privacyDesc}
+          />
+          <SettingsNavCard
+            href={`${base}/settings/subscription`}
+            icon="💎"
+            title={s.subscription}
+            description={s.subscriptionDesc}
           />
         </div>
       </section>

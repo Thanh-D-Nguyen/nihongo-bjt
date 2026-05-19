@@ -34,6 +34,7 @@ import { OperationsModule } from "./operations/operations.module.js";
 import { QuizModule } from "./quiz/quiz.module.js";
 import { ReadingAssistModule } from "./reading-assist/reading-assist.module.js";
 import { NotificationsModule } from "./notifications/notifications.module.js";
+import { RecommendationModule } from "./recommendation/recommendation.module.js";
 import { SearchModule } from "./search/search.module.js";
 
 @Module({
@@ -76,6 +77,7 @@ import { SearchModule } from "./search/search.module.js";
     CareerRpgModule,
     LevelsModule,
     NotificationsModule,
+    RecommendationModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

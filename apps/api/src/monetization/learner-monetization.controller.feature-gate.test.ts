@@ -18,6 +18,8 @@ describe("LearnerMonetizationController feature gate", () => {
 
     const stripeBilling = { startCheckout: vi.fn() };
 
+    const monetizationRepo = { resolvePlanForUser: vi.fn() };
+
     const controller = new LearnerMonetizationController(
       billing as any,
       stripeBilling as any,
@@ -25,7 +27,8 @@ describe("LearnerMonetizationController feature gate", () => {
       entitlements as any,
       quota as any,
       featureGate as any,
-      legalConsent as any
+      legalConsent as any,
+      monetizationRepo as any
     );
 
     await expect(
@@ -51,6 +54,8 @@ describe("LearnerMonetizationController feature gate", () => {
 
     const stripeBilling = { startCheckout: vi.fn() };
 
+    const monetizationRepo = { resolvePlanForUser: vi.fn() };
+
     const controller = new LearnerMonetizationController(
       billing as any,
       stripeBilling as any,
@@ -58,7 +63,8 @@ describe("LearnerMonetizationController feature gate", () => {
       entitlements as any,
       quota as any,
       featureGate as any,
-      legalConsent as any
+      legalConsent as any,
+      monetizationRepo as any
     );
 
     await expect(
