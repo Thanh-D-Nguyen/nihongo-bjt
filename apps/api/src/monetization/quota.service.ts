@@ -17,6 +17,7 @@ export class QuotaService {
 
   constructor(
     @Inject(MonetizationRepository) private readonly repository: MonetizationRepository,
+    @Inject(RuntimeFeatureGateService)
     private readonly featureGate: RuntimeFeatureGateService
   ) {}
 
