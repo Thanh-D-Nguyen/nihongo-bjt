@@ -180,13 +180,17 @@ export const comebackSummaryQuerySchema = z.object({
 
 export const authProfileUpdateSchema = z.object({
   avatarAssetId: z.uuid().nullable().optional(),
+  coverAssetId: z.uuid().nullable().optional(),
   dailyGoalCards: z.number().int().min(1).max(500).optional(),
+  densityPreference: z.enum(["compact", "comfortable"]).optional(),
   displayName: z.string().trim().min(1).max(120).optional(),
   explanationLocale: z.enum(["vi", "ja", "en"]).optional(),
+  fontSizePreference: z.enum(["small", "default", "large", "xl"]).optional(),
   learningPersonality: z.string().trim().min(1).max(64).nullable().optional(),
   privacyLevel: z.enum(["standard", "private"]).optional(),
   sharePostcardOptIn: z.boolean().optional(),
   targetBjtBand: z.enum(["J5", "J4", "J3", "J2", "J1", "J1+"]).nullable().optional(),
+  themeMode: z.enum(["light", "dark", "system"]).optional(),
   timezone: z.string().trim().min(1).max(80).optional(),
   uiLocale: z.enum(["vi", "ja", "en"]).optional()
 });
@@ -266,7 +270,7 @@ export const cloneDeckSchema = z.object({
 
 export const createCardFromContentSchema = z.object({
   backText: z.string().trim().min(1).max(1000),
-  deckId: z.uuid(),
+  deckId: z.uuid().optional(),
   frontText: z.string().trim().min(1).max(500),
   reading: z.string().trim().max(300).optional(),
   sourceId: z.uuid(),

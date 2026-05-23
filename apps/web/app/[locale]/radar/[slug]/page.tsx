@@ -1,11 +1,17 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import en from "../../../../messages/en.json";
 import ja from "../../../../messages/ja.json";
 import vi from "../../../../messages/vi.json";
+import { VocabExpressionList } from "./_components/vocab-expression-list";
+import type { VocabExpression } from "./_components/vocab-expression-list";
 
-const messages = { en, ja, vi };
+const messagesMap = { en, ja, vi } as const;
+type Locale = keyof typeof messagesMap;
 const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/$/u, "");
+
+/* ─── Types ─── */
 
 type CardDetail = {
   badgeTextVi: string | null;
@@ -31,25 +37,31 @@ type CardDetail = {
   visualTheme: string | null;
 };
 
-const themeGradients: Record<string, string> = {
-  blue_corporate: "from-slate-950 via-blue-900 to-blue-700",
-  indigo_culture: "from-indigo-900 via-indigo-800 to-purple-700",
-  indigo_news: "from-indigo-900 via-blue-800 to-cyan-700",
-  green_life: "from-emerald-900 via-emerald-800 to-teal-700",
-  sky_weather: "from-sky-900 via-sky-700 to-cyan-600",
-  slate_procedure: "from-slate-800 via-slate-700 to-zinc-600",
-  amber_money: "from-amber-800 via-amber-700 to-yellow-600",
-  red_safety: "from-red-900 via-red-800 to-rose-700",
-  purple_ai: "from-purple-900 via-purple-800 to-violet-700",
-  teal_health: "from-teal-900 via-teal-800 to-emerald-700",
-  cyan_transport: "from-cyan-900 via-cyan-800 to-sky-700",
-  rose_family: "from-rose-900 via-rose-800 to-pink-700",
+/* ─── Theme gradients ─── */
+
+const themeGradients: Record<string, { bg: string; badge: string }> = {
+  blue_corporate: { bg: "from-slate-950 via-blue-900 to-blue-700", badge: "from-blue-500 to-blue-700" },
+  indigo_culture: { bg: "from-indigo-900 via-indigo-800 to-purple-700", badge: "from-indigo-500 to-purple-600" },
+  indigo_news: { bg: "from-indigo-900 via-blue-800 to-cyan-700", badge: "from-blue-500 to-cyan-600" },
+  green_life: { bg: "from-emerald-900 via-emerald-800 to-teal-700", badge: "from-emerald-500 to-teal-600" },
+  sky_weather: { bg: "from-sky-900 via-sky-700 to-cyan-600", badge: "from-sky-500 to-cyan-500" },
+  slate_procedure: { bg: "from-slate-800 via-slate-700 to-zinc-600", badge: "from-slate-500 to-zinc-500" },
+  amber_money: { bg: "from-amber-800 via-amber-700 to-yellow-600", badge: "from-amber-500 to-yellow-500" },
+  red_safety: { bg: "from-red-900 via-red-800 to-rose-700", badge: "from-red-500 to-rose-600" },
+  purple_ai: { bg: "from-purple-900 via-purple-800 to-violet-700", badge: "from-purple-500 to-violet-600" },
+  teal_health: { bg: "from-teal-900 via-teal-800 to-emerald-700", badge: "from-teal-500 to-emerald-500" },
+  cyan_transport: { bg: "from-cyan-900 via-cyan-800 to-sky-700", badge: "from-cyan-500 to-sky-500" },
+  rose_family: { bg: "from-rose-900 via-rose-800 to-pink-700", badge: "from-rose-500 to-pink-500" },
 };
+
+const defaultTheme = { bg: "from-slate-950 via-blue-900 to-blue-700", badge: "from-blue-500 to-blue-700" };
+
+/* ─── Data fetching ─── */
 
 async function fetchCard(slug: string): Promise<CardDetail | null> {
   try {
     const res = await fetch(`${apiBaseUrl}/api/daily-radar/cards/${encodeURIComponent(slug)}`, {
-      cache: "no-store",
+      next: { revalidate: 300 },
     });
     if (!res.ok) return null;
     return (await res.json()) as CardDetail;
@@ -58,143 +70,282 @@ async function fetchCard(slug: string): Promise<CardDetail | null> {
   }
 }
 
+/* ─── SEO Metadata ─── */
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: Locale; slug: string }>;
+}): Promise<Metadata> {
+  const { locale, slug } = await params;
+  const card = await fetchCard(slug);
+  if (!card) return { title: "Not Found" };
+
+  const title = `${card.titleVi} | NihonGo BJT`;
+  const description = card.descriptionVi;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      locale: locale === "ja" ? "ja_JP" : locale === "en" ? "en_US" : "vi_VN",
+      type: "article",
+    },
+  };
+}
+
+/* ─── Helpers ─── */
+
+function parseExpressions(meta: Record<string, unknown>): VocabExpression[] {
+  const raw = meta.japaneseExpressions;
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((item): item is Record<string, unknown> => typeof item === "object" && item !== null && "word" in item)
+    .map((item) => ({
+      word: String(item.word ?? ""),
+      reading: String(item.reading ?? ""),
+      meaning: String(item.meaning ?? ""),
+      jlptLevel: typeof item.jlptLevel === "string" ? item.jlptLevel : undefined,
+      example: typeof item.example === "string" ? item.example : undefined,
+      exampleReading: typeof item.exampleReading === "string" ? item.exampleReading : undefined,
+      exampleMeaning: typeof item.exampleMeaning === "string" ? item.exampleMeaning : undefined,
+      usageNote: typeof item.usageNote === "string" ? item.usageNote : undefined,
+    }));
+}
+
+/* ─── Page component ─── */
+
 export default async function RadarCardPage({
   params,
 }: {
-  params: Promise<{ locale: keyof typeof messages; slug: string }>;
+  params: Promise<{ locale: Locale; slug: string }>;
 }) {
   const { locale, slug } = await params;
-  const t = messages[locale] ?? messages.vi;
+  const t = messagesMap[locale] ?? messagesMap.vi;
   const labels = t.homepage.dailyRadar;
+  const detail = t.homepage.radarDetail;
   const card = await fetchCard(slug);
 
   if (!card) {
     return (
-      <main className="mx-auto max-w-3xl px-4 py-16 text-center">
-        <h1 className="text-2xl font-semibold text-slate-950">Không tìm thấy bài học</h1>
-        <p className="mt-2 text-sm text-slate-600">Card này không tồn tại hoặc đã bị gỡ.</p>
-        <Link className="mt-6 inline-flex rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white" href={`/${locale}`}>
-          ← Về trang chủ
+      <main className="mx-auto flex min-h-[60vh] max-w-3xl flex-col items-center justify-center px-4 py-16 text-center">
+        <div className="rounded-full bg-slate-100 p-4">
+          <svg className="h-8 w-8 text-slate-400" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+            <path d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
+        <h1 className="mt-4 text-xl font-semibold text-slate-900">{detail.notFound}</h1>
+        <p className="mt-2 text-sm text-slate-600">{detail.notFoundDesc}</p>
+        <Link
+          className="mt-6 inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 active:scale-95"
+          href={`/${locale}`}
+        >
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path d="M10 19l-7-7m0 0l7-7m-7 7h18" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          {detail.backHome}
         </Link>
       </main>
     );
   }
 
   const meta = card.metadata ?? {};
-  const japaneseExpressions = Array.isArray(meta.japaneseExpressions) ? (meta.japaneseExpressions as string[]) : [];
+  const expressions = parseExpressions(meta);
   const skills = Array.isArray(meta.skills) ? (meta.skills as string[]) : [];
   const contentGoal = typeof meta.contentGoal === "string" ? meta.contentGoal : null;
-  const gradient = themeGradients[card.visualTheme ?? ""] ?? "from-slate-950 via-blue-900 to-blue-700";
-  const categoryLabel = labels[`category${card.category.charAt(0).toUpperCase()}${card.category.slice(1)}` as keyof typeof labels] ?? card.category;
+  const usageNote = typeof meta.usageNote === "string" ? meta.usageNote : null;
+  const theme = themeGradients[card.visualTheme ?? ""] ?? defaultTheme;
+  const categoryLabel =
+    labels[`category${card.category.charAt(0).toUpperCase()}${card.category.slice(1)}` as keyof typeof labels] ??
+    card.category;
+
+  const expressionLabels = {
+    addToFlashcard: detail.addToFlashcard,
+    addedToFlashcard: detail.addedToFlashcard,
+    example: detail.example,
+    exampleMeaning: detail.exampleMeaning,
+    listenPronunciation: detail.listenPronunciation,
+    meaning: detail.meaning,
+    reading: detail.reading,
+    tapToExpand: detail.tapToExpand,
+    usageNote: detail.usageNote,
+  };
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-      <Link className="text-sm font-semibold text-blue-700 hover:text-blue-900" href={`/${locale}/modules/${card.module.moduleKey}`}>
-        ← {card.module.titleVi}
-      </Link>
+    <main className="mx-auto max-w-3xl px-4 pb-16 pt-6 sm:px-6">
+      {/* Breadcrumb */}
+      <nav className="mb-6">
+        <Link
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 transition hover:text-slate-900"
+          href={`/${locale}`}
+        >
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path d="M10 19l-7-7m0 0l7-7m-7 7h18" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          {card.module.titleVi}
+        </Link>
+      </nav>
 
-      <article className="mt-6 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-        {/* Header */}
-        <div className={`bg-gradient-to-br ${gradient} p-6 text-white sm:p-8`}>
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-bold uppercase tracking-widest ring-1 ring-white/20">
-              {categoryLabel}
-            </span>
-            {card.badgeTextVi ? (
-              <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-900">{card.badgeTextVi}</span>
-            ) : null}
-            {card.levelLabel ? (
-              <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">{card.levelLabel}</span>
-            ) : null}
-          </div>
-          <h1 className="mt-4 text-2xl font-bold leading-tight sm:text-3xl">{card.titleVi}</h1>
-          {card.titleJa ? (
-            <p className="mt-2 text-lg font-medium text-white/80" lang="ja">{card.titleJa}</p>
-          ) : null}
-          <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-white/70">
-            {card.estimatedMinutes ? <span>⏱ {labels.minutes.replace("{n}", String(card.estimatedMinutes))}</span> : null}
-            <span>{card.module.titleVi}</span>
-          </div>
-        </div>
-
-        {/* Body */}
-        <div className="space-y-6 p-6 sm:p-8">
-          {/* Disclaimer */}
-          {card.module.disclaimerVi ? (
-            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-              ⚠️ {card.module.disclaimerVi}
-            </div>
-          ) : null}
-
-          {/* Content goal */}
-          {contentGoal ? (
-            <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3">
-              <p className="text-xs font-bold uppercase tracking-wider text-blue-700">Mục tiêu</p>
-              <p className="mt-1 text-sm leading-relaxed text-blue-900">{contentGoal}</p>
-            </div>
-          ) : null}
-
-          {/* Description */}
-          <div>
-            <h2 className="text-lg font-semibold text-slate-950">Nội dung</h2>
-            <p className="mt-2 text-sm leading-relaxed text-slate-700">{card.descriptionVi}</p>
+      <article className="space-y-6">
+        {/* Hero header */}
+        <header className={`relative overflow-hidden rounded-3xl bg-gradient-to-br ${theme.bg} p-6 text-white shadow-xl sm:p-8`}>
+          {/* Decorative elements */}
+          <div className="pointer-events-none absolute inset-0">
+            <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/5 blur-2xl" />
+            <div className="absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-white/5 blur-2xl" />
           </div>
 
-          {/* Recommendation reason */}
-          {card.recommendationReasonVi ? (
-            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Tại sao nên học</p>
-              <p className="mt-1 text-sm leading-relaxed text-slate-700">{card.recommendationReasonVi}</p>
+          <div className="relative">
+            {/* Badges */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-bold uppercase tracking-widest ring-1 ring-white/25 backdrop-blur-sm">
+                {categoryLabel}
+              </span>
+              {card.levelLabel && (
+                <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold backdrop-blur-sm">
+                  {card.levelLabel}
+                </span>
+              )}
+              {card.badgeTextVi && (
+                <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-900">
+                  {card.badgeTextVi}
+                </span>
+              )}
             </div>
-          ) : null}
 
-          {/* Japanese expressions */}
-          {japaneseExpressions.length > 0 ? (
-            <div>
-              <h2 className="text-lg font-semibold text-slate-950">Cụm từ tiếng Nhật</h2>
-              <div className="mt-3 space-y-2">
-                {japaneseExpressions.map((expr, i) => (
-                  <div
-                    className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
-                    key={i}
-                  >
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700">
-                      {i + 1}
-                    </span>
-                    <span className="text-lg font-semibold text-slate-900" lang="ja">{expr}</span>
-                  </div>
-                ))}
-              </div>
+            {/* Title */}
+            <h1 className="mt-5 text-2xl font-bold leading-tight sm:text-3xl">
+              {card.titleVi}
+            </h1>
+            {card.titleJa && (
+              <p className="mt-2 text-lg font-medium text-white/80" lang="ja" style={{ lineHeight: "1.8" }}>
+                {card.titleJa}
+              </p>
+            )}
+
+            {/* Meta info */}
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              {card.estimatedMinutes && (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-medium backdrop-blur-sm">
+                  <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  {detail.duration.replace("{n}", String(card.estimatedMinutes))}
+                </span>
+              )}
+              {expressions.length > 0 && (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-medium backdrop-blur-sm">
+                  <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path d="M4 6h16M4 12h16M4 18h7" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  {detail.expressionCount.replace("{n}", String(expressions.length))}
+                </span>
+              )}
             </div>
-          ) : null}
-
-          {/* Skills */}
-          {skills.length > 0 ? (
-            <div>
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-500">Kỹ năng</h2>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {skills.map((skill) => (
-                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200" key={skill}>
-                    {skill.replace(/_/g, " ")}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
-          {/* CTA area */}
-          <div className="flex flex-wrap items-center gap-3 border-t border-slate-200 pt-6">
-            <span className="inline-flex min-h-11 items-center rounded-xl bg-slate-100 px-5 text-sm font-semibold text-slate-500">
-              Bài học chi tiết sắp ra mắt
-            </span>
-            <Link
-              className="inline-flex min-h-11 items-center rounded-xl bg-slate-950 px-5 text-sm font-semibold text-white hover:bg-slate-800"
-              href={`/${locale}/modules/${card.module.moduleKey}`}
-            >
-              ← Xem các bài khác
-            </Link>
           </div>
-        </div>
+        </header>
+
+        {/* Disclaimer */}
+        {card.module.disclaimerVi && (
+          <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3.5">
+            <svg className="h-5 w-5 shrink-0 text-amber-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <p className="text-sm font-medium text-amber-900">{card.module.disclaimerVi}</p>
+          </div>
+        )}
+
+        {/* Content goal */}
+        {contentGoal && (
+          <section className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-sky-50 p-5">
+            <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-700">
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path d="M13 10V3L4 14h7v7l9-11h-7z" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              {detail.objective}
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-blue-900 font-medium">{contentGoal}</p>
+          </section>
+        )}
+
+        {/* Description */}
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-base font-semibold text-slate-900">{detail.content}</h2>
+          <p className="mt-2 text-sm leading-relaxed text-slate-700">{card.descriptionVi}</p>
+        </section>
+
+        {/* Usage note (general context) */}
+        {usageNote && (
+          <section className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-5">
+            <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-700">
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              {detail.usageNote}
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-emerald-900">{usageNote}</p>
+          </section>
+        )}
+
+        {/* Japanese Expressions - the main learning content */}
+        {expressions.length > 0 && (
+          <section>
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-slate-900">{detail.expressions}</h2>
+              <span className="text-xs font-medium text-slate-500">{detail.tapToExpand}</span>
+            </div>
+            <VocabExpressionList
+              expressions={expressions}
+              gradient={theme.badge}
+              labels={expressionLabels}
+            />
+          </section>
+        )}
+
+        {/* Recommendation reason */}
+        {card.recommendationReasonVi && (
+          <section className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+            <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-600">
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              {detail.whyLearn}
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-slate-700">{card.recommendationReasonVi}</p>
+          </section>
+        )}
+
+        {/* Skills */}
+        {skills.length > 0 && (
+          <section>
+            <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">{detail.skills}</h2>
+            <div className="flex flex-wrap gap-2">
+              {skills.map((skill) => (
+                <span
+                  className="rounded-full bg-gradient-to-r from-slate-100 to-slate-50 px-3.5 py-1.5 text-xs font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200"
+                  key={skill}
+                >
+                  {skill.replace(/_/gu, " ")}
+                </span>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Footer navigation */}
+        <footer className="flex flex-wrap items-center gap-3 border-t border-slate-200 pt-6">
+          <Link
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-slate-900 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 active:scale-95"
+            href={`/${locale}`}
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path d="M10 19l-7-7m0 0l7-7m-7 7h18" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            {detail.backModule}
+          </Link>
+        </footer>
       </article>
     </main>
   );

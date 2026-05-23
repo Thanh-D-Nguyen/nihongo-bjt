@@ -7,7 +7,7 @@ import { learnerApiFetch } from "../../../../lib/learner-api";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface OnboardingFlowProps {
-  onComplete: () => void;
+  onComplete: (didComplete?: boolean) => void;
 }
 
 type Step = "level" | "goal" | "topics" | "time" | "style";
@@ -88,14 +88,20 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   });
   const [saving, setSaving] = useState(false);
 
+  const skipOnboarding = useCallback(() => {
+    // Persist skip to backend so it won't show on other devices
+    void learnerApiFetch("/api/recommendation/onboarding/skip", { method: "POST" }).catch(() => {});
+    onComplete(false);
+  }, [onComplete]);
+
   // Escape key to skip onboarding
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onComplete();
+      if (e.key === "Escape") skipOnboarding();
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [onComplete]);
+  }, [skipOnboarding]);
 
   // Respect prefers-reduced-motion
   const prefersReducedMotion =
@@ -128,10 +134,10 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(answers),
         });
-        onComplete();
+        onComplete(true);
       } catch {
         // Silently complete even if save fails — preferences are non-critical
-        onComplete();
+        onComplete(true);
       } finally {
         setSaving(false);
       }
@@ -299,7 +305,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
           {/* Skip */}
           <div className="mt-3 text-center">
             <button
-              onClick={onComplete}
+              onClick={skipOnboarding}
               className="text-[11px] text-muted hover:text-ink transition"
             >
               Bỏ qua — tôi sẽ thiết lập sau

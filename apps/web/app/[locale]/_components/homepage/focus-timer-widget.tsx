@@ -1,111 +1,26 @@
 "use client";
 
 import { cn } from "@nihongo-bjt/ui";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
-import { learnerApiFetch } from "../../../../lib/learner-api";
+import { useState } from "react";
+import { useFocusTimer } from "../../../_hooks/use-focus-timer";
 
 const DURATION_OPTIONS = [15, 25, 45];
 const RING_RADIUS = 40;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
-interface ActiveSession {
-  id: string;
-  mode: string;
-  durationMinutes: number;
-  startedAt: string;
-}
-
 export function FocusTimerWidget({ locale }: { locale: string }) {
-  const { userId } = useKeycloakAuth();
-  const [loading, setLoading] = useState(true);
-  const [todayMinutes, setTodayMinutes] = useState(0);
-  const [todaySessions, setTodaySessions] = useState(0);
-  const [activeSession, setActiveSession] = useState<ActiveSession | null>(null);
+  const {
+    loading,
+    activeSession,
+    remaining,
+    todayMinutes,
+    todaySessions,
+    completed,
+    startSession,
+    stopSession,
+    dismissCompleted,
+  } = useFocusTimer();
   const [selectedDuration, setSelectedDuration] = useState(15);
-  const [remaining, setRemaining] = useState(0); // seconds
-  const [completed, setCompleted] = useState(false);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const endSession = useCallback(async (sessionId: string, isComplete: boolean, durationMin?: number) => {
-    try {
-      await learnerApiFetch("/api/gamification/focus/end", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId, completed: isComplete }),
-      });
-    } catch { /* no-op */ }
-    setActiveSession(null);
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    if (isComplete) {
-      setCompleted(true);
-      setTodayMinutes((m) => m + (durationMin ?? 0));
-      setTodaySessions((s) => s + 1);
-    }
-  }, []);
-
-  const loadStats = useCallback(async () => {
-    if (!userId) return;
-    try {
-      const r = await learnerApiFetch("/api/gamification/focus/today");
-      if (r.ok) {
-        const data = await r.json();
-        setTodayMinutes(data.todayMinutes ?? 0);
-        setTodaySessions(data.todaySessions ?? 0);
-        if (data.activeSession) {
-          setActiveSession(data.activeSession);
-          // Calculate remaining time
-          const started = new Date(data.activeSession.startedAt).getTime();
-          const total = data.activeSession.durationMinutes * 60 * 1000;
-          const elapsed = Date.now() - started;
-          const rem = Math.max(0, Math.floor((total - elapsed) / 1000));
-          setRemaining(rem);
-          if (rem <= 0) {
-            // Session already expired, auto-complete
-            await endSession(data.activeSession.id, true, data.activeSession.durationMinutes);
-          }
-        }
-      }
-    } catch { /* no-op */ } finally {
-      setLoading(false);
-    }
-  }, [userId, endSession]);
-
-  useEffect(() => { void loadStats(); }, [loadStats]);
-
-  // Countdown timer
-  useEffect(() => {
-    if (!activeSession || remaining <= 0) return;
-    intervalRef.current = setInterval(() => {
-      setRemaining((r) => {
-        if (r <= 1) {
-          clearInterval(intervalRef.current!);
-          void endSession(activeSession.id, true, activeSession.durationMinutes);
-          return 0;
-        }
-        return r - 1;
-      });
-    }, 1000);
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [activeSession?.id, activeSession?.durationMinutes, endSession, remaining]);
-
-  const startSession = async () => {
-    try {
-      const r = await learnerApiFetch("/api/gamification/focus/start", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ durationMinutes: selectedDuration, mode: "focus" }),
-      });
-      if (r.ok) {
-        const data = await r.json();
-        setActiveSession(data);
-        setRemaining(selectedDuration * 60);
-        setCompleted(false);
-      }
-    } catch { /* no-op */ }
-  };
-
-  if (!userId) return null;
 
   if (loading) {
     return (
@@ -132,7 +47,7 @@ export function FocusTimerWidget({ locale }: { locale: string }) {
           Hôm nay: {todayMinutes} phút · {todaySessions} phiên
         </p>
         <button
-          onClick={() => setCompleted(false)}
+          onClick={dismissCompleted}
           className="mt-3 text-xs font-medium text-[var(--color-matcha)] underline"
         >
           Tiếp tục học
@@ -175,7 +90,7 @@ export function FocusTimerWidget({ locale }: { locale: string }) {
         </div>
 
         <button
-          onClick={() => void endSession(activeSession.id, false)}
+          onClick={() => void stopSession()}
           className="mt-3 w-full rounded-xl border border-[var(--color-sakura)]/30 py-2 text-sm font-medium text-[var(--color-sakura)] transition-transform active:scale-[0.97]"
         >
           Dừng lại
@@ -216,7 +131,7 @@ export function FocusTimerWidget({ locale }: { locale: string }) {
       </div>
 
       <button
-        onClick={() => void startSession()}
+        onClick={() => void startSession(selectedDuration)}
         className="mt-3 w-full rounded-xl bg-[var(--color-matcha)] py-2.5 text-sm font-bold text-white shadow-sm transition-transform active:scale-[0.97]"
       >
         Bắt đầu tập trung

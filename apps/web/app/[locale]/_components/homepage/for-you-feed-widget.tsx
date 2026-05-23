@@ -14,6 +14,7 @@ interface FeedItem {
   title: string;
   score: number;
   source: string;
+  metadata?: Record<string, string> | null;
 }
 
 interface FeedMeta {
@@ -33,12 +34,28 @@ interface FeedResponse {
 const TYPE_META: Record<string, { emoji: string; label: string; color: string; href: string }> = {
   flashcard_review: { emoji: "🃏", label: "Ôn thẻ", color: "bg-blue-500/10 text-blue-700", href: "/flashcards?tab=review" },
   exercise: { emoji: "✏️", label: "Bài tập", color: "bg-emerald-500/10 text-emerald-700", href: "/exercises" },
-  lesson: { emoji: "📖", label: "Bài học", color: "bg-purple-500/10 text-purple-700", href: "/lessons" },
+  lesson: { emoji: "📖", label: "Bài học", color: "bg-purple-500/10 text-purple-700", href: "/levels" },
   news_article: { emoji: "📰", label: "Đọc báo", color: "bg-amber-500/10 text-amber-700", href: "/news" },
   quiz: { emoji: "📝", label: "Quiz", color: "bg-rose-500/10 text-rose-700", href: "/quiz" },
-  vocabulary: { emoji: "あ", label: "Từ vựng", color: "bg-cyan-500/10 text-cyan-700", href: "/vocabulary" },
+  vocabulary: { emoji: "あ", label: "Từ vựng", color: "bg-cyan-500/10 text-cyan-700", href: "/flashcards" },
   grammar_point: { emoji: "文", label: "Ngữ pháp", color: "bg-indigo-500/10 text-indigo-700", href: "/grammar" },
 };
+
+/** Build item-specific URL using metadata when available */
+function buildItemHref(item: FeedItem, fallbackHref: string): string {
+  const m = item.metadata;
+  if (!m) return fallbackHref;
+  switch (item.type) {
+    case "lesson":
+      return m.slug && m.levelCode ? `/levels/${m.levelCode}/lessons/${m.slug}` : fallbackHref;
+    case "grammar_point":
+      return `/grammar/${item.id}`;
+    case "news_article":
+      return `/news/${item.id}`;
+    default:
+      return fallbackHref;
+  }
+}
 
 /** Map recommendation source to user-friendly reason */
 function getReasonText(source: string, type: string): string {
@@ -200,10 +217,11 @@ export function ForYouFeedWidget({ locale, refreshKey = 0 }: { locale: string; r
       <ul className="mt-4 space-y-2" role="list" aria-label="Gợi ý học tập cá nhân">
         {feed.items.map((item, idx) => {
           const meta = TYPE_META[item.type] ?? TYPE_META["exercise"];
+          const itemHref = buildItemHref(item, meta.href);
           return (
             <li key={item.id}>
               <Link
-                href={`/${locale}${meta.href}`}
+                href={`/${locale}${itemHref}`}
                 className={cn(
                   "group flex items-start gap-3 rounded-xl p-2.5 transition-colors duration-150",
                   "hover:bg-ink/[0.03]",

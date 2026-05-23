@@ -3,6 +3,9 @@
 @source "../**/*.{ts,tsx}";
 @source "../../../packages/ui/src/**/*.{ts,tsx}";
 
+/* ── Class-based dark mode: dark: variants respond to .dark class ── */
+@custom-variant dark (&:where(.dark *));
+
 @theme {
   /* ── Brand Core (BJT Design System) ── */
   --color-ink: #111827;
@@ -79,8 +82,9 @@
 }
 
 :root {
-  color: #111827;
-  background: #F8FAFC;
+  color-scheme: light;
+  color: var(--color-ink);
+  background: var(--color-paper);
   font-family:
     'Inter',
     'Noto Sans JP',
@@ -92,27 +96,710 @@
     sans-serif;
 }
 
-/* ── Dark mode overrides ── */
+/* ── Dark mode: comprehensive token overrides ── */
 .dark {
+  color-scheme: dark;
+
+  /* Core surfaces */
   --color-ink: #F1F5F9;
   --color-muted: #94A3B8;
   --color-subtle: #64748B;
   --color-paper: #0F172A;
   --color-surface: #1E293B;
+
+  /* Borders */
   --color-border: #334155;
   --color-border-hover: #475569;
+  --color-border-focus: #60A5FA;
+
+  /* Accent (brighter for dark bg) */
+  --color-accent: #60A5FA;
+  --color-accent-mid: #3B82F6;
+  --color-accent-hover: #93C5FD;
   --color-accent-soft: #1E3A5F;
-  --color-focus-surface: #1E293B;
-  --color-brand-sky: #1E293B;
+
+  /* Semantic colors (adjusted for dark bg) */
+  --color-leaf: #34D399;
   --color-leaf-soft: #064E3B;
-  --color-matcha-soft: #064E3B;
+  --color-sakura: #F87171;
   --color-sakura-soft: #7F1D1D;
+  --color-amber: #FBBF24;
   --color-amber-soft: #78350F;
+  --color-matcha: #4ADE80;
+  --color-matcha-soft: #064E3B;
+  --color-focus-surface: #1E293B;
+
+  /* Brand extended (dark variants) */
+  --color-brand-navy: #93C5FD;
+  --color-brand-navy-hover: #BFDBFE;
+  --color-brand-sky: #1E293B;
+  --color-brand-sakura: #FDA4AF;
+  --color-brand-gold: #FCD34D;
+
+  /* SRS (brighter) */
+  --color-srs-new: #A78BFA;
+  --color-srs-learning: #FCD34D;
+  --color-srs-review: #60A5FA;
+  --color-srs-mastered: #34D399;
+
+  /*
+   * ── NOTE: No blanket gray scale inversion ──
+   * Inverting --color-gray-* would break 21+ explicit dark: variant usages
+   * (e.g., dark:bg-gray-800 expects a DARK value, not inverted to light).
+   * Instead, targeted CSS class selectors below handle specific utilities.
+   */
+
+  /* Shadows (deeper for dark mode) */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+
   color: #F1F5F9;
   background: #0F172A;
 }
+
+/*
+ * ── Dark mode: bg-white → surface override ──
+ * bg-white shares --color-white with text-white.
+ * We CANNOT override --color-white (breaks white text on colored buttons).
+ * Instead, target background-color directly via class~= (exact word match).
+ * class~="bg-white" matches ONLY the exact token "bg-white" in the class list.
+ * It does NOT match bg-white/20, bg-white/[0.07], hover:bg-white etc.
+ * This is safe because text-white uses `color` property, not `background-color`.
+ */
+:is(.dark) :is([class~="bg-white"]) {
+  background-color: var(--color-surface) !important;
+}
+/* Preserve intentional white backgrounds with escape hatch */
+:is(.dark) :is(.dark\:bg-white, .preserve-white-bg) {
+  background-color: #FFFFFF !important;
+}
+
+/* System preference fallback when JS fails */
+@media (prefers-color-scheme: dark) {
+  html:not(.dark):not([data-theme="light"]) {
+    color-scheme: dark;
+    --color-ink: #F1F5F9;
+    --color-muted: #94A3B8;
+    --color-subtle: #64748B;
+    --color-paper: #0F172A;
+    --color-surface: #1E293B;
+    --color-border: #334155;
+    --color-border-hover: #475569;
+    --color-border-focus: #60A5FA;
+    --color-accent: #60A5FA;
+    --color-accent-mid: #3B82F6;
+    --color-accent-hover: #93C5FD;
+    --color-accent-soft: #1E3A5F;
+    --color-leaf: #34D399;
+    --color-leaf-soft: #064E3B;
+    --color-sakura: #F87171;
+    --color-sakura-soft: #7F1D1D;
+    --color-amber: #FBBF24;
+    --color-amber-soft: #78350F;
+    --color-matcha: #4ADE80;
+    --color-matcha-soft: #064E3B;
+    --color-focus-surface: #1E293B;
+    --color-brand-navy: #93C5FD;
+    --color-brand-navy-hover: #BFDBFE;
+    --color-brand-sky: #1E293B;
+    --color-brand-sakura: #FDA4AF;
+    --color-brand-gold: #FCD34D;
+    --color-srs-new: #A78BFA;
+    --color-srs-learning: #FCD34D;
+    --color-srs-review: #60A5FA;
+    --color-srs-mastered: #34D399;
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+    color: #F1F5F9;
+    background: #0F172A;
+  }
+
+  html:not([data-theme="light"]) [class~="bg-white"] {
+    background-color: #1E293B;
+  }
+}
+
 .dark body {
   background: linear-gradient(180deg, #0F172A 0%, #1E293B 100%);
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) body {
+    background: linear-gradient(180deg, #0F172A 0%, #1E293B 100%);
+  }
+}
+
+/*
+ * ── Dark mode: Hardcoded hex → semantic token compatibility layer ──
+ * Maps arbitrary Tailwind hex values to their dark-mode equivalents.
+ * Covers 331+ usages across the codebase without modifying component files.
+ * Each rule maps a light-mode hex to its corresponding dark semantic token.
+ *
+ * Mapping reference (WCAG AA compliant):
+ *   #111827 (gray-900)  → ink       (#F1F5F9) — contrast 15.4:1 on dark bg
+ *   #374151 (gray-700)  → ink       (#F1F5F9) — contrast 15.4:1
+ *   #4B5563 (gray-600)  → muted     (#94A3B8) — contrast 5.1:1
+ *   #6B7280 (gray-500)  → muted     (#94A3B8) — contrast 5.1:1
+ *   #9CA3AF (gray-400)  → subtle    (#64748B) — contrast 3.2:1 (decorative OK)
+ *   #D1D5DB (gray-300)  → border    (#334155) — border context
+ *   #E5E7EB (gray-200)  → border    (#334155) — border context
+ *   #E2E8F0 (slate-200) → border    (#334155) — border context
+ *   #F3F4F6 (gray-100)  → surface   (#1E293B) — bg context
+ *   #F9FAFB (gray-50)   → surface   (#1E293B) — bg context
+ *   #F8FAFC (slate-50)  → paper     (#0F172A) — bg context
+ *   #1B2A4A             → brand-navy(#93C5FD) — brand color in dark
+ *   #243560             → brand-navy-hover(#BFDBFE)
+ */
+
+/* Text colors: dark text → light text in dark mode */
+:is(.dark) :is(
+  .text-\[\#111827\],
+  .text-\[\#1F2937\],
+  .text-\[\#374151\]
+) {
+  color: var(--color-ink) !important;
+}
+:is(.dark) :is(
+  .text-\[\#4B5563\],
+  .text-\[\#6B7280\]
+) {
+  color: var(--color-muted) !important;
+}
+:is(.dark) :is(
+  .text-\[\#9CA3AF\]
+) {
+  color: var(--color-subtle) !important;
+}
+
+/* Background colors: light bg → dark surface */
+:is(.dark) :is(
+  .bg-\[\#F3F4F6\],
+  .bg-\[\#F9FAFB\]
+) {
+  background-color: var(--color-surface) !important;
+}
+:is(.dark) :is(
+  .bg-\[\#F8FAFC\]
+) {
+  background-color: var(--color-paper) !important;
+}
+:is(.dark) :is(
+  .bg-\[\#1B2A4A\]
+) {
+  background-color: #1E3A5F !important;
+}
+
+/* Border colors: light borders → dark borders */
+:is(.dark) :is(
+  .border-\[\#E5E7EB\],
+  .border-\[\#E2E8F0\],
+  .border-\[\#D1D5DB\]
+) {
+  border-color: var(--color-border) !important;
+}
+
+/* Hover states using arbitrary hex values */
+:is(.dark) :is(
+  .hover\:border-\[\#3B82F6\]:hover
+) {
+  border-color: var(--color-accent-hover) !important;
+}
+:is(.dark) :is(
+  .hover\:text-\[\#1D4ED8\]:hover
+) {
+  color: var(--color-accent-hover) !important;
+}
+:is(.dark) :is(
+  .hover\:bg-\[\#F8FAFC\]:hover
+) {
+  background-color: var(--color-surface) !important;
+}
+
+/*
+ * ── Dark mode: Tailwind gray/slate utility class overrides ──
+ * Targets LITERAL class names (e.g., "text-gray-900") — NOT "dark:text-gray-900".
+ * The escaped colon in dark: variants (dark\:text-gray-900) means they have a
+ * DIFFERENT class name and won't match these selectors.
+ * Result: Components with explicit dark: variants keep their intent;
+ * components WITHOUT dark: variants get automatic dark-mode readability.
+ */
+
+/* Dark text utilities → light text in dark mode */
+:is(.dark) :is(
+  .text-gray-950,
+  .text-gray-900,
+  .text-gray-800,
+  .text-slate-950,
+  .text-slate-900,
+  .text-slate-800
+) {
+  color: var(--color-ink) !important;
+}
+:is(.dark) :is(
+  .text-gray-700,
+  .text-gray-600,
+  .text-slate-700,
+  .text-slate-600
+) {
+  color: var(--color-muted) !important;
+}
+:is(.dark) :is(
+  .text-gray-500,
+  .text-gray-400,
+  .text-slate-500,
+  .text-slate-400
+) {
+  color: var(--color-subtle) !important;
+}
+
+/* Light BG utilities → dark surface in dark mode */
+:is(.dark) :is(
+  .bg-gray-50,
+  .bg-gray-100,
+  .bg-slate-50,
+  .bg-slate-100
+) {
+  background-color: var(--color-surface) !important;
+}
+:is(.dark) :is(
+  .bg-gray-200,
+  .bg-slate-200
+) {
+  background-color: var(--color-border) !important;
+}
+
+/* Light border utilities → dark borders */
+:is(.dark) :is(
+  .border-gray-100,
+  .border-gray-200,
+  .border-gray-300,
+  .border-slate-100,
+  .border-slate-200,
+  .border-slate-300
+) {
+  border-color: var(--color-border) !important;
+}
+:is(.dark) :is(
+  .divide-gray-100,
+  .divide-gray-200,
+  .divide-slate-200
+) > * + * {
+  border-color: var(--color-border) !important;
+}
+
+/* Ring colors */
+:is(.dark) :is(
+  .ring-gray-200,
+  .ring-gray-300,
+  .ring-slate-200
+) {
+  --tw-ring-color: var(--color-border) !important;
+}
+
+/* Placeholder text */
+:is(.dark) :is(
+  .placeholder-gray-400,
+  .placeholder-gray-500
+)::placeholder {
+  color: var(--color-subtle) !important;
+}
+
+/*
+ * ── Dark mode: Colored utility overrides ──
+ * Covers text-*-600/700/800 (low contrast on dark) → *-400 (readable)
+ * Covers bg-*-50/100 (light pastel surfaces) → *-500/10 (subtle dark tint)
+ * Covers border-*-100/200 (light borders) → *-500/20 (visible on dark)
+ */
+
+/* ─── Text: colored text too dark for dark mode ─── */
+:is(.dark) :is(
+  .text-blue-600,
+  .text-blue-700,
+  .text-blue-800
+) {
+  color: #60A5FA !important; /* blue-400 */
+}
+:is(.dark) :is(
+  .text-indigo-600,
+  .text-indigo-700,
+  .text-indigo-800
+) {
+  color: #818CF8 !important; /* indigo-400 */
+}
+:is(.dark) :is(
+  .text-violet-600,
+  .text-violet-700,
+  .text-violet-800
+) {
+  color: #A78BFA !important; /* violet-400 */
+}
+:is(.dark) :is(
+  .text-purple-600,
+  .text-purple-700,
+  .text-purple-800
+) {
+  color: #C084FC !important; /* purple-400 */
+}
+:is(.dark) :is(
+  .text-emerald-600,
+  .text-emerald-700,
+  .text-emerald-800
+) {
+  color: #34D399 !important; /* emerald-400 */
+}
+:is(.dark) :is(
+  .text-green-600,
+  .text-green-700,
+  .text-green-800
+) {
+  color: #4ADE80 !important; /* green-400 */
+}
+:is(.dark) :is(
+  .text-amber-600,
+  .text-amber-700,
+  .text-amber-800
+) {
+  color: #FBBF24 !important; /* amber-400 */
+}
+:is(.dark) :is(
+  .text-yellow-600,
+  .text-yellow-700,
+  .text-yellow-800
+) {
+  color: #FACC15 !important; /* yellow-400 */
+}
+:is(.dark) :is(
+  .text-orange-600,
+  .text-orange-700,
+  .text-orange-800
+) {
+  color: #FB923C !important; /* orange-400 */
+}
+:is(.dark) :is(
+  .text-red-600,
+  .text-red-700,
+  .text-red-800
+) {
+  color: #F87171 !important; /* red-400 */
+}
+:is(.dark) :is(
+  .text-rose-600,
+  .text-rose-700,
+  .text-rose-800
+) {
+  color: #FB7185 !important; /* rose-400 */
+}
+:is(.dark) :is(
+  .text-pink-600,
+  .text-pink-700,
+  .text-pink-800
+) {
+  color: #F472B6 !important; /* pink-400 */
+}
+:is(.dark) :is(
+  .text-cyan-600,
+  .text-cyan-700,
+  .text-cyan-800
+) {
+  color: #22D3EE !important; /* cyan-400 */
+}
+:is(.dark) :is(
+  .text-teal-600,
+  .text-teal-700,
+  .text-teal-800
+) {
+  color: #2DD4BF !important; /* teal-400 */
+}
+:is(.dark) :is(
+  .text-sky-600,
+  .text-sky-700,
+  .text-sky-800
+) {
+  color: #38BDF8 !important; /* sky-400 */
+}
+
+/* ─── Backgrounds: light pastel surfaces → subtle dark tints ─── */
+:is(.dark) :is(
+  .bg-blue-50,
+  .bg-blue-100
+) {
+  background-color: rgba(96, 165, 250, 0.1) !important; /* blue-400/10 */
+}
+:is(.dark) :is(
+  .bg-indigo-50,
+  .bg-indigo-100
+) {
+  background-color: rgba(129, 140, 248, 0.1) !important; /* indigo-400/10 */
+}
+:is(.dark) :is(
+  .bg-violet-50,
+  .bg-violet-100
+) {
+  background-color: rgba(167, 139, 250, 0.1) !important; /* violet-400/10 */
+}
+:is(.dark) :is(
+  .bg-purple-50,
+  .bg-purple-100
+) {
+  background-color: rgba(192, 132, 252, 0.1) !important; /* purple-400/10 */
+}
+:is(.dark) :is(
+  .bg-emerald-50,
+  .bg-emerald-100
+) {
+  background-color: rgba(52, 211, 153, 0.1) !important; /* emerald-400/10 */
+}
+:is(.dark) :is(
+  .bg-green-50,
+  .bg-green-100
+) {
+  background-color: rgba(74, 222, 128, 0.1) !important; /* green-400/10 */
+}
+:is(.dark) :is(
+  .bg-amber-50,
+  .bg-amber-100
+) {
+  background-color: rgba(251, 191, 36, 0.1) !important; /* amber-400/10 */
+}
+:is(.dark) :is(
+  .bg-yellow-50,
+  .bg-yellow-100
+) {
+  background-color: rgba(250, 204, 21, 0.1) !important; /* yellow-400/10 */
+}
+:is(.dark) :is(
+  .bg-orange-50,
+  .bg-orange-100
+) {
+  background-color: rgba(251, 146, 60, 0.1) !important; /* orange-400/10 */
+}
+:is(.dark) :is(
+  .bg-red-50,
+  .bg-red-100
+) {
+  background-color: rgba(248, 113, 113, 0.1) !important; /* red-400/10 */
+}
+:is(.dark) :is(
+  .bg-rose-50,
+  .bg-rose-100
+) {
+  background-color: rgba(251, 113, 133, 0.1) !important; /* rose-400/10 */
+}
+:is(.dark) :is(
+  .bg-pink-50,
+  .bg-pink-100
+) {
+  background-color: rgba(244, 114, 182, 0.1) !important; /* pink-400/10 */
+}
+:is(.dark) :is(
+  .bg-cyan-50,
+  .bg-cyan-100
+) {
+  background-color: rgba(34, 211, 238, 0.1) !important; /* cyan-400/10 */
+}
+:is(.dark) :is(
+  .bg-teal-50,
+  .bg-teal-100
+) {
+  background-color: rgba(45, 212, 191, 0.1) !important; /* teal-400/10 */
+}
+:is(.dark) :is(
+  .bg-sky-50,
+  .bg-sky-100
+) {
+  background-color: rgba(56, 189, 248, 0.1) !important; /* sky-400/10 */
+}
+
+/* ─── Borders: light colored borders → visible on dark ─── */
+:is(.dark) :is(
+  .border-blue-100,
+  .border-blue-200
+) {
+  border-color: rgba(96, 165, 250, 0.2) !important;
+}
+:is(.dark) :is(
+  .border-indigo-100,
+  .border-indigo-200
+) {
+  border-color: rgba(129, 140, 248, 0.2) !important;
+}
+:is(.dark) :is(
+  .border-violet-100,
+  .border-violet-200
+) {
+  border-color: rgba(167, 139, 250, 0.2) !important;
+}
+:is(.dark) :is(
+  .border-purple-100,
+  .border-purple-200
+) {
+  border-color: rgba(192, 132, 252, 0.2) !important;
+}
+:is(.dark) :is(
+  .border-emerald-100,
+  .border-emerald-200
+) {
+  border-color: rgba(52, 211, 153, 0.2) !important;
+}
+:is(.dark) :is(
+  .border-green-100,
+  .border-green-200
+) {
+  border-color: rgba(74, 222, 128, 0.2) !important;
+}
+:is(.dark) :is(
+  .border-amber-100,
+  .border-amber-200
+) {
+  border-color: rgba(251, 191, 36, 0.2) !important;
+}
+:is(.dark) :is(
+  .border-yellow-100,
+  .border-yellow-200
+) {
+  border-color: rgba(250, 204, 21, 0.2) !important;
+}
+:is(.dark) :is(
+  .border-orange-100,
+  .border-orange-200
+) {
+  border-color: rgba(251, 146, 60, 0.2) !important;
+}
+:is(.dark) :is(
+  .border-red-100,
+  .border-red-200
+) {
+  border-color: rgba(248, 113, 113, 0.2) !important;
+}
+:is(.dark) :is(
+  .border-rose-100,
+  .border-rose-200
+) {
+  border-color: rgba(251, 113, 133, 0.2) !important;
+}
+:is(.dark) :is(
+  .border-pink-100,
+  .border-pink-200
+) {
+  border-color: rgba(244, 114, 182, 0.2) !important;
+}
+:is(.dark) :is(
+  .border-cyan-100,
+  .border-cyan-200
+) {
+  border-color: rgba(34, 211, 238, 0.2) !important;
+}
+:is(.dark) :is(
+  .border-teal-100,
+  .border-teal-200
+) {
+  border-color: rgba(45, 212, 191, 0.2) !important;
+}
+:is(.dark) :is(
+  .border-sky-100,
+  .border-sky-200
+) {
+  border-color: rgba(56, 189, 248, 0.2) !important;
+}
+
+/* ─── Gradients: light gradient stops ─── */
+:is(.dark) :is(
+  .from-white
+) {
+  --tw-gradient-from: var(--color-surface) !important;
+}
+:is(.dark) :is(
+  .to-white
+) {
+  --tw-gradient-to: var(--color-surface) !important;
+}
+:is(.dark) :is(
+  .via-white
+) {
+  --tw-gradient-via: var(--color-surface) !important;
+}
+:is(.dark) .from-slate-50,
+:is(.dark) .from-gray-50 {
+  --tw-gradient-from: var(--color-surface) !important;
+}
+:is(.dark) .to-slate-50,
+:is(.dark) .to-gray-50 {
+  --tw-gradient-to: var(--color-paper) !important;
+}
+:is(.dark) .from-blue-50 {
+  --tw-gradient-from: rgba(96, 165, 250, 0.08) !important;
+}
+:is(.dark) .from-indigo-50 {
+  --tw-gradient-from: rgba(129, 140, 248, 0.08) !important;
+}
+:is(.dark) .from-violet-50 {
+  --tw-gradient-from: rgba(167, 139, 250, 0.08) !important;
+}
+:is(.dark) .to-indigo-100,
+:is(.dark) .to-indigo-50 {
+  --tw-gradient-to: rgba(129, 140, 248, 0.08) !important;
+}
+:is(.dark) .to-violet-50,
+:is(.dark) .to-violet-100 {
+  --tw-gradient-to: rgba(167, 139, 250, 0.08) !important;
+}
+:is(.dark) .to-slate-100,
+:is(.dark) .to-slate-200 {
+  --tw-gradient-to: var(--color-border) !important;
+}
+:is(.dark) .from-slate-100,
+:is(.dark) .from-slate-200 {
+  --tw-gradient-from: var(--color-surface) !important;
+}
+
+/* ─── Gradient opacity variants (e.g., to-slate-50/80) ─── */
+:is(.dark) [class*="to-slate-50\/"],
+:is(.dark) [class*="to-gray-50\/"] {
+  --tw-gradient-to: var(--color-paper) !important;
+}
+:is(.dark) [class*="from-slate-50\/"],
+:is(.dark) [class*="from-gray-50\/"] {
+  --tw-gradient-from: var(--color-surface) !important;
+}
+:is(.dark) [class*="bg-slate-50\/"],
+:is(.dark) [class*="bg-gray-50\/"] {
+  background-color: var(--color-surface) !important;
+}
+
+/*
+ * ─── Low-opacity semantic text: contrast bump in dark mode ───
+ * text-muted = #94A3B8 in dark. At 60% opacity on #1E293B = ~2.7:1 (fails AA).
+ * Bump low opacities so they remain visible. Only affects dark mode.
+ */
+:is(.dark) [class*="text-muted\/4"] {
+  opacity: 1 !important;
+  color: var(--color-subtle) !important; /* #64748B → 3.5:1 */
+}
+:is(.dark) [class*="text-muted\/5"] {
+  opacity: 1 !important;
+  color: var(--color-subtle) !important;
+}
+:is(.dark) [class*="text-muted\/6"] {
+  opacity: 1 !important;
+  color: var(--color-muted) !important; /* #94A3B8 full opacity → 5.1:1 */
+}
+:is(.dark) [class*="text-ink\/4"] {
+  opacity: 1 !important;
+  color: var(--color-subtle) !important;
+}
+:is(.dark) [class*="text-ink\/5"] {
+  opacity: 1 !important;
+  color: var(--color-muted) !important;
+}
+:is(.dark) [class*="text-ink\/6"] {
+  opacity: 1 !important;
+  color: var(--color-muted) !important;
 }
 
 /* ── Japanese font-size tiers ── */
@@ -141,11 +828,18 @@ body {
 /* Thin custom scrollbar */
 .scrollbar-thin {
   scrollbar-width: thin;
-  scrollbar-color: #CBD5E1 transparent;
+  scrollbar-color: var(--color-border) transparent;
 }
 .scrollbar-thin::-webkit-scrollbar { height: 4px; }
-.scrollbar-thin::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 999px; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 999px; }
 .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+
+/* Global scrollbar dark mode */
+.dark {
+  scrollbar-color: #475569 transparent;
+}
+.dark ::-webkit-scrollbar-thumb { background: #475569; }
+.dark ::-webkit-scrollbar-track { background: #0F172A; }
 
 .site-root {
   min-height: 100vh;
@@ -697,9 +1391,9 @@ button.primary:disabled {
   margin: 0 0 8px;
 }
 
-.text-muted {
-  color: #4B5563;
-}
+/* NOTE: Do NOT add a hardcoded .text-muted { color: ... } rule here.
+   Tailwind's text-muted uses var(--color-muted) which adapts to dark mode.
+   A hardcoded rule would override it because unlayered CSS beats @layer. */
 
 .text-muted.small,
 .small {

@@ -58,6 +58,14 @@ export class OnboardingController {
     return { completed };
   }
 
+  @Post("skip")
+  @ApiOperation({ summary: "Mark onboarding as skipped so it won't show again" })
+  async skip(@CurrentUser() user: KeycloakAuthenticatedUser | undefined) {
+    const userId = resolveLearnerUserId(user, undefined, { required: true })!;
+    await this.repo.markSkipped(userId);
+    return { skipped: true };
+  }
+
   @Post("preferences")
   @ApiOperation({
     summary: "Save onboarding preferences",

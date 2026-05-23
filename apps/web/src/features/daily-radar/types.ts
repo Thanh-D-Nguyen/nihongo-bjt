@@ -63,5 +63,7 @@ export type DailyRadarLabels = {
   minutes: string;
   placeholderBody: string;
   retry: string;
+  showMore: string;
   subheading: string;
+  viewAll: string;
 };

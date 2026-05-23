@@ -43,9 +43,9 @@ export function AmbientMiniPlayer({ labels }: { labels: AmbientMiniPlayerLabels 
     <aside
       aria-label={labels.ariaLabel}
       className={cn(
-        "fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom))] right-3 z-[70] w-[min(calc(100vw-1.5rem),23rem)]",
+        "fixed bottom-[calc(10.5rem+env(safe-area-inset-bottom))] right-3 z-[70] w-[min(calc(100vw-1.5rem),23rem)]",
         "rounded-2xl border border-white/70 bg-white/90 p-2 shadow-[0_18px_60px_rgba(15,23,42,0.18)] backdrop-blur-xl",
-        "dark:border-white/10 dark:bg-slate-900/90 sm:right-5 lg:bottom-[calc(1.25rem+env(safe-area-inset-bottom))]"
+        "dark:border-white/10 dark:bg-slate-900/90 sm:right-5 lg:bottom-[calc(10.5rem+env(safe-area-inset-bottom))]"
       )}
     >
       <div className="flex items-center gap-2">

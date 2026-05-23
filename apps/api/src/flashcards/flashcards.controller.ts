@@ -157,7 +157,7 @@ export class FlashcardsController {
 
   @Post("cards/from-content")
   @ApiOperation({ summary: "Create card from dictionary/content id." })
-  createCardFromContent(
+  async createCardFromContent(
     @CurrentUser() user: KeycloakAuthenticatedUser | undefined,
     @Body() body: unknown
   ) {
@@ -168,7 +168,8 @@ export class FlashcardsController {
       throw new BadRequestException(parsed.error.flatten());
     }
 
-    return this.flashcardsRepository.createCardFromContent(parsed.data);
+    const deckId = parsed.data.deckId ?? await this.flashcardsRepository.getOrCreateDefaultDeck(userId);
+    return this.flashcardsRepository.createCardFromContent({ ...parsed.data, deckId });
   }
 
   @Get("reviews/due")

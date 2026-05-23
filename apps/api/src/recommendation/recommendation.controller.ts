@@ -41,6 +41,7 @@ export class RecommendationController {
         title: (c.data as { title?: string }).title,
         score: Math.round(c.score * 1000) / 1000,
         source: c.source,
+        metadata: (c.data as { metadata?: Record<string, string> }).metadata ?? null,
       })),
       meta: result.meta,
     };

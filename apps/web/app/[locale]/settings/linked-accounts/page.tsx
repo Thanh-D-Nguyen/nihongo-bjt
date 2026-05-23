@@ -1,4 +1,5 @@
 import { Card, CardContent, PageHeader } from "@nihongo-bjt/ui";
+import Link from "next/link";
 import { Suspense } from "react";
 
 import ja from "../../../../messages/ja.json";
@@ -28,6 +29,12 @@ export default async function AccountsSettingsPage({
             </Suspense>
           </CardContent>
         </Card>
+        <Link
+          className="text-sm font-medium text-muted underline-offset-4 hover:text-ink hover:underline"
+          href={`/${locale}/settings`}
+        >
+          ← {t.settings.title}
+        </Link>
       </main>
     </RequireKeycloakAuth>
   );

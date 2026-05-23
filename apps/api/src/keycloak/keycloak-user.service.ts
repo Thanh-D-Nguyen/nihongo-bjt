@@ -74,13 +74,18 @@ export class KeycloakUserService {
   getLearnerPublicProfile(appUserId: string) {
     return this.prisma.userProfile.findUnique({
       select: {
+        avatarAssetId: true,
+        coverAssetId: true,
+        densityPreference: true,
         displayName: true,
         email: true,
         explanationLocale: true,
+        fontSizePreference: true,
         id: true,
         keycloakSubject: true,
         sharePostcardOptIn: true,
         status: true,
+        themeMode: true,
         uiLocale: true
       },
       where: { id: appUserId }
@@ -91,13 +96,17 @@ export class KeycloakUserService {
     appUserId: string,
     input: {
       avatarAssetId?: string | null;
+      coverAssetId?: string | null;
       dailyGoalCards?: number;
+      densityPreference?: string;
       displayName?: string;
       explanationLocale?: string;
+      fontSizePreference?: string;
       learningPersonality?: string | null;
       privacyLevel?: string;
       sharePostcardOptIn?: boolean;
       targetBjtBand?: string | null;
+      themeMode?: string;
       timezone?: string;
       uiLocale?: string;
     }
@@ -105,22 +114,29 @@ export class KeycloakUserService {
     return this.prisma.userProfile.update({
       data: {
         avatarAssetId: input.avatarAssetId,
+        coverAssetId: input.coverAssetId,
         dailyGoalCards: input.dailyGoalCards,
+        densityPreference: input.densityPreference,
         displayName: input.displayName,
         explanationLocale: input.explanationLocale,
+        fontSizePreference: input.fontSizePreference,
         learningPersonality: input.learningPersonality,
         privacyLevel: input.privacyLevel,
         sharePostcardOptIn: input.sharePostcardOptIn,
         targetBjtBand: input.targetBjtBand,
+        themeMode: input.themeMode,
         timezone: input.timezone,
         uiLocale: input.uiLocale
       },
       select: {
         avatarAssetId: true,
+        coverAssetId: true,
         dailyGoalCards: true,
+        densityPreference: true,
         displayName: true,
         email: true,
         explanationLocale: true,
+        fontSizePreference: true,
         id: true,
         keycloakSubject: true,
         learningPersonality: true,
@@ -128,6 +144,7 @@ export class KeycloakUserService {
         sharePostcardOptIn: true,
         status: true,
         targetBjtBand: true,
+        themeMode: true,
         timezone: true,
         uiLocale: true
       },

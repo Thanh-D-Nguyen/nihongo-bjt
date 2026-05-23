@@ -26,6 +26,7 @@ For context, start from:
 
 ## Rules
 
+0. **PRODUCTION-FIRST**: Read `.github/instructions/production-first.instructions.md` before writing ANY code. No localStorage for persistent state. No demo patterns. No "fix later." Server-authoritative state. World-class UI. Accurate data. This is non-negotiable.
 1. PostgreSQL + Prisma only. No MongoDB/Mongoose.
 2. Do not rewrite existing working code without explaining why.
 3. No fake-success endpoints or fake production UI.

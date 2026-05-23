@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardContent, PageHeader } from "@nihongo-bjt/ui";
+import { Card, CardContent, PageHeader, Toggle } from "@nihongo-bjt/ui";
 import { useCallback, useEffect, useState } from "react";
 
 import { AnnotatedJapaneseText, type ReadingAssistDisplayMode } from "../../../../../components/reading-assist/annotated-japanese-text";
@@ -98,17 +98,20 @@ export function ReadingAssistSettingsClient({ labels }: Props) {
         <CardContent className="space-y-5 p-5 sm:p-6">
           <label className="grid gap-2">
             <span className="text-sm font-medium text-ink">{labels.displayModeLabel}</span>
-            <select
-              className="max-w-md rounded-xl border border-ink/12 bg-surface px-3 py-2 text-sm"
-              onChange={(e) => setDisplayMode(e.target.value as ReadingAssistDisplayMode)}
-              value={displayMode}
-            >
-              <option value="off">{labels.modeOff}</option>
-              <option value="hover">{labels.modeHover}</option>
-              <option value="difficult">{labels.modeDifficult}</option>
-              <option value="full_furigana">{labels.modeFull}</option>
-              <option value="beginner">{labels.modeBeginner}</option>
-            </select>
+            <div className="relative max-w-md">
+              <select
+                className="w-full appearance-none rounded-xl border border-ink/12 bg-surface px-4 py-2.5 pr-10 text-sm font-medium text-ink shadow-xs transition-colors hover:border-ink/20 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
+                onChange={(e) => setDisplayMode(e.target.value as ReadingAssistDisplayMode)}
+                value={displayMode}
+              >
+                <option value="off">{labels.modeOff}</option>
+                <option value="hover">{labels.modeHover}</option>
+                <option value="difficult">{labels.modeDifficult}</option>
+                <option value="full_furigana">{labels.modeFull}</option>
+                <option value="beginner">{labels.modeBeginner}</option>
+              </select>
+              <svg className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 6l4 4 4-4" /></svg>
+            </div>
           </label>
 
           <button
@@ -120,14 +123,11 @@ export function ReadingAssistSettingsClient({ labels }: Props) {
           </button>
           {prefsMessage ? <p className="text-sm text-muted">{prefsMessage}</p> : null}
 
-          <label className="flex items-center gap-2 text-sm text-ink">
-            <input
-              checked={examTimed}
-              onChange={(e) => setExamTimed(e.target.checked)}
-              type="checkbox"
-            />
-            <span>{labels.examLabel}</span>
-          </label>
+          <Toggle
+            checked={examTimed}
+            label={labels.examLabel}
+            onChange={(v) => setExamTimed(v)}
+          />
 
           {userId ? (
             <div className="border-t border-ink/10 pt-6" lang="ja">

@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardContent, PageHeader } from "@nihongo-bjt/ui";
+import { Card, CardContent, PageHeader, Toggle } from "@nihongo-bjt/ui";
 import { useCallback, useEffect, useState } from "react";
 
 import { useKeycloakAuth } from "../../../../../components/auth/keycloak-auth-provider";
@@ -129,16 +129,12 @@ export function PrivacySettingsClient({ labels }: { labels: PrivacyLabels }) {
           <section className="space-y-3 rounded-xl border border-ink/10 bg-paper/50 p-4">
             <h2 className="text-base font-semibold text-ink">{labels.consentTitle}</h2>
             <p className="text-sm text-muted">{labels.consentHint}</p>
-            <label className="flex items-center gap-3 text-sm text-ink">
-              <input
-                checked={sharePostcardOptIn}
-                className="h-4 w-4"
-                disabled={!userId}
-                onChange={(event) => setSharePostcardOptIn(event.target.checked)}
-                type="checkbox"
-              />
-              <span>{labels.consentToggle}</span>
-            </label>
+            <Toggle
+              checked={sharePostcardOptIn}
+              disabled={!userId}
+              label={labels.consentToggle}
+              onChange={(v) => setSharePostcardOptIn(v)}
+            />
             <button
               className="rounded-xl border border-ink/15 bg-ink px-4 py-2 text-sm font-semibold text-surface hover:bg-ink/90 disabled:opacity-50"
               disabled={!userId}
@@ -150,14 +146,6 @@ export function PrivacySettingsClient({ labels }: { labels: PrivacyLabels }) {
             {consentSaved ? <p className="text-xs text-muted">{labels.consentSaved}</p> : null}
           </section>
 
-          <button
-            className="rounded-xl border border-ink/15 bg-ink px-4 py-2 text-sm font-semibold text-surface hover:bg-ink/90 disabled:opacity-50"
-            disabled={!userId}
-            type="button"
-            onClick={() => void loadList()}
-          >
-            {labels.load}
-          </button>
           {error ? (
             <p className="text-sm text-sakura" role="alert">
               {labels.error}
@@ -165,20 +153,20 @@ export function PrivacySettingsClient({ labels }: { labels: PrivacyLabels }) {
           ) : null}
           <div className="flex flex-wrap gap-3">
             <button
-              className="rounded-xl border border-ink/12 bg-paper px-4 py-2 text-sm font-semibold text-ink hover:bg-paper/80 disabled:opacity-50"
+              className="rounded-xl border border-ink/12 bg-paper px-4 py-2 text-sm font-semibold text-ink hover:bg-paper/80 disabled:opacity-50 transition-colors"
               disabled={!userId}
               onClick={() => void postKind("data_export")}
               type="button"
             >
-              {labels.export}
+              📦 {labels.export}
             </button>
             <button
-              className="rounded-xl border border-ink/12 bg-paper px-4 py-2 text-sm font-semibold text-ink hover:bg-paper/80 disabled:opacity-50"
+              className="rounded-xl border border-sakura/30 bg-sakura/5 px-4 py-2 text-sm font-semibold text-sakura hover:bg-sakura/10 disabled:opacity-50 transition-colors"
               disabled={!userId}
               onClick={() => void postKind("account_deletion")}
               type="button"
             >
-              {labels.delete}
+              ⚠️ {labels.delete}
             </button>
           </div>
           <h2 className="text-base font-semibold text-ink">{labels.listTitle}</h2>

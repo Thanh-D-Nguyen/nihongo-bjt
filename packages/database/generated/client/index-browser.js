@@ -797,6 +797,7 @@ exports.Prisma.UserProfileScalarFieldEnum = {
   email: 'email',
   displayName: 'displayName',
   avatarAssetId: 'avatarAssetId',
+  coverAssetId: 'coverAssetId',
   uiLocale: 'uiLocale',
   explanationLocale: 'explanationLocale',
   timezone: 'timezone',
@@ -809,6 +810,9 @@ exports.Prisma.UserProfileScalarFieldEnum = {
   learningPurpose: 'learningPurpose',
   learningPersonality: 'learningPersonality',
   lowPressureMode: 'lowPressureMode',
+  themeMode: 'themeMode',
+  fontSizePreference: 'fontSizePreference',
+  densityPreference: 'densityPreference',
   privacyLevel: 'privacyLevel',
   adsPersonalizationOptIn: 'adsPersonalizationOptIn',
   sharePostcardOptIn: 'sharePostcardOptIn',
@@ -1851,6 +1855,14 @@ exports.Prisma.CompanionPetScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.PetCostumeInventoryScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  costumeSlug: 'costumeSlug',
+  obtainedFrom: 'obtainedFrom',
+  obtainedAt: 'obtainedAt'
+};
+
 exports.Prisma.SeasonalEventScalarFieldEnum = {
   id: 'id',
   slug: 'slug',
@@ -2246,6 +2258,7 @@ exports.Prisma.ModelName = {
   MysteryBoxReward: 'MysteryBoxReward',
   MysteryBoxClaim: 'MysteryBoxClaim',
   CompanionPet: 'CompanionPet',
+  PetCostumeInventory: 'PetCostumeInventory',
   SeasonalEvent: 'SeasonalEvent',
   EventChallenge: 'EventChallenge',
   EventParticipant: 'EventParticipant',

@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardContent, PageHeader, SectionHeader } from "@nihongo-bjt/ui";
+import { Card, CardContent, PageHeader, SectionHeader, Toggle } from "@nihongo-bjt/ui";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 
 import { useKeycloakAuth } from "../../../../../components/auth/keycloak-auth-provider";
@@ -17,6 +17,12 @@ export type NotificationsLabels = {
   load: string;
   markRead: string;
   productNews: string;
+  pushActive: string;
+  pushDescription: string;
+  pushDisable: string;
+  pushEnable: string;
+  pushTitle: string;
+  pushUnsupported: string;
   save: string;
   study: string;
   subtitle: string;
@@ -123,14 +129,6 @@ export function NotificationsSettingsClient({ labels }: { labels: NotificationsL
       <PageHeader description={labels.subtitle} title={labels.title} />
       <Card className="border-ink/10 shadow-sm">
         <CardContent className="space-y-6 p-5 sm:p-6">
-          <button
-            className="rounded-xl border border-ink/15 bg-ink px-4 py-2 text-sm font-semibold text-surface hover:bg-ink/90 disabled:opacity-50"
-            disabled={!userId}
-            type="button"
-            onClick={() => void loadAll()}
-          >
-            {labels.load}
-          </button>
           {error ? (
             <p className="text-sm text-sakura" role="alert">
               {labels.error}
@@ -138,47 +136,37 @@ export function NotificationsSettingsClient({ labels }: { labels: NotificationsL
           ) : null}
           {prefs ? (
             <form
-              className="space-y-3 rounded-xl border border-ink/10 bg-paper/50 p-4"
+              className="space-y-1 rounded-xl border border-ink/10 bg-paper/50 p-4"
               onSubmit={savePrefs}
             >
-              <label>
-                <input
-                  checked={prefs.studyRemindersEnabled}
-                  onChange={(e) => setPrefs({ ...prefs, studyRemindersEnabled: e.target.checked })}
-                  type="checkbox"
-                />{" "}
-                {labels.study}
-              </label>
-              <label>
-                <input
-                  checked={prefs.inAppEnabled}
-                  onChange={(e) => setPrefs({ ...prefs, inAppEnabled: e.target.checked })}
-                  type="checkbox"
-                />{" "}
-                {labels.inApp}
-              </label>
-              <label>
-                <input
-                  checked={prefs.emailEnabled}
-                  onChange={(e) => setPrefs({ ...prefs, emailEnabled: e.target.checked })}
-                  type="checkbox"
-                />{" "}
-                {labels.email}
-              </label>
-              <label>
-                <input
-                  checked={prefs.productNewsEnabled}
-                  onChange={(e) => setPrefs({ ...prefs, productNewsEnabled: e.target.checked })}
-                  type="checkbox"
-                />{" "}
-                {labels.productNews}
-              </label>
-              <button
-                className="rounded-xl border border-ink/15 bg-ink px-4 py-2 text-sm font-semibold text-surface hover:bg-ink/90"
-                type="submit"
-              >
-                {labels.save}
-              </button>
+              <Toggle
+                checked={prefs.studyRemindersEnabled}
+                label={labels.study}
+                onChange={(v) => setPrefs({ ...prefs, studyRemindersEnabled: v })}
+              />
+              <Toggle
+                checked={prefs.inAppEnabled}
+                label={labels.inApp}
+                onChange={(v) => setPrefs({ ...prefs, inAppEnabled: v })}
+              />
+              <Toggle
+                checked={prefs.emailEnabled}
+                label={labels.email}
+                onChange={(v) => setPrefs({ ...prefs, emailEnabled: v })}
+              />
+              <Toggle
+                checked={prefs.productNewsEnabled}
+                label={labels.productNews}
+                onChange={(v) => setPrefs({ ...prefs, productNewsEnabled: v })}
+              />
+              <div className="pt-3">
+                <button
+                  className="rounded-xl border border-ink/15 bg-ink px-4 py-2 text-sm font-semibold text-surface hover:bg-ink/90"
+                  type="submit"
+                >
+                  {labels.save}
+                </button>
+              </div>
               {saved ? (
                 <p className="text-sm text-muted" role="status">
                   {labels.saveSuccess}
@@ -187,31 +175,31 @@ export function NotificationsSettingsClient({ labels }: { labels: NotificationsL
             </form>
           ) : null}
           <section className="space-y-3 rounded-xl border border-ink/10 bg-paper/50 p-4">
-            <SectionHeader heading="h3" title="Push Notifications" />
+            <SectionHeader heading="h3" title={labels.pushTitle} />
             {!push.isSupported ? (
-              <p className="text-sm text-muted">Trình duyệt không hỗ trợ thông báo đẩy</p>
+              <p className="text-sm text-muted">{labels.pushUnsupported}</p>
             ) : push.loading ? (
               <p className="text-sm text-muted">…</p>
             ) : push.isSubscribed ? (
               <div className="flex items-center gap-3">
-                <p className="text-sm text-muted">✅ Đang nhận thông báo</p>
+                <p className="text-sm text-muted">✅ {labels.pushActive}</p>
                 <button
                   className="rounded-lg border border-ink/12 px-3 py-1.5 text-xs font-semibold text-ink hover:bg-paper"
                   onClick={() => void push.unsubscribe()}
                   type="button"
                 >
-                  Tắt
+                  {labels.pushDisable}
                 </button>
               </div>
             ) : (
               <div className="flex items-center gap-3">
-                <p className="text-sm text-muted">Nhận thông báo Kanji mỗi ngày</p>
+                <p className="text-sm text-muted">{labels.pushDescription}</p>
                 <button
                   className="rounded-lg bg-ink px-3 py-1.5 text-xs font-semibold text-surface hover:bg-ink/90"
                   onClick={() => void push.subscribe()}
                   type="button"
                 >
-                  Bật
+                  {labels.pushEnable}
                 </button>
               </div>
             )}
@@ -221,20 +209,45 @@ export function NotificationsSettingsClient({ labels }: { labels: NotificationsL
             {feed.length === 0 ? <p className="text-sm text-muted">{labels.emptyFeed}</p> : null}
             <ul className="mt-3 flex list-none flex-col gap-3 p-0">
               {feed.map((n) => (
-                <li className="rounded-xl border border-ink/10 bg-surface p-4" key={n.id}>
-                  <strong className="text-sm">{n.kind}</strong>
-                  <pre className="mt-2 text-xs text-muted" style={{ whiteSpace: "pre-wrap" }}>
-                    {JSON.stringify(n.payload, null, 0)}
-                  </pre>
-                  {n.readAt ? null : (
-                    <button
-                      className="mt-3 rounded-lg border border-ink/12 px-3 py-1.5 text-xs font-semibold text-ink hover:bg-paper"
-                      onClick={() => void readOne(n.id)}
-                      type="button"
-                    >
-                      {labels.markRead}
-                    </button>
-                  )}
+                <li
+                  className={`rounded-xl border p-4 transition-colors ${
+                    n.readAt
+                      ? "border-ink/6 bg-paper/30"
+                      : "border-accent/20 bg-accent/4"
+                  }`}
+                  key={n.id}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-ink capitalize">
+                        {n.kind.replace(/_/g, " ")}
+                      </p>
+                      {n.payload && typeof n.payload === "object" && "message" in (n.payload as Record<string, unknown>) ? (
+                        <p className="mt-1 text-sm text-muted">
+                          {String((n.payload as Record<string, unknown>).message)}
+                        </p>
+                      ) : null}
+                      <p className="mt-1.5 text-xs text-muted/70">
+                        {new Date(n.createdAt).toLocaleDateString(undefined, {
+                          day: "numeric",
+                          month: "short",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                    </div>
+                    {n.readAt ? (
+                      <span className="shrink-0 text-xs text-muted/50">✓</span>
+                    ) : (
+                      <button
+                        className="shrink-0 rounded-lg border border-ink/12 px-3 py-1.5 text-xs font-semibold text-ink hover:bg-paper"
+                        onClick={() => void readOne(n.id)}
+                        type="button"
+                      >
+                        {labels.markRead}
+                      </button>
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>

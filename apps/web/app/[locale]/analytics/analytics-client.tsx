@@ -89,6 +89,7 @@ export interface AnalyticsLabels {
   weakSkillsHint: string;
   weakSkillsTableCaption: string;
   weakSkillsTitle: string;
+  viewAchievements?: string;
 }
 
 interface DailyActivityPoint {
@@ -630,9 +631,22 @@ export function LearnerAnalyticsClient({
         </Card>
       )}
 
+      {/* ─── Cross-navigation ─── */}
+      {analytics && hasData && (
+        <div className="flex justify-center">
+          <Link
+            className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-ink/10 bg-surface px-5 text-sm font-semibold text-muted transition-all hover:border-ink/20 hover:bg-paper hover:text-ink hover:shadow-sm"
+            href={`/${locale}/achievements`}
+          >
+            <span>🏆</span>
+            {labels.viewAchievements ?? "View achievements"}
+          </Link>
+        </div>
+      )}
+
       {/* ─── Share Button (sticky mobile) ─── */}
       {analytics && hasData && (
-        <div className="fixed bottom-6 right-6 z-40 sm:static sm:flex sm:justify-end">
+        <div className="fixed bottom-20 right-4 z-40 sm:static sm:flex sm:justify-end">
           <button
             className="inline-flex min-h-11 items-center gap-2 rounded-full bg-ink px-5 text-sm font-bold text-white shadow-lg transition-all hover:shadow-xl hover:scale-105 focus-visible:ring-2 focus-visible:ring-accent active:scale-[0.97] dark:bg-white dark:text-gray-900"
             type="button"

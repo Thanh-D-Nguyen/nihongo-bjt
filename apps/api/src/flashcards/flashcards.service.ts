@@ -4,8 +4,9 @@ import {
   repairDailyContentFlashcardBackIfNeeded,
   type SrsRating
 } from "@nihongo-bjt/shared";
-import { Inject, Injectable } from "@nestjs/common";
+import { Inject, Injectable, Logger } from "@nestjs/common";
 
+import { SeasonalEventService } from "../gamification/seasonal-event.service.js";
 import { QuotaService } from "../monetization/quota.service.js";
 import { MediaService } from "../media/media.service.js";
 import { FlashcardsRepository } from "./flashcards.repository.js";
@@ -17,11 +18,13 @@ import { FlashcardsRepository } from "./flashcards.repository.js";
 @Injectable()
 export class FlashcardsService {
   private readonly prisma = createPrismaClient();
+  private readonly logger = new Logger(FlashcardsService.name);
 
   constructor(
     @Inject(FlashcardsRepository) private readonly flashcardsRepository: FlashcardsRepository,
     @Inject(MediaService) private readonly mediaService: MediaService,
-    @Inject(QuotaService) private readonly quotaService: QuotaService
+    @Inject(QuotaService) private readonly quotaService: QuotaService,
+    @Inject(SeasonalEventService) private readonly seasonalEventService: SeasonalEventService
   ) {}
 
   async dueReviewsForLearner(userId: string, limit: number, deckId?: string) {
@@ -175,13 +178,20 @@ export class FlashcardsService {
     userFlashcardId: string;
     userId: string;
   }) {
-    return this.prisma.$transaction(
+    const result = await this.prisma.$transaction(
       async (tx) => {
         await this.quotaService.consumeFlashcardReviewInTransaction(tx, input.userId);
         return this.flashcardsRepository.applySubmitReview(tx, input);
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
     );
+
+    // Fire-and-forget: update seasonal event progress
+    this.seasonalEventService.updateProgress(input.userId, "reviews", 1).catch((e) =>
+      this.logger.warn("Seasonal progress update failed", e instanceof Error ? e.message : e),
+    );
+
+    return result;
   }
 
   /**
@@ -223,6 +233,15 @@ export class FlashcardsService {
         results.push({ clientMutationId: item.clientMutationId, error: message, ok: false });
       }
     }
+
+    // Fire-and-forget: batch update seasonal event progress for all successful reviews
+    const successCount = results.filter((r) => r.ok).length;
+    if (successCount > 0) {
+      this.seasonalEventService.updateProgress(input.userId, "reviews", successCount).catch((e) =>
+        this.logger.warn("Seasonal progress update failed", e instanceof Error ? e.message : e),
+      );
+    }
+
     return { results };
   }
 }

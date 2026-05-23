@@ -182,6 +182,26 @@ export class FlashcardsRepository {
     });
   }
 
+  /** Get or create a default "Saved Vocabulary" deck for the user. */
+  async getOrCreateDefaultDeck(userId: string): Promise<string> {
+    const existing = await this.prisma.deck.findFirst({
+      where: { ownerUserId: userId, titleVi: "Từ vựng đã lưu", status: "active" },
+      select: { id: true }
+    });
+    if (existing) return existing.id;
+
+    const deck = await this.prisma.deck.create({
+      data: {
+        ownerUserId: userId,
+        titleVi: "Từ vựng đã lưu",
+        titleJa: "保存した語彙",
+        descriptionVi: "Thẻ được thêm từ từ điển và nội dung học",
+        visibility: "private"
+      }
+    });
+    return deck.id;
+  }
+
   createDeck(input: {
     cards?: Array<{
       backText: string;

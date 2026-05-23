@@ -14,6 +14,7 @@ import {
   Delete,
   Get,
   Inject,
+  Logger,
   Param,
   Post,
   Query,
@@ -21,6 +22,7 @@ import {
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiBody, ApiOkResponse, ApiOperation, ApiParam, ApiQuery, ApiTags } from "@nestjs/swagger";
 
+import { SeasonalEventService } from "../gamification/seasonal-event.service.js";
 import { CurrentUser } from "../keycloak/current-user.decorator.js";
 import { KeycloakAuthGuard } from "../keycloak/keycloak-auth.guard.js";
 import { resolveLearnerUserId } from "../keycloak/learner-identity.util.js";
@@ -40,9 +42,12 @@ import { FlashcardsService } from "./flashcards.service.js";
 @ApiBearerAuth("bearer")
 @DocumentedHttpErrors()
 export class DecksController {
+  private readonly logger = new Logger(DecksController.name);
+
   constructor(
     @Inject(FlashcardsRepository) private readonly repo: FlashcardsRepository,
-    @Inject(FlashcardsService) private readonly service: FlashcardsService
+    @Inject(FlashcardsService) private readonly service: FlashcardsService,
+    @Inject(SeasonalEventService) private readonly seasonalEventService: SeasonalEventService
   ) {}
 
   @Get()
@@ -122,12 +127,19 @@ export class DecksController {
   @Post(":deckId/cards")
   @ApiOperation({ summary: "Canonical v15 add card from content to deck." })
   @ApiParam({ name: "deckId" })
-  addCard(@CurrentUser() user: KeycloakAuthenticatedUser | undefined, @Param("deckId") deckId: string, @Body() body: unknown) {
+  async addCard(@CurrentUser() user: KeycloakAuthenticatedUser | undefined, @Param("deckId") deckId: string, @Body() body: unknown) {
     const raw = body as Record<string, unknown>;
     const userId = resolveLearnerUserId(user, raw.userId as string | undefined, { required: true })!;
     const parsed = createCardFromContentSchema.safeParse({ ...raw, deckId, userId });
     if (!parsed.success) throw new BadRequestException(parsed.error.flatten());
-    return this.repo.createCardFromContent(parsed.data);
+    const result = await this.repo.createCardFromContent({ ...parsed.data, deckId });
+
+    // Fire-and-forget: update seasonal event progress for new cards
+    this.seasonalEventService.updateProgress(userId, "new_cards", 1).catch((e) =>
+      this.logger.warn("Seasonal progress update failed", e instanceof Error ? e.message : e),
+    );
+
+    return result;
   }
 }
 

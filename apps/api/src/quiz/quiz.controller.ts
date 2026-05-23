@@ -6,6 +6,7 @@ import {
   ForbiddenException,
   Get,
   Inject,
+  Logger,
   Param,
   Post,
   Query,
@@ -13,6 +14,7 @@ import {
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from "@nestjs/swagger";
 
+import { SeasonalEventService } from "../gamification/seasonal-event.service.js";
 import { CurrentUser } from "../keycloak/current-user.decorator.js";
 import { KeycloakAuthGuard } from "../keycloak/keycloak-auth.guard.js";
 import { PublicRoute } from "../keycloak/keycloak-public.decorator.js";
@@ -33,9 +35,12 @@ import { QuizService } from "./quiz.service.js";
 @ApiBearerAuth("bearer")
 @DocumentedHttpErrors()
 export class QuizController {
+  private readonly logger = new Logger(QuizController.name);
+
   constructor(
     @Inject(QuizRepository) private readonly quizRepository: QuizRepository,
-    @Inject(QuizService) private readonly quizService: QuizService
+    @Inject(QuizService) private readonly quizService: QuizService,
+    @Inject(SeasonalEventService) private readonly seasonalEventService: SeasonalEventService
   ) {}
 
   @Get("templates")
@@ -135,7 +140,7 @@ export class QuizController {
   @Post("session/:id/answer")
   @ApiOperation({ summary: "Submit answer; scoring + analytics in repository." })
   @ApiParam({ name: "id" })
-  answer(
+  async answer(
     @CurrentUser() user: KeycloakAuthenticatedUser | undefined,
     @Param("id") id: string,
     @Body() body: unknown
@@ -149,12 +154,21 @@ export class QuizController {
       throw new BadRequestException(parsed.error.flatten());
     }
 
-    return this.quizRepository.submitAnswer({
+    const result = await this.quizRepository.submitAnswer({
       optionKey: parsed.data.optionKey,
       questionId: parsed.data.questionId,
       sessionId: id,
       userId: parsed.data.userId
     });
+
+    // Fire-and-forget: update seasonal event progress on quiz completion
+    if (result.session.status === "completed") {
+      this.seasonalEventService.updateProgress(userId, "quizzes", 1).catch((e) =>
+        this.logger.warn("Seasonal progress update failed", e instanceof Error ? e.message : e),
+      );
+    }
+
+    return result;
   }
 
   @Get("session/:id/remediation")

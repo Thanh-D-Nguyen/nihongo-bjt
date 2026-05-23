@@ -125,4 +125,41 @@ export class SeasonalEventService {
 
     return results;
   }
+
+  /** Set absolute progress value (for non-incremental metrics like streak_days) */
+  async setAbsoluteProgress(userId: string, challengeType: string, absoluteValue: number) {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    const joined = await this.prisma.eventParticipant.findMany({
+      where: {
+        userId,
+        event: { active: true, startDate: { lte: today }, endDate: { gte: today } },
+      },
+      select: { eventId: true },
+    });
+    if (joined.length === 0) return;
+
+    const challenges = await this.prisma.eventChallenge.findMany({
+      where: {
+        eventId: { in: joined.map((j) => j.eventId) },
+        challengeType,
+      },
+    });
+
+    for (const challenge of challenges) {
+      const progress = await this.prisma.eventChallengeProgress.upsert({
+        where: { challengeId_userId: { challengeId: challenge.id, userId } },
+        create: { challengeId: challenge.id, userId, currentValue: absoluteValue },
+        update: { currentValue: absoluteValue },
+      });
+
+      if (!progress.completed && progress.currentValue >= challenge.targetValue) {
+        await this.prisma.eventChallengeProgress.update({
+          where: { id: progress.id },
+          data: { completed: true, completedAt: new Date() },
+        });
+      }
+    }
+  }
 }

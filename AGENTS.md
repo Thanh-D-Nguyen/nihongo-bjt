@@ -13,10 +13,11 @@ Build NihonGo BJT as a production-ready Japanese/BJT learning web app. The produ
 Read these first:
 
 1. `AI_CONTEXT.md`
-2. `docs/spec/index.md`
-3. `docs/spec/nihongo_bjt_cursor_master_spec_final_completed_v2.md`
-4. Read and follow all active Cursor rules in `.cursor/rules/*.mdc`.
-5. `docs/cursor-prompts/*.xml`
+2. `.github/instructions/production-first.instructions.md` — **MANDATORY before any code**
+3. `docs/spec/index.md`
+4. `docs/spec/nihongo_bjt_cursor_master_spec_final_completed_v2.md`
+5. Read and follow all active Cursor rules in `.cursor/rules/*.mdc`.
+6. `docs/cursor-prompts/*.xml`
 
 ## Non-negotiables
 

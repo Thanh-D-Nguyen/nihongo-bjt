@@ -156,4 +156,18 @@ export class OnboardingRepository {
       return false;
     }
   }
+
+  async markSkipped(userId: string): Promise<void> {
+    try {
+      await this.prisma.$executeRawUnsafe(
+        `INSERT INTO recommendation.onboarding_preferences
+           (user_id, current_level, goal, topics, daily_minutes, style, completed, updated_at)
+         VALUES ($1::uuid, 0, 'general', '{}', 10, 'mixed', true, NOW())
+         ON CONFLICT (user_id) DO UPDATE SET completed = true, updated_at = NOW()`,
+        userId,
+      );
+    } catch (err) {
+      this.logger.warn(`Failed to mark onboarding skipped for ${userId}: ${err}`);
+    }
+  }
 }

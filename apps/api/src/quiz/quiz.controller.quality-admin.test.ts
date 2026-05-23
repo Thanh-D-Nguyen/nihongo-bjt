@@ -22,7 +22,7 @@ describe("QuizController admin quality endpoint", () => {
 
     mockService = {};
 
-    controller = new QuizController(mockRepository, mockService);
+    controller = new QuizController(mockRepository, mockService, {} as any);
   });
 
   it("rejects admin endpoint when user is not authenticated", () => {

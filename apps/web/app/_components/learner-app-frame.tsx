@@ -306,14 +306,14 @@ export function LearnerAppFrame({
                 </svg>
               </button>
               {exploreMenuOpen ? (
-                <div className="absolute left-0 top-12 z-50 w-56 overflow-hidden rounded-2xl border border-ink/10 bg-surface shadow-[0_18px_48px_rgba(23,33,31,0.12)]">
+                <div className="absolute left-0 top-12 z-50 w-56 overflow-hidden rounded-2xl border border-ink/10 bg-surface shadow-[0_18px_48px_rgba(23,33,31,0.12)] dark:border-white/10 dark:shadow-[0_18px_48px_rgba(0,0,0,0.5)]">
                   <div className="p-1.5">
                     <Link
                       className={cn(
                         "flex min-h-10 items-center gap-2.5 rounded-xl px-3 text-sm font-bold transition-colors",
                         linkActive(`${base}/explore`)
                           ? "bg-accent/8 text-accent"
-                          : "text-ink hover:bg-paper"
+                          : "text-ink hover:bg-paper dark:hover:bg-white/5"
                       )}
                       href={`${base}/explore`}
                       onClick={() => setExploreMenuOpen(false)}
@@ -321,7 +321,7 @@ export function LearnerAppFrame({
                       <IconExplore aria-hidden size={18} />
                       <span>{nav.explore}</span>
                     </Link>
-                    <div className="my-1 border-t border-ink/6" />
+                    <div className="my-1 border-t border-ink/6 dark:border-white/5" />
                     {exploreNavItems.map((item) => {
                       const active = linkActive(item.href);
                       return (
@@ -331,7 +331,7 @@ export function LearnerAppFrame({
                             "flex min-h-10 items-center gap-2.5 rounded-xl px-3 text-sm font-semibold transition-colors",
                             active
                               ? "bg-accent/8 text-accent"
-                              : "text-muted hover:bg-paper hover:text-ink"
+                              : "text-muted hover:bg-paper hover:text-ink dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
                           )}
                           href={item.href}
                           key={item.href}
@@ -428,20 +428,32 @@ export function LearnerAppFrame({
                 </button>
                 {userMenuOpen ? (
                   <div
-                    className="absolute right-0 top-12 z-50 w-72 overflow-hidden rounded-2xl border border-ink/10 bg-surface shadow-[0_18px_48px_rgba(23,33,31,0.14)]"
+                    className="absolute right-0 top-12 z-50 w-72 overflow-hidden rounded-2xl border border-ink/10 bg-surface shadow-[0_18px_48px_rgba(23,33,31,0.14)] dark:border-white/10 dark:bg-[#1E293B] dark:shadow-[0_18px_48px_rgba(0,0,0,0.5)]"
                     role="menu"
                   >
-                    <div className="border-b border-ink/8 px-4 py-3">
-                      <p className="truncate text-sm font-semibold text-ink">{userLabel}</p>
-                      {email && email !== userLabel ? (
-                        <p className="truncate text-xs text-muted">{email}</p>
-                      ) : null}
-                    </div>
+                    {/* Profile header — click goes to profile */}
+                    <Link
+                      className="flex items-center gap-3 border-b border-ink/8 px-4 py-3 transition-colors hover:bg-paper dark:border-white/5 dark:hover:bg-white/5"
+                      href={`${base}/profile`}
+                      role="menuitem"
+                      onClick={() => setUserMenuOpen(false)}
+                    >
+                      <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent/15 to-accent/5 text-xs font-bold text-ink">
+                        {userInitial}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-ink">{userLabel}</p>
+                        {email && email !== userLabel ? (
+                          <p className="truncate text-xs text-muted dark:text-slate-400">{email}</p>
+                        ) : null}
+                      </div>
+                      <svg className="size-4 shrink-0 text-muted/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+                    </Link>
                     <div className="p-1.5">
-                      {/* Learning shortcuts */}
-                      <p className="px-3 pb-1 pt-2 text-[10px] font-bold uppercase tracking-widest text-muted/60">Learning</p>
+                      {/* Progress shortcuts */}
+                      <p className="px-3 pb-1 pt-2 text-[10px] font-bold uppercase tracking-widest text-muted/60 dark:text-slate-500">Progress</p>
                       <Link
-                        className="flex min-h-10 items-center gap-2.5 rounded-xl px-3 text-sm font-semibold text-muted hover:bg-paper hover:text-ink"
+                        className="flex min-h-10 items-center gap-2.5 rounded-xl px-3 text-sm font-semibold text-muted hover:bg-paper hover:text-ink dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
                         href={`${base}/achievements`}
                         role="menuitem"
                         onClick={() => setUserMenuOpen(false)}
@@ -450,7 +462,7 @@ export function LearnerAppFrame({
                         {nav.achievements}
                       </Link>
                       <Link
-                        className="flex min-h-10 items-center gap-2.5 rounded-xl px-3 text-sm font-semibold text-muted hover:bg-paper hover:text-ink"
+                        className="flex min-h-10 items-center gap-2.5 rounded-xl px-3 text-sm font-semibold text-muted hover:bg-paper hover:text-ink dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
                         href={`${base}/analytics`}
                         role="menuitem"
                         onClick={() => setUserMenuOpen(false)}
@@ -458,8 +470,12 @@ export function LearnerAppFrame({
                         <IconAnalytics aria-hidden size={16} />
                         {nav.analytics}
                       </Link>
+
+                      {/* Content */}
+                      <div className="my-1.5 border-t border-ink/8 dark:border-white/5" />
+                      <p className="px-3 pb-1 pt-2 text-[10px] font-bold uppercase tracking-widest text-muted/60 dark:text-slate-500">Content</p>
                       <Link
-                        className="flex min-h-10 items-center gap-2.5 rounded-xl px-3 text-sm font-semibold text-muted hover:bg-paper hover:text-ink"
+                        className="flex min-h-10 items-center gap-2.5 rounded-xl px-3 text-sm font-semibold text-muted hover:bg-paper hover:text-ink dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
                         href={`${base}/daily-standup`}
                         role="menuitem"
                         onClick={() => setUserMenuOpen(false)}
@@ -469,10 +485,10 @@ export function LearnerAppFrame({
                       </Link>
 
                       {/* Account section */}
-                      <div className="my-1.5 border-t border-ink/8" />
-                      <p className="px-3 pb-1 pt-2 text-[10px] font-bold uppercase tracking-widest text-muted/60">Account</p>
+                      <div className="my-1.5 border-t border-ink/8 dark:border-white/5" />
+                      <p className="px-3 pb-1 pt-2 text-[10px] font-bold uppercase tracking-widest text-muted/60 dark:text-slate-500">Account</p>
                       <Link
-                        className="flex min-h-10 items-center gap-2.5 rounded-xl px-3 text-sm font-semibold text-muted hover:bg-paper hover:text-ink"
+                        className="flex min-h-10 items-center gap-2.5 rounded-xl px-3 text-sm font-semibold text-muted hover:bg-paper hover:text-ink dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
                         href={`${base}/settings`}
                         role="menuitem"
                         onClick={() => setUserMenuOpen(false)}
@@ -481,7 +497,7 @@ export function LearnerAppFrame({
                         {nav.settings}
                       </Link>
                       <button
-                        className="flex min-h-10 w-full items-center gap-2.5 rounded-xl px-3 text-left text-sm font-semibold text-sakura hover:bg-sakura/8"
+                        className="flex min-h-10 w-full items-center gap-2.5 rounded-xl px-3 text-left text-sm font-semibold text-sakura hover:bg-sakura/8 dark:text-red-400 dark:hover:bg-red-500/10"
                         role="menuitem"
                         type="button"
                         onClick={handleLogout}

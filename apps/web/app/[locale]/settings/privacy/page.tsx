@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import ja from "../../../../messages/ja.json";
 import vi from "../../../../messages/vi.json";
 import { RequireKeycloakAuth } from "../../../../components/auth/require-keycloak-auth";
@@ -16,6 +18,12 @@ export default async function PrivacySettingsPage({
   return (
     <RequireKeycloakAuth locale={locale}>
       <PrivacySettingsClient labels={t.privacyPage} />
+      <Link
+        className="text-sm font-medium text-muted underline-offset-4 hover:text-ink hover:underline"
+        href={`/${locale}/settings`}
+      >
+        ← {t.settings.title}
+      </Link>
     </RequireKeycloakAuth>
   );
 }

@@ -186,14 +186,138 @@ function Skeleton({ labels }: { labels: DailyRadarLabels }) {
   );
 }
 
-/* ─── Main section ─── */
+/* ─── Category Rail (Netflix-style row) ─── */
+
+const RAIL_MAX = 8;
+
+function CategoryRail({
+  cards,
+  category,
+  labels,
+  locale,
+}: {
+  cards: DailyRadarCard[];
+  category: string;
+  labels: DailyRadarLabels;
+  locale: string;
+}) {
+  const railRef = useRef<HTMLDivElement>(null);
+  const visible = cards.slice(0, RAIL_MAX);
+  const hasMore = cards.length > RAIL_MAX;
+  const theme = themeFor(undefined, category);
+
+  // Find a moduleKey from the first card to build the "view all" link
+  const moduleKey = cards[0]?.module.moduleKey;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <span className={`rounded-full px-2.5 py-1 text-xs font-bold ring-1 ${theme.badge}`}>
+            {categoryLabel(category, labels)}
+          </span>
+          <span className="text-xs font-medium text-slate-400">{cards.length}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          {visible.length > 2 ? (
+            <>
+              <button
+                aria-label="Scroll left"
+                className="hidden rounded-full border border-slate-200 p-1.5 text-slate-500 transition hover:bg-slate-50 hover:text-slate-700 sm:inline-flex"
+                onClick={() => railRef.current?.scrollBy({ behavior: "smooth", left: -340 })}
+                type="button"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+              </button>
+              <button
+                aria-label="Scroll right"
+                className="hidden rounded-full border border-slate-200 p-1.5 text-slate-500 transition hover:bg-slate-50 hover:text-slate-700 sm:inline-flex"
+                onClick={() => railRef.current?.scrollBy({ behavior: "smooth", left: 340 })}
+                type="button"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+              </button>
+            </>
+          ) : null}
+          {hasMore && moduleKey ? (
+            <Link
+              className="flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold text-blue-600 ring-1 ring-blue-200 transition hover:bg-blue-50"
+              href={`/${locale}/modules/${moduleKey}`}
+            >
+              {labels.viewAll}
+              <svg className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+            </Link>
+          ) : null}
+        </div>
+      </div>
+      <div ref={railRef} className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0 scrollbar-none">
+        {visible.map((card) =>
+          card.moduleType === "daily_widget"
+            ? <WidgetCard card={card} key={card.id} locale={locale} />
+            : <RadarCard card={card} key={card.id} labels={labels} locale={locale} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Rail List with progressive disclosure ─── */
+
+const INITIAL_RAILS = 3;
+
+function RailList({
+  categories,
+  categoryGroups,
+  labels,
+  locale,
+}: {
+  categories: string[];
+  categoryGroups: Map<string, DailyRadarCard[]>;
+  labels: DailyRadarLabels;
+  locale: string;
+}) {
+  const [expanded, setExpanded] = useState(false);
+
+  const validCategories = categories.filter((cat) => {
+    const group = categoryGroups.get(cat);
+    return group && group.length > 0;
+  });
+
+  const visibleCategories = expanded ? validCategories : validCategories.slice(0, INITIAL_RAILS);
+  const hiddenCount = validCategories.length - INITIAL_RAILS;
+
+  return (
+    <div className="space-y-6">
+      {visibleCategories.map((cat) => (
+        <CategoryRail
+          cards={categoryGroups.get(cat)!}
+          category={cat}
+          key={cat}
+          labels={labels}
+          locale={locale}
+        />
+      ))}
+
+      {!expanded && hiddenCount > 0 ? (
+        <button
+          className="group flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-slate-50/50 py-3.5 text-sm font-semibold text-slate-600 transition hover:border-slate-400 hover:bg-slate-100/60 hover:text-slate-800"
+          onClick={() => setExpanded(true)}
+          type="button"
+        >
+          <svg className="h-4 w-4 transition group-hover:scale-110" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+          {labels.showMore.replace("{n}", String(hiddenCount))}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+/* ─── Main section (Netflix multi-rail) ─── */
 
 export function DailyRadarSection({ labels, locale }: { labels: DailyRadarLabels; locale: string }) {
   const [payload, setPayload] = useState<DailyRadarHomePayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [category, setCategory] = useState("all");
-  const railRef = useRef<HTMLDivElement>(null);
 
   async function load() {
     setLoading(true);
@@ -213,15 +337,16 @@ export function DailyRadarSection({ labels, locale }: { labels: DailyRadarLabels
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locale]);
 
-  const cards = useMemo(() => {
-    const rows = payload?.cards ?? [];
-    return category === "all" ? rows : rows.filter((card) => card.category === category);
-  }, [category, payload]);
-
-  const categoryCounts = useMemo(() => {
-    const map = new Map<string, number>();
+  // Group cards by category, preserving API order
+  const categoryGroups = useMemo(() => {
+    const map = new Map<string, DailyRadarCard[]>();
     for (const card of payload?.cards ?? []) {
-      map.set(card.category, (map.get(card.category) ?? 0) + 1);
+      const group = map.get(card.category);
+      if (group) {
+        group.push(card);
+      } else {
+        map.set(card.category, [card]);
+      }
     }
     return map;
   }, [payload]);
@@ -249,54 +374,17 @@ export function DailyRadarSection({ labels, locale }: { labels: DailyRadarLabels
     );
   }
 
-  const categories = ["all", ...(payload.categories ?? [])];
-
   return (
-    <section aria-labelledby="daily-radar-heading" className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-700">Japan Daily Radar</p>
-          <h2 id="daily-radar-heading" className="mt-1 text-2xl font-semibold text-slate-950 sm:text-3xl">{labels.heading}</h2>
-          <p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-600">{labels.subheading}</p>
-        </div>
-        {cards.length > 3 ? (
-          <div className="flex gap-2 sm:shrink-0">
-            <button className="hidden rounded-full border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 sm:inline-flex" onClick={() => railRef.current?.scrollBy({ behavior: "smooth", left: -360 })} type="button">←</button>
-            <button className="hidden rounded-full border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 sm:inline-flex" onClick={() => railRef.current?.scrollBy({ behavior: "smooth", left: 360 })} type="button">→</button>
-          </div>
-        ) : null}
+    <section aria-labelledby="daily-radar-heading" className="space-y-6">
+      <div>
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-700">Japan Daily Radar</p>
+        <h2 id="daily-radar-heading" className="mt-1 text-2xl font-semibold text-slate-950 sm:text-3xl">{labels.heading}</h2>
+        <p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-600">{labels.subheading}</p>
       </div>
 
       {payload.spotlight ? <Spotlight card={payload.spotlight} labels={labels} locale={locale} /> : null}
 
-      {categories.length > 2 ? (
-        <div className="flex flex-wrap gap-2">
-          {categories.map((item) => (
-            <button
-              className={`rounded-full px-3 py-1.5 text-sm font-semibold ring-1 transition ${category === item ? "bg-slate-950 text-white ring-slate-950" : "bg-white text-slate-700 ring-slate-200 hover:bg-slate-50"}`}
-              key={item}
-              onClick={() => setCategory(item)}
-              type="button"
-            >
-              {item === "all"
-                ? `${labels.all} (${payload.cards.length})`
-                : `${categoryLabel(item, labels)} (${categoryCounts.get(item) ?? 0})`}
-            </button>
-          ))}
-        </div>
-      ) : null}
-
-      {cards.length === 0 ? (
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-600">{labels.empty}</div>
-      ) : (
-        <div ref={railRef} className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
-          {cards.map((card) => (
-            card.moduleType === "daily_widget"
-              ? <WidgetCard card={card} key={card.id} locale={locale} />
-              : <RadarCard card={card} key={card.id} labels={labels} locale={locale} />
-          ))}
-        </div>
-      )}
+      <RailList categories={payload.categories ?? []} categoryGroups={categoryGroups} labels={labels} locale={locale} />
     </section>
   );
 }

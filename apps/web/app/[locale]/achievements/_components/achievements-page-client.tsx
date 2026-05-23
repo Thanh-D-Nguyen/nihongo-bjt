@@ -13,6 +13,7 @@ import {
   TabsList
 } from "@nihongo-bjt/ui";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 
 import { learnerApiFetch } from "../../../../lib/learner-api";
 import { useSharePostcard } from "../../../_hooks/use-share-postcard";
@@ -138,6 +139,9 @@ export interface GamificationLabels {
   noLeaderboards?: string;
   myRank?: string;
   viewAll?: string;
+  selectBoardHint?: string;
+  viewAnalytics?: string;
+  achievementNames?: Record<string, string>;
 }
 
 const TIER_COLORS: Record<string, string> = {
@@ -155,6 +159,32 @@ const TIER_BG: Record<string, string> = {
 };
 
 const RANK_MEDAL: Record<number, string> = { 1: "🥇", 2: "🥈", 3: "🥉" };
+
+/** Emoji icon per achievement slug — portable, no external URL required */
+const ACHIEVEMENT_ICON: Record<string, string> = {
+  "vocab-master": "📚",
+  "kanji-scholar": "漢",
+  "grammar-sage": "📝",
+  "streak-champion": "🔥",
+  "battle-warrior": "⚔️",
+  "quiz-ace": "🎯",
+  "review-diligent": "🔄",
+  "daily-explorer": "🌅",
+};
+
+/** Resolve an i18n key like "achievement.vocab_master.name" to its translated text */
+function resolveAchievementKey(key: string | null | undefined, names?: Record<string, string>): string {
+  if (!key) return "";
+  if (names && names[key]) return names[key];
+  // Fallback: extract last segment and humanize (e.g., "achievement.vocab_master.name" → "Vocab Master")
+  const parts = key.split(".");
+  const last = parts[parts.length - 1];
+  if (last === "name" || last === "description") {
+    const slug = parts[parts.length - 2] ?? last;
+    return slug.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+  }
+  return key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+}
 
 /* ── Component ─────────────────────────────────────────────────────────── */
 
@@ -285,7 +315,7 @@ export function AchievementsPageClient({
       {celebrationItem && (
         <AchievementCelebration
           show={!!celebrationItem}
-          achievementName={celebrationItem.tier.achievement.nameKey}
+          achievementName={resolveAchievementKey(celebrationItem.tier.achievement.nameKey, labels.achievementNames)}
           tier={celebrationItem.tier.tier}
           onDismiss={dismissCelebration}
           labels={{
@@ -345,7 +375,7 @@ export function AchievementsPageClient({
                 {pendingAchievements.map(p => (
                   <div key={p.id} className="flex items-center gap-2 rounded-full bg-white/80 px-3 py-1.5 shadow-sm dark:bg-gray-800/80">
                     <span className="text-lg">{p.tier.tier === "gold" ? "🥇" : p.tier.tier === "silver" ? "🥈" : p.tier.tier === "platinum" ? "💎" : "🥉"}</span>
-                    <span className="text-xs font-medium text-ink">{p.tier.achievement.nameKey}</span>
+                    <span className="text-xs font-medium text-ink">{resolveAchievementKey(p.tier.achievement.nameKey, labels.achievementNames)}</span>
                   </div>
                 ))}
               </div>
@@ -406,11 +436,15 @@ export function AchievementsPageClient({
                               TIER_COLORS[bestTier.tier] ?? "from-gray-400 to-gray-600"
                             }`}
                           >
-                            {earned ? "★" : hasProgress ? "☆" : "🔒"}
+                            {earned
+                              ? (ACHIEVEMENT_ICON[def.slug] ?? "★")
+                              : hasProgress
+                                ? (ACHIEVEMENT_ICON[def.slug] ?? "☆")
+                                : "🔒"}
                           </div>
                           <div className="min-w-0">
                             <h4 className="truncate font-bold text-ink">
-                              {def.nameKey}
+                              {resolveAchievementKey(def.nameKey, labels.achievementNames)}
                             </h4>
                             <p className="text-xs text-ink/50">
                               {tierName} • {category}
@@ -435,7 +469,7 @@ export function AchievementsPageClient({
                         )}
                       </div>
                       <p className="mt-2 text-sm text-ink/60 line-clamp-2">
-                        {def.descriptionKey}
+                        {resolveAchievementKey(def.descriptionKey, labels.achievementNames)}
                       </p>
 
                       {/* Progress bar for in-progress */}
@@ -657,13 +691,24 @@ export function AchievementsPageClient({
               {/* Prompt to select if none selected */}
               {!selectedBoard && (
                 <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-ink/40">
-                  ← Chọn một bảng xếp hạng
+                  {labels.selectBoardHint ?? "← Select a leaderboard"}
                 </div>
               )}
             </>
           )}
         </div>
       )}
+
+      {/* Cross-navigation */}
+      <div className="mt-8 flex justify-center">
+        <Link
+          className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-ink/10 bg-surface px-5 text-sm font-semibold text-muted transition-all hover:border-ink/20 hover:bg-paper hover:text-ink hover:shadow-sm"
+          href={`/${_locale}/analytics`}
+        >
+          <span>📈</span>
+          {labels.viewAnalytics ?? "View learning analytics"}
+        </Link>
+      </div>
     </div>
   );
 }

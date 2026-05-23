@@ -1,10 +1,15 @@
 import { createPrismaClient } from "@nihongo-bjt/database";
-import { Injectable, Logger, BadRequestException } from "@nestjs/common";
+import { Injectable, Logger, BadRequestException, Inject } from "@nestjs/common";
+import { SeasonalEventService } from "./seasonal-event.service.js";
 
 @Injectable()
 export class StudyTimerService {
   private readonly logger = new Logger(StudyTimerService.name);
   private readonly prisma = createPrismaClient();
+
+  constructor(
+    @Inject(SeasonalEventService) private readonly seasonalEventService: SeasonalEventService,
+  ) {}
 
   /** Start a new focus session */
   async startSession(userId: string, durationMinutes: number, mode = "focus") {
@@ -35,7 +40,7 @@ export class StudyTimerService {
     });
     if (!session) throw new BadRequestException("Session not found");
 
-    return this.prisma.studySession.update({
+    const updated = await this.prisma.studySession.update({
       where: { id: sessionId },
       data: {
         completed,
@@ -45,6 +50,15 @@ export class StudyTimerService {
         xpEarned: stats?.xpEarned ?? session.xpEarned,
       },
     });
+
+    // Fire-and-forget: update seasonal event progress for focus time
+    if (completed) {
+      this.seasonalEventService.updateProgress(userId, "focus_minutes", session.durationMinutes).catch((e) =>
+        this.logger.warn("Seasonal progress update failed", e instanceof Error ? e.message : e),
+      );
+    }
+
+    return updated;
   }
 
   /** Get today's study stats */

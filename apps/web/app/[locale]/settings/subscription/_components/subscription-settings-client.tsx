@@ -47,6 +47,7 @@ export function SubscriptionSettingsClient({ labels, locale }: { labels: Labels;
   const [error, setError] = useState(false);
   const [canceling, setCanceling] = useState(false);
   const [cancelSuccess, setCancelSuccess] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   const load = useCallback(async () => {
     if (!userId) { setLoading(false); return; }
@@ -70,8 +71,6 @@ export function SubscriptionSettingsClient({ labels, locale }: { labels: Labels;
 
   async function handleCancel() {
     if (!userId || !data?.status) return;
-    const confirmed = window.confirm(labels.cancelConfirm);
-    if (!confirmed) return;
     setCanceling(true);
     try {
       const res = await learnerApiFetch("/api/learner/monetization/subscription/cancel", {
@@ -81,6 +80,7 @@ export function SubscriptionSettingsClient({ labels, locale }: { labels: Labels;
       });
       if (res.ok) {
         setCancelSuccess(true);
+        setShowCancelConfirm(false);
         setData((prev) => prev ? { ...prev, cancelAtPeriodEnd: true } : prev);
       }
     } catch { /* ignore */ } finally {
@@ -97,10 +97,10 @@ export function SubscriptionSettingsClient({ labels, locale }: { labels: Labels;
 
   if (loading) {
     return (
-      <main className="mx-auto w-full max-w-2xl px-4 py-12">
+      <main className="w-full space-y-6 pb-12">
         <div className="animate-pulse space-y-4">
-          <div className="h-7 w-48 rounded bg-slate-200" />
-          <div className="h-40 rounded-2xl bg-slate-100" />
+          <div className="h-7 w-48 rounded bg-ink/8" />
+          <div className="h-40 rounded-2xl bg-ink/5" />
         </div>
       </main>
     );
@@ -108,8 +108,8 @@ export function SubscriptionSettingsClient({ labels, locale }: { labels: Labels;
 
   if (error || !data) {
     return (
-      <main className="mx-auto w-full max-w-2xl px-4 py-12 text-center">
-        <p className="text-sm text-rose-600">{labels.error}</p>
+      <main className="w-full space-y-6 pb-12 text-center">
+        <p className="text-sm text-sakura">{labels.error}</p>
       </main>
     );
   }
@@ -118,11 +118,11 @@ export function SubscriptionSettingsClient({ labels, locale }: { labels: Labels;
   const periodEnd = data.currentPeriodEnd ? new Date(data.currentPeriodEnd).toLocaleDateString(locale === "ja" ? "ja-JP" : "vi-VN") : null;
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-4 py-12">
+    <main className="w-full space-y-6 pb-12">
       <h1 className="text-2xl font-bold text-ink">{labels.title}</h1>
       <p className="mt-1 text-sm text-muted">{labels.subtitle}</p>
 
-      <div className="mt-6 rounded-2xl border border-ink/8 bg-surface p-6 shadow-sm">
+      <div className="mt-2 rounded-2xl border border-ink/8 bg-surface p-6 shadow-sm">
         {/* Plan info */}
         <div className="flex items-center justify-between">
           <div>
@@ -132,7 +132,7 @@ export function SubscriptionSettingsClient({ labels, locale }: { labels: Labels;
           {!isFree && (
             <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
               data.cancelAtPeriodEnd
-                ? "bg-amber-50 text-amber-700"
+                ? "bg-sakura/10 text-sakura"
                 : "bg-leaf/10 text-leaf"
             }`}>
               {data.cancelAtPeriodEnd ? labels.canceled : statusLabel(data.status)}
@@ -154,7 +154,7 @@ export function SubscriptionSettingsClient({ labels, locale }: { labels: Labels;
             <ul className="mt-2 space-y-1.5">
               {data.entitlements.map((e) => (
                 <li key={e} className="flex items-center gap-2 text-sm text-ink">
-                  <span className="h-1.5 w-1.5 rounded-full bg-green-400" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-leaf" />
                   {e}
                 </li>
               ))}
@@ -169,7 +169,7 @@ export function SubscriptionSettingsClient({ labels, locale }: { labels: Labels;
             <ul className="mt-2 space-y-1.5">
               {data.quotas.map((q) => (
                 <li key={q.key} className="flex items-center gap-2 text-sm text-ink">
-                  <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-accent" />
                   {q.key}: {q.limit === 999999 ? labels.unlimited : `${q.limit}/${q.window}`}
                 </li>
               ))}
@@ -183,21 +183,43 @@ export function SubscriptionSettingsClient({ labels, locale }: { labels: Labels;
             <>
               <p className="text-sm text-muted">{labels.freePlanNote}</p>
               <Link
-                className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500"
+                className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-surface hover:bg-accent/90 transition-colors"
                 href={`/${locale}/pricing`}
               >
                 {labels.upgradeCta}
               </Link>
             </>
           ) : !data.cancelAtPeriodEnd ? (
-            <button
-              className="rounded-xl border border-rose-200 px-4 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50 disabled:opacity-50"
-              disabled={canceling}
-              onClick={() => void handleCancel()}
-              type="button"
-            >
-              {canceling ? "..." : labels.cancelButton}
-            </button>
+            <div className="space-y-3">
+              {!showCancelConfirm ? (
+                <button
+                  className="rounded-xl border border-sakura/30 px-4 py-2 text-sm font-medium text-sakura hover:bg-sakura/5 transition-colors"
+                  onClick={() => setShowCancelConfirm(true)}
+                  type="button"
+                >
+                  {labels.cancelButton}
+                </button>
+              ) : (
+                <div className="flex items-center gap-3 rounded-xl border border-sakura/20 bg-sakura/5 p-3">
+                  <p className="text-sm text-ink">{labels.cancelConfirm}</p>
+                  <button
+                    className="shrink-0 rounded-lg bg-sakura px-3 py-1.5 text-xs font-semibold text-surface hover:bg-sakura/90 disabled:opacity-50 transition-colors"
+                    disabled={canceling}
+                    onClick={() => void handleCancel()}
+                    type="button"
+                  >
+                    {canceling ? "..." : labels.cancelButton}
+                  </button>
+                  <button
+                    className="shrink-0 rounded-lg border border-ink/12 px-3 py-1.5 text-xs font-semibold text-ink hover:bg-paper transition-colors"
+                    onClick={() => setShowCancelConfirm(false)}
+                    type="button"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+            </div>
           ) : null}
           {cancelSuccess && (
             <span className="text-sm text-leaf">{labels.cancelSuccess}</span>
@@ -205,11 +227,9 @@ export function SubscriptionSettingsClient({ labels, locale }: { labels: Labels;
         </div>
       </div>
 
-      <div className="mt-6">
-        <Link className="text-sm text-muted hover:text-ink hover:underline" href={`/${locale}/settings`}>
-          ← {labels.backToSettings}
-        </Link>
-      </div>
+      <Link className="text-sm font-medium text-muted underline-offset-4 hover:text-ink hover:underline" href={`/${locale}/settings`}>
+        ← {labels.backToSettings}
+      </Link>
     </main>
   );
 }

@@ -27,6 +27,11 @@ interface ExploreLabels {
   statsGrammar: string;
   recentTitle: string;
   recentEmpty: string;
+  progressTitle?: string;
+  achievements?: string;
+  achievementsDesc?: string;
+  analytics?: string;
+  analyticsDesc?: string;
 }
 
 interface ExploreStats {
@@ -190,6 +195,53 @@ export function ExploreClient({ labels, locale }: { labels: ExploreLabels; local
             </Link>
           );
         })}
+      </div>
+
+      {/* ── My Progress section (mobile-discoverable) ── */}
+      <div className="space-y-3">
+        <h2 className="text-sm font-bold uppercase tracking-widest text-muted/70">
+          {labels.progressTitle ?? "My Progress"}
+        </h2>
+        <div className="grid grid-cols-2 gap-3">
+          <Link
+            className="explore-card group relative flex flex-col overflow-hidden rounded-2xl border border-orange-200/40 bg-gradient-to-br from-orange-50 to-amber-50/50 p-5 transition-all hover:border-orange-300/60 dark:border-orange-800/30 dark:from-orange-950/20 dark:to-amber-950/10"
+            href={`/${locale}/achievements`}
+          >
+            <span className="mb-3 flex size-11 items-center justify-center rounded-xl bg-white/70 text-xl shadow-sm dark:bg-gray-800/50">
+              🏆
+            </span>
+            <span className="font-bold text-ink">
+              {labels.achievements ?? "Achievements"}
+            </span>
+            <span className="mt-0.5 text-sm leading-snug text-muted">
+              {labels.achievementsDesc ?? "Streaks, badges & leaderboards"}
+            </span>
+            <span className="absolute right-4 top-5 text-muted/30 transition-all group-hover:translate-x-0.5 group-hover:text-muted/60">
+              <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+              </svg>
+            </span>
+          </Link>
+          <Link
+            className="explore-card group relative flex flex-col overflow-hidden rounded-2xl border border-cyan-200/40 bg-gradient-to-br from-cyan-50 to-blue-50/50 p-5 transition-all hover:border-cyan-300/60 dark:border-cyan-800/30 dark:from-cyan-950/20 dark:to-blue-950/10"
+            href={`/${locale}/analytics`}
+          >
+            <span className="mb-3 flex size-11 items-center justify-center rounded-xl bg-white/70 text-xl shadow-sm dark:bg-gray-800/50">
+              📈
+            </span>
+            <span className="font-bold text-ink">
+              {labels.analytics ?? "Analytics"}
+            </span>
+            <span className="mt-0.5 text-sm leading-snug text-muted">
+              {labels.analyticsDesc ?? "Charts, trends & insights"}
+            </span>
+            <span className="absolute right-4 top-5 text-muted/30 transition-all group-hover:translate-x-0.5 group-hover:text-muted/60">
+              <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+              </svg>
+            </span>
+          </Link>
+        </div>
       </div>
     </div>
   );

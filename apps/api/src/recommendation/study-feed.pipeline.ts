@@ -27,6 +27,8 @@ interface StudyCandidate {
   skillTag?: string;
   difficulty: number; // 0-1 normalized
   createdAt: number; // epoch ms
+  /** Routing metadata for frontend deep-linking */
+  metadata?: Record<string, string>;
 }
 
 // ─── Sources ──────────────────────────────────────────────────────────────────
@@ -60,6 +62,7 @@ class DueFlashcardsSource implements CandidateSource<StudyCandidate> {
         title: r.front_text.slice(0, 60),
         difficulty: 1.0 - (r.ease_factor / 3.0),
         createdAt: r.due_at.getTime(),
+        metadata: { cardId: r.card_id },
       },
       features: {
         p_remember: r.ease_factor / 3.0,
@@ -213,9 +216,9 @@ class UndiscoveredLessonsSource implements CandidateSource<StudyCandidate> {
     const codes = this.getLevelCodesInRange(ctx.estimatedLevel);
 
     const rows = await this.prisma.$queryRawUnsafe<
-      { id: string; title_vi: string; title_ja: string; level_code: string; created_at: Date }[]
+      { id: string; slug: string; title_vi: string; title_ja: string; level_code: string; created_at: Date }[]
     >(
-      `SELECT l.id, l.title_vi, l.title_ja, l.level_code, l.created_at
+      `SELECT l.id, l.slug, l.title_vi, l.title_ja, l.level_code, l.created_at
        FROM curriculum.bjt_lesson l
        WHERE l.status = 'active'
          AND l.level_code = ANY($1::text[])
@@ -232,6 +235,7 @@ class UndiscoveredLessonsSource implements CandidateSource<StudyCandidate> {
         title: r.title_ja || r.title_vi,
         difficulty: UserContextHydrator.bjtBandToLevel(r.level_code) / 5.0,
         createdAt: r.created_at.getTime(),
+        metadata: { slug: r.slug, levelCode: r.level_code },
       },
       features: {
         level_match: 1.0 - Math.abs(

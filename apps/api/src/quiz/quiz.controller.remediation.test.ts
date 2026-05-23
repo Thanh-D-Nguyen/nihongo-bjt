@@ -10,7 +10,7 @@ describe("QuizController remediation endpoint", () => {
     const quizService = {
       startSessionWithQuota: vi.fn()
     };
-    const controller = new QuizController(quizRepository as any, quizService as any);
+    const controller = new QuizController(quizRepository as any, quizService as any, {} as any);
 
     await controller.remediation(
       undefined,

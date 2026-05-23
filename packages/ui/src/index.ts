@@ -62,6 +62,7 @@ export { StatCard } from "./stat-card";
 export { StatusBadge, type StatusBadgeVariant } from "./status-badge";
 export { TabButton, TabsList } from "./tabs";
 export { TodayPlanCard } from "./today-plan-card";
+export { Toggle } from "./toggle";
 
 export const uiTokens = {
   color: {

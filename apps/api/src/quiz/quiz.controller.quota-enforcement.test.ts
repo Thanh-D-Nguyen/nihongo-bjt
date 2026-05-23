@@ -11,7 +11,7 @@ describe("QuizController quota enforcement", () => {
         .fn()
         .mockRejectedValue(new HttpException({ code: "QUOTA_EXCEEDED" }, 403))
     };
-    const controller = new QuizController(quizRepository as any, quizService as any);
+    const controller = new QuizController(quizRepository as any, quizService as any, {} as any);
 
     await expect(
       controller.start(undefined, {

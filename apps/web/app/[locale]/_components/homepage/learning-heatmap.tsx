@@ -198,7 +198,7 @@ export function LearningHeatmap({ locale }: { locale: string }) {
       {tooltip
         ? createPortal(
             <div
-              className="pointer-events-none fixed z-[9999] rounded-lg bg-ink px-3 py-2 text-[10px] text-white shadow-lg"
+              className="pointer-events-none fixed z-[9999] rounded-lg bg-[#1E293B] px-3 py-2 text-[10px] text-white shadow-lg dark:bg-slate-100 dark:text-slate-900"
               role="tooltip"
               style={{ left: tooltip.x, top: tooltip.y, width: TOOLTIP_WIDTH }}
             >

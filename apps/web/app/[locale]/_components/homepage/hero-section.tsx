@@ -177,7 +177,7 @@ export function HeroSection({
               {/* CTA cluster — bigger, bolder */}
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
                 <Link
-                  className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white px-5 text-[15px] font-bold text-[#1B2A4A] shadow-[0_4px_24px_rgba(255,255,255,0.25)] outline-none transition-all duration-200 hover:bg-blue-50 hover:shadow-[0_8px_32px_rgba(255,255,255,0.35)] focus-visible:ring-2 focus-visible:ring-white/60 active:scale-[0.97] sm:px-7"
+                  className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white dark:bg-white px-5 text-[15px] font-bold text-[#1B2A4A] dark:text-[#1B2A4A] shadow-[0_4px_24px_rgba(255,255,255,0.25)] outline-none transition-all duration-200 hover:bg-blue-50 dark:hover:bg-blue-50 hover:shadow-[0_8px_32px_rgba(255,255,255,0.35)] focus-visible:ring-2 focus-visible:ring-white/60 active:scale-[0.97] sm:px-7"
                   href={primaryHref}
                 >
                   <span className="transition-transform duration-200 group-hover:translate-x-0.5">→</span>

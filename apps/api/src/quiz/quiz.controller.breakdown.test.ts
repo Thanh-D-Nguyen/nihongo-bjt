@@ -16,7 +16,7 @@ describe("Quiz session breakdown endpoint", () => {
 
     service = {} as unknown as QuizService;
 
-    controller = new QuizController(repository, service);
+    controller = new QuizController(repository, service, {} as any);
   });
 
   it("allows authenticated learner access to breakdown endpoint", async () => {
