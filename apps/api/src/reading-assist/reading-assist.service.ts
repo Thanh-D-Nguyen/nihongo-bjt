@@ -194,7 +194,7 @@ export class ReadingAssistService {
       index,
       lexemeId,
       partOfSpeech: token.pos,
-      reading: katakanaToHiragana(token.reading),
+      reading: katakanaToHiragana(token.reading) || token.surface_form,
       shortMeaningVi,
       start,
       surface: token.surface_form

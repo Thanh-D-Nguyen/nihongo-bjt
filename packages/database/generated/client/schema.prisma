@@ -2742,20 +2742,6 @@ model CompanionPet {
   @@schema("gamification")
 }
 
-/// Tracks which pet costumes a user owns (from mystery box, events, etc.)
-model PetCostumeInventory {
-  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId       String   @map("user_id") @db.Uuid
-  costumeSlug  String   @map("costume_slug") @db.VarChar(50)
-  obtainedFrom String   @default("mystery_box") @map("obtained_from") @db.VarChar(30)
-  obtainedAt   DateTime @default(now()) @map("obtained_at") @db.Timestamptz(6)
-
-  @@unique([userId, costumeSlug], map: "uq_pet_costume_user_slug")
-  @@index([userId], map: "idx_pet_costume_user")
-  @@map("pet_costume_inventory")
-  @@schema("gamification")
-}
-
 /// Time-limited seasonal event (e.g. "Sakura Sprint", "Tanabata Challenge").
 model SeasonalEvent {
   id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid

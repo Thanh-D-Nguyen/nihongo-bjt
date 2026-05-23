@@ -1855,14 +1855,6 @@ exports.Prisma.CompanionPetScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
-exports.Prisma.PetCostumeInventoryScalarFieldEnum = {
-  id: 'id',
-  userId: 'userId',
-  costumeSlug: 'costumeSlug',
-  obtainedFrom: 'obtainedFrom',
-  obtainedAt: 'obtainedAt'
-};
-
 exports.Prisma.SeasonalEventScalarFieldEnum = {
   id: 'id',
   slug: 'slug',
@@ -2258,7 +2250,6 @@ exports.Prisma.ModelName = {
   MysteryBoxReward: 'MysteryBoxReward',
   MysteryBoxClaim: 'MysteryBoxClaim',
   CompanionPet: 'CompanionPet',
-  PetCostumeInventory: 'PetCostumeInventory',
   SeasonalEvent: 'SeasonalEvent',
   EventChallenge: 'EventChallenge',
   EventParticipant: 'EventParticipant',

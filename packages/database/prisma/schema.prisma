@@ -369,7 +369,8 @@ model MediaAsset {
   createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt      DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
   cardLinks      CardMediaLink[]
-  profileAvatars UserProfile[]
+  profileAvatars UserProfile[]   @relation("profileAvatars")
+  profileCovers  UserProfile[]   @relation("profileCovers")
 
   @@unique([objectKey], map: "uq_media_asset_object_key")
   @@index([ownerUserId, createdAt], map: "idx_media_asset_owner_created_at")
@@ -1051,6 +1052,7 @@ model UserProfile {
   email                    String?                   @unique
   displayName              String                    @map("display_name")
   avatarAssetId            String?                   @map("avatar_asset_id") @db.Uuid
+  coverAssetId             String?                   @map("cover_asset_id") @db.Uuid
   uiLocale                 String                    @default("vi") @map("ui_locale") @db.VarChar(16)
   explanationLocale        String                    @default("vi") @map("explanation_locale") @db.VarChar(16)
   timezone                 String                    @default("Asia/Tokyo") @db.VarChar(80)
@@ -1066,6 +1068,12 @@ model UserProfile {
   learningPurpose          String?                   @map("learning_purpose") @db.VarChar(200)
   learningPersonality      String?                   @map("learning_personality") @db.VarChar(64)
   lowPressureMode          Boolean                   @default(false) @map("low_pressure_mode")
+  /// Appearance: light | dark | system
+  themeMode                String                    @default("system") @map("theme_mode") @db.VarChar(16)
+  /// Appearance: small | default | large | xl
+  fontSizePreference       String                    @default("default") @map("font_size_preference") @db.VarChar(16)
+  /// Appearance: compact | comfortable
+  densityPreference        String                    @default("comfortable") @map("density_preference") @db.VarChar(16)
   privacyLevel             String                    @default("standard") @map("privacy_level") @db.VarChar(32)
   /// Opt-in for personalized ad relevance; never send raw learning history to ad providers.
   adsPersonalizationOptIn  Boolean                   @default(false) @map("ads_personalization_opt_in")
@@ -1074,7 +1082,8 @@ model UserProfile {
   status                   String                    @default("active") @db.VarChar(32)
   createdAt                DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt                DateTime                  @updatedAt @map("updated_at") @db.Timestamptz(6)
-  avatar                   MediaAsset?               @relation(fields: [avatarAssetId], references: [id], onDelete: SetNull)
+  avatar                   MediaAsset?               @relation("profileAvatars", fields: [avatarAssetId], references: [id], onDelete: SetNull)
+  cover                    MediaAsset?               @relation("profileCovers", fields: [coverAssetId], references: [id], onDelete: SetNull)
   authLinkCodes            AuthLinkCode[]
   identityProviderAccounts IdentityProviderAccount[]
   referralCode             ReferralCode?

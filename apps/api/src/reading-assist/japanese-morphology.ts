@@ -12,7 +12,7 @@ const kuromoji: {
 export type KuromojiToken = {
   basic_form: string;
   pos: string;
-  reading: string;
+  reading?: string;
   surface_form: string;
   word_id: number;
 };
@@ -47,7 +47,10 @@ export function sha256Hex(input: string): string {
   return createHash("sha256").update(input, "utf8").digest("hex");
 }
 
-export function katakanaToHiragana(s: string): string {
+export function katakanaToHiragana(s: unknown): string {
+  if (typeof s !== "string" || s.length === 0) {
+    return "";
+  }
   return [...s]
     .map((ch) => {
       const c = ch.codePointAt(0) ?? 0;
