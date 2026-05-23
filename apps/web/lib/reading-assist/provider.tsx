@@ -56,9 +56,12 @@ export function ReadingAssistProvider({ children, userId }: Props) {
       try {
         setPreferencesLoading(true);
         setPreferencesError(null);
-        const r = await learnerApiFetch("/reading-assist/preferences", {
+        const r = await learnerApiFetch(
+          `/api/reading-assist/preferences?userId=${encodeURIComponent(userId)}`,
+          {
           method: "GET"
-        });
+          }
+        );
         if (!r.ok) {
           setPreferencesError("fetch_error");
           return;
@@ -84,7 +87,7 @@ export function ReadingAssistProvider({ children, userId }: Props) {
       setDisplayMode(mode);
       // Sync to backend
       try {
-        await learnerApiFetch("/reading-assist/preferences", {
+        await learnerApiFetch("/api/reading-assist/preferences", {
           body: JSON.stringify({
             displayMode: mode,
             userId
@@ -104,7 +107,7 @@ export function ReadingAssistProvider({ children, userId }: Props) {
       setShowRomaji(value);
       // Sync to backend
       try {
-        await learnerApiFetch("/reading-assist/preferences", {
+        await learnerApiFetch("/api/reading-assist/preferences", {
           body: JSON.stringify({
             displayMode,
             showRomaji: value,

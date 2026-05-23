@@ -10,11 +10,14 @@ const THEME_INIT_SCRIPT = `
 (function(){
   try {
     var s = localStorage.getItem('nihongo-appearance');
-    var t = s ? JSON.parse(s).theme : 'system';
+    var a = s ? JSON.parse(s) : {};
+    var t = a.theme || 'system';
     var d = t === 'dark' || (t !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
     if (d) document.documentElement.classList.add('dark');
     else document.documentElement.classList.remove('dark');
     document.documentElement.setAttribute('data-theme', d ? 'dark' : 'light');
+    document.documentElement.dataset.jpFontSize = a.fontSize || 'default';
+    document.documentElement.dataset.density = a.density || 'comfortable';
   } catch(e) {}
 })();
 `;

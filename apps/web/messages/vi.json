@@ -359,7 +359,10 @@
     "bookmarkAdd": "Lưu bài",
     "bookmarkRemove": "Đã lưu",
     "summaryNote": "Đây là bản tóm tắt. Nội dung đầy đủ chỉ có trên trang NHK gốc.",
-    "readFullArticle": "Đọc bài viết đầy đủ trên NHK"
+    "readFullArticle": "Đọc bài viết đầy đủ trên NHK",
+    "furiganaToggle": "Hiển thị furigana",
+    "furiganaOn": "Furigana",
+    "furiganaOff": "Ẩn"
   },
   "dashboard": {
     "commandCenterDescription": "Một hành động chính rõ ràng, tiến độ nhìn thấy được, không bị quá tải.",

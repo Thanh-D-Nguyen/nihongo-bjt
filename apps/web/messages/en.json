@@ -357,7 +357,10 @@
     "bookmarkAdd": "save",
     "bookmarkRemove": "saved",
     "summaryNote": "This is a summary. You can read the full text in the original NHK article.",
-    "readFullArticle": "Read the full story on NHK"
+    "readFullArticle": "Read the full story on NHK",
+    "furiganaToggle": "Furigana display",
+    "furiganaOn": "Furigana",
+    "furiganaOff": "Hide"
   },
   "dashboard": {
     "commandCenterDescription": "The screen makes your next step clear, allows you to see your progress, and doesn't feel overwhelming.",

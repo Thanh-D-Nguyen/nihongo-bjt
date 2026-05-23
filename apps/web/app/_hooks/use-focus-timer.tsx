@@ -86,7 +86,13 @@ export function FocusTimerProvider({ children }: { children: ReactNode }) {
   }, [clearTimer]);
 
   const loadStats = useCallback(async () => {
-    if (!userId) return;
+    if (!userId) {
+      setLoading(false);
+      setActiveSession(null);
+      setRemaining(0);
+      return;
+    }
+    setLoading(true);
     try {
       const r = await learnerApiFetch("/api/gamification/focus/today");
       if (r.ok) {

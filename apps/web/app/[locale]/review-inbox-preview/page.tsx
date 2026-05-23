@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 
 import ja from "../../../messages/ja.json";
 import vi from "../../../messages/vi.json";
-import { CareerRpgProvider } from "../../../src/features/career-rpg/store";
 
 import { InboxPreviewClient } from "./_components/inbox-preview-client";
 
@@ -26,8 +25,6 @@ export default async function InboxRoute({
   const { locale } = await params;
   const t = messages[locale] ?? messages.vi;
   return (
-    <CareerRpgProvider>
-      <InboxPreviewClient labels={t.careerRpg} locale={locale} />
-    </CareerRpgProvider>
+    <InboxPreviewClient labels={t.careerRpg} locale={locale} />
   );
 }

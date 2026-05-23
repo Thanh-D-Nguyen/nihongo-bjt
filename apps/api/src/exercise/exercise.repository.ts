@@ -280,42 +280,128 @@ export class ExerciseRepository {
   }
 
   async lexemeDistractors(excludeId: string, level: string | null, partOfSpeech: string | null, count: number) {
-    const where: Prisma.LexemeWhereInput = {
+    const baseWhere: Prisma.LexemeWhereInput = {
       status: "active",
       id: { not: excludeId }
     };
-    if (level) where.jlptLevel = level;
+    if (level) baseWhere.jlptLevel = level;
 
-    const lexemes = await this.prisma.lexeme.findMany({
-      where,
-      take: count * 5,
-      include: {
-        senses: { take: 1, orderBy: { position: "asc" } }
-      }
-    });
+    const [target, sameLevel] = await Promise.all([
+      this.prisma.lexeme.findUnique({
+        where: { id: excludeId },
+        include: { senses: { take: 1, orderBy: { position: "asc" } } }
+      }),
+      this.prisma.lexeme.findMany({
+        where: baseWhere,
+        take: count * 24,
+        include: {
+          senses: { take: 1, orderBy: { position: "asc" } }
+        }
+      })
+    ]);
 
-    // Filter by POS if available, then shuffle and take `count`
-    let filtered = partOfSpeech
-      ? lexemes.filter((l) => l.senses[0]?.partOfSpeech === partOfSpeech)
-      : lexemes;
-    if (filtered.length < count) filtered = lexemes;
+    let pool = sameLevel;
+    if (pool.length < count) {
+      const broader = await this.prisma.lexeme.findMany({
+        where: { status: "active", id: { not: excludeId } },
+        take: count * 32,
+        include: {
+          senses: { take: 1, orderBy: { position: "asc" } }
+        }
+      });
+      pool = uniqueLexemes([...pool, ...broader]);
+    }
 
-    return shuffleArray(filtered).slice(0, count);
+    return pool
+      .filter((lexeme) => Boolean(lexeme.senses[0]?.meaningVi))
+      .map((lexeme) => ({
+        lexeme,
+        score: scoreLexemeDistractor({
+          candidate: lexeme,
+          level,
+          partOfSpeech,
+          target: target ?? null
+        })
+      }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, count)
+      .map((item) => item.lexeme);
   }
 
   async grammarDistractors(excludeId: string, level: string | null, count: number) {
-    const where: Prisma.GrammarPointWhereInput = {
+    const baseWhere: Prisma.GrammarPointWhereInput = {
       status: "active",
       id: { not: excludeId }
     };
-    if (level) where.jlptLevel = level;
+    if (level) baseWhere.jlptLevel = level;
 
-    const points = await this.prisma.grammarPoint.findMany({
+    const [target, sameLevel] = await Promise.all([
+      this.prisma.grammarPoint.findUnique({ where: { id: excludeId } }),
+      this.prisma.grammarPoint.findMany({
+        where: baseWhere,
+        take: count * 24
+      })
+    ]);
+
+    let pool = sameLevel;
+    if (pool.length < count) {
+      const broader = await this.prisma.grammarPoint.findMany({
+        where: { status: "active", id: { not: excludeId } },
+        take: count * 32
+      });
+      pool = uniqueGrammarPoints([...pool, ...broader]);
+    }
+
+    return pool
+      .map((point) => ({ point, score: scoreGrammarDistractor(point, target, level) }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, count)
+      .map((item) => item.point);
+  }
+
+  async sentenceTranslationDistractors(input: {
+    excludeExampleId: string;
+    level: string | null;
+    partOfSpeech: string | null;
+    translationVi: string;
+    count: number;
+  }) {
+    const where: Prisma.LexemeWhereInput = { status: "active" };
+    if (input.level) where.jlptLevel = input.level;
+    const lexemes = await this.prisma.lexeme.findMany({
       where,
-      take: count * 5
+      take: input.count * 36,
+      include: {
+        senses: {
+          take: 1,
+          orderBy: { position: "asc" },
+          include: {
+            exampleLinks: {
+              take: 2,
+              include: { exampleSentence: true }
+            }
+          }
+        }
+      }
     });
-
-    return shuffleArray(points).slice(0, count);
+    const examples = lexemes.flatMap((lexeme) =>
+      lexeme.senses
+        .filter((sense) => !input.partOfSpeech || posOverlap(sense.partOfSpeech, input.partOfSpeech))
+        .flatMap((sense) =>
+        (sense.exampleLinks ?? [])
+          .map((link) => link.exampleSentence)
+          .filter((example): example is NonNullable<typeof example> => Boolean(example?.translationVi))
+      )
+    );
+    return uniqueExamples(examples)
+      .filter((example) => example.id !== input.excludeExampleId && example.translationVi !== input.translationVi)
+      .map((example) => ({
+        example,
+        score: scoreSentenceDistractor(example.translationVi ?? "", input.translationVi)
+      }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, input.count)
+      .map((item) => item.example);
   }
 
   /* ── User Exercise Performance (Adaptive Difficulty) ─────────────────── */
@@ -610,6 +696,130 @@ export class ExerciseRepository {
       }))
     };
   }
+}
+
+type LexemeDistractorCandidate = {
+  headword: string;
+  jlptLevel: string | null;
+  reading: string | null;
+  senses: Array<{ field: string | null; meaningVi: string; partOfSpeech: string | null }>;
+};
+
+type GrammarDistractorCandidate = {
+  category: string | null;
+  jlptLevel: string | null;
+  meaningVi: string;
+  pattern: string;
+};
+
+function scoreLexemeDistractor(input: {
+  candidate: LexemeDistractorCandidate;
+  level: string | null;
+  partOfSpeech: string | null;
+  target: LexemeDistractorCandidate | null;
+}) {
+  const candidateSense = input.candidate.senses[0];
+  const targetSense = input.target?.senses[0];
+  let score = 0;
+  if (input.level && input.candidate.jlptLevel === input.level) score += 30;
+  if (posOverlap(candidateSense?.partOfSpeech ?? null, input.partOfSpeech)) score += 40;
+  if (input.target) {
+    if (candidateSense?.field && candidateSense.field === targetSense?.field) score += 24;
+    if (scriptProfile(input.candidate.headword) === scriptProfile(input.target.headword)) score += 18;
+    score += proximityScore(input.candidate.headword.length, input.target.headword.length, 14);
+    score += proximityScore((input.candidate.reading ?? "").length, (input.target.reading ?? "").length, 8);
+    if (targetSense?.meaningVi) {
+      score += proximityScore(candidateSense?.meaningVi.length ?? 0, targetSense.meaningVi.length, 10);
+    }
+  }
+  return score + Math.random();
+}
+
+function scoreGrammarDistractor(
+  candidate: GrammarDistractorCandidate,
+  target: GrammarDistractorCandidate | null,
+  level: string | null
+) {
+  let score = 0;
+  if (level && candidate.jlptLevel === level) score += 30;
+  if (target?.category && candidate.category === target.category) score += 36;
+  if (target) {
+    score += proximityScore(candidate.pattern.length, target.pattern.length, 18);
+    score += sharedCharacterScore(candidate.pattern, target.pattern, 12);
+    score += proximityScore(candidate.meaningVi.length, target.meaningVi.length, 8);
+  }
+  return score + Math.random();
+}
+
+function scoreSentenceDistractor(candidate: string, target: string) {
+  return proximityScore(candidate.length, target.length, 60) + sharedVietnameseTokenScore(candidate, target, 20) + Math.random();
+}
+
+function posOverlap(a: string | null | undefined, b: string | null | undefined) {
+  if (!a || !b) return false;
+  const left = new Set(a.split(/[,\s/]+/u).filter(Boolean));
+  return b.split(/[,\s/]+/u).some((part) => left.has(part));
+}
+
+function scriptProfile(value: string) {
+  if (/^[\p{Script=Katakana}ー]+$/u.test(value)) return "katakana";
+  if (/^[\p{Script=Hiragana}ー]+$/u.test(value)) return "hiragana";
+  if (/^[\p{Script=Han}々〆ヵヶ]+$/u.test(value)) return "kanji";
+  if (/[\p{Script=Han}]/u.test(value) && /[\p{Script=Hiragana}]/u.test(value)) return "kanji-kana";
+  return "mixed";
+}
+
+function proximityScore(candidate: number, target: number, max: number) {
+  if (target <= 0) return 0;
+  const diff = Math.abs(candidate - target);
+  return Math.max(0, max - diff);
+}
+
+function sharedCharacterScore(a: string, b: string, max: number) {
+  const chars = new Set(a.split(""));
+  const shared = b.split("").filter((char) => chars.has(char)).length;
+  return Math.min(max, shared * 2);
+}
+
+function sharedVietnameseTokenScore(a: string, b: string, max: number) {
+  const tokens = new Set(tokenizeVietnamese(a));
+  const shared = tokenizeVietnamese(b).filter((token) => tokens.has(token)).length;
+  return Math.min(max, shared * 4);
+}
+
+function tokenizeVietnamese(value: string) {
+  return value
+    .toLowerCase()
+    .normalize("NFC")
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter((token) => token.length >= 3);
+}
+
+function uniqueLexemes<T extends { id: string }>(items: T[]) {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    if (seen.has(item.id)) return false;
+    seen.add(item.id);
+    return true;
+  });
+}
+
+function uniqueGrammarPoints<T extends { id: string }>(items: T[]) {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    if (seen.has(item.id)) return false;
+    seen.add(item.id);
+    return true;
+  });
+}
+
+function uniqueExamples<T extends { id: string }>(items: T[]) {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    if (seen.has(item.id)) return false;
+    seen.add(item.id);
+    return true;
+  });
 }
 
 /**

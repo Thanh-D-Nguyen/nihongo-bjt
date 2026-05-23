@@ -5,6 +5,15 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useKeycloakAuth } from "../../../../../components/auth/keycloak-auth-provider";
+import {
+  DEFAULT_APPEARANCE,
+  type AppearanceState,
+  type FontSizePreference,
+  appearanceFromProfile,
+  applyTheme,
+  loadCachedAppearance,
+  saveAppearance
+} from "../../../../../lib/appearance";
 import { learnerApiFetch } from "../../../../../lib/learner-api";
 
 /* ── Types ── */
@@ -29,72 +38,6 @@ type AppearanceLabels = {
   previewText: string;
 };
 
-type ThemeMode = "light" | "dark" | "system";
-type FontSize = "small" | "default" | "large" | "xl";
-type Density = "compact" | "comfortable";
-
-const STORAGE_KEY = "nihongo-appearance";
-
-type AppearanceState = {
-  theme: ThemeMode;
-  fontSize: FontSize;
-  density: Density;
-};
-
-const DEFAULT_STATE: AppearanceState = {
-  theme: "system",
-  fontSize: "default",
-  density: "comfortable",
-};
-
-function loadCachedState(): AppearanceState {
-  if (typeof window === "undefined") return DEFAULT_STATE;
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return DEFAULT_STATE;
-    return { ...DEFAULT_STATE, ...JSON.parse(raw) };
-  } catch {
-    return DEFAULT_STATE;
-  }
-}
-
-function cacheState(state: AppearanceState) {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-}
-
-/* ── Apply theme to DOM ── */
-
-function applyTheme(theme: ThemeMode) {
-  if (typeof document === "undefined") return;
-  const root = document.documentElement;
-  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  const isDark = theme === "dark" || (theme === "system" && prefersDark);
-  if (isDark) {
-    root.classList.add("dark");
-    root.setAttribute("data-theme", "dark");
-  } else {
-    root.classList.remove("dark");
-    root.setAttribute("data-theme", "light");
-  }
-}
-
-function applyFontSize(size: FontSize) {
-  if (typeof document === "undefined") return;
-  document.documentElement.dataset.jpFontSize = size;
-}
-
-function applyDensity(density: Density) {
-  if (typeof document === "undefined") return;
-  document.documentElement.dataset.density = density;
-}
-
-function applyAll(s: AppearanceState) {
-  applyTheme(s.theme);
-  applyFontSize(s.fontSize);
-  applyDensity(s.density);
-}
-
 /* ── Main ── */
 
 export function AppearanceSettingsClient({
@@ -105,7 +48,7 @@ export function AppearanceSettingsClient({
   locale: string;
 }) {
   const auth = useKeycloakAuth();
-  const [state, setState] = useState<AppearanceState>(DEFAULT_STATE);
+  const [state, setState] = useState<AppearanceState>(DEFAULT_APPEARANCE);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -114,9 +57,9 @@ export function AppearanceSettingsClient({
   // Load from localStorage immediately (fast), then sync from server
   useEffect(() => {
     setMounted(true);
-    const cached = loadCachedState();
+    const cached = loadCachedAppearance();
     setState(cached);
-    applyAll(cached);
+    saveAppearance(cached);
 
     // Fetch from server and reconcile
     if (auth.accessToken) {
@@ -125,14 +68,9 @@ export function AppearanceSettingsClient({
         .then((data) => {
           const profile = data?.profile;
           if (!profile) return;
-          const serverState: AppearanceState = {
-            theme: (profile.themeMode as ThemeMode) || "system",
-            fontSize: (profile.fontSizePreference as FontSize) || "default",
-            density: (profile.densityPreference as Density) || "comfortable",
-          };
+          const serverState = appearanceFromProfile(profile);
           setState(serverState);
-          cacheState(serverState);
-          applyAll(serverState);
+          saveAppearance(serverState);
         })
         .catch(() => { /* use cached */ });
     }
@@ -177,14 +115,13 @@ export function AppearanceSettingsClient({
   const apply = useCallback(
     (next: AppearanceState) => {
       setState(next);
-      cacheState(next);
-      applyAll(next);
+      saveAppearance(next);
       persistToServer(next);
     },
     [persistToServer]
   );
 
-  const fontSizeMap: Record<FontSize, string> = {
+  const fontSizeMap: Record<FontSizePreference, string> = {
     small: "text-sm",
     default: "text-base",
     large: "text-lg",

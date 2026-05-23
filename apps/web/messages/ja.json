@@ -359,7 +359,10 @@
     "bookmarkAdd": "保存する",
     "bookmarkRemove": "保存済み",
     "summaryNote": "これは要約です。全文はNHKの元記事でご覧いただけます。",
-    "readFullArticle": "NHKで全文を読む"
+    "readFullArticle": "NHKで全文を読む",
+    "furiganaToggle": "ふりがな表示",
+    "furiganaOn": "ふりがな",
+    "furiganaOff": "非表示"
   },
   "dashboard": {
     "commandCenterDescription": "次の一歩がはっきりし、進捗が見えて、圧迫感のない画面にします。",

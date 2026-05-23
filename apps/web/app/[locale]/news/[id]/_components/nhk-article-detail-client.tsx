@@ -73,6 +73,9 @@ interface Labels {
   bookmarkRemove: string;
   summaryNote: string;
   readFullArticle: string;
+  furiganaToggle: string;
+  furiganaOn: string;
+  furiganaOff: string;
 }
 
 export function NhkArticleDetailClient({
@@ -96,6 +99,7 @@ export function NhkArticleDetailClient({
   const [savingWord, setSavingWord] = useState<string | null>(null);
   const [bookmarked, setBookmarked] = useState(false);
   const [togglingBookmark, setTogglingBookmark] = useState(false);
+  const [showFurigana, setShowFurigana] = useState(true);
   const readStartRef = { current: Date.now() };
 
   const safeBodyHtml = useMemo(() => article ? sanitizeNhkHtml(article.bodyHtml) : "", [article]);
@@ -295,6 +299,32 @@ export function NhkArticleDetailClient({
         </h1>
 
         <div className="mt-5 flex flex-wrap items-center gap-3">
+          <div
+            aria-label={labels.furiganaToggle}
+            className="inline-flex min-h-12 items-center rounded-xl border border-ink/10 bg-surface p-1 shadow-sm"
+            role="group"
+          >
+            <button
+              aria-pressed={showFurigana}
+              className={`min-h-10 rounded-lg px-3 py-1.5 text-sm font-semibold transition ${
+                showFurigana ? "bg-ink text-surface" : "text-muted hover:bg-ink/5 hover:text-ink"
+              }`}
+              onClick={() => setShowFurigana(true)}
+              type="button"
+            >
+              {labels.furiganaOn}
+            </button>
+            <button
+              aria-pressed={!showFurigana}
+              className={`min-h-10 rounded-lg px-3 py-1.5 text-sm font-semibold transition ${
+                !showFurigana ? "bg-ink text-surface" : "text-muted hover:bg-ink/5 hover:text-ink"
+              }`}
+              onClick={() => setShowFurigana(false)}
+              type="button"
+            >
+              {labels.furiganaOff}
+            </button>
+          </div>
           {auth.userId ? (
             <>
               <button
@@ -332,7 +362,7 @@ export function NhkArticleDetailClient({
         </div>
 
         {/* Ruby title */}
-        {article.titleWithRuby && (
+        {article.titleWithRuby && showFurigana && (
           <div className="mt-2 text-sm text-muted" lang="ja">
             <span className="rounded bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700">
               {labels.readingTitle}
@@ -375,10 +405,18 @@ export function NhkArticleDetailClient({
 
       {/* Body */}
       <article
-        className="nhk-body mt-6 space-y-4 text-base leading-relaxed text-ink/90"
+        className={`nhk-body mt-6 space-y-4 text-base leading-relaxed text-ink/90 ${
+          showFurigana ? "" : "nhk-hide-furigana"
+        }`}
         lang="ja"
         dangerouslySetInnerHTML={{ __html: safeBodyHtml }}
       />
+      <style jsx global>{`
+        .nhk-hide-furigana rt,
+        .nhk-hide-furigana rp {
+          display: none;
+        }
+      `}</style>
 
       {/* Read full article CTA — prominent for normal, subtle for easy */}
       {article.sourceType === "normal" ? (

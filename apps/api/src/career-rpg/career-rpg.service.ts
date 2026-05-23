@@ -1,4 +1,4 @@
-import { createPrismaClient, type Prisma, type PrismaClient } from "@nihongo-bjt/database";
+import { createPrismaClient, Prisma, type PrismaClient } from "@nihongo-bjt/database";
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 
 export const CAREER_SKILL_AXES = ["keigo", "written", "meeting", "customer", "chart", "nuance"] as const;
@@ -12,6 +12,30 @@ type RewardsPayload = {
   npcTrustGains?: Array<{ npcSlug: string; delta: number }>;
   contextMemoDrops?: Array<Record<string, unknown>>;
   npcReactionMontage?: Array<Record<string, unknown>>;
+};
+
+type ContextMemo = {
+  bjtTrapVi: string;
+  cardKind:
+    | "expression_pair"
+    | "keigo_register"
+    | "scene_pattern"
+    | "nuance_pattern"
+    | "soft_refusal"
+    | "discourse_marker";
+  expressionJa: string;
+  fromNpcSlug: string;
+  fromNpcAvatarInitial?: string;
+  fromNpcAvatarTint?: string;
+  fromNpcNameJa?: string;
+  generatedAt: string;
+  id: string;
+  reading: string;
+  realIntentVi: string;
+  sceneJa: string;
+  status: "unread" | "read";
+  surfaceMeaningVi: string;
+  toneVi: string;
 };
 
 @Injectable()
@@ -37,6 +61,41 @@ export class CareerRpgService {
   async ranks() {
     const ranks = await this.prisma.careerRank.findMany({ orderBy: { displayOrder: "asc" } });
     return ranks.map((rank) => this.mapRank(rank));
+  }
+
+  async inbox(userId: string) {
+    await this.ensureCareerFoundation(userId);
+    const [attempts, npcs] = await Promise.all([
+      this.prisma.chapterAttempt.findMany({
+        include: { chapter: true },
+        orderBy: { completedAt: "desc" },
+        where: {
+          completedAt: { not: null },
+          scoreSnapshot: { not: Prisma.JsonNull },
+          status: "completed",
+          userId
+        }
+      }),
+      this.prisma.storyNpc.findMany({ where: { status: "active" } })
+    ]);
+    const npcBySlug = new Map(npcs.map((npc) => [npc.slug, npc]));
+
+    const seen = new Set<string>();
+    const inbox: ContextMemo[] = [];
+    for (const attempt of attempts) {
+      const snapshot = objectJson(attempt.scoreSnapshot);
+      const drops = Array.isArray(snapshot.contextMemoDrops)
+        ? snapshot.contextMemoDrops.filter(isRecord)
+        : [];
+      const memoDrops = drops.length > 0 ? drops : [deriveContextMemoFromAttempt(attempt)].filter(isRecord);
+      for (const drop of memoDrops) {
+        const memo = mapContextMemo(drop, attempt.completedAt ?? undefined);
+        if (!memo || seen.has(memo.id)) continue;
+        seen.add(memo.id);
+        inbox.push(attachNpcMetadata(memo, npcBySlug.get(memo.fromNpcSlug)));
+      }
+    }
+    return inbox;
   }
 
   async clockIn(userId: string) {
@@ -450,6 +509,113 @@ function parseRewards(value: Prisma.JsonValue): RewardsPayload {
     rankXp: typeof raw.rankXp === "number" ? raw.rankXp : 0,
     skillGains: isRecord(raw.skillGains) ? (raw.skillGains as Partial<Record<SkillAxisCode, number>>) : {}
   };
+}
+
+function mapContextMemo(value: Record<string, unknown>, fallbackDate?: Date): ContextMemo | null {
+  if (typeof value.id !== "string" || typeof value.expressionJa !== "string") {
+    return null;
+  }
+  const fallbackGeneratedAt = fallbackDate?.toISOString() ?? new Date().toISOString();
+  return {
+    bjtTrapVi: stringOrEmpty(value.bjtTrapVi),
+    cardKind: contextMemoKind(value.cardKind),
+    expressionJa: value.expressionJa,
+    fromNpcSlug: stringOrEmpty(value.fromNpcSlug),
+    generatedAt: typeof value.generatedAt === "string" ? value.generatedAt : fallbackGeneratedAt,
+    id: value.id,
+    reading: stringOrEmpty(value.reading),
+    realIntentVi: stringOrEmpty(value.realIntentVi),
+    sceneJa: stringOrEmpty(value.sceneJa),
+    status: value.status === "read" ? "read" : "unread",
+    surfaceMeaningVi: stringOrEmpty(value.surfaceMeaningVi),
+    toneVi: stringOrEmpty(value.toneVi)
+  };
+}
+
+function deriveContextMemoFromAttempt(
+  attempt: Prisma.ChapterAttemptGetPayload<{ include: { chapter: true } }>
+): Record<string, unknown> {
+  const chapter = attempt.chapter;
+  const scenarioPayload = objectJson(chapter.scenarioPayload);
+  const scenarios = Array.isArray(scenarioPayload.scenarios)
+    ? scenarioPayload.scenarios.filter(isRecord)
+    : [];
+  const scenario = scenarios[0] ?? {};
+  const question = isRecord(scenario.question) ? scenario.question : {};
+  const options = Array.isArray(question.options) ? question.options.filter(isRecord) : [];
+  const correctOption = options.find((option) => option.isCorrect === true);
+  const characters = Array.isArray(scenario.characters) ? scenario.characters.filter(isRecord) : [];
+  const rewards = parseRewards(chapter.rewardsPayload);
+  const firstTrustGain = rewards.npcTrustGains?.[0];
+  const firstCharacter = characters[0];
+  const scenarioType = typeof scenario.scenarioType === "string" ? scenario.scenarioType : "";
+  const skillList = Object.keys(rewards.skillGains ?? {});
+
+  return {
+    bjtTrapVi:
+      stringOrEmpty(question.promptVi) ||
+      "Ôn lại bối cảnh BJT của chapter này để tránh hiểu sai ý định, sắc thái và hành động tiếp theo.",
+    cardKind: cardKindForScenario(scenarioType),
+    expressionJa:
+      stringOrEmpty(correctOption?.textJa) ||
+      stringOrEmpty(scenario.goalJa) ||
+      chapter.titleJa,
+    fromNpcSlug:
+      firstTrustGain?.npcSlug ||
+      (typeof firstCharacter?.npcSlug === "string" ? firstCharacter.npcSlug : "") ||
+      "tanaka_senpai",
+    generatedAt: attempt.completedAt?.toISOString() ?? new Date().toISOString(),
+    id: `chapter:${chapter.id}:reflection`,
+    reading: "",
+    realIntentVi:
+      stringOrEmpty(scenario.goalVi) ||
+      stringOrEmpty(scenario.contextSummaryVi) ||
+      `Ghi chú ôn tập từ chapter "${chapter.titleVi}".`,
+    sceneJa: stringOrEmpty(scenario.titleJa) || chapter.titleJa,
+    status: "unread",
+    surfaceMeaningVi: stringOrEmpty(scenario.titleVi) || chapter.titleVi,
+    toneVi: skillList.length > 0 ? `Trọng tâm: ${skillList.join(", ")}` : "Ngữ cảnh công sở Nhật"
+  };
+}
+
+function attachNpcMetadata(
+  memo: ContextMemo,
+  npc: Prisma.StoryNpcGetPayload<object> | undefined
+): ContextMemo {
+  if (!npc) return memo;
+  const avatar = objectJson(npc.avatarMedia);
+  return {
+    ...memo,
+    fromNpcAvatarInitial: typeof avatar.avatarInitial === "string" ? avatar.avatarInitial : npc.nameJa.slice(0, 1),
+    fromNpcAvatarTint: typeof avatar.avatarTint === "string" ? avatar.avatarTint : "#1B2A4A",
+    fromNpcNameJa: npc.nameJa
+  };
+}
+
+function cardKindForScenario(scenarioType: string): ContextMemo["cardKind"] {
+  if (scenarioType === "complaint") return "soft_refusal";
+  if (scenarioType === "meeting") return "discourse_marker";
+  if (scenarioType === "chat" || scenarioType === "deadline") return "nuance_pattern";
+  if (scenarioType === "email") return "keigo_register";
+  return "scene_pattern";
+}
+
+function contextMemoKind(value: unknown): ContextMemo["cardKind"] {
+  const allowed: ContextMemo["cardKind"][] = [
+    "expression_pair",
+    "keigo_register",
+    "scene_pattern",
+    "nuance_pattern",
+    "soft_refusal",
+    "discourse_marker"
+  ];
+  return typeof value === "string" && allowed.includes(value as ContextMemo["cardKind"])
+    ? (value as ContextMemo["cardKind"])
+    : "scene_pattern";
+}
+
+function stringOrEmpty(value: unknown): string {
+  return typeof value === "string" ? value : "";
 }
 
 function objectJson(value: Prisma.JsonValue | null | undefined): Record<string, unknown> {

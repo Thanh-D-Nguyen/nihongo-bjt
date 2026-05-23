@@ -805,6 +805,78 @@ export class NhkNewsRepository implements OnModuleInit {
     }
   }
 
+  private async enrichVocabularyFromCanonical(items: NhkVocabItem[]): Promise<NhkVocabItem[]> {
+    if (items.length === 0) return items;
+
+    const grammarPatterns = new Set<string>();
+    const lexemeTerms = new Set<string>();
+
+    for (const item of items) {
+      const word = item.word.trim();
+      const reading = item.reading?.trim();
+      if (!word || (item.meaning && item.pos)) continue;
+
+      if (item.pos === "grammar" || word.includes("〜") || word.includes("～")) {
+        grammarPatterns.add(word);
+      }
+      lexemeTerms.add(word);
+      if (reading) lexemeTerms.add(reading);
+    }
+
+    const [grammarPoints, lexemes] = await Promise.all([
+      grammarPatterns.size > 0
+        ? this.prisma.grammarPoint.findMany({
+            select: { meaningVi: true, pattern: true },
+            where: { pattern: { in: [...grammarPatterns] }, status: "active" }
+          })
+        : Promise.resolve([]),
+      lexemeTerms.size > 0
+        ? this.prisma.lexeme.findMany({
+            select: {
+              headword: true,
+              reading: true,
+              senses: {
+                orderBy: { position: "asc" },
+                select: { meaningVi: true, partOfSpeech: true },
+                take: 1
+              },
+              shortMeaningVi: true
+            },
+            where: {
+              OR: [...lexemeTerms].flatMap((term) => [{ headword: term }, { reading: term }]),
+              status: "active"
+            }
+          })
+        : Promise.resolve([])
+    ]);
+
+    const grammarByPattern = new Map(grammarPoints.map((grammar) => [grammar.pattern, grammar]));
+    const lexemeByTerm = new Map<string, (typeof lexemes)[number]>();
+    for (const lexeme of lexemes) {
+      lexemeByTerm.set(lexeme.headword, lexeme);
+      if (lexeme.reading) lexemeByTerm.set(lexeme.reading, lexeme);
+    }
+
+    return items.map((item) => {
+      if (item.meaning && item.pos) return item;
+
+      const word = item.word.trim();
+      const reading = item.reading?.trim();
+      const grammar =
+        item.pos === "grammar" || word.includes("〜") || word.includes("～")
+          ? grammarByPattern.get(word)
+          : null;
+      const lexeme = lexemeByTerm.get(word) ?? (reading ? lexemeByTerm.get(reading) : undefined);
+      const sense = lexeme?.senses[0];
+
+      return {
+        ...item,
+        meaning: item.meaning ?? grammar?.meaningVi ?? lexeme?.shortMeaningVi ?? sense?.meaningVi ?? null,
+        pos: item.pos ?? (grammar ? "grammar" : sense?.partOfSpeech ?? null)
+      };
+    });
+  }
+
   async getArticleDetail(articleId: string): Promise<NhkArticleDetail | null> {
     // Try DB first for persistent storage
     const dbArticle = await this.prisma.nhkArticle.findUnique({ where: { id: articleId } });
@@ -830,22 +902,36 @@ export class NhkNewsRepository implements OnModuleInit {
         url: dbArticle.url,
         vocabulary: (dbArticle.vocabulary as unknown as NhkVocabItem[]) ?? [],
       };
+      const detail: NhkArticleDetail = {
+        ...persistedDetail,
+        vocabulary: await this.enrichVocabularyFromCanonical(persistedDetail.vocabulary)
+      };
+      if (JSON.stringify(detail.vocabulary) !== JSON.stringify(persistedDetail.vocabulary)) {
+        void this.prisma.nhkArticle.update({
+          data: { vocabulary: detail.vocabulary as unknown as object },
+          where: { id: articleId }
+        }).catch(() => {});
+      }
       if (
-        persistedDetail.sourceType === "normal" &&
-        (isShortNormalArticleBody(persistedDetail.bodyPlain) || isLegacyNormalArticleUrl(persistedDetail.url))
+        detail.sourceType === "normal" &&
+        (isShortNormalArticleBody(detail.bodyPlain) || isLegacyNormalArticleUrl(detail.url))
       ) {
         const refreshed = await enrichNormalArticle({
-          ...persistedDetail,
+          ...detail,
           audioUrl: cachedAudioUrl,
-          summaryHtml: persistedDetail.bodyHtml,
-          summaryPlain: persistedDetail.bodyPlain
+          summaryHtml: detail.bodyHtml,
+          summaryPlain: detail.bodyPlain
         });
-        if (isRicherBody(refreshed, persistedDetail.bodyPlain) || refreshed.url !== persistedDetail.url) {
-          void this.persistArticle(refreshed).catch(() => {});
-          return refreshed;
+        const enrichedRefreshed = {
+          ...refreshed,
+          vocabulary: await this.enrichVocabularyFromCanonical(refreshed.vocabulary)
+        };
+        if (isRicherBody(enrichedRefreshed, detail.bodyPlain) || enrichedRefreshed.url !== detail.url) {
+          void this.persistArticle(enrichedRefreshed).catch(() => {});
+          return enrichedRefreshed;
         }
       }
-      return persistedDetail;
+      return detail;
     }
 
     let article = articleCache.get(articleId);
@@ -865,24 +951,36 @@ export class NhkNewsRepository implements OnModuleInit {
     // Normal NHK public endpoints expose only the article excerpt unless the
     // reader completes NHK's own usage confirmation/login flow.
     if (article.sourceType === "normal") {
-      const enriched = await enrichNormalArticle(article);
+      const normalDetail = await enrichNormalArticle(article);
+      const enriched = {
+        ...normalDetail,
+        vocabulary: await this.enrichVocabularyFromCanonical(normalDetail.vocabulary)
+      };
       void this.persistArticle(enriched).catch(() => {});
       return enriched;
     }
 
     try {
-      const detail = parseArticleHtml(article.url, await fetchText(article.url), article);
+      const parsed = parseArticleHtml(article.url, await fetchText(article.url), article);
+      const detail = {
+        ...parsed,
+        vocabulary: await this.enrichVocabularyFromCanonical(parsed.vocabulary)
+      };
       // Persist to DB (fire-and-forget)
       void this.persistArticle(detail).catch(() => {});
       return detail;
     } catch {
       const fallbackText = `${article.title}\n${article.summaryPlain ?? ""}`;
-      return {
+      const fallback = {
         ...article,
         audioUrl: article.audioUrl ?? null,
         bodyHtml: `<p>${escapeHtml(article.summaryPlain || article.title)}</p>`,
         bodyPlain: article.summaryPlain || article.title,
         vocabulary: [...extractVocabularyFromText(fallbackText), ...extractGrammarFromText(fallbackText)]
+      };
+      return {
+        ...fallback,
+        vocabulary: await this.enrichVocabularyFromCanonical(fallback.vocabulary)
       };
     }
   }

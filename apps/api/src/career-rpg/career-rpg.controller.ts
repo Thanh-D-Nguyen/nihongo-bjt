@@ -41,6 +41,14 @@ export class CareerController {
     return this.svc.ranks();
   }
 
+  @Get("inbox")
+  @ApiOperation({ summary: "List context memo cards earned from completed Career RPG chapters." })
+  @ApiQuery({ name: "userId", required: false, description: "Dev override; normally resolved from Keycloak." })
+  inbox(@CurrentUser() user: KeycloakAuthenticatedUser | undefined, @Query("userId") requestedUserId?: string) {
+    const userId = resolveCareerUserId(user, requestedUserId);
+    return this.svc.inbox(userId);
+  }
+
   @Patch("me")
   @ApiOperation({ summary: "Update the learner's Career RPG profile (e.g. Japanese work name)." })
   @ApiBody({ description: "Fields to update: `{ jpWorkName?, userId? }`." })

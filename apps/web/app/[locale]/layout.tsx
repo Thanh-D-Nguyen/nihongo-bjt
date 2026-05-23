@@ -51,6 +51,7 @@ export default async function LearnerLayout({
         <AmbientMiniPlayer labels={t.ambient} />
         <KeycloakAuthShell
           companionLabels={t.nav.companion}
+          focusTimerLabels={t.focusTimer}
           kcAccessCookiePresent={kcAccessCookiePresent}
           locale={locale}
           nav={t.nav}

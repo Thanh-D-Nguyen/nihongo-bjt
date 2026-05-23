@@ -3,7 +3,7 @@
 import { learnerApiFetch } from "../../../lib/learner-api";
 import { isWebKeycloakEnabled } from "../../../lib/public-keycloak";
 
-import type { CareerRank, ChapterResult, MissionArc, MissionChapter, NpcRelation, StoryNpc, UserCareerState } from "./types";
+import type { CareerRank, ChapterResult, ContextMemo, MissionArc, MissionChapter, NpcRelation, StoryNpc, UserCareerState } from "./types";
 
 const DEV_CAREER_USER_ID = "00000000-0000-4000-8000-000000000101";
 
@@ -48,6 +48,10 @@ export function clockIn() {
 
 export function careerRanks() {
   return apiJson<CareerRank[]>("/api/career/ranks");
+}
+
+export function careerInbox() {
+  return apiJson<ContextMemo[]>(withDevUser("/api/career/inbox"));
 }
 
 export function updateCareerProfile(data: { jpWorkName: string }) {

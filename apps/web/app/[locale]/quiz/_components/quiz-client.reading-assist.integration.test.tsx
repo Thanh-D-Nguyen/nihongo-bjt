@@ -134,6 +134,7 @@ describe("QuizQuestionPanel reading assist wiring", () => {
         onAnswer={() => undefined}
         onToggleFlag={() => undefined}
         question={questionPayload}
+        readingAssistMode="hover"
         userId="11111111-1111-4111-8111-111111111111"
       />
     );
@@ -144,6 +145,25 @@ describe("QuizQuestionPanel reading assist wiring", () => {
       quizSessionId: "session-123",
       text: "念のため確認させてください。"
     });
+  });
+
+  it("renders plain question text when reading assist is disabled", () => {
+    capturedProps = null;
+
+    const html = renderToStaticMarkup(
+      <QuizQuestionPanel
+        flagged={false}
+        labels={labels}
+        onAnswer={() => undefined}
+        onToggleFlag={() => undefined}
+        question={questionPayload}
+        readingAssistMode="off"
+        userId="11111111-1111-4111-8111-111111111111"
+      />
+    );
+
+    expect(capturedProps).toBeNull();
+    expect(html).toContain("念のため確認させてください。");
   });
 
   it("falls back to plain question text when learner id is unavailable", () => {

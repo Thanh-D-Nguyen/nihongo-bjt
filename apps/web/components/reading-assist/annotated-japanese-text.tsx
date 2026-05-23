@@ -144,6 +144,14 @@ export function AnnotatedJapaneseText({
   }, [interactive, loadDeck]);
 
   const runAnalyze = useCallback(async () => {
+    if (!interactive) {
+      setTokens([]);
+      setNormalized(text);
+      setTextHash("");
+      setError(null);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -198,11 +206,19 @@ export function AnnotatedJapaneseText({
     } finally {
       setLoading(false);
     }
-  }, [analyzePath, examTimed, labels.errorHttp, labels.errorNetwork, labels.errorTimeout, onAnalyzed, quizSessionId, text, userId]);
+  }, [analyzePath, examTimed, interactive, labels.errorHttp, labels.errorNetwork, labels.errorTimeout, onAnalyzed, quizSessionId, text, userId]);
 
   useEffect(() => {
+    if (!interactive) {
+      setTokens([]);
+      setNormalized(text);
+      setTextHash("");
+      setError(null);
+      setLoading(false);
+      return;
+    }
     void runAnalyze();
-  }, [runAnalyze]);
+  }, [interactive, runAnalyze, text]);
 
   const openDetails = (t: AnalyzedReadingToken) => {
     if (!interactive) {

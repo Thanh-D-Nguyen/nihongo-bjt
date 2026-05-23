@@ -11,7 +11,10 @@ import {
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { AnnotatedJapaneseText } from "../../../../components/reading-assist/annotated-japanese-text";
+import {
+  AnnotatedJapaneseText,
+  type ReadingAssistDisplayMode
+} from "../../../../components/reading-assist/annotated-japanese-text";
 import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
 import { learnerApiFetch } from "../../../../lib/learner-api";
 import { ShareDrawer } from "../../_components/share-drawer";
@@ -370,6 +373,7 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
   const [flaggedQuestions, setFlaggedQuestions] = useState<Set<string>>(new Set());
   const [confidenceMap, setConfidenceMap] = useState<Record<string, "sure" | "guessing">>({});
   const [sessionHistory, setSessionHistory] = useState<SessionHistoryItem[]>([]);
+  const [readingAssistMode, setReadingAssistMode] = useState<ReadingAssistDisplayMode | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const answeringRef = useRef(false);
   const { userId } = useKeycloakAuth();
@@ -580,6 +584,26 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
       }
     })();
   }, [userId, checkActiveSession, loadOfficialStatus, loadReferralLink, loadSessionHistory, resumeSession]);
+
+  useEffect(() => {
+    if (!userId) {
+      setReadingAssistMode(null);
+      return;
+    }
+    let cancelled = false;
+    void learnerApiFetch(`/api/reading-assist/preferences?userId=${encodeURIComponent(userId)}`)
+      .then(async (response) => {
+        if (!response.ok || cancelled) return;
+        const prefs = (await response.json()) as { displayMode?: ReadingAssistDisplayMode };
+        if (!cancelled) setReadingAssistMode(prefs.displayMode ?? "hover");
+      })
+      .catch(() => {
+        if (!cancelled) setReadingAssistMode("hover");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
 
   useEffect(() => {
     if (results && userId && !breakdown) {
@@ -1076,6 +1100,7 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
             onAnswer={answer}
             onToggleFlag={() => question.question && toggleFlag(question.question.id)}
             question={question}
+            readingAssistMode={readingAssistMode}
             userId={userId}
           />
         </div>
@@ -1449,6 +1474,7 @@ export function QuizQuestionPanel({
   onAnswer,
   onToggleFlag,
   question,
+  readingAssistMode,
   userId
 }: {
   flagged: boolean;
@@ -1456,6 +1482,7 @@ export function QuizQuestionPanel({
   onAnswer: (optionKey: string, confidence?: "sure" | "guessing") => void | Promise<void>;
   onToggleFlag: () => void;
   question: QuestionPayload;
+  readingAssistMode?: ReadingAssistDisplayMode | null;
   userId: string | null;
 }) {
   const [selected, setSelected] = useState<string | null>(null);
@@ -1568,11 +1595,11 @@ export function QuizQuestionPanel({
 
         {/* Prompt with reading assist */}
         <div className="mb-5">
-          {userId ? (
+          {userId && readingAssistMode && readingAssistMode !== "off" ? (
             <AnnotatedJapaneseText
               analyzePath="/api/reading-assist/analyze"
               analyticsPath="/api/reading-assist/analytics"
-              displayMode="hover"
+              displayMode={readingAssistMode}
               labels={labels.readingAssist.annotated}
               quizSessionId={question.session.id}
               text={question.question.prompt}

@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 import { ReviewInboxPreview } from "../../../../src/features/career-rpg/components/review-inbox-preview";
-import { useCareerRpg } from "../../../../src/features/career-rpg/store";
+import { careerInbox } from "../../../../src/features/career-rpg/api";
 import type { CareerRpgLabels } from "../../../../src/features/career-rpg/i18n";
+import type { ContextMemo } from "../../../../src/features/career-rpg/types";
 
 interface Props {
   labels: CareerRpgLabels;
@@ -12,8 +14,27 @@ interface Props {
 }
 
 export function InboxPreviewClient({ labels, locale }: Props) {
-  const { inbox } = useCareerRpg();
+  const [inbox, setInbox] = useState<ContextMemo[]>([]);
+  const [loading, setLoading] = useState(true);
   const unread = inbox.filter((m) => m.status === "unread").length;
+
+  useEffect(() => {
+    let alive = true;
+    setLoading(true);
+    void careerInbox()
+      .then((items) => {
+        if (alive) setInbox(items);
+      })
+      .catch(() => {
+        if (alive) setInbox([]);
+      })
+      .finally(() => {
+        if (alive) setLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-10">
@@ -42,7 +63,18 @@ export function InboxPreviewClient({ labels, locale }: Props) {
         </Link>
       </header>
 
-      <ReviewInboxPreview inbox={inbox} labels={labels.inbox} />
+      {loading ? (
+        <div className="grid gap-5 lg:grid-cols-[320px_minmax(0,1fr)]">
+          <div className="space-y-2">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="h-24 animate-pulse rounded-xl bg-[#F1F5F9]" />
+            ))}
+          </div>
+          <div className="h-72 animate-pulse rounded-xl bg-[#F8FAFC]" />
+        </div>
+      ) : (
+        <ReviewInboxPreview inbox={inbox} labels={labels.inbox} />
+      )}
     </div>
   );
 }

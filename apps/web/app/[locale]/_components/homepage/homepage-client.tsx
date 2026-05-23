@@ -23,6 +23,7 @@ import { CompanionPetWidget } from "./companion-pet-widget";
 import { SeasonalEventBanner } from "./seasonal-event-banner";
 import { AmbientModeWidget } from "./ambient-mode-widget";
 import { AdBanner } from "./ad-banner";
+import { CareerXpWidget } from "./career-xp-widget";
 import { ForYouFeedWidget } from "./for-you-feed-widget";
 import { OnboardingFlow } from "./onboarding-flow";
 
@@ -211,6 +212,9 @@ export function HomepageClient({ labels, locale, pushBannerLabels }: { labels: H
           </div>
           <div className="hp-enter hp-enter-d2">
             <LoginBonusWidget locale={locale} />
+          </div>
+          <div className="hp-enter hp-enter-d2">
+            <CareerXpWidget labels={labels} locale={locale} />
           </div>
           <div className="hp-enter hp-enter-d2">
             <MysteryBoxWidget locale={locale} />

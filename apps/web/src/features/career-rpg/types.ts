@@ -201,6 +201,9 @@ export interface ContextMemo {
   toneVi: string;
   bjtTrapVi: string;
   fromNpcSlug: string;
+  fromNpcAvatarInitial?: string;
+  fromNpcAvatarTint?: string;
+  fromNpcNameJa?: string;
   generatedAt: string;
   status: "unread" | "read";
 }

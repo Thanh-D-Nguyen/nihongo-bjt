@@ -180,12 +180,12 @@ export class ExerciseGeneratorService {
         lex.id,
         lex.jlptLevel,
         sense?.partOfSpeech ?? null,
-        3
+        12
       );
-      const distractorHeadwords = distractors
-        .map((d) => d.headword)
-        .filter(Boolean)
-        .slice(0, 3);
+      const distractorHeadwords = selectClozeDistractors(
+        lex.headword,
+        distractors.map((d) => d.headword).filter(Boolean)
+      );
 
       if (distractorHeadwords.length < 3) continue;
 
@@ -286,23 +286,17 @@ export class ExerciseGeneratorService {
       if (usedSentences.has(example.id)) continue;
       usedSentences.add(example.id);
 
-      // Get distractor sentences at similar level
-      const distractorLexemes = await this.repo.lexemeDistractors(
-        lex.id,
-        lex.jlptLevel,
-        null,
-        3
+      const distractorExamples = await this.repo.sentenceTranslationDistractors({
+        count: 12,
+        excludeExampleId: example.id,
+        level: lex.jlptLevel,
+        partOfSpeech: sense.partOfSpeech,
+        translationVi: example.translationVi
+      });
+      const distractorSentences = selectTranslationDistractors(
+        example.translationVi,
+        distractorExamples.map((item) => item.translationVi).filter(Boolean) as string[]
       );
-      const distractorSentences: string[] = [];
-      for (const d of distractorLexemes) {
-        const dSense = d.senses[0];
-        if (!dSense) continue;
-        // We need example sentences from distractors, fetch them
-        const dMeaning = dSense.meaningVi;
-        if (dMeaning && dMeaning !== example.translationVi) {
-          distractorSentences.push(dMeaning);
-        }
-      }
       if (distractorSentences.length < 3) continue;
 
       const options = shuffleArray([
@@ -387,6 +381,46 @@ function shuffleArray<T>(arr: T[]): T[] {
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
   return shuffled;
+}
+
+function selectClozeDistractors(target: string, candidates: string[]) {
+  const targetProfile = scriptProfile(target);
+  const strict = uniqueStrings(candidates).filter((candidate) => {
+    return scriptProfile(candidate) === targetProfile && Math.abs(candidate.length - target.length) <= 2;
+  });
+  const relaxed = uniqueStrings(candidates).filter((candidate) => scriptProfile(candidate) === targetProfile);
+  const fallback = uniqueStrings(candidates);
+  return [...strict, ...relaxed, ...fallback].filter(uniqueByValue).slice(0, 3);
+}
+
+function selectTranslationDistractors(target: string, candidates: string[]) {
+  const targetLength = target.length;
+  const strict = uniqueStrings(candidates).filter((candidate) => isComparableLength(candidate.length, targetLength, 0.55, 1.75));
+  const relaxed = uniqueStrings(candidates).filter((candidate) => isComparableLength(candidate.length, targetLength, 0.35, 2.4));
+  const fallback = uniqueStrings(candidates);
+  return [...strict, ...relaxed, ...fallback].filter(uniqueByValue).slice(0, 3);
+}
+
+function isComparableLength(candidateLength: number, targetLength: number, minRatio: number, maxRatio: number) {
+  if (targetLength <= 0) return true;
+  const ratio = candidateLength / targetLength;
+  return ratio >= minRatio && ratio <= maxRatio;
+}
+
+function scriptProfile(value: string) {
+  if (/^[\p{Script=Katakana}ー]+$/u.test(value)) return "katakana";
+  if (/^[\p{Script=Hiragana}ー]+$/u.test(value)) return "hiragana";
+  if (/^[\p{Script=Han}々〆ヵヶ]+$/u.test(value)) return "kanji";
+  if (/[\p{Script=Han}]/u.test(value) && /[\p{Script=Hiragana}]/u.test(value)) return "kanji-kana";
+  return "mixed";
+}
+
+function uniqueStrings(values: string[]) {
+  return values.filter((value, index, arr) => Boolean(value) && arr.indexOf(value) === index);
+}
+
+function uniqueByValue<T>(value: T, index: number, arr: T[]) {
+  return arr.indexOf(value) === index;
 }
 
 /**

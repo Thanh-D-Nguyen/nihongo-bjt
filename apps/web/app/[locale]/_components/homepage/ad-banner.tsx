@@ -7,11 +7,12 @@ import { learnerApiFetchOptional } from "../../../../lib/learner-api";
 interface AdPayload {
   campaign?: {
     creativeType: string;
-    destinationUrl?: string;
+    destinationUrl?: string | null;
     id: string;
     name: string;
   };
   config?: Record<string, unknown>;
+  description?: string;
   labelKey?: string;
   providerKey?: string;
   providerType?: string;
@@ -44,7 +45,13 @@ export function AdBanner({ locale }: { locale: string }) {
 
   const campaign = ad.payload?.campaign;
   const destinationUrl = campaign?.destinationUrl;
-  const label = locale === "ja" ? "広告" : "Quảng cáo";
+  const label = locale === "ja" ? "広告" : locale === "en" ? "Ad" : "Quảng cáo";
+  const fallbackDescription =
+    locale === "ja" ? "スポンサーコンテンツ" : locale === "en" ? "Sponsored content" : "Nội dung tài trợ";
+  const description =
+    typeof ad.payload?.description === "string" && ad.payload.description.trim()
+      ? ad.payload.description
+      : fallbackDescription;
 
   const content = (
     <div className="relative overflow-hidden rounded-xl border border-border/50 bg-gradient-to-r from-muted/60 to-muted/30 p-4">
@@ -60,11 +67,7 @@ export function AdBanner({ locale }: { locale: string }) {
             {campaign?.name ?? "Sponsored"}
           </p>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            {campaign?.creativeType === "placeholder"
-              ? locale === "ja"
-                ? "スポンサーコンテンツ"
-                : "Nội dung tài trợ"
-              : campaign?.creativeType ?? "banner"}
+            {campaign?.creativeType === "placeholder" ? description : campaign?.creativeType ?? "banner"}
           </p>
         </div>
       </div>

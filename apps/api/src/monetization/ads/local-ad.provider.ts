@@ -44,19 +44,6 @@ export class LocalAdProvider implements AdProvider {
       return { decisionKey: blockReason, eligible: false };
     }
 
-    const providerKey = this.getProviderKeyFromPlacement(placement.config);
-    const provider = await this.prisma.adProviderConfig.findFirst({
-      where: { enabled: true, key: providerKey }
-    });
-    if (!provider) {
-      await this.recordBlocked({
-        decisionKey: "provider:disabled_or_missing",
-        placementId: placement.id,
-        userId: input.userId
-      });
-      return { decisionKey: "provider:disabled_or_missing", eligible: false };
-    }
-
     const placementCfg = placement.config as Record<string, unknown>;
     if (!this.isPlanAllowed(effectivePlan, placementCfg)) {
       await this.recordBlocked({
@@ -95,22 +82,33 @@ export class LocalAdProvider implements AdProvider {
       }
     }
 
+    const providerKey = this.getProviderKeyFromPlacement(placement.config);
+    const provider = await this.prisma.adProviderConfig.findFirst({
+      where: { enabled: true, key: providerKey }
+    });
+    if (!provider) {
+      return this.placeholderDecision({
+        decisionKey: "local:provider_placeholder",
+        input,
+        placement,
+        providerKey,
+        providerType: "placeholder"
+      });
+    }
+
     const campaign = await this.pickCampaign({
       locale: input.locale,
       placementCode: placement.code,
       planSlug: effectivePlan
     });
     if (!campaign) {
-      return {
+      return this.placeholderDecision({
         decisionKey: "local:no_active_campaign",
-        eligible: true,
-        payload: {
-          config: placement.config,
-          labelKey: placement.labelKey,
-          providerKey,
-          providerType: provider.type
-        }
-      };
+        input,
+        placement,
+        providerKey,
+        providerType: provider.type
+      });
     }
 
     if (campaign.maxImpressions != null) {
@@ -150,6 +148,46 @@ export class LocalAdProvider implements AdProvider {
     const c = (config ?? {}) as Record<string, unknown>;
     const k = c.providerKey;
     return typeof k === "string" && k ? k : "local";
+  }
+
+  private placeholderDecision(input: {
+    decisionKey: string;
+    input: AdDecideInput;
+    placement: { code: string; config: unknown; labelKey: string | null };
+    providerKey: string;
+    providerType: string;
+  }): AdDecision {
+    const locale = input.input.locale;
+    const title =
+      locale === "ja"
+        ? "広告スペース"
+        : locale === "en"
+          ? "Ad space"
+          : "Quảng cáo ở đây";
+    const description =
+      locale === "ja"
+        ? "広告プロバイダーを設定すると、ここに配信内容が表示されます。"
+        : locale === "en"
+          ? "Configured ad content will appear here when a provider is connected."
+          : "Khi cài đặt ad provider, nội dung quảng cáo sẽ hiển thị tại vị trí này.";
+
+    return {
+      decisionKey: input.decisionKey,
+      eligible: true,
+      payload: {
+        campaign: {
+          creativeType: "placeholder",
+          destinationUrl: null,
+          id: `placeholder:${input.placement.code}`,
+          name: title
+        },
+        config: input.placement.config,
+        description,
+        labelKey: input.placement.labelKey,
+        providerKey: input.providerKey,
+        providerType: input.providerType
+      }
+    };
   }
 
   private isPlanAllowed(

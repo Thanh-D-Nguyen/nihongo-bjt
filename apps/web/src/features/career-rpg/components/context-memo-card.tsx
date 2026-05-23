@@ -14,6 +14,9 @@ interface Props {
 
 export function ContextMemoCard({ labels, memo, onFeedback }: Props) {
   const npc = findNpc(memo.fromNpcSlug);
+  const npcName = memo.fromNpcNameJa ?? npc?.nameJa ?? memo.fromNpcSlug;
+  const avatarInitial = memo.fromNpcAvatarInitial ?? npc?.avatarInitial;
+  const avatarTint = memo.fromNpcAvatarTint ?? npc?.avatarTint ?? "#1B2A4A";
   const dateStr = new Date(memo.generatedAt).toLocaleDateString("ja-JP", {
     year: "numeric",
     month: "2-digit",
@@ -35,13 +38,13 @@ export function ContextMemoCard({ labels, memo, onFeedback }: Props) {
           社内便箋 · {labels.cardKindLabels[memo.cardKind]}
         </p>
         <div className="mt-2 flex items-center gap-3">
-          {npc ? (
-            <NpcAvatar avatarInitial={npc.avatarInitial} avatarTint={npc.avatarTint} size={38} />
+          {avatarInitial ? (
+            <NpcAvatar avatarInitial={avatarInitial} avatarTint={avatarTint} size={38} />
           ) : null}
           <div>
             <div className="flex items-center gap-2">
               <p className="text-[10px] text-[#92400E]/70">{labels.fromLabel}:</p>
-              <p className="text-sm font-bold text-[#78350F]">{npc?.nameJa ?? memo.fromNpcSlug}</p>
+              <p className="text-sm font-bold text-[#78350F]">{npcName}</p>
             </div>
             <p className="text-[10px] text-[#92400E]/60">{dateStr}</p>
           </div>
