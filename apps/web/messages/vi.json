@@ -2083,9 +2083,12 @@
     "again": "Lại",
     "hard": "Khó",
     "good": "Tốt",
+    "easy": "Dễ",
     "comboLabel": "Combo",
     "correct": "Chính xác!",
     "incorrect": "Chưa đúng",
+    "almost": "Gần đúng",
+    "yourAnswer": "Câu trả lời của bạn",
     "correctAnswer": "Đáp án",
     "summaryTitle": "Phiên hoàn thành!",
     "summaryGreat": "Tuyệt vời! Tiếp tục phát huy nhé.",
@@ -2098,10 +2101,12 @@
     "loadingCards": "Đang tải thẻ…",
     "errorLoading": "Không tải được thẻ ôn tập.",
     "retry": "Thử lại",
-    "keyboardHint": "Space: lật · 1/2/3: đánh giá · Esc: thoát",
+    "keyboardHint": "Space: lật · 1/2/3/4: đánh giá · Esc: thoát",
     "sessionOf": "của",
     "tapToReveal": "Chạm hoặc nhấn Space",
-    "reading": "Cách đọc"
+    "reading": "Cách đọc",
+    "playAudio": "Phát âm",
+    "examplesLabel": "Ví dụ"
   },
   "appearancePage": {
     "title": "Giao di\u1ec7n",

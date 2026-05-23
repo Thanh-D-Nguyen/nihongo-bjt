@@ -2083,9 +2083,12 @@
     "again": "もう一度",
     "hard": "難しい",
     "good": "よし",
+    "easy": "簡単",
     "comboLabel": "コンボ",
     "correct": "正解！",
     "incorrect": "不正解",
+    "almost": "惜しい",
+    "yourAnswer": "あなたの回答",
     "correctAnswer": "正解",
     "summaryTitle": "セッション完了！",
     "summaryGreat": "素晴らしい！この調子で頑張りましょう。",
@@ -2098,10 +2101,12 @@
     "loadingCards": "カードを読み込み中…",
     "errorLoading": "復習カードを読み込めませんでした。",
     "retry": "再試行",
-    "keyboardHint": "Space: めくる · 1/2/3: 評価 · Esc: 終了",
+    "keyboardHint": "Space: めくる · 1/2/3/4: 評価 · Esc: 終了",
     "sessionOf": "/",
     "tapToReveal": "タップまたはSpaceキー",
-    "reading": "読み方"
+    "reading": "読み方",
+    "playAudio": "発音を再生",
+    "examplesLabel": "例文"
   },
   "appearancePage": {
     "title": "\u5916\u89b3",

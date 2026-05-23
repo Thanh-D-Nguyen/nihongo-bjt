@@ -5,15 +5,13 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { cn } from "@nihongo-bjt/ui";
 
 import type { KanjiDetailDto } from "./kanji-detail-dto";
-import { normalizeKanjiDetailDto } from "./kanji-detail-dto";
+import { fetchKanjiByCharacter, isSingleKanjiCharacter } from "./kanji-stroke-fetcher";
 import {
   IconReplayStroke,
   KanjiStrokeAnimation,
   type KanjiStrokeAnimationLabels,
   usePrefersReducedMotion
 } from "./kanji-stroke-animation";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
 type Row =
   | { status: "loading"; ch: string }
@@ -42,29 +40,18 @@ export function LexemeKanjiStrokeStrip({
     void (async () => {
       const next: Row[] = [];
       for (const ch of headwordOrderChars) {
-        try {
-          const res = await fetch(`${API_BASE}/api/kanji?q=${encodeURIComponent(ch)}&limit=1`, {
-            credentials: "omit",
-            mode: "cors"
-          });
-          if (!res.ok) {
-            next.push({ status: "empty", ch });
-            continue;
-          }
-          const body: unknown = await res.json();
-          if (!Array.isArray(body) || body.length === 0) {
-            next.push({ status: "empty", ch });
-            continue;
-          }
-          const dto = normalizeKanjiDetailDto(body[0]);
-          if (!dto.id) {
-            next.push({ status: "empty", ch });
-            continue;
-          }
-          next.push({ status: "ok", ch, dto });
-        } catch {
+        if (!isSingleKanjiCharacter(ch)) {
           next.push({ status: "empty", ch });
+          continue;
         }
+
+        const lookup = await fetchKanjiByCharacter(ch);
+        if (lookup.status === "ok") {
+          next.push({ status: "ok", ch, dto: lookup.dto });
+          continue;
+        }
+
+        next.push({ status: "empty", ch });
       }
       if (!cancelled) setRows(next);
     })();

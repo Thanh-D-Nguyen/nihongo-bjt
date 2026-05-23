@@ -10,17 +10,26 @@ import { learnerApiFetch } from "../../../../lib/learner-api";
    Types
    ═══════════════════════════════════════════════════════ */
 
+interface CardExample {
+  japaneseText: string;
+  reading: string | null;
+  translationVi: string | null;
+}
+
 interface DueCard {
   card: { backText: string; frontText: string; id: string; reading: string | null };
   cardId: string;
+  examples?: CardExample[];
   id: string;
+  primaryAudio: { assetId: string; mimeType: string; readUrl: string | null } | null;
   primaryImage: { assetId: string; mimeType: string; readUrl: string | null } | null;
   state: string;
 }
 
 type Phase = "loading" | "entry" | "review" | "summary";
 type Mode = "flip" | "type" | "match";
-type Rating = "again" | "hard" | "good";
+type Rating = "again" | "hard" | "good" | "easy";
+type CardState = "new" | "learning" | "review" | "lapsed";
 
 export interface ReviewSessionLabels {
   entryTitle: string;
@@ -37,9 +46,12 @@ export interface ReviewSessionLabels {
   again: string;
   hard: string;
   good: string;
+  easy: string;
   comboLabel: string;
   correct: string;
   incorrect: string;
+  almost: string;
+  yourAnswer: string;
   correctAnswer: string;
   summaryTitle: string;
   summaryGreat: string;
@@ -56,6 +68,8 @@ export interface ReviewSessionLabels {
   sessionOf: string;
   tapToReveal: string;
   reading: string;
+  playAudio: string;
+  examplesLabel: string;
 }
 
 interface Stats {
@@ -63,6 +77,7 @@ interface Stats {
   good: number;
   hard: number;
   again: number;
+  easy: number;
   maxCombo: number;
   startTime: number;
 }
@@ -71,8 +86,20 @@ interface Stats {
    Helpers
    ═══════════════════════════════════════════════════════ */
 
-function pickMode(index: number, totalCards: number): Mode {
-  if (totalCards < 4) return index % 2 === 0 ? "flip" : "type";
+/**
+ * Pick review mode based on SRS state.
+ * - new / lapsed: only flip or type (no multi-choice — too easy when memory is fresh/broken)
+ * - learning: flip + type alternation
+ * - review: full rotation flip/type/match
+ */
+function pickMode(index: number, state: CardState): Mode {
+  if (state === "new" || state === "lapsed") {
+    return index % 2 === 0 ? "flip" : "type";
+  }
+  if (state === "learning") {
+    return index % 2 === 0 ? "flip" : "type";
+  }
+  // review
   const modes: Mode[] = ["flip", "type", "match"];
   return modes[index % 3];
 }
@@ -86,14 +113,73 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-function generateOptions(current: DueCard, all: DueCard[]): string[] {
-  const correct = current.card.backText;
-  const others = all
-    .filter((c) => c.id !== current.id && c.card.backText !== correct)
-    .map((c) => c.card.backText);
-  const distractors = shuffle(others).slice(0, 3);
-  while (distractors.length < 3) distractors.push("—");
-  return shuffle([correct, ...distractors]);
+/** Fold katakana → hiragana, trim, lowercase, collapse whitespace. */
+function normalizeAnswer(s: string): string {
+  let out = s.trim().toLowerCase();
+  // Katakana (U+30A1-U+30F6) → Hiragana (offset -0x60)
+  out = out.replace(/[ァ-ヶ]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0x60));
+  // Full-width space → half-width, collapse runs
+  out = out.replace(/　/g, " ").replace(/\s+/g, " ");
+  return out;
+}
+
+/** Levenshtein distance (edit distance). */
+function editDistance(a: string, b: string): number {
+  if (a === b) return 0;
+  if (a.length === 0) return b.length;
+  if (b.length === 0) return a.length;
+  const prev = new Array<number>(b.length + 1);
+  const curr = new Array<number>(b.length + 1);
+  for (let j = 0; j <= b.length; j++) prev[j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    curr[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a.charCodeAt(i - 1) === b.charCodeAt(j - 1) ? 0 : 1;
+      curr[j] = Math.min(curr[j - 1] + 1, prev[j] + 1, prev[j - 1] + cost);
+    }
+    for (let j = 0; j <= b.length; j++) prev[j] = curr[j];
+  }
+  return prev[b.length];
+}
+
+type Grade = "correct" | "almost" | "wrong";
+
+/**
+ * Grade typed answer against backText and (optionally) reading.
+ * - exact normalized match against either field → "correct"
+ * - edit distance ≤ 1 (for short answers) or ≤ 20% of length → "almost"
+ * - else → "wrong"
+ */
+function gradeTyped(input: string, backText: string, reading: string | null): Grade {
+  const n = normalizeAnswer(input);
+  if (!n) return "wrong";
+  const candidates = [normalizeAnswer(backText)];
+  if (reading) candidates.push(normalizeAnswer(reading));
+  for (const c of candidates) {
+    if (!c) continue;
+    if (n === c) return "correct";
+  }
+  for (const c of candidates) {
+    if (!c) continue;
+    const dist = editDistance(n, c);
+    const threshold = Math.max(1, Math.floor(c.length * 0.2));
+    if (dist <= threshold) return "almost";
+  }
+  return "wrong";
+}
+
+function gradeToRating(g: Grade): Rating {
+  if (g === "correct") return "good";
+  if (g === "almost") return "hard";
+  return "again";
+}
+
+/** Build option array (correct + fetched distractors), pad with "—" if backend returned too few. */
+function buildOptions(correct: string, distractors: string[]): string[] {
+  const filtered = distractors.filter((d) => d && d !== correct).slice(0, 3);
+  const padded = [...filtered];
+  while (padded.length < 3) padded.push("—");
+  return shuffle([correct, ...padded]);
 }
 
 function formatTime(ms: number): string {
@@ -249,6 +335,111 @@ function Confetti() {
 }
 
 /* ═══════════════════════════════════════════════════════
+   Card Image
+   ═══════════════════════════════════════════════════════ */
+
+function CardImage({ url, alt }: { url: string; alt: string }) {
+  return (
+    <div className="mx-auto mb-4 max-h-48 w-full max-w-xs overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+      <img
+        src={url}
+        alt={alt}
+        className="h-full max-h-48 w-full object-contain"
+        loading="lazy"
+      />
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════
+   Audio Button (file → fallback to browser TTS)
+   ═══════════════════════════════════════════════════════ */
+
+function AudioButton({
+  audioUrl,
+  ttsText,
+  label,
+}: {
+  audioUrl: string | null;
+  ttsText: string;
+  label: string;
+}) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [playing, setPlaying] = useState(false);
+
+  const play = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (playing) return;
+      if (audioUrl) {
+        if (!audioRef.current) {
+          audioRef.current = new Audio(audioUrl);
+          audioRef.current.onended = () => setPlaying(false);
+          audioRef.current.onerror = () => setPlaying(false);
+        }
+        setPlaying(true);
+        audioRef.current.currentTime = 0;
+        audioRef.current.play().catch(() => setPlaying(false));
+        return;
+      }
+      // Fallback: browser TTS
+      if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+      const u = new SpeechSynthesisUtterance(ttsText);
+      u.lang = "ja-JP";
+      u.rate = 0.95;
+      u.onend = () => setPlaying(false);
+      u.onerror = () => setPlaying(false);
+      setPlaying(true);
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(u);
+    },
+    [audioUrl, ttsText, playing],
+  );
+
+  if (!ttsText && !audioUrl) return null;
+
+  return (
+    <button
+      type="button"
+      onClick={play}
+      aria-label={label}
+      className={`inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white/80 transition hover:bg-white/20 ${
+        playing ? "ring-2 ring-emerald-400/60" : ""
+      }`}
+    >
+      <svg width={16} height={16} viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+        <path d="M3 6v4h2.5L9 13V3L5.5 6H3zm9.5 2c0-1.3-.6-2.5-1.6-3.3l-.7.7c.8.6 1.3 1.6 1.3 2.6s-.5 2-1.3 2.6l.7.7c1-.8 1.6-2 1.6-3.3z" />
+      </svg>
+    </button>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════
+   Example List
+   ═══════════════════════════════════════════════════════ */
+
+function ExampleList({ examples, label }: { examples: CardExample[]; label: string }) {
+  if (!examples || examples.length === 0) return null;
+  return (
+    <div
+      className="mt-4 w-full space-y-2 border-t border-white/10 pt-3 text-left"
+      style={{ animation: "rs-flip-in 0.35s ease-out" }}
+    >
+      <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-400/70">{label}</p>
+      <ul className="space-y-2">
+        {examples.map((ex, i) => (
+          <li key={i} className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm">
+            <p className="font-semibold text-white">{ex.japaneseText}</p>
+            {ex.reading ? <p className="text-xs text-emerald-300/70">{ex.reading}</p> : null}
+            {ex.translationVi ? <p className="mt-1 text-xs text-white/60">{ex.translationVi}</p> : null}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════
    Card wrapper (shared dark card shell)
    ═══════════════════════════════════════════════════════ */
 
@@ -288,16 +479,24 @@ function FlipReview({
   flipped: boolean;
   onFlip: () => void;
 }) {
+  const audioUrl = card.primaryAudio?.readUrl ?? null;
+  const ttsText = card.card.reading ?? card.card.frontText;
   return (
     <ReviewCard onClick={!flipped ? onFlip : undefined}>
-      <div className="min-h-[200px] flex flex-col items-center justify-center gap-4 text-center">
+      <div className="min-h-[200px] flex flex-col items-center justify-center gap-3 text-center">
+        {card.primaryImage?.readUrl ? (
+          <CardImage url={card.primaryImage.readUrl} alt={card.card.frontText} />
+        ) : null}
         {/* Front: Japanese */}
         <p className="text-4xl font-black leading-tight text-white sm:text-5xl">
           {card.card.frontText}
         </p>
-        {card.card.reading ? (
-          <p className="text-lg font-medium text-emerald-300/80">{card.card.reading}</p>
-        ) : null}
+        <div className="flex items-center gap-3">
+          {card.card.reading ? (
+            <p className="text-lg font-medium text-emerald-300/80">{card.card.reading}</p>
+          ) : null}
+          <AudioButton audioUrl={audioUrl} ttsText={ttsText} label={labels.playAudio} />
+        </div>
 
         {!flipped ? (
           <p className="mt-4 text-sm text-white/40">{labels.tapToReveal}</p>
@@ -312,6 +511,7 @@ function FlipReview({
             <p className="mt-2 text-2xl font-bold text-white sm:text-3xl">
               {card.card.backText}
             </p>
+            <ExampleList examples={card.examples ?? []} label={labels.examplesLabel} />
           </div>
         )}
       </div>
@@ -332,9 +532,10 @@ function TypeReview({
   card: DueCard;
   labels: ReviewSessionLabels;
   revealed: boolean;
-  onReveal: (typed: string) => void;
+  onReveal: (typed: string, grade: Grade) => void;
 }) {
   const [input, setInput] = useState("");
+  const [grade, setGrade] = useState<Grade | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -342,17 +543,33 @@ function TypeReview({
   }, []);
 
   const submit = () => {
-    onReveal(input.trim());
+    const g = gradeTyped(input, card.card.backText, card.card.reading);
+    setGrade(g);
+    onReveal(input.trim(), g);
   };
+
+  const gradeColor =
+    grade === "correct" ? "text-emerald-400" : grade === "almost" ? "text-amber-400" : "text-red-400";
+  const gradeLabel =
+    grade === "correct" ? labels.correct : grade === "almost" ? labels.almost : labels.incorrect;
+  const audioUrl = card.primaryAudio?.readUrl ?? null;
+  const ttsText = card.card.reading ?? card.card.frontText;
 
   return (
     <ReviewCard>
-      <div className="min-h-[200px] flex flex-col items-center justify-center gap-4 text-center">
+      <div className="min-h-[200px] flex flex-col items-center justify-center gap-3 text-center">
+        {card.primaryImage?.readUrl ? (
+          <CardImage url={card.primaryImage.readUrl} alt={card.card.frontText} />
+        ) : null}
         <p className="text-4xl font-black leading-tight text-white sm:text-5xl">
           {card.card.frontText}
         </p>
-        {card.card.reading ? (
-          <p className="text-lg font-medium text-emerald-300/80">{card.card.reading}</p>
+        {/* Reading + audio hidden until revealed — would leak the answer */}
+        {revealed && card.card.reading ? (
+          <div className="flex items-center gap-3">
+            <p className="text-lg font-medium text-emerald-300/80">{card.card.reading}</p>
+            <AudioButton audioUrl={audioUrl} ttsText={ttsText} label={labels.playAudio} />
+          </div>
         ) : null}
 
         {!revealed ? (
@@ -387,16 +604,22 @@ function TypeReview({
             className="mt-6 w-full space-y-3 border-t border-white/10 pt-6"
             style={{ animation: "rs-flip-in 0.35s ease-out" }}
           >
+            {grade ? (
+              <p className={`text-base font-bold ${gradeColor}`}>{gradeLabel}</p>
+            ) : null}
             {input ? (
               <p className="text-base text-white/50">
-                <span className="text-white/30">{labels.typePrompt}: </span>
-                <span className="font-semibold text-white/70">{input}</span>
+                <span className="text-white/30">{labels.yourAnswer}: </span>
+                <span className={`font-semibold ${grade === "correct" ? "text-emerald-300" : "text-white/70"}`}>
+                  {input}
+                </span>
               </p>
             ) : null}
             <p className="text-sm font-semibold uppercase tracking-wider text-emerald-400/70">
               {labels.correctAnswer}
             </p>
             <p className="text-2xl font-bold text-white sm:text-3xl">{card.card.backText}</p>
+            <ExampleList examples={card.examples ?? []} label={labels.examplesLabel} />
           </div>
         )}
       </div>
@@ -417,33 +640,44 @@ function MatchReview({
   card: DueCard;
   options: string[];
   labels: ReviewSessionLabels;
-  onAnswer: (correct: boolean) => void;
+  onAnswer: (correct: boolean, elapsedMs: number) => void;
 }) {
   const [selected, setSelected] = useState<string | null>(null);
+  const startRef = useRef<number>(Date.now());
   const correct = card.card.backText;
   const isCorrect = selected === correct;
 
   const handleSelect = (opt: string) => {
     if (selected) return;
     setSelected(opt);
-    setTimeout(() => onAnswer(opt === correct), 900);
+    onAnswer(opt === correct, Date.now() - startRef.current);
   };
+
+  const audioUrl = card.primaryAudio?.readUrl ?? null;
+  const ttsText = card.card.reading ?? card.card.frontText;
 
   return (
     <ReviewCard>
-      <div className="min-h-[200px] flex flex-col items-center justify-center gap-4 text-center">
+      <div className="min-h-[200px] flex flex-col items-center justify-center gap-3 text-center">
+        {card.primaryImage?.readUrl ? (
+          <CardImage url={card.primaryImage.readUrl} alt={card.card.frontText} />
+        ) : null}
         <p className="text-sm font-semibold uppercase tracking-wider text-white/40">
           {labels.matchPrompt}
         </p>
         <p className="text-4xl font-black leading-tight text-white sm:text-5xl">
           {card.card.frontText}
         </p>
-        {card.card.reading ? (
-          <p className="text-lg font-medium text-emerald-300/80">{card.card.reading}</p>
-        ) : null}
+        {/* Reading visible on front for match mode — recognition task, not recall */}
+        <div className="flex items-center gap-3">
+          {card.card.reading ? (
+            <p className="text-lg font-medium text-emerald-300/80">{card.card.reading}</p>
+          ) : null}
+          <AudioButton audioUrl={audioUrl} ttsText={ttsText} label={labels.playAudio} />
+        </div>
 
         <div className="mt-6 grid w-full max-w-sm grid-cols-1 gap-2.5 sm:grid-cols-2">
-          {options.map((opt) => {
+          {options.map((opt, i) => {
             let bg = "bg-white/10 hover:bg-white/15 border-white/15";
             if (selected) {
               if (opt === correct) bg = "bg-emerald-500/25 border-emerald-400/50";
@@ -452,10 +686,10 @@ function MatchReview({
             }
             return (
               <button
-                key={opt}
+                key={`${opt}-${i}`}
                 className={`rounded-xl border px-4 py-3 text-sm font-semibold text-white transition-all ${bg}`}
                 onClick={() => handleSelect(opt)}
-                disabled={selected !== null}
+                disabled={selected !== null || opt === "—"}
                 type="button"
               >
                 {opt}
@@ -465,12 +699,15 @@ function MatchReview({
         </div>
 
         {selected ? (
-          <p
-            className={`mt-3 text-sm font-bold ${isCorrect ? "text-emerald-400" : "text-red-400"}`}
-            style={{ animation: "rs-flip-in 0.25s ease-out" }}
-          >
-            {isCorrect ? labels.correct : labels.incorrect}
-          </p>
+          <>
+            <p
+              className={`mt-3 text-sm font-bold ${isCorrect ? "text-emerald-400" : "text-red-400"}`}
+              style={{ animation: "rs-flip-in 0.25s ease-out" }}
+            >
+              {isCorrect ? labels.correct : labels.incorrect}
+            </p>
+            <ExampleList examples={card.examples ?? []} label={labels.examplesLabel} />
+          </>
         ) : null}
       </div>
     </ReviewCard>
@@ -484,35 +721,46 @@ function MatchReview({
 function RatingButtons({
   labels,
   onRate,
+  suggested,
 }: {
   labels: ReviewSessionLabels;
   onRate: (r: Rating) => void;
+  suggested?: Rating | null;
 }) {
+  const ring = (r: Rating) =>
+    suggested === r ? "ring-2 ring-white/70 ring-offset-2 ring-offset-transparent" : "";
   return (
     <div
-      className="mt-8 flex items-center justify-center gap-3"
+      className="mt-8 flex flex-wrap items-center justify-center gap-2 sm:gap-3"
       style={{ animation: "rs-card-enter 0.3s ease-out 0.1s both" }}
     >
       <button
-        className="min-w-[80px] rounded-2xl border border-red-400/30 bg-red-500/15 px-5 py-3 text-sm font-bold text-red-300 transition hover:bg-red-500/25"
+        className={`min-w-[72px] rounded-2xl border border-red-400/30 bg-red-500/15 px-4 py-3 text-sm font-bold text-red-300 transition hover:bg-red-500/25 ${ring("again")}`}
         onClick={() => onRate("again")}
         type="button"
       >
         {labels.again} 😅
       </button>
       <button
-        className="min-w-[80px] rounded-2xl border border-amber-400/30 bg-amber-500/15 px-5 py-3 text-sm font-bold text-amber-300 transition hover:bg-amber-500/25"
+        className={`min-w-[72px] rounded-2xl border border-amber-400/30 bg-amber-500/15 px-4 py-3 text-sm font-bold text-amber-300 transition hover:bg-amber-500/25 ${ring("hard")}`}
         onClick={() => onRate("hard")}
         type="button"
       >
         {labels.hard} 🤔
       </button>
       <button
-        className="min-w-[80px] rounded-2xl border border-emerald-400/30 bg-emerald-500/15 px-5 py-3 text-sm font-bold text-emerald-300 transition hover:bg-emerald-500/25"
+        className={`min-w-[72px] rounded-2xl border border-emerald-400/30 bg-emerald-500/15 px-4 py-3 text-sm font-bold text-emerald-300 transition hover:bg-emerald-500/25 ${ring("good")}`}
         onClick={() => onRate("good")}
         type="button"
       >
         {labels.good} 👍
+      </button>
+      <button
+        className={`min-w-[72px] rounded-2xl border border-sky-400/30 bg-sky-500/15 px-4 py-3 text-sm font-bold text-sky-300 transition hover:bg-sky-500/25 ${ring("easy")}`}
+        onClick={() => onRate("easy")}
+        type="button"
+      >
+        {labels.easy} ✨
       </button>
     </div>
   );
@@ -593,7 +841,9 @@ function SummaryScreen({
   onExit: () => void;
 }) {
   const elapsed = Date.now() - stats.startTime;
-  const accuracy = stats.total > 0 ? Math.round((stats.good / stats.total) * 100) : 0;
+  // good + easy both count as correct recall for accuracy
+  const accuracy =
+    stats.total > 0 ? Math.round(((stats.good + stats.easy) / stats.total) * 100) : 0;
   const showConfetti = accuracy >= 70;
 
   return (
@@ -627,6 +877,12 @@ function SummaryScreen({
       {/* Rating breakdown bar */}
       {stats.total > 0 ? (
         <div className="flex w-full max-w-xs gap-1 overflow-hidden rounded-full">
+          {stats.easy > 0 ? (
+            <div
+              className="h-2.5 bg-sky-500 transition-all"
+              style={{ width: `${(stats.easy / stats.total) * 100}%` }}
+            />
+          ) : null}
           {stats.good > 0 ? (
             <div
               className="h-2.5 bg-emerald-500 transition-all"
@@ -693,18 +949,23 @@ export function ReviewSession({
   const [mode, setMode] = useState<Mode>("flip");
   const [flipped, setFlipped] = useState(false);
   const [typeRevealed, setTypeRevealed] = useState(false);
+  const [typeGrade, setTypeGrade] = useState<Grade | null>(null);
   const [matchOptions, setMatchOptions] = useState<string[]>([]);
+  const [matchAnswered, setMatchAnswered] = useState<{ correct: boolean; elapsedMs: number } | null>(null);
   const [combo, setCombo] = useState(0);
   const [stats, setStats] = useState<Stats>({
     total: 0,
     good: 0,
     hard: 0,
     again: 0,
+    easy: 0,
     maxCombo: 0,
     startTime: Date.now(),
   });
   // Track reviewed card ids so we don't re-rate
   const reviewedIds = useRef(new Set<string>());
+  // When current card was first shown (for elapsedMs tracking)
+  const cardStartRef = useRef<number>(Date.now());
 
   // Ensure CSS keyframes are injected
   useEffect(() => {
@@ -721,6 +982,43 @@ export function ReviewSession({
     const data = (await res.json()) as DueCard[];
     return Array.isArray(data) ? data : [];
   }, [userId, scopeDeckId]);
+
+  /* ── Fetch distractors from backend (full deck pool, same sourceType) ── */
+  const fetchDistractors = useCallback(
+    async (card: DueCard): Promise<string[]> => {
+      if (!userId) return [];
+      try {
+        const params = new URLSearchParams({ n: "3", userId });
+        const res = await learnerApiFetch(
+          `/api/flashcards/reviews/${card.id}/distractors?${params.toString()}`
+        );
+        if (!res.ok) return [];
+        const data = (await res.json()) as { items?: string[] };
+        return Array.isArray(data.items) ? data.items : [];
+      } catch {
+        return [];
+      }
+    },
+    [userId],
+  );
+
+  /* ── Setup a card slot: reset per-card state, fetch options if match mode ── */
+  const setupCard = useCallback(
+    async (card: DueCard, m: Mode) => {
+      setMode(m);
+      setFlipped(false);
+      setTypeRevealed(false);
+      setTypeGrade(null);
+      setMatchAnswered(null);
+      setMatchOptions([]);
+      cardStartRef.current = Date.now();
+      if (m === "match") {
+        const distractors = await fetchDistractors(card);
+        setMatchOptions(buildOptions(card.card.backText, distractors));
+      }
+    },
+    [fetchDistractors],
+  );
 
   /* ── Initial load ── */
   useEffect(() => {
@@ -746,33 +1044,33 @@ export function ReviewSession({
   /* ── Start session ── */
   const startSession = useCallback(() => {
     if (cards.length === 0) return;
-    const m = pickMode(0, cards.length);
-    setMode(m);
+    const first = cards[0];
+    const m = pickMode(0, (first.state as CardState) ?? "review");
     setCurrentIdx(0);
-    setFlipped(false);
-    setTypeRevealed(false);
-    if (m === "match") setMatchOptions(generateOptions(cards[0], cards));
-    setStats({ total: 0, good: 0, hard: 0, again: 0, maxCombo: 0, startTime: Date.now() });
+    setStats({ total: 0, good: 0, hard: 0, again: 0, easy: 0, maxCombo: 0, startTime: Date.now() });
     setCombo(0);
     setPhase("review");
-  }, [cards]);
+    void setupCard(first, m);
+  }, [cards, setupCard]);
 
   /* ── Submit rating ── */
   const submitRating = useCallback(
     async (rating: Rating) => {
       const card = cards[currentIdx];
       if (!card || !userId) return;
+      const elapsedMs = Date.now() - cardStartRef.current;
 
       // Update stats
       setStats((prev) => {
         const next = { ...prev, total: prev.total + 1, [rating]: prev[rating] + 1 };
-        const newCombo = rating === "good" ? combo + 1 : rating === "hard" ? combo : 0;
+        const isGoodish = rating === "good" || rating === "easy";
+        const newCombo = isGoodish ? combo + 1 : rating === "hard" ? combo : 0;
         next.maxCombo = Math.max(next.maxCombo, newCombo);
         return next;
       });
 
       // Update combo
-      if (rating === "good") {
+      if (rating === "good" || rating === "easy") {
         setCombo((c) => c + 1);
       } else if (rating === "again") {
         setCombo(0);
@@ -783,17 +1081,23 @@ export function ReviewSession({
       reviewedIds.current.add(card.id);
 
       // Submit to backend (fire-and-forget with offline fallback)
+      const payload = { elapsedMs, rating, userId };
       try {
         const res = await learnerApiFetch(`/api/flashcards/reviews/${card.id}`, {
-          body: JSON.stringify({ rating, userId }),
+          body: JSON.stringify(payload),
           headers: { "Content-Type": "application/json" },
           method: "POST",
         });
         if (!res.ok) throw new Error("submit-fail");
       } catch {
-        // Offline fallback
         try {
-          await enqueueReview({ clientMutationId: `${card.id}-${Date.now()}`, rating, userId, userFlashcardId: card.id });
+          await enqueueReview({
+            clientMutationId: `${card.id}-${Date.now()}`,
+            elapsedMs,
+            rating,
+            userId,
+            userFlashcardId: card.id,
+          });
         } catch {
           /* best effort */
         }
@@ -802,18 +1106,14 @@ export function ReviewSession({
       // Move to next card or load more
       const nextIdx = currentIdx + 1;
       if (nextIdx >= cards.length) {
-        // Try loading more
         try {
           const more = await fetchCards();
           const fresh = more.filter((c) => !reviewedIds.current.has(c.id));
           if (fresh.length > 0) {
             setCards(fresh);
             setCurrentIdx(0);
-            const m = pickMode(0, fresh.length);
-            setMode(m);
-            setFlipped(false);
-            setTypeRevealed(false);
-            if (m === "match") setMatchOptions(generateOptions(fresh[0], fresh));
+            const m = pickMode(0, (fresh[0].state as CardState) ?? "review");
+            await setupCard(fresh[0], m);
           } else {
             setPhase("summary");
           }
@@ -822,14 +1122,12 @@ export function ReviewSession({
         }
       } else {
         setCurrentIdx(nextIdx);
-        const m = pickMode(nextIdx, cards.length);
-        setMode(m);
-        setFlipped(false);
-        setTypeRevealed(false);
-        if (m === "match") setMatchOptions(generateOptions(cards[nextIdx], cards));
+        const next = cards[nextIdx];
+        const m = pickMode(nextIdx, (next.state as CardState) ?? "review");
+        await setupCard(next, m);
       }
     },
-    [cards, currentIdx, userId, combo, fetchCards],
+    [cards, currentIdx, userId, combo, fetchCards, setupCard],
   );
 
   /* ── Keyboard shortcuts ── */
@@ -847,31 +1145,28 @@ export function ReviewSession({
       const card = cards[currentIdx];
       if (!card) return;
 
-      // Flip mode: Space to flip, then 1/2/3 to rate
+      const rate = (key: string) => {
+        if (key === "1") void submitRating("again");
+        else if (key === "2") void submitRating("hard");
+        else if (key === "3") void submitRating("good");
+        else if (key === "4") void submitRating("easy");
+      };
+
       if (mode === "flip") {
         if (!flipped && (e.key === " " || e.key === "Enter")) {
           e.preventDefault();
           setFlipped(true);
           return;
         }
-        if (flipped) {
-          if (e.key === "1") void submitRating("again");
-          else if (e.key === "2") void submitRating("hard");
-          else if (e.key === "3") void submitRating("good");
-        }
+        if (flipped) rate(e.key);
       }
-
-      // Type mode: after revealed, 1/2/3 to rate
-      if (mode === "type" && typeRevealed) {
-        if (e.key === "1") void submitRating("again");
-        else if (e.key === "2") void submitRating("hard");
-        else if (e.key === "3") void submitRating("good");
-      }
+      if (mode === "type" && typeRevealed) rate(e.key);
+      if (mode === "match" && matchAnswered) rate(e.key);
     };
 
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [phase, mode, flipped, typeRevealed, cards, currentIdx, submitRating, onExit]);
+  }, [phase, mode, flipped, typeRevealed, matchAnswered, cards, currentIdx, submitRating, onExit]);
 
   /* ── Touch swipe (flip mode) ── */
   const touchStart = useRef<{ x: number; y: number } | null>(null);
@@ -913,7 +1208,19 @@ export function ReviewSession({
   const currentCard = cards[currentIdx] ?? null;
   const batchProgress = cards.length > 0 ? ((currentIdx + 1) / cards.length) * 100 : 0;
   const showRating =
-    (mode === "flip" && flipped) || (mode === "type" && typeRevealed);
+    (mode === "flip" && flipped) ||
+    (mode === "type" && typeRevealed) ||
+    (mode === "match" && matchAnswered !== null);
+
+  // Suggested rating for highlight ring on RatingButtons
+  let suggestedRating: Rating | null = null;
+  if (mode === "type" && typeRevealed && typeGrade) {
+    suggestedRating = gradeToRating(typeGrade);
+  } else if (mode === "match" && matchAnswered) {
+    if (!matchAnswered.correct) suggestedRating = "again";
+    else if (matchAnswered.elapsedMs <= 3000) suggestedRating = "good";
+    else suggestedRating = "hard";
+  }
 
   return (
     <div
@@ -1009,19 +1316,28 @@ export function ReviewSession({
                 card={currentCard}
                 labels={labels}
                 revealed={typeRevealed}
-                onReveal={() => setTypeRevealed(true)}
+                onReveal={(_typed, g) => {
+                  setTypeGrade(g);
+                  setTypeRevealed(true);
+                }}
               />
             ) : mode === "match" ? (
               <MatchReview
                 card={currentCard}
                 options={matchOptions}
                 labels={labels}
-                onAnswer={(correct) => void submitRating(correct ? "good" : "again")}
+                onAnswer={(correct, elapsedMs) => setMatchAnswered({ correct, elapsedMs })}
               />
             ) : null}
 
-            {/* Rating buttons (flip & type after reveal) */}
-            {showRating ? <RatingButtons labels={labels} onRate={(r) => void submitRating(r)} /> : null}
+            {/* Rating buttons (after reveal/answer) */}
+            {showRating ? (
+              <RatingButtons
+                labels={labels}
+                onRate={(r) => void submitRating(r)}
+                suggested={suggestedRating}
+              />
+            ) : null}
           </div>
 
           {/* Bottom hint */}

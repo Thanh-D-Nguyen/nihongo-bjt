@@ -4,7 +4,8 @@ const STORE = "pending";
 
 export type QueuedReview = {
   clientMutationId: string;
-  rating: "again" | "hard" | "good";
+  elapsedMs?: number;
+  rating: "again" | "hard" | "good" | "easy";
   userFlashcardId: string;
   userId: string;
 };
@@ -55,6 +56,7 @@ export async function drainForUser(userId: string): Promise<QueuedReview[]> {
       if (row.userId === userId) {
         out.push({
           clientMutationId: row.clientMutationId,
+          elapsedMs: row.elapsedMs,
           rating: row.rating,
           userFlashcardId: row.userFlashcardId,
           userId: row.userId

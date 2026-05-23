@@ -208,6 +208,21 @@ export class FlashcardsController {
     return this.flashcardsService.comebackSummaryForLearner(parsed.data.userId, parsed.data.days);
   }
 
+  @Get("reviews/:userFlashcardId/distractors")
+  @ApiOperation({ summary: "Up to N backText distractors for MatchReview quiz (same sourceType, excluding correct)." })
+  @ApiParam({ name: "userFlashcardId" })
+  async distractors(
+    @CurrentUser() user: KeycloakAuthenticatedUser | undefined,
+    @Param("userFlashcardId") userFlashcardId: string,
+    @Query() query: Record<string, string | undefined>
+  ) {
+    const userId = resolveLearnerUserId(user, query.userId, { required: true })!;
+    const parsedN = Number.parseInt(query.n ?? "3", 10);
+    const n = Number.isFinite(parsedN) ? Math.max(1, Math.min(10, parsedN)) : 3;
+    const items = await this.flashcardsRepository.distractorsForCard(userFlashcardId, userId, n);
+    return { items };
+  }
+
   @Post("cards/:cardId/media")
   @ApiOperation({ summary: "Attach uploaded media to a user card." })
   @ApiParam({ name: "cardId" })

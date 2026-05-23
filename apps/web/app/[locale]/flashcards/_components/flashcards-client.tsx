@@ -234,6 +234,7 @@ export function FlashcardsClient({
         body: JSON.stringify({
           items: pending.map((p) => ({
             clientMutationId: p.clientMutationId,
+            elapsedMs: p.elapsedMs,
             rating: p.rating,
             userFlashcardId: p.userFlashcardId
           })),

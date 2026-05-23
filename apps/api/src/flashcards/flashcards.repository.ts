@@ -656,6 +656,52 @@ export class FlashcardsRepository {
     };
   }
 
+  /**
+   * Return up to `n` distractor backText strings for MatchReview quiz.
+   * Pulled from active FlashcardVariant rows with the same sourceType, excluding the source card
+   * and any rows whose backText equals the correct answer (dedup).
+   */
+  async distractorsForCard(userFlashcardId: string, userId: string, n: number): Promise<string[]> {
+    const owned = await this.prisma.userFlashcard.findFirst({
+      include: { card: { select: { backText: true, id: true, sourceType: true } } },
+      where: { id: userFlashcardId, userId }
+    });
+    if (!owned) {
+      throw new NotFoundException("User flashcard not found");
+    }
+    const correct = owned.card.backText;
+    const correctLen = correct.length;
+
+    // Fetch a pool from same sourceType (richer signal for "similar" distractors)
+    const pool = await this.prisma.flashcardVariant.findMany({
+      select: { backText: true },
+      take: 300,
+      where: {
+        id: { not: owned.card.id },
+        sourceType: owned.card.sourceType,
+        status: "active",
+        backText: { not: correct }
+      }
+    });
+
+    // Dedup + filter empties
+    const unique = Array.from(
+      new Set(pool.map((p) => p.backText).filter((s): s is string => typeof s === "string" && s.trim().length > 0))
+    );
+
+    // Prefer similar-length distractors (within ±60% length) to avoid trivial guessing,
+    // but fall back to any if too few candidates qualify.
+    const close = unique.filter((s) => Math.abs(s.length - correctLen) <= Math.max(2, correctLen * 0.6));
+    const candidates = close.length >= n ? close : unique;
+
+    // Fisher–Yates shuffle, then slice
+    for (let i = candidates.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
+    }
+    return candidates.slice(0, n);
+  }
+
   async linkCardToMedia(input: { assetId: string; cardId: string; role: string; userId: string }) {
     const owned = await this.prisma.userFlashcard.findFirst({
       where: { cardId: input.cardId, userId: input.userId }

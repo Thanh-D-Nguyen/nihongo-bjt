@@ -2079,9 +2079,12 @@
     "again": "once again",
     "hard": "difficult",
     "good": "Good",
+    "easy": "Easy",
     "comboLabel": "combo",
     "correct": "Correct!",
     "incorrect": "Incorrect answer",
+    "almost": "Almost",
+    "yourAnswer": "Your answer",
     "correctAnswer": "Correct answer",
     "summaryTitle": "Session completed!",
     "summaryGreat": "Awesome!Let's do our best at this pace.",
@@ -2094,10 +2097,12 @@
     "loadingCards": "Loading card...",
     "errorLoading": "The review card could not be loaded.",
     "retry": "Retry",
-    "keyboardHint": "Space: Turn · 1/2/3: Evaluation · Esc: Exit",
+    "keyboardHint": "Space: Turn · 1/2/3/4: Evaluation · Esc: Exit",
     "sessionOf": "/",
     "tapToReveal": "Tap or Spacebar",
-    "reading": "How to read"
+    "reading": "How to read",
+    "playAudio": "Play audio",
+    "examplesLabel": "Examples"
   },
   "appearancePage": {
     "title": "Appearance",

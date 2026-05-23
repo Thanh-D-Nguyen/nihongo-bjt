@@ -85,74 +85,65 @@ export class SearchService {
   }
 
   async suggest(q: string, limit: number): Promise<SearchSuggestion[]> {
-    try {
-      const res = await this.meili.index<Record<string, unknown>>("content_search").search(q, {
-        attributesToRetrieve: ["id", "kind", "reading", "title"],
-        limit
-      });
-      if (res.hits.length > 0) {
-        return res.hits.map((hit) => ({
-          id: String(hit.id),
-          kind: hit.kind as SearchSuggestion["kind"],
-          reading: (hit.reading as string) ?? null,
-          title: String(hit.title)
-        }));
-      }
-    } catch {
-      this.logger.warn("Meilisearch suggest failed, falling back to PostgreSQL");
-    }
-
+    // Bypass Meilisearch — CJK tokenization breaks multi-character words (e.g. 会議 → 会 + 議)
     return this.suggestPostgres(q, limit);
   }
 
   private async suggestPostgres(q: string, limit: number): Promise<SearchSuggestion[]> {
-    const results: SearchSuggestion[] = [];
+    const queries = this.normalizeQuery(q);
+    const perType = Math.max(limit, 20);
 
-    const [lexemes, kanji, grammar] = await Promise.all([
-      this.prisma.lexeme.findMany({
-        select: { headword: true, id: true, reading: true },
-        take: limit,
-        where: {
-          status: "active",
-          OR: [
-            { headword: { contains: q, mode: "insensitive" } },
-            { reading: { contains: q, mode: "insensitive" } }
-          ]
-        }
-      }),
-      this.prisma.kanji.findMany({
-        select: { character: true, id: true, kunyomi: true, onyomi: true },
-        take: limit,
-        where: {
-          status: "active",
-          OR: [
-            { character: { contains: q } },
-            { onyomi: { contains: q, mode: "insensitive" } },
-            { kunyomi: { contains: q, mode: "insensitive" } }
-          ]
-        }
-      }),
-      this.prisma.grammarPoint.findMany({
-        select: { id: true, jlptLevel: true, pattern: true },
-        take: limit,
-        where: {
-          status: "active",
-          pattern: { contains: q, mode: "insensitive" }
-        }
-      })
-    ]);
+    // Fetch ranked rows per query variant from contentRepository (raw SQL with exact-match ORDER BY)
+    const lexemeRowsArr = await Promise.all(queries.map((v) => this.contentRepository.lexemes(v, perType)));
+    const kanjiRowsArr = await Promise.all(queries.map((v) => this.contentRepository.kanji(v, perType)));
+    const grammarRowsArr = await Promise.all(queries.map((v) => this.contentRepository.grammar(v, perType)));
 
-    for (const l of lexemes) {
-      results.push({ id: l.id, kind: "lexeme", reading: l.reading, title: l.headword });
+    const scored: Array<SearchSuggestion & { score: number }> = [];
+    const seen = new Set<string>();
+
+    for (const rows of lexemeRowsArr) {
+      for (const l of rows) {
+        if (seen.has(l.id)) continue;
+        seen.add(l.id);
+        scored.push({
+          id: l.id,
+          kind: "lexeme",
+          reading: l.reading,
+          title: l.headword,
+          score: this.scoreResult(queries, l.headword, l.reading, l.shortMeaningVi ?? null)
+        });
+      }
     }
-    for (const k of kanji) {
-      results.push({ id: k.id, kind: "kanji", reading: [k.onyomi, k.kunyomi].filter(Boolean).join(" / ") || null, title: k.character });
+    for (const rows of kanjiRowsArr) {
+      for (const k of rows) {
+        if (seen.has(k.id)) continue;
+        seen.add(k.id);
+        const reading = [k.onyomi, k.kunyomi].filter(Boolean).join(" / ") || null;
+        scored.push({
+          id: k.id,
+          kind: "kanji",
+          reading,
+          title: k.character,
+          score: this.scoreResult(queries, k.character, reading, null)
+        });
+      }
     }
-    for (const g of grammar) {
-      results.push({ id: g.id, kind: "grammar", reading: g.jlptLevel, title: g.pattern });
+    for (const rows of grammarRowsArr) {
+      for (const g of rows) {
+        if (seen.has(g.id)) continue;
+        seen.add(g.id);
+        scored.push({
+          id: g.id,
+          kind: "grammar",
+          reading: g.jlptLevel,
+          title: g.pattern,
+          score: this.scoreResult(queries, g.pattern, null, null)
+        });
+      }
     }
 
-    return results.slice(0, limit);
+    scored.sort((a, b) => b.score - a.score);
+    return scored.slice(0, limit).map(({ score: _s, ...rest }) => rest);
   }
 
   async rebuildProjectionIndex(): Promise<{ indexed: number; sourceSystem: "PostgreSQL"; timestamp: string }> {

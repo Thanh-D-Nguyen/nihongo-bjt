@@ -129,17 +129,109 @@ export class FlashcardsService {
         )
       );
     }
+
+    // Batch fetch examples per sourceType to avoid N+1
+    const lexemeSourceIds = [...new Set(rows.filter((r) => r.card.sourceType === "lexeme").map((r) => r.card.sourceId))];
+    const grammarSourceIds = [...new Set(rows.filter((r) => r.card.sourceType === "grammar").map((r) => r.card.sourceId))];
+    const kanjiSourceIds = [...new Set(rows.filter((r) => r.card.sourceType === "kanji").map((r) => r.card.sourceId))];
+
+    type Example = { japaneseText: string; reading: string | null; translationVi: string | null };
+    const examplesBySource = new Map<string, Example[]>();
+    const exampleLimit = 2;
+
+    await Promise.all([
+      (async () => {
+        if (lexemeSourceIds.length === 0) return;
+        const senses = await this.prisma.lexemeSense.findMany({
+          select: {
+            lexemeId: true,
+            exampleLinks: {
+              include: { exampleSentence: true },
+              orderBy: { createdAt: "asc" },
+              take: exampleLimit
+            }
+          },
+          where: { lexemeId: { in: lexemeSourceIds } }
+        });
+        for (const s of senses) {
+          const arr = examplesBySource.get(s.lexemeId) ?? [];
+          for (const link of s.exampleLinks) {
+            const ex = link.exampleSentence;
+            if (!ex || ex.status !== "active") continue;
+            if (arr.length >= exampleLimit) break;
+            arr.push({ japaneseText: ex.japaneseText, reading: ex.reading, translationVi: ex.translationVi });
+          }
+          if (arr.length > 0) examplesBySource.set(s.lexemeId, arr);
+        }
+      })(),
+      (async () => {
+        if (grammarSourceIds.length === 0) return;
+        const details = await this.prisma.grammarPointDetail.findMany({
+          select: {
+            grammarPointId: true,
+            exampleLinks: {
+              include: { exampleSentence: true },
+              orderBy: { createdAt: "asc" },
+              take: exampleLimit
+            }
+          },
+          where: { grammarPointId: { in: grammarSourceIds } }
+        });
+        for (const d of details) {
+          const arr = examplesBySource.get(d.grammarPointId) ?? [];
+          for (const link of d.exampleLinks) {
+            const ex = link.exampleSentence;
+            if (!ex || ex.status !== "active") continue;
+            if (arr.length >= exampleLimit) break;
+            arr.push({ japaneseText: ex.japaneseText, reading: ex.reading, translationVi: ex.translationVi });
+          }
+          if (arr.length > 0) examplesBySource.set(d.grammarPointId, arr);
+        }
+      })(),
+      (async () => {
+        if (kanjiSourceIds.length === 0) return;
+        const kEx = await this.prisma.kanjiExample.findMany({
+          orderBy: { position: "asc" },
+          select: { kanjiId: true, meaningVi: true, reading: true, word: true },
+          where: { kanjiId: { in: kanjiSourceIds } }
+        });
+        for (const e of kEx) {
+          const arr = examplesBySource.get(e.kanjiId) ?? [];
+          if (arr.length >= exampleLimit) continue;
+          arr.push({ japaneseText: e.word, reading: e.reading, translationVi: e.meaningVi });
+          examplesBySource.set(e.kanjiId, arr);
+        }
+      })()
+    ]);
+
     return Promise.all(
       rows.map(async (row) => {
         const mediaLinks = row.card.mediaLinks;
-        const primary = mediaLinks.find((m) => m.role === "primary_image") ?? mediaLinks[0] ?? null;
-        const readUrl =
-          primary?.asset.provider === "external_url" && primary.asset.sourceUrl?.trim()
-            ? primary.asset.sourceUrl.trim()
-            : primary?.asset
-              ? await this.mediaService.presignedGetForObjectKey(primary.asset.objectKey)
-              : null;
+        const imageLink =
+          mediaLinks.find((m) => m.role === "primary_image") ??
+          mediaLinks.find((m) => m.asset.mimeType.startsWith("image/")) ??
+          null;
+        const audioLink =
+          mediaLinks.find((m) => m.role === "primary_audio") ??
+          mediaLinks.find((m) => m.asset.mimeType.startsWith("audio/")) ??
+          null;
+
+        const resolveReadUrl = async (link: typeof imageLink) => {
+          if (!link) return null;
+          if (link.asset.provider === "external_url" && link.asset.sourceUrl?.trim()) {
+            return link.asset.sourceUrl.trim();
+          }
+          return this.mediaService.presignedGetForObjectKey(link.asset.objectKey);
+        };
+
+        const [imageReadUrl, audioReadUrl] = await Promise.all([
+          resolveReadUrl(imageLink),
+          resolveReadUrl(audioLink)
+        ]);
+
         const backText = backByCardId.get(row.card.id) ?? row.card.backText;
+        const examples = examplesBySource.get(row.card.sourceId) ?? [];
+
         return {
           card: {
             backText,
@@ -149,13 +241,21 @@ export class FlashcardsService {
           },
           cardId: row.cardId,
           comebackMode: row.comebackMode ?? false,
+          examples,
           id: row.id,
           leeched: row.leeched ?? false,
-          primaryImage: primary
+          primaryAudio: audioLink
             ? {
-                assetId: primary.assetId,
-                mimeType: primary.asset.mimeType,
-                readUrl: readUrl ?? null
+                assetId: audioLink.assetId,
+                mimeType: audioLink.asset.mimeType,
+                readUrl: audioReadUrl ?? null
+              }
+            : null,
+          primaryImage: imageLink
+            ? {
+                assetId: imageLink.assetId,
+                mimeType: imageLink.asset.mimeType,
+                readUrl: imageReadUrl ?? null
               }
             : null,
           state: row.state
