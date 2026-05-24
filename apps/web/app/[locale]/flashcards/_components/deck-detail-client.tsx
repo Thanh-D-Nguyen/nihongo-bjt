@@ -10,6 +10,7 @@ import { learnerApiFetch } from "../../../../lib/learner-api";
 import type { DeckLabels } from "./deck-browser";
 import { deckDisplayDesc, deckDisplayTitle } from "./deck-card";
 import type { DeckApiRow } from "./deck-types";
+import { DeckComposerPanel, type DeckComposerInitialData } from "./deck-composer-panel";
 import { DeckStudySession } from "./deck-study-session";
 
 type DeckDetailCardRow = {
@@ -18,12 +19,22 @@ type DeckDetailCardRow = {
     examples?: DeckStudyExample[];
     frontText: string;
     id: string;
+    primaryAudio?: DeckStudyMedia | null;
+    primaryImage?: DeckStudyMedia | null;
     reading: string | null;
     sourceId?: string;
     sourceType?: string;
   };
   id: string;
   position: number;
+  primaryAudio?: DeckStudyMedia | null;
+  primaryImage?: DeckStudyMedia | null;
+};
+
+type DeckStudyMedia = {
+  assetId: string;
+  mimeType: string;
+  readUrl: string | null;
 };
 
 type DeckStudyExample = {
@@ -68,6 +79,7 @@ export function DeckDetailClient({
   const [shareLoading, setShareLoading] = useState(false);
   const [shareToken, setShareToken] = useState<string | null>(null);
   const [shareCopied, setShareCopied] = useState(false);
+  const [editMode, setEditMode] = useState(false);
   const deleteTitleId = useId();
   const deleteBodyId = useId();
 
@@ -216,6 +228,21 @@ export function DeckDetailClient({
   const sortedCards = [...deck.cards].sort((a, b) => a.position - b.position);
   const visibilityLabel = deck.visibility === "public" ? labels.public : labels.private;
   const statusLabel = deck.status === "active" ? labels.statusActive : labels.statusArchived;
+  const editInitialData: DeckComposerInitialData = {
+    cards: sortedCards.map((row) => ({
+      backText: row.card.backText,
+      cardId: row.card.id,
+      deckCardId: row.id,
+      frontText: row.card.frontText,
+      primaryImageAssetId: (row.primaryImage ?? row.card.primaryImage)?.assetId ?? null,
+      reading: row.card.reading
+    })),
+    deckId: deck.id,
+    descriptionVi: deck.descriptionVi ?? null,
+    titleJa: deck.titleJa ?? null,
+    titleVi: deck.titleVi,
+    visibility: deck.visibility
+  };
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-5 px-4 py-5 sm:px-6 lg:py-8">
@@ -240,52 +267,72 @@ export function DeckDetailClient({
             {desc ? <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted sm:text-base">{desc}</p> : null}
             <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted">{labels.deckDetailStudyHint}</p>
           </div>
-          <div className="flex shrink-0 flex-col gap-2 sm:flex-row lg:flex-col">
+          <div className="flex shrink-0 flex-col gap-2 sm:min-w-[18rem] lg:items-end">
             <Link
-              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-ink px-4 text-sm font-semibold text-surface shadow-sm transition hover:bg-ink/90"
+              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-ink px-4 text-sm font-semibold text-surface shadow-sm transition hover:bg-ink/90 sm:w-auto sm:min-w-44"
               href={reviewHref}
             >
+              <PlayIcon />
               {labels.reviewDeck}
             </Link>
-            {isOwner && !shareToken && (
-              <Button
-                disabled={shareLoading}
-                onClick={() => void handleShare()}
-                type="button"
-                variant="secondary"
-              >
-                {shareLoading ? "Đang tạo link…" : "Chia sẻ bộ thẻ"}
-              </Button>
-            )}
-            {isOwner && shareToken && (
-              <div className="flex items-center gap-2">
-                <Button
-                  onClick={() => void handleCopyLink()}
-                  type="button"
-                  variant="secondary"
-                >
-                  {shareCopied ? "Đã copy ✓" : "Copy link"}
-                </Button>
-                <Button
-                  disabled={shareLoading}
-                  onClick={() => void handleUnshare()}
-                  type="button"
-                  variant="secondary"
-                >
-                  Hủy chia sẻ
-                </Button>
-              </div>
-            )}
             {isOwner ? (
-              <Button onClick={() => setPendingDelete(true)} type="button" variant="secondary">
-                {labels.deleteOwnedDeck}
-              </Button>
+              <div aria-label={labels.ariaToolbar} className="flex w-full flex-wrap items-center justify-start gap-2 lg:justify-end" role="toolbar">
+                <HeaderActionButton
+                  icon={<EditIcon />}
+                  label={editMode ? labels.cancel : labels.editDeck}
+                  onClick={() => setEditMode((value) => !value)}
+                />
+                {!shareToken ? (
+                  <HeaderActionButton
+                    disabled={shareLoading}
+                    icon={<ShareIcon />}
+                    label={shareLoading ? "Đang tạo link…" : "Chia sẻ"}
+                    onClick={() => void handleShare()}
+                  />
+                ) : (
+                  <>
+                    <HeaderActionButton
+                      icon={shareCopied ? <CheckIcon /> : <CopyIcon />}
+                      label={shareCopied ? "Đã copy" : "Copy link"}
+                      onClick={() => void handleCopyLink()}
+                    />
+                    <HeaderActionButton
+                      disabled={shareLoading}
+                      icon={<LockIcon />}
+                      label="Tắt share"
+                      onClick={() => void handleUnshare()}
+                    />
+                  </>
+                )}
+                <HeaderActionButton
+                  danger
+                  icon={<TrashIcon />}
+                  label="Gỡ"
+                  onClick={() => setPendingDelete(true)}
+                />
+              </div>
             ) : null}
           </div>
         </div>
       </header>
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
+      {editMode && isOwner && userId ? (
+        <section className="rounded-2xl border border-ink/10 bg-surface p-4 shadow-sm ring-1 ring-ink/[0.03] sm:p-5">
+          <DeckComposerPanel
+            initialData={editInitialData}
+            labels={labels}
+            mode="edit"
+            onCancel={() => setEditMode(false)}
+            onSuccess={async () => {
+              setEditMode(false);
+              await load();
+            }}
+            userId={userId}
+          />
+        </section>
+      ) : null}
+
+      <div className={cn("grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start", editMode && "opacity-60")}>
         <div className="min-w-0">
           {sortedCards.length > 0 ? (
             <DeckStudySession
@@ -295,6 +342,8 @@ export function DeckDetailClient({
                 examples: row.card.examples ?? [],
                 frontText: row.card.frontText,
                 id: row.id,
+                primaryAudio: row.primaryAudio ?? row.card.primaryAudio ?? null,
+                primaryImage: row.primaryImage ?? row.card.primaryImage ?? null,
                 reading: row.card.reading
               }))}
               focusIndex={focusIndex}
@@ -321,13 +370,19 @@ export function DeckDetailClient({
                 deckStudyNext: labels.deckStudyNext,
                 deckStudyPrev: labels.deckStudyPrev,
                 deckStudyProgressTpl: labels.deckStudyProgressTpl,
+                deckStudyAutoRead: labels.deckStudyAutoRead,
+                deckStudyHideImages: labels.deckStudyHideImages,
+                deckStudyReadCard: labels.deckStudyReadCard,
+                deckStudyShowImages: labels.deckStudyShowImages,
                 deckStudyTapToFlip: labels.deckStudyTapToFlip,
+                deckStudyToolsAria: labels.deckStudyToolsAria,
                 exampleCopy: labels.deckStudyExampleCopy,
                 exampleCopied: labels.deckStudyExampleCopied,
                 exampleEmpty: labels.deckStudyExampleEmpty,
                 exampleFilterPlaceholder: labels.deckStudyExampleFilterPlaceholder,
                 exampleHeading: labels.deckStudyExampleHeading,
                 exampleManage: labels.deckStudyExampleManage,
+                exampleRead: labels.deckStudyExampleRead,
                 exampleSourceGrammar: labels.deckStudyExampleSourceGrammar,
                 exampleSourceKanji: labels.deckStudyExampleSourceKanji,
                 exampleSourceLexeme: labels.deckStudyExampleSourceLexeme,
@@ -427,6 +482,123 @@ export function DeckDetailClient({
         </div>
       ) : null}
     </div>
+  );
+}
+
+function HeaderActionButton({
+  danger,
+  disabled,
+  icon,
+  label,
+  onClick,
+}: {
+  danger?: boolean;
+  disabled?: boolean;
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      aria-label={label}
+      className={cn(
+        "inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border px-3 text-xs font-bold outline-none ring-offset-2 transition focus-visible:ring-2 focus-visible:ring-accent disabled:pointer-events-none disabled:opacity-45",
+        danger
+          ? "border-sakura/25 bg-sakura/5 text-sakura hover:border-sakura/40 hover:bg-sakura/10"
+          : "border-ink/12 bg-paper/80 text-ink hover:border-ink/20 hover:bg-white"
+      )}
+      disabled={disabled}
+      onClick={onClick}
+      title={label}
+      type="button"
+    >
+      {icon}
+      <span>{label}</span>
+    </button>
+  );
+}
+
+function IconBase({ children }: { children: React.ReactNode }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-4 w-4 shrink-0"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+    >
+      {children}
+    </svg>
+  );
+}
+
+function PlayIcon() {
+  return (
+    <IconBase>
+      <path d="M5 3v18l15-9L5 3Z" />
+    </IconBase>
+  );
+}
+
+function EditIcon() {
+  return (
+    <IconBase>
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+    </IconBase>
+  );
+}
+
+function ShareIcon() {
+  return (
+    <IconBase>
+      <circle cx="18" cy="5" r="3" />
+      <circle cx="6" cy="12" r="3" />
+      <circle cx="18" cy="19" r="3" />
+      <path d="m8.6 13.5 6.8 4" />
+      <path d="m15.4 6.5-6.8 4" />
+    </IconBase>
+  );
+}
+
+function CopyIcon() {
+  return (
+    <IconBase>
+      <rect height="14" rx="2" width="14" x="8" y="8" />
+      <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+    </IconBase>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <IconBase>
+      <path d="m20 6-11 11-5-5" />
+    </IconBase>
+  );
+}
+
+function LockIcon() {
+  return (
+    <IconBase>
+      <rect height="11" rx="2" width="16" x="4" y="11" />
+      <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+    </IconBase>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <IconBase>
+      <path d="M3 6h18" />
+      <path d="M8 6V4h8v2" />
+      <path d="M19 6v14H5V6" />
+      <path d="M10 11v6" />
+      <path d="M14 11v6" />
+    </IconBase>
   );
 }
 

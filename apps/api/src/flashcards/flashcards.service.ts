@@ -27,6 +27,54 @@ export class FlashcardsService {
     @Inject(SeasonalEventService) private readonly seasonalEventService: SeasonalEventService
   ) {}
 
+  async deckDetailForLearner(userId: string, deckId: string) {
+    const deck = await this.flashcardsRepository.deckDetail(userId, deckId);
+    return {
+      ...deck,
+      cards: await Promise.all(
+        deck.cards.map(async (row) => {
+          const mediaLinks = row.card.mediaLinks ?? [];
+          const imageLink =
+            mediaLinks.find((m) => m.role === "primary_image") ??
+            mediaLinks.find((m) => m.asset.mimeType.startsWith("image/")) ??
+            null;
+          const audioLink =
+            mediaLinks.find((m) => m.role === "primary_audio") ??
+            mediaLinks.find((m) => m.asset.mimeType.startsWith("audio/")) ??
+            null;
+          const resolveReadUrl = async (link: typeof imageLink) => {
+            if (!link) return null;
+            if (link.asset.provider === "external_url" && link.asset.sourceUrl?.trim()) {
+              return link.asset.sourceUrl.trim();
+            }
+            return this.mediaService.presignedGetForObjectKey(link.asset.objectKey);
+          };
+          const [imageReadUrl, audioReadUrl] = await Promise.all([
+            resolveReadUrl(imageLink),
+            resolveReadUrl(audioLink)
+          ]);
+          return {
+            ...row,
+            primaryAudio: audioLink
+              ? {
+                  assetId: audioLink.assetId,
+                  mimeType: audioLink.asset.mimeType,
+                  readUrl: audioReadUrl
+                }
+              : null,
+            primaryImage: imageLink
+              ? {
+                  assetId: imageLink.assetId,
+                  mimeType: imageLink.asset.mimeType,
+                  readUrl: imageReadUrl
+                }
+              : null
+          };
+        })
+      )
+    };
+  }
+
   async dueReviewsForLearner(userId: string, limit: number, deckId?: string) {
     const rows = await this.flashcardsRepository.dueReviews(userId, limit, deckId);
     const dailyRows = rows.filter((r) => r.card.sourceType === "daily_content");

@@ -311,6 +311,196 @@ export class FlashcardsRepository {
     });
   }
 
+  async updateOwnedDeckForLearner(
+    userId: string,
+    deckId: string,
+    input: {
+      cards?: Array<{
+        backText: string;
+        cardId?: string;
+        deckCardId?: string;
+        frontText: string;
+        imageUrl?: string;
+        primaryImageAssetId?: string;
+        reading?: string;
+      }>;
+      descriptionJa?: string;
+      descriptionVi?: string;
+      titleJa?: string;
+      titleVi: string;
+      visibility?: "private" | "public";
+    }
+  ) {
+    const deck = await this.prisma.deck.findFirst({
+      where: { id: deckId, ownerUserId: userId, status: "active" }
+    });
+    if (!deck) {
+      throw new NotFoundException({ code: "deck_not_found", message: "Deck not found" });
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const existingLinks = await tx.deckCard.findMany({
+        include: { card: true },
+        orderBy: { position: "asc" },
+        where: { deckId }
+      });
+      const existingByDeckCardId = new Map(existingLinks.map((link) => [link.id, link]));
+      const existingByCardId = new Map(existingLinks.map((link) => [link.cardId, link]));
+
+      await tx.deck.update({
+        data: {
+          descriptionJa: input.descriptionJa,
+          descriptionVi: input.descriptionVi,
+          titleJa: input.titleJa,
+          titleVi: input.titleVi,
+          visibility: input.visibility ?? "private"
+        },
+        where: { id: deckId }
+      });
+
+      if (!input.cards) {
+        return {
+          cardCount: existingLinks.length,
+          deckId,
+          status: "updated" as const
+        };
+      }
+
+      const nextCardIds: string[] = [];
+      const removedCardIds = existingLinks.map((link) => link.cardId);
+      await tx.deckCard.deleteMany({ where: { deckId } });
+
+      for (const [position, row] of input.cards.entries()) {
+        const existing =
+          (row.deckCardId ? existingByDeckCardId.get(row.deckCardId) : undefined) ??
+          (row.cardId ? existingByCardId.get(row.cardId) : undefined);
+        const card =
+          existing?.cardId
+            ? await tx.flashcardVariant.update({
+                data: {
+                  backText: row.backText,
+                  frontText: row.frontText,
+                  reading: row.reading
+                },
+                where: { id: existing.cardId }
+              })
+            : await tx.flashcardVariant.create({
+                data: {
+                  backText: row.backText,
+                  frontText: row.frontText,
+                  reading: row.reading,
+                  sourceId: randomUUID(),
+                  sourceType: "reading_assist"
+                }
+              });
+
+        nextCardIds.push(card.id);
+        await tx.deckCard.create({
+          data: {
+            cardId: card.id,
+            deckId,
+            position
+          }
+        });
+
+        await tx.userFlashcard.upsert({
+          create: {
+            cardId: card.id,
+            userId
+          },
+          update: {},
+          where: {
+            userId_cardId: {
+              cardId: card.id,
+              userId
+            }
+          }
+        });
+
+        await tx.cardMediaLink.deleteMany({
+          where: {
+            cardId: card.id,
+            role: "primary_image"
+          }
+        });
+
+        if (row.primaryImageAssetId) {
+          const asset = await tx.mediaAsset.findFirst({
+            where: {
+              id: row.primaryImageAssetId,
+              ownerUserId: userId,
+              status: "active"
+            }
+          });
+          if (!asset) {
+            throw new BadRequestException("Card image asset not found or not owned by user");
+          }
+          await tx.cardMediaLink.create({
+            data: {
+              assetId: asset.id,
+              cardId: card.id,
+              role: "primary_image"
+            }
+          });
+        } else if (row.imageUrl) {
+          const asset = await tx.mediaAsset.create({
+            data: {
+              accessibility: {
+                altText: row.frontText.slice(0, 200),
+                reducedMotionSafe: true
+              },
+              byteSize: 1,
+              license: "user_supplied_link",
+              mimeType: "image/jpeg",
+              objectKey: `learning/external-ref/${randomUUID()}`,
+              ownerUserId: userId,
+              provenance: { kind: "flashcard_edit_url" },
+              provider: "external_url",
+              rightsStatus: "cleared",
+              sourceUrl: row.imageUrl,
+              status: "active"
+            }
+          });
+          await tx.cardMediaLink.create({
+            data: {
+              assetId: asset.id,
+              cardId: card.id,
+              role: "primary_image"
+            }
+          });
+        }
+      }
+
+      const nextCardIdSet = new Set(nextCardIds);
+      const removed = removedCardIds.filter((cardId) => !nextCardIdSet.has(cardId));
+      if (removed.length > 0) {
+        const stillLinkedCards = await tx.deckCard.groupBy({
+          by: ["cardId"],
+          where: {
+            cardId: { in: removed },
+            deck: {
+              status: "active",
+              OR: [{ ownerUserId: userId }, { visibility: "public" }]
+            }
+          }
+        });
+        const stillLinked = new Set(stillLinkedCards.map((row) => row.cardId));
+        const orphaned = removed.filter((cardId) => !stillLinked.has(cardId));
+        if (orphaned.length > 0) {
+          await tx.userFlashcard.deleteMany({
+            where: { cardId: { in: orphaned }, userId }
+          });
+        }
+      }
+
+      return {
+        cardCount: nextCardIds.length,
+        deckId,
+        status: "updated" as const
+      };
+    });
+  }
+
   async createCardFromContent(input: {
     backText: string;
     deckId: string;

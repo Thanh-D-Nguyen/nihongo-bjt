@@ -31,13 +31,19 @@ export type DeckStudySessionLabels = {
   deckStudyNext: string;
   deckStudyPrev: string;
   deckStudyProgressTpl: string;
+  deckStudyAutoRead: string;
+  deckStudyHideImages: string;
+  deckStudyReadCard: string;
+  deckStudyShowImages: string;
   deckStudyTapToFlip: string;
+  deckStudyToolsAria: string;
   exampleCopied: string;
   exampleCopy: string;
   exampleEmpty: string;
   exampleFilterPlaceholder: string;
   exampleHeading: string;
   exampleManage: string;
+  exampleRead: string;
   exampleSourceGrammar: string;
   exampleSourceKanji: string;
   exampleSourceLexeme: string;
@@ -66,7 +72,15 @@ export type DeckStudyCard = {
   examples?: DeckStudyExample[];
   frontText: string;
   id: string;
+  primaryAudio?: DeckStudyMedia | null;
+  primaryImage?: DeckStudyMedia | null;
   reading: string | null;
+};
+
+type DeckStudyMedia = {
+  assetId: string;
+  mimeType: string;
+  readUrl: string | null;
 };
 
 export type DeckStudyExample = {
@@ -117,6 +131,8 @@ export function DeckStudySession({
   const [flipped, setFlipped] = useState(false);
   const [exampleFilter, setExampleFilter] = useState("");
   const [examplesOpen, setExamplesOpen] = useState(true);
+  const [autoRead, setAutoRead] = useState(false);
+  const [imagesVisible, setImagesVisible] = useState(true);
   const [copiedExampleId, setCopiedExampleId] = useState<string | null>(null);
   const [completed, setCompleted] = useState(false);
 
@@ -143,10 +159,18 @@ export function DeckStudySession({
   const sectionRef = useRef<HTMLElement>(null);
 
   const activeCards = mode === "shuffle" || mode === "quiz" ? shuffledCards : cards;
+  const deckHasImages = useMemo(
+    () => cards.some((card) => Boolean(card.primaryImage?.readUrl)),
+    [cards]
+  );
 
   const total = activeCards.length;
   const safeIndex = total === 0 ? 0 : Math.min(Math.max(0, index), total - 1);
   const current = total === 0 ? undefined : activeCards[safeIndex];
+  const primaryImageUrl = current?.primaryImage?.readUrl ?? null;
+  const primaryAudioUrl = current?.primaryAudio?.readUrl ?? null;
+  const currentCanSpeak = Boolean(current?.frontText);
+  const showCardImage = Boolean(primaryImageUrl && imagesVisible);
 
   // Quiz options for current card
   const quizOptions = useMemo(() => {
@@ -251,6 +275,11 @@ export function DeckStudySession({
     setFlipped((f) => !f);
   }, [total]);
 
+  const readCurrentCard = useCallback(() => {
+    if (!current?.frontText) return;
+    readJapanese(current.frontText);
+  }, [current?.frontText]);
+
   // ── Self-rating handler (flip/shuffle mode) ──
   const handleRate = useCallback((rating: Rating) => {
     bumpStreak(rating);
@@ -312,6 +341,20 @@ export function DeckStudySession({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [goNext, goPrev, toggleFlip, total, mode, completed]);
+
+  useEffect(() => {
+    if (!autoRead || !current?.frontText || completed) return;
+    const timer = window.setTimeout(() => readJapanese(current.frontText), 180);
+    return () => window.clearTimeout(timer);
+  }, [autoRead, completed, current?.frontText, current?.id]);
+
+  useEffect(() => {
+    return () => {
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
 
   if (cards.length === 0) {
     return null;
@@ -386,6 +429,8 @@ export function DeckStudySession({
   const flipAriaLabel = flipped
     ? `${labels.deckStudyFaceBack}. ${labels.deckStudyTapToFlip}`
     : `${labels.deckStudyFaceFront}. ${labels.deckStudyTapToFlip}`;
+  const frontTextClass = cardPromptTextClass(current.frontText);
+  const backTextClass = cardAnswerTextClass(current.backText);
 
   const modeButtons: { id: StudyMode; label: string; icon: string }[] = [
     { id: "flip", label: labels.deckStudyModeFlip, icon: "🔄" },
@@ -424,6 +469,29 @@ export function DeckStudySession({
               </button>
             ))}
           </div>
+          <div aria-label={labels.deckStudyToolsAria} className="mt-3 flex flex-wrap gap-1.5" role="toolbar">
+            <ToolButton
+              active={autoRead}
+              ariaPressed
+              icon={<VolumeIcon />}
+              label={labels.deckStudyAutoRead}
+              onClick={() => setAutoRead((value) => !value)}
+            />
+            <ToolButton
+              disabled={!currentCanSpeak}
+              icon={<VolumeIcon />}
+              label={labels.deckStudyReadCard}
+              onClick={readCurrentCard}
+            />
+            <ToolButton
+              active={imagesVisible}
+              ariaPressed
+              disabled={!deckHasImages}
+              icon={imagesVisible ? <ImageIcon /> : <ImageOffIcon />}
+              label={imagesVisible ? labels.deckStudyHideImages : labels.deckStudyShowImages}
+              onClick={() => setImagesVisible((value) => !value)}
+            />
+          </div>
         </div>
         <div className="flex items-center gap-3">
           {mode !== "quiz" && streak >= 2 ? (
@@ -452,7 +520,7 @@ export function DeckStudySession({
         />
       </div>
 
-      <div className="mx-auto max-w-xl">
+      <div className="mx-auto max-w-2xl">
         {mode === "quiz" ? (
           /* ── Quiz mode: show front + 4 options ── */
           <div
@@ -466,7 +534,13 @@ export function DeckStudySession({
             <p className="text-[11px] font-bold uppercase tracking-widest text-muted/70">
               {labels.deckStudyQuizPrompt}
             </p>
-            <p className="jp-text mt-5 text-4xl font-black leading-[1.3] tracking-tight text-ink sm:text-5xl" lang="ja">
+            <p
+              className={cn(
+                "jp-text mt-5 whitespace-pre-wrap break-words font-black leading-[1.25] text-ink [overflow-wrap:anywhere]",
+                frontTextClass
+              )}
+              lang="ja"
+            >
               {current.frontText}
             </p>
             {current.reading ? (
@@ -514,7 +588,7 @@ export function DeckStudySession({
               <button
                 aria-label={flipAriaLabel}
                 className={cn(
-                  "fc-card-shell relative min-h-[20rem] w-full rounded-[1.75rem] p-1.5 text-left outline-none ring-offset-2 transition-[box-shadow,transform] duration-300 hover:shadow-[0_20px_60px_-12px_rgba(0,0,0,0.18)] active:scale-[0.985] motion-reduce:active:scale-100 focus-visible:ring-2 focus-visible:ring-accent sm:min-h-[22rem] sm:p-2",
+                  "fc-card-shell relative h-[clamp(23rem,64vh,38rem)] w-full rounded-[1.75rem] p-1.5 text-left outline-none ring-offset-2 transition-[box-shadow,transform] duration-300 hover:shadow-[0_20px_60px_-12px_rgba(0,0,0,0.18)] active:scale-[0.985] motion-reduce:active:scale-100 focus-visible:ring-2 focus-visible:ring-accent sm:h-[clamp(25rem,66vh,40rem)] sm:p-2",
                   "[transform-style:preserve-3d]"
                 )}
                 onClick={toggleFlip}
@@ -522,31 +596,51 @@ export function DeckStudySession({
               >
                 <div
                   className={cn(
-                    "relative min-h-[17.5rem] w-full motion-reduce:transition-none motion-safe:transition-transform motion-safe:duration-600 motion-safe:[transition-timing-function:cubic-bezier(0.22,1,0.36,1)] [transform-style:preserve-3d] sm:min-h-[19rem]",
+                    "relative h-full w-full motion-reduce:transition-none motion-safe:transition-transform motion-safe:duration-600 motion-safe:[transition-timing-function:cubic-bezier(0.22,1,0.36,1)] [transform-style:preserve-3d]",
                     flipped && "motion-safe:[transform:rotateY(180deg)]"
                   )}
                 >
                   {/* ── Front face ── */}
-                  <div className="absolute inset-0 flex flex-col justify-between rounded-[1.25rem] border border-ink/[0.06] bg-gradient-to-br from-white via-paper to-blue-50/40 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] backface-hidden sm:p-8">
-                    <div>
+                  <div className="absolute inset-0 flex min-h-0 flex-col justify-between overflow-hidden rounded-[1.25rem] border border-ink/[0.06] bg-gradient-to-br from-white via-paper to-blue-50/40 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] backface-hidden sm:p-7">
+                    <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
                       <div className="flex items-center gap-2">
-                        <span className="inline-flex rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-accent">
+                        <span className="inline-flex rounded-full border border-ink/10 bg-ink/[0.03] px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-muted">
                           {labels.deckStudyFaceFront}
                         </span>
                       </div>
-                      <p className="mt-4 text-[11px] font-bold uppercase tracking-widest text-muted/70">
-                        {labels.deckStudyFlipPrompt}
-                      </p>
-                      <p className="jp-text mt-3 text-4xl font-black leading-[1.3] tracking-tight text-ink sm:text-5xl" lang="ja">
-                        {current.frontText}
-                      </p>
-                      {current.reading ? (
-                        <p className="jp-text mt-3 text-base font-medium text-muted/80 sm:text-lg" lang="ja">
-                          {current.reading}
-                        </p>
-                      ) : null}
+                      <div
+                        className={cn(
+                          "mt-4 grid gap-4",
+                          showCardImage
+                            ? "sm:grid-cols-[minmax(0,1fr)_minmax(13rem,42%)] sm:items-center"
+                            : "min-h-[18rem] place-items-center text-center sm:min-h-[20rem]"
+                        )}
+                      >
+                        <div className={cn("min-w-0", !showCardImage && "mx-auto max-w-[34rem]")}>
+                          <p className="text-[11px] font-bold uppercase tracking-widest text-muted/70">
+                            {labels.deckStudyFlipPrompt}
+                          </p>
+                          <p
+                            className={cn(
+                              "jp-text mt-3 whitespace-pre-wrap break-words font-black leading-[1.18] text-ink [overflow-wrap:anywhere]",
+                              frontTextClass
+                            )}
+                            lang="ja"
+                          >
+                            {current.frontText}
+                          </p>
+                          {current.reading ? (
+                            <p className="jp-text mt-3 whitespace-pre-wrap break-words text-base font-semibold leading-relaxed text-muted/85 [overflow-wrap:anywhere] sm:text-lg" lang="ja">
+                              {current.reading}
+                            </p>
+                          ) : null}
+                        </div>
+                        {showCardImage && primaryImageUrl ? (
+                          <MediaStage alt={current.frontText} priority src={primaryImageUrl} />
+                        ) : null}
+                      </div>
                     </div>
-                    <div className="mt-4 flex items-center justify-center gap-2 border-t border-ink/[0.06] pt-3">
+                    <div className="mt-4 flex shrink-0 items-center justify-center gap-2 border-t border-ink/[0.06] pt-3">
                       <span className="text-xs text-muted/50">↻</span>
                       <p className="text-[11px] font-semibold text-muted/60">
                         {labels.deckStudyTapToFlip}
@@ -554,17 +648,46 @@ export function DeckStudySession({
                     </div>
                   </div>
                   {/* ── Back face ── */}
-                  <div className="absolute inset-0 flex flex-col justify-between rounded-[1.25rem] border border-leaf/20 bg-gradient-to-br from-emerald-50 via-leaf-soft/60 to-white p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] [transform:rotateY(180deg)] backface-hidden sm:p-8">
-                    <div>
-                      <span className="inline-flex rounded-full border border-leaf/30 bg-leaf/15 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-leaf">
+                  <div className="absolute inset-0 flex min-h-0 flex-col justify-between overflow-hidden rounded-[1.25rem] border border-leaf/20 bg-gradient-to-br from-emerald-50 via-leaf-soft/60 to-white p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] [transform:rotateY(180deg)] backface-hidden sm:p-7">
+                    <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
+                      <span className="inline-flex rounded-full border border-ink/10 bg-ink/[0.03] px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-muted">
                         {labels.deckStudyFaceBack}
                       </span>
-                      {/* Answer with slide-in animation */}
-                      <div className={flipped ? "fc-answer-enter" : ""}>
-                        <p className="mt-5 text-xl font-bold leading-relaxed text-ink sm:text-2xl">{current.backText}</p>
+                      <div
+                        className={cn(
+                          "mt-4 grid gap-4",
+                          showCardImage
+                            ? "sm:grid-cols-[minmax(0,1fr)_minmax(13rem,40%)] sm:items-center"
+                            : "min-h-[18rem] place-items-center text-center sm:min-h-[20rem]"
+                        )}
+                      >
+                        {/* Answer with slide-in animation */}
+                        <div className={cn("min-w-0", flipped ? "fc-answer-enter" : "", !showCardImage && "mx-auto max-w-[34rem]")}>
+                          <p
+                            className={cn(
+                              "whitespace-pre-wrap break-words font-black leading-relaxed text-ink [overflow-wrap:anywhere]",
+                              backTextClass
+                            )}
+                          >
+                            {current.backText}
+                          </p>
+                          <div className="mt-5 rounded-2xl border border-leaf/15 bg-white/55 px-4 py-3 text-left">
+                            <p className="jp-text text-sm font-bold leading-relaxed text-ink" lang="ja">
+                              {current.frontText}
+                            </p>
+                            {current.reading ? (
+                              <p className="jp-text mt-1 text-xs font-semibold leading-relaxed text-muted" lang="ja">
+                                {current.reading}
+                              </p>
+                            ) : null}
+                          </div>
+                        </div>
+                        {showCardImage && primaryImageUrl ? (
+                          <MediaStage alt={current.frontText} compact src={primaryImageUrl} />
+                        ) : null}
                       </div>
                     </div>
-                    <div className="mt-4 flex items-center justify-center gap-2 border-t border-leaf/15 pt-3">
+                    <div className="mt-4 flex shrink-0 items-center justify-center gap-2 border-t border-leaf/15 pt-3">
                       <span className="text-xs text-muted/50">↻</span>
                       <p className="text-[11px] font-semibold text-muted/60">
                         {labels.deckStudyTapToFlip}
@@ -574,6 +697,20 @@ export function DeckStudySession({
                 </div>
               </button>
             </div>
+
+            {primaryAudioUrl ? (
+              <div className="mt-4 rounded-2xl border border-ink/10 bg-white/80 px-3 py-2 shadow-sm">
+                <audio
+                  className="h-9 w-full"
+                  controls
+                  controlsList="nodownload"
+                  preload="none"
+                  src={primaryAudioUrl}
+                >
+                  <track kind="captions" />
+                </audio>
+              </div>
+            ) : null}
 
             {/* ── Shiba companion ── */}
             {mentorState ? (
@@ -706,13 +843,26 @@ export function DeckStudySession({
                           </p>
                         ) : null}
                       </div>
-                      <button
-                        className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-xl border border-ink/12 bg-surface px-3 text-xs font-black text-ink outline-none ring-offset-2 transition hover:bg-white focus-visible:ring-2 focus-visible:ring-accent"
-                        onClick={() => void copyExample(example)}
-                        type="button"
-                      >
-                        {copiedExampleId === example.id ? labels.exampleCopied : labels.exampleCopy}
-                      </button>
+                      <div className="flex shrink-0 flex-wrap gap-2">
+                        <button
+                          aria-label={labels.exampleRead}
+                          className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-ink/12 bg-surface text-ink outline-none ring-offset-2 transition hover:bg-white focus-visible:ring-2 focus-visible:ring-accent"
+                          onClick={() => readJapanese(example.japaneseText)}
+                          title={labels.exampleRead}
+                          type="button"
+                        >
+                          <VolumeIcon />
+                        </button>
+                        <button
+                          aria-label={copiedExampleId === example.id ? labels.exampleCopied : labels.exampleCopy}
+                          className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-ink/12 bg-surface text-ink outline-none ring-offset-2 transition hover:bg-white focus-visible:ring-2 focus-visible:ring-accent"
+                          onClick={() => void copyExample(example)}
+                          title={copiedExampleId === example.id ? labels.exampleCopied : labels.exampleCopy}
+                          type="button"
+                        >
+                          {copiedExampleId === example.id ? <CheckIcon /> : <CopyIcon />}
+                        </button>
+                      </div>
                     </div>
                   </li>
                 ))}
@@ -738,6 +888,163 @@ export function DeckStudySession({
       setCopiedExampleId(null);
     }
   }
+}
+
+function ToolButton({
+  active,
+  ariaPressed,
+  disabled,
+  icon,
+  label,
+  onClick,
+}: {
+  active?: boolean;
+  ariaPressed?: boolean;
+  disabled?: boolean;
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      aria-label={label}
+      aria-pressed={ariaPressed ? Boolean(active) : undefined}
+      className={cn(
+        "inline-flex h-10 w-10 items-center justify-center rounded-xl border text-ink outline-none ring-offset-2 transition focus-visible:ring-2 focus-visible:ring-accent disabled:pointer-events-none disabled:opacity-35",
+        active
+          ? "border-accent/35 bg-accent-soft/70 shadow-sm"
+          : "border-ink/10 bg-paper hover:bg-white"
+      )}
+      disabled={disabled}
+      onClick={onClick}
+      title={label}
+      type="button"
+    >
+      {icon}
+    </button>
+  );
+}
+
+function MediaStage({
+  alt,
+  compact,
+  priority,
+  src,
+}: {
+  alt: string;
+  compact?: boolean;
+  priority?: boolean;
+  src: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex w-full items-center justify-center overflow-hidden rounded-2xl border border-ink/10 bg-white/80 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]",
+        compact
+          ? "h-[clamp(8rem,24vh,13rem)]"
+          : "h-[clamp(10rem,30vh,16rem)]"
+      )}
+    >
+      <img
+        alt={alt}
+        className="h-full w-full object-contain"
+        loading={priority ? "eager" : "lazy"}
+        src={src}
+      />
+    </div>
+  );
+}
+
+function cardPromptTextClass(text: string) {
+  const length = [...text.trim()].length;
+  if (length > 120) return "text-xl sm:text-2xl";
+  if (length > 72) return "text-2xl sm:text-3xl";
+  if (length > 32) return "text-3xl sm:text-4xl";
+  if (length > 8) return "text-5xl sm:text-6xl";
+  return "text-6xl sm:text-7xl";
+}
+
+function cardAnswerTextClass(text: string) {
+  const length = [...text.trim()].length;
+  if (length > 220) return "text-sm sm:text-base";
+  if (length > 120) return "text-base sm:text-lg";
+  if (length > 64) return "text-lg sm:text-xl";
+  if (length > 24) return "text-2xl sm:text-3xl";
+  return "text-3xl sm:text-4xl";
+}
+
+function IconBase({ children }: { children: React.ReactNode }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+    >
+      {children}
+    </svg>
+  );
+}
+
+function VolumeIcon() {
+  return (
+    <IconBase>
+      <path d="M11 5 6 9H3v6h3l5 4V5Z" />
+      <path d="M15.5 8.5a5 5 0 0 1 0 7" />
+      <path d="M18.5 5.5a9 9 0 0 1 0 13" />
+    </IconBase>
+  );
+}
+
+function ImageIcon() {
+  return (
+    <IconBase>
+      <rect height="16" rx="2" width="18" x="3" y="4" />
+      <circle cx="8.5" cy="9" r="1.5" />
+      <path d="m21 15-5-5L5 21" />
+    </IconBase>
+  );
+}
+
+function ImageOffIcon() {
+  return (
+    <IconBase>
+      <path d="m2 2 20 20" />
+      <path d="M10.4 4H19a2 2 0 0 1 2 2v8.6" />
+      <path d="M16.8 16.8 15 15l-2 2-3-3-5 5" />
+      <path d="M3 6.2V19a2 2 0 0 0 2 2h12.8" />
+    </IconBase>
+  );
+}
+
+function CopyIcon() {
+  return (
+    <IconBase>
+      <rect height="14" rx="2" width="14" x="8" y="8" />
+      <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+    </IconBase>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <IconBase>
+      <path d="m20 6-11 11-5-5" />
+    </IconBase>
+  );
+}
+
+function readJapanese(text: string) {
+  if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = "ja-JP";
+  utterance.rate = 0.9;
+  window.speechSynthesis.speak(utterance);
 }
 
 function sourceLabel(kind: DeckStudyExample["sourceKind"], labels: DeckStudySessionLabels) {

@@ -11,7 +11,8 @@ import {
   previewGenCountSchema,
   reviewBatchSchema,
   submitReviewSchema,
-  suggestCardsSchema
+  suggestCardsSchema,
+  updateDeckSchema
 } from "@nihongo-bjt/shared";
 import {
   BadRequestException,
@@ -21,6 +22,7 @@ import {
   Get,
   Inject,
   Param,
+  Patch,
   Post,
   Query,
   UseGuards
@@ -117,6 +119,23 @@ export class FlashcardsController {
     }
 
     return this.flashcardsRepository.createDeck(parsed.data);
+  }
+
+  @Patch("decks/:deckId")
+  @ApiOperation({ summary: "Update learner-owned deck metadata and cards." })
+  @ApiParam({ name: "deckId" })
+  updateOwnedDeck(
+    @CurrentUser() user: KeycloakAuthenticatedUser | undefined,
+    @Param("deckId") deckId: string,
+    @Body() body: unknown
+  ) {
+    const raw = body as Record<string, unknown>;
+    const userId = resolveLearnerUserId(user, raw.userId as string | undefined, { required: true })!;
+    const parsed = updateDeckSchema.safeParse({ ...raw, userId });
+    if (!parsed.success) {
+      throw new BadRequestException(parsed.error.flatten());
+    }
+    return this.flashcardsRepository.updateOwnedDeckForLearner(userId, deckId.trim(), parsed.data);
   }
 
   @Post("decks/generate")

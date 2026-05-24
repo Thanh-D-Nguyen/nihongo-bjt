@@ -52,6 +52,7 @@ export interface DeckComposerLabels {
   composerRowImageUrlPlaceholder: string;
   composerDuplicateHint: string;
   composerSearchPlaceholder: string;
+  composerSave: string;
   composerShortcutsBody: string;
   composerShortcutsTitle: string;
   composerSwapSides: string;
@@ -97,6 +98,7 @@ export interface DeckComposerLabels {
   createDeckTitle: string;
   descLabel: string;
   descPlaceholder: string;
+  editDeckTitle: string;
   error: string;
   private: string;
   public: string;
@@ -108,11 +110,29 @@ export interface DeckComposerLabels {
 
 type DraftRow = {
   back: string;
+  cardId?: string;
+  deckCardId?: string;
   front: string;
   id: string;
   imageAssetId: string | null;
   imageUrl: string;
   reading: string;
+};
+
+export type DeckComposerInitialData = {
+  cards: Array<{
+    backText: string;
+    cardId: string;
+    deckCardId: string;
+    frontText: string;
+    primaryImageAssetId?: string | null;
+    reading: string | null;
+  }>;
+  deckId: string;
+  descriptionVi?: string | null;
+  titleJa?: string | null;
+  titleVi: string;
+  visibility: string;
 };
 
 function emptyRow(): DraftRow {
@@ -157,22 +177,42 @@ const inputClass =
   "min-h-11 w-full rounded-xl border border-ink/12 bg-paper/60 px-3 text-sm text-ink outline-none focus:border-leaf focus:ring-1 focus:ring-leaf";
 
 export function DeckComposerPanel({
+  initialData,
   labels,
+  mode = "create",
   onCancel,
   onSuccess,
   userId
 }: {
+  initialData?: DeckComposerInitialData;
   labels: DeckComposerLabels;
+  mode?: "create" | "edit";
   onCancel: () => void;
   onSuccess: (opts: { startReview: boolean }) => void | Promise<void>;
   userId: string;
 }) {
   const formId = useId();
-  const [titleVi, setTitleVi] = useState("");
-  const [titleJa, setTitleJa] = useState("");
-  const [descVi, setDescVi] = useState("");
-  const [visibility, setVisibility] = useState<"private" | "public">("private");
-  const [rows, setRows] = useState<DraftRow[]>(() => [emptyRow(), emptyRow(), emptyRow()]);
+  const isEdit = mode === "edit";
+  const initialRows = useMemo<DraftRow[]>(() => {
+    if (!initialData?.cards.length) return [emptyRow(), emptyRow(), emptyRow()];
+    return initialData.cards.map((card) => ({
+      back: card.backText,
+      cardId: card.cardId,
+      deckCardId: card.deckCardId,
+      front: card.frontText,
+      id: card.deckCardId,
+      imageAssetId: card.primaryImageAssetId ?? null,
+      imageUrl: "",
+      reading: card.reading ?? ""
+    }));
+  }, [initialData]);
+  const [titleVi, setTitleVi] = useState(initialData?.titleVi ?? "");
+  const [titleJa, setTitleJa] = useState(initialData?.titleJa ?? "");
+  const [descVi, setDescVi] = useState(initialData?.descriptionVi ?? "");
+  const [visibility, setVisibility] = useState<"private" | "public">(
+    initialData?.visibility === "public" ? "public" : "private"
+  );
+  const [rows, setRows] = useState<DraftRow[]>(() => initialRows);
   const [search, setSearch] = useState("");
   const [importOpen, setImportOpen] = useState(false);
   const [importText, setImportText] = useState("");
@@ -245,6 +285,7 @@ export function DeckComposerPanel({
   // ── Auto-save draft to localStorage ──
   const draftKey = `nihongo_deck_draft_${userId}`;
   useEffect(() => {
+    if (isEdit) return;
     try {
       const saved = localStorage.getItem(draftKey);
       if (saved) {
@@ -258,16 +299,17 @@ export function DeckComposerPanel({
       }
     } catch { /* ignore corrupt draft */ }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isEdit]);
 
   useEffect(() => {
+    if (isEdit) return;
     const timer = setTimeout(() => {
       try {
         localStorage.setItem(draftKey, JSON.stringify({ descVi, emoji: deckEmoji, rows, titleJa, titleVi, visibility }));
       } catch { /* quota */ }
     }, 800);
     return () => clearTimeout(timer);
-  }, [titleVi, titleJa, descVi, visibility, rows, deckEmoji, draftKey]);
+  }, [titleVi, titleJa, descVi, visibility, rows, deckEmoji, draftKey, isEdit]);
 
   const filteredIndexes = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -389,6 +431,8 @@ export function DeckComposerPanel({
       const cards = rows
         .map((r) => ({
           backText: r.back.trim(),
+          cardId: r.cardId,
+          deckCardId: r.deckCardId,
           frontText: r.front.trim(),
           imageUrl: r.imageUrl.trim() || undefined,
           primaryImageAssetId: r.imageAssetId || undefined,
@@ -413,7 +457,11 @@ export function DeckComposerPanel({
           }
           return rest;
         });
-        const http = await learnerApiFetch("/api/flashcards/decks", {
+        const http = await learnerApiFetch(
+          isEdit && initialData
+            ? `/api/flashcards/decks/${encodeURIComponent(initialData.deckId)}`
+            : "/api/flashcards/decks",
+          {
           body: JSON.stringify({
             cards: filtered,
             descriptionVi: descVi.trim() || undefined,
@@ -423,10 +471,11 @@ export function DeckComposerPanel({
             visibility
           }),
           headers: { "Content-Type": "application/json" },
-          method: "POST"
-        });
-        if (!http.ok) throw new Error("create_failed");
-        resetForm();
+          method: isEdit ? "PATCH" : "POST"
+          }
+        );
+        if (!http.ok) throw new Error(isEdit ? "update_failed" : "create_failed");
+        if (!isEdit) resetForm();
         await onSuccess({ startReview });
       } catch {
         setError(labels.error);
@@ -438,6 +487,8 @@ export function DeckComposerPanel({
     [
       descVi,
       labels,
+      initialData,
+      isEdit,
       onSuccess,
       resetForm,
       rows,
@@ -500,11 +551,13 @@ export function DeckComposerPanel({
         onClick={() => void submit(false)}
         type="button"
       >
-        {submitting ? labels.composerCreating : labels.composerCreate}
+        {submitting ? labels.composerCreating : isEdit ? labels.composerSave : labels.composerCreate}
       </button>
-      <button className={btnPrimary} disabled={submitting} onClick={() => void submit(true)} type="button">
-        {submitting ? labels.composerCreating : labels.composerCreateAndPractice}
-      </button>
+      {!isEdit ? (
+        <button className={btnPrimary} disabled={submitting} onClick={() => void submit(true)} type="button">
+          {submitting ? labels.composerCreating : labels.composerCreateAndPractice}
+        </button>
+      ) : null}
     </div>
   );
 
@@ -515,7 +568,7 @@ export function DeckComposerPanel({
         <div className="min-w-0">
           <p className="text-[10px] font-black uppercase tracking-widest text-leaf">{labels.composerHeadline}</p>
           <h2 className="mt-1 text-lg font-black text-ink sm:text-xl" id={`${formId}-title`}>
-            {labels.createDeckTitle}
+            {isEdit ? labels.editDeckTitle : labels.createDeckTitle}
           </h2>
         </div>
         {actionBar()}
@@ -569,7 +622,7 @@ export function DeckComposerPanel({
         </div>
 
         {/* ── Templates ── */}
-        <div className="flex flex-wrap items-center gap-2">
+        {!isEdit ? <div className="flex flex-wrap items-center gap-2">
           {[
             { label: labels.composerTemplateVocab, front: "日本語の単語…", back: "Nghĩa tiếng Việt…", reading: "ひらがな…" },
             { label: labels.composerTemplateKanji, front: "漢字", back: "Nghĩa + cách đọc…", reading: "おんよみ / くんよみ" },
@@ -595,7 +648,7 @@ export function DeckComposerPanel({
               {tpl.label}
             </button>
           ))}
-        </div>
+        </div> : null}
 
         <div className="space-y-3">
           <div>

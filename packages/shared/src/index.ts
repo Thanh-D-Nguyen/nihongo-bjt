@@ -213,48 +213,40 @@ const bulkDeckCardRowSchema = z.object({
   reading: z.string().trim().max(300).optional()
 });
 
-export const createDeckSchema = z
-  .object({
-    cards: z.array(bulkDeckCardRowSchema).max(200).optional(),
-    descriptionJa: z.string().trim().max(500).optional(),
-    descriptionVi: z.string().trim().max(500).optional(),
-    titleJa: z.string().trim().min(1).max(120).optional(),
-    titleVi: z.string().trim().min(1).max(120),
-    userId: z.uuid(),
-    visibility: z.enum(["private", "public"]).default("private")
-  })
-  .superRefine((data, ctx) => {
-    data.cards?.forEach((row, i) => {
-      if (row.primaryImageAssetId && row.imageUrl?.trim()) {
+function refineDeckCardImages(data: { cards?: Array<{ imageUrl?: string; primaryImageAssetId?: string }> }, ctx: z.RefinementCtx) {
+  data.cards?.forEach((row, i) => {
+    if (row.primaryImageAssetId && row.imageUrl?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "use either imageUrl or primaryImageAssetId per card",
+        path: ["cards", i, "imageUrl"]
+      });
+    }
+    const u = row.imageUrl?.trim();
+    if (!u) {
+      return;
+    }
+    try {
+      const parsed = new URL(u);
+      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "use either imageUrl or primaryImageAssetId per card",
+          message: "imageUrl must be http(s)",
           path: ["cards", i, "imageUrl"]
         });
       }
-      const u = row.imageUrl?.trim();
-      if (!u) {
-        return;
-      }
-      try {
-        const parsed = new URL(u);
-        if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "imageUrl must be http(s)",
-            path: ["cards", i, "imageUrl"]
-          });
-        }
-      } catch {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "invalid imageUrl",
-          path: ["cards", i, "imageUrl"]
-        });
-      }
-    });
-  })
-  .transform((d) => ({
+    } catch {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "invalid imageUrl",
+        path: ["cards", i, "imageUrl"]
+      });
+    }
+  });
+}
+
+function normalizeDeckCards<T extends { cards?: Array<{ imageUrl?: string; primaryImageAssetId?: string; reading?: string }> }>(d: T): T {
+  return {
     ...d,
     cards: d.cards?.map((c) => ({
       ...c,
@@ -262,7 +254,34 @@ export const createDeckSchema = z
       primaryImageAssetId: c.primaryImageAssetId,
       reading: c.reading?.trim() ? c.reading.trim() : undefined
     }))
-  }));
+  };
+}
+
+const createDeckBaseSchema = z.object({
+    cards: z.array(bulkDeckCardRowSchema).max(200).optional(),
+    descriptionJa: z.string().trim().max(500).optional(),
+    descriptionVi: z.string().trim().max(500).optional(),
+    titleJa: z.string().trim().min(1).max(120).optional(),
+    titleVi: z.string().trim().min(1).max(120),
+    userId: z.uuid(),
+    visibility: z.enum(["private", "public"]).default("private")
+  });
+
+export const createDeckSchema = createDeckBaseSchema
+  .superRefine(refineDeckCardImages)
+  .transform(normalizeDeckCards);
+
+const updateDeckCardRowSchema = bulkDeckCardRowSchema.extend({
+  cardId: z.uuid().optional(),
+  deckCardId: z.uuid().optional()
+});
+
+export const updateDeckSchema = createDeckBaseSchema
+  .extend({
+    cards: z.array(updateDeckCardRowSchema).max(200).optional()
+  })
+  .superRefine(refineDeckCardImages)
+  .transform(normalizeDeckCards);
 
 export const cloneDeckSchema = z.object({
   userId: z.uuid(),

@@ -5,7 +5,8 @@ import {
   createDeckSchema,
   flashcardsDueQuerySchema,
   flashcardsUserScopedQuerySchema,
-  submitReviewSchema
+  submitReviewSchema,
+  updateDeckSchema
 } from "@nihongo-bjt/shared";
 import {
   BadRequestException,
@@ -16,6 +17,7 @@ import {
   Inject,
   Logger,
   Param,
+  Patch,
   Post,
   Query,
   UseGuards
@@ -70,12 +72,27 @@ export class DecksController {
     return this.repo.createDeck(parsed.data);
   }
 
+  @Patch(":id")
+  @ApiOperation({ summary: "Update learner-owned deck metadata and cards." })
+  @ApiParam({ name: "id" })
+  updateOwnedDeck(
+    @CurrentUser() user: KeycloakAuthenticatedUser | undefined,
+    @Param("id") id: string,
+    @Body() body: unknown
+  ) {
+    const raw = body as Record<string, unknown>;
+    const userId = resolveLearnerUserId(user, raw.userId as string | undefined, { required: true })!;
+    const parsed = updateDeckSchema.safeParse({ ...raw, userId });
+    if (!parsed.success) throw new BadRequestException(parsed.error.flatten());
+    return this.repo.updateOwnedDeckForLearner(userId, id.trim(), parsed.data);
+  }
+
   @Get(":id")
   @ApiOperation({ summary: "Canonical v15 deck detail." })
   @ApiParam({ name: "id" })
   detail(@CurrentUser() user: KeycloakAuthenticatedUser | undefined, @Param("id") id: string, @Query() query: Record<string, string | undefined>) {
     const userId = resolveLearnerUserId(user, query.userId, { required: true })!;
-    return this.repo.deckDetail(userId, id);
+    return this.service.deckDetailForLearner(userId, id);
   }
 
   @Delete(":id")

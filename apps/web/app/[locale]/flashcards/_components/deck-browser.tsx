@@ -53,13 +53,19 @@ export type DeckLabels = DeckComposerLabels & {
   deckStudyNext: string;
   deckStudyPrev: string;
   deckStudyProgressTpl: string;
+  deckStudyAutoRead: string;
+  deckStudyHideImages: string;
+  deckStudyReadCard: string;
+  deckStudyShowImages: string;
   deckStudyTapToFlip: string;
+  deckStudyToolsAria: string;
   deckStudyExampleCopied: string;
   deckStudyExampleCopy: string;
   deckStudyExampleEmpty: string;
   deckStudyExampleFilterPlaceholder: string;
   deckStudyExampleHeading: string;
   deckStudyExampleManage: string;
+  deckStudyExampleRead: string;
   deckStudyExampleSourceGrammar: string;
   deckStudyExampleSourceKanji: string;
   deckStudyExampleSourceLexeme: string;
@@ -93,6 +99,8 @@ export type DeckLabels = DeckComposerLabels & {
   deleteOwnedDeckConfirmTitle: string;
   deleteOwnedDeckDeleting: string;
   deleteOwnedDeckError: string;
+  editDeck: string;
+  editDeckTitle: string;
   empty: string;
   emptyMy: string;
   emptyMyHint: string;
