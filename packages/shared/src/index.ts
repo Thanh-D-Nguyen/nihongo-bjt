@@ -1468,7 +1468,7 @@ export const adminAnalyticsExecutiveQuerySchema = z.object({
   segment: z.enum(["all", "new", "returning"]).default("all")
 });
 
-export const dailyLocaleSchema = z.enum(["vi", "ja"]);
+export const dailyLocaleSchema = z.enum(["vi", "ja", "en"]);
 
 export const dailyHomeQuerySchema = z.object({
   locale: dailyLocaleSchema.default("vi"),

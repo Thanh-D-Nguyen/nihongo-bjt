@@ -2,13 +2,14 @@ import { isSupportedLocale, type SupportedLocale } from "@nihongo-bjt/config";
 import { isAccessTokenUsable } from "@nihongo-bjt/keycloak-oidc";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
+import en from "../../messages/en.json";
 import ja from "../../messages/ja.json";
 import vi from "../../messages/vi.json";
 import { adminKcCookies } from "../../lib/kc-cookies";
 import { AdminKeycloakSessionGate } from "../_components/admin-keycloak-session-gate";
 import { AdminShellClient } from "../_components/admin-shell-client";
 
-const messages = { ja, vi };
+const messages = { ja, vi, en };
 
 // Force dynamic rendering so server-side cookie reads reflect
 // the freshly-set Set-Cookie from POST /api/auth/keycloak/password-login on the
@@ -18,22 +19,10 @@ const messages = { ja, vi };
 export const dynamic = "force-dynamic";
 
 export function generateStaticParams() {
-  // Only vi/ja are first-class admin locales. `en` is accepted at runtime as a
-  // login-screen-only fallback (see below); we deliberately do not pre-render
-  // English admin shells.
-  return [{ locale: "vi" }, { locale: "ja" }];
+  return [{ locale: "vi" }, { locale: "ja" }, { locale: "en" }];
 }
 
-// Locales accepted at runtime. `en` is permitted so that the unauthenticated
-// /en/login route can serve an English login screen; the shell strings on
-// non-public /en/* routes will fall back to vi labels (the gate redirects
-// unauthenticated visitors to /en/login before they ever see the shell).
-const RUNTIME_LOCALES = ["vi", "ja", "en"] as const;
-type RuntimeLocale = (typeof RUNTIME_LOCALES)[number];
-
-function isRuntimeLocale(value: string): value is RuntimeLocale {
-  return (RUNTIME_LOCALES as readonly string[]).includes(value);
-}
+// All supported locales are fully accepted at runtime.
 
 export default async function AdminLayout({
   children,
@@ -43,15 +32,11 @@ export default async function AdminLayout({
   params: Promise<{ locale: string }>;
 }>) {
   const { locale } = await params;
-  if (!isRuntimeLocale(locale)) {
+  if (!isSupportedLocale(locale)) {
     notFound();
   }
 
-  // Shell chrome strings only exist for vi/ja. For `en` (login-only), fall back
-  // to vi so the shared session-gate busy label still renders sensibly if the
-  // gate ever runs on /en/* during transitions.
-  const shellLoc: SupportedLocale = isSupportedLocale(locale) ? (locale as SupportedLocale) : "vi";
-  const t = messages[shellLoc] ?? messages.vi;
+  const t = messages[locale as SupportedLocale] ?? messages.vi;
 
   const chrome = {
     brand: t.shell.brand,

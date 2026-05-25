@@ -1,11 +1,12 @@
 import Link from "next/link";
 
+import en from "../../../../messages/en.json";
 import ja from "../../../../messages/ja.json";
 import vi from "../../../../messages/vi.json";
 import { RequireKeycloakAuth } from "../../../../components/auth/require-keycloak-auth";
 import { NotificationsSettingsClient } from "./_components/notifications-settings-client";
 
-const messages = { ja, vi };
+const messages = { ja, vi, en };
 
 export default async function NotificationsSettingsPage({
   params

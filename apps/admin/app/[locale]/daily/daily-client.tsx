@@ -57,7 +57,7 @@ export function DailyAdminClient({
   locale
 }: {
   labels: DailyAdminLabels;
-  locale: "vi" | "ja";
+  locale: string;
 }) {
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);

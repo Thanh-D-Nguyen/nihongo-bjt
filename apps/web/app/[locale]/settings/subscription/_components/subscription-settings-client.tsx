@@ -5,10 +5,13 @@ import { useCallback, useEffect, useState } from "react";
 
 import { useKeycloakAuth } from "../../../../../components/auth/keycloak-auth-provider";
 import { learnerApiFetch } from "../../../../../lib/learner-api";
+import { toIntlLocale } from "@/lib/locale-utils";
 
 type SubscriptionData = {
   planSlug: string;
   planName: string;
+  planNameVi?: string;
+  planNameJa?: string;
   source: "subscription" | "default";
   status: string | null;
   currentPeriodEnd: string | null;
@@ -40,6 +43,43 @@ type Labels = {
   canceled: string;
 };
 
+const ENTITLEMENT_LABELS: Record<string, Record<string, string>> = {
+  vi: {
+    "learner.basic": "Tính năng học cơ bản",
+    "flashcard.deck.create": "Tạo bộ thẻ",
+    "flashcard.suggest_cards": "Gợi ý thẻ AI",
+    "flashcard.adaptive_gen": "Tạo thẻ thích ứng",
+    "quiz.bjt.start": "Làm bài kiểm tra BJT",
+    "quiz.official_simulation": "Mô phỏng BJT chính thức",
+    "ads.remove": "Xóa hoàn toàn quảng cáo",
+    "ads.reduced": "Giảm quảng cáo",
+  },
+  ja: {
+    "learner.basic": "基本学習機能",
+    "flashcard.deck.create": "デッキ作成",
+    "flashcard.suggest_cards": "AIカード提案",
+    "flashcard.adaptive_gen": "アダプティブ生成",
+    "quiz.bjt.start": "BJTクイズ",
+    "quiz.official_simulation": "公式BJTシミュレーション",
+    "ads.remove": "広告完全非表示",
+    "ads.reduced": "広告削減",
+  },
+};
+
+const QUOTA_LABELS: Record<string, Record<string, string>> = {
+  vi: {
+    "flashcard_reviews_per_day": "Ôn tập thẻ flashcard",
+  },
+  ja: {
+    "flashcard_reviews_per_day": "フラッシュカード復習",
+  },
+};
+
+const WINDOW_LABELS: Record<string, Record<string, string>> = {
+  vi: { day: "ngày", week: "tuần", month: "tháng" },
+  ja: { day: "日", week: "週", month: "月" },
+};
+
 export function SubscriptionSettingsClient({ labels, locale }: { labels: Labels; locale: string }) {
   const { userId } = useKeycloakAuth();
   const [data, setData] = useState<SubscriptionData | null>(null);
@@ -48,6 +88,10 @@ export function SubscriptionSettingsClient({ labels, locale }: { labels: Labels;
   const [canceling, setCanceling] = useState(false);
   const [cancelSuccess, setCancelSuccess] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+
+  const entitlementLabel = (key: string) => ENTITLEMENT_LABELS[locale]?.[key] ?? ENTITLEMENT_LABELS.vi[key] ?? key;
+  const quotaLabel = (key: string) => QUOTA_LABELS[locale]?.[key] ?? QUOTA_LABELS.vi[key] ?? key;
+  const windowLabel = (w: string) => WINDOW_LABELS[locale]?.[w] ?? WINDOW_LABELS.vi[w] ?? w;
 
   const load = useCallback(async () => {
     if (!userId) { setLoading(false); return; }
@@ -115,7 +159,7 @@ export function SubscriptionSettingsClient({ labels, locale }: { labels: Labels;
   }
 
   const isFree = data.source === "default";
-  const periodEnd = data.currentPeriodEnd ? new Date(data.currentPeriodEnd).toLocaleDateString(locale === "ja" ? "ja-JP" : "vi-VN") : null;
+  const periodEnd = data.currentPeriodEnd ? new Date(data.currentPeriodEnd).toLocaleDateString(toIntlLocale(locale)) : null;
 
   return (
     <main className="w-full space-y-6 pb-12">
@@ -127,7 +171,7 @@ export function SubscriptionSettingsClient({ labels, locale }: { labels: Labels;
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest text-muted">{labels.currentPlan}</p>
-            <h2 className="mt-1 text-xl font-bold text-ink">{data.planName}</h2>
+            <h2 className="mt-1 text-xl font-bold text-ink">{locale === "ja" ? (data.planNameJa ?? data.planName) : (data.planNameVi ?? data.planName)}</h2>
           </div>
           {!isFree && (
             <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
@@ -155,7 +199,7 @@ export function SubscriptionSettingsClient({ labels, locale }: { labels: Labels;
               {data.entitlements.map((e) => (
                 <li key={e} className="flex items-center gap-2 text-sm text-ink">
                   <span className="h-1.5 w-1.5 rounded-full bg-leaf" />
-                  {e}
+                  {entitlementLabel(e)}
                 </li>
               ))}
             </ul>
@@ -170,7 +214,7 @@ export function SubscriptionSettingsClient({ labels, locale }: { labels: Labels;
               {data.quotas.map((q) => (
                 <li key={q.key} className="flex items-center gap-2 text-sm text-ink">
                   <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-                  {q.key}: {q.limit === 999999 ? labels.unlimited : `${q.limit}/${q.window}`}
+                  {quotaLabel(q.key)}: {q.limit >= 999999 ? labels.unlimited : `${q.limit}/${windowLabel(q.window)}`}
                 </li>
               ))}
             </ul>

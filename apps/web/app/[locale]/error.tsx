@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 const copy = {
   vi: { title: "Đã xảy ra lỗi", desc: "Xin lỗi, có lỗi xảy ra. Vui lòng thử lại.", retry: "Thử lại" },
   ja: { title: "エラーが発生しました", desc: "申し訳ございません。もう一度お試しください。", retry: "再試行" },
+  en: { title: "Something went wrong", desc: "Sorry, an error occurred. Please try again.", retry: "Retry" },
 };
 
 export default function LocaleError({
@@ -14,8 +15,8 @@ export default function LocaleError({
   reset: () => void;
 }) {
   const params = useParams();
-  const locale = (params?.locale as string) === "ja" ? "ja" : "vi";
-  const t = copy[locale];
+  const locale = (params?.locale as string) ?? "vi";
+  const t = copy[locale as keyof typeof copy] ?? copy.vi;
 
   return (
     <main className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">

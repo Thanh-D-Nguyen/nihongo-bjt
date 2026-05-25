@@ -813,6 +813,7 @@ exports.Prisma.UserProfileScalarFieldEnum = {
   themeMode: 'themeMode',
   fontSizePreference: 'fontSizePreference',
   densityPreference: 'densityPreference',
+  flashcardStyleSlug: 'flashcardStyleSlug',
   privacyLevel: 'privacyLevel',
   adsPersonalizationOptIn: 'adsPersonalizationOptIn',
   sharePostcardOptIn: 'sharePostcardOptIn',
@@ -1002,6 +1003,71 @@ exports.Prisma.DailyUserActionScalarFieldEnum = {
   actionType: 'actionType',
   payload: 'payload',
   createdAt: 'createdAt'
+};
+
+exports.Prisma.MagazineArticleScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  widgetKind: 'widgetKind',
+  contentDate: 'contentDate',
+  locale: 'locale',
+  titleJp: 'titleJp',
+  titleVi: 'titleVi',
+  summaryJp: 'summaryJp',
+  summaryVi: 'summaryVi',
+  coverImageUrl: 'coverImageUrl',
+  contentJson: 'contentJson',
+  jlptLevel: 'jlptLevel',
+  sourceDataJson: 'sourceDataJson',
+  aiModel: 'aiModel',
+  generationCostTokens: 'generationCostTokens',
+  seoTitle: 'seoTitle',
+  seoDescription: 'seoDescription',
+  ogImageUrl: 'ogImageUrl',
+  status: 'status',
+  publishedAt: 'publishedAt',
+  expiresAt: 'expiresAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.MagazineVocabItemScalarFieldEnum = {
+  id: 'id',
+  articleId: 'articleId',
+  wordJp: 'wordJp',
+  reading: 'reading',
+  meaningVi: 'meaningVi',
+  pos: 'pos',
+  jlptLevel: 'jlptLevel',
+  sentenceJp: 'sentenceJp',
+  sentenceVi: 'sentenceVi',
+  displayOrder: 'displayOrder',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.MagazineQuizScalarFieldEnum = {
+  id: 'id',
+  articleId: 'articleId',
+  questionJp: 'questionJp',
+  questionVi: 'questionVi',
+  quizType: 'quizType',
+  options: 'options',
+  correctAnswer: 'correctAnswer',
+  explanationJp: 'explanationJp',
+  explanationVi: 'explanationVi',
+  displayOrder: 'displayOrder',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.MagazineUserReadScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  articleId: 'articleId',
+  readAt: 'readAt',
+  quizScore: 'quizScore',
+  quizTotal: 'quizTotal',
+  vocabSavedCount: 'vocabSavedCount',
+  timeSpentSeconds: 'timeSpentSeconds'
 };
 
 exports.Prisma.DailyRadarModuleConfigScalarFieldEnum = {
@@ -1855,6 +1921,14 @@ exports.Prisma.CompanionPetScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.PetCostumeInventoryScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  costumeSlug: 'costumeSlug',
+  obtainedFrom: 'obtainedFrom',
+  obtainedAt: 'obtainedAt'
+};
+
 exports.Prisma.SeasonalEventScalarFieldEnum = {
   id: 'id',
   slug: 'slug',
@@ -1896,6 +1970,20 @@ exports.Prisma.EventChallengeProgressScalarFieldEnum = {
   currentValue: 'currentValue',
   completed: 'completed',
   completedAt: 'completedAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.FlashcardStyleScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  nameKey: 'nameKey',
+  descriptionKey: 'descriptionKey',
+  thumbnailUrl: 'thumbnailUrl',
+  config: 'config',
+  tier: 'tier',
+  sortOrder: 'sortOrder',
+  status: 'status',
+  createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
 
@@ -2180,6 +2268,10 @@ exports.Prisma.ModelName = {
   DailyContentItem: 'DailyContentItem',
   DailyLearningExtraction: 'DailyLearningExtraction',
   DailyUserAction: 'DailyUserAction',
+  MagazineArticle: 'MagazineArticle',
+  MagazineVocabItem: 'MagazineVocabItem',
+  MagazineQuiz: 'MagazineQuiz',
+  MagazineUserRead: 'MagazineUserRead',
   DailyRadarModuleConfig: 'DailyRadarModuleConfig',
   DailyRadarCard: 'DailyRadarCard',
   PlacementTestSession: 'PlacementTestSession',
@@ -2250,10 +2342,12 @@ exports.Prisma.ModelName = {
   MysteryBoxReward: 'MysteryBoxReward',
   MysteryBoxClaim: 'MysteryBoxClaim',
   CompanionPet: 'CompanionPet',
+  PetCostumeInventory: 'PetCostumeInventory',
   SeasonalEvent: 'SeasonalEvent',
   EventChallenge: 'EventChallenge',
   EventParticipant: 'EventParticipant',
   EventChallengeProgress: 'EventChallengeProgress',
+  FlashcardStyle: 'FlashcardStyle',
   FlashcardGenRule: 'FlashcardGenRule',
   FlashcardGenJob: 'FlashcardGenJob',
   BjtLesson: 'BjtLesson',

@@ -63,6 +63,11 @@ const icons = {
       <path d="M9 12.75 11.25 15 15 9.75M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.2} />
     </svg>
   ),
+  newspaper: (
+    <svg className="size-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+      <path d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 0 0 2.25 2.25h13.5M6 7.5h3v3H6v-3Z" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} />
+    </svg>
+  ),
   user: (
     <svg className="size-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
       <path d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M4.5 19.128a9.38 9.38 0 0 0 2.625-.372m0 0a9.38 9.38 0 0 0-2.625-2.372m2.625 2.372a9.37 9.37 0 0 0 2.625-2.372m-2.625 2.372a9.37 9.37 0 0 1-2.625-2.372" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} />

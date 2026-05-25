@@ -221,7 +221,7 @@ export function UsersConsoleClient({
 }: {
   common: CommonLabels;
   form: UserFormLabels;
-  locale: "ja" | "vi";
+  locale: string;
   um: UserManagementLabels;
 }) {
   const t = (k: keyof UserManagementLabels | string) =>

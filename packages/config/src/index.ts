@@ -127,7 +127,7 @@ export function isPublicKeycloakEnabled(env: NodeJS.ProcessEnv = process.env): b
 }
 
 export const defaultLocale = "vi" as const;
-export const supportedLocales = ["vi", "ja"] as const;
+export const supportedLocales = ["vi", "ja", "en"] as const;
 export type SupportedLocale = (typeof supportedLocales)[number];
 
 export function isSupportedLocale(locale: string): locale is SupportedLocale {

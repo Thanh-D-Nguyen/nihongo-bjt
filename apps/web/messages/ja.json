@@ -173,7 +173,12 @@
       "onboardingNext": "次へ",
       "onboardingSkip": "スキップ",
       "onboardingFinish": "始める！"
-    }
+    },
+    "localeSwitcher": "言語",
+    "localeSwitcherAria": "表示言語を切り替える",
+    "localeVi": "Tiếng Việt",
+    "localeJa": "日本語",
+    "localeEn": "English"
   },
   "home": {
     "actionsLabel": "主な操作",
@@ -760,7 +765,16 @@
     "mentorMilestone5": "{n}枚連続正解！いいペースです！",
     "mentorMilestone10": "🔥 {n}枚連続 — 絶好調ですね！",
     "mentorMilestone25": "🏆 {n}枚！素晴らしい記録です！",
-    "streakLabel": "連続"
+    "streakLabel": "連続",
+    "stylePickerTitle": "カードスタイル",
+    "stylePickerDescription": "フラッシュカードの見た目を選択",
+    "stylePickerActive": "使用中",
+    "stylePickerSelect": "選択",
+    "stylePickerPremium": "プレミアム",
+    "stylePickerExclusive": "限定",
+    "stylePickerLocked": "アップグレードで解放",
+    "stylePickerFree": "無料",
+    "stylePickerApplied": "スタイル適用！"
   },
   "decks": {
     "title": "デッキ",
@@ -2118,23 +2132,23 @@
     "examplesLabel": "例文"
   },
   "appearancePage": {
-    "title": "\u5916\u89b3",
-    "subtitle": "\u30c6\u30fc\u30de\u3001\u30d5\u30a9\u30f3\u30c8\u30b5\u30a4\u30ba\u3001\u8868\u793a\u5bc6\u5ea6\u3092\u8abf\u6574\u3057\u307e\u3059\u3002",
-    "themeLabel": "\u30c6\u30fc\u30de",
-    "themeLight": "\u30e9\u30a4\u30c8",
-    "themeDark": "\u30c0\u30fc\u30af",
-    "themeSystem": "\u30b7\u30b9\u30c6\u30e0\u8a2d\u5b9a",
-    "fontSizeLabel": "\u65e5\u672c\u8a9e\u30d5\u30a9\u30f3\u30c8\u30b5\u30a4\u30ba",
-    "fontSizeSmall": "\u5c0f",
-    "fontSizeDefault": "\u6a19\u6e96",
-    "fontSizeLarge": "\u5927",
-    "fontSizeXl": "\u7279\u5927",
-    "densityLabel": "\u8868\u793a\u5bc6\u5ea6",
-    "densityCompact": "\u30b3\u30f3\u30d1\u30af\u30c8",
-    "densityComfortable": "\u3086\u3068\u308a",
-    "saved": "\u4fdd\u5b58\u3057\u307e\u3057\u305f\u3002",
-    "preview": "\u30d7\u30ec\u30d3\u30e5\u30fc",
-    "previewText": "\u65e5\u672c\u306e\u30d3\u30b8\u30cd\u30b9\u73b0\u5834\u3067\u306f\u3001\u6577\u8a9e\u3068\u8b19\u8b72\u8a9e\u306e\u4f7f\u3044\u5206\u3051\u304c\u5927\u5207\u3067\u3059\u3002"
+    "title": "外観",
+    "subtitle": "テーマ、フォントサイズ、表示密度を調整します。",
+    "themeLabel": "テーマ",
+    "themeLight": "ライト",
+    "themeDark": "ダーク",
+    "themeSystem": "システム設定",
+    "fontSizeLabel": "日本語フォントサイズ",
+    "fontSizeSmall": "小",
+    "fontSizeDefault": "標準",
+    "fontSizeLarge": "大",
+    "fontSizeXl": "特大",
+    "densityLabel": "表示密度",
+    "densityCompact": "コンパクト",
+    "densityComfortable": "ゆとり",
+    "saved": "保存しました。",
+    "preview": "プレビュー",
+    "previewText": "日本のビジネス现場では、敷語と謙譲語の使い分けが大切です。"
   },
   "announcements": {
     "close": "閉じる",
@@ -2154,7 +2168,9 @@
     "loading": "読み込み中...",
     "error": "プラン情報を読み込めませんでした。再度お試しください。",
     "backHome": "← ホームに戻る",
-    "enforcementOff": "現在は完全無料モードです。すべての機能がご利用いただけます。"
+    "enforcementOff": "現在は完全無料モードです。すべての機能がご利用いただけます。",
+    "checkoutLoading": "処理中...",
+    "checkoutError": "お支払い処理に失敗しました。もう一度お試しください。"
   },
   "subscription": {
     "title": "サブスクリプション",
@@ -2198,5 +2214,33 @@
     "stop": "集中モードを終了",
     "completed": "集中セッション完了！",
     "dismiss": "閉じる"
+  },
+  "magazine": {
+    "title": "デイリーマガジン",
+    "subtitle": "毎日楽しいコンテンツで日本語を学ぼう",
+    "filterAll": "すべて",
+    "filterVocab": "単語",
+    "filterWeather": "天気",
+    "filterHoroscope": "星占い",
+    "filterLoto": "ロト",
+    "filterBjt": "BJT",
+    "emptyTitle": "記事がまだありません",
+    "emptyDescription": "毎日新しいコンテンツが更新されます。また後でチェックしてください！",
+    "vocabSection": "この記事の単語",
+    "quizSection": "ミニクイズ",
+    "quizProgress": "問{current}/{total}",
+    "quizNext": "次へ →",
+    "quizResult": "結果を見る",
+    "quizComplete": "完了！",
+    "quizScore": "スコア：{score}/{total}",
+    "quizPerfect": "完璧！全問正解です！",
+    "quizGood": "よくできました！この調子で頑張りましょう！",
+    "quizTryAgain": "もう少し頑張りましょう！上の単語を復習してみてください。",
+    "todayTitle": "今日の記事",
+    "todayViewAll": "すべて見る →",
+    "readMore": "続きを読む",
+    "jlptBadge": "JLPT {level}",
+    "prevPage": "← 前へ",
+    "nextPage": "次へ →"
   }
 }

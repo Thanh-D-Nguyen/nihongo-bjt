@@ -6,6 +6,7 @@ import type { HomepageLabels } from "./types";
 import { getCurrentSeason, getSeasonTheme } from "./seasonal";
 import { HeroCitySilhouette } from "./illustrations/hero-city";
 import { SeasonalOverlay } from "./illustrations/seasonal-elements";
+import { toIntlLocale } from "@/lib/locale-utils";
 
 function getTimeOfDay(labels: HomepageLabels): string {
   const hour = new Date().getHours();
@@ -156,7 +157,7 @@ export function HeroSection({
 
               {/* Date */}
               <p className="mt-4 text-sm font-medium text-blue-200/60">
-                {new Date().toLocaleDateString(locale === "ja" ? "ja-JP" : "vi-VN", {
+                {new Date().toLocaleDateString(toIntlLocale(locale), {
                   weekday: "long",
                   month: "long",
                   day: "numeric"

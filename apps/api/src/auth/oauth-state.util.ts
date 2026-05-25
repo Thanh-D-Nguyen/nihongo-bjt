@@ -7,7 +7,7 @@ export interface GoogleOAuthStatePayload {
   n: string;
   ref?: string;
   /** UI locale for post-login redirect (default vi). */
-  locale?: "ja" | "vi";
+  locale?: "ja" | "vi" | "en";
 }
 
 export function signOAuthState(payload: GoogleOAuthStatePayload, secret: string): string {

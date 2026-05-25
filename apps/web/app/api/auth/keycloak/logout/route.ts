@@ -1,3 +1,4 @@
+import { isSupportedLocale } from "@nihongo-bjt/config";
 import { revokeKeycloakSession } from "@nihongo-bjt/keycloak-oidc";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
@@ -9,7 +10,8 @@ import { getKcWebConfig } from "@/lib/kc-server-config";
 export async function POST(request: Request) {
   const cfg = getKcWebConfig();
   const url = new URL(request.url);
-  const locale = url.searchParams.get("locale") === "ja" ? "ja" : "vi";
+  const localeParam = url.searchParams.get("locale") ?? "";
+  const locale = isSupportedLocale(localeParam) ? localeParam : "vi";
   const jar = await cookies();
 
   // Backchannel: revoke the refresh token server-side (no Keycloak redirect)
@@ -38,7 +40,8 @@ export async function POST(request: Request) {
 export async function GET(request: Request) {
   const cfg = getKcWebConfig();
   const url = new URL(request.url);
-  const locale = url.searchParams.get("locale") === "ja" ? "ja" : "vi";
+  const localeParam2 = url.searchParams.get("locale") ?? "";
+  const locale = isSupportedLocale(localeParam2) ? localeParam2 : "vi";
   const jar = await cookies();
 
   const publicBase = cfg?.publicBaseUrl

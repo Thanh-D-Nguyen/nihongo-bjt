@@ -328,4 +328,11 @@ export class GamificationController {
     const name = String(body.name ?? "");
     return this.companionPetService.renamePet(userId, name);
   }
+
+  @Get("pet/costumes")
+  @ApiOperation({ summary: "List user's owned pet costumes." })
+  getPetCostumes(@CurrentUser() user: KeycloakAuthenticatedUser | undefined) {
+    const userId = resolveLearnerUserId(user, undefined, { required: true })!;
+    return this.companionPetService.getCostumes(userId);
+  }
 }

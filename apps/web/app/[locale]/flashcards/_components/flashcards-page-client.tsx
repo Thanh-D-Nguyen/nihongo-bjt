@@ -19,6 +19,7 @@ import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provi
 import { queueSizeForUser } from "../../../../lib/offline-review-queue";
 import { learnerApiFetch } from "../../../../lib/learner-api";
 import { DeckBrowser, type DeckLabels, type LibraryDeckFilter } from "./deck-browser";
+import { FlashcardStylePickerModal, type StylePickerLabels } from "./flashcard-style-picker";
 import { FlashcardsClient, type FlashcardLabels } from "./flashcards-client";
 import { ReviewSession, type ReviewSessionLabels } from "./review-session";
 import { AutoGenDialog, type CardgenLabels } from "./auto-gen-dialog";
@@ -61,6 +62,16 @@ export function FlashcardsPageClient({
   const [heroPending, setHeroPending] = useState<number | null>(null);
   const [sessionActive, setSessionActive] = useState(false);
   const [autoGenOpen, setAutoGenOpen] = useState(false);
+  const [stylePickerOpen, setStylePickerOpen] = useState(false);
+  const [styleConfig, setStyleConfig] = useState<Record<string, string> | null>(null);
+
+  // Fetch active flashcard style on mount
+  useEffect(() => {
+    learnerApiFetch("/api/flashcards/styles/active")
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => { if (data?.config) setStyleConfig(data.config); })
+      .catch(() => {});
+  }, []);
 
   const refreshDueHero = useCallback(async () => {
     if (!userId) return;
@@ -205,6 +216,14 @@ export function FlashcardsPageClient({
           >
             <IconSpark aria-hidden size={16} />
             Auto
+          </button>
+          <button
+            className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-ink/12 bg-surface px-4 py-2.5 text-sm font-bold text-ink shadow-sm transition-all hover:scale-[1.02] hover:border-ink/20 hover:shadow-md active:scale-[0.98]"
+            onClick={() => setStylePickerOpen(true)}
+            type="button"
+          >
+            <span aria-hidden>🎨</span>
+            {flashcardLabels.stylePickerTitle ?? "Card Style"}
           </button>
           <div className="flex items-center gap-3 rounded-xl border border-ink/8 bg-surface px-3 py-2 text-xs font-semibold text-muted">
             <span className="tabular-nums">{flashcardLabels.statDueSession}: <span className="font-black text-ink">{heroDue ?? "—"}</span></span>
@@ -398,6 +417,7 @@ export function FlashcardsPageClient({
           labels={reviewSessionLabels}
           locale={locale}
           scopeDeckId={scopeDeckId}
+          styleConfig={styleConfig}
           onExit={() => {
             setSessionActive(false);
             void refreshDueHero();
@@ -405,6 +425,12 @@ export function FlashcardsPageClient({
         />
       ) : null}
       <AutoGenDialog open={autoGenOpen} onClose={() => setAutoGenOpen(false)} locale={locale} labels={cardgenLabels} />
+      <FlashcardStylePickerModal
+        open={stylePickerOpen}
+        onClose={() => setStylePickerOpen(false)}
+        onStyleApplied={(config) => setStyleConfig(config)}
+        labels={flashcardLabels as unknown as StylePickerLabels}
+      />
     </main>
   );
 }

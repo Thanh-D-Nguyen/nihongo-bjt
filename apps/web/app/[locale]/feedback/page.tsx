@@ -2,10 +2,11 @@
 
 import { useParams } from "next/navigation";
 import { useCallback, useState } from "react";
+import en from "../../../messages/en.json";
 import ja from "../../../messages/ja.json";
 import vi from "../../../messages/vi.json";
 
-const messages: Record<string, typeof vi> = { ja, vi };
+const messages: Record<string, typeof vi> = { ja, vi, en };
 
 export default function FeedbackPage() {
   const params = useParams();

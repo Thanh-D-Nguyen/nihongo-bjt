@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 
+import en from "../../../messages/en.json";
 import ja from "../../../messages/ja.json";
 import vi from "../../../messages/vi.json";
 
 import { InboxPreviewClient } from "./_components/inbox-preview-client";
 
-const messages = { ja, vi } as const;
+const messages = { ja, vi, en } as const;
 
 export async function generateMetadata({
   params

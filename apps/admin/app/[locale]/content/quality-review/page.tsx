@@ -2,11 +2,12 @@ import Link from "next/link";
 
 import { cn } from "@nihongo-bjt/ui";
 
+import en from "../../../../messages/en.json";
 import ja from "../../../../messages/ja.json";
 import vi from "../../../../messages/vi.json";
 import { OperationsResourceClient } from "../../_components/operations-resource-client";
 
-const messages = { ja, vi };
+const messages = { ja, vi, en };
 
 type ReviewKind = "grammar" | "kanji" | "lexeme";
 

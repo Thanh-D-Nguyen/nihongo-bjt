@@ -207,7 +207,7 @@ export function AdminAnalyticsClient({
 }: {
   common: CommonLabels;
   labels: ExecutiveAnalyticsPageLabels;
-  locale: "ja" | "vi";
+  locale: string;
 }) {
   const [data, setData] = useState<AdminAnalyticsResponse | null>(null);
   const [error, setError] = useState(false);

@@ -10,6 +10,7 @@ import {
   type ChangeEvent,
   type DragEvent
 } from "react";
+import { usePathname, useRouter } from "next/navigation";
 
 import { learnerApiFetch } from "../../../../lib/learner-api";
 import { parseBulkDeckLines } from "./bulk-deck-import-parse";
@@ -192,6 +193,9 @@ export function DeckComposerPanel({
   userId: string;
 }) {
   const formId = useId();
+  const router = useRouter();
+  const pathname = usePathname();
+  const locale = pathname.split("/")[1] || "vi";
   const isEdit = mode === "edit";
   const initialRows = useMemo<DraftRow[]>(() => {
     if (!initialData?.cards.length) return [emptyRow(), emptyRow(), emptyRow()];
@@ -268,6 +272,40 @@ export function DeckComposerPanel({
     } catch { /* silent */ } finally {
       setImgSearchLoading((p) => ({ ...p, [rowId]: false }));
     }
+  }, [userId]);
+
+  // ── Auto-generate reading from Japanese text ──
+  const readingLastQuery = useRef<Record<string, string>>({});
+  const readingAutoFilled = useRef<Set<string>>(new Set());
+
+  const fetchReadingForRow = useCallback(async (rowId: string, text: string) => {
+    const trimmed = text.trim();
+    if (trimmed.length < 1 || trimmed.length > 500) return;
+    // Only trigger if text contains Japanese (hiragana, katakana, or kanji)
+    if (!/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF]/.test(trimmed)) return;
+    if (readingLastQuery.current[rowId] === trimmed) return;
+    readingLastQuery.current[rowId] = trimmed;
+    try {
+      const res = await learnerApiFetch("/api/reading-assist/readings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: trimmed, userId }),
+      });
+      if (!res.ok) return;
+      const data = (await res.json()) as { reading: string };
+      if (!data.reading) return;
+      setRows((prev) => {
+        const idx = prev.findIndex((r) => r.id === rowId);
+        if (idx < 0) return prev;
+        const row = prev[idx];
+        // Only auto-fill if reading is still empty or was previously auto-filled
+        if (row.reading.trim() && !readingAutoFilled.current.has(rowId)) return prev;
+        readingAutoFilled.current.add(rowId);
+        const next = [...prev];
+        next[idx] = { ...row, reading: data.reading };
+        return next;
+      });
+    } catch { /* silent */ }
   }, [userId]);
 
   // ── Progress: count filled cards ──
@@ -751,7 +789,11 @@ export function DeckComposerPanel({
             <div className="text-center space-y-2 py-4">
               <p className="text-sm font-bold text-ink">{labels.suggestPremiumTitle}</p>
               <p className="text-xs text-muted">{labels.suggestPremiumBody}</p>
-              <button className={`${btnPrimary} min-h-9 px-6 text-xs font-bold`} type="button">
+              <button
+                className={`${btnPrimary} min-h-9 px-6 text-xs font-bold`}
+                onClick={() => router.push(`/${locale}/pricing`)}
+                type="button"
+              >
                 {labels.suggestPremiumCta}
               </button>
             </div>
@@ -1086,6 +1128,9 @@ export function DeckComposerPanel({
                         if (r.front.trim().length >= 2 && !r.imageUrl.trim() && !r.imageAssetId) {
                           void searchImagesForRow(r.id, r.front);
                         }
+                        if (r.front.trim().length >= 1) {
+                          void fetchReadingForRow(r.id, r.front);
+                        }
                       }}
                       onChange={(e) => {
                         const v = e.target.value;
@@ -1115,6 +1160,7 @@ export function DeckComposerPanel({
                       maxLength={300}
                       onChange={(e) => {
                         const v = e.target.value;
+                        readingAutoFilled.current.delete(r.id);
                         setRows((prev) => {
                           const next = [...prev];
                           const x = next[rowIndex];
@@ -1235,7 +1281,11 @@ export function DeckComposerPanel({
                   <div className="mt-2 rounded-lg border border-amber-300/40 bg-amber-50/60 p-2.5 text-center">
                     <p className="text-xs font-bold text-amber-700">{labels.imgSearchQuotaTitle}</p>
                     <p className="mt-0.5 text-[10px] text-amber-600">{labels.imgSearchQuotaBody}</p>
-                    <button className={`${btnPrimary} mt-1.5 min-h-7 px-4 text-[10px] font-bold`} type="button">
+                    <button
+                      className={`${btnPrimary} mt-1.5 min-h-7 px-4 text-[10px] font-bold`}
+                      onClick={() => router.push(`/${locale}/pricing`)}
+                      type="button"
+                    >
                       {labels.imgSearchQuotaCta}
                     </button>
                   </div>

@@ -141,6 +141,15 @@ export interface FlashcardLabels {
   mentorMilestone10: string;
   mentorMilestone25: string;
   streakLabel: string;
+  stylePickerTitle?: string;
+  stylePickerDescription?: string;
+  stylePickerActive?: string;
+  stylePickerSelect?: string;
+  stylePickerPremium?: string;
+  stylePickerExclusive?: string;
+  stylePickerLocked?: string;
+  stylePickerFree?: string;
+  stylePickerApplied?: string;
 }
 
 function imageFlowLabel(step: ImageFlowState["step"], labels: FlashcardLabels): string | null {

@@ -1,6 +1,9 @@
 import { createPrismaClient, type Prisma } from "@nihongo-bjt/database";
-import { greetingForHour, repairDailyContentFlashcardBackIfNeeded, todayDateKey } from "@nihongo-bjt/shared";
+import { type dailyLocaleSchema, greetingForHour, repairDailyContentFlashcardBackIfNeeded, todayDateKey } from "@nihongo-bjt/shared";
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import type { z } from "zod";
+
+type DailyLocale = z.infer<typeof dailyLocaleSchema>;
 
 interface SuggestedFlashcard {
   backText: string;
@@ -26,7 +29,7 @@ type DailyLearningSafeguard = {
 export class DailyRepository {
   private readonly prisma = createPrismaClient();
 
-  async home(locale: "vi" | "ja", userId?: string) {
+  async home(locale: DailyLocale, userId?: string) {
     const today = new Date(`${todayDateKey(new Date())}T00:00:00.000Z`);
     const [configs, contentItems, dueReviews] = await Promise.all([
       this.prisma.dailyWidgetConfig.findMany({
@@ -68,7 +71,7 @@ export class DailyRepository {
     };
   }
 
-  widgets(locale: "vi" | "ja") {
+  widgets(locale: DailyLocale) {
     return this.prisma.dailyWidgetConfig.findMany({
       orderBy: { displayOrder: "asc" },
       where: { enabled: true, locale }
@@ -83,7 +86,7 @@ export class DailyRepository {
     if (!item || item.status !== "published") {
       throw new NotFoundException("Daily content item not found");
     }
-    const safeguard = this.buildLearningSafeguard(item.widgetKind, item.extraction?.extractedEntries, item.locale as "vi" | "ja");
+    const safeguard = this.buildLearningSafeguard(item.widgetKind, item.extraction?.extractedEntries, item.locale as DailyLocale);
     return {
       id: item.id,
       title: item.title,
@@ -216,7 +219,7 @@ export class DailyRepository {
     return { ok: true };
   }
 
-  adminWidgets(locale: "vi" | "ja") {
+  adminWidgets(locale: DailyLocale) {
     return this.prisma.dailyWidgetConfig.findMany({
       orderBy: { displayOrder: "asc" },
       where: { locale }
@@ -322,7 +325,7 @@ export class DailyRepository {
 
   private withLearningSafeguard(
     item: Prisma.DailyContentItemGetPayload<{ include: { extraction: true } }> | null,
-    locale: "vi" | "ja"
+    locale: DailyLocale
   ) {
     if (!item) {
       return null;
@@ -338,7 +341,7 @@ export class DailyRepository {
   private buildLearningSafeguard(
     widgetKind: string,
     payload: Prisma.JsonValue | null | undefined,
-    locale: "vi" | "ja"
+    locale: DailyLocale
   ): DailyLearningSafeguard | null {
     const normalizedKind = widgetKind.toLowerCase();
     const isLifeInJapan =

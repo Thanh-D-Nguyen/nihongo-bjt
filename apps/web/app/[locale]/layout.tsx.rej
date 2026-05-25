@@ -1,0 +1,23 @@
+diff a/apps/web/app/[locale]/layout.tsx b/apps/web/app/[locale]/layout.tsx	(rejected hunks)
+@@ -13,16 +14,18 @@ import { FocusTimerProvider } from "../_hooks/use-focus-timer";
+ import { FocusMiniIndicator } from "../_components/focus-mini-indicator";
+ import { XpToastProvider } from "../_components/xp-toast";
+ 
+-const skipLabels: Record<"ja" | "vi", string> = {
++const messages = { ja, vi, en };
++const skipLabels: Record<SupportedLocale, string> = {
+   ja: ja.a11y.skipToContent,
+-  vi: vi.a11y.skipToContent
++  vi: vi.a11y.skipToContent,
++  en: en.a11y.skipToContent
+ };
+ 
+ /** Session cookies must be evaluated per request; avoid static shell mismatches with auth. */
+ export const dynamic = "force-dynamic";
+ 
+ export function generateStaticParams() {
+-  return [{ locale: "vi" }, { locale: "ja" }];
++  return [{ locale: "vi" }, { locale: "ja" }, { locale: "en" }];
+ }
+ 
+ export default async function LearnerLayout({

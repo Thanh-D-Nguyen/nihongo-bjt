@@ -117,19 +117,23 @@ export class LearnerMonetizationController {
     if (!user) {
       throw new UnauthorizedException("Authenticated user is required");
     }
-    await this.featureGate.requireEnabled("billing.stripe.enabled", {
-      message: "Checkout is temporarily disabled"
-    });
+    const useStripe = !!process.env.STRIPE_SECRET_KEY;
+    if (useStripe) {
+      await this.featureGate.requireEnabled("billing.stripe.enabled", {
+        message: "Checkout is temporarily disabled"
+      });
+    }
     const raw = body as Record<string, unknown>;
     const userId = resolveLearnerUserId(user, raw.userId as string | undefined, { required: true })!;
     const parsed = monetizationCheckoutSchema.safeParse({ ...raw, userId });
     if (!parsed.success) {
       throw new BadRequestException(parsed.error.flatten());
     }
-    await this.legalConsent.requireCheckoutConsent(parsed.data.userId);
+    if (useStripe) {
+      await this.legalConsent.requireCheckoutConsent(parsed.data.userId);
+    }
 
     // Use Stripe if configured, otherwise fall back to local dev provider
-    const useStripe = !!process.env.STRIPE_SECRET_KEY;
     const res = useStripe
       ? await this.stripeBilling.startCheckout(parsed.data)
       : await this.billing.startLocalCheckout(parsed.data);
@@ -244,7 +248,9 @@ export class LearnerMonetizationController {
     const planConfig = resolved.plan.config as Record<string, unknown> | null;
     return {
       planSlug: resolved.plan.slug,
-      planName: planConfig?.displayName ?? resolved.plan.nameKey,
+      planName: (planConfig?.displayNameVi ?? planConfig?.displayName ?? resolved.plan.nameKey) as string,
+      planNameVi: (planConfig?.displayNameVi ?? resolved.plan.nameKey) as string,
+      planNameJa: (planConfig?.displayNameJa ?? resolved.plan.nameKey) as string,
       source: resolved.source,
       status: resolved.subscription?.status ?? null,
       currentPeriodEnd: resolved.subscription?.currentPeriodEnd ?? null,

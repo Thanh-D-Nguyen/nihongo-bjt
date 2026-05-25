@@ -22,6 +22,7 @@ import {
   type PresenceUser
 } from "./battle-types";
 import { UserPresencePopover } from "./user-presence-popover";
+import { toIntlLocale } from "@/lib/locale-utils";
 
 type PopoverState =
   | { kind: "bot"; bot: BattleBotStageProfile; rect: DOMRect }
@@ -725,7 +726,7 @@ export function BattleLobbyClient() {
                 const mine = message.userId === userId;
                 const isBot = message.kind === "bot";
                 const timeStr = new Date(message.createdAt).toLocaleTimeString(
-                  locale === "ja" ? "ja-JP" : "vi-VN",
+                  toIntlLocale(locale),
                   { hour: "2-digit", minute: "2-digit" }
                 );
                 return (

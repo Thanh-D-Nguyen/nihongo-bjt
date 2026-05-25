@@ -15,6 +15,7 @@ export const EntitlementKey = {
   ads_reduced: "ads.reduced",
   flashcard_adaptive_gen: "flashcard.adaptive_gen",
   flashcard_suggest_cards: "flashcard.suggest_cards",
+  flashcard_premium_styles: "flashcard.premium_styles",
   quiz_official_simulation: "quiz.official_simulation"
 } as const;
 

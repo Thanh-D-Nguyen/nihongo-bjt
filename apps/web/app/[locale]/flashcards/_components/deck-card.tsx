@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 
 import type { DeckApiRow } from "./deck-types";
+import { toIntlLocale } from "@/lib/locale-utils";
 
 /* ── Color accent: deterministic gradient from deck title hash ── */
 const DECK_GRADIENTS = [
@@ -64,7 +65,7 @@ function formatShortDate(iso: string | undefined, locale: string) {
   if (!iso) return "";
   try {
     const d = new Date(iso);
-    return new Intl.DateTimeFormat(locale === "ja" ? "ja-JP" : "vi-VN", {
+    return new Intl.DateTimeFormat(toIntlLocale(locale), {
       day: "numeric",
       month: "short",
       year: "numeric"

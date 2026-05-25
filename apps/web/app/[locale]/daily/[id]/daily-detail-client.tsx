@@ -6,6 +6,7 @@ import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provi
 import { ShareDrawer } from "../../_components/share-drawer";
 import { AnnotatedJapaneseText } from "../../../../components/reading-assist/annotated-japanese-text";
 import { learnerApiFetch, learnerApiFetchOptional } from "../../../../lib/learner-api";
+import { toIntlLocale } from "@/lib/locale-utils";
 
 /* ── types ── */
 interface DailyItemDetail {
@@ -198,7 +199,7 @@ export function DailyDetailClient({
             {kindLabel(item.widgetKind)}
           </span>
           <time className="text-xs text-muted" dateTime={item.contentDate}>
-            {new Date(item.contentDate).toLocaleDateString(locale === "ja" ? "ja-JP" : "vi-VN", {
+            {new Date(item.contentDate).toLocaleDateString(toIntlLocale(locale), {
               day: "numeric",
               month: "long",
               year: "numeric"

@@ -21,6 +21,7 @@ import { ActivityBarChart } from "./_components/activity-bar-chart";
 import { ActivityHeatmap } from "./_components/activity-heatmap";
 import { RadialProgress } from "./_components/radial-progress";
 import { TrendMetricCard } from "./_components/trend-metric-card";
+import { toIntlLocale } from "@/lib/locale-utils";
 
 /* ─────────────────────────── Types ─────────────────────────── */
 
@@ -194,7 +195,7 @@ function formatUtcRangeLabel(dateIso: string, locale: string): string {
   const raw = dateIso.includes("T") ? dateIso : `${dateIso}T00:00:00.000Z`;
   const d = new Date(raw);
   if (Number.isNaN(d.getTime())) return dateIso.slice(0, 10);
-  return new Intl.DateTimeFormat(locale === "ja" ? "ja-JP" : "vi-VN", {
+  return new Intl.DateTimeFormat(toIntlLocale(locale), {
     day: "2-digit",
     month: "short",
     timeZone: "UTC",

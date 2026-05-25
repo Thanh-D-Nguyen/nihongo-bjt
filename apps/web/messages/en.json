@@ -173,7 +173,12 @@
       "onboardingNext": "Next",
       "onboardingSkip": "Skip",
       "onboardingFinish": "Let's start!"
-    }
+    },
+    "localeSwitcher": "Language",
+    "localeSwitcherAria": "Change display language",
+    "localeVi": "Tiếng Việt",
+    "localeJa": "日本語",
+    "localeEn": "English"
   },
   "home": {
     "actionsLabel": "Quick actions",
@@ -252,7 +257,9 @@
       "error": "Could not load Japan Daily Radar.",
       "retry": "Retry",
       "placeholderBody": "This module is in early preview. Home cards are already admin-managed and will link into a full experience in the next step.",
-      "disclaimerBadge": "Notice"
+      "disclaimerBadge": "Notice",
+      "viewAll": "View all",
+      "showMore": "Show {n} more categories"
     },
     "radarDetail": {
       "notFound": "Lesson not found",
@@ -758,7 +765,16 @@
     "mentorMilestone5": "{n} consecutive correct answers!Good pace!",
     "mentorMilestone10": "🔥 {n} in a row — It's going great!",
     "mentorMilestone25": "🏆 {n} cards!What a great record!",
-    "streakLabel": "continuous"
+    "streakLabel": "continuous",
+    "stylePickerTitle": "Card Style",
+    "stylePickerDescription": "Choose a visual style for your flashcards",
+    "stylePickerActive": "Active",
+    "stylePickerSelect": "Select",
+    "stylePickerPremium": "Premium",
+    "stylePickerExclusive": "Exclusive",
+    "stylePickerLocked": "Upgrade to unlock",
+    "stylePickerFree": "Free",
+    "stylePickerApplied": "Style applied!"
   },
   "decks": {
     "title": "deck",
@@ -1376,7 +1392,9 @@
     "appearanceDesc": "Theme, font size, display density.",
     "settingsArea": "Settings area",
     "backToHome": "Return to home",
-    "signOut": "Logout"
+    "signOut": "Logout",
+    "subscription": "Subscription",
+    "subscriptionDesc": "Manage plans, benefits, and payments."
   },
   "accountInfo": {
     "title": "Account information",
@@ -2173,5 +2191,56 @@
     "soundNature": "Nature",
     "soundRain": "Rain",
     "volume": "Volume"
+  },
+  "focusTimer": {
+    "active": "Focus mode active",
+    "stop": "End focus mode",
+    "completed": "Focus session complete!",
+    "dismiss": "Dismiss"
+  },
+  "pricing": {
+    "title": "Pricing Plans",
+    "subtitle": "Choose the plan that best fits your BJT study needs",
+    "current": "Current plan",
+    "upgrade": "Upgrade",
+    "free": "Free",
+    "features": "Features",
+    "perMonth": "/month",
+    "unlimited": "Unlimited",
+    "quotaFormat": "{limit}/{window}",
+    "loading": "Loading...",
+    "error": "Could not load plan info. Please try again.",
+    "backHome": "← Back to home",
+    "enforcementOff": "All features are currently free. Enjoy full access.",
+    "checkoutLoading": "Processing...",
+    "checkoutError": "Payment failed. Please try again."
+  },
+  "magazine": {
+    "title": "Daily Magazine",
+    "subtitle": "Learn Japanese every day through interesting content",
+    "filterAll": "All",
+    "filterVocab": "Vocabulary",
+    "filterWeather": "Weather",
+    "filterHoroscope": "Horoscope",
+    "filterLoto": "Loto",
+    "filterBjt": "BJT",
+    "emptyTitle": "No articles yet",
+    "emptyDescription": "New content is updated daily. Check back soon!",
+    "vocabSection": "Vocabulary in this article",
+    "quizSection": "Mini Quiz",
+    "quizProgress": "Q {current}/{total}",
+    "quizNext": "Next →",
+    "quizResult": "See results",
+    "quizComplete": "Complete!",
+    "quizScore": "Score: {score}/{total}",
+    "quizPerfect": "Perfect! You got them all right!",
+    "quizGood": "Great job! Keep it up!",
+    "quizTryAgain": "Keep trying! Review the vocabulary above.",
+    "todayTitle": "Today",
+    "todayViewAll": "View all →",
+    "readMore": "Read more",
+    "jlptBadge": "JLPT {level}",
+    "prevPage": "← Prev",
+    "nextPage": "Next →"
   }
 }

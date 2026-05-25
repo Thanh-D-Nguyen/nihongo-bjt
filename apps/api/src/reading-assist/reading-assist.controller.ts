@@ -170,4 +170,21 @@ export class ReadingAssistController {
       userId: uid
     });
   }
+
+  @Post("readings")
+  @ApiOperation({
+    summary: "Lightweight reading generation from Japanese text (for deck composer auto-fill)."
+  })
+  async readings(
+    @CurrentUser() user: KeycloakAuthenticatedUser | undefined,
+    @Body() body: unknown
+  ) {
+    const raw = body as Record<string, unknown>;
+    resolveLearnerUserId(user, raw.userId as string | undefined, { required: true });
+    const text = typeof raw.text === "string" ? raw.text.trim() : "";
+    if (!text || text.length > 500) {
+      throw new BadRequestException("text must be 1-500 characters");
+    }
+    return this.readingAssist.getReadings(text);
+  }
 }

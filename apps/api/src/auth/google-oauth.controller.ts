@@ -51,7 +51,7 @@ export class GoogleOAuthController {
         exp: Date.now() + 600_000,
         n: randomNonce(),
         ref: ref?.trim().toLowerCase().slice(0, 32),
-        locale: locale === "ja" || locale === "vi" ? locale : undefined
+        locale: locale === "ja" || locale === "vi" || locale === "en" ? locale : undefined
       },
       secret
     );
@@ -105,7 +105,7 @@ export class GoogleOAuthController {
       subject: g.subject
     });
     const { code: linkCode } = await this.auth.createLinkCode(user.id);
-    const loc = v.payload.locale === "ja" ? "ja" : "vi";
+    const loc = v.payload.locale === "ja" ? "ja" : v.payload.locale === "en" ? "en" : "vi";
     return res.redirect(
       302,
       `${this.webEnv.WEB_PUBLIC_URL}/${loc}/settings/accounts?linkCode=${encodeURIComponent(linkCode)}`

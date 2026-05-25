@@ -15,6 +15,7 @@ describe("parseServerEnv", () => {
   it("keeps locale support explicit", () => {
     expect(isSupportedLocale("vi")).toBe(true);
     expect(isSupportedLocale("ja")).toBe(true);
-    expect(isSupportedLocale("en")).toBe(false);
+    expect(isSupportedLocale("en")).toBe(true);
+    expect(isSupportedLocale("fr")).toBe(false);
   });
 });

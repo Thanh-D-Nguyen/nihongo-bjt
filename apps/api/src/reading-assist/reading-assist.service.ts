@@ -222,6 +222,26 @@ export class ReadingAssistService {
     });
   }
 
+  /**
+   * Lightweight reading generation: tokenize Japanese text and return concatenated hiragana reading.
+   * No dictionary lookup, no caching — designed for real-time deck composer auto-fill.
+   */
+  async getReadings(text: string): Promise<{ reading: string }> {
+    if (!text.trim()) return { reading: "" };
+    try {
+      const { spans } = await tokenizeJapanese(text);
+      const reading = spans
+        .map((s) => {
+          const r = s.token.reading;
+          return r ? katakanaToHiragana(r) : s.token.surface_form;
+        })
+        .join("");
+      return { reading };
+    } catch {
+      return { reading: "" };
+    }
+  }
+
   async inferAnalytics(input: {
     anonymousId?: string;
     eventName: string;

@@ -44,7 +44,7 @@ export function AccountsSettingsClient({
   locale
 }: {
   labels: AccountsLabels;
-  locale: "ja" | "vi";
+  locale: string;
 }) {
   const searchParams = useSearchParams();
   const { userId } = useKeycloakAuth();

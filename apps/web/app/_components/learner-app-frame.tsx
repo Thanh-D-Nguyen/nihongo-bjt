@@ -19,6 +19,7 @@ import { useKeycloakAuth } from "../../components/auth/keycloak-auth-provider";
 import { AnnouncementStrip } from "./announcement-strip";
 import { BrandFull } from "./brand-logo";
 import { CompanionBot, type CompanionBotLabels } from "./companion-bot";
+import { LocaleSwitcher, type LocaleSwitcherLabels } from "./locale-switcher";
 import {
   IconAchievement,
   IconAnalytics,
@@ -81,6 +82,11 @@ export type LearnerNavLabels = {
   signOut: string;
   signIn: string;
   userFallback: string;
+  localeSwitcher: string;
+  localeSwitcherAria: string;
+  localeVi: string;
+  localeJa: string;
+  localeEn: string;
 };
 
 type NavItem = {
@@ -496,6 +502,14 @@ export function LearnerAppFrame({
                         <IconSettings aria-hidden size={16} />
                         {nav.settings}
                       </Link>
+                      {/* Language switcher */}
+                      <div className="my-1.5 border-t border-ink/8 dark:border-white/5" />
+                      <LocaleSwitcher
+                        currentLocale={locale}
+                        labels={nav as unknown as LocaleSwitcherLabels}
+                        variant="menu-item"
+                      />
+
                       <button
                         className="flex min-h-10 w-full items-center gap-2.5 rounded-xl px-3 text-left text-sm font-semibold text-sakura hover:bg-sakura/8 dark:text-red-400 dark:hover:bg-red-500/10"
                         role="menuitem"
@@ -515,12 +529,19 @@ export function LearnerAppFrame({
             !authLoading &&
             !accessToken &&
             (!kcAccessCookiePresent || sessionFailedWithCookie) ? (
-              <Link
-                className="inline-flex min-h-10 items-center rounded-full bg-ink px-5 text-sm font-bold text-surface shadow-sm transition hover:bg-ink/90"
-                href={`${base}/login`}
-              >
-                {nav.signIn}
-              </Link>
+              <>
+                <LocaleSwitcher
+                  currentLocale={locale}
+                  labels={nav as unknown as LocaleSwitcherLabels}
+                  variant="icon"
+                />
+                <Link
+                  className="inline-flex min-h-10 items-center rounded-full bg-ink px-5 text-sm font-bold text-surface shadow-sm transition hover:bg-ink/90"
+                  href={`${base}/login`}
+                >
+                  {nav.signIn}
+                </Link>
+              </>
             ) : null}
           </div>
         </div>

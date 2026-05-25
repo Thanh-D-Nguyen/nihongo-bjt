@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useKeycloakAuth } from "../../../../../components/auth/keycloak-auth-provider";
 import { learnerApiFetch, learnerApiFetchOptional } from "../../../../../lib/learner-api";
 import { NhkCreateDeckDialog } from "../../../_components/nhk-create-deck-dialog";
+import { toIntlLocale } from "@/lib/locale-utils";
 
 /** Sanitize NHK HTML — allow ruby/rt for furigana, basic formatting */
 function sanitizeNhkHtml(html: string): string {
@@ -254,7 +255,7 @@ export function NhkArticleDetailClient({
   }
 
   const publishDate = new Date(article.publishedAt).toLocaleDateString(
-    locale === "ja" ? "ja-JP" : "vi-VN",
+    toIntlLocale(locale),
     { year: "numeric", month: "long", day: "numeric" }
   );
 

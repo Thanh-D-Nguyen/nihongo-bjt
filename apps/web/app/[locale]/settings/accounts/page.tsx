@@ -1,12 +1,13 @@
 import { Card, CardContent, PageHeader } from "@nihongo-bjt/ui";
 import { Suspense } from "react";
 
+import en from "../../../../messages/en.json";
 import ja from "../../../../messages/ja.json";
 import vi from "../../../../messages/vi.json";
 import { RequireKeycloakAuth } from "../../../../components/auth/require-keycloak-auth";
 import { AccountsSettingsClient } from "./_components/accounts-settings-client";
 
-const messages = { ja, vi };
+const messages = { ja, vi, en };
 
 export default async function AccountsSettingsPage({
   params
@@ -15,7 +16,7 @@ export default async function AccountsSettingsPage({
 }) {
   const { locale } = await params;
   const t = messages[locale] ?? messages.vi;
-  const loc = locale === "ja" ? "ja" : "vi";
+  const loc = locale;
 
   return (
     <RequireKeycloakAuth locale={locale}>

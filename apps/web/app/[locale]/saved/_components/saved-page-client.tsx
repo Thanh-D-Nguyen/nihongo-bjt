@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
 import { learnerApiFetch } from "../../../../lib/learner-api";
 import { normalizeKanjiDetailDto } from "../../search/_components/kanji-detail-dto";
+import { toIntlLocale } from "@/lib/locale-utils";
 
 export interface SavedPageLabels {
   title: string;
@@ -164,7 +165,7 @@ export function SavedPageClient({ labels, locale }: { labels: SavedPageLabels; l
   const formatSavedDate = (iso: string) => {
     try {
       const d = new Date(iso);
-      return d.toLocaleDateString(locale === "ja" ? "ja-JP" : "vi-VN", {
+      return d.toLocaleDateString(toIntlLocale(locale), {
         day: "numeric",
         month: "short",
         year: "numeric"

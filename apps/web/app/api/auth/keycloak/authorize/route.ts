@@ -1,3 +1,4 @@
+import { isSupportedLocale } from "@nihongo-bjt/config";
 import { buildAuthorizationRedirect, generatePkcePair } from "@nihongo-bjt/keycloak-oidc";
 import { randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
@@ -11,14 +12,14 @@ export async function GET(request: Request) {
   const cfg = getKcWebConfig();
   if (!cfg) {
     const localePrefix = url.searchParams.get("locale")?.trim();
-    const locale = localePrefix === "ja" ? "ja" : "vi";
+    const locale = isSupportedLocale(localePrefix ?? "") ? localePrefix : "vi";
     const publicBase = (process.env.WEB_PUBLIC_URL ?? "http://localhost:3000").replace(/\/$/u, "");
     return NextResponse.redirect(new URL(`/${locale}/login?authError=not_configured`, publicBase));
   }
 
   const localePrefix = url.searchParams.get("locale")?.trim();
   const defaultHome =
-    localePrefix === "ja" || localePrefix === "vi" ? `/${localePrefix}` : "/vi";
+    isSupportedLocale(localePrefix ?? "") ? `/${localePrefix}` : "/vi";
   const returnTo = safeReturnToPath(url.searchParams.get("returnTo"), defaultHome);
 
   const intent = url.searchParams.get("intent")?.trim();

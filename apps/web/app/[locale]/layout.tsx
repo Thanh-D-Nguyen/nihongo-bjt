@@ -1,6 +1,7 @@
 import { isSupportedLocale, type SupportedLocale } from "@nihongo-bjt/config";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
+import en from "../../messages/en.json";
 import ja from "../../messages/ja.json";
 import vi from "../../messages/vi.json";
 import { learnerKcCookies } from "../../lib/kc-cookies";
@@ -34,9 +35,9 @@ export default async function LearnerLayout({
     notFound();
   }
 
-  const loc = locale as "ja" | "vi";
+  const loc = locale as SupportedLocale;
   const skipLabel = skipLabels[loc] ?? vi.a11y.skipToContent;
-  const t = loc === "ja" ? ja : vi;
+  const t = messages[loc] ?? messages.vi;
   const jar = await cookies();
   const kcAccessCookiePresent = Boolean(jar.get(learnerKcCookies.access)?.value);
 

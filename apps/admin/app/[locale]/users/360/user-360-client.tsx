@@ -166,7 +166,7 @@ export function User360Client({
   um
 }: {
   common: { error: string; loading: string };
-  locale: "ja" | "vi";
+  locale: string;
   um: Labels;
 }) {
   const t = (k: string) => um[k] ?? k;

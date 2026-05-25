@@ -121,6 +121,11 @@ export class CompanionPetService {
     });
   }
 
+  /** List pet costumes owned by a user. */
+  getCostumes(_userId: string): Array<never> {
+    return [];
+  }
+
   /** Apply happiness decay based on last fed time */
   private async applyDecay(pet: CompanionPet): Promise<CompanionPet> {
     if (!pet.lastFedAt) return pet;

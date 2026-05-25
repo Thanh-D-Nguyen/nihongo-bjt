@@ -3,15 +3,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import en from "../../../messages/en.json";
 import ja from "../../../messages/ja.json";
 import vi from "../../../messages/vi.json";
 import { BrandFull } from "../../_components/brand-logo";
 import { AuthHeroLayout } from "../_components/auth-hero-layout";
 import { ForgotPasswordFormClient } from "./_components/forgot-password-form-client";
 
-const messages = { ja, vi };
+const messages = { ja, vi, en };
 
-const LOCALE_LABELS: Record<string, string> = { vi: "Tiếng Việt", ja: "日本語" };
+const LOCALE_LABELS: Record<string, string> = { vi: "Tiếng Việt", ja: "日本語", en: "English" };
 
 export async function generateMetadata({
   params
@@ -19,7 +20,7 @@ export async function generateMetadata({
   params: Promise<{ locale: string }>;
 }>): Promise<Metadata> {
   const { locale } = await params;
-  const loc = isSupportedLocale(locale) ? (locale as "ja" | "vi") : "vi";
+  const loc = isSupportedLocale(locale) ? locale : "vi";
   const t = messages[loc].auth.forgotPassword;
   return {
     robots: { index: false },
@@ -36,7 +37,7 @@ export default async function ForgotPasswordPage({
   if (!isSupportedLocale(locale)) {
     notFound();
   }
-  const loc = locale as "ja" | "vi";
+  const loc = locale as keyof typeof messages;
   const t = messages[loc].auth.forgotPassword;
   const localePrefix = `/${locale}`;
 

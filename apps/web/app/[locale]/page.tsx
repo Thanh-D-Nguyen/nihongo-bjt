@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
+import en from "../../messages/en.json";
 import ja from "../../messages/ja.json";
 import vi from "../../messages/vi.json";
 import { HomepageClient } from "./_components/homepage";
 
-const messages = { ja, vi };
+const messages = { ja, vi, en };
 
 export async function generateMetadata({
   params,

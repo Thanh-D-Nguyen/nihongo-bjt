@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 
+import en from "../../../messages/en.json";
 import ja from "../../../messages/ja.json";
 import vi from "../../../messages/vi.json";
 import { CareerRpgProvider } from "../../../src/features/career-rpg/store";
 import { DailyStandupPage } from "../../../src/features/career-rpg/components/daily-standup-page";
 
-const messages = { ja, vi } as const;
+const messages = { ja, vi, en } as const;
 
 export async function generateMetadata({
   params

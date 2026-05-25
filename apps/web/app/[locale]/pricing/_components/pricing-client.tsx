@@ -29,6 +29,11 @@ type Labels = {
   error: string;
   backHome: string;
   enforcementOff: string;
+  checkoutLoading?: string;
+  checkoutError?: string;
+  entitlementLabels?: Record<string, string>;
+  quotaLabels?: Record<string, string>;
+  windowLabels?: Record<string, string>;
 };
 
 export function PricingClient({ labels, locale }: { labels: Labels; locale: string }) {
@@ -38,6 +43,42 @@ export function PricingClient({ labels, locale }: { labels: Labels; locale: stri
   const [enforcementEnabled, setEnforcementEnabled] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [checkingOut, setCheckingOut] = useState<string | null>(null);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+
+  // Human-readable labels for entitlement/quota keys
+  const entitlementLabel = (key: string): string => {
+    const map: Record<string, string> = {
+      "learner.basic": locale === "ja" ? "基本学習機能" : "Tính năng học cơ bản",
+      "flashcard.deck.create": locale === "ja" ? "デッキ作成" : "Tạo bộ thẻ",
+      "flashcard.suggest_cards": locale === "ja" ? "AIカード提案" : "Gợi ý thẻ AI",
+      "flashcard.adaptive_gen": locale === "ja" ? "アダプティブ生成" : "Tạo thẻ thích ứng",
+      "quiz.bjt.start": locale === "ja" ? "BJTクイズ" : "Làm bài kiểm tra BJT",
+      "quiz.official_simulation": locale === "ja" ? "公式BJTシミュレーション" : "Mô phỏng BJT chính thức",
+      "ads.remove": locale === "ja" ? "広告完全非表示" : "Xóa hoàn toàn quảng cáo",
+      "ads.reduced": locale === "ja" ? "広告削減" : "Giảm quảng cáo",
+      ...(labels.entitlementLabels ?? {})
+    };
+    return map[key] ?? key;
+  };
+
+  const quotaLabel = (key: string): string => {
+    const map: Record<string, string> = {
+      "flashcard_reviews_per_day": locale === "ja" ? "フラッシュカード復習" : "Ôn thẻ flashcard",
+      ...(labels.quotaLabels ?? {})
+    };
+    return map[key] ?? key;
+  };
+
+  const windowLabel = (w: string): string => {
+    const map: Record<string, string> = {
+      day: locale === "ja" ? "日" : "ngày",
+      week: locale === "ja" ? "週" : "tuần",
+      month: locale === "ja" ? "月" : "tháng",
+      ...(labels.windowLabels ?? {})
+    };
+    return map[w] ?? w;
+  };
 
   const load = useCallback(async () => {
     try {
@@ -64,20 +105,33 @@ export function PricingClient({ labels, locale }: { labels: Labels; locale: stri
 
   async function startCheckout(planSlug: string) {
     if (!userId) return;
+    setCheckingOut(planSlug);
+    setCheckoutError(null);
     try {
       const res = await learnerApiFetch("/api/learner/monetization/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ planSlug, userId }),
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({})) as { message?: string };
+        setCheckoutError(data.message ?? (labels.checkoutError || "Checkout failed"));
+        return;
+      }
       const data = (await res.json()) as { checkoutUrl?: string };
       if (data.checkoutUrl) {
         window.location.href = data.checkoutUrl.startsWith("/")
           ? `/${locale}${data.checkoutUrl}`
           : data.checkoutUrl;
+      } else {
+        // Local checkout completed — reload to reflect new plan
+        await load();
       }
-    } catch { /* handled by UI */ }
+    } catch {
+      setCheckoutError(labels.checkoutError || "Checkout failed");
+    } finally {
+      setCheckingOut(null);
+    }
   }
 
   if (loading) {
@@ -117,9 +171,10 @@ export function PricingClient({ labels, locale }: { labels: Labels; locale: stri
         {plans.map((plan) => {
           const isCurrent = plan.slug === currentSlug;
           const isFree = plan.slug === "free";
-          const cfg = plan.config as { displayName?: string; price?: number; billingInterval?: string; recommended?: boolean } | null;
+          const cfg = plan.config as { displayName?: string; displayNameVi?: string; displayNameJa?: string; price?: number; billingInterval?: string; recommended?: boolean } | null;
           const price = cfg?.price ?? 0;
           const recommended = cfg?.recommended ?? false;
+          const displayName = locale === "ja" ? (cfg?.displayNameJa ?? cfg?.displayName) : (cfg?.displayNameVi ?? cfg?.displayName);
 
           return (
             <div
@@ -134,7 +189,7 @@ export function PricingClient({ labels, locale }: { labels: Labels; locale: stri
                 </span>
               )}
               <h3 className="text-lg font-semibold text-ink">
-                {cfg?.displayName ?? plan.nameKey}
+                {displayName ?? plan.slug}
               </h3>
               <div className="mt-2">
                 {isFree ? (
@@ -152,13 +207,13 @@ export function PricingClient({ labels, locale }: { labels: Labels; locale: stri
                 {plan.quotas.map((q) => (
                   <p key={q.key} className="flex items-center gap-1.5">
                     <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
-                    {q.key}: {q.limit === 999999 ? labels.unlimited : `${q.limit}/${q.window}`}
+                    {quotaLabel(q.key)}: {q.limit >= 999999 ? labels.unlimited : `${q.limit}/${windowLabel(q.window)}`}
                   </p>
                 ))}
                 {plan.entitlements.map((e) => (
                   <p key={e} className="flex items-center gap-1.5">
                     <span className="h-1.5 w-1.5 rounded-full bg-green-400" />
-                    {e}
+                    {entitlementLabel(e)}
                   </p>
                 ))}
               </div>
@@ -170,11 +225,14 @@ export function PricingClient({ labels, locale }: { labels: Labels; locale: stri
                   </span>
                 ) : !isFree && enforcementEnabled ? (
                   <button
-                    className="block w-full rounded-xl bg-indigo-600 py-2.5 text-center text-sm font-medium text-white hover:bg-indigo-500"
+                    className="block w-full rounded-xl bg-indigo-600 py-2.5 text-center text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-60"
+                    disabled={checkingOut === plan.slug}
                     onClick={() => void startCheckout(plan.slug)}
                     type="button"
                   >
-                    {labels.upgrade}
+                    {checkingOut === plan.slug
+                      ? (labels.checkoutLoading || "Đang xử lý...")
+                      : labels.upgrade}
                   </button>
                 ) : null}
               </div>
@@ -182,6 +240,12 @@ export function PricingClient({ labels, locale }: { labels: Labels; locale: stri
           );
         })}
       </div>
+
+      {checkoutError && (
+        <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-center">
+          <p className="text-sm text-rose-700">{checkoutError}</p>
+        </div>
+      )}
 
       <div className="mt-8 text-center">
         <Link className="text-sm text-indigo-600 hover:underline" href={`/${locale}`}>

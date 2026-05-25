@@ -919,20 +919,20 @@ model AnalyticsRollupRun {
 }
 
 model WeeklyReport {
-  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId          String    @map("user_id") @db.Uuid
-  weekStart       DateTime  @map("week_start") @db.Date
-  weekEnd         DateTime  @map("week_end") @db.Date
-  totalReviews    Int       @default(0) @map("total_reviews")
-  accuracyPct     Float     @default(0) @map("accuracy_pct")
-  streakDays      Int       @default(0) @map("streak_days")
-  quizSessions    Int       @default(0) @map("quiz_sessions")
-  newCardsLearned Int       @default(0) @map("new_cards_learned")
-  weakSkills      String[]  @map("weak_skills")
-  prevWeekReviews Int?      @map("prev_week_reviews")
-  prevWeekAccuracy Float?   @map("prev_week_accuracy")
-  emailSentAt     DateTime? @map("email_sent_at") @db.Timestamptz(6)
-  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId           String    @map("user_id") @db.Uuid
+  weekStart        DateTime  @map("week_start") @db.Date
+  weekEnd          DateTime  @map("week_end") @db.Date
+  totalReviews     Int       @default(0) @map("total_reviews")
+  accuracyPct      Float     @default(0) @map("accuracy_pct")
+  streakDays       Int       @default(0) @map("streak_days")
+  quizSessions     Int       @default(0) @map("quiz_sessions")
+  newCardsLearned  Int       @default(0) @map("new_cards_learned")
+  weakSkills       String[]  @map("weak_skills")
+  prevWeekReviews  Int?      @map("prev_week_reviews")
+  prevWeekAccuracy Float?    @map("prev_week_accuracy")
+  emailSentAt      DateTime? @map("email_sent_at") @db.Timestamptz(6)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@unique([userId, weekStart], map: "uq_weekly_report_user_week")
   @@index([userId, weekStart], map: "idx_weekly_report_user_week")
@@ -1074,6 +1074,8 @@ model UserProfile {
   fontSizePreference       String                    @default("default") @map("font_size_preference") @db.VarChar(16)
   /// Appearance: compact | comfortable
   densityPreference        String                    @default("comfortable") @map("density_preference") @db.VarChar(16)
+  /// Active flashcard style slug (null = default style)
+  flashcardStyleSlug       String?                   @map("flashcard_style_slug") @db.VarChar(64)
   privacyLevel             String                    @default("standard") @map("privacy_level") @db.VarChar(32)
   /// Opt-in for personalized ad relevance; never send raw learning history to ad providers.
   adsPersonalizationOptIn  Boolean                   @default(false) @map("ads_personalization_opt_in")
@@ -1113,19 +1115,19 @@ model UserProfile {
 }
 
 model CareerRank {
-  id                 String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  rankCode           String            @unique @map("rank_code") @db.VarChar(8)
-  titleJa            String            @map("title_ja")
-  titleVi            String            @map("title_vi")
-  bjtBandTarget      String            @map("bjt_band_target") @db.VarChar(32)
-  minSkillFloor      Int               @default(0) @map("min_skill_floor")
-  requiredArcCount   Int               @default(0) @map("required_arc_count")
-  xpToNext           Int               @default(100) @map("xp_to_next")
-  unlockedSceneTypes Json              @map("unlocked_scene_types")
-  rewardsPayload     Json              @default("{}") @map("rewards_payload")
-  displayOrder       Int               @map("display_order")
-  createdAt          DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt          DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id                 String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rankCode           String       @unique @map("rank_code") @db.VarChar(8)
+  titleJa            String       @map("title_ja")
+  titleVi            String       @map("title_vi")
+  bjtBandTarget      String       @map("bjt_band_target") @db.VarChar(32)
+  minSkillFloor      Int          @default(0) @map("min_skill_floor")
+  requiredArcCount   Int          @default(0) @map("required_arc_count")
+  xpToNext           Int          @default(100) @map("xp_to_next")
+  unlockedSceneTypes Json         @map("unlocked_scene_types")
+  rewardsPayload     Json         @default("{}") @map("rewards_payload")
+  displayOrder       Int          @map("display_order")
+  createdAt          DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
   arcs               MissionArc[]
 
   @@index([displayOrder], map: "idx_career_rank_display_order")
@@ -1180,18 +1182,18 @@ model RankProgressionEvent {
 }
 
 model MissionArc {
-  id             String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  slug           String           @unique
-  titleJa        String           @map("title_ja")
-  titleVi        String           @map("title_vi")
-  rankCodeEntry  String           @map("rank_code_entry") @db.VarChar(8)
-  storyPayload   Json             @default("{}") @map("story_payload")
-  status         String           @default("draft") @db.VarChar(32)
-  displayOrder   Int              @default(0) @map("display_order")
-  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
-  rankEntry      CareerRank       @relation(fields: [rankCodeEntry], references: [rankCode], onDelete: Restrict)
-  chapters       MissionChapter[]
+  id            String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug          String           @unique
+  titleJa       String           @map("title_ja")
+  titleVi       String           @map("title_vi")
+  rankCodeEntry String           @map("rank_code_entry") @db.VarChar(8)
+  storyPayload  Json             @default("{}") @map("story_payload")
+  status        String           @default("draft") @db.VarChar(32)
+  displayOrder  Int              @default(0) @map("display_order")
+  createdAt     DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rankEntry     CareerRank       @relation(fields: [rankCodeEntry], references: [rankCode], onDelete: Restrict)
+  chapters      MissionChapter[]
 
   @@index([status, displayOrder], map: "idx_mission_arc_status_order")
   @@index([rankCodeEntry], map: "idx_mission_arc_rank_entry")
@@ -1238,15 +1240,15 @@ model ChapterAttempt {
 }
 
 model StoryNpc {
-  id              String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  slug            String @unique
-  nameJa          String @map("name_ja")
-  roleJa          String @map("role_ja")
+  id              String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug            String  @unique
+  nameJa          String  @map("name_ja")
+  roleJa          String  @map("role_ja")
   companyJa       String? @map("company_ja")
-  defaultRelation String @default("uchi") @map("default_relation") @db.VarChar(16)
+  defaultRelation String  @default("uchi") @map("default_relation") @db.VarChar(16)
   personaPrompt   String? @map("persona_prompt")
-  avatarMedia     Json? @map("avatar_media")
-  status          String @default("active") @db.VarChar(32)
+  avatarMedia     Json?   @map("avatar_media")
+  status          String  @default("active") @db.VarChar(32)
 
   @@index([status], map: "idx_story_npc_status")
   @@map("story_npc")
@@ -1384,6 +1386,96 @@ model DailyUserAction {
   @@index([userId, createdAt], map: "idx_daily_user_action_user_created_at")
   @@index([dailyContentItemId, actionType], map: "idx_daily_user_action_item_type")
   @@map("daily_user_action")
+  @@schema("daily")
+}
+
+model MagazineArticle {
+  id                   String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug                 String              @unique @db.VarChar(200)
+  widgetKind           String              @map("widget_kind") @db.VarChar(64)
+  contentDate          DateTime            @map("content_date") @db.Date
+  locale               String              @default("vi") @db.VarChar(16)
+  titleJp              String              @map("title_jp")
+  titleVi              String              @map("title_vi")
+  summaryJp            String?             @map("summary_jp")
+  summaryVi            String?             @map("summary_vi")
+  coverImageUrl        String?             @map("cover_image_url")
+  contentJson          Json                @default("{}") @map("content_json")
+  jlptLevel            String?             @map("jlpt_level") @db.VarChar(8)
+  sourceDataJson       Json?               @default("{}") @map("source_data_json")
+  aiModel              String?             @map("ai_model") @db.VarChar(64)
+  generationCostTokens Int?                @map("generation_cost_tokens")
+  seoTitle             String?             @map("seo_title")
+  seoDescription       String?             @map("seo_description")
+  ogImageUrl           String?             @map("og_image_url")
+  status               String              @default("draft") @db.VarChar(32)
+  publishedAt          DateTime?           @map("published_at") @db.Timestamptz(6)
+  expiresAt            DateTime?           @map("expires_at") @db.Timestamptz(6)
+  createdAt            DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+  vocabItems           MagazineVocabItem[]
+  quizzes              MagazineQuiz[]
+  userReads            MagazineUserRead[]
+
+  @@unique([widgetKind, contentDate, locale], map: "uq_magazine_kind_date_locale")
+  @@index([status, contentDate(sort: Desc), locale], map: "idx_magazine_article_public")
+  @@index([widgetKind, status, contentDate(sort: Desc)], map: "idx_magazine_article_kind")
+  @@map("magazine_article")
+  @@schema("daily")
+}
+
+model MagazineVocabItem {
+  id           String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  articleId    String          @map("article_id") @db.Uuid
+  wordJp       String          @map("word_jp")
+  reading      String
+  meaningVi    String          @map("meaning_vi")
+  pos          String?         @db.VarChar(32)
+  jlptLevel    String?         @map("jlpt_level") @db.VarChar(8)
+  sentenceJp   String?         @map("sentence_jp")
+  sentenceVi   String?         @map("sentence_vi")
+  displayOrder Int             @default(0) @map("display_order")
+  createdAt    DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  article      MagazineArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@index([articleId, displayOrder], map: "idx_magazine_vocab_article_order")
+  @@map("magazine_vocab_item")
+  @@schema("daily")
+}
+
+model MagazineQuiz {
+  id            String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  articleId     String          @map("article_id") @db.Uuid
+  questionJp    String          @map("question_jp")
+  questionVi    String?         @map("question_vi")
+  quizType      String          @default("multiple_choice") @map("quiz_type") @db.VarChar(32)
+  options       Json            @default("[]")
+  correctAnswer String          @map("correct_answer")
+  explanationJp String?         @map("explanation_jp")
+  explanationVi String?         @map("explanation_vi")
+  displayOrder  Int             @default(0) @map("display_order")
+  createdAt     DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  article       MagazineArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@index([articleId, displayOrder], map: "idx_magazine_quiz_article_order")
+  @@map("magazine_quiz")
+  @@schema("daily")
+}
+
+model MagazineUserRead {
+  id               String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId           String          @map("user_id") @db.Uuid
+  articleId        String          @map("article_id") @db.Uuid
+  readAt           DateTime        @default(now()) @map("read_at") @db.Timestamptz(6)
+  quizScore        Int?            @map("quiz_score")
+  quizTotal        Int?            @map("quiz_total")
+  vocabSavedCount  Int             @default(0) @map("vocab_saved_count")
+  timeSpentSeconds Int?            @map("time_spent_seconds")
+  article          MagazineArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, articleId], map: "uq_magazine_user_article")
+  @@index([userId, readAt(sort: Desc)], map: "idx_magazine_user_read_user")
+  @@map("magazine_user_read")
   @@schema("daily")
 }
 
@@ -2201,18 +2293,18 @@ model ContentEnrichment {
 }
 
 model Announcement {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  type      String   @default("info") @db.Text
-  message   String   @db.Text
-  href      String?  @db.Text
-  active    Boolean  @default(true)
-  sortOrder Int      @default(0) @map("sort_order")
+  id        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type      String  @default("info") @db.Text
+  message   String  @db.Text
+  href      String? @db.Text
+  active    Boolean @default(true)
+  sortOrder Int     @default(0) @map("sort_order")
 
   /// banner | modal
-  format   String  @default("banner") @db.VarChar(32)
+  format   String @default("banner") @db.VarChar(32)
   /// all | free_only | premium_only
-  target   String  @default("all") @db.VarChar(32)
-  priority Int     @default(0)
+  target   String @default("all") @db.VarChar(32)
+  priority Int    @default(0)
 
   /// i18n title/body – Vi is canonical, En/Ja optional
   titleVi String? @map("title_vi") @db.Text
@@ -2230,9 +2322,9 @@ model Announcement {
 
   /// Modal visual config — admin-selectable presets
   /// none | confetti | particles | shimmer | aurora | sakura
-  effect    String @default("none") @db.VarChar(32)
+  effect   String @default("none") @db.VarChar(32)
   /// default | gradient-blue | gradient-violet | gradient-warm | gradient-dark | image-only
-  bgPreset  String @default("default") @map("bg_preset") @db.VarChar(32)
+  bgPreset String @default("default") @map("bg_preset") @db.VarChar(32)
 
   /// Dismiss behaviour
   allowCloseButton  Boolean @default(true) @map("allow_close_button")
@@ -2377,15 +2469,15 @@ model ExerciseAnswer {
 /// Links failed exercises to auto-generated remediation flashcards.
 /// When a user answers incorrectly, a flashcard is created from the source content.
 model ExerciseRemediation {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId      String   @map("user_id") @db.Uuid
-  exerciseId  String   @map("exercise_id") @db.Uuid
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  exerciseId String   @map("exercise_id") @db.Uuid
   /// The FlashcardVariant created as remediation
-  cardId      String   @map("card_id") @db.Uuid
+  cardId     String   @map("card_id") @db.Uuid
   /// Source content that generated the exercise (lexeme, grammar, kanji)
-  sourceType  String   @map("source_type") @db.VarChar(32)
-  sourceId    String   @map("source_id") @db.Uuid
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  sourceType String   @map("source_type") @db.VarChar(32)
+  sourceId   String   @map("source_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@unique([userId, exerciseId], map: "uq_exercise_remediation_user_exercise")
   @@index([userId, createdAt], map: "idx_exercise_remediation_user")
@@ -2397,25 +2489,25 @@ model ExerciseRemediation {
 /// Tracks a user's running performance per exercise type and level.
 /// Used by the adaptive difficulty algorithm to select appropriate difficulty.
 model UserExercisePerformance {
-  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId          String   @map("user_id") @db.Uuid
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId            String   @map("user_id") @db.Uuid
   /// word_order | cloze | translation | meaning_match | listening
-  exerciseType    String   @map("exercise_type") @db.VarChar(32)
+  exerciseType      String   @map("exercise_type") @db.VarChar(32)
   /// N5 | N4 | N3 | N2 | N1 | "all" (all levels combined)
-  level           String   @default("all") @db.VarChar(8)
+  level             String   @default("all") @db.VarChar(8)
   /// Total exercises attempted in this type+level
-  totalAttempts   Int      @default(0) @map("total_attempts")
+  totalAttempts     Int      @default(0) @map("total_attempts")
   /// Total correct answers
-  totalCorrect    Int      @default(0) @map("total_correct")
+  totalCorrect      Int      @default(0) @map("total_correct")
   /// Rolling accuracy of last 20 answers (0.0–1.0)
-  recentAccuracy  Float    @default(0.5) @map("recent_accuracy")
+  recentAccuracy    Float    @default(0.5) @map("recent_accuracy")
   /// Current adaptive difficulty: easy | medium | hard
-  currentDifficulty String @default("medium") @map("current_difficulty") @db.VarChar(16)
+  currentDifficulty String   @default("medium") @map("current_difficulty") @db.VarChar(16)
   /// Average time spent per question (ms)
-  avgTimeMs       Int      @default(0) @map("avg_time_ms")
+  avgTimeMs         Int      @default(0) @map("avg_time_ms")
   /// Last 20 answers as JSON array of booleans [true, false, true, ...]
-  recentWindow    Json     @default("[]") @map("recent_window")
-  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  recentWindow      Json     @default("[]") @map("recent_window")
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@unique([userId, exerciseType, level], map: "uq_user_exercise_perf")
   @@index([userId, exerciseType], map: "idx_user_exercise_perf_type")
@@ -2724,19 +2816,19 @@ model MysteryBoxClaim {
 
 /// Virtual companion pet that evolves through study consistency (Tamagotchi-style).
 model CompanionPet {
-  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId        String   @unique @map("user_id") @db.Uuid
-  name          String   @default("Shiba") @db.VarChar(30)
-  stage         String   @default("egg") @db.VarChar(20)
-  xp            Int      @default(0)
-  happiness     Int      @default(100)
-  mood          String   @default("happy") @db.VarChar(20)
-  totalFeedings Int      @default(0) @map("total_feedings")
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String    @unique @map("user_id") @db.Uuid
+  name          String    @default("Shiba") @db.VarChar(30)
+  stage         String    @default("egg") @db.VarChar(20)
+  xp            Int       @default(0)
+  happiness     Int       @default(100)
+  mood          String    @default("happy") @db.VarChar(20)
+  totalFeedings Int       @default(0) @map("total_feedings")
   lastFedAt     DateTime? @map("last_fed_at") @db.Timestamptz(6)
   evolvedAt     DateTime? @map("evolved_at") @db.Timestamptz(6)
-  costumeSlug   String?  @map("costume_slug") @db.VarChar(50)
-  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  costumeSlug   String?   @map("costume_slug") @db.VarChar(50)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@map("companion_pet")
   @@schema("gamification")
@@ -2818,6 +2910,35 @@ model EventChallengeProgress {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// ── Flashcard Styles (Cosmetic Premium Feature) ─────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/// Visual style/theme for flashcard display. Admin-managed, tier-gated.
+model FlashcardStyle {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug           String   @unique @db.VarChar(64)
+  /// i18n key for display name
+  nameKey        String   @map("name_key") @db.VarChar(128)
+  /// i18n key for description
+  descriptionKey String?  @map("description_key") @db.VarChar(128)
+  /// Preview image URL (thumbnail in style picker)
+  thumbnailUrl   String?  @map("thumbnail_url")
+  /// JSON config: { cardBg, textColor, fontFamily, borderRadius, flipAnimation, accentColor, backdropBlur, shadow }
+  config         Json     @default("{}")
+  /// free | premium | exclusive
+  tier           String   @default("free") @db.VarChar(16)
+  sortOrder      Int      @default(0) @map("sort_order")
+  /// active | draft | archived
+  status         String   @default("draft") @db.VarChar(32)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([tier, status, sortOrder], map: "idx_flashcard_style_tier_status_sort")
+  @@map("flashcard_style")
+  @@schema("learning")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // ── Auto Flashcard Generation ───────────────────────────────────────────────────
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -2876,22 +2997,24 @@ model FlashcardGenJob {
   @@schema("learning")
 }
 
-/* ── BJT Lessons ─────────────────────────────────────────── */
+/**
+ * ── BJT Lessons ───────────────────────────────────────────
+ */
 
 model BjtLesson {
-  id          String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  levelCode   String          @map("level_code") @db.VarChar(4)
-  sortOrder   Int             @map("sort_order")
-  slug        String          @unique @db.VarChar(80)
-  titleVi     String          @map("title_vi") @db.VarChar(200)
-  titleJa     String          @map("title_ja") @db.VarChar(200)
-  descriptionVi String?       @map("description_vi")
-  descriptionJa String?       @map("description_ja")
-  status      String          @default("active") @db.VarChar(32)
-  createdAt   DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  levelCode     String   @map("level_code") @db.VarChar(4)
+  sortOrder     Int      @map("sort_order")
+  slug          String   @unique @db.VarChar(80)
+  titleVi       String   @map("title_vi") @db.VarChar(200)
+  titleJa       String   @map("title_ja") @db.VarChar(200)
+  descriptionVi String?  @map("description_vi")
+  descriptionJa String?  @map("description_ja")
+  status        String   @default("active") @db.VarChar(32)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  items       BjtLessonItem[]
+  items BjtLessonItem[]
 
   @@unique([levelCode, sortOrder], map: "uq_bjt_lesson_level_order")
   @@index([levelCode, status], map: "idx_bjt_lesson_level_status")
@@ -2900,14 +3023,14 @@ model BjtLesson {
 }
 
 model BjtLessonItem {
-  id          String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  lessonId    String     @map("lesson_id") @db.Uuid
-  contentType String     @map("content_type") @db.VarChar(20)
-  contentId   String     @map("content_id") @db.Uuid
-  sortOrder   Int        @map("sort_order")
-  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  lessonId    String   @map("lesson_id") @db.Uuid
+  contentType String   @map("content_type") @db.VarChar(20)
+  contentId   String   @map("content_id") @db.Uuid
+  sortOrder   Int      @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  lesson      BjtLesson  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lesson BjtLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   @@unique([lessonId, contentType, contentId], map: "uq_bjt_lesson_item_unique")
   @@index([lessonId, sortOrder], map: "idx_bjt_lesson_item_order")
@@ -2922,7 +3045,7 @@ model BjtLessonItem {
 
 model NhkArticle {
   id            String   @id @db.VarChar(64)
-  sourceType    String   @map("source_type") @db.VarChar(16)  // "easy" | "normal"
+  sourceType    String   @map("source_type") @db.VarChar(16) // "easy" | "normal"
   title         String
   titleWithRuby String?  @map("title_with_ruby")
   url           String
@@ -2945,14 +3068,14 @@ model NhkArticle {
 }
 
 model NhkReadingProgress {
-  id          String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId      String     @map("user_id") @db.VarChar(128)
-  articleId   String     @map("article_id") @db.VarChar(64)
-  readAt      DateTime   @default(now()) @map("read_at") @db.Timestamptz(6)
-  readTimeSec Int?       @map("read_time_sec")
-  completed   Boolean    @default(false)
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String   @map("user_id") @db.VarChar(128)
+  articleId   String   @map("article_id") @db.VarChar(64)
+  readAt      DateTime @default(now()) @map("read_at") @db.Timestamptz(6)
+  readTimeSec Int?     @map("read_time_sec")
+  completed   Boolean  @default(false)
 
-  article     NhkArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  article NhkArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
 
   @@unique([userId, articleId], map: "uq_nhk_reading_progress_user_article")
   @@index([userId, readAt(sort: Desc)], map: "idx_nhk_reading_progress_user")
@@ -2961,12 +3084,12 @@ model NhkReadingProgress {
 }
 
 model NhkBookmark {
-  id         String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId     String     @map("user_id") @db.VarChar(128)
-  articleId  String     @map("article_id") @db.VarChar(64)
-  createdAt  DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @map("user_id") @db.VarChar(128)
+  articleId String   @map("article_id") @db.VarChar(64)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  article    NhkArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  article NhkArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
 
   @@unique([userId, articleId], map: "uq_nhk_bookmark_user_article")
   @@index([userId, createdAt(sort: Desc)], map: "idx_nhk_bookmark_user")
@@ -2975,17 +3098,17 @@ model NhkBookmark {
 }
 
 model CompanionTip {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  category    String   @db.VarChar(32)
-  contentJa   String   @map("content_ja")
-  contentVi   String   @map("content_vi")
-  exampleJa   String?  @map("example_ja")
-  exampleVi   String?  @map("example_vi")
-  jlptLevel   String?  @map("jlpt_level") @db.VarChar(8)
-  active      Boolean  @default(true)
-  sortOrder   Int      @default(0) @map("sort_order")
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  category  String   @db.VarChar(32)
+  contentJa String   @map("content_ja")
+  contentVi String   @map("content_vi")
+  exampleJa String?  @map("example_ja")
+  exampleVi String?  @map("example_vi")
+  jlptLevel String?  @map("jlpt_level") @db.VarChar(8)
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@index([category, active], map: "idx_companion_tip_category_active")
   @@map("companion_tip")

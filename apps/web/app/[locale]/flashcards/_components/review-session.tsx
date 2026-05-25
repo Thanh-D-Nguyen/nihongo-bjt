@@ -446,14 +446,25 @@ function ExampleList({ examples, label }: { examples: CardExample[]; label: stri
 function ReviewCard({
   children,
   onClick,
+  cardStyle,
 }: {
   children: React.ReactNode;
   onClick?: () => void;
+  cardStyle?: Record<string, string> | null;
 }) {
+  const inlineStyle: React.CSSProperties = {
+    animation: "rs-card-enter 0.4s ease-out",
+    animationFillMode: "both",
+    ...(cardStyle?.cardBg ? { background: cardStyle.cardBg } : {}),
+    ...(cardStyle?.textColor ? { color: cardStyle.textColor } : {}),
+    ...(cardStyle?.borderRadius ? { borderRadius: cardStyle.borderRadius } : {}),
+    ...(cardStyle?.shadow ? { boxShadow: cardStyle.shadow } : {}),
+    ...(cardStyle?.fontFamily ? { fontFamily: cardStyle.fontFamily } : {}),
+  };
   return (
     <div
-      className="relative mx-auto w-full max-w-lg cursor-pointer select-none overflow-hidden rounded-3xl border border-white/10 bg-white/[0.06] p-8 shadow-2xl backdrop-blur-xl transition-transform hover:scale-[1.01] sm:p-10"
-      style={{ animation: "rs-card-enter 0.4s ease-out", animationFillMode: "both" }}
+      className={`relative mx-auto w-full max-w-lg cursor-pointer select-none overflow-hidden rounded-3xl border border-white/10 ${cardStyle?.cardBg ? "" : "bg-white/[0.06]"} p-8 shadow-2xl backdrop-blur-xl transition-transform hover:scale-[1.01] sm:p-10`}
+      style={inlineStyle}
       onClick={onClick}
       role={onClick ? "button" : undefined}
       tabIndex={onClick ? 0 : undefined}
@@ -472,17 +483,19 @@ function FlipReview({
   card,
   labels,
   flipped,
+  cardStyle,
   onFlip,
 }: {
   card: DueCard;
   labels: ReviewSessionLabels;
   flipped: boolean;
+  cardStyle?: Record<string, string> | null;
   onFlip: () => void;
 }) {
   const audioUrl = card.primaryAudio?.readUrl ?? null;
   const ttsText = card.card.reading ?? card.card.frontText;
   return (
-    <ReviewCard onClick={!flipped ? onFlip : undefined}>
+    <ReviewCard onClick={!flipped ? onFlip : undefined} cardStyle={cardStyle}>
       <div className="min-h-[200px] flex flex-col items-center justify-center gap-3 text-center">
         {card.primaryImage?.readUrl ? (
           <CardImage url={card.primaryImage.readUrl} alt={card.card.frontText} />
@@ -527,11 +540,13 @@ function TypeReview({
   card,
   labels,
   revealed,
+  cardStyle,
   onReveal,
 }: {
   card: DueCard;
   labels: ReviewSessionLabels;
   revealed: boolean;
+  cardStyle?: Record<string, string> | null;
   onReveal: (typed: string, grade: Grade) => void;
 }) {
   const [input, setInput] = useState("");
@@ -556,7 +571,7 @@ function TypeReview({
   const ttsText = card.card.reading ?? card.card.frontText;
 
   return (
-    <ReviewCard>
+    <ReviewCard cardStyle={cardStyle}>
       <div className="min-h-[200px] flex flex-col items-center justify-center gap-3 text-center">
         {card.primaryImage?.readUrl ? (
           <CardImage url={card.primaryImage.readUrl} alt={card.card.frontText} />
@@ -635,11 +650,13 @@ function MatchReview({
   card,
   options,
   labels,
+  cardStyle,
   onAnswer,
 }: {
   card: DueCard;
   options: string[];
   labels: ReviewSessionLabels;
+  cardStyle?: Record<string, string> | null;
   onAnswer: (correct: boolean, elapsedMs: number) => void;
 }) {
   const [selected, setSelected] = useState<string | null>(null);
@@ -657,7 +674,7 @@ function MatchReview({
   const ttsText = card.card.reading ?? card.card.frontText;
 
   return (
-    <ReviewCard>
+    <ReviewCard cardStyle={cardStyle}>
       <div className="min-h-[200px] flex flex-col items-center justify-center gap-3 text-center">
         {card.primaryImage?.readUrl ? (
           <CardImage url={card.primaryImage.readUrl} alt={card.card.frontText} />
@@ -932,11 +949,13 @@ export function ReviewSession({
   labels,
   locale,
   scopeDeckId,
+  styleConfig,
   onExit,
 }: {
   labels: ReviewSessionLabels;
   locale: string;
   scopeDeckId?: string | null;
+  styleConfig?: Record<string, string> | null;
   onExit: () => void;
 }) {
   const { userId } = useKeycloakAuth();
@@ -1309,6 +1328,7 @@ export function ReviewSession({
                 card={currentCard}
                 labels={labels}
                 flipped={flipped}
+                cardStyle={styleConfig}
                 onFlip={() => setFlipped(true)}
               />
             ) : mode === "type" ? (
@@ -1316,6 +1336,7 @@ export function ReviewSession({
                 card={currentCard}
                 labels={labels}
                 revealed={typeRevealed}
+                cardStyle={styleConfig}
                 onReveal={(_typed, g) => {
                   setTypeGrade(g);
                   setTypeRevealed(true);
@@ -1326,6 +1347,7 @@ export function ReviewSession({
                 card={currentCard}
                 options={matchOptions}
                 labels={labels}
+                cardStyle={styleConfig}
                 onAnswer={(correct, elapsedMs) => setMatchAnswered({ correct, elapsedMs })}
               />
             ) : null}

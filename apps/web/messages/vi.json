@@ -173,7 +173,12 @@
       "onboardingNext": "Tiếp",
       "onboardingSkip": "Bỏ qua",
       "onboardingFinish": "Bắt đầu!"
-    }
+    },
+    "localeSwitcher": "Ngôn ngữ",
+    "localeSwitcherAria": "Đổi ngôn ngữ hiển thị",
+    "localeVi": "Tiếng Việt",
+    "localeJa": "日本語",
+    "localeEn": "English"
   },
   "home": {
     "actionsLabel": "Hành động chính",
@@ -760,7 +765,16 @@
     "mentorMilestone5": "Chuỗi {n} thẻ liên tiếp! Tuyệt vời!",
     "mentorMilestone10": "🔥 {n} thẻ liên tục — bạn đang cháy hết mình!",
     "mentorMilestone25": "🏆 {n} thẻ! Kỷ lục ấn tượng — tiếp tục thôi!",
-    "streakLabel": "Chuỗi"
+    "streakLabel": "Chuỗi",
+    "stylePickerTitle": "Giao diện thẻ",
+    "stylePickerDescription": "Chọn kiểu hiển thị cho thẻ flashcard",
+    "stylePickerActive": "Đang dùng",
+    "stylePickerSelect": "Chọn",
+    "stylePickerPremium": "Premium",
+    "stylePickerExclusive": "Độc quyền",
+    "stylePickerLocked": "Nâng cấp để mở khóa",
+    "stylePickerFree": "Miễn phí",
+    "stylePickerApplied": "Đã áp dụng!"
   },
   "decks": {
     "title": "Bộ thẻ",
@@ -2118,23 +2132,23 @@
     "examplesLabel": "Ví dụ"
   },
   "appearancePage": {
-    "title": "Giao di\u1ec7n",
-    "subtitle": "Ch\u1ec9nh ch\u1ebf \u0111\u1ed9 s\u00e1ng/t\u1ed1i, c\u1ee1 ch\u1eef v\u00e0 m\u1eadt \u0111\u1ed9 hi\u1ec3n th\u1ecb.",
-    "themeLabel": "Ch\u1ebf \u0111\u1ed9",
-    "themeLight": "S\u00e1ng",
-    "themeDark": "T\u1ed1i",
-    "themeSystem": "Theo h\u1ec7 th\u1ed1ng",
-    "fontSizeLabel": "C\u1ee1 ch\u1eef ti\u1ebfng Nh\u1eadt",
-    "fontSizeSmall": "Nh\u1ecf",
-    "fontSizeDefault": "M\u1eb7c \u0111\u1ecbnh",
-    "fontSizeLarge": "L\u1edbn",
-    "fontSizeXl": "R\u1ea5t l\u1edbn",
-    "densityLabel": "M\u1eadt \u0111\u1ed9 hi\u1ec3n th\u1ecb",
-    "densityCompact": "G\u1ecdn",
-    "densityComfortable": "Tho\u1ea3i m\u00e1i",
-    "saved": "\u0110\u00e3 l\u01b0u.",
-    "preview": "Xem tr\u01b0\u1edbc",
-    "previewText": "Trong m\u00f4i tr\u01b0\u1eddng kinh doanh Nh\u1eadt B\u1ea3n, vi\u1ec7c s\u1eed d\u1ee5ng k\u00ednh ng\u1eef v\u00e0 khi\u00eam nh\u01b0\u1eddng ng\u1eef \u0111\u00fang c\u00e1ch l\u00e0 r\u1ea5t quan tr\u1ecdng."
+    "title": "Giao diện",
+    "subtitle": "Chỉnh chế độ sáng/tối, cỡ chữ và mật độ hiển thị.",
+    "themeLabel": "Chế độ",
+    "themeLight": "Sáng",
+    "themeDark": "Tối",
+    "themeSystem": "Theo hệ thống",
+    "fontSizeLabel": "Cỡ chữ tiếng Nhật",
+    "fontSizeSmall": "Nhỏ",
+    "fontSizeDefault": "Mặc định",
+    "fontSizeLarge": "Lớn",
+    "fontSizeXl": "Rất lớn",
+    "densityLabel": "Mật độ hiển thị",
+    "densityCompact": "Gọn",
+    "densityComfortable": "Thoải mái",
+    "saved": "Đã lưu.",
+    "preview": "Xem trước",
+    "previewText": "Trong môi trường kinh doanh Nhật Bản, việc sử dụng kính ngữ và khiêm nhường ngữ đúng cách là rất quan trọng."
   },
   "announcements": {
     "close": "Đóng",
@@ -2154,7 +2168,9 @@
     "loading": "Đang tải...",
     "error": "Không thể tải thông tin gói. Vui lòng thử lại.",
     "backHome": "← Về trang chủ",
-    "enforcementOff": "Hệ thống đang ở chế độ miễn phí toàn diện. Tất cả tính năng đều mở."
+    "enforcementOff": "Hệ thống đang ở chế độ miễn phí toàn diện. Tất cả tính năng đều mở.",
+    "checkoutLoading": "Đang xử lý...",
+    "checkoutError": "Không thể thực hiện thanh toán. Vui lòng thử lại."
   },
   "subscription": {
     "title": "Gói đăng ký",
@@ -2198,5 +2214,33 @@
     "stop": "Dừng tập trung",
     "completed": "Hoàn thành phiên tập trung!",
     "dismiss": "Đóng"
+  },
+  "magazine": {
+    "title": "Daily Magazine",
+    "subtitle": "Học tiếng Nhật mỗi ngày qua nội dung thú vị",
+    "filterAll": "Tất cả",
+    "filterVocab": "Từ vựng",
+    "filterWeather": "Thời tiết",
+    "filterHoroscope": "Tử vi",
+    "filterLoto": "Loto",
+    "filterBjt": "BJT",
+    "emptyTitle": "Chưa có bài viết nào",
+    "emptyDescription": "Nội dung mới sẽ được cập nhật hàng ngày. Quay lại sau nhé!",
+    "vocabSection": "Từ vựng trong bài",
+    "quizSection": "Mini Quiz",
+    "quizProgress": "Câu {current}/{total}",
+    "quizNext": "Câu tiếp →",
+    "quizResult": "Xem kết quả",
+    "quizComplete": "Hoàn thành!",
+    "quizScore": "Điểm: {score}/{total}",
+    "quizPerfect": "Xuất sắc! Bạn trả lời đúng hết!",
+    "quizGood": "Tốt lắm! Tiếp tục cố gắng nhé!",
+    "quizTryAgain": "Cố gắng thêm nhé! Xem lại từ vựng ở trên.",
+    "todayTitle": "Hôm nay",
+    "todayViewAll": "Xem tất cả →",
+    "readMore": "Đọc tiếp",
+    "jlptBadge": "JLPT {level}",
+    "prevPage": "← Trước",
+    "nextPage": "Sau →"
   }
 }

@@ -3,10 +3,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import en from "../../../messages/en.json";
 import ja from "../../../messages/ja.json";
 import vi from "../../../messages/vi.json";
 
-const messages = { ja, vi };
+const messages = { ja, vi, en };
 
 export const metadata: Metadata = {
   robots: { index: false },
