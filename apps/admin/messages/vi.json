@@ -4401,6 +4401,7 @@
     "generating": "Đang sinh…",
     "generateSuccess": "Đã sinh bài viết thành công!",
     "generateExists": "Bài viết đã tồn tại cho ngày và loại này.",
+    "viewOnLearner": "Xem trên frontend",
     "regenerating": "Đang sinh lại…",
     "regenerateSuccess": "Đã sinh lại thành công!",
     "deleteSuccess": "Đã xóa bài viết.",

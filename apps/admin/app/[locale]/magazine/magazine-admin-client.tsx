@@ -43,6 +43,7 @@ interface MagazineLabels {
   generating: string;
   generateSuccess: string;
   generateExists: string;
+  viewOnLearner: string;
   regenerating: string;
   regenerateSuccess: string;
   deleteSuccess: string;
@@ -82,6 +83,12 @@ const KIND_OPTIONS = [
   { value: "magazine_bjt_phrase", icon: "💼" },
 ] as const;
 
+const learnerBaseUrl = (process.env.NEXT_PUBLIC_WEB_PUBLIC_URL ?? "http://localhost:3000").replace(/\/$/u, "");
+
+function buildMagazineSlug(date: string, widgetKind: string, locale: string): string {
+  return `${date}-${widgetKind.replace("magazine_", "")}-${locale}`;
+}
+
 /* ─── Component ─── */
 
 export function MagazineAdminClient({
@@ -97,6 +104,7 @@ export function MagazineAdminClient({
   const [showGenerate, setShowGenerate] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [genMessage, setGenMessage] = useState<string | null>(null);
+  const [generatedSlug, setGeneratedSlug] = useState<string | null>(null);
 
   // Generate form state
   const [genKind, setGenKind] = useState("magazine_vocab");
@@ -139,6 +147,7 @@ export function MagazineAdminClient({
   const handleGenerate = async () => {
     setGenerating(true);
     setGenMessage(null);
+    setGeneratedSlug(null);
     try {
       const res = await adminApiFetch("/api/admin/magazine/generate", {
         method: "POST",
@@ -148,6 +157,7 @@ export function MagazineAdminClient({
       if (!res.ok) throw new Error("generate failed");
       const result = (await res.json()) as { id: string | null; generated: boolean };
       setGenMessage(result.generated ? labels.generateSuccess : labels.generateExists);
+      setGeneratedSlug(buildMagazineSlug(genDate, genKind, genLocale));
       if (result.generated) {
         void loadArticles();
       }
@@ -253,6 +263,16 @@ export function MagazineAdminClient({
               </button>
               {genMessage && (
                 <span className="text-sm text-muted-foreground">{genMessage}</span>
+              )}
+              {generatedSlug && (
+                <a
+                  href={`${learnerBaseUrl}/${genLocale}/magazine/${generatedSlug}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+                >
+                  {labels.viewOnLearner}
+                </a>
               )}
             </div>
           </div>

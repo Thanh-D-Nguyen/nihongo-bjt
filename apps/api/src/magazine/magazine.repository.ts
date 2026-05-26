@@ -5,6 +5,7 @@ import { todayDateKey } from "@nihongo-bjt/shared";
 type ListFilter = {
   widgetKind?: string;
   status?: string;
+  includeAllStatuses?: boolean;
   locale?: string;
   limit: number;
   page: number;
@@ -56,14 +57,36 @@ function toInputJsonValue(value: unknown, fallback: Prisma.InputJsonValue): Pris
   return value as Prisma.InputJsonValue;
 }
 
+type ArticleWithRelations = Prisma.MagazineArticleGetPayload<{
+  include: {
+    vocabItems: { orderBy: { displayOrder: "asc" } };
+    quizzes: { orderBy: { displayOrder: "asc" } };
+  };
+}>;
+
+function serializeArticle(article: ArticleWithRelations) {
+  return {
+    ...article,
+    publishDate: article.publishedAt ?? article.contentDate,
+    vocabWords: article.vocabItems.map((item) => ({
+      word: item.wordJp,
+      reading: item.reading,
+      meaning: item.meaningVi,
+    })),
+  };
+}
+
 @Injectable()
 export class MagazineRepository {
   private readonly prisma: PrismaClient = createPrismaClient();
 
   async list(filter: ListFilter) {
     const where: Record<string, unknown> = {};
-    if (filter.status) where.status = filter.status;
-    else where.status = "published";
+    if (filter.status) {
+      where.status = filter.status;
+    } else if (!filter.includeAllStatuses) {
+      where.status = "published";
+    }
     if (filter.widgetKind) where.widgetKind = filter.widgetKind;
     if (filter.locale) where.locale = filter.locale;
 
@@ -73,17 +96,20 @@ export class MagazineRepository {
         orderBy: { contentDate: "desc" },
         skip: (filter.page - 1) * filter.limit,
         take: filter.limit,
-        include: { vocabItems: { orderBy: { displayOrder: "asc" } } },
+        include: {
+          vocabItems: { orderBy: { displayOrder: "asc" } },
+          quizzes: { orderBy: { displayOrder: "asc" } },
+        },
       }),
       this.prisma.magazineArticle.count({ where }),
     ]);
 
-    return { items, total, page: filter.page, limit: filter.limit };
+    return { data: items.map(serializeArticle), total, page: filter.page, limit: filter.limit };
   }
 
   async getToday(locale = "vi") {
     const today = todayDateKey(new Date());
-    return this.prisma.magazineArticle.findMany({
+    const items = await this.prisma.magazineArticle.findMany({
       where: { contentDate: new Date(today), locale, status: "published" },
       orderBy: { widgetKind: "asc" },
       include: {
@@ -91,16 +117,18 @@ export class MagazineRepository {
         quizzes: { orderBy: { displayOrder: "asc" } },
       },
     });
+    return items.map(serializeArticle);
   }
 
   async getBySlug(slug: string) {
-    return this.prisma.magazineArticle.findUnique({
+    const article = await this.prisma.magazineArticle.findUnique({
       where: { slug },
       include: {
         vocabItems: { orderBy: { displayOrder: "asc" } },
         quizzes: { orderBy: { displayOrder: "asc" } },
       },
     });
+    return article ? serializeArticle(article) : null;
   }
 
   async create(input: CreateArticleInput) {

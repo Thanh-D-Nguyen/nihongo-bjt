@@ -4411,6 +4411,7 @@
     "generating": "Generating…",
     "generateSuccess": "Article generated successfully!",
     "generateExists": "Article already exists for this date and type.",
+    "viewOnLearner": "View on learner site",
     "regenerating": "Regenerating…",
     "regenerateSuccess": "Regenerated successfully!",
     "deleteSuccess": "Article deleted.",

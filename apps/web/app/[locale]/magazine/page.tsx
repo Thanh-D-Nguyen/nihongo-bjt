@@ -9,7 +9,7 @@ import { MagazineGridSkeleton } from "./_components/magazine-skeleton";
 
 const messages: Record<string, typeof vi> = { ja, vi, en };
 
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
@@ -59,7 +59,7 @@ async function fetchMagazine(kind?: string, page = 1): Promise<MagazineResponse 
     params.set("limit", "12");
 
     const res = await fetch(`${apiBaseUrl}/api/magazine?${params.toString()}`, {
-      next: { revalidate: 3600 },
+      cache: "no-store",
     });
     if (!res.ok) return null;
     return (await res.json()) as MagazineResponse;

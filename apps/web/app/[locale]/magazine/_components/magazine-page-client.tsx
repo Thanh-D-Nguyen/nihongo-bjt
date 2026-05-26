@@ -101,6 +101,11 @@ function MagazineFilter({ activeKind, t }: { activeKind: string; t: MagazineTran
 /* ─── Bento Card ─── */
 
 const kindIcons: Record<string, string> = {
+  magazine_vocab: "🌸",
+  magazine_weather: "☀️",
+  magazine_horoscope: "⭐",
+  magazine_loto: "🎰",
+  magazine_bjt_phrase: "💼",
   vocab: "🌸",
   weather: "☀️",
   horoscope: "⭐",
@@ -109,6 +114,11 @@ const kindIcons: Record<string, string> = {
 };
 
 const kindGradients: Record<string, string> = {
+  magazine_vocab: "from-pink-500/10 to-rose-500/5",
+  magazine_weather: "from-amber-500/10 to-orange-500/5",
+  magazine_horoscope: "from-violet-500/10 to-purple-500/5",
+  magazine_loto: "from-emerald-500/10 to-teal-500/5",
+  magazine_bjt_phrase: "from-blue-500/10 to-indigo-500/5",
   vocab: "from-pink-500/10 to-rose-500/5",
   weather: "from-amber-500/10 to-orange-500/5",
   horoscope: "from-violet-500/10 to-purple-500/5",

@@ -8,14 +8,14 @@ import { MagazineArticleView } from "../_components/magazine-article-view";
 
 const messages: Record<string, typeof vi> = { ja, vi, en };
 
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
 
 const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/$/u, "");
 
 async function fetchArticle(slug: string) {
   try {
     const res = await fetch(`${apiBaseUrl}/api/magazine/${slug}`, {
-      next: { revalidate: 3600 },
+      cache: "no-store",
     });
     if (!res.ok) return null;
     return await res.json();

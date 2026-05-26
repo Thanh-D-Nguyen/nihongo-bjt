@@ -4401,6 +4401,7 @@
     "generating": "生成中…",
     "generateSuccess": "記事を生成しました！",
     "generateExists": "この日付・種類の記事は既に存在します。",
+    "viewOnLearner": "学習者画面で表示",
     "regenerating": "再生成中…",
     "regenerateSuccess": "再生成しました！",
     "deleteSuccess": "記事を削除しました。",

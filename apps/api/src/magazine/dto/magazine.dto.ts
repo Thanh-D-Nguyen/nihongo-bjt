@@ -3,6 +3,11 @@ import { IsOptional, IsString, IsInt, Min, Max, IsDateString } from "class-valid
 import { Type } from "class-transformer";
 
 export class ListMagazineQuery {
+  @ApiPropertyOptional({ description: "Short kind used by learner UI, e.g. vocab, weather, bjt_phrase" })
+  @IsOptional()
+  @IsString()
+  kind?: string;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()

@@ -9,6 +9,16 @@ import { MagazineRepository } from "./magazine.repository.js";
 import { MagazineGenerationService } from "./magazine-generation.service.js";
 import { AdminGenerateBody, ListMagazineQuery } from "./dto/magazine.dto.js";
 
+function normalizeWidgetKind(kind?: string): string | undefined {
+  if (!kind || kind === "all") return undefined;
+  return kind.startsWith("magazine_") ? kind : `magazine_${kind}`;
+}
+
+function positiveInt(value: unknown, fallback: number): number {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
 @ApiTags("Admin – Magazine")
 @Controller("admin/magazine")
 @UseGuards(AdminRbacGuard)
@@ -31,11 +41,11 @@ export class MagazineAdminController {
   @ApiOkResponse({ description: "Paginated list of magazine articles including drafts." })
   list(@Query() query: ListMagazineQuery) {
     return this.repo.list({
-      widgetKind: query.widgetKind,
+      widgetKind: normalizeWidgetKind(query.widgetKind ?? query.kind),
       locale: query.locale ?? "vi",
-      page: query.page ?? 1,
-      limit: query.limit ?? 10,
-      status: undefined, // show all statuses for admin
+      page: positiveInt(query.page, 1),
+      limit: Math.min(positiveInt(query.limit, 10), 50),
+      includeAllStatuses: true,
     });
   }
 

@@ -3,6 +3,16 @@ import { ApiTags, ApiOperation } from "@nestjs/swagger";
 import { MagazineRepository } from "./magazine.repository.js";
 import { ListMagazineQuery, MarkReadBody } from "./dto/magazine.dto.js";
 
+function normalizeWidgetKind(kind?: string): string | undefined {
+  if (!kind || kind === "all") return undefined;
+  return kind.startsWith("magazine_") ? kind : `magazine_${kind}`;
+}
+
+function positiveInt(value: unknown, fallback: number): number {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
 @ApiTags("Magazine")
 @Controller("magazine")
 export class MagazineController {
@@ -12,10 +22,10 @@ export class MagazineController {
   @ApiOperation({ summary: "List published magazine articles" })
   list(@Query() query: ListMagazineQuery) {
     return this.repo.list({
-      widgetKind: query.widgetKind,
+      widgetKind: normalizeWidgetKind(query.widgetKind ?? query.kind),
       locale: query.locale ?? "vi",
-      page: query.page ?? 1,
-      limit: query.limit ?? 10,
+      page: positiveInt(query.page, 1),
+      limit: Math.min(positiveInt(query.limit, 10), 50),
     });
   }
 
