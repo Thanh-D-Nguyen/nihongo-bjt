@@ -283,6 +283,30 @@ export const ADMIN_HELP_CONTENT: Record<string, HelpContent> = {
     ],
   },
 
+  "/magazine": {
+    title: "Magazine (AI Daily Content)",
+    description:
+      "Quản lý nội dung daily magazine tự động sinh bởi AI. 5 loại widget: vocab, weather, horoscope, loto, bjt_phrase. Hỗ trợ sinh thủ công và xem trạng thái.",
+    steps: [
+      { title: "Xem danh sách bài viết", description: "Bảng: Title (JP/VI), Kind (widget type), Date, Status (published/draft), JLPT Level, Actions." },
+      { title: "Sinh nội dung mới", description: "Bấm 'Sinh nội dung' → chọn Kind (vocab/weather/horoscope/loto/bjt_phrase), Date, Locale → Submit. AI sẽ sinh nội dung tự động." },
+      { title: "Sinh lại (Regenerate)", description: "Nếu chất lượng chưa tốt, bấm 'Sinh lại' trên bài cụ thể → nội dung cũ bị overwrite bằng phiên bản mới." },
+      { title: "Xóa bài", description: "Bấm 'Xóa' → xác nhận → bài bị xóa vĩnh viễn." },
+    ],
+    tips: [
+      "⏰ Nội dung được tự động sinh mỗi ngày lúc 5:30 sáng (vocab, weather, horoscope, bjt_phrase) và Thứ 2 + Thứ 5 lúc 17:00 (loto).",
+      "✋ Admin có thể sinh thủ công bất kỳ ngày/loại nào, hoặc sinh lại nếu chất lượng chưa tốt.",
+      "🔑 Cần OPENAI_API_KEY trong env để dùng AI thật. Không có key → dùng mock data.",
+      "🌐 Weather lấy từ JMA (気象庁). Loto dùng statistical mock (Phase 2: API thật).",
+      "🔄 Sinh nội dung là idempotent — cùng ngày/loại sẽ không tạo trùng. Dùng 'Sinh lại' để overwrite.",
+      "Mỗi widget type có layout hiển thị khác nhau trên app learner.",
+    ],
+    relatedLinks: [
+      { label: "Daily Hub", href: "/daily-hub" },
+      { label: "Daily Radar", href: "/daily-radar" },
+    ],
+  },
+
   "/decks": {
     title: "Flashcard Decks",
     description:
@@ -839,16 +863,24 @@ export const ADMIN_HELP_CONTENT: Record<string, HelpContent> = {
   "/monetization": {
     title: "Monetization Overview",
     description:
-      "Dashboard doanh thu. Tất cả monetization pages dùng chung MonetizationConsoleClient với các tabs khác nhau.",
+      "Dashboard doanh thu tổng hợp. Kiến trúc 3 lớp bảo vệ server-side: Entitlement Guard (chặn feature premium), Quota Service (giới hạn sử dụng), Feature Flag (bật/tắt toàn hệ thống).",
     steps: [
-      { title: "Xem KPIs", description: "Revenue metrics: MRR, subscribers, conversion, ARPU." },
-      { title: "Navigate tabs", description: "Dùng sidebar hoặc tab nav để vào: Plans, Entitlements, Quotas, Subscriptions, Billing Events, Refunds, Provider Config, Webhook DLQ." },
+      { title: "Xem KPIs", description: "Revenue metrics: MRR, subscribers, conversion rate, ARPU, funnel biểu đồ phân bổ plan." },
+      { title: "Navigate tabs", description: "Sidebar/tab nav: Plans, Entitlements, Quotas, Subscriptions, Billing Events, Refunds, Provider Config, Webhook DLQ." },
+      { title: "Kiểm tra enforcement", description: "Feature flag 'monetization.enforcement' quyết định có bật thu phí hay không. Tắt = mọi user dùng free mode." },
+    ],
+    tips: [
+      "Quyền cần có: admin.monetization.read (xem) + admin.monetization.write (sửa).",
+      "3 lớp bảo vệ: Entitlement Guard → 403 ENTITLEMENT_DENIED, Quota Service → 403 QUOTA_EXCEEDED, Feature Flag → 503 feature_disabled.",
+      "Tất cả enforce server-side, không bypass được từ frontend.",
+      "Nguyên tắc Free tier: Browse/Daily/Gamification cơ bản = full. Practice = có quota. AI-powered/Mock exam = premium only.",
     ],
     relatedLinks: [
       { label: "Plans", href: "/monetization/plans" },
       { label: "Subscriptions", href: "/monetization/subscriptions" },
       { label: "Quotas", href: "/monetization/quotas" },
       { label: "Billing Events", href: "/monetization/billing-events" },
+      { label: "Feature Flags", href: "/ops/feature-flags" },
       { label: "Ads", href: "/ads" },
     ],
   },
@@ -856,129 +888,156 @@ export const ADMIN_HELP_CONTENT: Record<string, HelpContent> = {
   "/monetization/plans": {
     title: "Subscription Plans",
     description:
-      "CRUD quản lý plans. Create/Edit/Delete, Activate/Deactivate plans. Mỗi plan define pricing và features.",
+      "CRUD quản lý gói cước. Mỗi plan define pricing, trial, features highlight. 3 gói đề xuất: Free, Pro, Premium.",
     steps: [
-      { title: "Xem plans", description: "Bảng: tên, giá, billing period, active subscribers, status." },
-      { title: "Tạo plan", description: "Bấm Create → nhập tên, giá (monthly/yearly), description." },
-      { title: "Activate/Deactivate", description: "Toggle plan active status. Deactivated plans không nhận subscriber mới." },
+      { title: "Xem danh sách plans", description: "Bảng: tên, slug, giá (monthly/yearly), billing period, active subscribers, status (draft/active)." },
+      { title: "Tạo plan mới", description: "Bấm 'Tạo Plan' → nhập slug (VD: pro), nameKey (i18n), status = draft trước. Điền Reason (bắt buộc ≥3 ký tự)." },
+      { title: "Gắn Entitlements & Quotas", description: "Sau khi tạo plan → vào tab Entitlements/Quotas để link features và limits cho plan." },
+      { title: "Activate/Deactivate", description: "Chuyển status active khi sẵn sàng. Deactivated plans không nhận subscriber mới." },
       { title: "Edit/Delete", description: "Sửa thông tin hoặc xóa plan (chỉ khi không có active subscribers)." },
     ],
     tips: [
       "Cần quyền admin.monetization.write.",
+      "Template 3 gói: Free (0đ), Pro (99k-149k/tháng, trial 7 ngày), Premium (199k-299k/tháng, trial 14 ngày).",
+      "Config JSON plan cần: pricing (monthly/yearly/currency), billing_interval, trial_days, features_highlight.",
       "Thay đổi giá chỉ áp dụng cho NEW subscribers. Existing giữ giá cũ đến khi renewal.",
-      "Không nên có quá 3–4 plans.",
+      "Không nên có quá 3–4 plans. Tạo draft → test → rồi mới active.",
+      "Checklist trước khi active: đã link entitlements, đã set quotas, đã test trên staging.",
+    ],
+    relatedLinks: [
+      { label: "Entitlements", href: "/monetization/entitlements" },
+      { label: "Quotas", href: "/monetization/quotas" },
     ],
   },
 
   "/monetization/entitlements": {
-    title: "Entitlements",
+    title: "Entitlements (Quyền truy cập Feature)",
     description:
-      "Quản lý quyền truy cập feature theo plan. Add/Remove features, configure limits.",
+      "Quản lý quyền truy cập feature theo plan. Ma trận Feature × Plan cho biết plan nào có feature nào. Guard tự động chặn ở server.",
     steps: [
-      { title: "Xem ma trận", description: "Feature × Plan matrix cho biết plan nào có feature nào." },
-      { title: "Add entitlement", description: "Chọn feature + plan → Add." },
-      { title: "Remove", description: "Xóa entitlement (ảnh hưởng existing users của plan đó)." },
-      { title: "Configure limits", description: "Set giới hạn cụ thể cho từng feature per plan." },
+      { title: "Xem ma trận", description: "Feature × Plan matrix hiển thị plan nào có feature nào. Ví dụ: quiz.official_simulation chỉ có ở Premium." },
+      { title: "Tạo Entitlement Definition", description: "Key format: {module}.{feature} (VD: analytics.detailed_report). Category: flashcard/bjt/reading_assist/analytics/media/ai/battle/ads/admin." },
+      { title: "Link vào Plan", description: "Chọn entitlement → 'Link Plan' → chọn plan → nhập Reason → Confirm." },
+      { title: "Remove entitlement", description: "Gỡ entitlement khỏi plan. LƯU Ý: users hiện tại MẤT quyền ngay lập tức!" },
     ],
     tips: [
       "Cần quyền admin.monetization.write.",
-      "Remove entitlement = users hiện tại mất quyền ngay. Cẩn thận!",
-      "Free plan nên có đủ features cơ bản để tạo giá trị trước khi upgrade.",
+      "Ví dụ phân bổ: learner.basic (Free ✅, Pro ✅, Premium ✅), ads.reduced (Pro ✅), ads.remove (Premium ✅), flashcard.suggest_cards (Pro ✅, Premium ✅), quiz.official_simulation (Premium ✅ only).",
+      "Remove entitlement = users hiện tại mất quyền ngay. Cẩn thận! Nên thông báo user trước.",
+      "Free plan nên có đủ features cơ bản (browse, daily, gamification) để tạo giá trị trước khi upgrade.",
+      "Nếu tạo entitlement mới → cần dev thêm @RequiresEntitlement guard trong controller.",
+    ],
+    relatedLinks: [
+      { label: "Plans", href: "/monetization/plans" },
+      { label: "Quotas", href: "/monetization/quotas" },
     ],
   },
 
   "/monetization/quotas": {
-    title: "Quotas",
+    title: "Quotas (Giới hạn sử dụng)",
     description:
-      "Quản lý giới hạn sử dụng. Create/Edit quotas, Reset individual hoặc Bulk reset.",
+      "Quản lý giới hạn sử dụng theo plan. Tạo Policy → Link Plan với Limit → User vượt limit = API trả 403 QUOTA_EXCEEDED.",
     steps: [
-      { title: "Xem quotas", description: "Bảng: quota key, limit per plan, current usage stats." },
-      { title: "Create quota", description: "Tạo quota mới: key, description, limits cho từng plan." },
-      { title: "Edit limits", description: "Sửa limit cho từng plan tier." },
-      { title: "Reset", description: "Reset quota đã dùng cho user cụ thể. Bulk reset cho toàn bộ." },
+      { title: "Xem quotas", description: "Bảng: quota key, window (day/week/month), limit per plan, current usage stats." },
+      { title: "Tạo Quota Policy", description: "Key format: {module}_{action}_per_{window} (VD: flashcard_reviews_per_day). Chọn window: day/week/month. Set warnThresholdPercent (mặc định 80%)." },
+      { title: "Link Plan với Limit", description: "Chọn Policy → Plan → nhập Limit. VD: flashcard_reviews_per_day: Free=30, Pro=300, Premium=999999 (unlimited)." },
+      { title: "Override cho user cụ thể", description: "Tạo Override: User ID + Quota Key + Limit Value + Expires At (tùy chọn) + Reason. User đó dùng limit override thay vì plan." },
+      { title: "Reset quota", description: "Reset quota đã dùng cho user cụ thể hoặc Bulk reset. Thường chạy tự động theo window." },
     ],
     tips: [
       "Cần quyền admin.monetization.write.",
-      "Quota reset thường chạy tự động theo window (daily/monthly). Manual reset khi cần support user.",
+      "Bảng quota đề xuất: flashcard_reviews_per_day (Free=30, Pro=300, Premium=∞), quiz.bjt.start/day (3/20/∞), flashcard_gen_per_day (3/30/100), battle_matches_per_day (5/20/∞).",
+      "Quota reset tự động theo window (daily/monthly). Manual reset khi cần support user hoặc compensate.",
+      "Nếu tạo quota mới → cần dev thêm QuotaService.consume() call trong service tương ứng.",
+      "Override có thể set Expires At để tự động hết hạn — dùng khi tặng user VIP tạm thời.",
+    ],
+    relatedLinks: [
+      { label: "Plans", href: "/monetization/plans" },
+      { label: "Subscriptions", href: "/monetization/subscriptions" },
     ],
   },
 
   "/monetization/subscriptions": {
     title: "Subscriptions",
     description:
-      "Xem và quản lý subscriptions. View details, Extend/Cancel.",
+      "Xem và quản lý subscriptions user. Filter, xem chi tiết billing, Extend (gia hạn) hoặc Cancel.",
     steps: [
-      { title: "Tìm subscription", description: "Filter: user, plan, status (active/cancelled/expired)." },
-      { title: "Xem chi tiết", description: "Click → billing history, next renewal date, payment method." },
-      { title: "Extend", description: "Gia hạn subscription (thường dùng khi support compensate user)." },
-      { title: "Cancel", description: "Hủy subscription — active đến hết billing period hiện tại." },
+      { title: "Tìm subscription", description: "Filter: user, plan, status (active/cancelled/expired), date range." },
+      { title: "Xem chi tiết", description: "Click → billing history, next renewal date, payment method, plan info." },
+      { title: "Extend", description: "Gia hạn subscription — thường dùng khi support compensate user (lỗi hệ thống, downtime, v.v.)." },
+      { title: "Cancel", description: "Hủy subscription — user vẫn dùng premium đến hết billing period hiện tại, sau đó về Free." },
     ],
     tips: [
       "Cần quyền admin.monetization.write.",
-      "Cancel ≠ immediate stop. User vẫn dùng premium đến hết period đã trả.",
+      "Cancel ≠ immediate stop. User vẫn dùng premium đến hết period đã trả. Chỉ không gia hạn tiếp.",
+      "Extend nên ghi Reason rõ ràng (VD: 'compensate 2-day downtime on 2025-01-15').",
     ],
   },
 
   "/monetization/billing-events": {
     title: "Billing Events",
     description:
-      "Xem lịch sử sự kiện billing: payments, renewals, failures. View details, Export, Filter.",
+      "Lịch sử sự kiện billing: payments, renewals, failures. Chỉ đọc — dùng để investigate billing issues.",
     steps: [
-      { title: "Filter events", description: "Theo event type, user, date range, status." },
-      { title: "Xem chi tiết", description: "Click → full event payload, timestamps." },
-      { title: "Export", description: "Download billing events cho reporting." },
+      { title: "Filter events", description: "Theo event type (payment_success, payment_failed, renewal, refund), user, date range, status." },
+      { title: "Xem chi tiết", description: "Click → full event payload JSON, timestamps, related subscription." },
+      { title: "Export", description: "Download billing events CSV/JSON cho reporting hoặc đối soát." },
     ],
     tips: [
       "Cần quyền admin.monetization.read.",
-      "Chỉ đọc — không có actions. Dùng để investigate billing issues.",
+      "Chỉ đọc — không có actions sửa/xóa. Dùng để investigate billing issues.",
+      "Nếu thấy nhiều payment_failed liên tiếp → kiểm tra Provider Config và Webhook DLQ.",
     ],
   },
 
   "/monetization/refunds": {
-    title: "Refunds",
+    title: "Refunds (Hoàn tiền)",
     description:
-      "Xử lý yêu cầu hoàn tiền. Approve/Deny refund requests, Process payout.",
+      "Xử lý yêu cầu hoàn tiền. Review → Approve/Deny → Process payout qua payment provider.",
     steps: [
-      { title: "Xem requests", description: "Danh sách refund requests: user, amount, reason, status." },
-      { title: "Review", description: "Click → xem chi tiết: subscription info, payment history, user reason." },
-      { title: "Approve/Deny", description: "Quyết định: Approve (process refund) hoặc Deny (reject with reason)." },
-      { title: "Process payout", description: "Sau approve, bấm Process để thực hiện hoàn tiền qua payment provider." },
+      { title: "Xem requests", description: "Danh sách refund requests: user, amount, reason, status (pending/approved/denied/processed)." },
+      { title: "Review chi tiết", description: "Click → subscription info, payment history, user reason, account age." },
+      { title: "Approve/Deny", description: "Approve (chấp nhận hoàn tiền) hoặc Deny (từ chối kèm reason cho user)." },
+      { title: "Process payout", description: "Sau approve, bấm Process → hoàn tiền qua payment provider. User tự động downgrade về Free." },
     ],
     tips: [
       "Cần quyền admin.monetization.write.",
-      "Approve refund = downgrade user về free plan sau khi process.",
+      "Approve refund = downgrade user về Free plan sau khi process. Không thể undo.",
+      "Nên review payment history và account age trước khi approve — tránh abuse refund.",
     ],
   },
 
   "/monetization/provider-config": {
     title: "Payment Provider Config",
     description:
-      "Cấu hình kết nối payment provider (Stripe, etc.). Update settings, Test API connection.",
+      "Cấu hình kết nối payment provider (Stripe, etc.). API keys, webhook URLs, test/live modes.",
     steps: [
-      { title: "Xem config", description: "Current provider settings: API keys (masked), webhook URLs, modes." },
-      { title: "Update settings", description: "Sửa configuration values." },
-      { title: "Test API", description: "Bấm Test để verify kết nối với provider hoạt động." },
+      { title: "Xem config hiện tại", description: "Provider settings: API keys (masked), webhook URLs, mode (test/live), last verified." },
+      { title: "Update settings", description: "Sửa configuration values. LƯU Ý: ảnh hưởng thanh toán đang xử lý nếu sửa sai." },
+      { title: "Test API connection", description: "Bấm 'Test' → verify kết nối với provider hoạt động. Luôn test sau mỗi lần update." },
     ],
     tips: [
       "Cần quyền admin.monetization.write.",
-      "CẨN THẬN khi thay đổi — có thể ảnh hưởng thanh toán đang xử lý.",
-      "Luôn Test sau khi update config.",
+      "CẨN THẬN khi thay đổi — có thể ảnh hưởng thanh toán đang xử lý. Nên test ở test mode trước.",
+      "Luôn Test sau khi update config. Nếu test fail → rollback ngay.",
+      "Kill switch: tắt 'billing.stripe.enabled' feature flag nếu cần emergency stop thanh toán.",
     ],
   },
 
   "/monetization/webhook-dlq": {
     title: "Webhook Dead Letter Queue",
     description:
-      "Webhooks từ payment provider bị thất bại. Retry, View payload, Discard.",
+      "Webhooks từ payment provider bị thất bại. Queue tích tụ = vấn đề hệ thống cần investigate root cause.",
     steps: [
-      { title: "Xem queue", description: "Danh sách webhooks failed: event type, error, retry count." },
-      { title: "View payload", description: "Click → xem full webhook JSON payload." },
-      { title: "Retry", description: "Bấm Retry để gửi lại webhook vào processing." },
-      { title: "Discard", description: "Bỏ qua webhook không cần xử lý nữa." },
+      { title: "Xem queue", description: "Danh sách webhooks failed: event type, error message, retry count, first failed at." },
+      { title: "View payload", description: "Click → full webhook JSON payload để debug." },
+      { title: "Retry", description: "Bấm Retry → gửi lại webhook vào processing pipeline." },
+      { title: "Discard", description: "Bỏ qua webhook không cần xử lý (VD: duplicate, outdated)." },
     ],
     tips: [
       "Cần quyền admin.monetization.write và iam.manage.",
-      "Webhook DLQ tích tụ = vấn đề hệ thống. Investigate root cause thay vì chỉ retry.",
+      "Webhook DLQ tích tụ = vấn đề hệ thống. Investigate root cause (provider config? network? parsing error?) thay vì chỉ retry.",
+      "Retry thường fix được transient errors (timeout, 5xx). Nếu retry vẫn fail → xem payload để debug.",
     ],
   },
 

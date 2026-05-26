@@ -58,11 +58,18 @@ export { ReadingAssistPopoverPanel } from "./reading-assist-popover";
 export { SectionHeader, type SectionHeaderProps } from "./section-header";
 export { Sheet } from "./sheet";
 export { SkillChip } from "./skill-chip";
+export { SkipLink } from "./skip-link";
 export { StatCard } from "./stat-card";
 export { StatusBadge, type StatusBadgeVariant } from "./status-badge";
 export { TabButton, TabsList } from "./tabs";
 export { TodayPlanCard } from "./today-plan-card";
 export { Toggle } from "./toggle";
+export {
+  useReducedMotion,
+  getAnimationDuration,
+  FOCUS_VISIBLE_RING,
+  announceToScreenReader,
+} from "./a11y-utils";
 
 export const uiTokens = {
   color: {

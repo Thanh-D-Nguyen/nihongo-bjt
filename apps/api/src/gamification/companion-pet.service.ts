@@ -129,6 +129,15 @@ export class CompanionPetService {
     });
   }
 
+  /** Grant a costume to a user's pet inventory (upsert — idempotent). */
+  async grantCostume(userId: string, costumeSlug: string, obtainedFrom: string) {
+    return this.prisma.petCostumeInventory.upsert({
+      where: { userId_costumeSlug: { userId, costumeSlug } },
+      create: { userId, costumeSlug, obtainedFrom },
+      update: {},
+    });
+  }
+
   /** Apply happiness decay based on last fed time */
   private async applyDecay(pet: CompanionPet): Promise<CompanionPet> {
     if (!pet.lastFedAt) return pet;

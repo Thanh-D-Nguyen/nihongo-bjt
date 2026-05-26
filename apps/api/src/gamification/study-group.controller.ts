@@ -32,28 +32,28 @@ import { DocumentedHttpErrors } from "../openapi/common-decorators.js";
 import { StudyGroupService } from "./study-group.service.js";
 
 class CreateStudyGroupDto {
-  @ApiProperty({ example: "BJT Lunch Break Club", maxLength: 60 })
+  @ApiProperty({ type: String, example: "BJT Lunch Break Club", maxLength: 60 })
   @IsString()
   name!: string;
 
-  @ApiPropertyOptional({ example: "15-minute reviews on weekdays.", maxLength: 1000 })
+  @ApiPropertyOptional({ type: String, example: "15-minute reviews on weekdays.", maxLength: 1000 })
   @IsOptional()
   @IsString()
   description?: string;
 
-  @ApiPropertyOptional({ enum: ["open", "invite", "closed"], example: "open" })
+  @ApiPropertyOptional({ type: String, enum: ["open", "invite", "closed"], example: "open" })
   @IsOptional()
   @IsIn(["open", "invite", "closed"])
   joinPolicy?: "open" | "invite" | "closed";
 
-  @ApiPropertyOptional({ example: 2500, minimum: 0, maximum: 1000000 })
+  @ApiPropertyOptional({ type: Number, example: 2500, minimum: 0, maximum: 1000000 })
   @IsOptional()
   @IsInt()
   @Min(0)
   @Max(1_000_000)
   weeklyXpGoal?: number;
 
-  @ApiPropertyOptional({ example: 20, minimum: 2, maximum: 50 })
+  @ApiPropertyOptional({ type: Number, example: 20, minimum: 2, maximum: 50 })
   @IsOptional()
   @IsInt()
   @Min(2)
@@ -62,29 +62,29 @@ class CreateStudyGroupDto {
 }
 
 class UpdateStudyGroupDto {
-  @ApiPropertyOptional({ maxLength: 60 })
+  @ApiPropertyOptional({ type: String, maxLength: 60 })
   @IsOptional()
   @IsString()
   name?: string;
 
-  @ApiPropertyOptional({ nullable: true, maxLength: 1000 })
+  @ApiPropertyOptional({ type: String, nullable: true, maxLength: 1000 })
   @IsOptional()
   @IsString()
   description?: string | null;
 
-  @ApiPropertyOptional({ enum: ["open", "invite", "closed"] })
+  @ApiPropertyOptional({ type: String, enum: ["open", "invite", "closed"] })
   @IsOptional()
   @IsIn(["open", "invite", "closed"])
   joinPolicy?: "open" | "invite" | "closed";
 
-  @ApiPropertyOptional({ minimum: 0, maximum: 1000000, nullable: true })
+  @ApiPropertyOptional({ type: Number, minimum: 0, maximum: 1000000, nullable: true })
   @IsOptional()
   @IsInt()
   @Min(0)
   @Max(1_000_000)
   weeklyXpGoal?: number | null;
 
-  @ApiPropertyOptional({ minimum: 2, maximum: 50 })
+  @ApiPropertyOptional({ type: Number, minimum: 2, maximum: 50 })
   @IsOptional()
   @IsInt()
   @Min(2)
@@ -93,36 +93,36 @@ class UpdateStudyGroupDto {
 }
 
 class TargetUserDto {
-  @ApiProperty({ example: "00000000-0000-4000-8000-000000000002" })
+  @ApiProperty({ type: String, example: "00000000-0000-4000-8000-000000000002" })
   @IsUUID()
   targetUserId!: string;
 }
 
 class CreateChallengeDto {
-  @ApiProperty({ example: "Finish 500 XP before Sunday", maxLength: 80 })
+  @ApiProperty({ type: String, example: "Finish 500 XP before Sunday", maxLength: 80 })
   @IsString()
   title!: string;
 
-  @ApiPropertyOptional({ maxLength: 1000 })
+  @ApiPropertyOptional({ type: String, maxLength: 1000 })
   @IsOptional()
   @IsString()
   description?: string;
 
-  @ApiPropertyOptional({ enum: ["xp", "reviews", "quizzes", "focus_minutes", "battle_wins"], example: "xp" })
+  @ApiPropertyOptional({ type: String, enum: ["xp", "reviews", "quizzes", "focus_minutes", "battle_wins"], example: "xp" })
   @IsOptional()
   @IsIn(["xp", "reviews", "quizzes", "focus_minutes", "battle_wins"])
   metricType?: "xp" | "reviews" | "quizzes" | "focus_minutes" | "battle_wins";
 
-  @ApiProperty({ example: 500, minimum: 1 })
+  @ApiProperty({ type: Number, example: 500, minimum: 1 })
   @IsInt()
   @Min(1)
   targetValue!: number;
 
-  @ApiProperty({ example: "2026-05-25" })
+  @ApiProperty({ type: String, example: "2026-05-25" })
   @IsISO8601()
   periodStart!: string;
 
-  @ApiProperty({ example: "2026-06-01" })
+  @ApiProperty({ type: String, example: "2026-06-01" })
   @IsISO8601()
   periodEnd!: string;
 
@@ -131,13 +131,13 @@ class CreateChallengeDto {
 }
 
 class FriendRequestDto {
-  @ApiProperty({ example: "00000000-0000-4000-8000-000000000002" })
+  @ApiProperty({ type: String, example: "00000000-0000-4000-8000-000000000002" })
   @IsUUID()
   addresseeUserId!: string;
 }
 
 class FriendResponseDto {
-  @ApiProperty({ enum: ["accept", "decline"], example: "accept" })
+  @ApiProperty({ type: String, enum: ["accept", "decline"], example: "accept" })
   @IsIn(["accept", "decline"])
   response!: "accept" | "decline";
 }

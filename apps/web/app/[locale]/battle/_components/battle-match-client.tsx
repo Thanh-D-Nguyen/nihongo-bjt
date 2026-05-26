@@ -8,6 +8,7 @@ import { BattleBotAvatar } from "../../../_components/battle-bot-avatar";
 import { BattleCountdownOverlay } from "./battle-countdown-overlay";
 import { BattleHypeLayer, BattleVictoryConfetti, BattleComboIndicator } from "./battle-hype-layer";
 import { BattlePvpOutcomeEffects } from "./battle-pvp-outcome-effects";
+import { GameTypeRenderer } from "./game-types";
 import { readBattlePending, useBattleRuntime } from "./battle-runtime-provider";
 import { botName, localizeDifficulty, metricWidth } from "./battle-types";
 import { ShareDrawer } from "../../_components/share-drawer";
@@ -95,7 +96,9 @@ export function BattleMatchClient() {
     userId,
     userScore,
     error,
-    botState
+    botState,
+    botComment,
+    activeGameType
   } = useBattleRuntime();
 
   const [shareDrawerOpen, setShareDrawerOpen] = useState(false);
@@ -374,6 +377,16 @@ export function BattleMatchClient() {
             </div>
           )}
 
+          {/* Bot speech bubble */}
+          {botComment && battleMode === "bot" && (
+            <div className="relative mt-2 ml-8 animate-[fadeIn_0.2s_ease-out]" role="status" aria-live="polite">
+              <div className="absolute -top-1.5 left-6 h-3 w-3 rotate-45 border-l border-t border-indigo-200/60 bg-white" />
+              <div className="rounded-xl border border-indigo-200/60 bg-white px-3.5 py-2 shadow-sm">
+                <p className="text-sm font-semibold leading-5 text-ink" lang="ja">{botComment}</p>
+              </div>
+            </div>
+          )}
+
           <section
             className={`relative mt-6 overflow-hidden rounded-2xl border border-ink/10 bg-white/90 shadow-sm ${
               round && !answerResult ? "battle-question-active" : ""
@@ -480,9 +493,19 @@ export function BattleMatchClient() {
                       {labels.roundSkill.replace("{skill}", round.question.skillTag)}
                     </span>
                   </div>
-                  <p className="rounded-2xl border border-ink/10 bg-paper/70 p-4 text-base font-semibold leading-7 text-ink sm:text-lg">
-                    {round.question.prompt}
-                  </p>
+
+                  {/* Per-game-type interaction renderer */}
+                  <GameTypeRenderer
+                    answerPending={answerPending}
+                    answerResult={answerResult}
+                    canAnswer={canAnswer}
+                    gameType={activeGameType}
+                    onSubmitAnswer={submitAnswer}
+                    round={round}
+                    selectedOptionKey={selectedOptionKey}
+                    timeLeft={timeLeft}
+                  />
+
                   {answerPending ? (
                     <p className="text-sm font-bold text-muted" role="status">
                       {battleMode === "pvp" ? labels.pvpWaiting : labels.answerWaiting}
@@ -508,41 +531,6 @@ export function BattleMatchClient() {
                       {answerFeedback}
                     </p>
                   ) : null}
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {round.question.options.map((option) => {
-                      const picked = selectedOptionKey === option.optionKey;
-                      const correct = answerResult?.correctOptionKey === option.optionKey;
-                      const wrong = picked && answerResult && !answerResult.userCorrect;
-                      return (
-                        <button
-                          className={`battle-answer-btn min-h-16 rounded-2xl border px-4 py-3 text-left text-sm font-bold leading-6 ${
-                            correct
-                              ? "battle-answer-correct border-leaf/30 bg-leaf-soft text-leaf shadow-sm shadow-leaf/10"
-                              : wrong
-                                ? "battle-answer-wrong border-sakura/30 bg-sakura-soft text-sakura"
-                                : picked
-                                  ? "border-accent/30 bg-accent/5 text-ink shadow-sm"
-                                  : "border-ink/10 bg-white text-ink"
-                          } ${!canAnswer ? "cursor-not-allowed opacity-75" : ""}`}
-                          disabled={!canAnswer}
-                          key={option.optionKey}
-                          onClick={() => submitAnswer(option.optionKey)}
-                          type="button"
-                        >
-                          <span className={`mr-2 inline-flex h-6 w-6 items-center justify-center rounded-md text-xs font-black ${
-                            correct
-                              ? "bg-leaf/15 text-leaf"
-                              : wrong
-                                ? "bg-sakura/15 text-sakura"
-                                : picked
-                                  ? "bg-accent/10 text-accent"
-                                  : "bg-ink/5 text-muted"
-                          }`}>{option.optionKey}</span>
-                          {option.text}
-                        </button>
-                      );
-                    })}
-                  </div>
                 </article>
               ) : null}
 

@@ -1,6 +1,8 @@
 import { Module } from "@nestjs/common";
 
 import { AdminModule } from "../admin/admin.module.js";
+import { ComebackExperienceCron } from "./comeback-experience.cron.js";
+import { ComebackExperienceService } from "./comeback-experience.service.js";
 import { CompanionPetService } from "./companion-pet.service.js";
 import { DailyStudyGoalService } from "./daily-study-goal.service.js";
 import { GamificationAdminController } from "./gamification-admin.controller.js";
@@ -17,8 +19,8 @@ import { StudyTimerService } from "./study-timer.service.js";
 
 @Module({
   controllers: [GamificationController, GamificationAdminController, SeasonalEventController, StudyGroupController],
-  exports: [GamificationService, DailyStudyGoalService, LoginBonusService, MysteryBoxService, StudyTimerService, CompanionPetService, SeasonalEventService, StudyGroupService],
+  exports: [GamificationService, DailyStudyGoalService, LoginBonusService, MysteryBoxService, StudyTimerService, CompanionPetService, SeasonalEventService, StudyGroupService, ComebackExperienceService],
   imports: [AdminModule],
-  providers: [GamificationRepository, GamificationService, DailyStudyGoalService, LoginBonusService, MysteryBoxService, StudyTimerService, CompanionPetService, SeasonalEventService, StudyGroupService]
+  providers: [GamificationRepository, GamificationService, DailyStudyGoalService, LoginBonusService, MysteryBoxService, StudyTimerService, CompanionPetService, SeasonalEventService, StudyGroupService, ComebackExperienceService, ComebackExperienceCron]
 })
 export class GamificationModule {}

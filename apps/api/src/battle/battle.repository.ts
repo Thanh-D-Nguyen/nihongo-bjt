@@ -20,6 +20,7 @@ const autoRiveMetadataValues = new Set([
 ]);
 
 export type BattleQuestionPayload = {
+  audioUrl: string | null;
   options: Array<{ isCorrect: boolean; optionKey: string; text: string }>;
   prompt: string;
   questionId: string;
@@ -223,6 +224,7 @@ export class BattleRepository {
         roundIds.push(created.id);
       }
       const questions: BattleQuestionPayload[] = picked.map((q) => ({
+        audioUrl: q.audioUrl ?? null,
         options: q.options.map((o) => ({
           isCorrect: o.isCorrect,
           optionKey: o.optionKey,
@@ -427,6 +429,7 @@ export class BattleRepository {
         name: true,
         description: true,
         level: true,
+        questionPoolKey: true,
         questionCount: true,
         timePerQuestionSec: true,
         maxParticipants: true,
@@ -446,16 +449,20 @@ export class BattleRepository {
         ]
       }
     });
-    return rows.map((r) => ({
-      ...r,
-      isUpcoming: r.scheduleStart ? r.scheduleStart > now : false,
-      isActive: !r.scheduleStart || (r.scheduleStart <= now && (!r.scheduleEnd || r.scheduleEnd >= now))
-    }));
+    return rows.map((r) => {
+      const scoring = r.scoringRules as Record<string, unknown> | null;
+      return {
+        ...r,
+        gameType: (scoring?.gameType as string) ?? "speed_duel",
+        isUpcoming: r.scheduleStart ? r.scheduleStart > now : false,
+        isActive: !r.scheduleStart || (r.scheduleStart <= now && (!r.scheduleEnd || r.scheduleEnd >= now))
+      };
+    });
   }
 
   /** Get a single published config by ID (for match params resolution) */
   async getPublishedConfig(id: string) {
-    return this.prisma.battleConfig.findFirst({
+    const row = await this.prisma.battleConfig.findFirst({
       select: {
         id: true,
         questionCount: true,
@@ -466,6 +473,12 @@ export class BattleRepository {
       },
       where: { id, status: "published" }
     });
+    if (!row) return null;
+    const scoring = row.scoringRules as Record<string, unknown> | null;
+    return {
+      ...row,
+      gameType: (scoring?.gameType as string) ?? "speed_duel"
+    };
   }
 
   createChatMessage(input: {
@@ -645,6 +658,7 @@ export class BattleRepository {
         roundIds.push(created.id);
       }
       const questions: BattleQuestionPayload[] = picked.map((q) => ({
+        audioUrl: q.audioUrl ?? null,
         options: q.options.map((o) => ({
           isCorrect: o.isCorrect,
           optionKey: o.optionKey,

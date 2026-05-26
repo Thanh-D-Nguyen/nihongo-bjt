@@ -53,6 +53,7 @@ type BattleRuntimeContextValue = {
   botKey: string;
   botProfile: BattleBotStageProfile | null;
   botState: BattleBotAnimationState;
+  botComment: string | null;
   combo: number;
   countdown: number | null;
   error: string | null;
@@ -84,7 +85,9 @@ type BattleRuntimeContextValue = {
   isMatchUiActive: boolean;
   pvpEndReason: PvpEndReason | null;
   selectedConfigId: string | null;
+  activeGameType: string | null;
   setSelectedConfigId: (id: string | null) => void;
+  setActiveGameType: (gt: string | null) => void;
   setPvpChallenge: (c: UserChallenge | null) => void;
   connectAndStart: () => void;
   submitAnswer: (optionKey: string) => void;
@@ -178,6 +181,9 @@ export function BattleRuntimeProvider({
   const [pvpOpponentAnswered, setPvpOpponentAnswered] = useState(false);
   const [pvpEndReason, setPvpEndReason] = useState<PvpEndReason | null>(null);
   const [selectedConfigId, setSelectedConfigId] = useState<string | null>(null);
+  const [activeGameType, setActiveGameType] = useState<string | null>(null);
+  const [botComment, setBotComment] = useState<string | null>(null);
+  const botCommentTimer = useRef<NodeJS.Timeout | null>(null);
 
   const pathname = usePathname();
   const learnerDisplayName = displayName || email || labels.userLabel;
@@ -374,7 +380,7 @@ export function BattleRuntimeProvider({
         setError(code === "no_questions" ? labels.noQuestions : `${labels.error} (${code})`);
         setStatus(null);
       });
-      s.on("battle:match_found", (p: { bot: BattleBotStageProfile }) => {
+      s.on("battle:match_found", (p: { bot: BattleBotStageProfile; gameType?: string }) => {
         clearPending();
         setBattleMode("bot");
         setPvpRoomCode(null);
@@ -383,6 +389,7 @@ export function BattleRuntimeProvider({
         setStatus(null);
         setBotState("matched");
         setShowCountdownOverlay(true);
+        if (p.gameType) setActiveGameType(p.gameType);
         navigateToMatch();
       });
       s.on("battle:bot_state", (p: BotStateEvent) => {
@@ -407,6 +414,8 @@ export function BattleRuntimeProvider({
         setAnswerResult(null);
         setPvpOpponentAnswered(false);
         setBotState("thinking");
+        setBotComment(null);
+        if (p.gameType) setActiveGameType(p.gameType as string);
       });
       s.on("battle:answer_result", (p: AnswerResultEvent) => {
         setAnswerResult(p);
@@ -418,6 +427,11 @@ export function BattleRuntimeProvider({
       s.on("battle:score_update", (p: { opponentScore: number; userScore: number }) => {
         setUserScore(p.userScore);
         setOpponentScore(p.opponentScore);
+      });
+      s.on("battle:bot_comment", (p: { message: string }) => {
+        setBotComment(p.message);
+        if (botCommentTimer.current) clearTimeout(botCommentTimer.current);
+        botCommentTimer.current = setTimeout(() => setBotComment(null), 4000);
       });
       s.on("battle:finished", (p: FinishedEvent) => {
         setQuestion(null);
@@ -800,6 +814,7 @@ export function BattleRuntimeProvider({
         botKey,
         botProfile,
         botState,
+        botComment,
         combo,
         countdown,
         error,
@@ -831,7 +846,9 @@ export function BattleRuntimeProvider({
         isMatchUiActive,
         pvpEndReason,
         selectedConfigId,
+        activeGameType,
         setSelectedConfigId,
+        setActiveGameType,
         setPvpChallenge,
         connectAndStart,
         submitAnswer,
@@ -886,6 +903,7 @@ export function BattleRuntimeProvider({
       isMatchUiActive,
       pvpEndReason,
       selectedConfigId,
+      activeGameType,
       setSelectedConfigId,
       connectAndStart,
       submitAnswer,

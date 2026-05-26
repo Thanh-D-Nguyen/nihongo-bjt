@@ -120,11 +120,13 @@ export function DeckStudySession({
   focusIndex,
   labels,
   onIndexChange,
+  styleConfig,
 }: {
   cards: DeckStudyCard[];
   focusIndex?: number | null;
   labels: DeckStudySessionLabels;
   onIndexChange?: (index: number) => void;
+  styleConfig?: Record<string, string> | null;
 }) {
   const [mode, setMode] = useState<StudyMode>("flip");
   const [index, setIndex] = useState(0);
@@ -163,6 +165,20 @@ export function DeckStudySession({
     () => cards.some((card) => Boolean(card.primaryImage?.readUrl)),
     [cards]
   );
+
+  // ── Card style from user preference ──
+  const cardInlineStyle = useMemo(() => {
+    if (!styleConfig) return undefined;
+    const s: React.CSSProperties = {};
+    if (styleConfig.cardBg) s.background = styleConfig.cardBg;
+    if (styleConfig.textColor) s.color = styleConfig.textColor;
+    if (styleConfig.borderRadius) s.borderRadius = styleConfig.borderRadius;
+    if (styleConfig.shadow) s.boxShadow = styleConfig.shadow;
+    if (styleConfig.fontFamily) s.fontFamily = styleConfig.fontFamily;
+    return Object.keys(s).length > 0 ? s : undefined;
+  }, [styleConfig]);
+
+  const hasCustomBg = Boolean(styleConfig?.cardBg);
 
   const total = activeCards.length;
   const safeIndex = total === 0 ? 0 : Math.min(Math.max(0, index), total - 1);
@@ -205,7 +221,6 @@ export function DeckStudySession({
       setCardAnim("enter");
       sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusIndex]);
 
   useEffect(() => {
@@ -416,7 +431,6 @@ export function DeckStudySession({
     .replace("{total}", String(total));
   const progressPct = total > 0 ? (displayIndex / total) * 100 : 0;
   const atStart = safeIndex <= 0;
-  const atEnd = safeIndex >= total - 1;
   const examples = current.examples ?? [];
   const normalizedFilter = exampleFilter.trim().toLowerCase();
   const filteredExamples = normalizedFilter
@@ -530,6 +544,7 @@ export function DeckStudySession({
               cardAnim === "exit" && "fc-card-exit"
             )}
             key={current.id}
+            style={cardInlineStyle}
           >
             <p className="text-[11px] font-bold uppercase tracking-widest text-muted/70">
               {labels.deckStudyQuizPrompt}
@@ -601,7 +616,13 @@ export function DeckStudySession({
                   )}
                 >
                   {/* ── Front face ── */}
-                  <div className="absolute inset-0 flex min-h-0 flex-col justify-between overflow-hidden rounded-[1.25rem] border border-ink/[0.06] bg-gradient-to-br from-white via-paper to-blue-50/40 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] backface-hidden sm:p-7">
+                  <div
+                    className={cn(
+                      "absolute inset-0 flex min-h-0 flex-col justify-between overflow-hidden rounded-[1.25rem] border border-ink/[0.06] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] backface-hidden sm:p-7",
+                      !hasCustomBg && "bg-gradient-to-br from-white via-paper to-blue-50/40"
+                    )}
+                    style={cardInlineStyle}
+                  >
                     <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
                       <div className="flex items-center gap-2">
                         <span className="inline-flex rounded-full border border-ink/10 bg-ink/[0.03] px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-muted">
@@ -648,7 +669,13 @@ export function DeckStudySession({
                     </div>
                   </div>
                   {/* ── Back face ── */}
-                  <div className="absolute inset-0 flex min-h-0 flex-col justify-between overflow-hidden rounded-[1.25rem] border border-leaf/20 bg-gradient-to-br from-emerald-50 via-leaf-soft/60 to-white p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] [transform:rotateY(180deg)] backface-hidden sm:p-7">
+                  <div
+                    className={cn(
+                      "absolute inset-0 flex min-h-0 flex-col justify-between overflow-hidden rounded-[1.25rem] border border-leaf/20 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] [transform:rotateY(180deg)] backface-hidden sm:p-7",
+                      !hasCustomBg && "bg-gradient-to-br from-emerald-50 via-leaf-soft/60 to-white"
+                    )}
+                    style={cardInlineStyle}
+                  >
                     <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
                       <span className="inline-flex rounded-full border border-ink/10 bg-ink/[0.03] px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-muted">
                         {labels.deckStudyFaceBack}

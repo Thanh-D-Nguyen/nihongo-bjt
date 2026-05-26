@@ -115,6 +115,7 @@ describe("BattleOrchestratorService", () => {
     (service as any).rooms.set("room-1", {
       botKey: "bot_j3",
       botProfile,
+      configTimeSec: 45,
       idempotency: new Set<string>(),
       maxRounds: 1,
       opponentScore: 0,
@@ -131,7 +132,7 @@ describe("BattleOrchestratorService", () => {
       ],
       roomCode: "room-1",
       roundIds: ["r1"],
-      roundStartMs: Date.now(),
+      roundStartMs: Date.now() + 1_000,
       roundTimer: null,
       sessionId: "s1",
       state: "question",
@@ -177,7 +178,7 @@ describe("BattleOrchestratorService", () => {
       ],
       roomCode: "room-3",
       roundIds: ["r3"],
-      roundStartMs: Date.now(),
+      roundStartMs: Date.now() + 1_000,
       roundTimer: null,
       sessionId: "s3",
       state: "question",
@@ -225,10 +226,11 @@ describe("BattleOrchestratorService", () => {
   it("emits remediation payload and suspicious-speed analytics on fast losing answer", async () => {
     const { repository, service } = buildService();
     const client = { emit: vi.fn(), id: "socket-2" };
-    (service as any).rooms.set("room-2", {
-      botKey: "bot_j3",
-      botProfile,
-      idempotency: new Set<string>(),
+	    (service as any).rooms.set("room-2", {
+	      botKey: "bot_j3",
+	      botProfile,
+	      configTimeSec: 45,
+	      idempotency: new Set<string>(),
       maxRounds: 1,
       missedSkillTagCounts: new Map<string, number>(),
       invalidAnswerStrikes: 0,
@@ -246,7 +248,7 @@ describe("BattleOrchestratorService", () => {
       ],
       roomCode: "room-2",
       roundIds: ["r2"],
-      roundStartMs: Date.now(),
+      roundStartMs: Date.now() + 1_000,
       roundTimer: null,
       sessionId: "s2",
       state: "question",

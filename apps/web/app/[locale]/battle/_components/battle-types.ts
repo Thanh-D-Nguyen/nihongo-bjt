@@ -254,8 +254,24 @@ export const fallbackBotChoices: BattleBotStageProfile[] = [
   }
 ];
 
+export type InteractionType = "multiple_choice" | "matching" | "audio_only" | "boss_hp" | "passage";
+
+export type GameType =
+  | "speed_duel"
+  | "kanji_vocab_duel"
+  | "listening_challenge"
+  | "business_roleplay"
+  | "boss_rush"
+  | "mock_exam_sprint"
+  | "team_room"
+  | "tournament"
+  | "custom";
+
 export type QuestionEvent = {
+  gameType?: GameType | string;
+  interactionType?: InteractionType | string;
   question: {
+    audioUrl?: string | null;
     options: Array<{ optionKey: string; text: string }>;
     prompt: string;
     skillTag: string;

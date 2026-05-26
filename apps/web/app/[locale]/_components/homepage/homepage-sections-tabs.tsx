@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { TabButton, TabsList } from "@nihongo-bjt/ui";
+import Link from "next/link";
 
 import { ForYouFeedWidget } from "./for-you-feed-widget";
 import { DailyRadarSection } from "@/src/features/daily-radar/daily-radar-section";
@@ -175,8 +176,19 @@ export function HomepageSectionsTabs({
           id="homepage-tab-panel-rewards"
           role="tabpanel"
         >
-          <MysteryBoxWidget locale={locale} />
-          <RevengeModeWidget locale={locale} />
+          {isLoggedIn ? (
+            <>
+              <MysteryBoxWidget locale={locale} />
+              <RevengeModeWidget locale={locale} />
+            </>
+          ) : (
+            <GuestRewardsCta
+              title={labels.rewardsSignIn}
+              subtitle={labels.rewardsSignInSub}
+              cta={labels.rewardsSignInCta}
+              locale={locale}
+            />
+          )}
         </div>
       )}
 
@@ -194,5 +206,21 @@ export function HomepageSectionsTabs({
         </div>
       )}
     </section>
+  );
+}
+
+function GuestRewardsCta({ title, subtitle, cta, locale }: { title: string; subtitle: string; cta: string; locale: string }) {
+  return (
+    <div className="flex flex-col items-center gap-4 rounded-2xl border border-ink/8 bg-surface p-8 text-center shadow-sm">
+      <span className="text-4xl" aria-hidden>🎁</span>
+      <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+      <p className="max-w-xs text-sm text-muted">{subtitle}</p>
+      <Link
+        href={`/${locale}/login`}
+        className="inline-flex items-center gap-2 rounded-xl bg-[var(--color-sakura)] px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:brightness-110 active:scale-95"
+      >
+        {cta}
+      </Link>
+    </div>
   );
 }

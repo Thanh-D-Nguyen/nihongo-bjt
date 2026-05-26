@@ -335,14 +335,16 @@ export function BattleLobbyClient() {
     status,
     userId,
     displayedBot,
-    setSelectedConfigId
+    setSelectedConfigId,
+    setActiveGameType
   } = useBattleRuntime();
 
   const [selectedConfig, setSelectedConfig] = useState<BattleConfigItem | null>(null);
   // Sync local config selection to runtime context
   useEffect(() => {
     setSelectedConfigId(selectedConfig?.id ?? null);
-  }, [selectedConfig, setSelectedConfigId]);
+    setActiveGameType(selectedConfig?.gameType ?? null);
+  }, [selectedConfig, setSelectedConfigId, setActiveGameType]);
 
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
   const didInitialChatScrollRef = useRef(false);
@@ -638,13 +640,25 @@ export function BattleLobbyClient() {
           selectedConfigId={selectedConfig?.id ?? null}
         />
         {selectedConfig && (
-          <div className="mt-2 rounded-xl border border-accent/20 bg-accent/5 px-3 py-2">
-            <p className="text-[11px] font-black text-accent">
-              Selected: {selectedConfig.name}
-            </p>
-            <p className="text-[10px] font-semibold text-muted">
-              {selectedConfig.questionCount} questions · {selectedConfig.timePerQuestionSec}s/question · {selectedConfig.maxParticipants} players max
-            </p>
+          <div className="mt-2 flex items-center gap-2 rounded-xl border border-accent/20 bg-accent/5 px-3 py-2">
+            <span className="text-base" aria-hidden>
+              {selectedConfig.gameType === "speed_duel" ? "⚡" :
+               selectedConfig.gameType === "kanji_vocab_duel" ? "漢" :
+               selectedConfig.gameType === "listening_challenge" ? "🎧" :
+               selectedConfig.gameType === "business_roleplay" ? "💼" :
+               selectedConfig.gameType === "boss_rush" ? "🔥" :
+               selectedConfig.gameType === "mock_exam_sprint" ? "📋" :
+               selectedConfig.gameType === "team_room" ? "👥" :
+               selectedConfig.gameType === "tournament" ? "🏆" : "⚙️"}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-black text-accent truncate">
+                {selectedConfig.name}
+              </p>
+              <p className="text-[10px] font-semibold text-muted">
+                {selectedConfig.questionCount}Q · {selectedConfig.timePerQuestionSec}s · {selectedConfig.maxParticipants}P max
+              </p>
+            </div>
           </div>
         )}
       </div>

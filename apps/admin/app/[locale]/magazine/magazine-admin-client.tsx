@@ -53,12 +53,6 @@ interface MagazineLabels {
   kindHoroscope: string;
   kindLoto: string;
   kindBjtPhrase: string;
-  guideTitle: string;
-  guideAuto: string;
-  guideManual: string;
-  guideApi: string;
-  guideSource: string;
-  guideIdempotent: string;
 }
 
 interface MagazineArticle {
@@ -188,37 +182,6 @@ export function MagazineAdminClient({
   return (
     <div className="space-y-6">
       <AdminPageHeader breadcrumbs={labels.eyebrow} title={labels.title} description={labels.subtitle} />
-
-      {/* Usage Guide */}
-      <AdminSection>
-        <details className="group">
-          <summary className="cursor-pointer select-none font-semibold text-base text-foreground group-open:mb-3">
-            📖 {labels.guideTitle}
-          </summary>
-          <ul className="space-y-2 text-sm text-muted-foreground leading-relaxed">
-            <li className="flex gap-2">
-              <span className="shrink-0">⏰</span>
-              <span>{labels.guideAuto}</span>
-            </li>
-            <li className="flex gap-2">
-              <span className="shrink-0">✋</span>
-              <span>{labels.guideManual}</span>
-            </li>
-            <li className="flex gap-2">
-              <span className="shrink-0">🔑</span>
-              <span>{labels.guideApi}</span>
-            </li>
-            <li className="flex gap-2">
-              <span className="shrink-0">🌐</span>
-              <span>{labels.guideSource}</span>
-            </li>
-            <li className="flex gap-2">
-              <span className="shrink-0">🔄</span>
-              <span>{labels.guideIdempotent}</span>
-            </li>
-          </ul>
-        </details>
-      </AdminSection>
 
       {/* Generate Panel */}
       <AdminSection>

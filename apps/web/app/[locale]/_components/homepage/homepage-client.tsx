@@ -14,8 +14,9 @@ import { CompanionPetWidget } from "./companion-pet-widget";
 import { SeasonalEventBanner } from "./seasonal-event-banner";
 import { AdBanner } from "./ad-banner";
 import { OnboardingFlow } from "./onboarding-flow";
-import { XpRankWidget } from "./xp-rank-widget";
 import { HomepageSectionsTabs } from "./homepage-sections-tabs";
+import { SidebarGuestCta } from "./sidebar-guest-cta";
+import { XpRankWidget } from "./xp-rank-widget";
 
 interface DailyHubPayload {
   dueReviews: number;
@@ -182,18 +183,31 @@ export function HomepageClient({ labels, locale, pushBannerLabels }: { labels: H
 
         {/* Sidebar: 4 widget cốt lõi — always-visible motivation stack */}
         <div className="space-y-6 lg:sticky lg:top-20">
-          <div className="hp-enter hp-enter-d1">
-            <XpRankWidget locale={locale} />
-          </div>
-          <div className="hp-enter hp-enter-d1">
-            <CompanionPetWidget locale={locale} />
-          </div>
-          <div className="hp-enter hp-enter-d2">
-            <StudyGoalWidget locale={locale} />
-          </div>
-          <div className="hp-enter hp-enter-d2">
-            <LoginBonusWidget locale={locale} />
-          </div>
+          {isLoggedIn ? (
+            <>
+              <div className="hp-enter hp-enter-d1">
+                <XpRankWidget locale={locale} />
+              </div>
+              <div className="hp-enter hp-enter-d1">
+                <CompanionPetWidget locale={locale} />
+              </div>
+              <div className="hp-enter hp-enter-d2">
+                <StudyGoalWidget locale={locale} />
+              </div>
+              <div className="hp-enter hp-enter-d2">
+                <LoginBonusWidget locale={locale} />
+              </div>
+            </>
+          ) : (
+            <div className="hp-enter hp-enter-d1">
+              <SidebarGuestCta
+                title={labels.sidebarSignIn}
+                subtitle={labels.sidebarSignInSub}
+                cta={labels.progressSignInCta}
+                locale={locale}
+              />
+            </div>
+          )}
         </div>
       </div>
 

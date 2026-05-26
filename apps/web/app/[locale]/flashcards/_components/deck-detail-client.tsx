@@ -1,6 +1,6 @@
 "use client";
 
-import { Badge, Button, Card, CardContent, cn, EmptyState, ErrorState, LoadingSkeleton } from "@nihongo-bjt/ui";
+import { Badge, Card, CardContent, cn, EmptyState, ErrorState, LoadingSkeleton } from "@nihongo-bjt/ui";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
@@ -80,8 +80,17 @@ export function DeckDetailClient({
   const [shareToken, setShareToken] = useState<string | null>(null);
   const [shareCopied, setShareCopied] = useState(false);
   const [editMode, setEditMode] = useState(false);
+  const [styleConfig, setStyleConfig] = useState<Record<string, string> | null>(null);
   const deleteTitleId = useId();
   const deleteBodyId = useId();
+
+  // Fetch active flashcard style on mount
+  useEffect(() => {
+    learnerApiFetch("/api/flashcards/styles/active")
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => { if (data?.config) setStyleConfig(data.config); })
+      .catch(() => {});
+  }, []);
 
   const load = useCallback(async () => {
     if (!userId) return;
@@ -348,6 +357,7 @@ export function DeckDetailClient({
               }))}
               focusIndex={focusIndex}
               onIndexChange={setActiveIndex}
+              styleConfig={styleConfig}
               labels={{
                 deckStudyEyebrow: labels.deckStudyEyebrow,
                 deckStudyFaceBack: labels.deckStudyFaceBack,

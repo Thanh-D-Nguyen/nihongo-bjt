@@ -22,6 +22,7 @@ import { KeycloakAuthGuard } from "../keycloak/keycloak-auth.guard.js";
 import { resolveLearnerUserId } from "../keycloak/learner-identity.util.js";
 import type { KeycloakAuthenticatedUser } from "../keycloak/keycloak.types.js";
 import { DocumentedHttpErrors } from "../openapi/common-decorators.js";
+import { ComebackExperienceService } from "./comeback-experience.service.js";
 import { CompanionPetService } from "./companion-pet.service.js";
 import { DailyStudyGoalService } from "./daily-study-goal.service.js";
 import { GamificationService } from "./gamification.service.js";
@@ -47,6 +48,8 @@ export class GamificationController {
     private readonly mysteryBoxService: MysteryBoxService,
     @Inject(CompanionPetService)
     private readonly companionPetService: CompanionPetService,
+    @Inject(ComebackExperienceService)
+    private readonly comebackService: ComebackExperienceService,
   ) {}
 
   /* ── Streaks ─────────────────────────────────────────────────────────── */
@@ -334,5 +337,40 @@ export class GamificationController {
   getPetCostumes(@CurrentUser() user: KeycloakAuthenticatedUser | undefined) {
     const userId = resolveLearnerUserId(user, undefined, { required: true })!;
     return this.companionPetService.getCostumes(userId);
+  }
+
+  // ─── Comeback Experience ────────────────────────────────────────────────
+
+  @Get("comeback/check")
+  @ApiOperation({
+    summary: "Check if user qualifies for a comeback experience (absent 3+ days).",
+  })
+  async checkComeback(@CurrentUser() user: KeycloakAuthenticatedUser | undefined) {
+    const userId = resolveLearnerUserId(user, undefined, { required: true })!;
+    const plan = await this.comebackService.checkComebackEligibility(userId);
+    return { eligible: plan !== null, plan };
+  }
+
+  @Post("comeback/activate")
+  @ApiOperation({
+    summary: "Activate the comeback plan (reduced goals, mystery box, difficulty ease).",
+  })
+  async activateComeback(@CurrentUser() user: KeycloakAuthenticatedUser | undefined) {
+    const userId = resolveLearnerUserId(user, undefined, { required: true })!;
+    const plan = await this.comebackService.checkComebackEligibility(userId);
+    if (!plan) {
+      throw new BadRequestException("User is not eligible for comeback plan");
+    }
+    await this.comebackService.activateComebackPlan(userId, plan);
+    return { activated: true, plan };
+  }
+
+  @Get("comeback/summary")
+  @ApiOperation({
+    summary: "Get a 'what you missed' summary for the welcome-back screen.",
+  })
+  async getComebackSummary(@CurrentUser() user: KeycloakAuthenticatedUser | undefined) {
+    const userId = resolveLearnerUserId(user, undefined, { required: true })!;
+    return this.comebackService.getWelcomeBackSummary(userId);
   }
 }

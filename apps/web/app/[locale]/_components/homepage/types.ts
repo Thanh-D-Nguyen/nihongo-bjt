@@ -58,6 +58,11 @@ export interface HomepageLabels {
   progressSignIn: string;
   progressSignInSub: string;
   progressSignInCta: string;
+  rewardsSignIn: string;
+  rewardsSignInSub: string;
+  rewardsSignInCta: string;
+  sidebarSignIn: string;
+  sidebarSignInSub: string;
   lifeTitle: string;
   lifeSubtitle: string;
   recommendTitle: string;

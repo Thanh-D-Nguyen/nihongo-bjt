@@ -5,6 +5,7 @@ import type { Namespace, Socket } from "socket.io";
 
 import type { BattleQuestionPayload, PlayableBattleBot } from "./battle.repository.js";
 import { BattleRepository } from "./battle.repository.js";
+import { generateBattleCommentary, type CommentaryContext, type CommentaryTrigger } from "./bot-battle-commentary.js";
 import { BotChatResponderPort } from "./bot-chat-responder.port.js";
 import { MatchmakingPort } from "./matchmaking.port.js";
 
@@ -24,6 +25,7 @@ type RoomState = {
   botKey: string;
   botProfile: PlayableBattleBot;
   configTimeSec: number;
+  gameType: string;
   idempotency: Set<string>;
   maxRounds: number;
   opponentScore: number;
@@ -40,9 +42,14 @@ type RoomState = {
   userScore: number;
   /** 0-based index of the current question */
   whichRound: number;
+  /** Commentary state */
+  userCorrectStreak: number;
+  botCorrectStreak: number;
+  lastCommentRound: number;
 };
 
 type PvpRoomState = {
+  gameType: string;
   idempotency: Set<string>;
   maxRounds: number;
   opponentDisplayName: string;
@@ -233,10 +240,11 @@ export class BattleOrchestratorService {
     const opponentScore = isAcceptor ? pvpRoom.opponentScore : pvpRoom.userScore;
 
     let question: {
-      question: {
-        options: Array<{ optionKey: string; text: string }>;
-        prompt: string;
-        skillTag: string;
+	      question: {
+	        audioUrl: string | null;
+	        options: Array<{ optionKey: string; text: string }>;
+	        prompt: string;
+	        skillTag: string;
       };
       roomCode: string;
       roundIndex: number;
@@ -252,6 +260,7 @@ export class BattleOrchestratorService {
       if (q) {
         question = {
           question: {
+            audioUrl: q.audioUrl ?? null,
             options: this.safeOptionsForClient(q),
             prompt: q.prompt,
             skillTag: q.skillTag
@@ -272,6 +281,7 @@ export class BattleOrchestratorService {
       if (q) {
         question = {
           question: {
+            audioUrl: q.audioUrl ?? null,
             options: this.safeOptionsForClient(q),
             prompt: q.prompt,
             skillTag: q.skillTag
@@ -427,7 +437,7 @@ export class BattleOrchestratorService {
       });
       this.nsp.to("battle:lobby:global").emit("battle:lobby_message", botMessage);
     } catch (error) {
-      this.logger.warn(`Bot chat response failed: ${(error as Error).message}`);
+      this.logger.warn(`Bot chat response failed: ${(error as Error).message}`, (error as Error).stack);
     }
   }
 
@@ -518,6 +528,7 @@ export class BattleOrchestratorService {
     const challengerDisplayName = challenge.fromDisplayName ?? this.lobbyUsers.get(input.fromUserId)?.displayName ?? null;
 
     const pvpRoom: PvpRoomState = {
+      gameType: "speed_duel",
       idempotency: new Set(),
       maxRounds: created.questions.length,
       opponentDisplayName: challengerDisplayName ?? "Opponent",
@@ -882,7 +893,10 @@ export class BattleOrchestratorService {
     }, pvpRoundTimeMs);
 
     const questionPayload = {
+      gameType: pvpRoom.gameType,
+      interactionType: this.getInteractionType(pvpRoom.gameType),
       question: {
+        audioUrl: q.audioUrl ?? null,
         options: q.options.map((o) => ({ optionKey: o.optionKey, text: o.text })),
         prompt: q.prompt,
         questionId: q.questionId,
@@ -1111,11 +1125,13 @@ export class BattleOrchestratorService {
     // Load config params if configId provided
     let configMaxRounds: number | undefined;
     let configTimeSec: number | undefined;
+    let configGameType: string = "speed_duel";
     if (input.configId) {
       const config = await this.battleRepository.getPublishedConfig(input.configId);
       if (config) {
         configMaxRounds = config.questionCount;
         configTimeSec = config.timePerQuestionSec;
+        configGameType = config.gameType;
       }
     }
 
@@ -1145,6 +1161,7 @@ export class BattleOrchestratorService {
       botKey: input.botKey,
       botProfile: playableBot,
       configTimeSec: configTimeSec ?? Math.round(roundTimeMs / 1000),
+      gameType: configGameType,
       idempotency: new Set(),
       maxRounds: created.questions.length,
       opponentScore: 0,
@@ -1159,7 +1176,10 @@ export class BattleOrchestratorService {
       invalidAnswerStrikes: 0,
       userId: input.userId,
       userScore: 0,
-      whichRound: 0
+      whichRound: 0,
+      userCorrectStreak: 0,
+      botCorrectStreak: 0,
+      lastCommentRound: -2
     };
     this.rooms.set(roomCode, room);
     this.userActiveRoom.set(input.userId, roomCode);
@@ -1184,6 +1204,7 @@ export class BattleOrchestratorService {
         styleToken: playableBot.styleToken,
         vocabularyLevel: playableBot.vocabularyLevel
       },
+      gameType: room.gameType,
       maxRounds: room.maxRounds,
       roomCode,
       sessionId: room.sessionId
@@ -1233,17 +1254,30 @@ export class BattleOrchestratorService {
       void this.settleRound(client, roomCode, { timeout: true });
     }, room.configTimeSec * 1000);
     client.emit("battle:question", {
+      gameType: room.gameType,
+      interactionType: this.getInteractionType(room.gameType),
       roundIndex: room.whichRound,
       roomCode,
       timeLimitSec: room.configTimeSec,
       totalRounds: room.maxRounds,
       question: {
+        audioUrl: q.audioUrl ?? null,
         options: this.safeOptionsForClient(q),
         prompt: q.prompt,
         questionId: q.questionId,
         skillTag: q.skillTag
       }
     });
+  }
+
+  private getInteractionType(gameType: string): string {
+    switch (gameType) {
+      case "kanji_vocab_duel": return "matching";
+      case "listening_challenge": return "audio_only";
+      case "boss_rush": return "boss_hp";
+      case "mock_exam_sprint": return "passage";
+      default: return "multiple_choice";
+    }
   }
 
   async submitAnswer(
@@ -1403,6 +1437,9 @@ export class BattleOrchestratorService {
       }
       room.userScore = nextUser;
       room.opponentScore = nextOp;
+      // Update streaks for commentary
+      room.userCorrectStreak = userCorrect ? room.userCorrectStreak + 1 : 0;
+      room.botCorrectStreak = botCorrect ? room.botCorrectStreak + 1 : 0;
       client.emit("battle:answer_result", {
         botCorrect,
         correctOptionKey: correct,
@@ -1410,6 +1447,27 @@ export class BattleOrchestratorService {
         userCorrect
       });
       client.emit("battle:score_update", { opponentScore: nextOp, userScore: nextUser });
+      // Bot commentary
+      const baseTrigger: CommentaryTrigger =
+        userCorrect && botCorrect ? "both_correct"
+          : !userCorrect && !botCorrect ? "both_wrong"
+            : userCorrect ? "user_correct"
+              : "bot_correct";
+      const commentCtx: CommentaryContext = {
+        botKey: room.botKey,
+        botCorrectStreak: room.botCorrectStreak,
+        botScore: nextOp,
+        currentRound: room.whichRound,
+        totalRounds: room.maxRounds,
+        trigger: baseTrigger,
+        userCorrectStreak: room.userCorrectStreak,
+        userScore: nextUser
+      };
+      const commentary = generateBattleCommentary(commentCtx, room.lastCommentRound);
+      if (commentary) {
+        room.lastCommentRound = room.whichRound;
+        client.emit("battle:bot_comment", { message: commentary.message, trigger: commentary.trigger });
+      }
       const lastRound = room.whichRound === room.maxRounds - 1;
       room.whichRound += 1;
       if (lastRound) {

@@ -646,7 +646,7 @@ model BattleChatMessage {
   id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   roomKey         String         @default("global") @map("room_key") @db.VarChar(64)
   sessionId       String?        @map("session_id") @db.Uuid
-  userId          String         @map("user_id") @db.Uuid
+  userId          String         @map("user_id") @db.VarChar(64)
   displayName     String?        @map("display_name") @db.VarChar(120)
   message         String         @db.VarChar(500)
   kind            String         @default("chat") @db.VarChar(24)
