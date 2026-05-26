@@ -2,8 +2,10 @@
  * Seed flashcard styles — 3 free + 3 premium + 1 exclusive.
  * Idempotent: uses upsert on slug.
  *
- * Run: pnpm -F api tsx scripts/seed-flashcard-styles.ts
+ * Run: pnpm exec tsx scripts/seed-flashcard-styles.ts
  */
+import "dotenv/config";
+
 import { createPrismaClient } from "@nihongo-bjt/database";
 
 const prisma = createPrismaClient();

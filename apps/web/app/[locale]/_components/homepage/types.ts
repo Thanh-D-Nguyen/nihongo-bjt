@@ -91,6 +91,16 @@ export interface HomepageLabels {
     kanji: string;
     grammar: string;
   };
+  tabs: {
+    today: string;
+    progress: string;
+    rewards: string;
+    focus: string;
+    todaySub: string;
+    progressSub: string;
+    rewardsSub: string;
+    focusSub: string;
+  };
 }
 
 export interface NhkArticle {

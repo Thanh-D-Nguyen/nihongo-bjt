@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Query, Body, Req, NotFoundException } from "@nestjs/common";
+import { Body, Controller, Get, Inject, NotFoundException, Param, Post, Query, Req } from "@nestjs/common";
 import { ApiTags, ApiOperation } from "@nestjs/swagger";
 import { MagazineRepository } from "./magazine.repository.js";
 import { ListMagazineQuery, MarkReadBody } from "./dto/magazine.dto.js";
@@ -6,7 +6,7 @@ import { ListMagazineQuery, MarkReadBody } from "./dto/magazine.dto.js";
 @ApiTags("Magazine")
 @Controller("magazine")
 export class MagazineController {
-  constructor(private readonly repo: MagazineRepository) {}
+  constructor(@Inject(MagazineRepository) private readonly repo: MagazineRepository) {}
 
   @Get()
   @ApiOperation({ summary: "List published magazine articles" })

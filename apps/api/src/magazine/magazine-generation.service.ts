@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Inject, Injectable, Logger } from "@nestjs/common";
 import { MagazineRepository } from "./magazine.repository.js";
 import { AiContentProvider, type GenerationContext } from "./providers/ai-content.provider.js";
 import { JmaWeatherProvider } from "./providers/jma-weather.provider.js";
@@ -9,10 +9,10 @@ export class MagazineGenerationService {
   private readonly logger = new Logger(MagazineGenerationService.name);
 
   constructor(
-    private readonly repo: MagazineRepository,
-    private readonly ai: AiContentProvider,
-    private readonly weather: JmaWeatherProvider,
-    private readonly loto: LotoDataProvider,
+    @Inject(MagazineRepository) private readonly repo: MagazineRepository,
+    @Inject(AiContentProvider) private readonly ai: AiContentProvider,
+    @Inject(JmaWeatherProvider) private readonly weather: JmaWeatherProvider,
+    @Inject(LotoDataProvider) private readonly loto: LotoDataProvider,
   ) {}
 
   async generateForDate(widgetKind: string, date: Date, locale = "vi"): Promise<string | null> {

@@ -329,6 +329,16 @@
       "vocab": "Vocabulary",
       "kanji": "Kanji",
       "grammar": "Grammar"
+    },
+    "tabs": {
+      "today": "Today",
+      "progress": "Progress",
+      "rewards": "Rewards",
+      "focus": "Focus",
+      "todaySub": "Fresh picks and today's lessons",
+      "progressSub": "Track your learning journey",
+      "rewardsSub": "Boxes, bonuses & redemption",
+      "focusSub": "Pomodoro & ambient mode"
     }
   },
   "nhkDetail": {

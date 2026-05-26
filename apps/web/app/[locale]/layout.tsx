@@ -11,16 +11,18 @@ import { AmbientProvider } from "../_hooks/use-ambient-mode";
 import { AmbientOverlay } from "../_components/ambient-overlay";
 import { AmbientMiniPlayer } from "../_components/ambient-mini-player";
 
-const skipLabels: Record<"ja" | "vi", string> = {
+const messages = { ja, vi, en };
+const skipLabels: Record<SupportedLocale, string> = {
   ja: ja.a11y.skipToContent,
-  vi: vi.a11y.skipToContent
+  vi: vi.a11y.skipToContent,
+  en: en.a11y.skipToContent
 };
 
 /** Session cookies must be evaluated per request; avoid static shell mismatches with auth. */
 export const dynamic = "force-dynamic";
 
 export function generateStaticParams() {
-  return [{ locale: "vi" }, { locale: "ja" }];
+  return [{ locale: "vi" }, { locale: "ja" }, { locale: "en" }];
 }
 
 export default async function LearnerLayout({

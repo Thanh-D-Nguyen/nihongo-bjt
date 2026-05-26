@@ -11,6 +11,10 @@ export type LotoData = {
 export class LotoDataProvider {
   private readonly logger = new Logger(LotoDataProvider.name);
 
+  async getHistoricalData(): Promise<LotoData> {
+    return this.fetchLotoData();
+  }
+
   // Phase 2: integrate real Loto 6 / Loto 7 API from mizuho-bk or scraping service
   async fetchLotoData(): Promise<LotoData> {
     this.logger.debug('Generating statistical mock loto data (Phase 2: real API integration)');

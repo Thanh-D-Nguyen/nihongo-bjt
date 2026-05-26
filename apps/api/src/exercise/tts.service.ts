@@ -1,18 +1,22 @@
 import { Injectable, Logger } from "@nestjs/common";
 
+import { AzureTtsProvider } from "./azure-tts.provider.js";
+
 /**
  * TTS (Text-to-Speech) provider interface.
  * Abstraction for generating audio from Japanese text.
  * Can be backed by:
  *  - Web Speech API (browser-only, used in frontend fallback)
- *  - Google Cloud TTS
- *  - Amazon Polly
- *  - Azure Cognitive Services
+ *  - Azure Cognitive Services (server-side, production)
+ *  - Google Cloud TTS (future)
+ *  - Amazon Polly (future)
  *  - Local mock (dev mode)
  */
 export interface TtsProvider {
   /** Generate audio buffer from text. Returns a URL to the stored audio file. */
   synthesize(text: string, options?: TtsOptions): Promise<TtsResult>;
+  /** Optional — return raw audio bytes for callers that upload to object storage themselves. */
+  synthesizeBuffer?(text: string, options?: TtsOptions): Promise<Buffer>;
   /** Provider name for logging */
   readonly name: string;
 }
@@ -39,8 +43,15 @@ export interface TtsResult {
 
 /**
  * TTS Service — orchestrates text-to-speech generation.
- * In dev mode, uses BrowserTtsProvider (returns a special URL that triggers
- * Web Speech API on the client). In production, routes to cloud TTS providers.
+ *
+ * Provider selection (via env `TTS_PROVIDER`):
+ * - `azure`   → AzureTtsProvider (requires AZURE_SPEECH_KEY + AZURE_SPEECH_REGION)
+ * - `browser` → BrowserFallbackTtsProvider (default; returns a URI the client
+ *               interprets via Web Speech API — no server audio bytes)
+ *
+ * Callers that need cached audio bytes (e.g. LexemeAudioService) should use
+ * `synthesizeBuffer()` — it throws if the active provider doesn't support
+ * server-side audio (browser fallback).
  */
 @Injectable()
 export class TtsService {
@@ -48,8 +59,7 @@ export class TtsService {
   private provider: TtsProvider;
 
   constructor() {
-    // Default to browser-fallback provider (client-side TTS)
-    this.provider = new BrowserFallbackTtsProvider();
+    this.provider = this.pickProvider();
     this.logger.log(`TTS provider initialized: ${this.provider.name}`);
   }
 
@@ -57,8 +67,45 @@ export class TtsService {
     return this.provider.synthesize(text, options);
   }
 
+  /**
+   * Return raw audio bytes for the given text. Throws if the active provider
+   * does not support server-side synthesis (browser fallback). Use this from
+   * services that upload to object storage themselves.
+   */
+  async synthesizeBuffer(text: string, options?: TtsOptions): Promise<Buffer> {
+    if (!this.provider.synthesizeBuffer) {
+      throw new Error(
+        `Active TTS provider "${this.provider.name}" does not support synthesizeBuffer. ` +
+          `Set TTS_PROVIDER=azure and configure AZURE_SPEECH_KEY/REGION.`,
+      );
+    }
+    return this.provider.synthesizeBuffer(text, options);
+  }
+
   getProviderName(): string {
     return this.provider.name;
+  }
+
+  /** Returns true when the active provider can hand back raw audio bytes. */
+  supportsServerSideSynthesis(): boolean {
+    return typeof this.provider.synthesizeBuffer === "function";
+  }
+
+  private pickProvider(): TtsProvider {
+    const choice = (process.env.TTS_PROVIDER ?? "browser").toLowerCase();
+    if (choice === "azure") {
+      const key = process.env.AZURE_SPEECH_KEY ?? "";
+      const region = process.env.AZURE_SPEECH_REGION ?? "";
+      const defaultVoice = process.env.AZURE_SPEECH_DEFAULT_VOICE;
+      if (!key || !region) {
+        this.logger.warn(
+          "TTS_PROVIDER=azure but AZURE_SPEECH_KEY/REGION missing — falling back to browser",
+        );
+        return new BrowserFallbackTtsProvider();
+      }
+      return new AzureTtsProvider(key, region, defaultVoice);
+    }
+    return new BrowserFallbackTtsProvider();
   }
 }
 
@@ -67,6 +114,8 @@ export class TtsService {
  * Instead of generating server-side audio, returns a special URL format
  * that signals the frontend to use the Web Speech API (SpeechSynthesis).
  * This works without any cloud API keys and provides decent Japanese TTS.
+ *
+ * Does NOT implement `synthesizeBuffer` — server-side cache calls will fail.
  */
 class BrowserFallbackTtsProvider implements TtsProvider {
   readonly name = "browser-fallback";

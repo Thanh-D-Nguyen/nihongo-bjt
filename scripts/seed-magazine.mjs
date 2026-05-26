@@ -2,6 +2,7 @@
 // Usage: node scripts/seed-magazine.mjs
 // Idempotent: skips articles whose slug already exists.
 
+import "dotenv/config";
 import { PrismaClient } from "../packages/database/generated/client/index.js";
 import { PrismaPg } from "@prisma/adapter-pg";
 

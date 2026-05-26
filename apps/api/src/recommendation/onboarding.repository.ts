@@ -134,6 +134,21 @@ export class OnboardingRepository {
       input.style,
     );
 
+    // Auto-tune DailyStudyGoal — keeps the gamification target in sync with
+    // the time commitment the user just declared. Best-effort; non-fatal on
+    // failure (e.g. user_profile row missing on a fresh account).
+    try {
+      await this.prisma.dailyStudyGoal.upsert({
+        where: { userId },
+        create: { userId, targetMinutes: input.dailyMinutes },
+        update: { targetMinutes: input.dailyMinutes },
+      });
+    } catch (err) {
+      this.logger.warn(
+        `Failed to auto-tune DailyStudyGoal for ${userId}: ${String(err)}`,
+      );
+    }
+
     return {
       currentLevel: input.currentLevel,
       goal: input.goal,

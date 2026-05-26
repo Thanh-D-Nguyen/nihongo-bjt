@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Delete, Param, Query, Body, UseGuards, NotFoundException } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Inject, NotFoundException, Param, Post, Query, UseGuards } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiOkResponse, ApiBody, ApiParam, ApiQuery } from "@nestjs/swagger";
 import { Throttle } from "@nestjs/throttler";
 
@@ -17,7 +17,8 @@ import { AdminGenerateBody, ListMagazineQuery } from "./dto/magazine.dto.js";
 @ApiBearerAuth("bearer")
 export class MagazineAdminController {
   constructor(
-    private readonly repo: MagazineRepository,
+    @Inject(MagazineRepository) private readonly repo: MagazineRepository,
+    @Inject(MagazineGenerationService)
     private readonly generation: MagazineGenerationService,
   ) {}
 

@@ -26,7 +26,17 @@
       "mcp__codegraph__codegraph_explore",
       "Bash(pnpm --filter @nihongo-bjt/api exec tsc --noEmit)",
       "Bash(pnpm --filter @nihongo-bjt/web exec tsc --noEmit)",
-      "Bash(PGPASSWORD=postgres psql -h 127.0.0.1 -p 15432 -U postgres -d nihongo_bjt -c \"SELECT source_type, count\\(*\\) FROM learning.flashcard_variant GROUP BY source_type ORDER BY count\\(*\\) DESC;\")"
+      "Bash(PGPASSWORD=postgres psql -h 127.0.0.1 -p 15432 -U postgres -d nihongo_bjt -c \"SELECT source_type, count\\(*\\) FROM learning.flashcard_variant GROUP BY source_type ORDER BY count\\(*\\) DESC;\")",
+      "mcp__codegraph__codegraph_files",
+      "Bash(grep -E \"\\\\.\\(tsx|ts|jsx\\)$\")",
+      "Bash(grep -E \"\\\\.ts$\")",
+      "Bash(xargs basename -a)",
+      "Bash(pnpm --filter @nihongo-bjt/web lint)",
+      "Bash(npx eslint *)",
+      "Bash(pnpm --filter @nihongo-bjt/api typecheck)",
+      "Bash(wait)",
+      "Bash(pnpm prisma:validate)",
+      "Bash(pnpm prisma:generate)"
     ]
   }
 }

@@ -11,12 +11,14 @@ import { LoginBonusService } from "./login-bonus.service.js";
 import { MysteryBoxService } from "./mystery-box.service.js";
 import { SeasonalEventController } from "./seasonal-event.controller.js";
 import { SeasonalEventService } from "./seasonal-event.service.js";
+import { StudyGroupController } from "./study-group.controller.js";
+import { StudyGroupService } from "./study-group.service.js";
 import { StudyTimerService } from "./study-timer.service.js";
 
 @Module({
-  controllers: [GamificationController, GamificationAdminController, SeasonalEventController],
-  exports: [GamificationService, DailyStudyGoalService, LoginBonusService, MysteryBoxService, StudyTimerService, CompanionPetService, SeasonalEventService],
+  controllers: [GamificationController, GamificationAdminController, SeasonalEventController, StudyGroupController],
+  exports: [GamificationService, DailyStudyGoalService, LoginBonusService, MysteryBoxService, StudyTimerService, CompanionPetService, SeasonalEventService, StudyGroupService],
   imports: [AdminModule],
-  providers: [GamificationRepository, GamificationService, DailyStudyGoalService, LoginBonusService, MysteryBoxService, StudyTimerService, CompanionPetService, SeasonalEventService]
+  providers: [GamificationRepository, GamificationService, DailyStudyGoalService, LoginBonusService, MysteryBoxService, StudyTimerService, CompanionPetService, SeasonalEventService, StudyGroupService]
 })
 export class GamificationModule {}

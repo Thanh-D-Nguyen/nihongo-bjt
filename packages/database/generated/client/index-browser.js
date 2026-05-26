@@ -247,6 +247,41 @@ exports.Prisma.ExampleSentenceScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.LexemeAudioScalarFieldEnum = {
+  id: 'id',
+  lexemeId: 'lexemeId',
+  mediaAssetId: 'mediaAssetId',
+  ttsProvider: 'ttsProvider',
+  voiceName: 'voiceName',
+  speakingRate: 'speakingRate',
+  durationMs: 'durationMs',
+  voiceActor: 'voiceActor',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.ExampleSentenceAudioScalarFieldEnum = {
+  id: 'id',
+  sentenceId: 'sentenceId',
+  mediaAssetId: 'mediaAssetId',
+  ttsProvider: 'ttsProvider',
+  voiceName: 'voiceName',
+  speakingRate: 'speakingRate',
+  durationMs: 'durationMs',
+  voiceActor: 'voiceActor',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.ContentQaReviewScalarFieldEnum = {
+  id: 'id',
+  entityType: 'entityType',
+  entityId: 'entityId',
+  state: 'state',
+  reviewerId: 'reviewerId',
+  comment: 'comment',
+  version: 'version',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.EntityImportProvenanceScalarFieldEnum = {
   id: 'id',
   entityType: 'entityType',
@@ -2167,6 +2202,57 @@ exports.Prisma.UserScenarioAttemptScalarFieldEnum = {
   completedAt: 'completedAt'
 };
 
+exports.Prisma.StudyGroupScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  description: 'description',
+  ownerUserId: 'ownerUserId',
+  joinPolicy: 'joinPolicy',
+  weeklyXpGoal: 'weeklyXpGoal',
+  memberLimit: 'memberLimit',
+  coverAssetId: 'coverAssetId',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.StudyGroupMemberScalarFieldEnum = {
+  id: 'id',
+  groupId: 'groupId',
+  userId: 'userId',
+  role: 'role',
+  status: 'status',
+  joinedAt: 'joinedAt'
+};
+
+exports.Prisma.StudyGroupChallengeScalarFieldEnum = {
+  id: 'id',
+  groupId: 'groupId',
+  title: 'title',
+  description: 'description',
+  metricType: 'metricType',
+  targetValue: 'targetValue',
+  periodStart: 'periodStart',
+  periodEnd: 'periodEnd',
+  rewardPayload: 'rewardPayload',
+  status: 'status',
+  createdByUserId: 'createdByUserId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.UserSocialConnectionScalarFieldEnum = {
+  id: 'id',
+  pairKey: 'pairKey',
+  requesterUserId: 'requesterUserId',
+  addresseeUserId: 'addresseeUserId',
+  status: 'status',
+  blockedByUserId: 'blockedByUserId',
+  requestedAt: 'requestedAt',
+  respondedAt: 'respondedAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -2208,6 +2294,9 @@ exports.Prisma.ModelName = {
   Kanji: 'Kanji',
   GrammarPoint: 'GrammarPoint',
   ExampleSentence: 'ExampleSentence',
+  LexemeAudio: 'LexemeAudio',
+  ExampleSentenceAudio: 'ExampleSentenceAudio',
+  ContentQaReview: 'ContentQaReview',
   EntityImportProvenance: 'EntityImportProvenance',
   LexemeSense: 'LexemeSense',
   LexemeSenseExample: 'LexemeSenseExample',
@@ -2362,7 +2451,11 @@ exports.Prisma.ModelName = {
   BusinessScenario: 'BusinessScenario',
   ScenarioStep: 'ScenarioStep',
   ScenarioChoice: 'ScenarioChoice',
-  UserScenarioAttempt: 'UserScenarioAttempt'
+  UserScenarioAttempt: 'UserScenarioAttempt',
+  StudyGroup: 'StudyGroup',
+  StudyGroupMember: 'StudyGroupMember',
+  StudyGroupChallenge: 'StudyGroupChallenge',
+  UserSocialConnection: 'UserSocialConnection'
 };
 
 /**

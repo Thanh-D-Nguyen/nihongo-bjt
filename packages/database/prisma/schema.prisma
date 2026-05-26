@@ -109,6 +109,7 @@ model Lexeme {
   createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt      DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
   senses         LexemeSense[]
+  audios         LexemeAudio[]
 
   @@index([headword], map: "idx_lexeme_headword")
   @@index([status], map: "idx_lexeme_status")
@@ -192,10 +193,87 @@ model ExampleSentence {
   lexemeSenseExamples      LexemeSenseExample[]
   reverseCandidateExamples LexemeReverseCandidateExample[]
   grammarDetailExamples    GrammarPointDetailExample[]
+  audios                   ExampleSentenceAudio[]
 
   @@index([japaneseText], map: "idx_example_sentence_japanese_text")
   @@index([status], map: "idx_example_sentence_status")
   @@map("example_sentence")
+  @@schema("content")
+}
+
+/// TTS audio variant for a Lexeme — cached audio so we don't re-synthesize on
+/// every request. One lexeme can have many variants (male/female, slow/normal,
+/// different providers). De-duplicated by (lexemeId, voiceName, speakingRate).
+model LexemeAudio {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  lexemeId      String   @map("lexeme_id") @db.Uuid
+  /// MediaAsset row that holds the actual audio file in object storage.
+  mediaAssetId  String   @map("media_asset_id") @db.Uuid
+  /// Provider key — "azure", "google", "elevenlabs", "browser", etc.
+  ttsProvider   String   @map("tts_provider") @db.VarChar(40)
+  /// Voice identifier within the provider (e.g. "ja-JP-NanamiNeural").
+  voiceName     String   @map("voice_name") @db.VarChar(80)
+  speakingRate  Float    @default(1.0) @map("speaking_rate")
+  durationMs    Int?     @map("duration_ms")
+  /// Optional human voice actor metadata when not machine-TTS.
+  voiceActor    String?  @map("voice_actor") @db.VarChar(120)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  lexeme        Lexeme   @relation(fields: [lexemeId], references: [id], onDelete: Cascade)
+
+  @@unique([lexemeId, voiceName, speakingRate], map: "uq_lexeme_audio_voice")
+  @@index([lexemeId], map: "idx_lexeme_audio_lexeme")
+  @@index([mediaAssetId], map: "idx_lexeme_audio_asset")
+  @@map("lexeme_audio")
+  @@schema("content")
+}
+
+/// TTS audio variant for an ExampleSentence — same cache-or-generate pattern
+/// as LexemeAudio, scoped to sentence-level pronunciation.
+model ExampleSentenceAudio {
+  id           String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sentenceId   String          @map("sentence_id") @db.Uuid
+  mediaAssetId String          @map("media_asset_id") @db.Uuid
+  ttsProvider  String          @map("tts_provider") @db.VarChar(40)
+  voiceName    String          @map("voice_name") @db.VarChar(80)
+  speakingRate Float           @default(1.0) @map("speaking_rate")
+  durationMs   Int?            @map("duration_ms")
+  voiceActor   String?         @map("voice_actor") @db.VarChar(120)
+  createdAt    DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  sentence     ExampleSentence @relation(fields: [sentenceId], references: [id], onDelete: Cascade)
+
+  @@unique([sentenceId, voiceName, speakingRate], map: "uq_example_audio_voice")
+  @@index([sentenceId], map: "idx_example_audio_sentence")
+  @@index([mediaAssetId], map: "idx_example_audio_asset")
+  @@map("example_sentence_audio")
+  @@schema("content")
+}
+
+/// Polymorphic QA review log for human-curated content. One row per state
+/// transition — the latest row per (entityType, entityId) is the current state.
+/// Used to gate LLM-generated content before it's exposed to learners.
+///
+/// State machine: pending → in_review → approved → published
+///                                   ↘ changes_requested → in_review …
+///                                   ↘ rejected (terminal)
+model ContentQaReview {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Entity kind — "daily_radar_card", "magazine_article", "lexeme",
+  /// "example_sentence", "bjt_question", etc.
+  entityType String   @map("entity_type") @db.VarChar(80)
+  entityId   String   @map("entity_id") @db.Uuid
+  /// pending | in_review | changes_requested | approved | published | rejected
+  state      String   @db.VarChar(32)
+  /// User id of the reviewer (system or human). Null for the initial "pending" row.
+  reviewerId String?  @map("reviewer_id") @db.Uuid
+  comment    String?
+  /// Monotonically increasing per (entityType, entityId) — first row = 1.
+  version    Int
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([entityType, entityId, version], map: "uq_content_qa_entity_version")
+  @@index([entityType, state, createdAt], map: "idx_content_qa_type_state")
+  @@index([entityType, entityId], map: "idx_content_qa_entity")
+  @@map("content_qa_review")
   @@schema("content")
 }
 
@@ -1106,6 +1184,11 @@ model UserProfile {
   rankProgressionEvents    RankProgressionEvent[]
   chapterAttempts          ChapterAttempt[]
   npcRelations             NpcRelation[]
+  ownedStudyGroups         StudyGroup[]               @relation("StudyGroupOwner")
+  studyGroupMemberships    StudyGroupMember[]
+  studyGroupChallenges      StudyGroupChallenge[]      @relation("StudyGroupChallengeCreator")
+  sentSocialConnections    UserSocialConnection[]     @relation("SocialConnectionRequester")
+  receivedSocialConnections UserSocialConnection[]    @relation("SocialConnectionAddressee")
 
   @@index([status, createdAt], map: "idx_user_profile_status_created_at")
   @@index([accountType], map: "idx_user_profile_account_type")
@@ -2834,6 +2917,20 @@ model CompanionPet {
   @@schema("gamification")
 }
 
+/// Tracks which pet costumes a user owns (from mystery box, events, etc.)
+model PetCostumeInventory {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  costumeSlug  String   @map("costume_slug") @db.VarChar(50)
+  obtainedFrom String   @default("mystery_box") @map("obtained_from") @db.VarChar(30)
+  obtainedAt   DateTime @default(now()) @map("obtained_at") @db.Timestamptz(6)
+
+  @@unique([userId, costumeSlug], map: "uq_pet_costume_user_slug")
+  @@index([userId], map: "idx_pet_costume_user")
+  @@map("pet_costume_inventory")
+  @@schema("gamification")
+}
+
 /// Time-limited seasonal event (e.g. "Sakura Sprint", "Tanabata Challenge").
 model SeasonalEvent {
   id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
@@ -3232,4 +3329,105 @@ model UserScenarioAttempt {
   @@index([userId, scenarioId], map: "idx_scenario_attempt_user")
   @@map("user_scenario_attempt")
   @@schema("content")
+}
+
+/// Learner-formed study group. Small (≤ 50 members) cohorts that share a
+/// weekly XP goal and aggregate progress. Sits on top of the existing
+/// leaderboard infrastructure — a group is just a scoped audience.
+model StudyGroup {
+  id              String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Display name (max 60 chars). Not required to be unique.
+  name            String              @db.VarChar(60)
+  description     String?
+  /// Owner user — also has a row in StudyGroupMember with role="owner".
+  ownerUserId     String              @map("owner_user_id") @db.Uuid
+  /// open      — anyone with the link can join
+  /// invite    — only invited users (future: via StudyGroupInvite)
+  /// closed    — no new members
+  joinPolicy      String              @default("open") @map("join_policy") @db.VarChar(16)
+  /// Optional weekly XP goal for the whole group, used by progress widgets.
+  weeklyXpGoal    Int?                @map("weekly_xp_goal")
+  /// Max members the group will accept (server-enforced).
+  memberLimit     Int                 @default(50) @map("member_limit")
+  coverAssetId    String?             @map("cover_asset_id") @db.Uuid
+  status          String              @default("active") @db.VarChar(16)
+  createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+  owner           UserProfile         @relation("StudyGroupOwner", fields: [ownerUserId], references: [id], onDelete: Cascade)
+  members         StudyGroupMember[]
+  challenges      StudyGroupChallenge[]
+
+  @@index([ownerUserId], map: "idx_study_group_owner")
+  @@index([status, createdAt], map: "idx_study_group_status_created")
+  @@map("study_group")
+  @@schema("gamification")
+}
+
+/// Junction between a StudyGroup and a UserProfile. Tracks role + status so
+/// admins can mute or ban without removing membership history.
+model StudyGroupMember {
+  id        String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  groupId   String     @map("group_id") @db.Uuid
+  userId    String     @map("user_id") @db.Uuid
+  /// owner | admin | member
+  role      String     @default("member") @db.VarChar(16)
+  /// active | pending | banned | left
+  status    String     @default("active") @db.VarChar(16)
+  joinedAt  DateTime   @default(now()) @map("joined_at") @db.Timestamptz(6)
+  group     StudyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user      UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId], map: "uq_study_group_member_group_user")
+  @@index([userId, status], map: "idx_study_group_member_user_status")
+  @@index([groupId, role], map: "idx_study_group_member_group_role")
+  @@map("study_group_member")
+  @@schema("gamification")
+}
+
+/// Time-boxed group challenge. MVP supports XP/study-count targets and stores
+/// rewards as typed JSON so future seasonal events can reuse the same surface.
+model StudyGroupChallenge {
+  id              String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  groupId         String      @map("group_id") @db.Uuid
+  title           String      @db.VarChar(80)
+  description     String?
+  metricType      String      @default("xp") @map("metric_type") @db.VarChar(32)
+  targetValue     Int         @map("target_value")
+  periodStart     DateTime    @map("period_start") @db.Date
+  periodEnd       DateTime    @map("period_end") @db.Date
+  rewardPayload   Json        @default("{}") @map("reward_payload")
+  status          String      @default("active") @db.VarChar(16)
+  createdByUserId String      @map("created_by_user_id") @db.Uuid
+  createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  group           StudyGroup  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  creator         UserProfile @relation("StudyGroupChallengeCreator", fields: [createdByUserId], references: [id], onDelete: Cascade)
+
+  @@index([groupId, status, periodStart], map: "idx_study_group_challenge_group_status_period")
+  @@index([createdByUserId, createdAt], map: "idx_study_group_challenge_creator_created")
+  @@map("study_group_challenge")
+  @@schema("gamification")
+}
+
+/// Privacy-preserving learner social graph. A row represents one unordered
+/// learner pair via pairKey while preserving request direction for approvals.
+model UserSocialConnection {
+  id               String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  pairKey          String      @unique @map("pair_key") @db.VarChar(80)
+  requesterUserId  String      @map("requester_user_id") @db.Uuid
+  addresseeUserId  String      @map("addressee_user_id") @db.Uuid
+  /// pending | accepted | declined | cancelled | blocked
+  status           String      @default("pending") @db.VarChar(16)
+  blockedByUserId  String?     @map("blocked_by_user_id") @db.Uuid
+  requestedAt      DateTime    @default(now()) @map("requested_at") @db.Timestamptz(6)
+  respondedAt      DateTime?   @map("responded_at") @db.Timestamptz(6)
+  updatedAt        DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  requester        UserProfile @relation("SocialConnectionRequester", fields: [requesterUserId], references: [id], onDelete: Cascade)
+  addressee        UserProfile @relation("SocialConnectionAddressee", fields: [addresseeUserId], references: [id], onDelete: Cascade)
+
+  @@index([requesterUserId, status], map: "idx_social_connection_requester_status")
+  @@index([addresseeUserId, status], map: "idx_social_connection_addressee_status")
+  @@index([status, updatedAt], map: "idx_social_connection_status_updated")
+  @@map("user_social_connection")
+  @@schema("gamification")
 }

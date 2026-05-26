@@ -329,6 +329,16 @@
       "vocab": "語彙",
       "kanji": "漢字",
       "grammar": "文法"
+    },
+    "tabs": {
+      "today": "今日",
+      "progress": "進捗",
+      "rewards": "ごほうび",
+      "focus": "集中",
+      "todaySub": "今日のおすすめと新着コンテンツ",
+      "progressSub": "学習の歩みをチェック",
+      "rewardsSub": "ミステリーボックスとリベンジ",
+      "focusSub": "ポモドーロ・アンビエント"
     }
   },
   "nhkDetail": {

@@ -1020,6 +1020,15 @@ input.learner-topbar-search[type="search"] {
   .hp-enter { animation: none; }
 }
 
+/* Tab panel enter — used by HomepageSectionsTabs */
+.hp-tab-enter {
+  animation: fadeSlideUp 0.3s cubic-bezier(0, 0, 0.2, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hp-tab-enter { animation: none; }
+}
+
 .hero-gradient-shift {
   animation: gradientShift 12s ease infinite;
 }

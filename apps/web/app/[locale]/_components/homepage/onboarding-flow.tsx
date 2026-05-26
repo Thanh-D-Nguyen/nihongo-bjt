@@ -3,6 +3,7 @@
 import { cn } from "@nihongo-bjt/ui";
 import { useCallback, useEffect, useState } from "react";
 import { learnerApiFetch } from "../../../../lib/learner-api";
+import { OnboardingDiagnostic } from "./onboarding-diagnostic";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -10,7 +11,7 @@ interface OnboardingFlowProps {
   onComplete: (didComplete?: boolean) => void;
 }
 
-type Step = "level" | "goal" | "topics" | "time" | "style";
+type Step = "level" | "diagnostic" | "goal" | "topics" | "time" | "style";
 
 interface Answers {
   currentLevel: number;
@@ -73,7 +74,19 @@ const STYLES = [
   { value: "mixed", label: "Trộn đều các kiểu", desc: "Để hệ thống tự phối hợp", emoji: "🎲", recommended: true },
 ];
 
-const STEPS: Step[] = ["level", "goal", "topics", "time", "style"];
+/**
+ * Static base step order. `diagnostic` is inserted dynamically only when
+ * `currentLevel === 0` ("Chưa biết"); see `getSteps()` below.
+ */
+const BASE_STEPS: Step[] = ["level", "goal", "topics", "time", "style"];
+
+function getSteps(answers: Answers): Step[] {
+  if (answers.currentLevel === 0) {
+    // Insert diagnostic right after the level step
+    return ["level", "diagnostic", "goal", "topics", "time", "style"];
+  }
+  return BASE_STEPS;
+}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -108,12 +121,14 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
     typeof window !== "undefined" &&
     window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
-  const stepIndex = STEPS.indexOf(step);
-  const progress = ((stepIndex + 1) / STEPS.length) * 100;
+  const steps = getSteps(answers);
+  const stepIndex = steps.indexOf(step);
+  const progress = ((stepIndex + 1) / steps.length) * 100;
 
   const canProceed = useCallback(() => {
     switch (step) {
       case "level": return answers.currentLevel >= 0;
+      case "diagnostic": return false; // diagnostic auto-advances on completion
       case "goal": return answers.goal !== "";
       case "topics": return answers.topics.length >= 1;
       case "time": return answers.dailyMinutes > 0;
@@ -122,9 +137,10 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   }, [step, answers]);
 
   const next = useCallback(async () => {
-    const idx = STEPS.indexOf(step);
-    if (idx < STEPS.length - 1) {
-      setStep(STEPS[idx + 1]);
+    const currentSteps = getSteps(answers);
+    const idx = currentSteps.indexOf(step);
+    if (idx < currentSteps.length - 1) {
+      setStep(currentSteps[idx + 1]);
     } else {
       // Final step — save to backend
       setSaving(true);
@@ -145,9 +161,22 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   }, [step, answers, onComplete]);
 
   const back = useCallback(() => {
-    const idx = STEPS.indexOf(step);
-    if (idx > 0) setStep(STEPS[idx - 1]);
-  }, [step]);
+    const currentSteps = getSteps(answers);
+    const idx = currentSteps.indexOf(step);
+    if (idx > 0) setStep(currentSteps[idx - 1]);
+  }, [step, answers]);
+
+  /** When diagnostic completes, apply suggested level and advance to goal */
+  const handleDiagnosticComplete = useCallback((suggestedLevel: 5 | 4 | 3) => {
+    setAnswers((a) => ({ ...a, currentLevel: suggestedLevel }));
+    // getSteps will now return BASE_STEPS — jump to "goal"
+    setStep("goal");
+  }, []);
+
+  /** Skip diagnostic — keep level=0 won't pass canProceed, so push to goal directly */
+  const handleDiagnosticSkip = useCallback(() => {
+    setStep("goal");
+  }, []);
 
   const toggleTopic = (topic: string) => {
     setAnswers((prev) => {
@@ -176,10 +205,11 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
           {/* Header */}
           <div className="mb-6 text-center">
             <p className="text-xs text-muted mb-1">
-              Bước {stepIndex + 1}/{STEPS.length}
+              Bước {stepIndex + 1}/{steps.length}
             </p>
             <h2 className="text-lg font-bold text-ink">
               {step === "level" && "Trình độ hiện tại của bạn?"}
+              {step === "diagnostic" && "Kiểm tra nhanh trình độ"}
               {step === "goal" && "Mục tiêu chính là gì?"}
               {step === "topics" && "Bạn quan tâm chủ đề nào?"}
               {step === "time" && "Mỗi ngày bạn dành bao lâu?"}
@@ -187,6 +217,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
             </h2>
             <p className="mt-1 text-xs text-muted">
               {step === "level" && "Giúp hệ thống chọn nội dung phù hợp từ đầu"}
+              {step === "diagnostic" && "5 câu hỏi nhanh để gợi ý trình độ phù hợp"}
               {step === "goal" && "Chúng tôi sẽ ưu tiên nội dung liên quan"}
               {step === "topics" && "Chọn 1–5 chủ đề (bạn có thể thay đổi sau)"}
               {step === "time" && "Gợi ý sẽ vừa vặn thời gian của bạn"}
@@ -196,6 +227,13 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
 
           {/* Options */}
           <div className="space-y-2 max-h-[50vh] overflow-y-auto pr-1">
+            {step === "diagnostic" && (
+              <OnboardingDiagnostic
+                onComplete={handleDiagnosticComplete}
+                onSkip={handleDiagnosticSkip}
+              />
+            )}
+
             {step === "level" &&
               LEVELS.map((l) => (
                 <OptionButton
@@ -268,39 +306,41 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
               ))}
           </div>
 
-          {/* Navigation */}
-          <div className="mt-6 flex items-center justify-between">
-            <button
-              onClick={back}
-              disabled={stepIndex === 0}
-              className={cn(
-                "rounded-xl px-4 py-2 text-sm font-medium transition",
-                stepIndex === 0
-                  ? "invisible"
-                  : "text-muted hover:text-ink hover:bg-ink/5",
-              )}
-            >
-              ← Quay lại
-            </button>
+          {/* Navigation — hidden during diagnostic (component has its own nav) */}
+          {step !== "diagnostic" && (
+            <div className="mt-6 flex items-center justify-between">
+              <button
+                onClick={back}
+                disabled={stepIndex === 0}
+                className={cn(
+                  "rounded-xl px-4 py-2 text-sm font-medium transition",
+                  stepIndex === 0
+                    ? "invisible"
+                    : "text-muted hover:text-ink hover:bg-ink/5",
+                )}
+              >
+                ← Quay lại
+              </button>
 
-            <button
-              onClick={next}
-              disabled={!canProceed() || saving}
-              className={cn(
-                "rounded-xl px-5 py-2.5 text-sm font-bold transition",
-                "shadow-sm active:scale-[0.97]",
-                canProceed() && !saving
-                  ? "bg-accent text-white hover:bg-accent/90"
-                  : "bg-ink/10 text-muted cursor-not-allowed",
-              )}
-            >
-              {saving
-                ? "Đang lưu..."
-                : stepIndex === STEPS.length - 1
-                  ? "Hoàn tất ✓"
-                  : "Tiếp theo →"}
-            </button>
-          </div>
+              <button
+                onClick={next}
+                disabled={!canProceed() || saving}
+                className={cn(
+                  "rounded-xl px-5 py-2.5 text-sm font-bold transition",
+                  "shadow-sm active:scale-[0.97]",
+                  canProceed() && !saving
+                    ? "bg-accent text-white hover:bg-accent/90"
+                    : "bg-ink/10 text-muted cursor-not-allowed",
+                )}
+              >
+                {saving
+                  ? "Đang lưu..."
+                  : stepIndex === steps.length - 1
+                    ? "Hoàn tất ✓"
+                    : "Tiếp theo →"}
+              </button>
+            </div>
+          )}
 
           {/* Skip */}
           <div className="mt-3 text-center">

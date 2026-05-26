@@ -122,8 +122,11 @@ export class CompanionPetService {
   }
 
   /** List pet costumes owned by a user. */
-  getCostumes(_userId: string): Array<never> {
-    return [];
+  getCostumes(userId: string) {
+    return this.prisma.petCostumeInventory.findMany({
+      orderBy: { obtainedAt: "desc" },
+      where: { userId },
+    });
   }
 
   /** Apply happiness decay based on last fed time */

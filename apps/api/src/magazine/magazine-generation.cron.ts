@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Inject, Injectable, Logger } from "@nestjs/common";
 import { Cron } from "@nestjs/schedule";
 import { MagazineGenerationService } from "./magazine-generation.service.js";
 
@@ -6,7 +6,10 @@ import { MagazineGenerationService } from "./magazine-generation.service.js";
 export class MagazineGenerationCron {
   private readonly logger = new Logger(MagazineGenerationCron.name);
 
-  constructor(private readonly generation: MagazineGenerationService) {}
+  constructor(
+    @Inject(MagazineGenerationService)
+    private readonly generation: MagazineGenerationService,
+  ) {}
 
   /** Daily at 05:30 AM (Asia/Ho_Chi_Minh) — generate vocab, weather, horoscope, BJT phrase */
   @Cron("30 5 * * *", { timeZone: "Asia/Ho_Chi_Minh" })

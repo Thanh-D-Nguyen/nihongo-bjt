@@ -329,6 +329,16 @@
       "vocab": "từ vựng",
       "kanji": "kanji",
       "grammar": "ngữ pháp"
+    },
+    "tabs": {
+      "today": "Hôm nay",
+      "progress": "Tiến độ",
+      "rewards": "Phần thưởng",
+      "focus": "Tập trung",
+      "todaySub": "Nội dung mới và bài học hôm nay",
+      "progressSub": "Theo dõi đường tiến của bạn",
+      "rewardsSub": "Quà, mystery box & cơ hội phục thù",
+      "focusSub": "Pomodoro & chế độ thư giãn"
     }
   },
   "nhkDetail": {

@@ -16,6 +16,10 @@ const JMA_FORECAST_URL = 'https://www.jma.go.jp/bosai/forecast/data/forecast/130
 export class JmaWeatherProvider {
   private readonly logger = new Logger(JmaWeatherProvider.name);
 
+  async fetchTokyo(): Promise<WeatherData> {
+    return this.fetchWeather();
+  }
+
   async fetchWeather(): Promise<WeatherData> {
     try {
       const response = await fetch(JMA_FORECAST_URL);

@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { createPrismaClient, type PrismaClient } from "@nihongo-bjt/database";
+import { createPrismaClient, Prisma, type PrismaClient } from "@nihongo-bjt/database";
 import { todayDateKey } from "@nihongo-bjt/shared";
 
 type ListFilter = {
@@ -51,6 +51,11 @@ type CreateArticleInput = {
   }>;
 };
 
+function toInputJsonValue(value: unknown, fallback: Prisma.InputJsonValue): Prisma.InputJsonValue {
+  if (value === undefined) return fallback;
+  return value as Prisma.InputJsonValue;
+}
+
 @Injectable()
 export class MagazineRepository {
   private readonly prisma: PrismaClient = createPrismaClient();
@@ -77,7 +82,7 @@ export class MagazineRepository {
   }
 
   async getToday(locale = "vi") {
-    const today = todayDateKey();
+    const today = todayDateKey(new Date());
     return this.prisma.magazineArticle.findMany({
       where: { contentDate: new Date(today), locale, status: "published" },
       orderBy: { widgetKind: "asc" },
@@ -110,9 +115,9 @@ export class MagazineRepository {
         summaryJp: input.summaryJp,
         summaryVi: input.summaryVi,
         coverImageUrl: input.coverImageUrl,
-        contentJson: input.contentJson as any,
+        contentJson: toInputJsonValue(input.contentJson, {}),
         jlptLevel: input.jlptLevel,
-        sourceDataJson: input.sourceDataJson as any,
+        sourceDataJson: toInputJsonValue(input.sourceDataJson, {}),
         aiModel: input.aiModel,
         generationCostTokens: input.generationCostTokens,
         seoTitle: input.seoTitle ?? input.titleVi,
@@ -123,7 +128,14 @@ export class MagazineRepository {
           ? { createMany: { data: input.vocabItems } }
           : undefined,
         quizzes: input.quizzes
-          ? { createMany: { data: input.quizzes } }
+          ? {
+              createMany: {
+                data: input.quizzes.map((quiz) => ({
+                  ...quiz,
+                  options: toInputJsonValue(quiz.options, []),
+                })),
+              },
+            }
           : undefined,
       },
       include: { vocabItems: true, quizzes: true },

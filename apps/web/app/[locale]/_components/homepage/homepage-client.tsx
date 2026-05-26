@@ -4,27 +4,18 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
 import { learnerApiFetchOptional } from "../../../../lib/learner-api";
-import { FeaturedNewsSection } from "./featured-news-section";
 import { HeroSection } from "./hero-section";
-import { ProgressSection } from "./progress-section";
 import { LoginBonusWidget } from "./login-bonus-widget";
 import { StudyGoalWidget } from "./study-goal-widget";
 import { QuickActionsStrip } from "./quick-actions-strip";
 import type { HomepageLabels, LearnerAnalytics, NhkArticle } from "./types";
-import { DailyRadarSection } from "@/src/features/daily-radar/daily-radar-section";
-import { BjtLevelsSection } from "./bjt-levels-section";
 import { PushPromptBanner, type PushBannerLabels } from "./push-prompt-banner";
-import { MysteryBoxWidget } from "./mystery-box-widget";
-import { RevengeModeWidget } from "./revenge-mode-widget";
-import { WeeklyReportCard } from "./weekly-report-card";
-import { FocusTimerWidget } from "./focus-timer-widget";
-import { LearningHeatmap } from "./learning-heatmap";
 import { CompanionPetWidget } from "./companion-pet-widget";
 import { SeasonalEventBanner } from "./seasonal-event-banner";
-import { AmbientModeWidget } from "./ambient-mode-widget";
 import { AdBanner } from "./ad-banner";
-import { ForYouFeedWidget } from "./for-you-feed-widget";
 import { OnboardingFlow } from "./onboarding-flow";
+import { XpRankWidget } from "./xp-rank-widget";
+import { HomepageSectionsTabs } from "./homepage-sections-tabs";
 
 interface DailyHubPayload {
   dueReviews: number;
@@ -143,6 +134,7 @@ export function HomepageClient({ labels, locale, pushBannerLabels }: { labels: H
         }} />
       )}
       <PushPromptBanner labels={pushBannerLabels} />
+
       <div className="hp-enter">
         <HeroSection
           displayName={displayName}
@@ -168,41 +160,31 @@ export function HomepageClient({ labels, locale, pushBannerLabels }: { labels: H
             <SeasonalEventBanner locale={locale} />
           </div>
 
-          <div className="hp-enter hp-enter-d1">
-            <ForYouFeedWidget locale={locale} refreshKey={onboardingJustCompleted ? 1 : 0} />
-          </div>
-
-          <div className="hp-enter hp-enter-d1">
-            <LearningHeatmap locale={locale} />
-          </div>
-
           <div className="hp-enter hp-enter-d2">
-            <BjtLevelsSection
-              labels={labels.bjtLevels}
+            <HomepageSectionsTabs
+              analytics={analytics}
+              analyticsLoading={isLoggedIn && !analyticsReady}
+              isLoggedIn={isLoggedIn}
+              labels={labels}
               locale={locale}
+              nhkArticlesByType={nhkArticlesByType}
+              nhkError={nhkError}
+              nhkReady={nhkReady}
+              onNhkRetry={loadData}
+              onNhkTabChange={loadNewsType}
+              onboardingJustCompleted={onboardingJustCompleted}
+              tabsLabels={labels.tabs}
             />
-          </div>
-
-          <div className="hp-enter hp-enter-d3">
-            <DailyRadarSection labels={labels.dailyRadar} locale={locale} />
           </div>
 
           <AdBanner locale={locale} />
-
-          <div className="hp-enter hp-enter-d4">
-            <FeaturedNewsSection
-              articlesByType={nhkArticlesByType}
-              error={nhkError}
-              labels={labels}
-              loading={!nhkReady}
-              locale={locale}
-              onRetry={loadData}
-              onTabChange={loadNewsType}
-            />
-          </div>
         </div>
 
+        {/* Sidebar: 4 widget cốt lõi — always-visible motivation stack */}
         <div className="space-y-6 lg:sticky lg:top-20">
+          <div className="hp-enter hp-enter-d1">
+            <XpRankWidget locale={locale} />
+          </div>
           <div className="hp-enter hp-enter-d1">
             <CompanionPetWidget locale={locale} />
           </div>
@@ -211,30 +193,6 @@ export function HomepageClient({ labels, locale, pushBannerLabels }: { labels: H
           </div>
           <div className="hp-enter hp-enter-d2">
             <LoginBonusWidget locale={locale} />
-          </div>
-          <div className="hp-enter hp-enter-d2">
-            <MysteryBoxWidget locale={locale} />
-          </div>
-          <div className="hp-enter hp-enter-d2">
-            <WeeklyReportCard locale={locale} />
-          </div>
-          <div className="hp-enter hp-enter-d2">
-            <RevengeModeWidget locale={locale} />
-          </div>
-          <div className="hp-enter hp-enter-d2">
-            <FocusTimerWidget locale={locale} />
-          </div>
-          <div className="hp-enter hp-enter-d2">
-            <ProgressSection
-              analytics={analytics}
-              analyticsLoading={isLoggedIn && !analyticsReady}
-              isLoggedIn={isLoggedIn}
-              labels={labels}
-              locale={locale}
-            />
-          </div>
-          <div className="hp-enter hp-enter-d2">
-            <AmbientModeWidget />
           </div>
         </div>
       </div>

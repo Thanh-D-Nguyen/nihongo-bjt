@@ -6,6 +6,8 @@ import { BusinessScenarioController } from "./business-scenario.controller.js";
 import { BusinessScenarioService } from "./business-scenario.service.js";
 import { ContentEnrichmentAdminController } from "./content-enrichment-admin.controller.js";
 import { ContentEnrichmentAdminRepository } from "./content-enrichment-admin.repository.js";
+import { ContentQaAdminController } from "./content-qa-admin.controller.js";
+import { ContentQaService } from "./content-qa.service.js";
 import { ContentVersionsAdminController } from "./content-versions-admin.controller.js";
 import { ContentVersionsAdminRepository } from "./content-versions-admin.repository.js";
 import { ContentController } from "./content.controller.js";
@@ -23,6 +25,7 @@ import {
     ContentController,
     ContentEnrichmentAdminController,
     ContentVersionsAdminController,
+    ContentQaAdminController,
     BusinessScenarioController,
     DictionaryController,
     KanjiController,
@@ -31,7 +34,13 @@ import {
     VijaController
   ],
   imports: [AdminModule, MediaModule],
-  providers: [ContentRepository, ContentEnrichmentAdminRepository, ContentVersionsAdminRepository, BusinessScenarioService],
-  exports: [ContentRepository, BusinessScenarioService]
+  providers: [
+    ContentRepository,
+    ContentEnrichmentAdminRepository,
+    ContentVersionsAdminRepository,
+    ContentQaService,
+    BusinessScenarioService,
+  ],
+  exports: [ContentRepository, BusinessScenarioService, ContentQaService]
 })
 export class ContentModule {}
