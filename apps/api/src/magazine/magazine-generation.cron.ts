@@ -31,18 +31,33 @@ export class MagazineGenerationCron {
     this.logger.log("Daily magazine generation complete");
   }
 
-  /** Monday + Thursday at 17:00 (Asia/Ho_Chi_Minh) — loto prediction */
-  @Cron("0 17 * * 1,4", { timeZone: "Asia/Ho_Chi_Minh" })
-  async handleLotoGeneration() {
-    this.logger.log("Starting loto prediction generation…");
+  /** Monday + Thursday at 18:30 (Asia/Ho_Chi_Minh) — Loto6 learning article after Japan draw window */
+  @Cron("30 18 * * 1,4", { timeZone: "Asia/Ho_Chi_Minh" })
+  async handleLoto6Generation() {
+    this.logger.log("Starting Loto6 magazine generation…");
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     try {
-      await this.generation.generateForDate("magazine_loto", today);
-      this.logger.log("Loto prediction generation complete");
+      await this.generation.generateForDate("magazine_loto6", today);
+      this.logger.log("Loto6 magazine generation complete");
     } catch (e) {
-      this.logger.error("Failed to generate loto", e instanceof Error ? e.stack : e);
+      this.logger.error("Failed to generate Loto6", e instanceof Error ? e.stack : e);
+    }
+  }
+
+  /** Friday at 18:30 (Asia/Ho_Chi_Minh) — Loto7 learning article after Japan draw window */
+  @Cron("30 18 * * 5", { timeZone: "Asia/Ho_Chi_Minh" })
+  async handleLoto7Generation() {
+    this.logger.log("Starting Loto7 magazine generation…");
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    try {
+      await this.generation.generateForDate("magazine_loto7", today);
+      this.logger.log("Loto7 magazine generation complete");
+    } catch (e) {
+      this.logger.error("Failed to generate Loto7", e instanceof Error ? e.stack : e);
     }
   }
 }

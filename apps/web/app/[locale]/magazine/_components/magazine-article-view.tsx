@@ -129,6 +129,41 @@ function ContentBody({ content, kind }: { content: Record<string, unknown>; kind
     );
   }
 
+  const generatedSets = content.generatedSets as
+    | { mainNumbers: number[]; bonusNumbers?: number[]; score?: number }[]
+    | undefined;
+  if (generatedSets?.length) {
+    const sentence = content.japaneseSentence as { textJp?: string; textVi?: string; reading?: string } | undefined;
+    return (
+      <div className="space-y-4">
+        <div className="grid gap-3">
+          {generatedSets.map((set, index) => (
+            <div key={index} className="rounded-2xl border border-border/30 bg-card p-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="mr-1 text-xs font-semibold text-muted-foreground">#{index + 1}</span>
+                {set.mainNumbers.map((number) => (
+                  <span key={number} className="flex size-10 items-center justify-center rounded-2xl bg-primary/10 text-sm font-bold text-primary">
+                    {number}
+                  </span>
+                ))}
+                {set.bonusNumbers?.length ? (
+                  <span className="text-xs text-muted-foreground">+ {set.bonusNumbers.join(", ")}</span>
+                ) : null}
+              </div>
+            </div>
+          ))}
+        </div>
+        {sentence?.textJp && (
+          <div className="rounded-2xl border border-border/30 bg-accent/20 p-4">
+            <p className="text-base leading-[1.8] text-foreground">{sentence.textJp}</p>
+            {sentence.reading && <p className="mt-1 text-xs text-muted-foreground">{sentence.reading}</p>}
+            {sentence.textVi && <p className="mt-2 text-sm italic text-muted-foreground">{sentence.textVi}</p>}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   const dialogue = content.dialogue as
     | { speaker: string; textJp: string; textVi?: string }[]
     | undefined;

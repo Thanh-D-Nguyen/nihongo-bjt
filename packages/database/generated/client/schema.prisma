@@ -1562,6 +1562,67 @@ model MagazineUserRead {
   @@schema("daily")
 }
 
+model LotoDraw {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  game            String   @db.VarChar(16)
+  drawNumber      Int      @map("draw_number")
+  drawDate        DateTime @map("draw_date") @db.Date
+  mainNumbers     Int[]    @map("main_numbers")
+  bonusNumbers    Int[]    @default([]) @map("bonus_numbers")
+  carryoverAmount BigInt?  @map("carryover_amount")
+  salesAmount     BigInt?  @map("sales_amount")
+  sourceUrl       String?  @map("source_url")
+  sourceProvider  String   @default("csv_import") @map("source_provider") @db.VarChar(32)
+  importedAt      DateTime @default(now()) @map("imported_at") @db.Timestamptz(6)
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([game, drawNumber], map: "uq_loto_draw_game_number")
+  @@index([game, drawDate(sort: Desc)], map: "idx_loto_draw_game_date")
+  @@map("loto_draw")
+  @@schema("daily")
+}
+
+model LotoGenerationRun {
+  id                   String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  game                 String             @db.VarChar(16)
+  targetDrawDate       DateTime           @map("target_draw_date") @db.Date
+  status               String             @default("generated") @db.VarChar(32)
+  seed                 String?            @db.VarChar(128)
+  requestedSetCount    Int                @default(3) @map("requested_set_count")
+  inputConfigJson      Json               @default("{}") @map("input_config_json")
+  algorithmWeightsJson Json               @default("{}") @map("algorithm_weights_json")
+  contextJson          Json               @default("{}") @map("context_json")
+  japaneseSentenceJson Json?              @map("japanese_sentence_json")
+  selectedSetId        String?            @map("selected_set_id") @db.Uuid
+  createdByAdminId     String?            @map("created_by_admin_id") @db.Uuid
+  createdAt            DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  sets                 LotoGeneratedSet[]
+
+  @@index([game, targetDrawDate(sort: Desc)], map: "idx_loto_generation_run_game_date")
+  @@index([createdAt(sort: Desc)], map: "idx_loto_generation_run_created_at")
+  @@map("loto_generation_run")
+  @@schema("daily")
+}
+
+model LotoGeneratedSet {
+  id                  String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  runId               String            @map("run_id") @db.Uuid
+  rank                Int
+  mainNumbers         Int[]             @map("main_numbers")
+  bonusNumbers        Int[]             @default([]) @map("bonus_numbers")
+  score               Float
+  explanationJson     Json              @default("{}") @map("explanation_json")
+  selectedForMagazine Boolean           @default(false) @map("selected_for_magazine")
+  createdAt           DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  run                 LotoGenerationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId, rank], map: "idx_loto_generated_set_run_rank")
+  @@map("loto_generated_set")
+  @@schema("daily")
+}
+
 model DailyRadarModuleConfig {
   id                  String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   moduleKey           String           @unique @map("module_key") @db.VarChar(80)

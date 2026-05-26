@@ -73,6 +73,22 @@ Teach number expressions, probability vocabulary, and luck-related phrases.
 Include 4 vocabulary items and 2 quiz questions.
 Schema: { titleJp, titleVi, summaryJp, summaryVi, contentJson: { prediction }, vocabItems: [{wordJp, reading, meaningVi, pos, jlptLevel, sentenceJp, sentenceVi, displayOrder}], quizzes: [{questionJp, questionVi, quizType, options, correctAnswer, explanationJp, explanationVi, displayOrder}], jlptLevel }`,
 
+  magazine_loto6: (ctx) =>
+    `Generate a Loto6-themed Japanese learning article for JLPT ${ctx.targetJlptLevel ?? 'N3'} learners.
+Use this statistical and admin-generated set data: ${JSON.stringify(ctx.realData ?? {})}.
+Do not claim winning certainty. Present generated number sets as study/entertainment combinations.
+Teach number expressions, probability vocabulary, and luck-related phrases.
+Include 4 vocabulary items and 2 quiz questions.
+Schema: { titleJp, titleVi, summaryJp, summaryVi, contentJson: { prediction, generatedSets, japaneseSentence }, vocabItems: [{wordJp, reading, meaningVi, pos, jlptLevel, sentenceJp, sentenceVi, displayOrder}], quizzes: [{questionJp, questionVi, quizType, options, correctAnswer, explanationJp, explanationVi, displayOrder}], jlptLevel }`,
+
+  magazine_loto7: (ctx) =>
+    `Generate a Loto7-themed Japanese learning article for JLPT ${ctx.targetJlptLevel ?? 'N3'} learners.
+Use this statistical and admin-generated set data: ${JSON.stringify(ctx.realData ?? {})}.
+Do not claim winning certainty. Present generated number sets as study/entertainment combinations.
+Teach number expressions, probability vocabulary, and luck-related phrases.
+Include 4 vocabulary items and 2 quiz questions.
+Schema: { titleJp, titleVi, summaryJp, summaryVi, contentJson: { prediction, generatedSets, japaneseSentence }, vocabItems: [{wordJp, reading, meaningVi, pos, jlptLevel, sentenceJp, sentenceVi, displayOrder}], quizzes: [{questionJp, questionVi, quizType, options, correctAnswer, explanationJp, explanationVi, displayOrder}], jlptLevel }`,
+
   magazine_bjt_phrase: (ctx) =>
     `Generate a BJT business Japanese phrase article for JLPT ${ctx.targetJlptLevel ?? 'N2'} learners.
 Date: ${ctx.date.toISOString().slice(0, 10)}.

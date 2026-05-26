@@ -5,6 +5,8 @@ const KIND_ICONS: Record<string, string> = {
   magazine_weather: "☀️",
   magazine_horoscope: "⭐",
   magazine_loto: "🎰",
+  magazine_loto6: "⑥",
+  magazine_loto7: "⑦",
   magazine_bjt_phrase: "💼",
 };
 
@@ -13,6 +15,8 @@ const KIND_LABELS: Record<string, string> = {
   magazine_weather: "Thời tiết",
   magazine_horoscope: "Tử vi",
   magazine_loto: "Loto",
+  magazine_loto6: "Loto6",
+  magazine_loto7: "Loto7",
   magazine_bjt_phrase: "BJT Phrase",
 };
 

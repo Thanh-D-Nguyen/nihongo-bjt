@@ -1105,6 +1105,51 @@ exports.Prisma.MagazineUserReadScalarFieldEnum = {
   timeSpentSeconds: 'timeSpentSeconds'
 };
 
+exports.Prisma.LotoDrawScalarFieldEnum = {
+  id: 'id',
+  game: 'game',
+  drawNumber: 'drawNumber',
+  drawDate: 'drawDate',
+  mainNumbers: 'mainNumbers',
+  bonusNumbers: 'bonusNumbers',
+  carryoverAmount: 'carryoverAmount',
+  salesAmount: 'salesAmount',
+  sourceUrl: 'sourceUrl',
+  sourceProvider: 'sourceProvider',
+  importedAt: 'importedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.LotoGenerationRunScalarFieldEnum = {
+  id: 'id',
+  game: 'game',
+  targetDrawDate: 'targetDrawDate',
+  status: 'status',
+  seed: 'seed',
+  requestedSetCount: 'requestedSetCount',
+  inputConfigJson: 'inputConfigJson',
+  algorithmWeightsJson: 'algorithmWeightsJson',
+  contextJson: 'contextJson',
+  japaneseSentenceJson: 'japaneseSentenceJson',
+  selectedSetId: 'selectedSetId',
+  createdByAdminId: 'createdByAdminId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.LotoGeneratedSetScalarFieldEnum = {
+  id: 'id',
+  runId: 'runId',
+  rank: 'rank',
+  mainNumbers: 'mainNumbers',
+  bonusNumbers: 'bonusNumbers',
+  score: 'score',
+  explanationJson: 'explanationJson',
+  selectedForMagazine: 'selectedForMagazine',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.DailyRadarModuleConfigScalarFieldEnum = {
   id: 'id',
   moduleKey: 'moduleKey',
@@ -2361,6 +2406,9 @@ exports.Prisma.ModelName = {
   MagazineVocabItem: 'MagazineVocabItem',
   MagazineQuiz: 'MagazineQuiz',
   MagazineUserRead: 'MagazineUserRead',
+  LotoDraw: 'LotoDraw',
+  LotoGenerationRun: 'LotoGenerationRun',
+  LotoGeneratedSet: 'LotoGeneratedSet',
   DailyRadarModuleConfig: 'DailyRadarModuleConfig',
   DailyRadarCard: 'DailyRadarCard',
   PlacementTestSession: 'PlacementTestSession',

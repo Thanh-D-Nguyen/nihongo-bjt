@@ -64,7 +64,10 @@ export class MagazineGenerationService {
       case "magazine_weather":
         return (await this.weather.fetchTokyo()) as unknown as Record<string, unknown>;
       case "magazine_loto":
-        return (await this.loto.getHistoricalData()) as unknown as Record<string, unknown>;
+      case "magazine_loto6":
+        return (await this.loto.getHistoricalData("loto6")) as unknown as Record<string, unknown>;
+      case "magazine_loto7":
+        return (await this.loto.getHistoricalData("loto7")) as unknown as Record<string, unknown>;
       default:
         return undefined;
     }

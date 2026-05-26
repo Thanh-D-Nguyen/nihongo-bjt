@@ -8,10 +8,12 @@ import { MagazineGenerationCron } from "./magazine-generation.cron.js";
 import { AiContentProvider } from "./providers/ai-content.provider.js";
 import { JmaWeatherProvider } from "./providers/jma-weather.provider.js";
 import { LotoDataProvider } from "./providers/loto-data.provider.js";
+import { LotoLabAdminController } from "./loto/loto-lab-admin.controller.js";
+import { LotoLabService } from "./loto/loto-lab.service.js";
 
 @Module({
   imports: [AdminModule],
-  controllers: [MagazineController, MagazineAdminController],
+  controllers: [MagazineController, MagazineAdminController, LotoLabAdminController],
   providers: [
     MagazineRepository,
     MagazineGenerationService,
@@ -19,6 +21,7 @@ import { LotoDataProvider } from "./providers/loto-data.provider.js";
     AiContentProvider,
     JmaWeatherProvider,
     LotoDataProvider,
+    LotoLabService,
   ],
   exports: [MagazineRepository, MagazineGenerationService],
 })
