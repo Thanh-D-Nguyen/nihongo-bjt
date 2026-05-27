@@ -45,7 +45,7 @@ export function MagazineGridSkeleton() {
       {/* Filter skeleton */}
       <div className="flex gap-2">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="h-11 w-20 animate-pulse rounded-full bg-muted" />
+          <div key={i} className="h-12 w-24 animate-pulse rounded-2xl bg-muted" />
         ))}
       </div>
       {/* Bento grid skeleton */}

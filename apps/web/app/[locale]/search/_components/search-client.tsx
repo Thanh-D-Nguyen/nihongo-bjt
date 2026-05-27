@@ -17,6 +17,8 @@ import {
 import { VoiceSearchButton, type VoiceSearchLabels } from "../../../_components/search-advanced-inputs";
 import { IconSearch } from "../../../_components/nav-icons";
 import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
+import { useRecentSearches } from "../../../../lib/use-recent-searches";
+import { SearchDropdown, type DropdownKeyHandler, type SearchDropdownLabels } from "../../../_components/search-dropdown";
 import {
   type DetailPayload,
   normalizeKanjiDetailDto,
@@ -149,6 +151,12 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
   const prevLoadingForAnnounceRef = useRef(false);
   /** Monotonic id so stale in-flight search responses cannot overwrite newer results */
   const searchEpochRef = useRef(0);
+  /** Debounce timer for instant search */
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  /** Dropdown key handler for autocomplete */
+  const dropdownKeyHandlerRef = useRef<DropdownKeyHandler | null>(null);
+
+  const { searches: recentSearches, addSearch } = useRecentSearches();
 
   /** q + scope + level only — entry changes must not re-fetch the whole index */
   const urlSearchBootstrapKey = useMemo(
@@ -174,6 +182,7 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
   const [detail, setDetail] = useState<DetailPayload | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const runSearch = useCallback(async (rawQuery: string, scope?: string, level?: string) => {
     const q = rawQuery.trim();
@@ -255,7 +264,41 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
     event.preventDefault();
     pendingEntryRef.current = null;
     setSelected(null);
+    setDropdownOpen(false);
+    if (query.trim()) addSearch(query.trim());
+    // Cancel any pending debounce
+    clearTimeout(debounceRef.current);
     updateUrl(query, filter, levelFilter, null);
+  }
+
+  /** Debounced instant search: triggers 300ms after user stops typing */
+  useEffect(() => {
+    const q = query.trim();
+    if (!q) return;
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      pendingEntryRef.current = null;
+      setSelected(null);
+      addSearch(q);
+      updateUrl(q, filter, levelFilter, null);
+    }, 350);
+    return () => clearTimeout(debounceRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query]);
+
+  function handleInputChange(value: string) {
+    setQuery(value);
+    if (value.trim()) {
+      setDropdownOpen(true);
+    } else {
+      setDropdownOpen(true); // show recent searches
+      // Clear results if field is emptied
+      setResults([]);
+      setHasSearched(false);
+      setSelected(null);
+      clearTimeout(debounceRef.current);
+      updateUrl("", filter, levelFilter, null);
+    }
   }
 
   function handleFilterChange(newFilter: KindFilter) {
@@ -574,58 +617,83 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
         {searchStatusAnnouncement}
       </p>
       <div inert={searchBodyInert ? true : undefined}>
-        <div className="sticky top-0 z-20 border-b border-ink/10 bg-paper/95 px-4 pb-2 pt-4 shadow-[0_6px_14px_-10px_rgba(0,0,0,0.08)] backdrop-blur-sm sm:px-0">
+        <div className="sticky top-0 z-20 rounded-b-2xl border-b border-ink/6 bg-paper/80 px-4 pb-3 pt-4 shadow-[0_8px_32px_-12px_rgba(0,0,0,0.08),0_2px_8px_-2px_rgba(0,0,0,0.04)] backdrop-blur-xl sm:rounded-b-3xl sm:px-0">
           <form className="relative" onSubmit={onSubmit}>
             <label className="sr-only" htmlFor="content-search">
               {labels.inputLabel}
             </label>
-            <div className="grid gap-2 sm:flex sm:items-center">
-              <div className="flex min-w-0 items-center gap-2 sm:flex-1">
-                <div className="relative flex-1">
-                  <IconSearch
-                    aria-hidden
-                    className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted"
-                    size={18}
-                  />
-                  <input
-                    ref={inputRef}
-                    id="content-search"
-                    autoComplete="off"
-                    className="min-h-11 w-full appearance-none rounded-xl border border-ink/10 bg-surface py-3 pl-10 pr-4 text-base text-ink shadow-sm transition-all placeholder:text-muted/60 focus:border-accent/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
-                    placeholder={labels.placeholder}
-                    style={{ WebkitAppearance: "none", appearance: "none" }}
-                    type="search"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                  />
-                </div>
-                <VoiceSearchButton
-                  className="shrink-0"
-                  locale={locale}
-                  labels={{
-                    listening: labels.voiceListening,
-                    title: labels.voiceTitle,
-                    permissionDenied: labels.voicePermissionDenied,
-                    noSpeech: labels.voiceNoSpeech,
-                    networkError: labels.voiceNetworkError,
-                    genericError: labels.voiceGenericError,
-                  }}
-                  onResult={(text) => {
-                    setQuery(text);
-                    pendingEntryRef.current = null;
-                    setSelected(null);
-                    updateUrl(text, filter, levelFilter, null);
+            <div className="flex items-center gap-2">
+              <div className="relative min-w-0 flex-1">
+                <IconSearch
+                  aria-hidden
+                  className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted/70"
+                  size={18}
+                />
+                {loading && hasSearched && (
+                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2" aria-hidden>
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-accent/30 border-t-accent motion-reduce:animate-none" />
+                  </div>
+                )}
+                <input
+                  ref={inputRef}
+                  id="content-search"
+                  autoComplete="off"
+                  className="min-h-12 w-full appearance-none rounded-2xl border border-ink/8 bg-surface/90 py-3 pl-10 pr-10 text-base text-ink shadow-md transition-all duration-200 placeholder:text-muted/50 focus:border-accent/30 focus:bg-surface focus:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
+                  placeholder={labels.placeholder}
+                  style={{ WebkitAppearance: "none", appearance: "none" }}
+                  type="search"
+                  value={query}
+                  onChange={(e) => handleInputChange(e.target.value)}
+                  onFocus={() => setDropdownOpen(true)}
+                  onKeyDown={(e) => {
+                    if (dropdownKeyHandlerRef.current?.(e)) return;
                   }}
                 />
+                {/* Autocomplete dropdown */}
+                <SearchDropdown
+                  query={query}
+                  open={dropdownOpen && !hasSearched}
+                  onClose={() => setDropdownOpen(false)}
+                  onSelect={(q) => {
+                    setQuery(q);
+                    setDropdownOpen(false);
+                    clearTimeout(debounceRef.current);
+                    pendingEntryRef.current = null;
+                    setSelected(null);
+                    addSearch(q);
+                    updateUrl(q, filter, levelFilter, null);
+                  }}
+                  locale={locale}
+                  labels={labels as unknown as SearchDropdownLabels}
+                  onKeyHandlerReady={(handler) => { dropdownKeyHandlerRef.current = handler; }}
+                />
               </div>
-              <button
-                className="search-submit-btn min-h-11 w-full shrink-0 rounded-xl bg-ink px-5 py-3 text-sm font-semibold text-surface shadow-sm hover:bg-ink/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:opacity-40 sm:w-auto"
-                disabled={loading || !query.trim()}
-                type="submit"
-              >
-                {labels.submit}
-              </button>
+              <VoiceSearchButton
+                className="shrink-0"
+                locale={locale}
+                labels={{
+                  listening: labels.voiceListening,
+                  title: labels.voiceTitle,
+                  permissionDenied: labels.voicePermissionDenied,
+                  noSpeech: labels.voiceNoSpeech,
+                  networkError: labels.voiceNetworkError,
+                  genericError: labels.voiceGenericError,
+                }}
+                onResult={(text) => {
+                  setQuery(text);
+                  setDropdownOpen(false);
+                  clearTimeout(debounceRef.current);
+                  pendingEntryRef.current = null;
+                  setSelected(null);
+                  addSearch(text);
+                  updateUrl(text, filter, levelFilter, null);
+                }}
+              />
             </div>
+            {/* Hidden submit to allow Enter key form submission */}
+            <button type="submit" className="sr-only" tabIndex={-1} aria-hidden>
+              {labels.submit}
+            </button>
           </form>
 
           <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
@@ -662,10 +730,10 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
                 <button
                   key={lvl}
                   className={cn(
-                    "search-level-pill inline-flex min-h-10 min-w-10 items-center justify-center rounded-md px-2 py-1.5 text-[11px] font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30",
+                    "search-level-pill inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg px-2.5 py-1.5 text-[11px] font-bold transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 active:scale-95",
                     levelFilter === lvl
-                      ? "bg-accent text-surface shadow-sm"
-                      : "text-muted hover:bg-ink/5 hover:text-ink"
+                      ? "bg-accent text-surface shadow-md shadow-accent/20"
+                      : "text-muted hover:bg-ink/5 hover:text-ink hover:shadow-sm"
                   )}
                   type="button"
                   onClick={() => handleLevelChange(lvl)}
@@ -678,7 +746,7 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
         </div>
 
         {!loading && hasSearched && results.length > 0 && (
-          <p className="mt-3 px-4 text-xs text-muted sm:px-0">
+          <p className="mt-3 px-4 text-xs font-medium text-muted sm:px-0">
             {labels.resultsForQueryLabel
               .replace("{count}", String(visibleResults.length))
               .replace("{query}", query.trim())}
@@ -687,13 +755,6 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
 
         {loading && hasSearched && (
           <div className="mt-4 min-h-[min(52vh,28rem)] px-4 sm:px-0" aria-busy="true">
-            <div className="mb-3 flex items-center justify-center gap-2">
-              <div
-                className="h-5 w-5 shrink-0 animate-spin rounded-full border-2 border-accent/30 border-t-accent motion-reduce:animate-none"
-                aria-hidden
-              />
-              <span className="text-sm text-muted">{labels.loading}</span>
-            </div>
             <SearchResultsLoadingSkeleton />
           </div>
         )}
@@ -706,7 +767,7 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
             action={
               query.trim() ? (
                 <button
-                  className="inline-flex min-h-11 items-center justify-center rounded-xl border border-ink/12 bg-surface px-4 text-sm font-semibold text-ink shadow-sm transition-colors hover:border-ink/18 hover:bg-paper focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/35"
+                  className="inline-flex min-h-11 items-center justify-center rounded-xl border border-ink/12 bg-surface px-4 text-sm font-semibold text-ink shadow-sm transition-all duration-150 hover:border-ink/18 hover:bg-paper hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/35 active:scale-95"
                   type="button"
                   onClick={() => {
                     setError(false);
@@ -725,12 +786,33 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
         )}
 
         {!loading && !error && hasSearched && results.length === 0 && (
-          <div className="search-empty-state mx-4 mt-12 flex flex-col items-center gap-4 rounded-2xl border border-ink/6 bg-gradient-to-b from-paper to-surface p-8 text-center sm:mx-0">
+          <div className="search-empty-state mx-4 mt-10 flex flex-col items-center gap-4 rounded-3xl border border-ink/6 bg-gradient-to-b from-paper to-surface p-8 text-center shadow-sm sm:mx-0 sm:p-10">
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/8">
-              <IconSearch aria-hidden className="text-accent/50" size={28} />
+              <IconSearch aria-hidden className="text-accent/40" size={28} />
             </div>
-            <p className="text-sm font-semibold text-ink">{labels.empty}</p>
-            <p className="max-w-xs text-xs text-muted">{labels.subtitle}</p>
+            <p className="text-sm font-bold text-ink">{labels.empty}</p>
+            <p className="max-w-xs text-xs leading-relaxed text-muted">{labels.subtitle}</p>
+            {/* Smart suggestions */}
+            <div className="mt-2 flex flex-wrap justify-center gap-2">
+              {labels.exampleChips.slice(0, 4).map((chip) => (
+                <button
+                  key={chip}
+                  type="button"
+                  className="rounded-full border border-ink/8 bg-surface px-3 py-1.5 text-xs font-medium text-muted transition-all duration-150 hover:border-accent/20 hover:text-accent active:scale-95"
+                  onClick={() => {
+                    setQuery(chip);
+                    setDropdownOpen(false);
+                    clearTimeout(debounceRef.current);
+                    pendingEntryRef.current = null;
+                    setSelected(null);
+                    addSearch(chip);
+                    updateUrl(chip, filter, levelFilter, null);
+                  }}
+                >
+                  {chip}
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
@@ -739,34 +821,117 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
         )}
 
         {!hasSearched && !loading && (
-          <div className="search-landing mt-12 flex flex-col items-center gap-5 px-4 text-center sm:mt-16">
-            {/* Hero glyph with gradient glow */}
-            <div className="relative">
-              <span className="absolute inset-0 -z-10 mx-auto h-20 w-20 rounded-full bg-accent/8 blur-2xl" aria-hidden />
-              <span aria-hidden className="jp-text select-none text-6xl font-bold text-ink/15 sm:text-7xl">
-                {labels.landingHeroGlyph}
-              </span>
+          <div className="search-landing mt-8 px-4 sm:mt-12 sm:px-0">
+            {/* Bento discovery grid */}
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+              {/* Hero card — spans 2 cols */}
+              <div className="col-span-2 flex flex-col items-center justify-center gap-3 rounded-3xl border border-ink/6 bg-gradient-to-br from-accent/5 via-paper to-sakura/5 p-8 text-center shadow-sm sm:p-10">
+                <div className="relative">
+                  <span className="absolute inset-0 -z-10 mx-auto h-20 w-20 rounded-full bg-accent/10 blur-2xl" aria-hidden />
+                  <span aria-hidden className="jp-text select-none text-6xl font-bold text-ink/12 sm:text-7xl">
+                    {labels.landingHeroGlyph}
+                  </span>
+                </div>
+                <h2 className="text-lg font-bold text-ink sm:text-xl">{labels.title}</h2>
+                <p className="max-w-sm text-sm leading-relaxed text-muted">{labels.subtitle}</p>
+              </div>
+
+              {/* Category quick-search cards */}
+              {kinds.map((kind) => {
+                const config = kindConfig[kind];
+                return (
+                  <button
+                    key={kind}
+                    type="button"
+                    className="group flex flex-col items-center justify-center gap-2 rounded-2xl border border-ink/6 bg-surface p-5 shadow-sm transition-all duration-200 hover:border-ink/12 hover:shadow-md active:scale-[0.97]"
+                    onClick={() => {
+                      handleFilterChange(kind);
+                      inputRef.current?.focus();
+                    }}
+                  >
+                    <span className={cn("inline-flex h-10 w-10 items-center justify-center rounded-xl text-base font-bold transition-transform duration-200 group-hover:scale-110", config.bg)}>
+                      {config.icon}
+                    </span>
+                    <span className="text-xs font-semibold text-ink/80">{kindLabel(kind, labels)}</span>
+                  </button>
+                );
+              })}
             </div>
-            <h2 className="text-xl font-bold text-ink sm:text-2xl">{labels.title}</h2>
-            <p className="max-w-md text-sm leading-relaxed text-muted">{labels.subtitle}</p>
-            <div
-              className="mt-2 flex flex-wrap justify-center gap-2"
-              role="group"
-              aria-label={labels.exampleChipsAriaLabel}
-            >
-              {labels.exampleChips.map((example) => (
+
+            {/* Example chips */}
+            <div className="mt-6 flex flex-col items-center gap-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted/60">{labels.exampleChipsAriaLabel}</p>
+              <div
+                className="flex flex-wrap justify-center gap-2"
+                role="group"
+                aria-label={labels.exampleChipsAriaLabel}
+              >
+                {labels.exampleChips.map((example) => (
+                  <button
+                    key={example}
+                    className="search-example-chip min-h-10 rounded-full border border-ink/8 bg-surface px-4 py-2 text-sm font-medium text-ink/70 shadow-sm transition-all duration-150 hover:border-accent/20 hover:bg-accent/5 hover:text-accent hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 active:scale-95"
+                    type="button"
+                    onClick={() => {
+                      setQuery(example);
+                      setDropdownOpen(false);
+                      clearTimeout(debounceRef.current);
+                      pendingEntryRef.current = null;
+                      setSelected(null);
+                      addSearch(example);
+                      updateUrl(example, filter, levelFilter, null);
+                    }}
+                  >
+                    {example}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Recent searches section */}
+            {recentSearches.length > 0 && (
+              <div className="mt-6 rounded-2xl border border-ink/6 bg-surface/80 p-4 shadow-sm">
+                <p className="mb-2.5 text-[11px] font-bold uppercase tracking-wider text-muted/70">
+                  {labels.recentTitle ?? "Gần đây"}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {recentSearches.slice(0, 6).map((term) => (
+                    <button
+                      key={term}
+                      type="button"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-ink/6 bg-paper px-3 py-1.5 text-xs font-medium text-ink/70 transition-all duration-150 hover:border-accent/20 hover:text-accent active:scale-95"
+                      onClick={() => {
+                        setQuery(term);
+                        setDropdownOpen(false);
+                        clearTimeout(debounceRef.current);
+                        pendingEntryRef.current = null;
+                        setSelected(null);
+                        updateUrl(term, filter, levelFilter, null);
+                      }}
+                    >
+                      <svg className="h-3 w-3 text-muted/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span className="jp-text">{term}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* JLPT Level quick-access */}
+            <div className="mt-5 flex items-center justify-center gap-2">
+              <span className="text-[11px] font-semibold text-muted/60">JLPT:</span>
+              {levels.map((lvl) => (
                 <button
-                  key={example}
-                  className="search-example-chip min-h-10 rounded-full border border-ink/8 bg-surface px-4 py-2 text-sm text-muted shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
+                  key={lvl}
                   type="button"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-ink/6 bg-surface text-[11px] font-bold text-muted shadow-sm transition-all duration-150 hover:border-accent/20 hover:text-accent hover:shadow-md active:scale-95"
                   onClick={() => {
-                    setQuery(example);
-                    pendingEntryRef.current = null;
-                    setSelected(null);
-                    updateUrl(example, filter, levelFilter, null);
+                    handleLevelChange(lvl);
+                    inputRef.current?.focus();
                   }}
                 >
-                  {example}
+                  {lvl}
                 </button>
               ))}
             </div>
@@ -774,17 +939,17 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
         )}
 
         {!loading && !error && hasSearched && visibleResults.length > 0 && (
-          <div className="mt-4 px-4 sm:px-0 lg:mt-6 lg:grid lg:grid-cols-[minmax(260px,min(100%,24rem))_minmax(0,1fr)] lg:items-start lg:gap-8">
+          <div className="mt-4 px-4 sm:px-0 md:mt-5 md:grid md:grid-cols-[minmax(220px,20rem)_minmax(0,1fr)] md:items-start md:gap-6 lg:mt-6 lg:grid-cols-[minmax(260px,min(100%,24rem))_minmax(0,1fr)] lg:gap-8">
             <section
               aria-label={labels.resultsRegionLabel}
-              className="min-w-0 lg:max-w-sm xl:max-w-md"
+              className="min-w-0 md:max-w-sm lg:max-w-sm xl:max-w-md"
               onKeyDownCapture={handleResultsListKeyDown}
             >
               <h2 className="mb-2 hidden text-xs font-bold uppercase tracking-wide text-muted lg:block">
                 {labels.resultsHeading}
               </h2>
-              <ul className="divide-y divide-ink/6 overflow-hidden rounded-2xl border border-ink/8 bg-surface shadow-sm outline-none focus-within:ring-2 focus-within:ring-accent/25">
-                {visibleResults.map((result) => (
+              <ul className="divide-y divide-ink/5 overflow-hidden rounded-2xl border border-ink/8 bg-surface shadow-md shadow-ink/[0.03] outline-none focus-within:ring-2 focus-within:ring-accent/25">
+                {visibleResults.map((result, idx) => (
                   <ResultEntry
                     key={`${result.kind}:${result.id}`}
                     labels={labels}
@@ -792,6 +957,7 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
                     result={result}
                     selected={selected?.id === result.id && selected.kind === result.kind}
                     onSelect={() => selectResult(result)}
+                    style={{ animation: `fadeSlideUp 0.25s ease-out ${Math.min(idx * 30, 300)}ms both` }}
                   />
                 ))}
               </ul>
@@ -800,7 +966,7 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
               ) : null}
             </section>
 
-            <section aria-label={labels.detailRegionLabel} className="hidden min-w-0 lg:block">
+            <section aria-label={labels.detailRegionLabel} className="hidden min-w-0 md:block">
               <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-muted">
                 {labels.detailHeading}
               </h2>
@@ -820,16 +986,22 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
         )}
 
         {showMobileDetailBar ? (
-          <div className="fixed inset-x-0 bottom-0 z-30 border-t border-ink/10 bg-paper/95 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-8px_24px_-4px_rgba(0,0,0,0.08)] backdrop-blur-sm lg:hidden">
+          <div className="fixed inset-x-0 bottom-0 z-30 border-t border-ink/6 bg-paper/85 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-16px_40px_-8px_rgba(0,0,0,0.12)] backdrop-blur-2xl md:hidden">
             <div className="mx-auto flex max-w-6xl items-center gap-3 px-4">
+              {/* Kind icon badge */}
+              <span className={cn("inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold", kindConfig[selected.kind]?.bg ?? "bg-accent/10 text-accent")} aria-hidden>
+                {kindConfig[selected.kind]?.icon ?? "文"}
+              </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate jp-text text-sm font-semibold text-ink">{selected.title}</p>
-                {selected.reading ? (
-                  <p className="truncate jp-text text-xs text-muted">{selected.reading}</p>
-                ) : null}
+                <p className="truncate jp-text text-sm font-bold text-ink">{selected.title}</p>
+                <p className="truncate text-xs text-muted">
+                  {selected.reading && <span className="jp-text">{selected.reading}</span>}
+                  {selected.reading && selected.description && <span className="mx-1">·</span>}
+                  {selected.description && <span className="line-clamp-1">{selected.description.slice(0, 40)}</span>}
+                </p>
               </div>
               <button
-                className="shrink-0 rounded-xl bg-ink px-4 py-2.5 text-xs font-bold text-surface shadow-sm transition-colors hover:bg-ink/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                className="shrink-0 rounded-xl bg-ink px-4 py-2.5 text-xs font-bold text-surface shadow-md transition-all duration-150 hover:bg-ink/90 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                 type="button"
                 onClick={(e) => {
                   sheetReturnFocusRef.current = e.currentTarget;
@@ -847,7 +1019,7 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
         <div className="fixed inset-0 z-50 md:hidden">
           <button
             aria-hidden
-            className="absolute inset-0 bg-ink/40 backdrop-blur-[1px]"
+            className="absolute inset-0 bg-ink/40 backdrop-blur-[2px]"
             tabIndex={-1}
             type="button"
             onClick={() => setDetailSheetOpen(false)}
@@ -856,8 +1028,9 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
             ref={sheetPanelRef}
             aria-labelledby={sheetTitleId}
             aria-modal="true"
-            className="absolute inset-x-0 bottom-0 max-h-[90vh] animate-in slide-in-from-bottom-4 rounded-t-2xl border border-ink/10 bg-paper shadow-2xl motion-reduce:animate-none"
+            className="absolute inset-x-0 bottom-0 max-h-[90vh] rounded-t-3xl border border-ink/8 bg-paper shadow-2xl"
             role="dialog"
+            style={{ animation: 'panelSlideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1) both' }}
           >
             <h2 className="sr-only" id={sheetTitleId}>
               {labels.detailHeading}
@@ -868,10 +1041,13 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
             <div className="max-h-[calc(90vh-2rem)] overflow-y-auto px-3 pb-6 pt-2">
               <div className="mb-2 flex justify-end">
                 <button
-                  className="min-h-10 rounded-lg px-3 py-2 text-xs font-bold text-muted hover:bg-ink/5 hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/35"
+                  className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-ink/8 bg-surface px-3 py-2 text-xs font-bold text-muted shadow-sm transition-all duration-150 hover:bg-ink/5 hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/35 active:scale-95"
                   type="button"
                   onClick={() => setDetailSheetOpen(false)}
                 >
+                  <svg aria-hidden width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                    <path d="M18 6L6 18M6 6l12 12" />
+                  </svg>
                   {labels.closeSheet}
                 </button>
               </div>
@@ -897,16 +1073,17 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
 function SearchResultsLoadingSkeleton() {
   return (
     <div
-      className="min-h-[min(52vh,28rem)] lg:grid lg:grid-cols-[minmax(260px,min(100%,24rem))_minmax(0,1fr)] lg:items-start lg:gap-8"
+      className="min-h-[min(52vh,28rem)] md:grid md:grid-cols-[minmax(220px,20rem)_minmax(0,1fr)] md:items-start md:gap-6 lg:grid-cols-[minmax(260px,min(100%,24rem))_minmax(0,1fr)] lg:gap-8"
       aria-hidden
     >
-      <div className="overflow-hidden rounded-2xl border border-ink/8 bg-surface/90">
+      <div className="overflow-hidden rounded-2xl border border-ink/8 bg-surface/90 shadow-md shadow-ink/[0.03]">
         {Array.from({ length: 6 }, (_, i) => (
           <div
             key={i}
             className="flex gap-3 border-b border-ink/5 py-3.5 pl-4 pr-3 last:border-b-0"
+            style={{ opacity: 1 - i * 0.08 }}
           >
-            <div className="mt-0.5 h-6 w-6 shrink-0 rounded search-skeleton-shimmer" />
+            <div className="mt-0.5 h-7 w-7 shrink-0 rounded-lg search-skeleton-shimmer" />
             <div className="min-w-0 flex-1 space-y-2 py-0.5">
               <div className="h-4 max-w-[12rem] rounded search-skeleton-shimmer" />
               <div className="h-3 max-w-[18rem] rounded search-skeleton-shimmer" />
@@ -914,13 +1091,14 @@ function SearchResultsLoadingSkeleton() {
           </div>
         ))}
       </div>
-      <div className="mt-4 hidden min-h-[20rem] rounded-2xl border border-ink/8 bg-surface/90 p-4 lg:mt-0 lg:block">
+      <div className="mt-4 hidden min-h-[20rem] rounded-3xl border border-ink/8 bg-surface/90 p-5 shadow-lg shadow-ink/[0.04] md:mt-0 md:block">
         <div className="mb-4 h-5 max-w-[10rem] rounded search-skeleton-shimmer" />
-        <div className="space-y-2">
+        <div className="space-y-3">
           <div className="h-3 w-full rounded search-skeleton-shimmer" />
           <div className="h-3 w-full rounded search-skeleton-shimmer" />
           <div className="h-3 w-[92%] rounded search-skeleton-shimmer" />
           <div className="h-3 w-[88%] rounded search-skeleton-shimmer" />
+          <div className="h-3 w-[75%] rounded search-skeleton-shimmer" />
         </div>
       </div>
     </div>
@@ -932,41 +1110,53 @@ function ResultEntry({
   onSelect,
   query,
   result,
-  selected
+  selected,
+  style
 }: {
   labels: SearchLabels;
   onSelect: () => void;
   query: string;
   result: SearchResult;
   selected: boolean;
+  style?: React.CSSProperties;
 }) {
   const config = kindConfig[result.kind] ?? kindConfig.lexeme;
   const isKanji = result.kind === "kanji";
 
   return (
-    <li>
+    <li style={style}>
       <button
         className={cn(
-          "search-result-btn group flex w-full gap-3 border-l-[3px] py-3.5 pl-4 pr-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/30",
+          "search-result-btn group flex w-full gap-3 border-l-[3px] py-3.5 pl-4 pr-3 text-left transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/30",
           config.border,
           selected
-            ? "bg-accent/[0.06] shadow-[inset_0_0_0_1px_rgba(59,130,246,0.12)]"
-            : "bg-surface"
+            ? "bg-accent/[0.04] shadow-[inset_0_0_0_1px_rgba(59,130,246,0.12)]"
+            : "bg-surface hover:bg-ink/[0.02]",
+          /* Kind-specific selected tint */
+          selected && result.kind === "kanji" && "bg-sakura/[0.04]",
+          selected && result.kind === "grammar" && "bg-leaf/[0.04]",
+          selected && result.kind === "example" && "bg-amber-50/50"
         )}
         type="button"
         onClick={onSelect}
       >
         {isKanji ? (
-          <div className="flex shrink-0 items-start pt-0.5">
-            <span className="jp-text text-3xl font-bold leading-none text-ink">
+          <div className="flex shrink-0 items-start">
+            <span className="jp-text text-[2.25rem] font-bold leading-none text-ink group-hover:text-sakura/90 transition-colors">
               <HighlightMatch query={query} text={result.title} />
+            </span>
+          </div>
+        ) : result.kind === "example" ? (
+          <div className="mt-0.5 shrink-0">
+            <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-amber-100 text-xs font-bold text-amber-700">
+              {config.icon}
             </span>
           </div>
         ) : (
           <div className="mt-0.5 shrink-0">
             <span
               className={cn(
-                "inline-flex h-6 w-6 items-center justify-center rounded text-[11px] font-bold",
+                "inline-flex h-7 w-7 items-center justify-center rounded-lg text-xs font-bold",
                 config.bg
               )}
             >
@@ -977,8 +1167,13 @@ function ResultEntry({
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline gap-2">
-            {!isKanji && (
+            {!isKanji && result.kind !== "example" && (
               <span className="jp-text text-lg font-bold leading-tight text-ink">
+                <HighlightMatch query={query} text={result.title} />
+              </span>
+            )}
+            {result.kind === "example" && (
+              <span className="jp-text text-base leading-snug text-ink/85 italic">
                 <HighlightMatch query={query} text={result.title} />
               </span>
             )}
@@ -988,13 +1183,26 @@ function ResultEntry({
               </span>
             ) : null}
             {result.jlptLevel ? (
-              <span className="ml-auto shrink-0 rounded bg-accent/10 px-1.5 py-0.5 text-[10px] font-bold leading-none text-accent">
+              <span className={cn(
+                "ml-auto shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-bold leading-none",
+                result.kind === "kanji" ? "bg-sakura/10 text-sakura" :
+                result.kind === "grammar" ? "bg-leaf/10 text-leaf" :
+                "bg-accent/10 text-accent"
+              )}>
                 {result.jlptLevel}
               </span>
             ) : null}
+            {result.kind === "grammar" && (
+              <span className="shrink-0 rounded-md bg-leaf/8 px-1.5 py-0.5 text-[10px] font-semibold text-leaf">
+                文法
+              </span>
+            )}
           </div>
           {result.description ? (
-            <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-ink/70">
+            <p className={cn(
+              "mt-1 line-clamp-2 text-sm leading-relaxed",
+              result.kind === "example" ? "text-ink/60" : "text-ink/70"
+            )}>
               <HighlightMatch query={query} text={result.description} />
             </p>
           ) : null}
@@ -1002,7 +1210,7 @@ function ResultEntry({
 
         <span
           aria-hidden
-          className="shrink-0 self-center rounded-lg p-1.5 text-muted/50"
+          className="shrink-0 self-center rounded-lg p-1.5 text-muted/40 transition-colors duration-150 group-hover:text-ink/50"
           title={labels.addToFlashcard}
         >
           <ChevronIcon />
@@ -1028,8 +1236,8 @@ function FilterPill({
   return (
     <button
       className={cn(
-        "search-filter-pill inline-flex min-h-9 items-center gap-1 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30",
-        active ? "bg-ink text-surface shadow-sm" : "text-muted hover:bg-ink/5 hover:text-ink"
+        "search-filter-pill inline-flex min-h-9 items-center gap-1 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 active:scale-95",
+        active ? "bg-ink text-surface shadow-md shadow-ink/15" : "text-muted hover:bg-ink/5 hover:text-ink hover:shadow-sm"
       )}
       type="button"
       onClick={onClick}

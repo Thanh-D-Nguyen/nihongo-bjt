@@ -1,6 +1,7 @@
 "use client";
 
-import Link from "next/link";
+import { BackNavigation } from "../../_components/back-navigation";
+import { VocabExpressionList, type VocabExpression } from "../../_components/vocab-expression-list";
 import { MiniQuiz } from "./mini-quiz";
 
 /* ─── Types ─── */
@@ -210,19 +211,32 @@ export function MagazineArticleView({
 
   const quizzes = article.quizzes ?? [];
 
+  // Convert VocabItems to VocabExpression format for shared component
+  const expressions: VocabExpression[] = vocabItems.map((item) => ({
+    word: item.wordJp,
+    reading: item.reading ?? "",
+    meaning: item.meaningVi,
+    jlptLevel: item.jlptLevel,
+    example: item.exampleJp,
+    exampleMeaning: item.exampleVi,
+  }));
+
+  const expressionLabels = {
+    addToFlashcard: t.addToFlashcard ?? "Thêm flashcard",
+    addedToFlashcard: t.addedToFlashcard ?? "Đã thêm!",
+    example: t.example ?? "Ví dụ",
+    exampleMeaning: t.exampleMeaning ?? "Nghĩa",
+    listenPronunciation: t.listenPronunciation ?? "Nghe phát âm",
+    meaning: t.meaning ?? "Nghĩa",
+    reading: t.reading ?? "Đọc",
+    tapToExpand: t.tapToExpand ?? "Nhấn để mở rộng",
+    usageNote: t.usageNote ?? "Ghi chú",
+  };
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-background via-background to-accent/5 px-4 pb-28 pt-6 sm:px-6">
       <article className="mx-auto max-w-3xl">
-        {/* Back nav */}
-        <Link
-          href={`/${locale}/magazine`}
-          className="mb-6 inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground active:scale-95"
-        >
-          <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          Magazine
-        </Link>
+        <BackNavigation href={`/${locale}/magazine`} label="Magazine" />
 
         {/* ─── Header ─── */}
         <header className="mb-10 rounded-3xl bg-gradient-to-br from-primary/5 via-accent/5 to-transparent p-6 sm:p-8">
@@ -258,45 +272,20 @@ export function MagazineArticleView({
         )}
 
         {/* ─── Vocabulary Section ─── */}
-        {vocabItems.length > 0 && (
+        {expressions.length > 0 && (
           <section className="mb-10">
-            <h2 className="mb-5 flex items-center gap-2 text-xl font-bold text-foreground">
-              <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-base">📚</span>
-              {t.vocabSection}
-            </h2>
-            <div className="grid gap-3">
-              {vocabItems.map((item, i) => (
-                <div
-                  key={i}
-                  className="group rounded-2xl border border-border/30 bg-card p-4 transition-all duration-200 hover:border-border/60 hover:shadow-sm"
-                >
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-lg font-bold text-foreground" style={{ lineHeight: 1.8 }}>
-                      {item.wordJp}
-                    </span>
-                    {item.reading && (
-                      <span className="text-sm text-muted-foreground">({item.reading})</span>
-                    )}
-                    {item.jlptLevel && (
-                      <span className="ml-auto rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                        {item.jlptLevel}
-                      </span>
-                    )}
-                  </div>
-                  <p className="mt-1.5 text-sm font-medium text-foreground/80">{item.meaningVi}</p>
-                  {item.exampleJp && (
-                    <div className="mt-3 rounded-xl bg-accent/30 px-4 py-3">
-                      <p className="text-sm leading-[1.8] text-foreground">{item.exampleJp}</p>
-                      {item.exampleVi && (
-                        <p className="mt-1 text-xs italic text-muted-foreground">
-                          {item.exampleVi}
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="flex items-center gap-2 text-xl font-bold text-foreground">
+                <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-base">📚</span>
+                {t.vocabSection}
+              </h2>
+              <span className="text-xs font-medium text-muted-foreground">{expressionLabels.tapToExpand}</span>
             </div>
+            <VocabExpressionList
+              expressions={expressions}
+              gradient="from-indigo-500 to-purple-600"
+              labels={expressionLabels}
+            />
           </section>
         )}
 

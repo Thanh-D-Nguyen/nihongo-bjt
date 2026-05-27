@@ -4441,5 +4441,29 @@
     "guideApi": "Cần OPENAI_API_KEY trong env để dùng AI thật. Không có key → dùng mock data.",
     "guideSource": "Weather lấy từ JMA (気象庁). Loto dùng statistical mock (Phase 2: API thật).",
     "guideIdempotent": "Sinh nội dung là idempotent — cùng ngày/loại sẽ không tạo trùng. Dùng 'Sinh lại' để overwrite."
+  },
+  "lotoLab": {
+    "tabPredictions": "Dự đoán",
+    "tabResults": "Kết quả",
+    "tabAnalytics": "Thống kê",
+    "tabData": "Dữ liệu",
+    "tabGeneration": "Sinh số",
+    "filterAll": "Tất cả",
+    "filterPending": "Chờ duyệt",
+    "filterApproved": "Đã duyệt",
+    "filterRejected": "Từ chối",
+    "approve": "Duyệt",
+    "reject": "Từ chối",
+    "edit": "Sửa",
+    "inputResult": "Nhập kết quả kỳ mới",
+    "drawNumber": "Kỳ số",
+    "drawDate": "Ngày quay",
+    "mainNumbers": "Số chính",
+    "bonusNumbers": "Số bonus",
+    "save": "Lưu kết quả",
+    "totalPredictions": "Tổng kỳ dự đoán",
+    "avgHitRate": "Tỷ lệ trúng TB",
+    "bestHit": "Trúng cao nhất",
+    "totalViews": "Lượt xem"
   }
 }

@@ -4441,5 +4441,29 @@
     "guideApi": "本番AI生成にはenvのOPENAI_API_KEYが必要です。キーなし→モックデータ。",
     "guideSource": "天気はJMA（気象庁）から取得。ロトは統計モック（Phase 2: 実API）。",
     "guideIdempotent": "生成は冪等 — 同じ日付・種類で重複作成されません。『再生成』で上書きします。"
+  },
+  "lotoLab": {
+    "tabPredictions": "予想",
+    "tabResults": "結果",
+    "tabAnalytics": "分析",
+    "tabData": "データ",
+    "tabGeneration": "数字生成",
+    "filterAll": "すべて",
+    "filterPending": "審査待ち",
+    "filterApproved": "承認済み",
+    "filterRejected": "却下",
+    "approve": "承認",
+    "reject": "却下",
+    "edit": "編集",
+    "inputResult": "新しい結果を入力",
+    "drawNumber": "回号",
+    "drawDate": "抽選日",
+    "mainNumbers": "メイン数字",
+    "bonusNumbers": "ボーナス数字",
+    "save": "結果を保存",
+    "totalPredictions": "総予想回数",
+    "avgHitRate": "平均的中率",
+    "bestHit": "最高的中",
+    "totalViews": "閲覧数"
   }
 }

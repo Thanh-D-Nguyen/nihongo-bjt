@@ -150,12 +150,12 @@ export function VoiceSearchButton({
       <button
         type="button"
         className={cn(
-          "flex items-center justify-center rounded-md border p-1.5 transition-colors",
+          "flex min-h-12 min-w-12 items-center justify-center rounded-2xl border transition-all duration-150 active:scale-95",
           listening
-            ? "border-sakura bg-sakura/10 text-sakura"
+            ? "border-sakura bg-sakura/10 text-sakura shadow-md shadow-sakura/10"
             : error
               ? "border-sakura/40 text-sakura"
-              : "border-ink/10 text-muted hover:border-ink/20 hover:text-ink",
+              : "border-ink/10 bg-surface text-muted shadow-sm hover:border-ink/20 hover:text-ink hover:shadow-md",
           className
         )}
         onClick={toggle}
@@ -222,7 +222,7 @@ export function ImageSearchButton({
       <button
         type="button"
         className={cn(
-          "flex items-center justify-center rounded-md border border-ink/10 p-1.5 text-muted transition-colors hover:text-ink hover:border-ink/20",
+          "flex min-h-12 min-w-12 items-center justify-center rounded-2xl border border-ink/10 bg-surface text-muted shadow-sm transition-all duration-150 hover:border-ink/20 hover:text-ink hover:shadow-md active:scale-95",
           processing && "opacity-50 pointer-events-none",
           className
         )}
@@ -250,10 +250,10 @@ export function AiSearchToggle({
     <button
       type="button"
       className={cn(
-        "flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] font-medium transition-colors",
+        "flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold transition-all duration-150 active:scale-95",
         active
-          ? "border-purple-300 bg-purple-50 text-purple-600"
-          : "border-ink/10 text-muted hover:text-ink hover:border-ink/20",
+          ? "border-purple-300 bg-purple-50 text-purple-600 shadow-sm shadow-purple-100"
+          : "border-ink/10 bg-surface text-muted shadow-sm hover:text-ink hover:border-ink/20 hover:shadow-md",
         className
       )}
       onClick={() => onToggle(!active)}
@@ -269,8 +269,8 @@ export function AiSearchToggle({
 function MicIcon({ listening }: { listening: boolean }) {
   return (
     <svg
-      width="14"
-      height="14"
+      width="20"
+      height="20"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -290,8 +290,8 @@ function MicIcon({ listening }: { listening: boolean }) {
 function CameraIcon() {
   return (
     <svg
-      width="14"
-      height="14"
+      width="20"
+      height="20"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"

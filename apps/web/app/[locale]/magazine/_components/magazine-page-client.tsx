@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
+import { LotoPromoBanner } from "./loto-promo-banner";
 
 /* ─── Types ─── */
 
@@ -68,6 +69,7 @@ function MagazineFilter({ activeKind, t }: { activeKind: string; t: MagazineTran
       }
       params.delete("page");
       router.push(`${pathname}?${params.toString()}`);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     },
     [router, pathname, searchParams],
   );
@@ -82,7 +84,7 @@ function MagazineFilter({ activeKind, t }: { activeKind: string; t: MagazineTran
               key={f.key}
               type="button"
               onClick={() => handleFilter(f.key)}
-              className={`flex min-h-[48px] shrink-0 items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-medium transition-all duration-200 motion-reduce:transition-none active:scale-95 sm:min-h-[44px] ${
+              className={`flex min-h-[48px] shrink-0 items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-medium transition-all duration-200 motion-reduce:transition-none active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 sm:min-h-[44px] ${
                 isActive
                   ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
                   : "border border-border/40 bg-card/80 text-muted-foreground backdrop-blur-sm hover:border-primary/30 hover:bg-accent hover:text-foreground"
@@ -154,8 +156,8 @@ function BentoCard({
   return (
     <Link
       href={`/${locale}/magazine/${article.slug}`}
-      className={`group relative flex flex-col overflow-hidden rounded-2xl border border-border/40 bg-card transition-all duration-300 motion-reduce:transition-none hover:-translate-y-1 motion-reduce:hover:translate-y-0 hover:border-border/80 hover:shadow-xl hover:shadow-primary/5 active:scale-[0.98] ${
-        isHero ? "row-span-2 sm:col-span-2" : ""
+      className={`group relative flex flex-col overflow-hidden rounded-2xl border border-border/40 bg-card transition-all duration-300 motion-reduce:transition-none hover:-translate-y-1 motion-reduce:hover:translate-y-0 hover:border-border/80 hover:shadow-xl hover:shadow-primary/5 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 ${
+        isHero ? "row-span-2 bg-gradient-to-br from-card to-accent/5 sm:col-span-2" : ""
       }`}
     >
       {/* Gradient overlay */}
@@ -218,7 +220,7 @@ function BentoCard({
         {/* Bottom: date + read more */}
         <div className="mt-auto flex items-center justify-between pt-5">
           <time className="text-xs text-muted-foreground/60">{formattedDate}</time>
-          <span className="text-xs font-medium text-primary opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+          <span className="text-xs font-medium text-primary opacity-70 transition-opacity duration-200 group-hover:opacity-100 sm:opacity-0">
             {t.readMore} →
           </span>
         </div>
@@ -267,7 +269,8 @@ function Pagination({
       {page > 1 && (
         <Link
           href={`/${locale}/magazine?kind=${kind}&page=${page - 1}`}
-          className="flex min-h-[48px] items-center rounded-xl border border-border/50 bg-card px-5 py-2.5 text-sm font-medium text-foreground shadow-sm transition-all duration-200 motion-reduce:transition-none hover:border-primary/30 hover:bg-accent active:scale-95"
+          scroll
+          className="flex min-h-[48px] items-center rounded-xl border border-border/50 bg-card px-5 py-2.5 text-sm font-medium text-foreground shadow-sm transition-all duration-200 motion-reduce:transition-none hover:border-primary/30 hover:bg-accent active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
         >
           {t.prevPage}
         </Link>
@@ -280,7 +283,8 @@ function Pagination({
             <Link
               key={pageNum}
               href={`/${locale}/magazine?kind=${kind}&page=${pageNum}`}
-              className={`flex size-10 items-center justify-center rounded-lg text-sm font-medium transition-all duration-150 motion-reduce:transition-none ${
+              scroll
+              className={`flex size-12 items-center justify-center rounded-xl text-sm font-medium transition-all duration-150 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 ${
                 pageNum === page
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-muted-foreground hover:bg-accent hover:text-foreground"
@@ -294,7 +298,8 @@ function Pagination({
       {page < totalPages && (
         <Link
           href={`/${locale}/magazine?kind=${kind}&page=${page + 1}`}
-          className="flex min-h-[48px] items-center rounded-xl border border-border/50 bg-card px-5 py-2.5 text-sm font-medium text-foreground shadow-sm transition-all duration-200 motion-reduce:transition-none hover:border-primary/30 hover:bg-accent active:scale-95"
+          scroll
+          className="flex min-h-[48px] items-center rounded-xl border border-border/50 bg-card px-5 py-2.5 text-sm font-medium text-foreground shadow-sm transition-all duration-200 motion-reduce:transition-none hover:border-primary/30 hover:bg-accent active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
         >
           {t.nextPage}
         </Link>
@@ -320,24 +325,81 @@ export function MagazinePageClient({
   totalPages: number;
   t: MagazineTranslations;
 }) {
+  const todayStr = new Date().toDateString();
+  const { todayArticles, olderArticles } = useMemo(() => {
+    if (page !== 1) return { todayArticles: [], olderArticles: articles };
+    const today: MagazineArticle[] = [];
+    const older: MagazineArticle[] = [];
+    for (const a of articles) {
+      if (new Date(a.publishDate).toDateString() === todayStr) today.push(a);
+      else older.push(a);
+    }
+    return { todayArticles: today, olderArticles: older };
+  }, [articles, page, todayStr]);
+
   return (
     <>
       <MagazineFilter activeKind={kind} t={t} />
 
+      {/* Loto Promo Banner — show on page 1 when not filtered to loto specifically */}
+      {page === 1 && kind !== "loto" && (
+        <LotoPromoBanner
+          locale={locale}
+          labels={{
+            title: t.lotoPromoTitle ?? "🎰 Loto Lab — Dự đoán & Học tiếng Nhật",
+            subtitle: t.lotoPromoSubtitle ?? "Xem dự đoán Loto6/Loto7 hàng tuần kèm từ vựng & câu tiếng Nhật thực tế",
+            cta: t.lotoPromoCta ?? "Xem ngay",
+          }}
+        />
+      )}
+
       {articles.length > 0 ? (
         <>
-          {/* Bento grid: first item is hero */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {articles.map((article, idx) => (
-              <BentoCard
-                key={article.id}
-                article={article}
-                locale={locale}
-                isHero={idx === 0 && page === 1}
-                t={t}
-              />
-            ))}
-          </div>
+          {/* Today's articles section */}
+          {todayArticles.length > 0 && (
+            <section className="mb-8">
+              <div className="mb-4 flex items-center gap-2">
+                <span className="flex size-7 items-center justify-center rounded-lg bg-green-500/10 text-sm">✨</span>
+                <h2 className="text-base font-bold text-foreground">{t.todayTitle}</h2>
+                <div className="h-px flex-1 bg-border/40" />
+              </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {todayArticles.map((article, idx) => (
+                  <BentoCard
+                    key={article.id}
+                    article={article}
+                    locale={locale}
+                    isHero={idx === 0}
+                    t={t}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Older articles */}
+          {olderArticles.length > 0 && (
+            <section>
+              {todayArticles.length > 0 && (
+                <div className="mb-4 flex items-center gap-2">
+                  <span className="flex size-7 items-center justify-center rounded-lg bg-muted text-sm">📚</span>
+                  <h2 className="text-base font-bold text-muted-foreground">{t.olderTitle ?? "Earlier"}</h2>
+                  <div className="h-px flex-1 bg-border/40" />
+                </div>
+              )}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {olderArticles.map((article, idx) => (
+                  <BentoCard
+                    key={article.id}
+                    article={article}
+                    locale={locale}
+                    isHero={idx === 0 && page === 1 && todayArticles.length === 0}
+                    t={t}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
 
           <Pagination locale={locale} kind={kind} page={page} totalPages={totalPages} t={t} />
         </>

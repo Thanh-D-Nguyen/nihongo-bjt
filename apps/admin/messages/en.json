@@ -4451,5 +4451,29 @@
     "guideApi": "Requires OPENAI_API_KEY in env for real AI generation. Without key → mock data.",
     "guideSource": "Weather sourced from JMA (気象庁). Loto uses statistical mock (Phase 2: real API).",
     "guideIdempotent": "Generation is idempotent — same date/type won't create duplicates. Use 'Regenerate' to overwrite."
+  },
+  "lotoLab": {
+    "tabPredictions": "Predictions",
+    "tabResults": "Results",
+    "tabAnalytics": "Analytics",
+    "tabData": "Data",
+    "tabGeneration": "Generation",
+    "filterAll": "All",
+    "filterPending": "Pending",
+    "filterApproved": "Approved",
+    "filterRejected": "Rejected",
+    "approve": "Approve",
+    "reject": "Reject",
+    "edit": "Edit",
+    "inputResult": "Input new draw result",
+    "drawNumber": "Draw number",
+    "drawDate": "Draw date",
+    "mainNumbers": "Main numbers",
+    "bonusNumbers": "Bonus numbers",
+    "save": "Save result",
+    "totalPredictions": "Total predictions",
+    "avgHitRate": "Avg hit rate",
+    "bestHit": "Best hit",
+    "totalViews": "Total views"
   }
 }

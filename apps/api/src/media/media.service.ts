@@ -9,6 +9,12 @@ import {
 import { Client } from "minio";
 import { randomUUID } from "node:crypto";
 import type { Readable } from "node:stream";
+import sharp from "sharp";
+
+/** Max dimension (width or height) for flashcard images stored via proxy download */
+const PROXY_IMAGE_MAX_DIMENSION = 800;
+/** JPEG quality for resized proxy images */
+const PROXY_IMAGE_QUALITY = 82;
 
 /**
  * **Object storage** (MinIO/S3) for learner/admin uploads. Assets store **provenance/rights** in PostgreSQL
@@ -365,6 +371,92 @@ export class MediaService {
       });
       return next;
     });
+  }
+
+  /**
+   * Downloads an external image URL and stores it in MinIO.
+   * Returns the assetId on success, or null if download fails (caller should fall back to external_url).
+   */
+  async proxyDownloadExternalImage(input: {
+    url: string;
+    userId: string;
+    altText?: string;
+    license?: string;
+    provenance?: Record<string, unknown>;
+  }): Promise<string | null> {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15_000);
+
+      const resp = await fetch(input.url, {
+        signal: controller.signal,
+        headers: { "User-Agent": "NihonGo-BJT/1.0 (image proxy)" },
+      });
+      clearTimeout(timeout);
+
+      if (!resp.ok || !resp.body) return null;
+
+      const contentType = resp.headers.get("content-type") ?? "image/jpeg";
+      if (!contentType.startsWith("image/")) return null;
+
+      const contentLength = parseInt(resp.headers.get("content-length") ?? "0", 10);
+      if (contentLength > 10 * 1024 * 1024) return null; // 10MB max
+
+      const chunks: Uint8Array[] = [];
+      let totalSize = 0;
+      const reader = resp.body.getReader();
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        totalSize += value.length;
+        if (totalSize > 10 * 1024 * 1024) return null; // abort if too large
+        chunks.push(value);
+      }
+
+      const rawBuffer = Buffer.concat(chunks);
+      if (rawBuffer.length < 100) return null; // too small to be a real image
+
+      // Resize to max 800px on longest side, convert to JPEG for consistency
+      const resized = await sharp(rawBuffer)
+        .resize(PROXY_IMAGE_MAX_DIMENSION, PROXY_IMAGE_MAX_DIMENSION, {
+          fit: "inside",
+          withoutEnlargement: true,
+        })
+        .jpeg({ quality: PROXY_IMAGE_QUALITY, mozjpeg: true })
+        .toBuffer();
+
+      const finalMime = "image/jpeg";
+      await this.ensureBucket();
+      const objectKey = `${input.userId}/proxy-${randomUUID()}.jpg`;
+      const bucket = this.env.MINIO_BUCKET;
+
+      await this.minio.putObject(bucket, objectKey, resized, resized.length, {
+        "Content-Type": finalMime,
+      });
+
+      const asset = await this.prisma.mediaAsset.create({
+        data: {
+          accessibility: {
+            altText: input.altText?.slice(0, 200) ?? "",
+            reducedMotionSafe: true,
+          },
+          byteSize: resized.length,
+          license: input.license ?? "user_supplied_link",
+          mimeType: finalMime,
+          objectKey,
+          ownerUserId: input.userId,
+          provenance: (input.provenance ?? { kind: "proxy_downloaded", originalUrl: input.url }) as never,
+          provider: "local",
+          rightsStatus: "cleared",
+          sourceUrl: input.url,
+          status: "active",
+        },
+      });
+
+      return asset.id;
+    } catch {
+      return null;
+    }
   }
 
   private async ensureBucket() {

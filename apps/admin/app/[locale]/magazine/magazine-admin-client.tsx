@@ -12,6 +12,7 @@ import {
   AdminSection,
   AdminStatusBadge,
 } from "@nihongo-bjt/ui";
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
@@ -58,25 +59,7 @@ interface MagazineLabels {
   kindBjtPhrase: string;
   lotoLabTitle: string;
   lotoLabDescription: string;
-  lotoImportCsv: string;
-  lotoGenerateSets: string;
-  lotoSetCount: string;
-  lotoSeed: string;
-  lotoWeather: string;
-  lotoDream: string;
-  lotoLuckyText: string;
-  lotoPinned: string;
-  lotoExcluded: string;
-  lotoDataHealth: string;
-  lotoDrawCount: string;
-  lotoLastDraw: string;
-  lotoHot: string;
-  lotoCold: string;
-  lotoOverdue: string;
-  lotoGeneratedSets: string;
-  lotoJapaneseSentence: string;
-  lotoImportSuccess: string;
-  lotoNeedData: string;
+  [key: string]: string;
 }
 
 interface MagazineArticle {
@@ -107,283 +90,10 @@ const KIND_OPTIONS = [
   { value: "magazine_bjt_phrase", icon: "💼" },
 ] as const;
 
-type LotoGame = "loto6" | "loto7";
-
-type LotoSummary = {
-  game: LotoGame;
-  drawCount: number;
-  lastDraw: { drawNumber: number; drawDate: string; mainNumbers: number[]; bonusNumbers: number[] } | null;
-  hotNumbers: number[];
-  coldNumbers: number[];
-  overdueNumbers: number[];
-};
-
-type LotoRun = {
-  id: string;
-  japaneseSentence?: { textJp?: string; reading?: string; textVi?: string };
-  sets: Array<{
-    id: string;
-    rank: number;
-    mainNumbers: number[];
-    bonusNumbers: number[];
-    score: number;
-    explanation?: { signals?: Record<string, number[]> };
-  }>;
-};
-
-const DEFAULT_WEIGHTS = {
-  frequencyHot: 0.2,
-  frequencyCold: 0.08,
-  overdue: 0.16,
-  recentMomentum: 0.14,
-  pairAffinity: 0.12,
-  weatherBias: 0.08,
-  dreamTextBias: 0.08,
-  dateNumerology: 0.06,
-  randomEntropy: 0.08,
-};
-
 const learnerBaseUrl = (process.env.NEXT_PUBLIC_WEB_PUBLIC_URL ?? "http://localhost:3000").replace(/\/$/u, "");
 
 function buildMagazineSlug(date: string, widgetKind: string, locale: string): string {
   return `${date}-${widgetKind.replace("magazine_", "")}-${locale}`;
-}
-
-function parseNumberList(value: string): number[] {
-  return value
-    .split(/[,\s]+/u)
-    .map((item) => Number(item.trim()))
-    .filter((item) => Number.isInteger(item) && item > 0);
-}
-
-function NumberChips({ numbers }: { numbers: number[] }) {
-  return (
-    <span className="inline-flex flex-wrap gap-1">
-      {numbers.map((number) => (
-        <span key={number} className="inline-flex size-7 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-          {number}
-        </span>
-      ))}
-    </span>
-  );
-}
-
-function LotoLabPanel({ labels }: { labels: MagazineLabels }) {
-  const [game, setGame] = useState<LotoGame>("loto6");
-  const [summary, setSummary] = useState<LotoSummary | null>(null);
-  const [run, setRun] = useState<LotoRun | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  const [targetDrawDate, setTargetDrawDate] = useState(() => new Date().toISOString().slice(0, 10));
-  const [setCount, setSetCount] = useState(3);
-  const [seed, setSeed] = useState("");
-  const [weatherText, setWeatherText] = useState("");
-  const [dreamText, setDreamText] = useState("");
-  const [luckyText, setLuckyText] = useState("");
-  const [pinnedNumbers, setPinnedNumbers] = useState("");
-  const [excludedNumbers, setExcludedNumbers] = useState("");
-  const [weights, setWeights] = useState(DEFAULT_WEIGHTS);
-
-  const loadSummary = useCallback(async () => {
-    try {
-      const res = await adminApiFetch(`/api/admin/magazine/loto/summary?game=${game}`);
-      if (!res.ok) throw new Error("summary failed");
-      setSummary((await res.json()) as LotoSummary);
-    } catch {
-      setSummary(null);
-    }
-  }, [game]);
-
-  useEffect(() => {
-    void loadSummary();
-  }, [loadSummary]);
-
-  const importCsv = async (file: File | null) => {
-    if (!file) return;
-    setBusy(true);
-    setMessage(null);
-    try {
-      const csvText = await file.text();
-      const res = await adminApiFetch("/api/admin/magazine/loto/import-csv", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ game, csvText }),
-      });
-      if (!res.ok) throw new Error("import failed");
-      const result = (await res.json()) as { created: number; updated: number; total: number };
-      setMessage(labels.lotoImportSuccess.replace("{total}", String(result.total)));
-      await loadSummary();
-    } catch {
-      setMessage(labels.error);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const generateSets = async () => {
-    setBusy(true);
-    setMessage(null);
-    try {
-      const res = await adminApiFetch("/api/admin/magazine/loto/generate", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          game,
-          targetDrawDate,
-          setCount,
-          seed: seed || undefined,
-          weights,
-          weatherText,
-          dreamText,
-          luckyText,
-          pinnedNumbers: parseNumberList(pinnedNumbers),
-          excludedNumbers: parseNumberList(excludedNumbers),
-        }),
-      });
-      if (!res.ok) throw new Error("generate failed");
-      setRun((await res.json()) as LotoRun);
-      await loadSummary();
-    } catch {
-      setMessage(summary && summary.drawCount < 10 ? labels.lotoNeedData : labels.error);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <AdminSection>
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h3 className="text-sm font-semibold">{labels.lotoLabTitle}</h3>
-          <p className="mt-1 text-sm text-muted-foreground">{labels.lotoLabDescription}</p>
-        </div>
-        <select
-          value={game}
-          onChange={(event) => setGame(event.target.value as LotoGame)}
-          className="min-h-[40px] rounded-md border border-border bg-background px-3 py-2 text-sm"
-        >
-          <option value="loto6">Loto6</option>
-          <option value="loto7">Loto7</option>
-        </select>
-      </div>
-
-      <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(320px,420px)]">
-        <div className="space-y-4">
-          <div className="rounded-lg border border-border/50 bg-muted/20 p-4">
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <label className="text-xs font-medium text-muted-foreground">
-                {labels.fieldDate}
-                <input type="date" value={targetDrawDate} onChange={(e) => setTargetDrawDate(e.target.value)} className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm" />
-              </label>
-              <label className="text-xs font-medium text-muted-foreground">
-                {labels.lotoSetCount}
-                <input type="number" min={1} max={5} value={setCount} onChange={(e) => setSetCount(Number(e.target.value))} className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm" />
-              </label>
-              <label className="text-xs font-medium text-muted-foreground">
-                {labels.lotoSeed}
-                <input value={seed} onChange={(e) => setSeed(e.target.value)} className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm" />
-              </label>
-            </div>
-
-            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <label className="text-xs font-medium text-muted-foreground">
-                {labels.lotoWeather}
-                <input value={weatherText} onChange={(e) => setWeatherText(e.target.value)} className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm" />
-              </label>
-              <label className="text-xs font-medium text-muted-foreground">
-                {labels.lotoDream}
-                <input value={dreamText} onChange={(e) => setDreamText(e.target.value)} className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm" />
-              </label>
-              <label className="text-xs font-medium text-muted-foreground">
-                {labels.lotoLuckyText}
-                <input value={luckyText} onChange={(e) => setLuckyText(e.target.value)} className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm" />
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                <label className="text-xs font-medium text-muted-foreground">
-                  {labels.lotoPinned}
-                  <input value={pinnedNumbers} onChange={(e) => setPinnedNumbers(e.target.value)} className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm" />
-                </label>
-                <label className="text-xs font-medium text-muted-foreground">
-                  {labels.lotoExcluded}
-                  <input value={excludedNumbers} onChange={(e) => setExcludedNumbers(e.target.value)} className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm" />
-                </label>
-              </div>
-            </div>
-
-            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-              {Object.entries(weights).map(([key, value]) => (
-                <label key={key} className="text-xs font-medium text-muted-foreground">
-                  <span className="flex justify-between gap-2"><span>{key}</span><span>{value.toFixed(2)}</span></span>
-                  <input
-                    type="range"
-                    min={0}
-                    max={0.5}
-                    step={0.01}
-                    value={value}
-                    onChange={(e) => setWeights((prev) => ({ ...prev, [key]: Number(e.target.value) }))}
-                    className="mt-1 w-full"
-                  />
-                </label>
-              ))}
-            </div>
-
-            <div className="mt-4 flex flex-wrap items-center gap-3">
-              <button type="button" disabled={busy} onClick={generateSets} className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50">
-                {labels.lotoGenerateSets}
-              </button>
-              <label className="rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent">
-                {labels.lotoImportCsv}
-                <input type="file" accept=".csv,text/csv" className="sr-only" onChange={(e) => void importCsv(e.target.files?.[0] ?? null)} />
-              </label>
-              {message && <span className="text-sm text-muted-foreground">{message}</span>}
-            </div>
-          </div>
-
-          {run && (
-            <div className="rounded-lg border border-border/50 bg-background p-4">
-              <h4 className="text-sm font-semibold">{labels.lotoGeneratedSets}</h4>
-              <div className="mt-3 grid gap-3">
-                {run.sets.map((set) => (
-                  <div key={set.id} className="rounded-lg border border-border/50 bg-muted/20 p-3">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs font-semibold text-muted-foreground">#{set.rank}</span>
-                        <NumberChips numbers={set.mainNumbers} />
-                        {set.bonusNumbers.length > 0 && <span className="text-xs text-muted-foreground">+ {set.bonusNumbers.join(", ")}</span>}
-                      </div>
-                      <span className="text-xs font-medium text-muted-foreground">score {set.score.toFixed(3)}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {run.japaneseSentence?.textJp && (
-                <div className="mt-4 rounded-lg bg-primary/5 p-3">
-                  <p className="text-xs font-semibold text-primary">{labels.lotoJapaneseSentence}</p>
-                  <p className="mt-1 text-sm leading-relaxed">{run.japaneseSentence.textJp}</p>
-                  <p className="text-xs text-muted-foreground">{run.japaneseSentence.textVi}</p>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        <aside className="rounded-lg border border-border/50 bg-background p-4">
-          <h4 className="text-sm font-semibold">{labels.lotoDataHealth}</h4>
-          {summary ? (
-            <div className="mt-3 space-y-3 text-sm">
-              <p className="flex justify-between gap-3"><span className="text-muted-foreground">{labels.lotoDrawCount}</span><strong>{summary.drawCount}</strong></p>
-              <p className="flex justify-between gap-3"><span className="text-muted-foreground">{labels.lotoLastDraw}</span><strong>{summary.lastDraw ? `${summary.lastDraw.drawNumber} / ${summary.lastDraw.drawDate}` : "-"}</strong></p>
-              <div><p className="mb-1 text-xs font-medium text-muted-foreground">{labels.lotoHot}</p><NumberChips numbers={summary.hotNumbers ?? []} /></div>
-              <div><p className="mb-1 text-xs font-medium text-muted-foreground">{labels.lotoCold}</p><NumberChips numbers={summary.coldNumbers ?? []} /></div>
-              <div><p className="mb-1 text-xs font-medium text-muted-foreground">{labels.lotoOverdue}</p><NumberChips numbers={summary.overdueNumbers ?? []} /></div>
-            </div>
-          ) : (
-            <p className="mt-3 text-sm text-muted-foreground">{labels.loading}</p>
-          )}
-        </aside>
-      </div>
-    </AdminSection>
-  );
 }
 
 /* ─── Component ─── */
@@ -578,7 +288,22 @@ export function MagazineAdminClient({
         )}
       </AdminSection>
 
-      <LotoLabPanel labels={labels} />
+      {/* Loto Lab dedicated page link */}
+      <Link
+        href={`/${locale}/magazine/loto-lab`}
+        className="group flex items-center gap-4 rounded-xl border border-border/50 bg-gradient-to-r from-emerald-500/5 to-transparent p-4 transition-all duration-200 hover:border-emerald-500/30 hover:shadow-sm"
+      >
+        <div className="flex size-10 items-center justify-center rounded-lg bg-emerald-500/10 text-xl transition-transform duration-200 group-hover:scale-110">
+          🎰
+        </div>
+        <div className="flex-1">
+          <h3 className="text-sm font-semibold text-foreground">{labels.lotoLabTitle}</h3>
+          <p className="text-xs text-muted-foreground">{labels.lotoLabDescription}</p>
+        </div>
+        <svg className="size-5 text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+        </svg>
+      </Link>
 
       {/* Articles Table */}
       <AdminSection>
@@ -593,12 +318,14 @@ export function MagazineAdminClient({
         ) : (
           <AdminDataTable>
             <AdminDataTableHead>
-              <AdminDataTableTh>{labels.colDate}</AdminDataTableTh>
-              <AdminDataTableTh>{labels.colKind}</AdminDataTableTh>
-              <AdminDataTableTh>{labels.colTitle}</AdminDataTableTh>
-              <AdminDataTableTh>{labels.colJlpt}</AdminDataTableTh>
-              <AdminDataTableTh>{labels.colStatus}</AdminDataTableTh>
-              <AdminDataTableTh>{labels.colActions}</AdminDataTableTh>
+              <AdminDataTableRow>
+                <AdminDataTableTh>{labels.colDate}</AdminDataTableTh>
+                <AdminDataTableTh>{labels.colKind}</AdminDataTableTh>
+                <AdminDataTableTh>{labels.colTitle}</AdminDataTableTh>
+                <AdminDataTableTh>{labels.colJlpt}</AdminDataTableTh>
+                <AdminDataTableTh>{labels.colStatus}</AdminDataTableTh>
+                <AdminDataTableTh>{labels.colActions}</AdminDataTableTh>
+              </AdminDataTableRow>
             </AdminDataTableHead>
             <AdminDataTableBody>
               {articles.map((article) => (

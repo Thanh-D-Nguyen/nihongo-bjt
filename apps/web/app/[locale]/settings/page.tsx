@@ -1,34 +1,10 @@
-import type { Metadata } from "next";
-
-import en from "../../../messages/en.json";
-import ja from "../../../messages/ja.json";
-import vi from "../../../messages/vi.json";
-import { SettingsHubClient } from "./_components/settings-hub-client";
-
-const messages: Record<string, typeof vi> = { ja, vi, en };
-
-export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
-  const { locale } = await params;
-  const t = messages[locale] ?? messages.vi;
-  return { title: `${t.settings.title} — NihonGo BJT` };
-}
+import { redirect } from "next/navigation";
 
 export default async function SettingsHubPage({
   params
 }: {
-  params: Promise<{ locale: keyof typeof messages }>;
+  params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const t = messages[locale] ?? messages.vi;
-
-  return (
-    <SettingsHubClient
-      labels={{
-        settings: t.settings,
-        accountInfo: t.accountInfo,
-        appearancePage: t.appearancePage,
-      }}
-      locale={locale}
-    />
-  );
+  redirect(`/${locale}/me?tab=settings`);
 }

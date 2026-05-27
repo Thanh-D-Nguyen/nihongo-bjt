@@ -15,6 +15,7 @@ import { MysteryBoxWidget } from "./mystery-box-widget";
 import { RevengeModeWidget } from "./revenge-mode-widget";
 import { FocusTimerWidget } from "./focus-timer-widget";
 import { AmbientModeWidget } from "./ambient-mode-widget";
+import { LotoTeaserWidget } from "./loto-teaser-widget";
 import type { HomepageLabels, LearnerAnalytics, NhkArticle } from "./types";
 
 export type HomepageTabKey = "today" | "progress" | "rewards" | "focus";
@@ -132,6 +133,7 @@ export function HomepageSectionsTabs({
           role="tabpanel"
         >
           <ForYouFeedWidget locale={locale} refreshKey={onboardingJustCompleted ? 1 : 0} />
+          <LotoTeaserWidget locale={locale} />
           <DailyRadarSection labels={labels.dailyRadar} locale={locale} />
           <FeaturedNewsSection
             articlesByType={nhkArticlesByType}

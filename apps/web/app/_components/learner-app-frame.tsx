@@ -16,12 +16,12 @@ import {
 } from "react";
 
 import { useKeycloakAuth } from "../../components/auth/keycloak-auth-provider";
+import { learnerApiFetchOptional } from "../../lib/learner-api";
 import { AnnouncementStrip } from "./announcement-strip";
 import { BrandFull } from "./brand-logo";
 import { CompanionBot, type CompanionBotLabels } from "./companion-bot";
 import { LocaleSwitcher, type LocaleSwitcherLabels } from "./locale-switcher";
 import {
-  IconAchievement,
   IconAnalytics,
   IconBattle,
   IconDocument,
@@ -39,13 +39,26 @@ import {
   IconReview,
   IconSearch,
   IconSettings,
-  IconShield
+  IconShield,
+  IconUser
 } from "./app-icons";
 import {
   SearchDropdown,
   type DropdownKeyHandler,
   type SearchDropdownLabels
 } from "./search-dropdown";
+
+/* ── Scroll-aware hook: detects when user has scrolled past threshold ── */
+function useScrolled(threshold = 10) {
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > threshold);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [threshold]);
+  return scrolled;
+}
 
 export type LearnerNavLabels = {
   account: string;
@@ -119,6 +132,7 @@ export function LearnerAppFrame({
   const router = useRouter();
   const pathname = normalizePath(usePathname() ?? "");
   const base = `/${locale}`;
+  const scrolled = useScrolled();
   const {
     accessToken,
     displayName,
@@ -134,11 +148,37 @@ export function LearnerAppFrame({
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [exploreMenuOpen, setExploreMenuOpen] = useState(false);
   const searchKeyHandlerRef = useRef<DropdownKeyHandler | null>(null);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
   const userMenuRef = useRef<HTMLDivElement | null>(null);
   const exploreMenuRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  /* ── Global keyboard shortcut: Cmd/Ctrl+K focuses search ── */
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        setGlobalSearchOpen(true);
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, []);
+
+  /* ── Due flashcard count for nav badge ── */
+  const [dueCount, setDueCount] = useState(0);
+  useEffect(() => {
+    if (!accessToken) return;
+    let cancelled = false;
+    learnerApiFetchOptional("/api/review/next?limit=100")
+      .then((r) => r.ok ? r.json() : [])
+      .then((data: unknown) => { if (!cancelled) setDueCount(Array.isArray(data) ? data.length : 0); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [accessToken]);
 
   useEffect(() => {
     if (!userMenuOpen && !exploreMenuOpen) return;
@@ -183,14 +223,6 @@ export function LearnerAppFrame({
     { href: `${base}/levels`, icon: IconLevels, label: nav.levelsNav },
   ] satisfies NavItem[], [base, nav]);
 
-  /* ── User menu items (achievements, analytics are moved here) ── */
-  const navItems = useMemo(() => [
-    ...primaryNavItems,
-    ...exploreNavItems,
-    { href: `${base}/achievements`, icon: IconAchievement, label: nav.achievements },
-    { href: `${base}/analytics`, icon: IconAnalytics, label: nav.analytics },
-  ] satisfies NavItem[], [base, nav, primaryNavItems, exploreNavItems]);
-
   const footerLinks = useMemo(
     () => [
       {
@@ -198,7 +230,7 @@ export function LearnerAppFrame({
           { href: base, icon: IconHome, label: nav.home },
           { href: `${base}/flashcards`, icon: IconReview, label: nav.review },
           { href: `${base}/quiz`, icon: IconQuiz, label: nav.quiz },
-          { href: `${base}/analytics`, icon: IconAnalytics, label: nav.analytics }
+          { href: `${base}/me?tab=progress`, icon: IconAnalytics, label: nav.analytics }
         ],
         title: nav.footerLearning
       },
@@ -236,9 +268,9 @@ export function LearnerAppFrame({
   const mobileNavItems = [
     { href: base, icon: IconHome, label: nav.home },
     { href: `${base}/flashcards`, icon: IconReview, label: nav.review },
-    { href: `${base}/explore`, icon: IconExplore, label: nav.explore },
     { href: `${base}/quiz`, icon: IconQuiz, label: nav.quiz },
     { href: `${base}/battle`, icon: IconBattle, label: nav.battle },
+    { href: `${base}/me`, icon: IconUser, label: nav.account },
   ];
 
   function submitGlobalSearch(event?: FormEvent<HTMLFormElement>) {
@@ -256,26 +288,38 @@ export function LearnerAppFrame({
 
   return (
     <AppShell>
-      <header className="sticky top-0 z-40 -mx-4 mb-5 border-b border-ink/8 bg-paper/95 px-4 backdrop-blur-2xl sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
-        <div className="mx-auto flex min-h-16 max-w-7xl items-center gap-4">
+      <header className={cn(
+        "sticky top-0 z-40 -mx-4 mb-5 bg-paper/95 px-4 backdrop-blur-2xl transition-[box-shadow,border-color,min-height] duration-200 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8",
+        scrolled
+          ? "border-b border-ink/10 shadow-[0_2px_16px_rgba(23,33,31,0.06)]"
+          : "border-b border-transparent"
+      )}>
+        <div className={cn(
+          "mx-auto flex max-w-7xl items-center gap-4 transition-[min-height] duration-200",
+          scrolled ? "min-h-12" : "min-h-16"
+        )}>
           {/* Brand */}
           <Link
             aria-label={nav.brand}
             className="group inline-flex min-w-0 shrink-0 items-center rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
             href={base}
           >
-            <BrandFull className="transition-transform duration-150 group-hover:-translate-y-0.5" />
+            <BrandFull className={cn(
+              "transition-all duration-200 group-hover:-translate-y-0.5",
+              scrolled && "scale-[0.88] origin-left"
+            )} />
           </Link>
 
           {/* Primary nav — only 4 core items on desktop */}
           <nav aria-label={nav.ariaMain} className="hidden shrink-0 items-center gap-1 lg:flex">
             {primaryNavItems.map((item) => {
               const active = linkActive(item.href);
+              const isReview = item.href === `${base}/flashcards`;
               return (
                 <Link
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "inline-flex min-h-10 items-center gap-1.5 whitespace-nowrap rounded-xl px-3 text-sm font-semibold transition-colors",
+                    "relative inline-flex min-h-10 items-center gap-1.5 whitespace-nowrap rounded-xl px-3 text-sm font-semibold transition-colors",
                     active
                       ? "bg-ink text-surface shadow-sm"
                       : "text-muted hover:bg-ink/5 hover:text-ink"
@@ -285,6 +329,16 @@ export function LearnerAppFrame({
                 >
                   <item.icon aria-hidden="true" className="shrink-0" size={18} />
                   <span>{item.label}</span>
+                  {isReview && dueCount > 0 ? (
+                    <span className={cn(
+                      "inline-flex min-w-5 items-center justify-center rounded-full px-1 py-0.5 text-[10px] font-bold leading-none",
+                      active
+                        ? "bg-surface/20 text-surface"
+                        : "bg-accent/15 text-accent"
+                    )}>
+                      {dueCount > 99 ? "99+" : dueCount}
+                    </span>
+                  ) : null}
                 </Link>
               );
             })}
@@ -372,6 +426,7 @@ export function LearnerAppFrame({
                 <IconSearch aria-hidden size={17} />
               </button>
               <input
+                ref={searchInputRef}
                 aria-autocomplete="list"
                 aria-expanded={globalSearchOpen}
                 autoComplete="off"
@@ -390,6 +445,10 @@ export function LearnerAppFrame({
                   if (event.key === "Escape") setGlobalSearchOpen(false);
                 }}
               />
+              {/* Keyboard shortcut hint */}
+              <kbd className="mr-2.5 hidden select-none items-center gap-0.5 rounded-md border border-ink/10 bg-paper px-1.5 py-0.5 text-[10px] font-medium text-muted/60 lg:inline-flex">
+                <span className="text-xs">⌘</span>K
+              </kbd>
             </div>
             <SearchDropdown
               labels={searchLabels}
@@ -434,13 +493,13 @@ export function LearnerAppFrame({
                 </button>
                 {userMenuOpen ? (
                   <div
-                    className="absolute right-0 top-12 z-50 w-72 overflow-hidden rounded-2xl border border-ink/10 bg-surface shadow-[0_18px_48px_rgba(23,33,31,0.14)] dark:border-white/10 dark:bg-[#1E293B] dark:shadow-[0_18px_48px_rgba(0,0,0,0.5)]"
+                    className="absolute right-0 top-12 z-50 w-64 overflow-hidden rounded-2xl border border-ink/10 bg-surface shadow-[0_18px_48px_rgba(23,33,31,0.14)] dark:border-white/10 dark:bg-[#1E293B] dark:shadow-[0_18px_48px_rgba(0,0,0,0.5)]"
                     role="menu"
                   >
-                    {/* Profile header — click goes to profile */}
+                    {/* Profile header — click goes to unified Me page */}
                     <Link
                       className="flex items-center gap-3 border-b border-ink/8 px-4 py-3 transition-colors hover:bg-paper dark:border-white/5 dark:hover:bg-white/5"
-                      href={`${base}/profile`}
+                      href={`${base}/me`}
                       role="menuitem"
                       onClick={() => setUserMenuOpen(false)}
                     >
@@ -456,30 +515,7 @@ export function LearnerAppFrame({
                       <svg className="size-4 shrink-0 text-muted/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
                     </Link>
                     <div className="p-1.5">
-                      {/* Progress shortcuts */}
-                      <p className="px-3 pb-1 pt-2 text-[10px] font-bold uppercase tracking-widest text-muted/60 dark:text-slate-500">Progress</p>
-                      <Link
-                        className="flex min-h-10 items-center gap-2.5 rounded-xl px-3 text-sm font-semibold text-muted hover:bg-paper hover:text-ink dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
-                        href={`${base}/achievements`}
-                        role="menuitem"
-                        onClick={() => setUserMenuOpen(false)}
-                      >
-                        <IconAchievement aria-hidden size={16} />
-                        {nav.achievements}
-                      </Link>
-                      <Link
-                        className="flex min-h-10 items-center gap-2.5 rounded-xl px-3 text-sm font-semibold text-muted hover:bg-paper hover:text-ink dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
-                        href={`${base}/analytics`}
-                        role="menuitem"
-                        onClick={() => setUserMenuOpen(false)}
-                      >
-                        <IconAnalytics aria-hidden size={16} />
-                        {nav.analytics}
-                      </Link>
-
-                      {/* Content */}
-                      <div className="my-1.5 border-t border-ink/8 dark:border-white/5" />
-                      <p className="px-3 pb-1 pt-2 text-[10px] font-bold uppercase tracking-widest text-muted/60 dark:text-slate-500">Content</p>
+                      {/* Quick links */}
                       <Link
                         className="flex min-h-10 items-center gap-2.5 rounded-xl px-3 text-sm font-semibold text-muted hover:bg-paper hover:text-ink dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
                         href={`${base}/daily-standup`}
@@ -489,13 +525,9 @@ export function LearnerAppFrame({
                         <IconExercise aria-hidden size={16} />
                         {nav.dailyStandup}
                       </Link>
-
-                      {/* Account section */}
-                      <div className="my-1.5 border-t border-ink/8 dark:border-white/5" />
-                      <p className="px-3 pb-1 pt-2 text-[10px] font-bold uppercase tracking-widest text-muted/60 dark:text-slate-500">Account</p>
                       <Link
                         className="flex min-h-10 items-center gap-2.5 rounded-xl px-3 text-sm font-semibold text-muted hover:bg-paper hover:text-ink dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
-                        href={`${base}/settings`}
+                        href={`${base}/me?tab=settings`}
                         role="menuitem"
                         onClick={() => setUserMenuOpen(false)}
                       >
@@ -555,11 +587,12 @@ export function LearnerAppFrame({
         <div className="mx-auto grid max-w-lg grid-cols-5 gap-1">
           {mobileNavItems.map((item) => {
             const active = linkActive(item.href);
+            const isReview = item.href === `${base}/flashcards`;
             return (
               <Link
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-xl text-[10px] font-semibold transition-colors",
+                  "relative flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-xl text-[10px] font-semibold transition-colors",
                   active ? "bg-ink text-surface" : "text-muted hover:bg-surface hover:text-ink"
                 )}
                 href={item.href}
@@ -567,6 +600,11 @@ export function LearnerAppFrame({
               >
                 <item.icon aria-hidden size={20} />
                 <span className="max-w-full truncate px-1">{item.label}</span>
+                {isReview && dueCount > 0 ? (
+                  <span className="absolute right-1 top-1 flex size-4 items-center justify-center rounded-full bg-accent text-[8px] font-bold text-white">
+                    {dueCount > 9 ? "9+" : dueCount}
+                  </span>
+                ) : null}
               </Link>
             );
           })}

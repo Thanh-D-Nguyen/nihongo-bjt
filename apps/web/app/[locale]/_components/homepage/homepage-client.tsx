@@ -16,7 +16,6 @@ import { AdBanner } from "./ad-banner";
 import { OnboardingFlow } from "./onboarding-flow";
 import { HomepageSectionsTabs } from "./homepage-sections-tabs";
 import { SidebarGuestCta } from "./sidebar-guest-cta";
-import { XpRankWidget } from "./xp-rank-widget";
 
 interface DailyHubPayload {
   dueReviews: number;

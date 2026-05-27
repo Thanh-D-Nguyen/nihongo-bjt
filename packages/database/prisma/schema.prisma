@@ -1492,6 +1492,9 @@ model MagazineArticle {
   seoDescription       String?             @map("seo_description")
   ogImageUrl           String?             @map("og_image_url")
   status               String              @default("draft") @db.VarChar(32)
+  approvalStatus       String              @default("auto_approved") @map("approval_status") @db.VarChar(32)
+  approvedBy           String?             @map("approved_by") @db.Uuid
+  approvedAt           DateTime?           @map("approved_at") @db.Timestamptz(6)
   publishedAt          DateTime?           @map("published_at") @db.Timestamptz(6)
   expiresAt            DateTime?           @map("expires_at") @db.Timestamptz(6)
   createdAt            DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -1503,6 +1506,7 @@ model MagazineArticle {
   @@unique([widgetKind, contentDate, locale], map: "uq_magazine_kind_date_locale")
   @@index([status, contentDate(sort: Desc), locale], map: "idx_magazine_article_public")
   @@index([widgetKind, status, contentDate(sort: Desc)], map: "idx_magazine_article_kind")
+  @@index([approvalStatus, widgetKind], map: "idx_magazine_article_approval")
   @@map("magazine_article")
   @@schema("daily")
 }

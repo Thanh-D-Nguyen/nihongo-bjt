@@ -167,7 +167,7 @@ export function SearchBookmarkToggle({
         <p className="text-[11px] text-sakura">{labels.error}</p>
         <button
           aria-label={labels.retry}
-          className="inline-flex min-h-10 min-w-10 items-center justify-center self-start rounded-lg border border-ink/12 bg-paper text-ink/85 hover:bg-ink/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
+          className="inline-flex min-h-10 min-w-10 items-center justify-center self-start rounded-lg border border-ink/12 bg-paper text-ink/85 transition-all duration-150 hover:bg-ink/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 active:scale-95"
           onClick={() => setRetryToken((n) => n + 1)}
           title={labels.retry}
           type="button"
@@ -189,7 +189,7 @@ export function SearchBookmarkToggle({
       aria-label={bookmarkLabel}
       aria-pressed={bookmarked}
       className={cn(
-        "inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg border p-0 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30",
+        "inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg border p-0 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 active:scale-95",
         bookmarked
           ? "border-sakura/30 bg-sakura-soft/40 text-sakura hover:bg-sakura-soft/60"
           : "border-ink/12 bg-paper text-ink/85 hover:bg-ink/5",
@@ -252,7 +252,7 @@ export function SearchReadAloudButton({
           <button
             aria-label={labels.stop}
             className={cn(
-              "inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg border border-sakura/25 bg-sakura-soft/30 text-sakura hover:bg-sakura-soft/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30",
+              "inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg border border-sakura/25 bg-sakura-soft/30 text-sakura transition-all duration-150 hover:bg-sakura-soft/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 active:scale-95",
               compact && "min-h-9 min-w-9"
             )}
             onClick={stop}
@@ -265,7 +265,7 @@ export function SearchReadAloudButton({
           <button
             aria-label={readLabel}
             className={cn(
-              "inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg border border-ink/12 bg-paper text-ink/85 hover:bg-ink/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30",
+              "inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg border border-ink/12 bg-paper text-ink/85 transition-all duration-150 hover:bg-ink/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 active:scale-95",
               compact && "min-h-9 min-w-9"
             )}
             onClick={start}

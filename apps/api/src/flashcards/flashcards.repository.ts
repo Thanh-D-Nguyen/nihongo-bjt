@@ -1,7 +1,9 @@
 import { createPrismaClient, type Prisma } from "@nihongo-bjt/database";
 import { scheduleSrsReview, type SrsRating } from "@nihongo-bjt/shared";
 import { randomBytes, randomUUID } from "node:crypto";
-import { BadRequestException, Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from "@nestjs/common";
+
+import { MediaService } from "../media/media.service.js";
 
 function parseAccessibilityMetadata(value: Prisma.JsonValue | null | undefined): {
   altText?: string;
@@ -22,6 +24,10 @@ function parseAccessibilityMetadata(value: Prisma.JsonValue | null | undefined):
 export class FlashcardsRepository {
   private readonly logger = new Logger(FlashcardsRepository.name);
   private readonly prisma = createPrismaClient();
+
+  constructor(
+    @Inject(MediaService) private readonly mediaService: MediaService | null = null
+  ) {}
 
   decks(userId: string, limit: number) {
     return this.prisma.deck.findMany({
@@ -278,28 +284,46 @@ export class FlashcardsRepository {
             }
           });
         } else if (row.imageUrl) {
-          const asset = await tx.mediaAsset.create({
-            data: {
-              accessibility: {
+          // Attempt to proxy-download the external image to MinIO for persistence
+          const proxyAssetId = this.mediaService
+            ? await this.mediaService.proxyDownloadExternalImage({
+                url: row.imageUrl,
+                userId: input.userId,
                 altText: row.frontText.slice(0, 200),
-                reducedMotionSafe: true
-              },
-              byteSize: 1,
-              license: "user_supplied_link",
-              mimeType: "image/jpeg",
-              objectKey: `learning/external-ref/${randomUUID()}`,
-              ownerUserId: input.userId,
-              provenance: { kind: "flashcard_bulk_import_url" },
-              provider: "external_url",
-              rightsStatus: "cleared",
-              sourceUrl: row.imageUrl,
-              status: "active"
-            }
-          });
+                license: "user_supplied_link",
+                provenance: { kind: "flashcard_bulk_import_url", originalUrl: row.imageUrl },
+              })
+            : null;
+
+          let assetId: string;
+          if (proxyAssetId) {
+            assetId = proxyAssetId;
+          } else {
+            // Fallback: store as external_url reference
+            const asset = await tx.mediaAsset.create({
+              data: {
+                accessibility: {
+                  altText: row.frontText.slice(0, 200),
+                  reducedMotionSafe: true
+                },
+                byteSize: 1,
+                license: "user_supplied_link",
+                mimeType: "image/jpeg",
+                objectKey: `learning/external-ref/${randomUUID()}`,
+                ownerUserId: input.userId,
+                provenance: { kind: "flashcard_bulk_import_url" },
+                provider: "external_url",
+                rightsStatus: "cleared",
+                sourceUrl: row.imageUrl,
+                status: "active"
+              }
+            });
+            assetId = asset.id;
+          }
 
           await tx.cardMediaLink.create({
             data: {
-              assetId: asset.id,
+              assetId,
               cardId: card.id,
               role: "primary_image"
             }
@@ -443,27 +467,46 @@ export class FlashcardsRepository {
             }
           });
         } else if (row.imageUrl) {
-          const asset = await tx.mediaAsset.create({
-            data: {
-              accessibility: {
+          // Attempt to proxy-download the external image to MinIO for persistence
+          const proxyAssetId = this.mediaService
+            ? await this.mediaService.proxyDownloadExternalImage({
+                url: row.imageUrl,
+                userId,
                 altText: row.frontText.slice(0, 200),
-                reducedMotionSafe: true
-              },
-              byteSize: 1,
-              license: "user_supplied_link",
-              mimeType: "image/jpeg",
-              objectKey: `learning/external-ref/${randomUUID()}`,
-              ownerUserId: userId,
-              provenance: { kind: "flashcard_edit_url" },
-              provider: "external_url",
-              rightsStatus: "cleared",
-              sourceUrl: row.imageUrl,
-              status: "active"
-            }
-          });
+                license: "user_supplied_link",
+                provenance: { kind: "flashcard_edit_url", originalUrl: row.imageUrl },
+              })
+            : null;
+
+          let assetId: string;
+          if (proxyAssetId) {
+            assetId = proxyAssetId;
+          } else {
+            // Fallback: store as external_url reference
+            const asset = await tx.mediaAsset.create({
+              data: {
+                accessibility: {
+                  altText: row.frontText.slice(0, 200),
+                  reducedMotionSafe: true
+                },
+                byteSize: 1,
+                license: "user_supplied_link",
+                mimeType: "image/jpeg",
+                objectKey: `learning/external-ref/${randomUUID()}`,
+                ownerUserId: userId,
+                provenance: { kind: "flashcard_edit_url" },
+                provider: "external_url",
+                rightsStatus: "cleared",
+                sourceUrl: row.imageUrl,
+                status: "active"
+              }
+            });
+            assetId = asset.id;
+          }
+
           await tx.cardMediaLink.create({
             data: {
-              assetId: asset.id,
+              assetId,
               cardId: card.id,
               role: "primary_image"
             }

@@ -161,12 +161,14 @@ export function SearchDetailPanel({
     return (
       <div
         className={cn(
-          "flex flex-col items-center justify-center gap-3 rounded-2xl border border-ink/8 bg-gradient-to-b from-paper to-surface p-10 text-center",
+          "flex flex-col items-center justify-center gap-4 rounded-3xl border border-ink/6 bg-gradient-to-b from-paper to-surface p-10 text-center shadow-sm",
           variant === "sheet" && "min-h-[40vh]"
         )}
       >
-        <span aria-hidden className="jp-text text-4xl text-ink/10">辞</span>
-        <p className="text-sm text-muted">{labels.detailEmpty}</p>
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/6">
+          <span aria-hidden className="jp-text text-3xl text-accent/30">辞</span>
+        </div>
+        <p className="text-sm font-medium text-muted">{labels.detailEmpty}</p>
       </div>
     );
   }
@@ -177,12 +179,12 @@ export function SearchDetailPanel({
   return (
     <div
       className={cn(
-        "search-detail-entrance flex flex-col overflow-hidden rounded-2xl border border-ink/10 bg-surface shadow-sm",
+        "search-detail-entrance flex flex-col overflow-hidden rounded-3xl border border-ink/8 bg-surface shadow-lg shadow-ink/5",
         variant === "desktop" && "sticky top-24 max-h-[calc(100vh-6rem)]",
         variant === "sheet" && "max-h-[85vh]"
       )}
     >
-      <div className="shrink-0 border-b border-ink/8 bg-paper/80 px-4 py-3">
+      <div className="shrink-0 border-b border-ink/6 bg-gradient-to-b from-paper/90 to-paper/60 px-5 py-4 backdrop-blur-sm">
         <p className="text-[10px] font-bold uppercase tracking-wide text-muted">{labels.lovableProductTag}</p>
         <div className="mt-1 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
           <div className="min-w-0 flex-1">
@@ -204,10 +206,9 @@ export function SearchDetailPanel({
           {showReadToolbar ? (
             <div
               aria-label={labels.detailLearnerToolsRegionLabel}
-              className="flex shrink-0 flex-col gap-1 self-start sm:self-start sm:pt-0.5"
+              className="flex shrink-0 items-center gap-1 self-start sm:pt-0.5"
               role="group"
             >
-              <div className="inline-flex items-center gap-1 rounded-xl border border-ink/8 bg-surface/95 p-1 shadow-sm">
                 {bookmarkKind ? (
                   <SearchBookmarkToggle
                     labels={{
@@ -233,7 +234,6 @@ export function SearchDetailPanel({
                   showTtsNotice={false}
                   text={result.title}
                 />
-              </div>
             </div>
           ) : null}
         </div>
@@ -442,7 +442,7 @@ function LexemeDetailBody({
             {kanjiChars.map((ch, i) => (
               <li key={`${i}-${ch}`}>
                 <Link
-                  className="search-kanji-chip inline-flex min-h-9 min-w-9 items-center justify-center rounded-lg border border-ink/12 bg-paper px-2 text-lg font-bold text-ink hover:border-accent/30 hover:bg-accent-soft/30"
+                    className="search-kanji-chip inline-flex min-h-9 min-w-9 items-center justify-center rounded-lg border border-ink/12 bg-paper px-2 text-lg font-bold text-ink shadow-sm transition-all duration-150 hover:border-accent/30 hover:bg-accent-soft/30 hover:shadow-md active:scale-95"
                   href={`/${locale}/search?q=${encodeURIComponent(ch)}&scope=kanji`}
                 >
                   {ch}
@@ -528,7 +528,7 @@ function KanjiDetailBody({
               return (
                 <li key={`${ch}-${c.position ?? 0}`}>
                   <Link
-                    className="search-kanji-chip flex min-h-10 min-w-10 flex-col items-center justify-center rounded-lg border border-ink/12 bg-paper px-2 py-1 text-lg font-bold text-ink hover:border-accent/30"
+                    className="search-kanji-chip flex min-h-10 min-w-10 flex-col items-center justify-center rounded-lg border border-ink/12 bg-paper px-2 py-1 text-lg font-bold text-ink shadow-sm transition-all duration-150 hover:border-accent/30 hover:shadow-md active:scale-95"
                     href={`/${locale}/search?q=${encodeURIComponent(ch)}&scope=kanji`}
                     title={c.hanViet ?? undefined}
                   >
@@ -622,26 +622,26 @@ function DetailActions({
     <section className="mt-6 space-y-3 border-t border-ink/8 pt-4">
       <div className="flex flex-wrap gap-2">
         <Link
-          className="search-detail-cta inline-flex min-h-10 flex-1 items-center justify-center rounded-xl bg-accent px-3 text-xs font-bold text-white hover:bg-accent-hover sm:flex-none sm:px-4"
+          className="search-detail-cta inline-flex min-h-10 flex-1 items-center justify-center rounded-xl bg-accent px-3 text-xs font-bold text-white shadow-sm shadow-accent/20 transition-all duration-150 hover:bg-accent-hover hover:shadow-md active:scale-95 sm:flex-none sm:px-4"
           href={`/${locale}/quiz`}
         >
           {labels.bjtCtaQuiz}
         </Link>
         <Link
-          className="search-detail-cta inline-flex min-h-10 flex-1 items-center justify-center rounded-xl border border-ink/12 bg-paper px-3 text-xs font-bold text-ink hover:bg-ink/5 sm:flex-none sm:px-4"
+          className="search-detail-cta inline-flex min-h-10 flex-1 items-center justify-center rounded-xl border border-ink/10 bg-paper px-3 text-xs font-bold text-ink shadow-sm transition-all duration-150 hover:border-ink/18 hover:bg-ink/5 hover:shadow-md active:scale-95 sm:flex-none sm:px-4"
           href={`/${locale}/flashcards`}
         >
           {labels.bjtCtaFlashcards}
         </Link>
         <Link
-          className="search-detail-cta inline-flex min-h-10 flex-1 items-center justify-center rounded-xl border border-ink/12 bg-paper px-3 text-xs font-bold text-ink hover:bg-ink/5 sm:flex-none sm:px-4"
+          className="search-detail-cta inline-flex min-h-10 flex-1 items-center justify-center rounded-xl border border-ink/10 bg-paper px-3 text-xs font-bold text-ink shadow-sm transition-all duration-150 hover:border-ink/18 hover:bg-ink/5 hover:shadow-md active:scale-95 sm:flex-none sm:px-4"
           href={`/${locale}/battle`}
         >
           {labels.bjtCtaBattle}
         </Link>
       </div>
       <Link
-        className="search-detail-cta inline-flex min-h-10 w-full items-center justify-center rounded-xl border border-dashed border-ink/15 px-3 text-xs font-semibold text-muted hover:text-ink"
+        className="search-detail-cta inline-flex min-h-10 w-full items-center justify-center rounded-xl border border-dashed border-ink/12 bg-surface px-3 text-xs font-semibold text-muted transition-all duration-150 hover:border-accent/30 hover:bg-accent/5 hover:text-accent active:scale-[0.98]"
         href={`/${locale}/flashcards?source=search&q=${q}`}
       >
         {labels.addToFlashcard}
