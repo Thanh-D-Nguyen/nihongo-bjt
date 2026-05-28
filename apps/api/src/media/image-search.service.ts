@@ -1,9 +1,10 @@
 import { parseServerEnv } from "@nihongo-bjt/config";
-import { createPrismaClient, type PrismaClient } from "@nihongo-bjt/database";
-import { HttpException, Injectable, Logger } from "@nestjs/common";
+import { createPrismaClient, type Prisma, type PrismaClient } from "@nihongo-bjt/database";
+import { HttpException, Inject, Injectable, Logger } from "@nestjs/common";
 
-import { Quota } from "../monetization/monetization.constants.js";
+import { FeatureFlagKey, Quota } from "../monetization/monetization.constants.js";
 import { utcDateKey } from "../monetization/quota-window.util.js";
+import { RuntimeFeatureGateService } from "../operations/runtime-feature-gate.service.js";
 
 export interface ImageSearchResult {
   id: string;
@@ -21,6 +22,10 @@ export class ImageSearchService {
   private readonly logger = new Logger(ImageSearchService.name);
   private readonly env = parseServerEnv(process.env);
   private readonly prisma: PrismaClient = createPrismaClient();
+
+  constructor(
+    @Inject(RuntimeFeatureGateService) private readonly featureGate: RuntimeFeatureGateService
+  ) {}
 
   /**
    * Search images across configured providers, with daily quota enforcement.
@@ -68,6 +73,8 @@ export class ImageSearchService {
   // ── Quota ──
 
   private async consumeImageSearchQuota(userId: string): Promise<void> {
+    if (!(await this.isEnforcementEnabled())) return;
+
     const quotaKey = Quota.image_search_daily;
     const windowKey = utcDateKey();
 
@@ -75,37 +82,55 @@ export class ImageSearchService {
       // Resolve limit from user plan (fallback: 5 for free)
       const plan = await tx.userSubscription.findFirst({
         where: { userId, status: "active" },
-        select: { plan: { select: { planQuotas: { where: { quotaPolicy: { key: quotaKey } }, select: { limitValue: true } } } } }
-      });
-      const limit = plan?.plan?.planQuotas?.[0]?.limitValue ?? 5;
-
-      const updated = await tx.usageCounter.updateMany({
-        data: { value: { increment: 1 } },
-        where: { quotaKey, userId, value: { lt: limit }, windowKey }
-      });
-
-      if (updated.count === 0) {
-        try {
-          await tx.usageCounter.create({ data: { quotaKey, userId, value: 1, windowKey } });
-        } catch {
-          // Row exists → quota exhausted
-          const current = await tx.usageCounter.findUnique({
-            where: { userId_quotaKey_windowKey: { userId, quotaKey, windowKey } }
-          });
-          if (current && current.value >= limit) {
-            throw new HttpException({ code: "QUOTA_EXCEEDED", limit, quotaKey, used: current.value }, 403);
-          }
-          // Race: retry increment
-          const retry = await tx.usageCounter.updateMany({
-            data: { value: { increment: 1 } },
-            where: { quotaKey, userId, value: { lt: limit }, windowKey }
-          });
-          if (retry.count === 0) {
-            throw new HttpException({ code: "QUOTA_EXCEEDED", limit, quotaKey, used: limit }, 403);
+        select: {
+          plan: {
+            select: {
+              planQuotas: {
+                where: { quotaPolicy: { key: quotaKey } },
+                select: { limitValue: true }
+              }
+            }
           }
         }
+      });
+      const limit = plan?.plan?.planQuotas?.[0]?.limitValue ?? 5;
+      if (limit <= 0) {
+        throw new HttpException({ code: "QUOTA_EXCEEDED", limit, quotaKey, used: 0 }, 403);
+      }
+
+      const consumed = await this.incrementUsageCounter(tx, { limit, quotaKey, userId, windowKey });
+      if (!consumed) {
+        const current = await tx.usageCounter.findUnique({
+          where: { userId_quotaKey_windowKey: { userId, quotaKey, windowKey } }
+        });
+        throw new HttpException(
+          { code: "QUOTA_EXCEEDED", limit, quotaKey, used: current?.value ?? limit },
+          403
+        );
       }
     });
+  }
+
+  private async incrementUsageCounter(
+    tx: Prisma.TransactionClient,
+    input: { limit: number; quotaKey: string; userId: string; windowKey: string }
+  ): Promise<boolean> {
+    const rows = await tx.$queryRaw<Array<{ value: number }>>`
+      INSERT INTO "monetization"."usage_counter" ("user_id", "quota_key", "window_key", "value", "updated_at")
+      VALUES (${input.userId}::uuid, ${input.quotaKey}, ${input.windowKey}, 1, now())
+      ON CONFLICT ("user_id", "quota_key", "window_key")
+      DO UPDATE SET "value" = "usage_counter"."value" + 1, "updated_at" = now()
+      WHERE "usage_counter"."value" < ${input.limit}
+      RETURNING "value"
+    `;
+    return rows.length > 0;
+  }
+
+  private async isEnforcementEnabled(): Promise<boolean> {
+    const { enabled } = await this.featureGate.status(FeatureFlagKey.monetization_enforcement, {
+      missingBehavior: "allow"
+    });
+    return enabled;
   }
 
   // ── Unsplash ──

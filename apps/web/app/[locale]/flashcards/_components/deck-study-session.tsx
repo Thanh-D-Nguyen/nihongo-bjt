@@ -654,15 +654,22 @@ export function DeckStudySession({
               cardAnim === "exit" && "fc-card-exit"
             )}
           >
-            <div className={cn("relative [perspective:1400px]", flipped && "fc-card-reveal")}>
-              <button
+            <div className={cn("relative [perspective:1400px]", flipped && "fc-card-reveal")}> 
+              <div
+                role="button"
                 aria-label={flipAriaLabel}
+                tabIndex={0}
                 className={cn(
                   "fc-card-shell relative h-[clamp(23rem,64vh,38rem)] w-full rounded-[1.75rem] p-1.5 text-left outline-none ring-offset-2 transition-[box-shadow,transform] duration-300 hover:shadow-[0_20px_60px_-12px_rgba(0,0,0,0.18)] active:scale-[0.985] motion-reduce:active:scale-100 focus-visible:ring-2 focus-visible:ring-accent sm:h-[clamp(25rem,66vh,40rem)] sm:p-2",
                   "[transform-style:preserve-3d]"
                 )}
                 onClick={toggleFlip}
-                type="button"
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    toggleFlip();
+                  }
+                }}
               >
                 <div
                   className={cn(
@@ -782,7 +789,7 @@ export function DeckStudySession({
                     </div>
                   </div>
                 </div>
-              </button>
+              </div>
             </div>
 
             {primaryAudioUrl ? (
@@ -799,7 +806,6 @@ export function DeckStudySession({
               </div>
             ) : null}
 
-            {/* ── Shiba companion ── */}
             {mentorState ? (
               <ShibaCompanion
                 exiting={mentorState.exiting}
@@ -809,7 +815,6 @@ export function DeckStudySession({
               />
             ) : null}
 
-            {/* ── Rating buttons (appear after flip) ── */}
             {flipped ? (
               <div className="fc-btn-stagger mt-5 flex flex-wrap items-center justify-center gap-3">
                 <button
@@ -841,7 +846,6 @@ export function DeckStudySession({
               </p>
             ) : null}
 
-            {/* ── Prev/Next buttons ── */}
             <div className="mt-5 flex flex-wrap items-stretch justify-between gap-3 sm:gap-4">
               <button
                 className="inline-flex min-h-[3rem] min-w-[7.5rem] flex-1 items-center justify-center gap-1.5 rounded-2xl border-2 border-ink/10 bg-white px-5 text-sm font-black text-ink shadow-sm outline-none ring-offset-2 transition-all hover:border-ink/20 hover:bg-paper hover:shadow-md focus-visible:ring-2 focus-visible:ring-accent disabled:pointer-events-none disabled:opacity-30 sm:flex-none"
@@ -1163,7 +1167,8 @@ function ReadingReveal({
   const isShown = visible || localRevealed;
 
   return (
-    <button
+    <div
+      role="button"
       aria-label={isShown ? reading : revealLabel}
       className={cn(
         "jp-text mt-2 block w-full whitespace-pre-wrap break-words text-left font-semibold leading-relaxed [overflow-wrap:anywhere] transition-all duration-300",
@@ -1180,12 +1185,18 @@ function ReadingReveal({
           setLocalRevealed(true);
         }
       }}
+      onKeyDown={(event) => {
+        if (!isShown && (event.key === "Enter" || event.key === " ")) {
+          event.preventDefault();
+          event.stopPropagation();
+          setLocalRevealed(true);
+        }
+      }}
       tabIndex={isShown ? -1 : 0}
       title={isShown ? undefined : revealLabel}
-      type="button"
     >
       {reading}
-    </button>
+    </div>
   );
 }
 

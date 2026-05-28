@@ -48,12 +48,18 @@ async function main() {
     where: { key: "ads.reduced" }
   });
   const eSuggestCards = await prisma.entitlementDefinition.upsert({
-    create: { key: "flashcard.suggest_cards", description: "AI-powered card suggestions for deck composition" },
+    create: {
+      key: "flashcard.suggest_cards",
+      description: "AI-powered card suggestions for deck composition"
+    },
     update: { description: "AI-powered card suggestions for deck composition" },
     where: { key: "flashcard.suggest_cards" }
   });
   const eAdaptiveGen = await prisma.entitlementDefinition.upsert({
-    create: { key: "flashcard.adaptive_gen", description: "Adaptive flashcard generation based on learning history" },
+    create: {
+      key: "flashcard.adaptive_gen",
+      description: "Adaptive flashcard generation based on learning history"
+    },
     update: { description: "Adaptive flashcard generation based on learning history" },
     where: { key: "flashcard.adaptive_gen" }
   });
@@ -62,40 +68,83 @@ async function main() {
     update: {},
     where: { key: "flashcard_reviews_per_day" }
   });
+  const qImageSearch = await prisma.quotaPolicy.upsert({
+    create: { key: "image_search_daily", windowCode: "day" },
+    update: {},
+    where: { key: "image_search_daily" }
+  });
   const free = await prisma.plan.upsert({
     create: {
-      config: { displayName: "Free", displayNameVi: "Miễn phí", displayNameJa: "無料", price: 0, billingInterval: "month" },
+      config: {
+        displayName: "Free",
+        displayNameVi: "Miễn phí",
+        displayNameJa: "無料",
+        price: 0,
+        billingInterval: "month"
+      },
       nameKey: "plan.free.name",
       slug: "free"
     },
     update: {
-      config: { displayName: "Free", displayNameVi: "Miễn phí", displayNameJa: "無料", price: 0, billingInterval: "month" },
+      config: {
+        displayName: "Free",
+        displayNameVi: "Miễn phí",
+        displayNameJa: "無料",
+        price: 0,
+        billingInterval: "month"
+      },
       status: "active"
     },
     where: { slug: "free" }
   });
   const plus = await prisma.plan.upsert({
     create: {
-      config: { displayName: "Plus", displayNameVi: "Plus", displayNameJa: "プラス", price: 79000, billingInterval: "month", recommended: true },
+      config: {
+        displayName: "Plus",
+        displayNameVi: "Plus",
+        displayNameJa: "プラス",
+        price: 79000,
+        billingInterval: "month",
+        recommended: true
+      },
       nameKey: "plan.plus.name",
       slug: "plus",
       sortOrder: 10
     },
     update: {
-      config: { displayName: "Plus", displayNameVi: "Plus", displayNameJa: "プラス", price: 79000, billingInterval: "month", recommended: true },
+      config: {
+        displayName: "Plus",
+        displayNameVi: "Plus",
+        displayNameJa: "プラス",
+        price: 79000,
+        billingInterval: "month",
+        recommended: true
+      },
       status: "active"
     },
     where: { slug: "plus" }
   });
   const standard = await prisma.plan.upsert({
     create: {
-      config: { displayName: "Standard", displayNameVi: "Standard", displayNameJa: "スタンダード", price: 149000, billingInterval: "month" },
+      config: {
+        displayName: "Standard",
+        displayNameVi: "Standard",
+        displayNameJa: "スタンダード",
+        price: 149000,
+        billingInterval: "month"
+      },
       nameKey: "plan.standard.name",
       slug: "standard",
       sortOrder: 20
     },
     update: {
-      config: { displayName: "Standard", displayNameVi: "Standard", displayNameJa: "スタンダード", price: 149000, billingInterval: "month" },
+      config: {
+        displayName: "Standard",
+        displayNameVi: "Standard",
+        displayNameJa: "スタンダード",
+        price: 149000,
+        billingInterval: "month"
+      },
       status: "active"
     },
     where: { slug: "standard" }
@@ -149,19 +198,41 @@ async function main() {
     where: { planId_quotaPolicyId: { planId: free.id, quotaPolicyId: qFlash.id } }
   });
   await prisma.planQuota.upsert({
+    create: { limitValue: 5, planId: free.id, quotaPolicyId: qImageSearch.id },
+    update: { limitValue: 5 },
+    where: { planId_quotaPolicyId: { planId: free.id, quotaPolicyId: qImageSearch.id } }
+  });
+  await prisma.planQuota.upsert({
     create: { limitValue: 200, planId: plus.id, quotaPolicyId: qFlash.id },
     update: { limitValue: 200 },
     where: { planId_quotaPolicyId: { planId: plus.id, quotaPolicyId: qFlash.id } }
   });
+  await prisma.planQuota.upsert({
+    create: { limitValue: 50, planId: plus.id, quotaPolicyId: qImageSearch.id },
+    update: { limitValue: 50 },
+    where: { planId_quotaPolicyId: { planId: plus.id, quotaPolicyId: qImageSearch.id } }
+  });
   const eFlashcardStyles = await prisma.entitlementDefinition.upsert({
-    create: { key: "flashcard.premium_styles", description: "Access to premium and exclusive flashcard visual styles", category: "flashcard" },
-    update: { description: "Access to premium and exclusive flashcard visual styles", category: "flashcard" },
+    create: {
+      key: "flashcard.premium_styles",
+      description: "Access to premium and exclusive flashcard visual styles",
+      category: "flashcard"
+    },
+    update: {
+      description: "Access to premium and exclusive flashcard visual styles",
+      category: "flashcard"
+    },
     where: { key: "flashcard.premium_styles" }
   });
   await prisma.planQuota.upsert({
     create: { limitValue: 500, planId: standard.id, quotaPolicyId: qFlash.id },
     update: { limitValue: 500 },
     where: { planId_quotaPolicyId: { planId: standard.id, quotaPolicyId: qFlash.id } }
+  });
+  await prisma.planQuota.upsert({
+    create: { limitValue: 200, planId: standard.id, quotaPolicyId: qImageSearch.id },
+    update: { limitValue: 200 },
+    where: { planId_quotaPolicyId: { planId: standard.id, quotaPolicyId: qImageSearch.id } }
   });
   // Link premium styles entitlement to plus and standard plans
   for (const plan of [plus, standard]) {
