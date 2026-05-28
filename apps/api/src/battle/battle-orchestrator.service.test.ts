@@ -77,7 +77,7 @@ describe("BattleOrchestratorService", () => {
     const botResponder = {
       generateResponse: vi.fn().mockResolvedValue(null)
     };
-    const service = new BattleOrchestratorService(repository as any, matchmaking as any, botResponder as any);
+    const service = new BattleOrchestratorService(repository as any, matchmaking as any, botResponder as any, null);
     return { botResponder, matchmaking, repository, service };
   }
 

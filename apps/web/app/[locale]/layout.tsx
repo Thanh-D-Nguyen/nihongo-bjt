@@ -58,6 +58,7 @@ export default async function LearnerLayout({
           kcAccessCookiePresent={kcAccessCookiePresent}
           locale={locale}
           nav={t.nav}
+          presenceLabels={t.presence}
           searchLabels={t.search}
         >
           <div className="site-root" id="main" tabIndex={-1}>

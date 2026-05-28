@@ -2286,7 +2286,8 @@
       "uploading": "Đang tải lên...",
       "uploadError": "Tải ảnh thất bại. Vui lòng thử lại.",
       "memberSince": "Thành viên từ {date}",
-      "editProfile": "Chỉnh sửa hồ sơ"
+      "editProfile": "Chỉnh sửa hồ sơ",
+      "viewPublicProfile": "Xem hồ sơ công khai"
     },
     "stats": {
       "streak": "Chuỗi ngày",
@@ -2355,5 +2356,67 @@
     "disclaimer": "⚠️ Dự đoán chỉ mang tính giải trí và học tiếng Nhật. Không khuyến khích mua xổ số. Hãy tận hưởng nội dung học tập!",
     "premiumCta": "Nâng cấp Premium để xem toàn bộ lịch sử",
     "premiumBenefit": "Xem lịch sử đầy đủ, phân tích chi tiết & từ vựng exclusive"
+  },
+  "presence": {
+    "accept": "Chấp nhận",
+    "challengeReceived": "⚔️ {name} vừa thách đấu bạn!",
+    "decline": "Từ chối",
+    "fallbackChallenger": "Một người học"
+  },
+  "publicProfile": {
+    "metaTitle": "Hồ sơ {name} — NihonGo BJT",
+    "metaTitleFallback": "Hồ sơ người dùng — NihonGo BJT",
+    "metaDescription": "Hồ sơ học viên công khai trên NihonGo BJT",
+    "notFound": "Không tìm thấy người dùng",
+    "notFoundDesc": "Người dùng không tồn tại hoặc đã bị xóa.",
+    "home": "Trang chủ",
+    "errorTitle": "Có lỗi xảy ra",
+    "errorDesc": "Vui lòng thử lại sau.",
+    "privateProfile": "Hồ sơ riêng tư",
+    "privateProfileDesc": "Người dùng này đã đặt hồ sơ ở chế độ riêng tư.",
+    "memberSince": "Thành viên từ",
+    "targetBand": "Mục tiêu BJT",
+    "online": "Đang online",
+    "offline": "Offline",
+    "lastSeen": "Hoạt động lần cuối",
+    "stats": {
+      "streak": "Streak",
+      "longestStreak": "Streak dài nhất",
+      "studyDays": "Ngày học",
+      "achievements": "Thành tích",
+      "battles": "Trận đấu",
+      "winRate": "Tỷ lệ thắng",
+      "days": "ngày",
+      "wins": "T"
+    },
+    "achievements": {
+      "title": "Thành tích nổi bật",
+      "viewAll": "Xem tất cả"
+    },
+    "actions": {
+      "challenge": "⚔️ Thách đấu",
+      "addFriend": "Kết bạn",
+      "pendingFriend": "Đã gửi lời mời",
+      "friends": "Bạn bè",
+      "message": "Nhắn tin",
+      "block": "Chặn",
+      "report": "Báo cáo"
+    },
+    "loginPrompt": "Đăng nhập để xem thêm thông tin",
+    "loginCta": "Đăng nhập",
+    "challengeSent": "Đã gửi thách đấu!",
+    "challengeDesc": "Đang chờ đối thủ chấp nhận...",
+    "loginToChallenge": "Đăng nhập để thách đấu",
+    "friendRequestSent": "Đã gửi lời mời kết bạn!",
+    "purpose": "Mục đích học",
+    "share": "Chia sẻ",
+    "copied": "Đã sao chép!",
+    "relativeJustNow": "vừa xong",
+    "relativeMinutesAgo": "{count} phút trước",
+    "relativeHoursAgo": "{count} giờ trước",
+    "relativeDaysAgo": "{count} ngày trước",
+    "selfPreview": "Đây là cách người khác nhìn thấy hồ sơ của bạn",
+    "copyUrl": "Sao chép link",
+    "editProfile": "Sửa hồ sơ"
   }
 }

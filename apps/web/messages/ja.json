@@ -2286,7 +2286,8 @@
       "uploading": "アップロード中...",
       "uploadError": "アップロード失敗。もう一度お試しください。",
       "memberSince": "{date}から利用中",
-      "editProfile": "プロフィール編集"
+      "editProfile": "プロフィール編集",
+      "viewPublicProfile": "公開プロフィールを見る"
     },
     "stats": {
       "streak": "連続日数",
@@ -2355,5 +2356,67 @@
     "disclaimer": "⚠️ この予測はエンターテイメントおよび学習目的のみです。宝くじの購入を推奨するものではありません。",
     "premiumCta": "Premiumにアップグレードして全履歴を見る",
     "premiumBenefit": "全履歴・詳細分析・限定単語をアンロック"
+  },
+  "presence": {
+    "accept": "承諾",
+    "challengeReceived": "⚔️ {name}さんから対戦リクエストが届きました！",
+    "decline": "辞退",
+    "fallbackChallenger": "ユーザー"
+  },
+  "publicProfile": {
+    "metaTitle": "{name}のプロフィール — NihonGo BJT",
+    "metaTitleFallback": "ユーザープロフィール — NihonGo BJT",
+    "metaDescription": "NihonGo BJTの公開学習プロフィール",
+    "notFound": "ユーザーが見つかりません",
+    "notFoundDesc": "このユーザーは存在しないか、削除されています。",
+    "home": "ホーム",
+    "errorTitle": "エラーが発生しました",
+    "errorDesc": "時間をおいてもう一度お試しください。",
+    "privateProfile": "非公開プロフィール",
+    "privateProfileDesc": "このユーザーはプロフィールを非公開に設定しています。",
+    "memberSince": "登録日",
+    "targetBand": "BJT目標",
+    "online": "オンライン",
+    "offline": "オフライン",
+    "lastSeen": "最終アクティブ",
+    "stats": {
+      "streak": "ストリーク",
+      "longestStreak": "最長ストリーク",
+      "studyDays": "学習日数",
+      "achievements": "実績",
+      "battles": "バトル",
+      "winRate": "勝率",
+      "days": "日",
+      "wins": "勝"
+    },
+    "achievements": {
+      "title": "注目の実績",
+      "viewAll": "すべて見る"
+    },
+    "actions": {
+      "challenge": "⚔️ 対戦する",
+      "addFriend": "友達追加",
+      "pendingFriend": "リクエスト送信済み",
+      "friends": "フレンド",
+      "message": "メッセージ",
+      "block": "ブロック",
+      "report": "通報"
+    },
+    "loginPrompt": "ログインして詳細を見る",
+    "loginCta": "ログイン",
+    "challengeSent": "対戦リクエスト送信！",
+    "challengeDesc": "相手の承諾を待っています...",
+    "loginToChallenge": "ログインして対戦",
+    "friendRequestSent": "フレンドリクエスト送信！",
+    "purpose": "学習目的",
+    "share": "共有",
+    "copied": "コピーしました！",
+    "relativeJustNow": "たった今",
+    "relativeMinutesAgo": "{count}分前",
+    "relativeHoursAgo": "{count}時間前",
+    "relativeDaysAgo": "{count}日前",
+    "selfPreview": "他のユーザーからの見え方",
+    "copyUrl": "URLをコピー",
+    "editProfile": "編集"
   }
 }

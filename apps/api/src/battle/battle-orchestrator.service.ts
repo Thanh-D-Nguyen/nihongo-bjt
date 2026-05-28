@@ -1,5 +1,5 @@
 import { decideBotOption, randomBetween, type BattleBotAnimationState } from "@nihongo-bjt/shared";
-import { BadRequestException, Inject, Injectable, Logger } from "@nestjs/common";
+import { BadRequestException, Inject, Injectable, Logger, Optional } from "@nestjs/common";
 import { randomBytes } from "node:crypto";
 import type { Namespace, Socket } from "socket.io";
 
@@ -8,6 +8,7 @@ import { BattleRepository } from "./battle.repository.js";
 import { generateBattleCommentary, type CommentaryContext, type CommentaryTrigger } from "./bot-battle-commentary.js";
 import { BotChatResponderPort } from "./bot-chat-responder.port.js";
 import { MatchmakingPort } from "./matchmaking.port.js";
+import { PresenceGateway } from "../presence/presence.gateway.js";
 
 const roundTimeMs = 45_000;
 const suspiciousAnswerThresholdMs = 250;
@@ -113,7 +114,8 @@ export class BattleOrchestratorService {
   constructor(
     @Inject(BattleRepository) private readonly battleRepository: BattleRepository,
     @Inject(MatchmakingPort) private readonly matchmaking: MatchmakingPort,
-    @Inject(BotChatResponderPort) private readonly botResponder: BotChatResponderPort
+    @Inject(BotChatResponderPort) private readonly botResponder: BotChatResponderPort,
+    @Optional() @Inject(PresenceGateway) private readonly presenceGateway: PresenceGateway | null
   ) {}
 
   /** Called by BattleGateway.afterInit to provide a stable namespace reference */
@@ -484,6 +486,9 @@ export class BattleOrchestratorService {
     client.emit("battle:user_challenge_sent", payload);
     if (target) {
       client.nsp.to(target.socketId).emit("battle:user_challenge_received", payload);
+    } else if (this.presenceGateway) {
+      // Target not in battle lobby — forward via presence namespace
+      this.presenceGateway.emitToUser(input.targetUserId, "battle:user_challenge_received", payload);
     }
   }
 

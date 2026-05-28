@@ -2286,7 +2286,8 @@
       "uploading": "Uploading...",
       "uploadError": "Upload failed. Please try again.",
       "memberSince": "Member since {date}",
-      "editProfile": "Edit profile"
+      "editProfile": "Edit profile",
+      "viewPublicProfile": "View public profile"
     },
     "stats": {
       "streak": "Streak",
@@ -2355,5 +2356,67 @@
     "disclaimer": "⚠️ These predictions are for entertainment and Japanese learning only. We do not encourage lottery purchases.",
     "premiumCta": "Upgrade to Premium for full history",
     "premiumBenefit": "Unlock full history, detailed analytics & exclusive vocabulary"
+  },
+  "presence": {
+    "accept": "Accept",
+    "challengeReceived": "⚔️ {name} challenged you!",
+    "decline": "Decline",
+    "fallbackChallenger": "Someone"
+  },
+  "publicProfile": {
+    "metaTitle": "{name}'s Profile — NihonGo BJT",
+    "metaTitleFallback": "User Profile — NihonGo BJT",
+    "metaDescription": "Public learner profile on NihonGo BJT",
+    "notFound": "User not found",
+    "notFoundDesc": "This user does not exist or has been deleted.",
+    "home": "Home",
+    "errorTitle": "Something went wrong",
+    "errorDesc": "Please try again later.",
+    "privateProfile": "Private Profile",
+    "privateProfileDesc": "This user has set their profile to private.",
+    "memberSince": "Member since",
+    "targetBand": "BJT Target",
+    "online": "Online",
+    "offline": "Offline",
+    "lastSeen": "Last active",
+    "stats": {
+      "streak": "Streak",
+      "longestStreak": "Longest Streak",
+      "studyDays": "Study Days",
+      "achievements": "Achievements",
+      "battles": "Battles",
+      "winRate": "Win Rate",
+      "days": "days",
+      "wins": "W"
+    },
+    "achievements": {
+      "title": "Featured Achievements",
+      "viewAll": "View All"
+    },
+    "actions": {
+      "challenge": "⚔️ Challenge",
+      "addFriend": "Add Friend",
+      "pendingFriend": "Request Sent",
+      "friends": "Friends",
+      "message": "Message",
+      "block": "Block",
+      "report": "Report"
+    },
+    "loginPrompt": "Log in to see more details",
+    "loginCta": "Log In",
+    "challengeSent": "Challenge sent!",
+    "challengeDesc": "Waiting for opponent to accept...",
+    "loginToChallenge": "Log in to challenge",
+    "friendRequestSent": "Friend request sent!",
+    "purpose": "Learning Purpose",
+    "share": "Share",
+    "copied": "Copied!",
+    "relativeJustNow": "just now",
+    "relativeMinutesAgo": "{count} minutes ago",
+    "relativeHoursAgo": "{count} hours ago",
+    "relativeDaysAgo": "{count} days ago",
+    "selfPreview": "This is how others see your profile",
+    "copyUrl": "Copy URL",
+    "editProfile": "Edit"
   }
 }
