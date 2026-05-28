@@ -54,6 +54,9 @@ export type DeckLabels = DeckComposerLabels & {
   deckStudyPrev: string;
   deckStudyProgressTpl: string;
   deckStudyAutoRead: string;
+  deckStudyHideReading: string;
+  deckStudyShowReading: string;
+  deckStudyTapToRevealReading: string;
   deckStudyHideImages: string;
   deckStudyReadCard: string;
   deckStudyShowImages: string;

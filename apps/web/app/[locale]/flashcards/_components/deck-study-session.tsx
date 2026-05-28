@@ -9,6 +9,11 @@ import { BattleBotAvatar } from "../../../_components/battle-bot-avatar";
 type StudyMode = "flip" | "shuffle" | "quiz";
 type Rating = "again" | "hard" | "good";
 
+/** Detect if text contains Japanese characters (Hiragana, Katakana, CJK) */
+function hasJapanese(text: string): boolean {
+  return /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\u3400-\u4DBF]/.test(text);
+}
+
 export type DeckStudySessionLabels = {
   deckStudyEyebrow: string;
   deckStudyFaceBack: string;
@@ -32,6 +37,9 @@ export type DeckStudySessionLabels = {
   deckStudyPrev: string;
   deckStudyProgressTpl: string;
   deckStudyAutoRead: string;
+  deckStudyHideReading: string;
+  deckStudyShowReading: string;
+  deckStudyTapToRevealReading: string;
   deckStudyHideImages: string;
   deckStudyReadCard: string;
   deckStudyShowImages: string;
@@ -136,6 +144,7 @@ export function DeckStudySession({
   const [exampleFilter, setExampleFilter] = useState("");
   const [examplesOpen, setExamplesOpen] = useState(true);
   const [autoRead, setAutoRead] = useState(false);
+  const [readingVisible, setReadingVisible] = useState(true);
   const [imagesVisible, setImagesVisible] = useState(true);
   const [copiedExampleId, setCopiedExampleId] = useState<string | null>(null);
   const [completed, setCompleted] = useState(false);
@@ -535,6 +544,13 @@ export function DeckStudySession({
               onClick={readCurrentCard}
             />
             <ToolButton
+              active={!readingVisible}
+              ariaPressed
+              icon={<ReadingToggleIcon hidden={!readingVisible} />}
+              label={readingVisible ? labels.deckStudyHideReading : labels.deckStudyShowReading}
+              onClick={() => setReadingVisible((value) => !value)}
+            />
+            <ToolButton
               active={imagesVisible}
               ariaPressed
               disabled={!deckHasImages}
@@ -595,10 +611,12 @@ export function DeckStudySession({
             >
               {current.frontText}
             </p>
-            {current.reading ? (
-              <p className="jp-text mt-3 text-base font-medium text-muted/80 sm:text-lg" lang="ja">
-                {current.reading}
-              </p>
+            {current.reading && hasJapanese(current.frontText) ? (
+              <ReadingReveal
+                reading={current.reading}
+                revealLabel={labels.deckStudyTapToRevealReading}
+                visible={readingVisible}
+              />
             ) : null}
             <div className="mt-7 grid gap-3 sm:grid-cols-2">
               {quizOptions.map((opt) => {
@@ -687,10 +705,12 @@ export function DeckStudySession({
                           >
                             {current.frontText}
                           </p>
-                          {current.reading ? (
-                            <p className="jp-text mt-3 whitespace-pre-wrap break-words text-base font-semibold leading-relaxed text-muted/85 [overflow-wrap:anywhere] sm:text-lg" lang="ja">
-                              {current.reading}
-                            </p>
+                          {current.reading && hasJapanese(current.frontText) ? (
+                            <ReadingReveal
+                              reading={current.reading}
+                              revealLabel={labels.deckStudyTapToRevealReading}
+                              visible={readingVisible}
+                            />
                           ) : null}
                         </div>
                         {showCardImage && primaryImageUrl ? (
@@ -739,10 +759,13 @@ export function DeckStudySession({
                             <p className="jp-text text-sm font-bold leading-relaxed text-ink" lang="ja">
                               {current.frontText}
                             </p>
-                            {current.reading ? (
-                              <p className="jp-text mt-1 text-xs font-semibold leading-relaxed text-muted" lang="ja">
-                                {current.reading}
-                              </p>
+                            {current.reading && hasJapanese(current.frontText) ? (
+                              <ReadingReveal
+                                compact
+                                reading={current.reading}
+                                revealLabel={labels.deckStudyTapToRevealReading}
+                                visible={readingVisible}
+                              />
                             ) : null}
                           </div>
                         </div>
@@ -1094,6 +1117,75 @@ function ImageOffIcon() {
       <path d="M16.8 16.8 15 15l-2 2-3-3-5 5" />
       <path d="M3 6.2V19a2 2 0 0 0 2 2h12.8" />
     </IconBase>
+  );
+}
+
+function ReadingToggleIcon({ hidden }: { hidden: boolean }) {
+  return (
+    <IconBase>
+      {hidden ? (
+        <>
+          <path d="m2 2 20 20" />
+          <path d="M6 6a8 8 0 0 0 12 12" />
+          <path d="M12 4c3.5 0 6.4 2 7.8 5a13 13 0 0 1-1.6 2.5" />
+          <path d="M12 4a8 8 0 0 0-7.8 5 13 13 0 0 0 1.6 2.5" />
+        </>
+      ) : (
+        <>
+          <path d="M4 7V4h16v3" />
+          <path d="M9 20h6" />
+          <path d="M12 4v16" />
+        </>
+      )}
+    </IconBase>
+  );
+}
+
+/** Reading reveal component — blurs reading when hidden, tappable to reveal per-instance */
+function ReadingReveal({
+  compact,
+  reading,
+  revealLabel,
+  visible,
+}: {
+  compact?: boolean;
+  reading: string;
+  revealLabel: string;
+  visible: boolean;
+}) {
+  const [localRevealed, setLocalRevealed] = useState(false);
+
+  // Reset local reveal when global visibility changes or card changes
+  useEffect(() => {
+    setLocalRevealed(false);
+  }, [visible, reading]);
+
+  const isShown = visible || localRevealed;
+
+  return (
+    <button
+      aria-label={isShown ? reading : revealLabel}
+      className={cn(
+        "jp-text mt-2 block w-full whitespace-pre-wrap break-words text-left font-semibold leading-relaxed [overflow-wrap:anywhere] transition-all duration-300",
+        compact
+          ? "text-xs text-muted"
+          : "text-base text-muted/85 sm:text-lg",
+        !isShown && "cursor-pointer select-none rounded-lg bg-ink/[0.06] px-2 py-1 [filter:blur(6px)] hover:bg-ink/[0.1] active:scale-[0.98]",
+        isShown && "cursor-default"
+      )}
+      lang="ja"
+      onClick={(e) => {
+        if (!isShown) {
+          e.stopPropagation();
+          setLocalRevealed(true);
+        }
+      }}
+      tabIndex={isShown ? -1 : 0}
+      title={isShown ? undefined : revealLabel}
+      type="button"
+    >
+      {reading}
+    </button>
   );
 }
 
