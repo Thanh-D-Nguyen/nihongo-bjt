@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { srsRatingSchema } from "./srs.js";
+export { applyShufflePermutation, generateBalancedPositions, generateExamShuffleMap, generateSeededExamShuffleMap, reverseMapDisplayKey, shuffleArray, shuffleQuizOptions, shuffleStringOptions, validateAnswerDistribution } from "./quiz-shuffle.js";
 export { coachingInsight, percentage, toUtcDateKey } from "./analytics.js";
 export { COMPANION_HINT_ALGORITHM_VERSION, companionActionKindSchema, companionHintQuerySchema, companionHintReasonSchema, companionHintResponseSchema, companionReasonCodeSchema } from "./companion-hint.js";
 export { greetingForHour, todayDateKey } from "./daily.js";
