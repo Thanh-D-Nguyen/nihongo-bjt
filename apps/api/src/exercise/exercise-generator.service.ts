@@ -1,4 +1,5 @@
 import { Inject, Injectable, Logger } from "@nestjs/common";
+import { shuffleArray } from "@nihongo-bjt/shared";
 
 import { tokenizeJapanese as morphTokenize } from "../reading-assist/japanese-morphology.js";
 import { ExerciseRepository } from "./exercise.repository.js";
@@ -74,14 +75,14 @@ export class ExerciseGeneratorService {
           3
         );
 
-        const options = shuffleArray([
-          { key: "A", text: point.meaningVi, correct: true },
-          ...distractors.map((d, i) => ({
-            key: String.fromCharCode(66 + i),
+        const shuffled = shuffleArray([
+          { text: point.meaningVi, correct: true },
+          ...distractors.map((d) => ({
             text: d.meaningVi,
             correct: false
           }))
         ]);
+        const options = shuffled.map((o, i) => ({ ...o, key: String.fromCharCode(65 + i) }));
 
         exercises.push({
           exerciseType: "meaning_match",
@@ -109,7 +110,8 @@ export class ExerciseGeneratorService {
           lex.id,
           lex.jlptLevel,
           sense.partOfSpeech,
-          3
+          3,
+          diff
         );
 
         const correctMeaning = sense.meaningVi || lex.shortMeaningVi || "";
@@ -121,14 +123,14 @@ export class ExerciseGeneratorService {
 
         if (distractorMeanings.length < 3) continue;
 
-        const options = shuffleArray([
-          { key: "A", text: correctMeaning, correct: true },
-          ...distractorMeanings.slice(0, 3).map((text, i) => ({
-            key: String.fromCharCode(66 + i),
+        const shuffled = shuffleArray([
+          { text: correctMeaning, correct: true },
+          ...distractorMeanings.slice(0, 3).map((text) => ({
             text,
             correct: false
           }))
         ]);
+        const options = shuffled.map((o, i) => ({ ...o, key: String.fromCharCode(65 + i) }));
 
         exercises.push({
           exerciseType: "meaning_match",
@@ -180,7 +182,8 @@ export class ExerciseGeneratorService {
         lex.id,
         lex.jlptLevel,
         sense?.partOfSpeech ?? null,
-        12
+        12,
+        diff
       );
       const distractorHeadwords = selectClozeDistractors(
         lex.headword,
@@ -189,14 +192,14 @@ export class ExerciseGeneratorService {
 
       if (distractorHeadwords.length < 3) continue;
 
-      const options = shuffleArray([
-        { key: "A", text: lex.headword, correct: true },
-        ...distractorHeadwords.map((text, i) => ({
-          key: String.fromCharCode(66 + i),
+      const shuffledCloze = shuffleArray([
+        { text: lex.headword, correct: true },
+        ...distractorHeadwords.map((text) => ({
           text,
           correct: false
         }))
       ]);
+      const options = shuffledCloze.map((o, i) => ({ ...o, key: String.fromCharCode(65 + i) }));
 
       exercises.push({
         exerciseType: "cloze",
@@ -299,14 +302,14 @@ export class ExerciseGeneratorService {
       );
       if (distractorSentences.length < 3) continue;
 
-      const options = shuffleArray([
-        { key: "A", text: example.translationVi, correct: true },
-        ...distractorSentences.slice(0, 3).map((text, i) => ({
-          key: String.fromCharCode(66 + i),
+      const shuffledTrans = shuffleArray([
+        { text: example.translationVi, correct: true },
+        ...distractorSentences.slice(0, 3).map((text) => ({
           text,
           correct: false
         }))
       ]);
+      const options = shuffledTrans.map((o, i) => ({ ...o, key: String.fromCharCode(65 + i) }));
 
       exercises.push({
         exerciseType: "translation",
@@ -373,15 +376,6 @@ export class ExerciseGeneratorService {
 }
 
 /* ── Helpers ──────────────────────────────────────────────────────────── */
-
-function shuffleArray<T>(arr: T[]): T[] {
-  const shuffled = [...arr];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
-}
 
 function selectClozeDistractors(target: string, candidates: string[]) {
   const targetProfile = scriptProfile(target);

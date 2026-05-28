@@ -279,7 +279,7 @@ export class ExerciseRepository {
     });
   }
 
-  async lexemeDistractors(excludeId: string, level: string | null, partOfSpeech: string | null, count: number) {
+  async lexemeDistractors(excludeId: string, level: string | null, partOfSpeech: string | null, count: number, difficulty?: string) {
     const baseWhere: Prisma.LexemeWhereInput = {
       status: "active",
       id: { not: excludeId }
@@ -312,20 +312,33 @@ export class ExerciseRepository {
       pool = uniqueLexemes([...pool, ...broader]);
     }
 
-    return pool
+    const targetMeaning = target?.senses[0]?.meaningVi ?? "";
+
+    const scored = pool
       .filter((lexeme) => Boolean(lexeme.senses[0]?.meaningVi))
+      // Anti-synonym: reject if meaning is too similar to correct (would create ambiguity)
+      .filter((lexeme) => {
+        if (!targetMeaning) return true;
+        const similarity = vietnameseSimilarity(lexeme.senses[0]!.meaningVi, targetMeaning);
+        return similarity < 0.85; // reject near-duplicates
+      })
       .map((lexeme) => ({
         lexeme,
         score: scoreLexemeDistractor({
           candidate: lexeme,
+          difficulty: difficulty ?? "medium",
           level,
           partOfSpeech,
           target: target ?? null
         })
       }))
-      .sort((a, b) => b.score - a.score)
-      .slice(0, count)
-      .map((item) => item.lexeme);
+      .sort((a, b) => b.score - a.score);
+
+    // Diversity selection: pick top distractors that aren't too similar to each other
+    return selectDiverseDistractors(
+      scored.map((s) => ({ item: s.lexeme, meaning: s.lexeme.senses[0]?.meaningVi ?? "" })),
+      count
+    );
   }
 
   async grammarDistractors(excludeId: string, level: string | null, count: number) {
@@ -352,11 +365,22 @@ export class ExerciseRepository {
       pool = uniqueGrammarPoints([...pool, ...broader]);
     }
 
-    return pool
+    const targetMeaning = target?.meaningVi ?? "";
+
+    const scored = pool
+      // Anti-synonym: reject if meaning is too similar
+      .filter((point) => {
+        if (!targetMeaning) return true;
+        return vietnameseSimilarity(point.meaningVi, targetMeaning) < 0.85;
+      })
       .map((point) => ({ point, score: scoreGrammarDistractor(point, target, level) }))
-      .sort((a, b) => b.score - a.score)
-      .slice(0, count)
-      .map((item) => item.point);
+      .sort((a, b) => b.score - a.score);
+
+    // Diversity selection
+    return selectDiverseDistractors(
+      scored.map((s) => ({ item: s.point, meaning: s.point.meaningVi })),
+      count
+    );
   }
 
   async sentenceTranslationDistractors(input: {
@@ -395,6 +419,8 @@ export class ExerciseRepository {
     );
     return uniqueExamples(examples)
       .filter((example) => example.id !== input.excludeExampleId && example.translationVi !== input.translationVi)
+      // Anti-synonym: reject if translation is near-identical to correct
+      .filter((example) => vietnameseSimilarity(example.translationVi ?? "", input.translationVi) < 0.85)
       .map((example) => ({
         example,
         score: scoreSentenceDistractor(example.translationVi ?? "", input.translationVi)
@@ -714,6 +740,7 @@ type GrammarDistractorCandidate = {
 
 function scoreLexemeDistractor(input: {
   candidate: LexemeDistractorCandidate;
+  difficulty: string;
   level: string | null;
   partOfSpeech: string | null;
   target: LexemeDistractorCandidate | null;
@@ -721,17 +748,41 @@ function scoreLexemeDistractor(input: {
   const candidateSense = input.candidate.senses[0];
   const targetSense = input.target?.senses[0];
   let score = 0;
+
+  // Core matching signals (always important)
   if (input.level && input.candidate.jlptLevel === input.level) score += 30;
   if (posOverlap(candidateSense?.partOfSpeech ?? null, input.partOfSpeech)) score += 40;
+
   if (input.target) {
-    if (candidateSense?.field && candidateSense.field === targetSense?.field) score += 24;
+    // Script similarity (katakana distractors for katakana words, etc.)
     if (scriptProfile(input.candidate.headword) === scriptProfile(input.target.headword)) score += 18;
+    // Headword length proximity
     score += proximityScore(input.candidate.headword.length, input.target.headword.length, 14);
+    // Reading length proximity
     score += proximityScore((input.candidate.reading ?? "").length, (input.target.reading ?? "").length, 8);
-    if (targetSense?.meaningVi) {
-      score += proximityScore(candidateSense?.meaningVi.length ?? 0, targetSense.meaningVi.length, 10);
+
+    // Vietnamese meaning similarity — the KEY signal for quality distractors
+    if (targetSense?.meaningVi && candidateSense?.meaningVi) {
+      const viSim = vietnameseSimilarity(candidateSense.meaningVi, targetSense.meaningVi);
+      // Difficulty-aware: hard → prefer high similarity, easy → prefer medium similarity
+      if (input.difficulty === "hard") {
+        // Hard: distractors with 40-80% similarity are ideal (confusing but distinct)
+        score += viSim >= 0.4 && viSim <= 0.8 ? 50 : viSim >= 0.2 ? 25 : 0;
+      } else if (input.difficulty === "easy") {
+        // Easy: distractors with 10-40% similarity (same domain but clearly different)
+        score += viSim >= 0.1 && viSim <= 0.4 ? 40 : viSim > 0.4 ? 20 : 0;
+      } else {
+        // Medium: 20-60% similarity range
+        score += viSim >= 0.2 && viSim <= 0.6 ? 45 : viSim >= 0.1 ? 20 : 0;
+      }
+      // Meaning length proximity (answers should look similar)
+      score += proximityScore(candidateSense.meaningVi.length, targetSense.meaningVi.length, 12);
     }
+
+    // Semantic field bonus (if available)
+    if (candidateSense?.field && candidateSense.field === targetSense?.field) score += 24;
   }
+
   return score + Math.random();
 }
 
@@ -746,7 +797,10 @@ function scoreGrammarDistractor(
   if (target) {
     score += proximityScore(candidate.pattern.length, target.pattern.length, 18);
     score += sharedCharacterScore(candidate.pattern, target.pattern, 12);
-    score += proximityScore(candidate.meaningVi.length, target.meaningVi.length, 8);
+    // Vietnamese meaning similarity — crucial for grammar confusion
+    const viSim = vietnameseSimilarity(candidate.meaningVi, target.meaningVi);
+    score += viSim >= 0.2 && viSim <= 0.7 ? 40 : viSim >= 0.1 ? 15 : 0;
+    score += proximityScore(candidate.meaningVi.length, target.meaningVi.length, 10);
   }
   return score + Math.random();
 }
@@ -793,6 +847,81 @@ function tokenizeVietnamese(value: string) {
     .normalize("NFC")
     .split(/[^\p{L}\p{N}]+/u)
     .filter((token) => token.length >= 3);
+}
+
+/**
+ * Vietnamese text similarity using Jaccard coefficient of word tokens + character bigrams.
+ * Returns 0-1 (0 = completely different, 1 = identical).
+ * This is the core signal for distractor quality without embeddings.
+ */
+function vietnameseSimilarity(a: string, b: string): number {
+  if (!a || !b) return 0;
+  if (a === b) return 1;
+
+  // Token-level Jaccard (captures semantic overlap)
+  const tokensA = new Set(tokenizeVietnamese(a));
+  const tokensB = new Set(tokenizeVietnamese(b));
+  const tokenUnion = new Set([...tokensA, ...tokensB]);
+  const tokenIntersect = [...tokensA].filter((t) => tokensB.has(t)).length;
+  const tokenJaccard = tokenUnion.size > 0 ? tokenIntersect / tokenUnion.size : 0;
+
+  // Character bigram Jaccard (captures partial word overlap, morphological similarity)
+  const bigramsA = charBigrams(a);
+  const bigramsB = charBigrams(b);
+  const bigramUnion = new Set([...bigramsA, ...bigramsB]);
+  const bigramIntersect = [...bigramsA].filter((bg) => bigramsB.has(bg)).length;
+  const bigramJaccard = bigramUnion.size > 0 ? bigramIntersect / bigramUnion.size : 0;
+
+  // Weighted combination: tokens matter more for meaning, bigrams for form
+  return tokenJaccard * 0.65 + bigramJaccard * 0.35;
+}
+
+function charBigrams(value: string): Set<string> {
+  const normalized = value.toLowerCase().normalize("NFC").replace(/[^\p{L}\p{N}]/gu, "");
+  const bigrams = new Set<string>();
+  for (let i = 0; i < normalized.length - 1; i++) {
+    bigrams.add(normalized.slice(i, i + 2));
+  }
+  return bigrams;
+}
+
+/**
+ * Select diverse distractors: pick from ranked candidates ensuring they're not
+ * too similar TO EACH OTHER (prevents 3 distractors that all mean the same thing).
+ * Uses greedy selection with minimum inter-distractor distance.
+ */
+function selectDiverseDistractors<T>(
+  ranked: Array<{ item: T; meaning: string }>,
+  count: number,
+  minDiversity = 0.6
+): T[] {
+  if (ranked.length <= count) return ranked.map((r) => r.item);
+
+  const selected: Array<{ item: T; meaning: string }> = [];
+  for (const candidate of ranked) {
+    if (selected.length >= count) break;
+
+    // Check diversity: candidate must be sufficiently different from already-selected
+    const tooSimilar = selected.some(
+      (s) => vietnameseSimilarity(s.meaning, candidate.meaning) > minDiversity
+    );
+
+    if (!tooSimilar) {
+      selected.push(candidate);
+    }
+  }
+
+  // If diversity constraint is too strict, relax and fill remaining slots
+  if (selected.length < count) {
+    for (const candidate of ranked) {
+      if (selected.length >= count) break;
+      if (!selected.includes(candidate)) {
+        selected.push(candidate);
+      }
+    }
+  }
+
+  return selected.map((s) => s.item);
 }
 
 function uniqueLexemes<T extends { id: string }>(items: T[]) {

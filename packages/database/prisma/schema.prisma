@@ -878,6 +878,7 @@ model QuizSession {
   correctCount      Int          @default(0) @map("correct_count")
   estimatedScore    Int?         @map("estimated_score")
   estimatedBjtBand  String?      @map("estimated_bjt_band") @db.VarChar(16)
+  shuffleMap        Json?        @map("shuffle_map")
   startedAt         DateTime     @default(now()) @map("started_at") @db.Timestamptz(6)
   completedAt       DateTime?    @map("completed_at") @db.Timestamptz(6)
   test              BjtMockTest  @relation(fields: [testId], references: [id], onDelete: Restrict)

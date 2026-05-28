@@ -1,5 +1,11 @@
 import { createPrismaClient, type Prisma } from "@nihongo-bjt/database";
-import { scoreBjtPractice } from "@nihongo-bjt/shared";
+import {
+  type ExamShuffleMap,
+  generateExamShuffleMap,
+  generateSeededExamShuffleMap,
+  reverseMapDisplayKey,
+  scoreBjtPractice,
+} from "@nihongo-bjt/shared";
 import { Injectable, NotFoundException } from "@nestjs/common";
 
 @Injectable()
@@ -15,6 +21,10 @@ export class QuizRepository {
     return Date.now() >= expiresAt;
   }
 
+  /**
+   * Fetch test template with question IDs + option keys for session start.
+   * Includes isCorrect to compute the balanced shuffle map.
+   */
   private templateForStart(
     id: string,
     tx: Prisma.TransactionClient | typeof this.prisma = this.prisma
@@ -22,8 +32,20 @@ export class QuizRepository {
     return tx.bjtMockTest.findFirst({
       include: {
         sections: {
-          include: { questions: { select: { id: true } } }
-        }
+          include: {
+            questions: {
+              select: {
+                id: true,
+                options: {
+                  select: { optionKey: true, isCorrect: true },
+                  orderBy: { optionKey: "asc" },
+                },
+              },
+              orderBy: { createdAt: "asc" },
+            },
+          },
+          orderBy: { displayOrder: "asc" },
+        },
       },
       where: { id, status: "published" }
     });
@@ -136,6 +158,16 @@ export class QuizRepository {
 
     const totalQuestions = test.sections.reduce((count, s) => count + s.questions.length, 0);
 
+    // Build seeded shuffle map for balanced answer distribution (reproducible for same exam)
+    const allQuestions = test.sections.flatMap((s) =>
+      s.questions.map((q) => ({
+        questionId: q.id,
+        optionKeys: q.options.map((o) => o.optionKey),
+        correctKey: q.options.find((o) => o.isCorrect)?.optionKey ?? "A",
+      }))
+    );
+    const shuffleMap = generateSeededExamShuffleMap(allQuestions, test.id);
+
     let questionNumber = 0;
     const sections = test.sections.map((section) => ({
       code: section.code,
@@ -144,15 +176,24 @@ export class QuizRepository {
       titleVi: section.titleVi,
       questions: section.questions.map((q) => {
         questionNumber++;
+        const permutation = shuffleMap[q.id];
+        const options = permutation
+          ? permutation.map((origKey, i) => {
+              const orig = q.options.find((o) => o.optionKey === origKey);
+              return { key: String.fromCharCode(65 + i), text: orig?.text ?? "" };
+            })
+          : q.options.map((o) => ({ key: o.optionKey, text: o.text }));
+        const correctKey = permutation
+          ? String.fromCharCode(65 + permutation.indexOf(
+              q.options.find((o) => o.isCorrect)?.optionKey ?? "A"
+            ))
+          : q.options.find((o) => o.isCorrect)?.optionKey ?? null;
         return {
           number: questionNumber,
           prompt: q.prompt,
           scenario: q.scenario,
-          options: q.options.map((o) => ({
-            key: o.optionKey,
-            text: o.text
-          })),
-          correctKey: q.options.find((o) => o.isCorrect)?.optionKey ?? null
+          options,
+          correctKey
         };
       })
     }));
@@ -190,11 +231,22 @@ export class QuizRepository {
       0
     );
 
+    // Build exam-level shuffle map: balanced distribution + anti-consecutive
+    const allQuestions = test.sections.flatMap((s) =>
+      s.questions.map((q) => ({
+        questionId: q.id,
+        optionKeys: q.options.map((o) => o.optionKey),
+        correctKey: q.options.find((o) => o.isCorrect)?.optionKey ?? "A",
+      }))
+    );
+    const shuffleMap = generateExamShuffleMap(allQuestions);
+
     const run = async (trx: Prisma.TransactionClient) => {
       const session = await trx.quizSession.create({
         data: {
           testId,
           totalQuestions,
+          shuffleMap: shuffleMap as unknown as Prisma.InputJsonValue,
           userId
         }
       });
@@ -397,29 +449,54 @@ export class QuizRepository {
     }
 
     const sanitizedQuestion = question
-      ? {
-          audioScript: question.audioScript,
-          audioUrl: question.audioUrl,
-          createdAt: question.createdAt,
-          difficulty: question.difficulty,
-          id: question.id,
-          imageUrl: question.imageUrl,
-          imageAlt: question.imageAlt,
-          options: question.options.map((option) => ({
-            createdAt: option.createdAt,
-            id: option.id,
-            optionKey: option.optionKey,
-            questionId: option.questionId,
-            text: option.text
-          })),
-          prompt: question.prompt,
-          scenario: question.scenario,
-          sectionCode: matchedSectionCode,
-          skillTag: question.skillTag,
-          sourceId: question.sourceId,
-          sourceType: question.sourceType,
-          updatedAt: question.updatedAt
-        }
+      ? (() => {
+          // Apply session-level shuffle map for balanced distribution
+          const shuffleMap = session.shuffleMap as ExamShuffleMap | null;
+          const permutation = shuffleMap?.[question.id];
+          let options: Array<{ createdAt: Date; id: string; optionKey: string; questionId: string; text: string }>;
+
+          if (permutation && permutation.length === question.options.length) {
+            // Apply exam-level shuffle: reorder by permutation, assign positional keys
+            const byKey = new Map(question.options.map((o) => [o.optionKey, o]));
+            options = permutation.map((origKey, i) => {
+              const opt = byKey.get(origKey)!;
+              return {
+                createdAt: opt.createdAt,
+                id: opt.id,
+                optionKey: String.fromCharCode(65 + i), // positional display key
+                questionId: opt.questionId,
+                text: opt.text,
+              };
+            });
+          } else {
+            // Fallback for legacy sessions without shuffleMap
+            options = question.options.map((option) => ({
+              createdAt: option.createdAt,
+              id: option.id,
+              optionKey: option.optionKey,
+              questionId: option.questionId,
+              text: option.text
+            }));
+          }
+
+          return {
+            audioScript: question.audioScript,
+            audioUrl: question.audioUrl,
+            createdAt: question.createdAt,
+            difficulty: question.difficulty,
+            id: question.id,
+            imageUrl: question.imageUrl,
+            imageAlt: question.imageAlt,
+            options,
+            prompt: question.prompt,
+            scenario: question.scenario,
+            sectionCode: matchedSectionCode,
+            skillTag: question.skillTag,
+            sourceId: question.sourceId,
+            sourceType: question.sourceType,
+            updatedAt: question.updatedAt
+          };
+        })()
       : null;
 
     const remainingSeconds =
@@ -482,6 +559,13 @@ export class QuizRepository {
       };
     }
 
+    // Reverse-map display key → original DB key using session shuffle map
+    const shuffleMap = session.shuffleMap as ExamShuffleMap | null;
+    const permutation = shuffleMap?.[input.questionId];
+    const resolvedKey = permutation
+      ? reverseMapDisplayKey(permutation, input.optionKey)
+      : input.optionKey; // legacy sessions: key is already original
+
     const option = await this.prisma.bjtQuestionOption.findFirst({
       include: {
         question: {
@@ -491,7 +575,7 @@ export class QuizRepository {
         }
       },
       where: {
-        optionKey: input.optionKey,
+        optionKey: resolvedKey,
         questionId: input.questionId
       }
     });

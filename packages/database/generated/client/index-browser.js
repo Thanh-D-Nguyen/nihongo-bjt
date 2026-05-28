@@ -670,6 +670,7 @@ exports.Prisma.QuizSessionScalarFieldEnum = {
   correctCount: 'correctCount',
   estimatedScore: 'estimatedScore',
   estimatedBjtBand: 'estimatedBjtBand',
+  shuffleMap: 'shuffleMap',
   startedAt: 'startedAt',
   completedAt: 'completedAt'
 };

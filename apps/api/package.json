@@ -6,16 +6,8 @@
   "scripts": {
     "dev": "tsx watch --exclude '**/node_modules/**' --exclude '**/.git/**' --exclude '**/.next/**' --exclude '**/.turbo/**' --exclude '**/dist/**' --exclude '**/coverage/**' src/main.ts",
     "dev:plain": "tsx src/main.ts",
-    "admin:seed": "tsx scripts/seed-admin.ts",
-    "seed:foundation": "tsx scripts/seed-foundation.ts && tsx scripts/seed-admin.ts && tsx scripts/seed-monetization.ts && tsx scripts/seed-career-rpg.ts",
-    "career:seed": "tsx scripts/seed-career-rpg.ts",
-    "monetization:seed": "tsx scripts/seed-monetization.ts",
-    "growth:seed": "tsx scripts/seed-growth.ts",
     "analytics:rollup": "tsx scripts/rollup-analytics.ts",
     "build": "tsc --noEmit",
-    "daily:seed": "tsx scripts/seed-daily.ts",
-    "daily-radar:seed": "tsx scripts/seed-daily-radar.ts",
-    "quiz:seed": "tsx scripts/seed-quiz.ts",
     "search:index": "tsx scripts/index-search.ts",
     "typecheck": "tsc --noEmit",
     "openapi:generate": "tsx scripts/generate-openapi.ts"

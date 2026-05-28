@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { createPrismaClient, Prisma, type PrismaClient } from "@nihongo-bjt/database";
-import { todayDateKey } from "@nihongo-bjt/shared";
+import { shuffleArray, todayDateKey } from "@nihongo-bjt/shared";
 
 type ListFilter = {
   widgetKind?: string;
@@ -73,6 +73,24 @@ function serializeArticle(article: ArticleWithRelations) {
       reading: item.reading,
       meaning: item.meaningVi,
     })),
+    quizzes: article.quizzes.map((quiz) => {
+      const rawOptions = Array.isArray(quiz.options) ? (quiz.options as string[]) : [];
+      // Shuffle options and mark correct answer for frontend
+      const shuffled = shuffleArray(
+        rawOptions.map((text) => ({
+          label: text,
+          isCorrect: text === quiz.correctAnswer,
+        }))
+      );
+      return {
+        questionJp: quiz.questionJp,
+        questionVi: quiz.questionVi,
+        quizType: quiz.quizType,
+        options: shuffled,
+        explanationJp: quiz.explanationJp,
+        explanationVi: quiz.explanationVi,
+      };
+    }),
   };
 }
 

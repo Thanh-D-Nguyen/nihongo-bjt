@@ -1488,6 +1488,10 @@ export function QuizQuestionPanel({
   const [selected, setSelected] = useState<string | null>(null);
   const [confidence, setConfidence] = useState<"sure" | "guessing" | null>(null);
 
+  // Options are pre-shuffled by backend with exam-level balanced distribution
+  // optionKey is already the positional display key (A/B/C/D) after backend shuffle
+  const options = question.question?.options ?? [];
+
   // Reset selected + confidence when question changes
   useEffect(() => {
     setSelected(null);
@@ -1502,11 +1506,11 @@ export function QuizQuestionPanel({
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
 
-      const keyMap: Record<string, string> = { a: "A", b: "B", c: "C", d: "D", "1": "A", "2": "B", "3": "C", "4": "D" };
-      const mapped = keyMap[e.key.toLowerCase()];
-      if (mapped && question.question!.options.some((o) => o.optionKey === mapped)) {
+      const keyMap: Record<string, number> = { a: 0, b: 1, c: 2, d: 3, "1": 0, "2": 1, "3": 2, "4": 3 };
+      const posIndex = keyMap[e.key.toLowerCase()];
+      if (posIndex !== undefined && options[posIndex]) {
         e.preventDefault();
-        handleAnswer(mapped);
+        handleAnswer(options[posIndex].optionKey);
       }
       // F key to toggle flag
       if (e.key.toLowerCase() === "f" && !e.ctrlKey && !e.metaKey) {
@@ -1516,7 +1520,7 @@ export function QuizQuestionPanel({
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [question.question?.id, selected]);
+  }, [question.question?.id, selected, options]);
 
   if (!question.question) return null;
 
@@ -1614,7 +1618,7 @@ export function QuizQuestionPanel({
 
         {/* Options */}
         <div className="flex flex-col gap-2.5">
-          {question.question.options.map((option) => {
+          {options.map((option) => {
             const isSelected = selected === option.optionKey;
             return (
               <button

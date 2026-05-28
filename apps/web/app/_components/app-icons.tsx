@@ -181,3 +181,7 @@ export function IconLevels(props: AppIconProps) {
 export function IconExplore(props: AppIconProps) {
   return path("M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Z M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12Z", props);
 }
+
+export function IconMagazine(props: AppIconProps) {
+  return path("M4 4h16a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z M7 8h4 M7 12h10 M7 16h10", props);
+}

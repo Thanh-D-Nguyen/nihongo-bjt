@@ -346,6 +346,7 @@ export function DeckDetailClient({
           {sortedCards.length > 0 ? (
             <DeckStudySession
               key={deck.id}
+              deckId={deck.id}
               cards={sortedCards.map((row) => ({
                 backText: row.card.backText,
                 examples: row.card.examples ?? [],

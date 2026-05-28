@@ -260,6 +260,7 @@ export function DeckComposerPanel({
   const [imgSearchResults, setImgSearchResults] = useState<Record<string, ImgSuggestion[]>>({});
   const [imgSearchLoading, setImgSearchLoading] = useState<Record<string, boolean>>({});
   const [imgSearchQuotaHit, setImgSearchQuotaHit] = useState(false);
+  const [imgProxyingRowId, setImgProxyingRowId] = useState<string | null>(null);
   const imgSearchLastQuery = useRef<Record<string, string>>({});
 
   const searchImagesForRow = useCallback(async (rowId: string, query: string) => {
@@ -285,6 +286,40 @@ export function DeckComposerPanel({
       setImgSearchResults((p) => ({ ...p, [rowId]: data.images ?? [] }));
     } catch { /* silent */ } finally {
       setImgSearchLoading((p) => ({ ...p, [rowId]: false }));
+    }
+  }, [userId]);
+
+  // ── Proxy image to S3 immediately on selection ──
+  const proxyImageForRow = useCallback(async (rowId: string, rowIndex: number, fullUrl: string, altText: string, source: string) => {
+    // Immediately show the image URL for instant visual feedback
+    setRows((prev) => {
+      const next = [...prev];
+      const x = next[rowIndex];
+      if (x) next[rowIndex] = { ...x, imageAssetId: null, imageUrl: fullUrl };
+      return next;
+    });
+    // Proxy to S3 in background
+    setImgProxyingRowId(rowId);
+    try {
+      const res = await learnerApiFetch("/api/media/proxy-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: fullUrl, userId, altText, source }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as { assetId: string };
+        setRows((prev) => {
+          const next = [...prev];
+          const idx = next.findIndex((r) => r.id === rowId);
+          if (idx >= 0) {
+            next[idx] = { ...next[idx]!, imageAssetId: data.assetId, imageUrl: "" };
+          }
+          return next;
+        });
+      }
+      // If proxy fails, keep fullUrl — backend will retry on deck save
+    } catch { /* silent — fallback to URL mode */ } finally {
+      setImgProxyingRowId(null);
     }
   }, [userId]);
 
@@ -796,208 +831,269 @@ export function DeckComposerPanel({
         </button>
       </div>
 
-      {/* ── Suggest Cards Panel ── */}
+      {/* ── Suggest Cards Modal ── */}
       {suggestOpen ? (
-        <div className="rounded-xl border border-accent/20 bg-gradient-to-br from-accent/5 to-leaf/5 p-4 space-y-3">
-          {suggestPremiumLocked ? (
-            <div className="text-center space-y-2 py-4">
-              <p className="text-sm font-bold text-ink">{labels.suggestPremiumTitle}</p>
-              <p className="text-xs text-muted">{labels.suggestPremiumBody}</p>
-              <button
-                className={`${btnPrimary} min-h-9 px-6 text-xs font-bold`}
-                onClick={() => router.push(`/${locale}/pricing`)}
-                type="button"
-              >
-                {labels.suggestPremiumCta}
-              </button>
-            </div>
-          ) : (
-            <>
-              <div className="flex items-center justify-between">
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-ink/40 backdrop-blur-sm animate-in fade-in duration-200"
+          role="dialog"
+          aria-modal="true"
+          aria-label={labels.suggestTitle}
+          onKeyDown={(e) => { if (e.key === "Escape") setSuggestOpen(false); }}
+        >
+          {/* Backdrop */}
+          <div className="absolute inset-0" onClick={() => setSuggestOpen(false)} aria-hidden="true" />
+
+          {/* Modal panel — bottom sheet on mobile, centered on desktop */}
+          <div className="relative w-full max-w-lg animate-in slide-in-from-bottom-4 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300 rounded-t-3xl sm:rounded-2xl bg-surface shadow-2xl border border-ink/10 max-h-[85vh] sm:max-h-[80vh] flex flex-col overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-ink/8">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-accent/15 to-leaf/15">
+                  <svg className="h-5 w-5 text-accent" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456Z" />
+                  </svg>
+                </div>
                 <div>
-                  <p className="text-sm font-bold text-ink">{labels.suggestTitle}</p>
+                  <h3 className="text-sm font-bold text-ink">{labels.suggestTitle}</h3>
                   <p className="text-xs text-muted">{labels.suggestSubtitle}</p>
                 </div>
-                <button
-                  className="text-xs text-muted hover:text-ink transition-colors"
-                  onClick={() => setSuggestOpen(false)}
-                  type="button"
-                >
-                  {labels.suggestClose}
-                </button>
               </div>
-
-              {/* Level pills */}
-              <div className="space-y-1.5">
-                <p className="text-xs font-bold text-muted">{labels.suggestLevel}</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {["J5", "J4", "J3", "J2", "J1", "J1+"].map((lv) => (
-                    <button
-                      className={`rounded-lg px-3 py-1 text-xs font-bold transition-all ${
-                        suggestLevel === lv
-                          ? "bg-accent text-white shadow-sm"
-                          : "bg-ink/6 text-muted hover:bg-ink/12"
-                      }`}
-                      key={lv}
-                      onClick={() => setSuggestLevel(lv)}
-                      type="button"
-                    >
-                      {lv}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Source pills */}
-              <div className="space-y-1.5">
-                <p className="text-xs font-bold text-muted">{labels.suggestSource}</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {(["lexeme", "kanji", "grammar"] as const).map((src) => {
-                    const label = src === "lexeme" ? labels.suggestSourceLexeme : src === "kanji" ? labels.suggestSourceKanji : labels.suggestSourceGrammar;
-                    const active = suggestSources.includes(src);
-                    return (
-                      <button
-                        className={`rounded-lg px-3 py-1 text-xs font-bold transition-all ${
-                          active
-                            ? "bg-leaf text-white shadow-sm"
-                            : "bg-ink/6 text-muted hover:bg-ink/12"
-                        }`}
-                        key={src}
-                        onClick={() =>
-                          setSuggestSources((prev) =>
-                            active ? prev.filter((s) => s !== src) : [...prev, src]
-                          )
-                        }
-                        type="button"
-                      >
-                        {label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Fetch button */}
               <button
-                className={`${btnPrimary} min-h-9 w-full text-xs font-bold`}
-                disabled={suggestLoading || suggestSources.length === 0}
-                onClick={async () => {
-                  setSuggestLoading(true);
-                  setSuggestPremiumLocked(false);
-                  setSuggestions([]);
-                  setSelectedSuggest(new Set());
-                  try {
-                    const res = await learnerApiFetch("/api/flashcards/cards/suggest", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ level: suggestLevel, sourceTypes: suggestSources, count: 10, userId }),
-                    });
-                    if (res.status === 403) {
-                      setSuggestPremiumLocked(true);
-                      return;
-                    }
-                    if (!res.ok) throw new Error("suggest failed");
-                    const data = await res.json();
-                    setSuggestions(data.suggestions ?? []);
-                    setSuggestFetched(true);
-                  } catch {
-                    setError("Suggest failed");
-                  } finally {
-                    setSuggestLoading(false);
-                  }
-                }}
+                className="flex h-9 w-9 items-center justify-center rounded-xl text-muted hover:bg-ink/8 hover:text-ink transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-accent/35"
+                onClick={() => setSuggestOpen(false)}
                 type="button"
+                aria-label={labels.suggestClose}
               >
-                {suggestLoading ? labels.suggestFetching : labels.suggestFetch}
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
               </button>
+            </div>
 
-              {/* Results */}
-              {suggestFetched && suggestions.length === 0 ? (
-                <p className="text-xs text-muted text-center py-2">{labels.suggestEmpty}</p>
-              ) : null}
-
-              {suggestions.length > 0 ? (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-muted">
-                      {labels.suggestCount.replace("{n}", String(suggestions.length))}
-                    </span>
-                    <button
-                      className="text-xs text-accent hover:underline"
-                      onClick={() => {
-                        if (selectedSuggest.size === suggestions.length) {
-                          setSelectedSuggest(new Set());
-                        } else {
-                          setSelectedSuggest(new Set(suggestions.map((_, i) => i)));
-                        }
-                      }}
-                      type="button"
-                    >
-                      {selectedSuggest.size === suggestions.length ? labels.suggestDeselectAll : labels.suggestSelectAll}
-                    </button>
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+              {suggestPremiumLocked ? (
+                <div className="text-center space-y-3 py-8">
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-100 to-amber-50">
+                    <svg className="h-7 w-7 text-amber-500" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                    </svg>
                   </div>
-
-                  <div className="max-h-60 overflow-y-auto space-y-1.5 rounded-lg border border-ink/8 bg-white/60 p-2">
-                    {suggestions.map((s, i) => (
-                      <label
-                        className={`flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 transition-colors ${
-                          selectedSuggest.has(i) ? "bg-leaf/10" : "hover:bg-ink/4"
-                        }`}
-                        key={i}
-                      >
-                        <input
-                          checked={selectedSuggest.has(i)}
-                          className="accent-leaf"
-                          onChange={() =>
-                            setSelectedSuggest((prev) => {
-                              const next = new Set(prev);
-                              if (next.has(i)) next.delete(i);
-                              else next.add(i);
-                              return next;
-                            })
-                          }
-                          type="checkbox"
-                        />
-                        <span className="flex-1 text-xs">
-                          <span className="font-bold text-ink">{s.front}</span>
-                          {s.reading ? <span className="ml-1 text-muted">({s.reading})</span> : null}
-                          <span className="ml-2 text-muted">— {s.back}</span>
-                        </span>
-                        <span className="shrink-0 rounded bg-ink/6 px-1.5 py-0.5 text-[10px] text-muted">
-                          {s.sourceType}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-
+                  <p className="text-sm font-bold text-ink">{labels.suggestPremiumTitle}</p>
+                  <p className="text-xs text-muted max-w-xs mx-auto">{labels.suggestPremiumBody}</p>
                   <button
-                    className={`${btnPrimary} min-h-9 w-full text-xs font-bold`}
-                    disabled={selectedSuggest.size === 0}
-                    onClick={() => {
-                      const newRows: DraftRow[] = Array.from(selectedSuggest)
-                        .sort()
-                        .map((i) => ({
-                          back: suggestions[i]!.back,
-                          front: suggestions[i]!.front,
-                          id: crypto.randomUUID(),
-                          imageAssetId: null,
-                          imageUrl: "",
-                          reading: suggestions[i]!.reading ?? "",
-                        }));
-                      setRows((prev) => [...prev, ...newRows].slice(0, 200));
+                    className={`${btnPrimary} min-h-11 px-8 text-sm font-bold`}
+                    onClick={() => router.push(`/${locale}/pricing`)}
+                    type="button"
+                  >
+                    {labels.suggestPremiumCta}
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {/* Level selection */}
+                  <div className="space-y-2">
+                    <p className="text-xs font-bold text-muted uppercase tracking-wide">{labels.suggestLevel}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {["J5", "J4", "J3", "J2", "J1", "J1+"].map((lv) => (
+                        <button
+                          className={`rounded-xl px-4 py-2 text-xs font-bold transition-all active:scale-95 ${
+                            suggestLevel === lv
+                              ? "bg-accent text-white shadow-md shadow-accent/25"
+                              : "bg-ink/6 text-muted hover:bg-ink/12 hover:shadow-sm"
+                          }`}
+                          key={lv}
+                          onClick={() => setSuggestLevel(lv)}
+                          type="button"
+                        >
+                          {lv}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Source selection */}
+                  <div className="space-y-2">
+                    <p className="text-xs font-bold text-muted uppercase tracking-wide">{labels.suggestSource}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {(["lexeme", "kanji", "grammar"] as const).map((src) => {
+                        const label = src === "lexeme" ? labels.suggestSourceLexeme : src === "kanji" ? labels.suggestSourceKanji : labels.suggestSourceGrammar;
+                        const active = suggestSources.includes(src);
+                        return (
+                          <button
+                            className={`rounded-xl px-4 py-2 text-xs font-bold transition-all active:scale-95 ${
+                              active
+                                ? "bg-leaf text-white shadow-md shadow-leaf/25"
+                                : "bg-ink/6 text-muted hover:bg-ink/12 hover:shadow-sm"
+                            }`}
+                            key={src}
+                            onClick={() =>
+                              setSuggestSources((prev) =>
+                                active ? prev.filter((s) => s !== src) : [...prev, src]
+                              )
+                            }
+                            type="button"
+                          >
+                            {label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Fetch button */}
+                  <button
+                    className={`${btnPrimary} min-h-11 w-full text-sm font-bold relative overflow-hidden`}
+                    disabled={suggestLoading || suggestSources.length === 0}
+                    onClick={async () => {
+                      setSuggestLoading(true);
+                      setSuggestPremiumLocked(false);
                       setSuggestions([]);
                       setSelectedSuggest(new Set());
-                      setSuggestOpen(false);
-                      setSuggestFetched(false);
+                      try {
+                        const res = await learnerApiFetch("/api/flashcards/cards/suggest", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ level: suggestLevel, sourceTypes: suggestSources, count: 10, userId }),
+                        });
+                        if (res.status === 403) {
+                          setSuggestPremiumLocked(true);
+                          return;
+                        }
+                        if (!res.ok) throw new Error("suggest failed");
+                        const data = await res.json();
+                        setSuggestions(data.suggestions ?? []);
+                        setSuggestFetched(true);
+                        // Auto-fill deck title from suggestion if title is empty
+                        if (!titleVi.trim() && data.suggestedTitleVi) {
+                          setTitleVi(data.suggestedTitleVi);
+                        }
+                        if (!titleJa.trim() && data.suggestedTitleJa) {
+                          setTitleJa(data.suggestedTitleJa);
+                        }
+                      } catch {
+                        setError("Suggest failed");
+                      } finally {
+                        setSuggestLoading(false);
+                      }
                     }}
                     type="button"
                   >
-                    {labels.suggestAddSelected} ({selectedSuggest.size})
+                    {suggestLoading ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Z" />
+                        </svg>
+                        {labels.suggestFetching}
+                      </span>
+                    ) : labels.suggestFetch}
                   </button>
-                </div>
-              ) : null}
-            </>
-          )}
+
+                  {/* Results */}
+                  {suggestFetched && suggestions.length === 0 ? (
+                    <div className="text-center py-6">
+                      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-ink/5 mb-2">
+                        <svg className="h-6 w-6 text-muted" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                        </svg>
+                      </div>
+                      <p className="text-xs text-muted">{labels.suggestEmpty}</p>
+                    </div>
+                  ) : null}
+
+                  {suggestions.length > 0 ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-ink">
+                          {labels.suggestCount.replace("{n}", String(suggestions.length))}
+                        </span>
+                        <button
+                          className="text-xs font-medium text-accent hover:text-accent/80 transition-colors active:scale-95"
+                          onClick={() => {
+                            if (selectedSuggest.size === suggestions.length) {
+                              setSelectedSuggest(new Set());
+                            } else {
+                              setSelectedSuggest(new Set(suggestions.map((_, i) => i)));
+                            }
+                          }}
+                          type="button"
+                        >
+                          {selectedSuggest.size === suggestions.length ? labels.suggestDeselectAll : labels.suggestSelectAll}
+                        </button>
+                      </div>
+
+                      <div className="max-h-56 overflow-y-auto space-y-1 rounded-xl border border-ink/8 bg-ink/[0.02] p-1.5">
+                        {suggestions.map((s, i) => (
+                          <label
+                            className={`flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 transition-all ${
+                              selectedSuggest.has(i)
+                                ? "bg-leaf/10 border border-leaf/20 shadow-sm"
+                                : "border border-transparent hover:bg-ink/4"
+                            }`}
+                            key={i}
+                          >
+                            <input
+                              checked={selectedSuggest.has(i)}
+                              className="h-4 w-4 accent-leaf rounded"
+                              onChange={() =>
+                                setSelectedSuggest((prev) => {
+                                  const next = new Set(prev);
+                                  if (next.has(i)) next.delete(i);
+                                  else next.add(i);
+                                  return next;
+                                })
+                              }
+                              type="checkbox"
+                            />
+                            <span className="flex-1 min-w-0">
+                              <span className="block text-sm font-bold text-ink truncate">{s.front}</span>
+                              <span className="block text-xs text-muted truncate">
+                                {s.reading ? `${s.reading} — ` : ""}{s.back}
+                              </span>
+                            </span>
+                            <span className="shrink-0 rounded-lg bg-ink/6 px-2 py-0.5 text-[10px] font-medium text-muted">
+                              {s.sourceType}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                </>
+              )}
+            </div>
+
+            {/* Footer — sticky add button */}
+            {suggestions.length > 0 && !suggestPremiumLocked ? (
+              <div className="border-t border-ink/8 px-5 py-3 bg-surface/80 backdrop-blur-sm">
+                <button
+                  className={`${btnPrimary} min-h-11 w-full text-sm font-bold relative overflow-hidden`}
+                  disabled={selectedSuggest.size === 0}
+                  onClick={() => {
+                    const newRows: DraftRow[] = Array.from(selectedSuggest)
+                      .sort()
+                      .map((i) => ({
+                        back: suggestions[i]!.back,
+                        front: suggestions[i]!.front,
+                        id: crypto.randomUUID(),
+                        imageAssetId: null,
+                        imageUrl: "",
+                        reading: suggestions[i]!.reading ?? "",
+                      }));
+                    setRows((prev) => [...prev, ...newRows].slice(0, 200));
+                    setSuggestions([]);
+                    setSelectedSuggest(new Set());
+                    setSuggestOpen(false);
+                    setSuggestFetched(false);
+                  }}
+                  type="button"
+                >
+                  {labels.suggestAddSelected} ({selectedSuggest.size})
+                </button>
+              </div>
+            ) : null}
+          </div>
         </div>
       ) : null}
 
@@ -1098,17 +1194,36 @@ export function DeckComposerPanel({
                     </button>
                   </div>
                   <div className="flex items-center gap-1">
-                    <button
-                      aria-label={`Preview ${displayNum}`}
-                      className="shrink-0 rounded-md p-1.5 text-muted/50 hover:bg-accent-soft hover:text-accent focus-visible:ring-2 focus-visible:ring-accent"
-                      onClick={() => setPreviewRowId(r.id)}
-                      type="button"
-                    >
-                      <svg aria-hidden className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" strokeLinecap="round" />
-                        <circle cx="12" cy="12" r="3" />
-                      </svg>
-                    </button>
+                    {/* Inline preview tooltip on hover */}
+                    <div className="group/preview relative">
+                      <button
+                        aria-label={`Preview ${displayNum}`}
+                        className="shrink-0 rounded-md p-1.5 text-muted/50 hover:bg-accent-soft hover:text-accent focus-visible:ring-2 focus-visible:ring-accent"
+                        onClick={() => setPreviewRowId(previewRowId === r.id ? null : r.id)}
+                        type="button"
+                      >
+                        <svg aria-hidden className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" strokeLinecap="round" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                      </button>
+                      {/* Hover tooltip - positioned to the left on desktop */}
+                      {(r.front.trim() || r.back.trim()) ? (
+                        <div className="pointer-events-none absolute right-0 top-full z-30 mt-1.5 w-64 opacity-0 transition-all duration-200 group-hover/preview:pointer-events-auto group-hover/preview:opacity-100 group-focus-within/preview:pointer-events-auto group-focus-within/preview:opacity-100">
+                          <div className="overflow-hidden rounded-xl border border-ink/10 bg-paper shadow-lg ring-1 ring-ink/[0.03]">
+                            <div className="border-b border-accent/10 bg-accent-soft/20 px-3 py-2">
+                              <p className="text-[10px] font-black uppercase tracking-wider text-accent">{labels.composerTermLabel}</p>
+                              <p className="mt-0.5 text-sm font-bold text-ink line-clamp-2" lang="ja">{r.front || "—"}</p>
+                              {r.reading ? <p className="mt-0.5 text-xs text-muted" lang="ja">{r.reading}</p> : null}
+                            </div>
+                            <div className="px-3 py-2">
+                              <p className="text-[10px] font-black uppercase tracking-wider text-leaf">{labels.composerDefinitionLabel}</p>
+                              <p className="mt-0.5 text-xs leading-relaxed text-ink line-clamp-3">{r.back || "—"}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
                     <button
                       aria-label={`${labels.composerDeleteRowAria} ${displayNum}`}
                       className="shrink-0 rounded-md p-1.5 text-muted/50 hover:bg-sakura/10 hover:text-sakura focus-visible:ring-2 focus-visible:ring-sakura"
@@ -1232,7 +1347,11 @@ export function DeckComposerPanel({
                     {r.imageUrl.trim() ? (
                       <ImgWithFallback alt="" className="h-full w-full object-cover" src={r.imageUrl.trim()} />
                     ) : r.imageAssetId ? (
-                      <span className="px-1 text-center text-[9px] font-bold text-leaf">{labels.composerImageAttached}</span>
+                      <div className="flex h-full w-full items-center justify-center bg-leaf/10">
+                        <svg className="h-4 w-4 text-leaf" fill="currentColor" viewBox="0 0 20 20">
+                          <path clipRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" fillRule="evenodd" />
+                        </svg>
+                      </div>
                     ) : (
                       <svg aria-hidden className="h-5 w-5 text-muted/40 group-hover:text-leaf" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <rect height="16" rx="2" width="18" x="3" y="4" strokeWidth="1.5" />
@@ -1240,6 +1359,11 @@ export function DeckComposerPanel({
                         <path d="m21 15-5-5L5 21" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
                       </svg>
                     )}
+                    {imgProxyingRowId === r.id ? (
+                      <div className="absolute inset-0 flex items-center justify-center bg-paper/80">
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-leaf/30 border-t-leaf" />
+                      </div>
+                    ) : null}
                     {uploadingRowId === r.id ? (
                       <div className="absolute inset-0 flex items-center justify-center bg-paper/80 text-[9px] font-bold text-ink">
                         {labels.composerUploading}
@@ -1324,16 +1448,12 @@ export function DeckComposerPanel({
                       {imgSearchResults[r.id]!.map((img) => (
                         <button
                           className={`group/img relative aspect-square overflow-hidden rounded-lg border transition-all duration-150 hover:ring-2 hover:ring-leaf/40 ${
-                            r.imageUrl === img.fullUrl ? "border-leaf ring-2 ring-leaf/30" : "border-ink/10"
+                            r.imageUrl === img.fullUrl || (r.imageAssetId && imgProxyingRowId !== r.id) ? "border-leaf ring-2 ring-leaf/30" : "border-ink/10"
                           }`}
                           key={img.id}
+                          disabled={imgProxyingRowId === r.id}
                           onClick={() => {
-                            setRows((prev) => {
-                              const next = [...prev];
-                              const x = next[rowIndex];
-                              if (x) next[rowIndex] = { ...x, imageAssetId: null, imageUrl: img.fullUrl };
-                              return next;
-                            });
+                            void proxyImageForRow(r.id, rowIndex, img.fullUrl, r.front.slice(0, 200), img.source);
                           }}
                           type="button"
                         >
@@ -1343,7 +1463,17 @@ export function DeckComposerPanel({
                             loading="lazy"
                             src={img.thumbUrl}
                           />
-                          {r.imageUrl === img.fullUrl ? (
+                          {r.imageUrl === img.fullUrl && imgProxyingRowId === r.id ? (
+                            <div className="absolute inset-0 flex items-center justify-center bg-leaf/20">
+                              <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/60 border-t-white" />
+                            </div>
+                          ) : r.imageAssetId && imgProxyingRowId !== r.id ? (
+                            <div className="absolute inset-0 flex items-center justify-center bg-leaf/20">
+                              <svg className="h-4 w-4 text-white drop-shadow" fill="currentColor" viewBox="0 0 20 20">
+                                <path clipRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" fillRule="evenodd" />
+                              </svg>
+                            </div>
+                          ) : r.imageUrl === img.fullUrl ? (
                             <div className="absolute inset-0 flex items-center justify-center bg-leaf/20">
                               <svg className="h-4 w-4 text-white drop-shadow" fill="currentColor" viewBox="0 0 20 20">
                                 <path clipRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" fillRule="evenodd" />

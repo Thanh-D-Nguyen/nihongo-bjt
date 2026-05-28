@@ -84,6 +84,39 @@ export class MediaController {
     return { images };
   }
 
+  @Post("proxy-image")
+  @ApiOperation({ summary: "Download an external image URL, store in MinIO, return assetId." })
+  @ApiCreatedResponse({ description: "Proxied image asset ID." })
+  async proxyImage(@CurrentUser() user: KeycloakAuthenticatedUser | undefined, @Body() body: unknown) {
+    const raw = body as Record<string, unknown>;
+    const userId = resolveLearnerUserId(user, raw.userId as string | undefined, { required: true })!;
+    const url = typeof raw.url === "string" ? raw.url.trim() : "";
+    if (!url || url.length > 2048) {
+      throw new BadRequestException("url is required and must be <= 2048 chars");
+    }
+    try {
+      new URL(url);
+    } catch {
+      throw new BadRequestException("url must be a valid URL");
+    }
+    const altText = typeof raw.altText === "string" ? raw.altText.slice(0, 200) : "";
+    const source = typeof raw.source === "string" ? raw.source.slice(0, 50) : "user_selected";
+
+    const assetId = await this.mediaService.proxyDownloadExternalImage({
+      url,
+      userId,
+      altText,
+      license: "user_supplied_link",
+      provenance: { kind: "learner_image_proxy", originalUrl: url, source },
+    });
+
+    if (!assetId) {
+      throw new BadRequestException("Failed to download image. The URL may be inaccessible or not a valid image.");
+    }
+
+    return { assetId };
+  }
+
   @Post("presign-upload")
   @ApiOperation({
     summary: "Create `media_asset` + presigned PUT URL; `rightsStatus` starts **pending_review** (provenance in DB).",

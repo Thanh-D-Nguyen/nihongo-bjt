@@ -16,6 +16,7 @@ import { AdBanner } from "./ad-banner";
 import { OnboardingFlow } from "./onboarding-flow";
 import { HomepageSectionsTabs } from "./homepage-sections-tabs";
 import { SidebarGuestCta } from "./sidebar-guest-cta";
+import { XpRankWidget } from "./xp-rank-widget";
 
 interface DailyHubPayload {
   dueReviews: number;
@@ -23,7 +24,15 @@ interface DailyHubPayload {
   today: string;
 }
 
-export function HomepageClient({ labels, locale, pushBannerLabels }: { labels: HomepageLabels; locale: string; pushBannerLabels: PushBannerLabels }) {
+export function HomepageClient({
+  labels,
+  locale,
+  pushBannerLabels
+}: {
+  labels: HomepageLabels;
+  locale: string;
+  pushBannerLabels: PushBannerLabels;
+}) {
   const auth = useKeycloakAuth();
   const userId = auth.userId ?? "";
   const isLoggedIn = Boolean(userId);
@@ -86,7 +95,6 @@ export function HomepageClient({ labels, locale, pushBannerLabels }: { labels: H
       setAnalytics(null);
       setAnalyticsReady(true);
     }
-
   }, [locale, userId]);
 
   // Check onboarding status for logged-in users
@@ -128,10 +136,12 @@ export function HomepageClient({ labels, locale, pushBannerLabels }: { labels: H
   return (
     <main className="space-y-8 overflow-x-hidden pb-12 pt-2 sm:pt-6">
       {showOnboarding && (
-        <OnboardingFlow onComplete={() => {
-          setShowOnboarding(false);
-          setOnboardingJustCompleted(true);
-        }} />
+        <OnboardingFlow
+          onComplete={() => {
+            setShowOnboarding(false);
+            setOnboardingJustCompleted(true);
+          }}
+        />
       )}
       <PushPromptBanner labels={pushBannerLabels} />
 
@@ -209,7 +219,6 @@ export function HomepageClient({ labels, locale, pushBannerLabels }: { labels: H
           )}
         </div>
       </div>
-
     </main>
   );
 }

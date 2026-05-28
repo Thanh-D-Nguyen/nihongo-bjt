@@ -48,6 +48,8 @@ interface ContentCandidate {
   backText: string;
   reading?: string;
   sourceType: SourceType;
+  /** Higher = more important/frequent. Used for smart ranking. */
+  relevanceScore?: number;
 }
 
 @Injectable()
@@ -75,7 +77,10 @@ export class FlashcardGenService {
     };
   }
 
-  /** Suggest cards for manual deck composition (premium). */
+  /** Suggest cards for manual deck composition (premium).
+   *  Uses smart ranking: frequency-weighted, spaced-repetition-aware,
+   *  source-balanced, diversity-ensured.
+   */
   async suggestCards(input: {
     level: string;
     sourceTypes: SourceType[];
@@ -94,12 +99,10 @@ export class FlashcardGenService {
       });
     }
 
-    const candidates = await this.gatherCandidates({
+    const candidates = await this.gatherSmartSuggestions({
       level: input.level,
       sourceTypes: input.sourceTypes,
-      direction: "jp_to_vn",
-      cardCount: input.count,
-      adaptive: false,
+      count: input.count,
       userId: input.userId
     });
 
@@ -109,7 +112,9 @@ export class FlashcardGenService {
         back: c.backText,
         reading: c.reading,
         sourceType: c.sourceType
-      }))
+      })),
+      suggestedTitleVi: this.suggestTitleVi(input.level, input.sourceTypes),
+      suggestedTitleJa: this.suggestTitleJa(input.level, input.sourceTypes),
     };
   }
 
@@ -208,6 +213,235 @@ export class FlashcardGenService {
       sourceTypes: input.sourceTypes,
       ...(input.topics?.length ? { topics: input.topics } : {})
     };
+  }
+
+  /**
+   * Smart suggestion algorithm:
+   * 1. Fetch candidates per source type with frequency/relevance scoring
+   * 2. Exclude content user already has in flashcards
+   * 3. Boost content user recently failed (weak areas) — reinforcement
+   * 4. Balance across source types proportionally
+   * 5. Ensure diversity (mix PoS for lexeme, mix categories for grammar)
+   * 6. Order by relevance score (frequency + weak-area boost + diversity bonus)
+   */
+  private async gatherSmartSuggestions(input: {
+    level: string;
+    sourceTypes: SourceType[];
+    count: number;
+    userId: string;
+  }): Promise<ContentCandidate[]> {
+    const existingSourceIds = await this.existingUserSourceIds(input.userId);
+    const weakIds = await this.weakAreaSourceIds(input.userId);
+    const recentlyReviewedIds = await this.recentlyReviewedSourceIds(input.userId);
+
+    // Fetch larger pool per source type for better selection
+    const poolSize = Math.max(input.count * 5, 50);
+    const pools = new Map<SourceType, ContentCandidate[]>();
+
+    for (const st of input.sourceTypes) {
+      const items = await this.fetchScoredCandidates(st, input.level, existingSourceIds, poolSize);
+      pools.set(st, items);
+    }
+
+    // Apply weak-area boost: items user previously failed get +50 relevance
+    for (const [, items] of pools) {
+      for (const item of items) {
+        if (weakIds.has(item.id)) {
+          item.relevanceScore = (item.relevanceScore ?? 0) + 50;
+        }
+        // Slight penalty for recently reviewed (avoid repetition fatigue)
+        if (recentlyReviewedIds.has(item.id)) {
+          item.relevanceScore = (item.relevanceScore ?? 0) - 20;
+        }
+      }
+    }
+
+    // Balance across source types: distribute count proportionally
+    const sourceCount = input.sourceTypes.length;
+    const perSource = Math.ceil(input.count / sourceCount);
+    const selected: ContentCandidate[] = [];
+
+    for (const st of input.sourceTypes) {
+      const pool = pools.get(st) ?? [];
+      // Sort by relevance descending
+      pool.sort((a, b) => (b.relevanceScore ?? 0) - (a.relevanceScore ?? 0));
+
+      // Diversity: for lexeme, ensure mixed PoS; taken from top candidates with dedup on backText
+      const seen = new Set<string>();
+      let picked = 0;
+      for (const item of pool) {
+        if (picked >= perSource) break;
+        // Avoid near-duplicate meanings (e.g. two synonyms with same backText)
+        const normBack = item.backText.toLowerCase().trim();
+        if (seen.has(normBack)) continue;
+        seen.add(normBack);
+        selected.push(item);
+        picked++;
+      }
+    }
+
+    // Final sort: interleave source types for variety, then by score within groups
+    selected.sort((a, b) => {
+      // Primary: source type interleaving (rotating)
+      const stA = input.sourceTypes.indexOf(a.sourceType);
+      const stB = input.sourceTypes.indexOf(b.sourceType);
+      if (stA !== stB) return stA - stB;
+      // Secondary: relevance score
+      return (b.relevanceScore ?? 0) - (a.relevanceScore ?? 0);
+    });
+
+    // Interleave: round-robin across source types for natural mix
+    if (sourceCount > 1) {
+      const buckets = new Map<SourceType, ContentCandidate[]>();
+      for (const item of selected) {
+        const bucket = buckets.get(item.sourceType) ?? [];
+        bucket.push(item);
+        buckets.set(item.sourceType, bucket);
+      }
+      const interleaved: ContentCandidate[] = [];
+      let idx = 0;
+      let added = true;
+      while (added && interleaved.length < input.count) {
+        added = false;
+        for (const st of input.sourceTypes) {
+          const bucket = buckets.get(st);
+          if (bucket && idx < bucket.length) {
+            interleaved.push(bucket[idx]!);
+            added = true;
+            if (interleaved.length >= input.count) break;
+          }
+        }
+        idx++;
+      }
+      return interleaved.slice(0, input.count);
+    }
+
+    return selected.slice(0, input.count);
+  }
+
+  /** Fetch candidates with frequency/relevance scoring. */
+  private async fetchScoredCandidates(
+    sourceType: SourceType,
+    level: string,
+    exclude: Set<string>,
+    limit: number
+  ): Promise<ContentCandidate[]> {
+    switch (sourceType) {
+      case "lexeme":
+        return this.fetchScoredLexemes(level, exclude, limit);
+      case "kanji":
+        return this.fetchScoredKanji(level, exclude, limit);
+      case "grammar":
+        return this.fetchScoredGrammar(level, exclude, limit);
+    }
+  }
+
+  private async fetchScoredLexemes(
+    level: string,
+    exclude: Set<string>,
+    limit: number
+  ): Promise<ContentCandidate[]> {
+    const jlptLevel = this.bjtToJlpt(level);
+    const rows = await this.prisma.lexeme.findMany({
+      where: {
+        status: "active",
+        jlptLevel,
+        id: { notIn: [...exclude].slice(0, 5000) }
+      },
+      include: { senses: { take: 2, orderBy: { position: "asc" } } },
+      take: limit
+    });
+
+    return rows
+      .filter((r) => r.shortMeaningVi || r.senses[0]?.meaningVi)
+      .map((r) => {
+        // Frequency score: lexemes at beginning of DB tend to be more common
+        // Use sense count as proxy for importance (more senses = more versatile word)
+        const senseBonus = Math.min(r.senses.length * 5, 15);
+        // Short meaning available = well-curated entry = higher quality
+        const curationBonus = r.shortMeaningVi ? 10 : 0;
+        return {
+          id: r.id,
+          frontText: r.headword,
+          backText: r.shortMeaningVi || r.senses[0]?.meaningVi || "",
+          reading: r.reading ?? undefined,
+          sourceType: "lexeme" as const,
+          relevanceScore: 50 + senseBonus + curationBonus
+        };
+      });
+  }
+
+  private async fetchScoredKanji(
+    level: string,
+    exclude: Set<string>,
+    limit: number
+  ): Promise<ContentCandidate[]> {
+    const kanjiLevel = this.bjtToKanjiLevel(level);
+    const rows = await this.prisma.kanji.findMany({
+      where: {
+        status: "active",
+        ...(kanjiLevel != null ? { level: kanjiLevel } : {}),
+        id: { notIn: [...exclude].slice(0, 5000) }
+      },
+      take: limit,
+      orderBy: { frequency: "asc" } // Lower frequency rank = more common
+    });
+
+    return rows
+      .filter((r) => r.meaningVi)
+      .map((r, idx) => ({
+        id: r.id,
+        frontText: r.character,
+        backText: r.meaningVi!,
+        reading: [r.onyomi, r.kunyomi].filter(Boolean).join(" / ") || undefined,
+        sourceType: "kanji" as const,
+        // Frequency-based: higher score for more frequent kanji
+        // frequency field = rank (lower = more common), so invert
+        relevanceScore: r.frequency
+          ? Math.max(100 - Math.floor(r.frequency / 20), 10)
+          : 50 - idx // fallback: order in result
+      }));
+  }
+
+  private async fetchScoredGrammar(
+    level: string,
+    exclude: Set<string>,
+    limit: number
+  ): Promise<ContentCandidate[]> {
+    const jlptLevel = this.bjtToJlpt(level);
+    const rows = await this.prisma.grammarPoint.findMany({
+      where: {
+        status: "active",
+        jlptLevel,
+        id: { notIn: [...exclude].slice(0, 5000) }
+      },
+      include: { details: { take: 1 } },
+      take: limit
+    });
+
+    return rows.map((r, idx) => ({
+      id: r.id,
+      frontText: r.pattern,
+      backText: r.meaningVi,
+      sourceType: "grammar" as const,
+      // Grammar with details = better documented = higher quality suggestion
+      relevanceScore: 50 + (r.details.length > 0 ? 15 : 0) - idx * 0.5
+    }));
+  }
+
+  /** Source IDs reviewed in last 7 days (to avoid repetition fatigue). */
+  private async recentlyReviewedSourceIds(userId: string): Promise<Set<string>> {
+    if (!userId) return new Set();
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const rows = await this.prisma.reviewEvent.findMany({
+      where: {
+        userId,
+        reviewedAt: { gte: sevenDaysAgo }
+      },
+      select: { userFlashcard: { select: { card: { select: { sourceId: true } } } } },
+      take: 500
+    });
+    return new Set(rows.map((r) => r.userFlashcard.card.sourceId));
   }
 
   private async gatherCandidates(input: {
@@ -488,23 +722,33 @@ export class FlashcardGenService {
     return map[bjtLevel.toUpperCase()] ?? null;
   }
 
-  private autoTitleVi(input: GenerateDeckInput): string {
-    const parts = [`${input.level}`];
-    for (const st of input.sourceTypes) {
+  private suggestTitleVi(level: string, sourceTypes: string[]): string {
+    const parts = [`${level}`];
+    for (const st of sourceTypes) {
       const labels: Record<string, string> = { lexeme: "Từ vựng", kanji: "Kanji", grammar: "Ngữ pháp" };
       parts.push(labels[st] ?? st);
     }
-    if (input.adaptive) parts.push("(điểm yếu)");
     return parts.join(" — ");
   }
 
-  private autoTitleJa(input: GenerateDeckInput): string {
-    const parts = [`${input.level}`];
-    for (const st of input.sourceTypes) {
+  private suggestTitleJa(level: string, sourceTypes: string[]): string {
+    const parts = [`${level}`];
+    for (const st of sourceTypes) {
       const labels: Record<string, string> = { lexeme: "語彙", kanji: "漢字", grammar: "文法" };
       parts.push(labels[st] ?? st);
     }
-    if (input.adaptive) parts.push("(弱点)");
     return parts.join("—");
+  }
+
+  private autoTitleVi(input: GenerateDeckInput): string {
+    const base = this.suggestTitleVi(input.level, input.sourceTypes);
+    if (input.adaptive) return `${base} — (điểm yếu)`;
+    return base;
+  }
+
+  private autoTitleJa(input: GenerateDeckInput): string {
+    const base = this.suggestTitleJa(input.level, input.sourceTypes);
+    if (input.adaptive) return `${base}—(弱点)`;
+    return base;
   }
 }

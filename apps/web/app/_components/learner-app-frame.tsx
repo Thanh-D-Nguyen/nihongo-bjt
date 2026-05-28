@@ -34,6 +34,7 @@ import {
   IconKanji,
   IconLevels,
   IconLogout,
+  IconMagazine,
   IconMessage,
   IconQuiz,
   IconReview,
@@ -85,6 +86,7 @@ export type LearnerNavLabels = {
   home: string;
   kanjiNav: string;
   levelsNav: string;
+  magazine: string;
   quiz: string;
   review: string;
   saved: string;
@@ -216,6 +218,7 @@ export function LearnerAppFrame({
 
   /* ── "Explore" dropdown: secondary learning features ── */
   const exploreNavItems = useMemo(() => [
+    { href: `${base}/magazine`, icon: IconMagazine, label: nav.magazine },
     { href: `${base}/exercises`, icon: IconExercise, label: nav.exercises },
     { href: `${base}/dictionary`, icon: IconDictionary, label: nav.dictionary },
     { href: `${base}/kanji`, icon: IconKanji, label: nav.kanjiNav },

@@ -3,6 +3,21 @@ import { z } from "zod";
 import { srsRatingSchema } from "./srs.js";
 
 export {
+  applyShufflePermutation,
+  generateBalancedPositions,
+  generateExamShuffleMap,
+  generateSeededExamShuffleMap,
+  reverseMapDisplayKey,
+  shuffleArray,
+  shuffleQuizOptions,
+  shuffleStringOptions,
+  validateAnswerDistribution,
+  type ExamShuffleMap,
+  type QuizOption,
+  type ShuffledQuizOption,
+} from "./quiz-shuffle.js";
+
+export {
   coachingInsight,
   percentage,
   toUtcDateKey,

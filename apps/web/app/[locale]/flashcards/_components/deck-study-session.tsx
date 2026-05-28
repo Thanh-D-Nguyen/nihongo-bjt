@@ -117,12 +117,14 @@ function generateQuizOptions(current: DeckStudyCard, all: DeckStudyCard[]): stri
 
 export function DeckStudySession({
   cards,
+  deckId,
   focusIndex,
   labels,
   onIndexChange,
   styleConfig,
 }: {
   cards: DeckStudyCard[];
+  deckId?: string;
   focusIndex?: number | null;
   labels: DeckStudySessionLabels;
   onIndexChange?: (index: number) => void;
@@ -145,6 +147,41 @@ export function DeckStudySession({
 
   // Shuffled order (recomputed when mode changes)
   const [shuffledCards, setShuffledCards] = useState<DeckStudyCard[]>([]);
+
+  // ── Progress persistence (sessionStorage) ──
+  const progressKey = deckId ? `nihongo_study_progress_${deckId}` : null;
+  const restoredRef = useRef(false);
+
+  // Restore progress on mount
+  useEffect(() => {
+    if (!progressKey || restoredRef.current) return;
+    restoredRef.current = true;
+    try {
+      const raw = sessionStorage.getItem(progressKey);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as { mode?: StudyMode; index?: number; quizCorrectCount?: number; quizTotalCount?: number };
+      if (saved.mode) setMode(saved.mode);
+      if (typeof saved.index === "number" && saved.index < cards.length) setIndex(saved.index);
+      if (typeof saved.quizCorrectCount === "number") setQuizCorrectCount(saved.quizCorrectCount);
+      if (typeof saved.quizTotalCount === "number") setQuizTotalCount(saved.quizTotalCount);
+    } catch { /* ignore corrupt */ }
+  }, [progressKey, cards.length]);
+
+  // Save progress on state changes
+  useEffect(() => {
+    if (!progressKey || completed) {
+      if (progressKey && completed) {
+        try { sessionStorage.removeItem(progressKey); } catch { /* ok */ }
+      }
+      return;
+    }
+    const timer = setTimeout(() => {
+      try {
+        sessionStorage.setItem(progressKey, JSON.stringify({ mode, index, quizCorrectCount, quizTotalCount }));
+      } catch { /* quota */ }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [progressKey, mode, index, quizCorrectCount, quizTotalCount, completed]);
 
   // ── Card animation state ──
   const [cardAnim, setCardAnim] = useState<"enter" | "exit" | "idle">("idle");

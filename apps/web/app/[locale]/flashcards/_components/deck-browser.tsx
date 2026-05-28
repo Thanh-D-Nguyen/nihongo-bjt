@@ -281,20 +281,22 @@ export function DeckBrowser({
 
   if (createMode && userId) {
     return (
-      <section aria-label={labels.title} className="space-y-4">
-        <DeckComposerPanel
-          labels={labels}
-          userId={userId}
-          onCancel={() => onCreateModeChange(false)}
-          onSuccess={async ({ startReview }) => {
-            await loadDecks();
-            onCreateModeChange(false);
-            await onDeckCreated?.({ startReview });
-          }}
-        />
-      </section>
+      <DeckComposerPanel
+        labels={labels}
+        userId={userId}
+        onCancel={() => onCreateModeChange(false)}
+        onSuccess={async ({ startReview }) => {
+          await loadDecks();
+          onCreateModeChange(false);
+          await onDeckCreated?.({ startReview });
+        }}
+      />
     );
   }
+
+  return renderDeckLibrary();
+
+  function renderDeckLibrary() {
 
   const sectionTitle =
     filter === "my"
@@ -486,4 +488,5 @@ export function DeckBrowser({
       ) : null}
     </section>
   );
+  } // end renderDeckLibrary
 }

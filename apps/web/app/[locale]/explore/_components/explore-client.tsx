@@ -20,6 +20,8 @@ interface ExploreLabels {
   exercisesDesc: string;
   levels: string;
   levelsDesc: string;
+  magazine: string;
+  magazineDesc: string;
   search: string;
   searchDesc: string;
   statsWords: string;
@@ -54,6 +56,14 @@ const SECTIONS = [
     gradient: "from-accent/10 to-accent/5",
     border: "border-accent/15 hover:border-accent/30",
     hero: true,
+  },
+  {
+    key: "magazine",
+    href: (l: string) => `/${l}/magazine`,
+    icon: "📰",
+    gradient: "from-orange-50 to-orange-50/50",
+    border: "border-orange-200/40 hover:border-orange-300/60",
+    hero: false,
   },
   {
     key: "dictionary",
@@ -127,6 +137,7 @@ export function ExploreClient({ labels, locale }: { labels: ExploreLabels; local
 
   const labelMap: Record<string, { name: string; desc: string }> = {
     search: { name: labels.search, desc: labels.searchDesc },
+    magazine: { name: labels.magazine, desc: labels.magazineDesc },
     dictionary: { name: labels.dictionary, desc: labels.dictionaryDesc },
     kanji: { name: labels.kanji, desc: labels.kanjiDesc },
     grammar: { name: labels.grammar, desc: labels.grammarDesc },
