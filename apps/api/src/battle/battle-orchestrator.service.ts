@@ -451,6 +451,9 @@ export class BattleOrchestratorService {
       client.emit("battle:lobby_error", { code: "cannot_challenge_self" });
       return;
     }
+    if (this.socketToLobbyUser.get(client.id) !== input.fromUserId) {
+      await this.joinLobby(client, { displayName: input.fromDisplayName, userId: input.fromUserId });
+    }
     const challengeId = randomBytes(8).toString("hex");
     const target = this.lobbyUsers.get(input.targetUserId);
     const challenge: PendingChallenge = {
@@ -512,6 +515,9 @@ export class BattleOrchestratorService {
     if (challenge.targetUserId !== input.userId || challenge.fromUserId !== input.fromUserId) {
       client.emit("battle:lobby_error", { code: "challenge_mismatch" });
       return;
+    }
+    if (this.socketToLobbyUser.get(client.id) !== input.userId) {
+      await this.joinLobby(client, { userId: input.userId });
     }
     this.pendingChallenges.delete(input.challengeId);
 

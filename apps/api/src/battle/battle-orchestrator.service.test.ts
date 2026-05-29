@@ -54,6 +54,22 @@ describe("BattleOrchestratorService", () => {
         roundIds: ["r-start"],
         session: { id: "s-start" }
       }),
+      createPvpBattle: vi.fn().mockResolvedValue({
+        questions: [
+          {
+            options: [
+              { isCorrect: true, optionKey: "A", text: "A" },
+              { isCorrect: false, optionKey: "B", text: "B" }
+            ],
+            prompt: "q",
+            questionId: "q1",
+            skillTag: "reading"
+          }
+        ],
+        roomCode: "pvp-room",
+        roundIds: ["pvp-round-1"],
+        session: { id: "pvp-session" }
+      }),
       createAnalyticsEvent: vi.fn().mockResolvedValue(undefined),
       createChatMessage: vi.fn().mockImplementation((input: any) =>
         Promise.resolve({
@@ -123,7 +139,8 @@ describe("BattleOrchestratorService", () => {
     const client = {
       emit: vi.fn(),
       id: "socket-challenger",
-      nsp: { to: vi.fn() }
+      join: vi.fn().mockResolvedValue(undefined),
+      nsp: { to: vi.fn().mockReturnValue({ emit: vi.fn() }) }
     };
 
     await service.challengeUser(client as any, {
@@ -155,6 +172,45 @@ describe("BattleOrchestratorService", () => {
         }),
         userId: "00000000-0000-4000-8000-0000000000a1"
       })
+    );
+    expect(client.join).toHaveBeenCalledWith("battle:lobby:global");
+  });
+
+  it("accepts a challenge after auto-joining the acceptor socket", async () => {
+    const { service } = buildService();
+    const challengerClient = {
+      emit: vi.fn(),
+      id: "socket-a",
+      join: vi.fn().mockResolvedValue(undefined),
+      nsp: { to: vi.fn().mockReturnValue({ emit: vi.fn() }) }
+    };
+    const acceptorClient = {
+      emit: vi.fn(),
+      id: "socket-b",
+      join: vi.fn().mockResolvedValue(undefined),
+      nsp: { sockets: new Map(), to: vi.fn().mockReturnValue({ emit: vi.fn() }) }
+    };
+
+    await service.challengeUser(challengerClient as any, {
+      fromDisplayName: "A",
+      fromUserId: "00000000-0000-4000-8000-0000000000a1",
+      targetUserId: "00000000-0000-4000-8000-0000000000b1"
+    });
+    const challenge = (challengerClient.emit as any).mock.calls.find(
+      ([event]: [string]) => event === "battle:user_challenge_sent"
+    )?.[1];
+
+    await service.acceptChallenge(acceptorClient as any, {
+      challengeId: challenge.challengeId,
+      fromUserId: "00000000-0000-4000-8000-0000000000a1",
+      userId: "00000000-0000-4000-8000-0000000000b1"
+    });
+
+    expect(acceptorClient.join).toHaveBeenCalledWith("battle:lobby:global");
+    expect(acceptorClient.join).toHaveBeenCalledWith("battle:pvp-room");
+    expect(acceptorClient.emit).toHaveBeenCalledWith(
+      "battle:pvp_match_found",
+      expect.objectContaining({ roomCode: "pvp-room", sessionId: "pvp-session" })
     );
   });
 

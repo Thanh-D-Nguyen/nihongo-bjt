@@ -150,6 +150,8 @@ export function BattleRuntimeProvider({
   const searchParams = useSearchParams();
   const socketRef = useRef<Socket | null>(null);
   const handledUrlIntentsRef = useRef<Set<string>>(new Set());
+  const lobbyJoinedRef = useRef(false);
+  const pendingLobbyActionsRef = useRef<Array<(socket: Socket) => void>>([]);
   const { accessToken, displayName, email, userId } = useKeycloakAuth();
   const [answerPending, setAnswerPending] = useState(false);
   const [answerResult, setAnswerResult] = useState<AnswerResultEvent | null>(null);
@@ -217,6 +219,8 @@ export function BattleRuntimeProvider({
       socketRef.current.disconnect();
       socketRef.current = null;
     }
+    lobbyJoinedRef.current = false;
+    pendingLobbyActionsRef.current = [];
   }, []);
 
   useEffect(() => clearSocket, [clearSocket]);
@@ -270,10 +274,19 @@ export function BattleRuntimeProvider({
     (s: Socket, uid: string) => {
       s.on("connect", () => {
         setSocketConnected(true);
+        lobbyJoinedRef.current = false;
         s.emit("battle:lobby_join", { displayName: learnerDisplayName, userId: uid });
       });
       s.on("disconnect", () => {
         setSocketConnected(false);
+        lobbyJoinedRef.current = false;
+      });
+      s.on("battle:lobby_joined", () => {
+        lobbyJoinedRef.current = true;
+        const pending = pendingLobbyActionsRef.current.splice(0);
+        for (const action of pending) {
+          action(s);
+        }
       });
       s.on("battle:lobby_presence", (p: { users: PresenceUser[] }) => {
         setPresence(p.users);
@@ -478,6 +491,20 @@ export function BattleRuntimeProvider({
     return s;
   }, [attachSocketListeners, userId]);
 
+  const runWhenLobbyReady = useCallback(
+    (action: (socket: Socket) => void) => {
+      const s = ensureSocket();
+      if (!s) return false;
+      if (s.connected && lobbyJoinedRef.current) {
+        action(s);
+        return true;
+      }
+      pendingLobbyActionsRef.current.push(action);
+      return true;
+    },
+    [ensureSocket]
+  );
+
   useEffect(() => {
     ensureSocket();
   }, [ensureSocket]);
@@ -611,16 +638,15 @@ export function BattleRuntimeProvider({
   );
 
   const acceptPvpChallenge = useCallback(() => {
-    const s = ensureSocket();
     const uid = userId;
     const challenge = pvpChallenge;
-    if (!s || !uid || !challenge) return;
+    if (!uid || !challenge) return;
     markPending();
-    s.emit("battle:accept_challenge", {
+    runWhenLobbyReady((s) => s.emit("battle:accept_challenge", {
       challengeId: challenge.challengeId,
       fromUserId: challenge.fromUserId,
       userId: uid
-    });
+    }));
     setPvpChallenge(null);
     setStatus(labels.connecting);
     setError(null);
@@ -648,7 +674,7 @@ export function BattleRuntimeProvider({
     socketRef.current?.once("battle:pvp_match_found", cleanup);
     socketRef.current?.once("battle:lobby_error", cleanup);
     socketRef.current?.once("battle:error", cleanup);
-  }, [ensureSocket, labels.connecting, labels.pvpChallengeExpired, pvpChallenge, userId]);
+  }, [labels.connecting, labels.pvpChallengeExpired, pvpChallenge, runWhenLobbyReady, userId]);
 
   const declinePvpChallenge = useCallback(() => {
     const s = ensureSocket();
@@ -737,29 +763,27 @@ export function BattleRuntimeProvider({
 
   const challengeUser = useCallback(
     (targetUserId: string) => {
-      const s = ensureSocket();
       const uid = userId;
-      if (!s || !uid || targetUserId === uid) return;
-      s.emit("battle:challenge_user", {
+      if (!uid || targetUserId === uid) return;
+      runWhenLobbyReady((s) => s.emit("battle:challenge_user", {
         fromDisplayName: learnerDisplayName,
         fromUserId: uid,
         targetUserId
-      });
+      }));
     },
-    [ensureSocket, learnerDisplayName, userId]
+    [learnerDisplayName, runWhenLobbyReady, userId]
   );
 
   const acceptChallenge = useCallback(
     (challenge: Pick<UserChallenge, "challengeId" | "fromUserId">) => {
-      const s = ensureSocket();
       const uid = userId;
-      if (!s || !uid) return;
+      if (!uid) return;
       markPending();
-      s.emit("battle:accept_challenge", {
+      runWhenLobbyReady((s) => s.emit("battle:accept_challenge", {
         challengeId: challenge.challengeId,
         fromUserId: challenge.fromUserId,
         userId: uid
-      });
+      }));
       setPvpChallenge(null);
       setStatus(labels.connecting);
       setError(null);
@@ -786,7 +810,7 @@ export function BattleRuntimeProvider({
       socketRef.current?.once("battle:lobby_error", cleanup);
       socketRef.current?.once("battle:error", cleanup);
     },
-    [ensureSocket, labels.connecting, labels.pvpChallengeExpired, userId]
+    [labels.connecting, labels.pvpChallengeExpired, runWhenLobbyReady, userId]
   );
 
   useEffect(() => {
