@@ -40,8 +40,8 @@ export function CompanionOnboarding({
 
   return (
     <div
-      className="pointer-events-auto motion-safe:animate-[panelSlideUp_0.3s_ease-out_both] absolute bottom-full right-0 mb-3 w-[min(20rem,calc(100vw-2rem))]"
-      onPointerDown={(e) => e.stopPropagation()}
+      className="pointer-events-auto motion-safe:animate-[panelSlideUp_0.3s_ease-out_both] absolute bottom-full right-0 z-10 mb-3 w-[min(20rem,calc(100vw-2rem))]"
+      onClick={(e) => e.stopPropagation()}
     >
       <div className="rounded-2xl border border-amber-200/60 bg-gradient-to-br from-amber-50 to-orange-50 p-4 shadow-2xl">
         {/* Step indicator */}
@@ -61,7 +61,7 @@ export function CompanionOnboarding({
             ))}
           </div>
           <button
-            className="text-[10px] font-medium text-muted transition hover:text-ink"
+            className="min-h-[44px] min-w-[44px] px-2 text-[11px] font-medium text-muted transition active:scale-95 hover:text-ink"
             onClick={onDismiss}
             type="button"
           >

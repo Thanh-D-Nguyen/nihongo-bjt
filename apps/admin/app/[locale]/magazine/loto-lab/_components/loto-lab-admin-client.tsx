@@ -9,6 +9,14 @@ import { adminApiFetch } from "@/lib/admin-api";
 type LotoGame = "loto6" | "loto7";
 
 type Tab = "predictions" | "results" | "analytics" | "data" | "generation";
+type AdminCopyLabels = Record<string, string | undefined>;
+
+interface PredictionContent {
+  sets?: Array<{ mainNumbers?: number[] }>;
+  generatedSets?: Array<{ mainNumbers?: number[] }>;
+  japaneseSentence?: { textJp?: string };
+  jpSentence?: { textJp?: string };
+}
 
 interface PredictionItem {
   id: string;
@@ -18,7 +26,7 @@ interface PredictionItem {
   contentDate: string;
   approvalStatus: string;
   approvedAt: string | null;
-  contentJson: any;
+  contentJson: PredictionContent | null;
   status: string;
 }
 
@@ -70,9 +78,8 @@ interface LotoLabLabels {
 export function LotoLabAdminClient({
   labels,
   lotoLabels,
-  locale,
 }: {
-  labels: any;
+  labels: AdminCopyLabels;
   lotoLabels?: LotoLabLabels;
   locale: string;
 }) {
@@ -126,12 +133,53 @@ export function LotoLabAdminClient({
 
       {/* Tab content */}
       {tab === "generation" && <GenerationTab game={game} labels={labels} />}
-      {tab === "data" && <DataTab game={game} labels={labels} />}
+      {tab === "data" && <DataTab game={game} />}
       {tab === "predictions" && <PredictionsTab game={game} labels={lotoLabels} />}
       {tab === "results" && <ResultsTab game={game} labels={lotoLabels} />}
       {tab === "analytics" && <AnalyticsTab game={game} labels={lotoLabels} />}
     </div>
   );
+}
+
+/* ─── Draw Schedule ─── */
+
+const LOTO_SCHEDULE: Record<LotoGame, { drawDays: number[]; drawTime: string; labelJp: string; labelVi: string }> = {
+  loto6: {
+    drawDays: [1, 4], // Monday=1, Thursday=4
+    drawTime: "18:45 JST",
+    labelJp: "毎週 月曜・木曜 18:45 抽選",
+    labelVi: "Thứ 2 & Thứ 5 hàng tuần, quay thưởng 18:45 (giờ Nhật)",
+  },
+  loto7: {
+    drawDays: [5], // Friday=5
+    drawTime: "18:45 JST",
+    labelJp: "毎週 金曜 18:45 抽選",
+    labelVi: "Thứ 6 hàng tuần, quay thưởng 18:45 (giờ Nhật)",
+  },
+};
+
+function getNextDrawDate(game: LotoGame): string {
+  const schedule = LOTO_SCHEDULE[game];
+  const now = new Date();
+  // Iterate up to 7 days to find the next draw day
+  for (let offset = 1; offset <= 7; offset++) {
+    const candidate = new Date(now);
+    candidate.setDate(now.getDate() + offset);
+    const dow = candidate.getDay(); // 0=Sun,1=Mon...6=Sat
+    if (schedule.drawDays.includes(dow)) {
+      return candidate.toISOString().slice(0, 10);
+    }
+  }
+  // Fallback: today
+  return now.toISOString().slice(0, 10);
+}
+
+function getDayNameJp(dow: number): string {
+  return ["日", "月", "火", "水", "木", "金", "土"][dow] ?? "";
+}
+
+function getDayNameVi(dow: number): string {
+  return ["CN", "T2", "T3", "T4", "T5", "T6", "T7"][dow] ?? "";
 }
 
 /* ─── Algorithm Constants ─── */
@@ -202,13 +250,20 @@ type LotoRun = {
 
 /* ─── Generation Tab ─── */
 
-function GenerationTab({ game, labels }: { game: LotoGame; labels: any }) {
+function GenerationTab({ game, labels }: { game: LotoGame; labels: AdminCopyLabels }) {
   const [summary, setSummary] = useState<LotoSummary | null>(null);
   const [run, setRun] = useState<LotoRun | null>(null);
   const [busy, setBusy] = useState(false);
+  const [publishing, setPublishing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [targetDrawDate, setTargetDrawDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [selectedSets, setSelectedSets] = useState<Set<string>>(new Set());
+  const [targetDrawDate, setTargetDrawDate] = useState(() => getNextDrawDate(game));
   const [setCount, setSetCount] = useState(3);
+
+  // Auto-update target date when game changes
+  useEffect(() => {
+    setTargetDrawDate(getNextDrawDate(game));
+  }, [game]);
   const [seed, setSeed] = useState("");
   const [weatherText, setWeatherText] = useState("");
   const [dreamText, setDreamText] = useState("");
@@ -235,6 +290,7 @@ function GenerationTab({ game, labels }: { game: LotoGame; labels: any }) {
   const generateSets = async () => {
     setBusy(true);
     setMessage(null);
+    setSelectedSets(new Set());
     try {
       const res = await adminApiFetch("/api/admin/magazine/loto/generate", {
         method: "POST",
@@ -262,6 +318,44 @@ function GenerationTab({ game, labels }: { game: LotoGame; labels: any }) {
     }
   };
 
+  const toggleSet = (setId: string) => {
+    setSelectedSets((prev) => {
+      const next = new Set(prev);
+      if (next.has(setId)) next.delete(setId);
+      else next.add(setId);
+      return next;
+    });
+  };
+
+  const selectAll = () => {
+    if (!run) return;
+    setSelectedSets(new Set(run.sets.map((s) => s.id)));
+  };
+
+  const publishSelected = async () => {
+    if (!run || selectedSets.size === 0) return;
+    setPublishing(true);
+    setMessage(null);
+    try {
+      const res = await adminApiFetch("/api/admin/magazine/loto/publish", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ runId: run.id, setIds: Array.from(selectedSets) }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => null);
+        throw new Error(err?.message ?? "publish failed");
+      }
+      const result = (await res.json()) as { selectedSets: number; slug: string };
+      setMessage(`✅ Đã xuất bản ${result.selectedSets} bộ số → Magazine (${result.slug})`);
+      setSelectedSets(new Set());
+    } catch (e) {
+      setMessage(`❌ ${e instanceof Error ? e.message : "Lỗi xuất bản"}`);
+    } finally {
+      setPublishing(false);
+    }
+  };
+
   const resetWeights = () => setWeights(DEFAULT_WEIGHTS);
 
   return (
@@ -274,6 +368,27 @@ function GenerationTab({ game, labels }: { game: LotoGame; labels: any }) {
             <p className="mt-1 text-xs text-muted-foreground">
               Mix thuật toán thống kê + ngữ cảnh bất định → sinh 1–5 dãy số {game === "loto6" ? "(6/43)" : "(7/37)"}
             </p>
+
+            {/* Draw Schedule Info */}
+            <div className="mt-3 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                <span className="text-xs font-semibold text-primary">
+                  🗓️ {LOTO_SCHEDULE[game].labelJp}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {LOTO_SCHEDULE[game].labelVi}
+                </span>
+              </div>
+              {targetDrawDate && (() => {
+                const d = new Date(targetDrawDate + "T00:00:00");
+                const dow = d.getDay();
+                return (
+                  <p className="mt-1 text-[11px] text-muted-foreground">
+                    次回抽選: <strong>{targetDrawDate} ({getDayNameJp(dow)})</strong> — Kỳ quay tiếp: <strong>{targetDrawDate} ({getDayNameVi(dow)})</strong>
+                  </p>
+                );
+              })()}
+            </div>
 
             {/* Basic params */}
             <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -378,38 +493,78 @@ function GenerationTab({ game, labels }: { game: LotoGame; labels: any }) {
           {/* Generated Results */}
           {run && (
             <div className="rounded-xl border border-border/50 bg-background p-5">
-              <h4 className="text-sm font-semibold">🎯 Kết quả sinh ({run.sets.length} bộ)</h4>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h4 className="text-sm font-semibold">🎯 Kết quả sinh ({run.sets.length} bộ)</h4>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={selectAll}
+                    className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/30 hover:text-foreground"
+                  >
+                    Chọn tất cả
+                  </button>
+                  <button
+                    type="button"
+                    disabled={selectedSets.size === 0 || publishing}
+                    onClick={publishSelected}
+                    className="rounded-lg bg-emerald-600 px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition-all hover:bg-emerald-700 hover:shadow-md active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {publishing ? "⏳ Đang xuất bản..." : `📢 Xuất bản (${selectedSets.size})`}
+                  </button>
+                </div>
+              </div>
               <div className="mt-3 grid gap-3">
-                {run.sets.map((set) => (
-                  <div key={set.id} className="rounded-lg border border-border/50 bg-muted/10 p-3 transition-colors hover:bg-muted/20">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <span className="flex size-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                          {set.rank}
+                {run.sets.map((set) => {
+                  const isSelected = selectedSets.has(set.id);
+                  return (
+                    <div
+                      key={set.id}
+                      onClick={() => toggleSet(set.id)}
+                      className={`cursor-pointer rounded-lg border p-3 transition-all ${
+                        isSelected
+                          ? "border-emerald-500 bg-emerald-500/5 ring-1 ring-emerald-500/30"
+                          : "border-border/50 bg-muted/10 hover:bg-muted/20"
+                      }`}
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          {/* Checkbox */}
+                          <span
+                            className={`flex size-5 items-center justify-center rounded border transition-colors ${
+                              isSelected
+                                ? "border-emerald-500 bg-emerald-500 text-white"
+                                : "border-border bg-background"
+                            }`}
+                          >
+                            {isSelected && <span className="text-xs">✓</span>}
+                          </span>
+                          <span className="flex size-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                            {set.rank}
+                          </span>
+                          <NumberChips numbers={set.mainNumbers} />
+                          {set.bonusNumbers.length > 0 && (
+                            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                              + <NumberChips numbers={set.bonusNumbers} variant="muted" />
+                            </span>
+                          )}
+                        </div>
+                        <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                          {set.score.toFixed(3)}
                         </span>
-                        <NumberChips numbers={set.mainNumbers} />
-                        {set.bonusNumbers.length > 0 && (
-                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                            + <NumberChips numbers={set.bonusNumbers} variant="muted" />
-                          </span>
-                        )}
                       </div>
-                      <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-700">
-                        {set.score.toFixed(3)}
-                      </span>
+                      {/* Signal breakdown */}
+                      {set.explanation?.signals && (
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {Object.entries(set.explanation.signals).map(([sig, nums]) => (
+                            <span key={sig} className="rounded bg-muted/30 px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                              {sig}: [{(nums as number[]).join(",")}]
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    {/* Signal breakdown */}
-                    {set.explanation?.signals && (
-                      <div className="mt-2 flex flex-wrap gap-1">
-                        {Object.entries(set.explanation.signals).map(([sig, nums]) => (
-                          <span key={sig} className="rounded bg-muted/30 px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                            {sig}: [{(nums as number[]).join(",")}]
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               {/* Japanese sentence for learning */}
               {run.japaneseSentence?.textJp && (
@@ -470,7 +625,7 @@ function GenerationTab({ game, labels }: { game: LotoGame; labels: any }) {
 
 /* ─── Data Tab (Import CSV + History) ─── */
 
-function DataTab({ game, labels }: { game: LotoGame; labels: any }) {
+function DataTab({ game }: { game: LotoGame }) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [summary, setSummary] = useState<LotoSummary | null>(null);
@@ -484,7 +639,10 @@ function DataTab({ game, labels }: { game: LotoGame; labels: any }) {
       ]);
       if (summaryRes.ok) setSummary(await summaryRes.json());
       if (drawsRes.ok) setRecentDraws(await drawsRes.json());
-    } catch {}
+    } catch {
+      setSummary(null);
+      setRecentDraws([]);
+    }
   }, [game]);
 
   useEffect(() => { void loadData(); }, [loadData]);
@@ -494,18 +652,29 @@ function DataTab({ game, labels }: { game: LotoGame; labels: any }) {
     setBusy(true);
     setMessage(null);
     try {
-      const csvText = await file.text();
+      // Official lottery CSVs are Shift-JIS encoded. Try Shift-JIS first, fallback to UTF-8.
+      const buffer = await file.arrayBuffer();
+      let csvText: string;
+      const sjisDecoded = new TextDecoder("shift-jis").decode(buffer);
+      if (sjisDecoded.includes("開催回") || sjisDecoded.includes("数字")) {
+        csvText = sjisDecoded;
+      } else {
+        csvText = new TextDecoder("utf-8").decode(buffer);
+      }
       const res = await adminApiFetch("/api/admin/magazine/loto/import-csv", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ game, csvText }),
       });
-      if (!res.ok) throw new Error("import failed");
+      if (!res.ok) {
+        const err = await res.json().catch(() => null) as { message?: string } | null;
+        throw new Error(err?.message ?? `Import failed (${res.status})`);
+      }
       const result = (await res.json()) as { created: number; updated: number; total: number };
       setMessage(`✅ Nhập thành công: ${result.created} mới, ${result.updated} cập nhật (tổng ${result.total})`);
       await loadData();
-    } catch {
-      setMessage("❌ Lỗi khi nhập file CSV");
+    } catch (e) {
+      setMessage(`❌ ${e instanceof Error ? e.message : "Lỗi khi nhập file CSV"}`);
     } finally {
       setBusy(false);
     }
@@ -619,7 +788,9 @@ function PredictionsTab({ game, labels }: { game: LotoGame; labels?: LotoLabLabe
         const data = await res.json();
         setItems(data.data ?? []);
       }
-    } catch {}
+    } catch {
+      setItems([]);
+    }
     setLoading(false);
   }, [game, filter]);
 
@@ -727,7 +898,9 @@ function ResultsTab({ game, labels }: { game: LotoGame; labels?: LotoLabLabels }
     try {
       const res = await adminApiFetch(`/api/admin/magazine/loto/draws?game=${game}&limit=10`);
       if (res.ok) setRecentDraws(await res.json());
-    } catch {}
+    } catch {
+      setRecentDraws([]);
+    }
   }, [game]);
 
   useEffect(() => { void loadDraws(); }, [loadDraws]);

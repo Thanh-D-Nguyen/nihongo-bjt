@@ -2,6 +2,29 @@ import { LOTO_GAME_SPECS, type LotoDrawInput, type LotoGame } from "./loto-types
 
 type CsvRow = Record<string, string>;
 
+/** Maps Japanese headers from official lottery CSV to internal keys. */
+const JP_HEADER_ALIASES: Record<string, string> = {
+  "開催回": "drawnumber",
+  "日付": "drawdate",
+  "第1数字": "n1",
+  "第2数字": "n2",
+  "第3数字": "n3",
+  "第4数字": "n4",
+  "第5数字": "n5",
+  "第6数字": "n6",
+  "第7数字": "n7",
+  "bonus数字": "bonus",
+  "bonus数字1": "bonus1",
+  "bonus数字2": "bonus2",
+  "キャリーオーバー": "carryoveramount",
+  "1等賞金": "prize1",
+  "2等賞金": "prize2",
+  "3等賞金": "prize3",
+  "4等賞金": "prize4",
+  "5等賞金": "prize5",
+  "6等賞金": "prize6",
+};
+
 function parseCsvLine(line: string): string[] {
   const cells: string[] = [];
   let current = "";
@@ -28,7 +51,26 @@ function parseCsvLine(line: string): string[] {
 }
 
 function normalizeHeader(value: string): string {
-  return value.trim().replace(/^\uFEFF/u, "").toLowerCase();
+  const trimmed = value.trim().replace(/^\uFEFF/u, "");
+  const lower = trimmed.toLowerCase();
+  return JP_HEADER_ALIASES[trimmed] ?? JP_HEADER_ALIASES[lower] ?? lower;
+}
+
+/** Detects game type from headers: presence of n7 → loto7, otherwise loto6. */
+function detectGameFromHeaders(headers: string[]): LotoGame | undefined {
+  if (headers.includes("n7")) return "loto7";
+  if (headers.includes("n6") && !headers.includes("n7")) return "loto6";
+  return undefined;
+}
+
+/** Converts date strings like "2000/10/5" or "2000/10/05" to ISO "2000-10-05". */
+function normalizeDateString(value: string): string {
+  const slashMatch = value.match(/^(\d{4})[/.](\d{1,2})[/.](\d{1,2})$/u);
+  if (slashMatch) {
+    const [, year, month, day] = slashMatch;
+    return `${year}-${month!.padStart(2, "0")}-${day!.padStart(2, "0")}`;
+  }
+  return value;
 }
 
 function optionalInt(value: string | undefined): number | undefined {
@@ -102,20 +144,23 @@ export function parseLotoCsv(csvText: string, fallbackGame?: LotoGame): LotoDraw
   if (lines.length < 2) return [];
 
   const headers = parseCsvLine(lines[0]!).map(normalizeHeader);
+  const detectedGame = detectGameFromHeaders(headers);
+
   return lines.slice(1).map((line, index) => {
     const rowNumber = index + 2;
     const values = parseCsvLine(line);
     const row = Object.fromEntries(headers.map((header, cellIndex) => [header, values[cellIndex] ?? ""]));
-    const game = (normalizeHeader(row.game ?? "") || fallbackGame) as LotoGame | undefined;
+    const game = (normalizeHeader(row.game ?? "") || detectedGame || fallbackGame) as LotoGame | undefined;
     if (!game || !(game in LOTO_GAME_SPECS)) {
       throw new Error(`Row ${rowNumber}: game must be loto6 or loto7`);
     }
     const spec = LOTO_GAME_SPECS[game];
+    const rawDate = row.drawdate ?? row.draw_date ?? row.date ?? "";
     return validateDraw(
       {
         game,
         drawNumber: requireInt(row, ["drawnumber", "draw_number", "round", "kai"], rowNumber),
-        drawDate: row.drawdate ?? row.draw_date ?? row.date ?? "",
+        drawDate: normalizeDateString(rawDate),
         mainNumbers: readNumbers(row, "n", spec.mainCount, rowNumber),
         bonusNumbers: readBonus(row, spec.bonusCount, rowNumber),
         carryoverAmount: optionalBigInt(row.carryoveramount ?? row.carryover_amount),

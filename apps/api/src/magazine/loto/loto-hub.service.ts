@@ -1,11 +1,15 @@
 import { Injectable } from "@nestjs/common";
 import { createPrismaClient, type PrismaClient } from "@nihongo-bjt/database";
-import type { LotoGame } from "./loto-types.js";
+import { LOTO_SCHEDULE, type LotoGame } from "./loto-types.js";
 
 interface PredictionFeedItem {
   id: string;
   drawNumber: number | null;
   drawDate: string;
+  drawDayJp: string;
+  drawTime: string;
+  scheduleJp: string;
+  scheduleVi: string;
   game: LotoGame;
   sets: Array<{ mainNumbers: number[]; bonusNumbers: number[]; score: number }>;
   result: { mainNumbers: number[]; bonusNumbers: number[] } | null;
@@ -81,10 +85,19 @@ export class LotoHubService {
         ? result.bonusNumbers.some((b) => primarySet.mainNumbers.includes(b))
         : false;
 
+      const schedule = LOTO_SCHEDULE[game];
+      const dateObj = new Date(toDateKey(article.contentDate) + "T00:00:00.000Z");
+      const dow = dateObj.getDay();
+      const dayJp = ["日", "月", "火", "水", "木", "金", "土"][dow];
+
       return {
         id: article.id,
         drawNumber: content?.drawNumber ?? null,
         drawDate: toDateKey(article.contentDate),
+        drawDayJp: `${dayJp}曜日`,
+        drawTime: schedule.drawTime,
+        scheduleJp: schedule.labelJp,
+        scheduleVi: schedule.labelVi,
         game,
         sets,
         result: result ? { mainNumbers: result.mainNumbers, bonusNumbers: result.bonusNumbers } : null,
@@ -131,10 +144,18 @@ export class LotoHubService {
     nowDate.setUTCHours(0, 0, 0, 0);
     const daysUntil = Math.max(0, Math.round((drawDateObj.getTime() - nowDate.getTime()) / 86400000));
 
+    const schedule = LOTO_SCHEDULE[game];
+    const dow = drawDateObj.getDay();
+    const dayJp = ["日", "月", "火", "水", "木", "金", "土"][dow];
+
     return {
       id: article.id,
       drawNumber: content?.drawNumber ?? null,
       drawDate,
+      drawDayJp: `${dayJp}曜日`,
+      drawTime: schedule.drawTime,
+      scheduleJp: schedule.labelJp,
+      scheduleVi: schedule.labelVi,
       game,
       sets,
       jpSentence,

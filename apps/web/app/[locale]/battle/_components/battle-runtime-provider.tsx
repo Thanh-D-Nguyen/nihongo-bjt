@@ -16,6 +16,7 @@ import { io, type Socket } from "socket.io-client";
 
 import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
 import { learnerApiFetch } from "../../../../lib/learner-api";
+import { recordStudyProgress } from "../../../_hooks/use-study-progress";
 import {
   apiBase,
   botName,
@@ -368,10 +369,15 @@ export function BattleRuntimeProvider({
         navigateToLobby();
       });
       s.on("battle:lobby_error", (p: { code: string } | undefined) => {
+        clearPending();
+        setStatus(null);
+        setPvpChallenge(null);
         setLobbyNotice(
           p?.code === "rate_limited"
             ? labels.chatRateLimited
-            : `${labels.error} (${p?.code ?? "lobby"})`
+            : p?.code === "challenge_expired"
+              ? labels.pvpChallengeExpired
+              : `${labels.error} (${p?.code ?? "lobby"})`
         );
       });
       s.on("battle:error", (p: { code: string } | undefined) => {
@@ -436,6 +442,7 @@ export function BattleRuntimeProvider({
       s.on("battle:finished", (p: FinishedEvent) => {
         setQuestion(null);
         setOutcome(p.outcome);
+        recordStudyProgress("battle_bot");
         setPvpEndReason(p.pvpEndReason ?? null);
         setRemediation(p.remediation ?? null);
         setStatus(null);
@@ -623,7 +630,23 @@ export function BattleRuntimeProvider({
     setCombo(0);
     setRemediation(null);
     setShareUrl(null);
-  }, [ensureSocket, labels.connecting, pvpChallenge, userId]);
+    // Timeout: if server doesn't respond within 8s, reset to idle
+    const timeout = window.setTimeout(() => {
+      setStatus((prev) => {
+        if (prev === labels.connecting) {
+          clearPending();
+          setLobbyNotice(labels.pvpChallengeExpired);
+          return null;
+        }
+        return prev;
+      });
+    }, 8000);
+    // Clear timeout if match found (socket event will update status)
+    const cleanup = () => window.clearTimeout(timeout);
+    socketRef.current?.once("battle:pvp_match_found", cleanup);
+    socketRef.current?.once("battle:lobby_error", cleanup);
+    socketRef.current?.once("battle:error", cleanup);
+  }, [ensureSocket, labels.connecting, labels.pvpChallengeExpired, pvpChallenge, userId]);
 
   const declinePvpChallenge = useCallback(() => {
     const s = ensureSocket();

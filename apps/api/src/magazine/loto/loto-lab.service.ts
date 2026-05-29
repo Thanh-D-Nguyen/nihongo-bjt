@@ -1,9 +1,9 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { createPrismaClient, Prisma, type PrismaClient } from "@nihongo-bjt/database";
 
 import { parseLotoCsv } from "./loto-csv.js";
 import { generateLotoSets, summarizeLotoDraws } from "./loto-engine.js";
-import { LOTO_GAME_SPECS, type LotoDrawInput, type LotoGame, type LotoGenerationInput } from "./loto-types.js";
+import { LOTO_GAME_SPECS, LOTO_SCHEDULE, type LotoDrawInput, type LotoGame, type LotoGenerationInput } from "./loto-types.js";
 
 function toDateOnly(value: string | Date): Date {
   const date = typeof value === "string" ? new Date(`${value.slice(0, 10)}T00:00:00.000Z`) : value;
@@ -27,6 +27,7 @@ function validateGame(game: string): LotoGame {
 }
 
 function normalizeDraw(row: {
+  id: string;
   game: string;
   drawNumber: number;
   drawDate: Date;
@@ -38,6 +39,7 @@ function normalizeDraw(row: {
   sourceProvider: string;
 }) {
   return {
+    id: row.id,
     game: row.game,
     drawNumber: row.drawNumber,
     drawDate: toDateKey(row.drawDate),
@@ -74,7 +76,13 @@ export class LotoLabService {
   private readonly prisma: PrismaClient = createPrismaClient();
 
   async importCsv(csvText: string, fallbackGame?: string) {
-    const draws = parseLotoCsv(csvText, fallbackGame ? validateGame(fallbackGame) : undefined);
+    let draws: ReturnType<typeof parseLotoCsv>;
+    try {
+      draws = parseLotoCsv(csvText, fallbackGame ? validateGame(fallbackGame) : undefined);
+    } catch (e) {
+      throw new BadRequestException(e instanceof Error ? e.message : "Invalid CSV format");
+    }
+    if (draws.length === 0) throw new BadRequestException("CSV contains no valid rows");
     let created = 0;
     let updated = 0;
 
@@ -135,7 +143,6 @@ export class LotoLabService {
     const rows = await this.prisma.lotoDraw.findMany({
       where: { game },
       orderBy: [{ drawDate: "desc" }, { drawNumber: "desc" }],
-      take: 500,
     });
     const draws = rows.map((row) => ({
       game,
@@ -160,7 +167,6 @@ export class LotoLabService {
     const rows = await this.prisma.lotoDraw.findMany({
       where: { game },
       orderBy: [{ drawDate: "desc" }, { drawNumber: "desc" }],
-      take: 500,
     });
     if (rows.length < 10) {
       throw new BadRequestException("Need at least 10 historical draws before generating Loto sets");
@@ -281,6 +287,113 @@ export class LotoLabService {
         explanation: set.explanationJson,
         selectedForMagazine: set.selectedForMagazine,
       })),
+    };
+  }
+
+  async publishToMagazine(runId: string, setIds: string[], adminId: string) {
+    const uniqueSetIds = [...new Set(setIds)];
+    const run = await this.prisma.lotoGenerationRun.findUnique({
+      where: { id: runId },
+      include: { sets: { where: { id: { in: uniqueSetIds } }, orderBy: { rank: "asc" } } },
+    });
+    if (!run) throw new NotFoundException("Generation run not found");
+    if (run.sets.length === 0) throw new BadRequestException("No matching sets found in this run");
+    if (run.sets.length !== uniqueSetIds.length) {
+      throw new BadRequestException("All selected setIds must belong to the generation run");
+    }
+
+    const game = run.game as LotoGame;
+    const targetDate = run.targetDrawDate;
+    const dateKey = toDateKey(targetDate);
+    const widgetKind = `magazine_${game}`;
+    const slug = `${game}-prediction-${dateKey}`;
+    const schedule = LOTO_SCHEDULE[game];
+    const dow = targetDate.getDay();
+    const dayJp = ["日", "月", "火", "水", "木", "金", "土"][dow];
+
+    // Build content JSON
+    const contentJson = {
+      runId,
+      game,
+      targetDrawDate: dateKey,
+      drawDayJp: `${dayJp}曜日`,
+      drawTime: schedule.drawTime,
+      scheduleJp: schedule.labelJp,
+      scheduleVi: schedule.labelVi,
+      sets: run.sets.map((s) => ({
+        id: s.id,
+        rank: s.rank,
+        mainNumbers: s.mainNumbers,
+        bonusNumbers: s.bonusNumbers,
+        score: s.score,
+        explanation: s.explanationJson,
+      })),
+      japaneseSentence: run.japaneseSentenceJson,
+      algorithmWeights: run.algorithmWeightsJson,
+    };
+
+    const article = await this.prisma.$transaction(async (tx) => {
+      await tx.lotoGeneratedSet.updateMany({
+        where: { runId },
+        data: { selectedForMagazine: false },
+      });
+
+      await tx.lotoGeneratedSet.updateMany({
+        where: { id: { in: uniqueSetIds }, runId },
+        data: { selectedForMagazine: true },
+      });
+
+      await tx.lotoGenerationRun.update({
+        where: { id: runId },
+        data: { selectedSetId: run.sets[0].id },
+      });
+
+      // Upsert magazine article (unique on widgetKind + contentDate + locale)
+      return tx.magazineArticle.upsert({
+        where: {
+          widgetKind_contentDate_locale: {
+            widgetKind,
+            contentDate: targetDate,
+            locale: "vi",
+          },
+        },
+        create: {
+          slug,
+          widgetKind,
+          contentDate: targetDate,
+          locale: "vi",
+          titleJp: `${game.toUpperCase()} 予想 — ${dateKey}（${dayJp}）${schedule.drawTime}`,
+          titleVi: `Dự đoán ${game.toUpperCase()} — ${dateKey} • Quay thưởng ${schedule.drawTime}`,
+          summaryJp: `${schedule.labelJp}｜AI分析による予想数字`,
+          summaryVi: `${schedule.labelVi} | Số dự đoán từ AI`,
+          contentJson,
+          status: "published",
+          approvalStatus: "approved",
+          approvedBy: adminId,
+          approvedAt: new Date(),
+          publishedAt: new Date(),
+        },
+        update: {
+          titleJp: `${game.toUpperCase()} 予想 — ${dateKey}（${dayJp}）${schedule.drawTime}`,
+          titleVi: `Dự đoán ${game.toUpperCase()} — ${dateKey} • Quay thưởng ${schedule.drawTime}`,
+          summaryJp: `${schedule.labelJp}｜AI分析による予想数字`,
+          summaryVi: `${schedule.labelVi} | Số dự đoán từ AI`,
+          contentJson,
+          status: "published",
+          approvalStatus: "approved",
+          approvedBy: adminId,
+          approvedAt: new Date(),
+          publishedAt: new Date(),
+        },
+      });
+    });
+
+    return {
+      articleId: article.id,
+      slug: article.slug,
+      status: article.status,
+      publishedAt: article.publishedAt?.toISOString() ?? null,
+      selectedSets: run.sets.length,
     };
   }
 }

@@ -17,6 +17,7 @@ import {
 } from "../../../../components/reading-assist/annotated-japanese-text";
 import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
 import { learnerApiFetch } from "../../../../lib/learner-api";
+import { recordStudyProgress } from "../../../_hooks/use-study-progress";
 import { ShareDrawer } from "../../_components/share-drawer";
 import { BjtAudioPlayer, isAudioSection } from "./bjt-audio-player";
 import { BjtFormatGuidePanel } from "./bjt-format-guide";
@@ -211,6 +212,12 @@ export interface QuizLabels {
   retryWrongOnly?: string;
   retryWrongAndGuessed?: string;
   sectionScoreLabel?: string;
+  shareResult?: string;
+  skillBreakdownTitle?: string;
+  achievementScore600?: string;
+  achievementScore700?: string;
+  sectionNameLabels?: Record<string, string>;
+  skillTagLabels?: Record<string, string>;
   recommendedNextTitle?: string;
   recommendedNextDesc?: string;
   historyTitle?: string;
@@ -429,6 +436,7 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
           if (res.ok) {
             const data = (await res.json()) as QuestionPayload;
             if (data.session.status === "completed") {
+              recordStudyProgress("bjt_quiz");
               setResults(data.session);
               setQuestion(null);
             }
@@ -491,6 +499,7 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
         }
         const data = (await res.json()) as QuestionPayload;
         if (data.session.status === "completed") {
+          recordStudyProgress("bjt_quiz");
           setResults(data.session);
           setResuming(false);
           return true;
@@ -722,6 +731,7 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
       const data = (await response.json()) as { session: SessionPayload };
       if (data.session.status === "completed") {
         stopTimer();
+        recordStudyProgress("bjt_quiz");
         setResults(data.session);
         setQuestion(null);
         return;
@@ -1561,8 +1571,8 @@ export function QuizQuestionPanel({
                 <line x1="4" x2="4" y1="22" y2="15" />
               </svg>
             </button>
-            <span className="rounded-full bg-accent/8 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-accent">
-              {question.question.skillTag}
+            <span className="rounded-full bg-accent/8 px-2.5 py-1 text-[10px] font-bold tracking-wider text-accent">
+              {formatSkillTag(question.question.skillTag, labels)}
             </span>
           </div>
         </div>
@@ -1862,11 +1872,12 @@ function ResultsSummary({
             {labels.retryQuiz ?? "Làm bài khác"}
           </button>
           <button
-            className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[hsl(var(--border))] px-5 text-sm font-medium text-[hsl(var(--muted))] hover:text-[hsl(var(--ink))] transition-colors"
+            className="inline-flex min-h-11 items-center justify-center rounded-xl border border-ink/12 bg-surface px-5 text-sm font-bold text-ink outline-none ring-offset-2 transition hover:bg-paper focus-visible:ring-2 focus-visible:ring-accent active:scale-[0.98]"
             onClick={() => setShareOpen(true)}
             type="button"
           >
-            Share Result
+            <svg className="mr-1.5 h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            {labels.shareResult ?? "Chia sẻ kết quả"}
           </button>
           <ShareDrawer
             hasOptedIn={false}
@@ -1913,8 +1924,8 @@ function AchievementBadges({
     { emoji: "🎯", label: labels.achievementPerfect ?? "100% chính xác!", earned: accuracy === 100 },
     { emoji: "🏅", label: labels.achievementFirst ?? "Bài đầu tiên hoàn thành!", earned: historyCount <= 1 },
     { emoji: "🔥", label: labels.achievementStreak ?? "Đã làm 10+ bài!", earned: historyCount >= 10 },
-    { emoji: "⭐", label: "Score 600+", earned: score >= 600 },
-    { emoji: "💎", label: "Score 700+", earned: score >= 700 },
+    { emoji: "⭐", label: labels.achievementScore600 ?? "Đạt 600+ điểm", earned: score >= 600 },
+    { emoji: "💎", label: labels.achievementScore700 ?? "Đạt 700+ điểm", earned: score >= 700 },
   ];
 
   const earned = badges.filter((b) => b.earned);
@@ -2058,10 +2069,29 @@ function SessionHistoryTimeline({
 /* ------------------------------------------------------------------ */
 
 const SECTION_NAMES: Record<string, string> = {
-  LC: "Listening Comprehension",
-  LR: "Listening & Reading",
-  RC: "Reading Comprehension"
+  // Full section codes from BJT structure
+  LC_SCENE: "Nắm bắt tình huống (聴解)",
+  LC_STATEMENT: "Nghe hiểu phát ngôn (聴解)",
+  LC_INTEGRATED: "Nghe hiểu tổng hợp (聴解)",
+  LR_SITUATION: "Nắm bắt tình huống (聴読解)",
+  LR_DOCUMENT: "Đọc tài liệu kết hợp nghe",
+  LR_INTEGRATED: "Nghe-đọc tổng hợp (聴読解)",
+  RC_VOCAB_GRAMMAR: "Từ vựng - Ngữ pháp (読解)",
+  RC_EXPRESSION: "Biểu đạt - Đọc hiểu (読解)",
+  RC_INTEGRATED: "Đọc hiểu tổng hợp (読解)",
+  // Fallback short codes
+  LC: "Nghe hiểu (聴解)",
+  LR: "Nghe-đọc hiểu (聴読解)",
+  RC: "Đọc hiểu (読解)"
 };
+
+function formatSkillTag(tag: string, labels: QuizLabels): string {
+  if (labels.skillTagLabels?.[tag]) return labels.skillTagLabels[tag];
+  // Fallback: convert snake_case to readable
+  return tag
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
 function SkillSectionBreakdown({
   breakdown,
@@ -2083,11 +2113,11 @@ function SkillSectionBreakdown({
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([code, stats]) => ({
         code,
-        name: SECTION_NAMES[code] ?? code,
+        name: labels.sectionNameLabels?.[code] ?? SECTION_NAMES[code] ?? code,
         ...stats,
         pct: stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0
       }));
-  }, [breakdown]);
+  }, [breakdown, labels.sectionNameLabels]);
 
   // Group by skillTag
   const skillStats = useMemo(() => {
@@ -2147,14 +2177,14 @@ function SkillSectionBreakdown({
         <div className="overflow-hidden rounded-2xl border border-ink/8 bg-surface shadow-sm">
           <div className="border-b border-ink/6 bg-paper/40 px-4 py-3">
             <h3 className="text-sm font-bold text-ink">
-              Skill breakdown
+              {labels.skillBreakdownTitle ?? "Phân tích theo kỹ năng"}
             </h3>
           </div>
           <div className="space-y-2.5 p-4">
             {skillStats.map((s) => (
               <div key={s.tag} className="flex items-center gap-2">
-                <span className="w-24 truncate text-[11px] font-medium text-muted" title={s.tag}>
-                  {s.tag}
+                <span className="w-28 truncate text-[11px] font-medium text-muted" title={formatSkillTag(s.tag, labels)}>
+                  {formatSkillTag(s.tag, labels)}
                 </span>
                 <div className="h-2 flex-1 overflow-hidden rounded-full bg-ink/5">
                   <div

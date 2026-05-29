@@ -10,7 +10,7 @@ interface RevengeQuestion {
   prompt: string;
   scenario: string | null;
   skillTag: string | null;
-  options: { key: string; text: string }[];
+  options: { key: string; text: string; originalKey: string }[];
   yourAnswer: string;
 }
 
@@ -60,15 +60,19 @@ export function RevengeModeWidget({ locale }: { locale: string }) {
   const handleAnswer = async (optionKey: string) => {
     if (selected || !currentQ) return;
     setSelected(optionKey);
+    // Find the original DB key to send to backend
+    const originalKey = currentQ.options.find((o) => o.key === optionKey)?.originalKey ?? optionKey;
     try {
       const r = await learnerApiFetch("/api/quiz/revenge/answer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ questionId: currentQ.questionId, selectedOption: optionKey }),
+        body: JSON.stringify({ questionId: currentQ.questionId, selectedOption: originalKey }),
       });
       if (r.ok) {
         const data = await r.json();
-        setFeedback(data);
+        // Map correctOption (DB key) to display key for UI highlighting
+        const correctDisplayKey = currentQ.options.find((o) => o.originalKey === data.correctOption)?.key ?? data.correctOption;
+        setFeedback({ ...data, correctOption: correctDisplayKey });
         setResults((prev) => [...prev, data.isCorrect]);
         setTimeout(() => {
           setSelected(null);

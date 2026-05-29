@@ -8,6 +8,8 @@ interface FeedItem {
   id: string;
   drawNumber: number | null;
   drawDate: string;
+  drawDayJp?: string;
+  drawTime?: string;
   game: LotoGame;
   sets: Array<{ mainNumbers: number[]; bonusNumbers: number[]; score: number }>;
   result: { mainNumbers: number[]; bonusNumbers: number[] } | null;
@@ -68,7 +70,12 @@ export function LotoHistoryCard({ item, labels, game }: { item: FeedItem; labels
           <span className="rounded-lg bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
             {item.drawNumber ? `#${item.drawNumber}` : item.drawDate}
           </span>
-          <span className="text-xs text-muted">{item.drawDate}</span>
+          <span className="text-xs text-muted">
+            {item.drawDate}{item.drawDayJp ? `（${item.drawDayJp}）` : ""}
+          </span>
+          {item.drawTime && (
+            <span className="text-[10px] text-muted/70">{item.drawTime}</span>
+          )}
         </div>
         {item.result ? (
           <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${hitColorClass(item.hitCount, totalNumbers)}`}>

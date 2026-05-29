@@ -5,6 +5,7 @@ import { cn } from "@nihongo-bjt/ui";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { BattleBotAvatar } from "../../../_components/battle-bot-avatar";
+import { recordStudyProgress } from "../../../_hooks/use-study-progress";
 
 type StudyMode = "flip" | "shuffle" | "quiz";
 type Rating = "again" | "hard" | "good";
@@ -321,6 +322,7 @@ export function DeckStudySession({
   const goNext = useCallback(() => {
     if (index >= total - 1) {
       setCompleted(true);
+      recordStudyProgress("srs_review");
       return;
     }
     setCardAnim("exit");

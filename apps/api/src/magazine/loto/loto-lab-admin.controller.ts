@@ -69,4 +69,23 @@ export class LotoLabAdminController {
     const principal = await this.auth.requirePermission(req, "admin.content.write");
     return this.loto.generate(body, principal.actorId);
   }
+
+  @Post("publish")
+  @ApiOperation({ summary: "Publish selected generated sets as a Magazine prediction article." })
+  @ApiBody({
+    schema: {
+      type: "object",
+      properties: {
+        runId: { type: "string", description: "LotoGenerationRun UUID" },
+        setIds: { type: "array", items: { type: "string" }, description: "Selected LotoGeneratedSet UUIDs to publish" },
+      },
+      required: ["runId", "setIds"],
+    },
+  })
+  async publish(@Req() req: Request, @Body() body: { runId?: string; setIds?: string[] }) {
+    const principal = await this.auth.requirePermission(req, "admin.content.write");
+    if (!body.runId) throw new BadRequestException("runId is required");
+    if (!body.setIds?.length) throw new BadRequestException("At least one setId is required");
+    return this.loto.publishToMagazine(body.runId, body.setIds, principal.actorId);
+  }
 }

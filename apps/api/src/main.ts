@@ -1,5 +1,6 @@
 import { parseServerEnv } from "@nihongo-bjt/config";
 import { NestFactory } from "@nestjs/core";
+import type { NestExpressApplication } from "@nestjs/platform-express";
 import { IoAdapter } from "@nestjs/platform-socket.io";
 import { config as loadEnv } from "dotenv";
 import helmet from "helmet";
@@ -26,10 +27,13 @@ async function bootstrap() {
     }
     throw error;
   }
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bodyParser: false,
     bufferLogs: true,
     rawBody: true
   });
+  app.useBodyParser("json", { limit: "5mb" });
+  app.useBodyParser("urlencoded", { extended: true, limit: "5mb" });
   app.useWebSocketAdapter(new IoAdapter(app));
   app.useGlobalFilters(new GlobalExceptionFilter());
   app.use(

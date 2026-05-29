@@ -5,6 +5,10 @@ type LotoGame = "loto6" | "loto7";
 interface NextDrawData {
   drawNumber: number | null;
   drawDate: string;
+  drawDayJp?: string;
+  drawTime?: string;
+  scheduleJp?: string;
+  scheduleVi?: string;
   sets: Array<{ mainNumbers: number[]; bonusNumbers: number[]; score: number }>;
   jpSentence: { textJp: string; reading: string; textVi: string; vocabItems: Array<{ wordJp: string; reading: string; meaningVi: string }> } | null;
   vocabItems: Array<{ wordJp: string; reading: string; meaningVi: string }>;
@@ -52,8 +56,23 @@ export function LotoHeroPrediction({ data, labels, game }: { data: NextDrawData;
           )}
         </div>
 
-        {/* Draw date */}
-        <p className="text-xs text-muted">{data.drawDate}</p>
+        {/* Draw date + schedule */}
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <p className="text-sm font-medium text-ink/80">
+            📅 {data.drawDate}{data.drawDayJp ? `（${data.drawDayJp}）` : ""}
+          </p>
+          {data.drawTime && (
+            <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+              ⏰ {data.drawTime}
+            </span>
+          )}
+        </div>
+        {data.scheduleJp && (
+          <div className="rounded-lg bg-white/40 px-3 py-1.5 dark:bg-white/5">
+            <p className="text-xs font-medium text-ink/70">{data.scheduleJp}</p>
+            <p className="text-[11px] text-muted">{data.scheduleVi}</p>
+          </div>
+        )}
 
         {/* Number sets */}
         <div className="space-y-3">

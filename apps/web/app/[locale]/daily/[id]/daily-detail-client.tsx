@@ -6,6 +6,7 @@ import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provi
 import { ShareDrawer } from "../../_components/share-drawer";
 import { AnnotatedJapaneseText } from "../../../../components/reading-assist/annotated-japanese-text";
 import { learnerApiFetch, learnerApiFetchOptional } from "../../../../lib/learner-api";
+import { recordStudyProgress } from "../../../_hooks/use-study-progress";
 import { toIntlLocale } from "@/lib/locale-utils";
 
 /* ── types ── */
@@ -124,7 +125,10 @@ export function DailyDetailClient({
           if (!cancelled) setError(t("errorNotFound"));
           return;
         }
-        if (!cancelled) setItem((await r.json()) as DailyItemDetail);
+        if (!cancelled) {
+          setItem((await r.json()) as DailyItemDetail);
+          recordStudyProgress("daily_phrase");
+        }
       } catch {
         if (!cancelled) setError(t("errorLoad"));
       } finally {

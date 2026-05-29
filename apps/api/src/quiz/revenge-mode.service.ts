@@ -1,4 +1,5 @@
 import { createPrismaClient } from "@nihongo-bjt/database";
+import { shuffleArray } from "@nihongo-bjt/shared";
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 
 @Injectable()
@@ -66,19 +67,25 @@ export class RevengeModeService {
     const selected = pending.slice(0, limit);
 
     return {
-      questions: selected.map((a) => ({
-        questionId: a.questionId,
-        prompt: a.question.prompt,
-        scenario: a.question.scenario,
-        skillTag: a.question.skillTag,
-        difficulty: a.question.difficulty,
-        options: a.question.options.map((o) => ({
-          key: o.optionKey,
-          text: o.text,
-        })),
-        wrongAnswerDate: a.answeredAt,
-        yourAnswer: a.selectedOption,
-      })),
+      questions: selected.map((a) => {
+        // Shuffle options per-serving to prevent position memorization
+        const shuffled = shuffleArray(a.question.options);
+        const KEYS = ["A", "B", "C", "D", "E", "F", "G", "H"];
+        return {
+          questionId: a.questionId,
+          prompt: a.question.prompt,
+          scenario: a.question.scenario,
+          skillTag: a.question.skillTag,
+          difficulty: a.question.difficulty,
+          options: shuffled.map((o, i) => ({
+            key: KEYS[i] ?? String(i + 1),
+            text: o.text,
+            originalKey: o.optionKey,
+          })),
+          wrongAnswerDate: a.answeredAt,
+          yourAnswer: a.selectedOption,
+        };
+      }),
       totalPending: pending.length,
     };
   }

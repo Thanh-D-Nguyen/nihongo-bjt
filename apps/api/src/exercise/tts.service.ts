@@ -1,6 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 
 import { AzureTtsProvider } from "./azure-tts.provider.js";
+import { OmniVoiceTtsProvider } from "./omnivoice-tts.provider.js";
 
 /**
  * TTS (Text-to-Speech) provider interface.
@@ -104,6 +105,13 @@ export class TtsService {
         return new BrowserFallbackTtsProvider();
       }
       return new AzureTtsProvider(key, region, defaultVoice);
+    }
+    if (choice === "omnivoice") {
+      const url = process.env.OMNIVOICE_URL ?? "http://localhost:8001";
+      const refAudio = process.env.OMNIVOICE_REF_AUDIO;
+      const refText = process.env.OMNIVOICE_REF_TEXT;
+      const numSteps = parseInt(process.env.OMNIVOICE_NUM_STEPS ?? "32", 10);
+      return new OmniVoiceTtsProvider(url, refAudio, refText, numSteps);
     }
     return new BrowserFallbackTtsProvider();
   }

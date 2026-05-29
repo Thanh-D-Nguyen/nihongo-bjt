@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { learnerApiFetchOptional } from "../../../../../lib/learner-api";
 
 interface ProfileData {
   id: string;
@@ -31,9 +30,6 @@ interface Props {
 export function ProfileActions({ profile, labels, locale, isAuthenticated }: Props) {
   const router = useRouter();
   const [challengeState, setChallengeState] = useState<"idle" | "sending" | "sent">("idle");
-  const [friendState, setFriendState] = useState<"idle" | "sending" | "sent">(
-    profile.relationship === "friend" ? "sent" : "idle"
-  );
 
   if (profile.relationship === "self") return null;
   if (profile.relationship === "blocked") return null;
@@ -54,33 +50,6 @@ export function ProfileActions({ profile, labels, locale, isAuthenticated }: Pro
     setChallengeState("sending");
     router.push(`/${locale}/battle?challenge=${profile.id}`);
     setChallengeState("sent");
-  };
-
-  const handleAddFriend = async () => {
-    if (friendState !== "idle") return;
-
-    if (!isAuthenticated) {
-      redirectToLogin();
-      return;
-    }
-
-    setFriendState("sending");
-
-    try {
-      const res = await learnerApiFetchOptional("/api/social/connections", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ addresseeUserId: profile.id }),
-      });
-
-      if (res.ok) {
-        setFriendState("sent");
-      } else {
-        setFriendState("idle");
-      }
-    } catch {
-      setFriendState("idle");
-    }
   };
 
   const challengeLabel = !isAuthenticated
@@ -118,36 +87,6 @@ export function ProfileActions({ profile, labels, locale, isAuthenticated }: Pro
           </>
         )}
       </button>
-
-      {/* Friend Button — only for authenticated or prompt login */}
-      {(profile.relationship === "stranger" || (!isAuthenticated && profile.relationship !== "friend")) && (
-        <button
-          onClick={handleAddFriend}
-          disabled={friendState !== "idle"}
-          className={`
-            inline-flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm
-            min-h-[48px] transition-all duration-150 active:scale-[0.97]
-            ${friendState === "sent"
-              ? "bg-leaf/10 text-leaf border border-leaf/20 cursor-default"
-              : "bg-surface border-2 border-accent/30 text-accent hover:bg-accent/5 hover:border-accent/50 shadow-sm hover:shadow-md"
-            }
-            disabled:opacity-60 disabled:cursor-not-allowed
-          `}
-        >
-          {friendState === "sent" ? (
-            <>✓ {labels.actions.pendingFriend}</>
-          ) : friendState === "sending" ? (
-            <span className="animate-pulse">{labels.actions.addFriend}</span>
-          ) : (
-            <>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-              </svg>
-              {labels.actions.addFriend}
-            </>
-          )}
-        </button>
-      )}
 
       {/* Already friends badge */}
       {profile.relationship === "friend" && (

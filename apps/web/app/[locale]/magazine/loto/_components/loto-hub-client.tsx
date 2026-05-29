@@ -42,6 +42,10 @@ interface FeedItem {
   id: string;
   drawNumber: number | null;
   drawDate: string;
+  drawDayJp?: string;
+  drawTime?: string;
+  scheduleJp?: string;
+  scheduleVi?: string;
   game: LotoGame;
   sets: Array<{ mainNumbers: number[]; bonusNumbers: number[]; score: number }>;
   result: { mainNumbers: number[]; bonusNumbers: number[] } | null;
@@ -54,6 +58,10 @@ interface NextDrawData {
   id: string;
   drawNumber: number | null;
   drawDate: string;
+  drawDayJp?: string;
+  drawTime?: string;
+  scheduleJp?: string;
+  scheduleVi?: string;
   game: LotoGame;
   sets: Array<{ mainNumbers: number[]; bonusNumbers: number[]; score: number }>;
   jpSentence: { textJp: string; reading: string; textVi: string; vocabItems: Array<{ wordJp: string; reading: string; meaningVi: string }> } | null;

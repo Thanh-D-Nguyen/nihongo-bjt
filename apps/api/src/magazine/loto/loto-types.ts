@@ -12,6 +12,21 @@ export const LOTO_GAME_SPECS: Record<LotoGame, LotoGameSpec> = {
   loto7: { game: "loto7", mainCount: 7, maxNumber: 37, bonusCount: 2 },
 };
 
+export const LOTO_SCHEDULE: Record<LotoGame, { drawDays: number[]; drawTime: string; labelJp: string; labelVi: string }> = {
+  loto6: {
+    drawDays: [1, 4], // Monday=1, Thursday=4
+    drawTime: "18:45 JST",
+    labelJp: "毎週 月曜・木曜 18:45 抽選",
+    labelVi: "Thứ 2 & Thứ 5 hàng tuần, quay thưởng 18:45 (giờ Nhật)",
+  },
+  loto7: {
+    drawDays: [5], // Friday=5
+    drawTime: "18:45 JST",
+    labelJp: "毎週 金曜 18:45 抽選",
+    labelVi: "Thứ 6 hàng tuần, quay thưởng 18:45 (giờ Nhật)",
+  },
+};
+
 export type LotoAlgorithmWeights = {
   frequencyHot: number;
   frequencyCold: number;
