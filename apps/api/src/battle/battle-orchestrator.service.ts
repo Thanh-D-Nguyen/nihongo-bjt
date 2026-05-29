@@ -1,5 +1,5 @@
 import { decideBotOption, randomBetween, type BattleBotAnimationState } from "@nihongo-bjt/shared";
-import { BadRequestException, Inject, Injectable, Logger, Optional } from "@nestjs/common";
+import { BadRequestException, forwardRef, Inject, Injectable, Logger } from "@nestjs/common";
 import { randomBytes } from "node:crypto";
 import type { Namespace, Socket } from "socket.io";
 
@@ -115,7 +115,7 @@ export class BattleOrchestratorService {
     @Inject(BattleRepository) private readonly battleRepository: BattleRepository,
     @Inject(MatchmakingPort) private readonly matchmaking: MatchmakingPort,
     @Inject(BotChatResponderPort) private readonly botResponder: BotChatResponderPort,
-    @Optional() @Inject(PresenceGateway) private readonly presenceGateway: PresenceGateway | null
+    @Inject(forwardRef(() => PresenceGateway)) private readonly presenceGateway: PresenceGateway
   ) {}
 
   /** Called by BattleGateway.afterInit to provide a stable namespace reference */
@@ -471,11 +471,6 @@ export class BattleOrchestratorService {
         }
       }
     }, challengeExpiryMs);
-    await this.battleRepository.createAnalyticsEvent({
-      eventName: "battle_user_challenge_created",
-      payload: { challengeId, delivered: Boolean(target), targetUserId: input.targetUserId },
-      userId: input.fromUserId
-    });
     const payload = {
       challengeId,
       createdAt: new Date().toISOString(),
@@ -483,12 +478,25 @@ export class BattleOrchestratorService {
       fromUserId: input.fromUserId,
       targetUserId: input.targetUserId
     };
+    const deliveredViaBattle = Boolean(target);
+    const deliveredViaPresence = deliveredViaBattle
+      ? false
+      : this.presenceGateway.emitToUser(input.targetUserId, "battle:user_challenge_received", payload);
+
+    await this.battleRepository.createAnalyticsEvent({
+      eventName: "battle_user_challenge_created",
+      payload: {
+        challengeId,
+        delivered: deliveredViaBattle || deliveredViaPresence,
+        deliveredViaBattle,
+        deliveredViaPresence,
+        targetUserId: input.targetUserId
+      },
+      userId: input.fromUserId
+    });
     client.emit("battle:user_challenge_sent", payload);
     if (target) {
       client.nsp.to(target.socketId).emit("battle:user_challenge_received", payload);
-    } else if (this.presenceGateway) {
-      // Target not in battle lobby — forward via presence namespace
-      this.presenceGateway.emitToUser(input.targetUserId, "battle:user_challenge_received", payload);
     }
   }
 

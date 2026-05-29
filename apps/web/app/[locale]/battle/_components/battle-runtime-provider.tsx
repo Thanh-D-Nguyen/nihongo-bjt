@@ -11,7 +11,7 @@ import {
   useState,
   type ReactNode
 } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { io, type Socket } from "socket.io-client";
 
 import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
@@ -147,7 +147,9 @@ export function BattleRuntimeProvider({
   locale: string;
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const socketRef = useRef<Socket | null>(null);
+  const handledUrlIntentsRef = useRef<Set<string>>(new Set());
   const { accessToken, displayName, email, userId } = useKeycloakAuth();
   const [answerPending, setAnswerPending] = useState(false);
   const [answerResult, setAnswerResult] = useState<AnswerResultEvent | null>(null);
@@ -746,6 +748,71 @@ export function BattleRuntimeProvider({
     },
     [ensureSocket, learnerDisplayName, userId]
   );
+
+  const acceptChallenge = useCallback(
+    (challenge: Pick<UserChallenge, "challengeId" | "fromUserId">) => {
+      const s = ensureSocket();
+      const uid = userId;
+      if (!s || !uid) return;
+      markPending();
+      s.emit("battle:accept_challenge", {
+        challengeId: challenge.challengeId,
+        fromUserId: challenge.fromUserId,
+        userId: uid
+      });
+      setPvpChallenge(null);
+      setStatus(labels.connecting);
+      setError(null);
+      setOutcome(null);
+      setQuestion(null);
+      setBotProfile(null);
+      setUserScore(0);
+      setOpponentScore(0);
+      setCombo(0);
+      setRemediation(null);
+      setShareUrl(null);
+      const timeout = window.setTimeout(() => {
+        setStatus((prev) => {
+          if (prev === labels.connecting) {
+            clearPending();
+            setLobbyNotice(labels.pvpChallengeExpired);
+            return null;
+          }
+          return prev;
+        });
+      }, 8000);
+      const cleanup = () => window.clearTimeout(timeout);
+      socketRef.current?.once("battle:pvp_match_found", cleanup);
+      socketRef.current?.once("battle:lobby_error", cleanup);
+      socketRef.current?.once("battle:error", cleanup);
+    },
+    [ensureSocket, labels.connecting, labels.pvpChallengeExpired, userId]
+  );
+
+  useEffect(() => {
+    const challengeTargetUserId = searchParams.get("challenge");
+    const acceptChallengeId = searchParams.get("accept");
+    const acceptFromUserId = searchParams.get("from");
+
+    if (challengeTargetUserId) {
+      const key = `challenge:${challengeTargetUserId}`;
+      if (handledUrlIntentsRef.current.has(key)) return;
+      if (!userId || challengeTargetUserId === userId) return;
+      handledUrlIntentsRef.current.add(key);
+      challengeUser(challengeTargetUserId);
+      router.replace(`/${locale}/battle`);
+      return;
+    }
+
+    if (acceptChallengeId && acceptFromUserId) {
+      const key = `accept:${acceptChallengeId}:${acceptFromUserId}`;
+      if (handledUrlIntentsRef.current.has(key)) return;
+      if (!userId) return;
+      handledUrlIntentsRef.current.add(key);
+      acceptChallenge({ challengeId: acceptChallengeId, fromUserId: acceptFromUserId });
+      router.replace(`/${locale}/battle`);
+    }
+  }, [acceptChallenge, challengeUser, locale, router, searchParams, userId]);
 
   const goToLobby = useCallback(() => {
     const s = socketRef.current;

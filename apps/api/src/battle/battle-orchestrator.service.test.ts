@@ -77,8 +77,16 @@ describe("BattleOrchestratorService", () => {
     const botResponder = {
       generateResponse: vi.fn().mockResolvedValue(null)
     };
-    const service = new BattleOrchestratorService(repository as any, matchmaking as any, botResponder as any, null);
-    return { botResponder, matchmaking, repository, service };
+    const presenceGateway = {
+      emitToUser: vi.fn().mockReturnValue(false)
+    };
+    const service = new BattleOrchestratorService(
+      repository as any,
+      matchmaking as any,
+      botResponder as any,
+      presenceGateway as any
+    );
+    return { botResponder, matchmaking, presenceGateway, repository, service };
   }
 
   it("rate limits global lobby chat at five messages per ten seconds", async () => {
@@ -106,6 +114,47 @@ describe("BattleOrchestratorService", () => {
     expect(client.emit).toHaveBeenCalledWith("battle:lobby_error", { code: "rate_limited" });
     expect(repository.createAnalyticsEvent).toHaveBeenCalledWith(
       expect.objectContaining({ eventName: "battle_chat_rate_limited", userId: "u-chat" })
+    );
+  });
+
+  it("forwards user challenges through presence when target is outside battle lobby", async () => {
+    const { presenceGateway, repository, service } = buildService();
+    presenceGateway.emitToUser.mockReturnValueOnce(true);
+    const client = {
+      emit: vi.fn(),
+      id: "socket-challenger",
+      nsp: { to: vi.fn() }
+    };
+
+    await service.challengeUser(client as any, {
+      fromDisplayName: "A",
+      fromUserId: "00000000-0000-4000-8000-0000000000a1",
+      targetUserId: "00000000-0000-4000-8000-0000000000b1"
+    });
+
+    expect(presenceGateway.emitToUser).toHaveBeenCalledWith(
+      "00000000-0000-4000-8000-0000000000b1",
+      "battle:user_challenge_received",
+      expect.objectContaining({
+        fromDisplayName: "A",
+        fromUserId: "00000000-0000-4000-8000-0000000000a1",
+        targetUserId: "00000000-0000-4000-8000-0000000000b1"
+      })
+    );
+    expect(client.emit).toHaveBeenCalledWith(
+      "battle:user_challenge_sent",
+      expect.objectContaining({ targetUserId: "00000000-0000-4000-8000-0000000000b1" })
+    );
+    expect(repository.createAnalyticsEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventName: "battle_user_challenge_created",
+        payload: expect.objectContaining({
+          delivered: true,
+          deliveredViaBattle: false,
+          deliveredViaPresence: true
+        }),
+        userId: "00000000-0000-4000-8000-0000000000a1"
+      })
     );
   });
 
