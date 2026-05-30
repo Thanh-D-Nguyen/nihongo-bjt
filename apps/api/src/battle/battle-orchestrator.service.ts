@@ -1,5 +1,5 @@
 import { decideBotOption, randomBetween, type BattleBotAnimationState } from "@nihongo-bjt/shared";
-import { BadRequestException, forwardRef, Inject, Injectable, Logger } from "@nestjs/common";
+import { BadRequestException, Inject, Injectable, Logger } from "@nestjs/common";
 import { randomBytes } from "node:crypto";
 import type { Namespace, Socket } from "socket.io";
 
@@ -115,7 +115,7 @@ export class BattleOrchestratorService {
     @Inject(BattleRepository) private readonly battleRepository: BattleRepository,
     @Inject(MatchmakingPort) private readonly matchmaking: MatchmakingPort,
     @Inject(BotChatResponderPort) private readonly botResponder: BotChatResponderPort,
-    @Inject(forwardRef(() => PresenceGateway)) private readonly presenceGateway: PresenceGateway
+    @Inject(PresenceGateway) private readonly presenceGateway: PresenceGateway
   ) {}
 
   /** Called by BattleGateway.afterInit to provide a stable namespace reference */
@@ -243,6 +243,7 @@ export class BattleOrchestratorService {
 
     let question: {
 	      question: {
+	        audioScript: string | null;
 	        audioUrl: string | null;
 	        options: Array<{ optionKey: string; text: string }>;
 	        prompt: string;
@@ -262,6 +263,7 @@ export class BattleOrchestratorService {
       if (q) {
         question = {
           question: {
+            audioScript: q.audioScript ?? null,
             audioUrl: q.audioUrl ?? null,
             options: this.safeOptionsForClient(q),
             prompt: q.prompt,
@@ -283,6 +285,7 @@ export class BattleOrchestratorService {
       if (q) {
         question = {
           question: {
+            audioScript: q.audioScript ?? null,
             audioUrl: q.audioUrl ?? null,
             options: this.safeOptionsForClient(q),
             prompt: q.prompt,
@@ -454,8 +457,9 @@ export class BattleOrchestratorService {
     if (this.socketToLobbyUser.get(client.id) !== input.fromUserId) {
       await this.joinLobby(client, { displayName: input.fromDisplayName, userId: input.fromUserId });
     }
-    const challengeId = randomBytes(8).toString("hex");
+
     const target = this.lobbyUsers.get(input.targetUserId);
+    const challengeId = randomBytes(8).toString("hex");
     const challenge: PendingChallenge = {
       challengeId,
       createdAt: Date.now(),
@@ -915,6 +919,7 @@ export class BattleOrchestratorService {
       gameType: pvpRoom.gameType,
       interactionType: this.getInteractionType(pvpRoom.gameType),
       question: {
+        audioScript: q.audioScript ?? null,
         audioUrl: q.audioUrl ?? null,
         options: q.options.map((o) => ({ optionKey: o.optionKey, text: o.text })),
         prompt: q.prompt,
@@ -1280,6 +1285,7 @@ export class BattleOrchestratorService {
       timeLimitSec: room.configTimeSec,
       totalRounds: room.maxRounds,
       question: {
+        audioScript: q.audioScript ?? null,
         audioUrl: q.audioUrl ?? null,
         options: this.safeOptionsForClient(q),
         prompt: q.prompt,

@@ -1,4 +1,4 @@
-import { forwardRef, Module } from "@nestjs/common";
+import { Module } from "@nestjs/common";
 
 import { AdminModule } from "../admin/admin.module.js";
 import { PresenceModule } from "../presence/presence.module.js";
@@ -32,7 +32,7 @@ import { TemplateBotChatResponder } from "./template-bot-chat-responder.js";
     BattleBotsAdminController,
     BattleAbuseAdminController
   ],
-  imports: [AdminModule, forwardRef(() => PresenceModule)],
+  imports: [AdminModule, PresenceModule],
   providers: [
     BattleRepository,
     BattleConfigsAdminRepository,

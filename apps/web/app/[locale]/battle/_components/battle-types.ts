@@ -271,6 +271,7 @@ export type QuestionEvent = {
   gameType?: GameType | string;
   interactionType?: InteractionType | string;
   question: {
+    audioScript?: string | null;
     audioUrl?: string | null;
     options: Array<{ optionKey: string; text: string }>;
     prompt: string;

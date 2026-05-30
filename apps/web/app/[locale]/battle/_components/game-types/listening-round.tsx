@@ -1,9 +1,26 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { GameTypeRoundProps } from "./shared-props";
 
 const MAX_REPLAYS = 2;
+
+function parseBrowserTtsUrl(audioUrl: string | null | undefined): { lang: string; rate: number; text: string } | null {
+  if (!audioUrl?.startsWith("tts://")) return null;
+  try {
+    const url = new URL(audioUrl);
+    const text = url.searchParams.get("text")?.trim() ?? "";
+    if (!text) return null;
+    const rate = Number.parseFloat(url.searchParams.get("rate") ?? "0.9");
+    return {
+      lang: url.searchParams.get("lang") ?? "ja-JP",
+      rate: Number.isFinite(rate) ? rate : 0.9,
+      text
+    };
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Listening Challenge: Audio-only mode.
@@ -19,32 +36,73 @@ export function ListeningRound({
   selectedOptionKey
 }: GameTypeRoundProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const [playing, setPlaying] = useState(false);
   const [playCount, setPlayCount] = useState(0);
   const [showHint, setShowHint] = useState(false);
   const audioSrc = round.question.audioUrl;
+  const browserTts = parseBrowserTtsUrl(audioSrc);
+  const fileAudioSrc = browserTts ? null : audioSrc;
+  const speechText = browserTts?.text ?? round.question.audioScript?.trim() ?? "";
+  const speechLang = browserTts?.lang ?? "ja-JP";
+  const speechRate = browserTts?.rate ?? 0.9;
+  const hasPlayableAudio = Boolean(fileAudioSrc || speechText);
+
+  const playSpeech = useCallback((countPlay: boolean) => {
+    if (!speechText || typeof window === "undefined" || !window.speechSynthesis) return false;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(speechText);
+    utterance.lang = speechLang;
+    utterance.rate = speechRate;
+    const voice = window.speechSynthesis.getVoices().find((item) => item.lang.startsWith("ja"));
+    if (voice) utterance.voice = voice;
+    utterance.onstart = () => {
+      setPlaying(true);
+      if (countPlay) setPlayCount((count) => count + 1);
+    };
+    utterance.onend = () => setPlaying(false);
+    utterance.onerror = () => setPlaying(false);
+    utteranceRef.current = utterance;
+    window.speechSynthesis.speak(utterance);
+    return true;
+  }, [speechLang, speechRate, speechText]);
+
+  const playAudio = useCallback((countPlay: boolean) => {
+    if (fileAudioSrc && audioRef.current) {
+      audioRef.current.currentTime = 0;
+      void audioRef.current.play().then(() => {
+        setPlaying(true);
+        if (countPlay) setPlayCount((count) => count + 1);
+      }).catch(() => {
+        void playSpeech(countPlay);
+      });
+      return;
+    }
+    void playSpeech(countPlay);
+  }, [fileAudioSrc, playSpeech]);
 
   // Auto-play on new round
   useEffect(() => {
     setPlaying(false);
     setPlayCount(0);
     setShowHint(false);
-    if (audioSrc && audioRef.current) {
-      audioRef.current.currentTime = 0;
-      void audioRef.current.play().then(() => {
-        setPlaying(true);
-        setPlayCount(1);
-      }).catch(() => { /* needs user gesture */ });
+    if (typeof window !== "undefined") {
+      window.speechSynthesis?.cancel();
     }
-  }, [audioSrc, round.roundIndex]);
+    if (hasPlayableAudio) {
+      playAudio(true);
+    }
+    return () => {
+      if (typeof window !== "undefined") {
+        window.speechSynthesis?.cancel();
+      }
+      utteranceRef.current = null;
+    };
+  }, [hasPlayableAudio, playAudio, round.roundIndex]);
 
   const replay = () => {
-    if (playCount >= MAX_REPLAYS || !audioRef.current) return;
-    audioRef.current.currentTime = 0;
-    void audioRef.current.play().then(() => {
-      setPlaying(true);
-      setPlayCount((c) => c + 1);
-    });
+    if (!hasPlayableAudio || playCount >= MAX_REPLAYS || playing) return;
+    playAudio(true);
   };
 
   const replaysLeft = MAX_REPLAYS - playCount;
@@ -94,11 +152,11 @@ export function ListeningRound({
             className={`grid h-14 w-14 place-items-center rounded-full shadow-md transition-all ${
               playing
                 ? "bg-cyan-600 text-white shadow-cyan-400/30"
-                : replaysLeft > 0
+                : hasPlayableAudio && replaysLeft > 0
                   ? "bg-white text-cyan-700 ring-2 ring-cyan-200 hover:bg-cyan-50"
                   : "bg-gray-100 text-gray-400 cursor-not-allowed"
             }`}
-            disabled={replaysLeft <= 0 && !playing}
+            disabled={!hasPlayableAudio || (replaysLeft <= 0 && !playing)}
             onClick={replay}
             type="button"
             aria-label={playing ? "Playing..." : "Replay audio"}
@@ -122,13 +180,18 @@ export function ListeningRound({
           </div>
         </div>
 
-        {audioSrc && (
+        {fileAudioSrc && (
           <audio
             ref={audioRef}
-            src={audioSrc}
+            src={fileAudioSrc}
             preload="auto"
             onEnded={() => setPlaying(false)}
             onPause={() => setPlaying(false)}
+            onError={() => {
+              if (speechText) {
+                playSpeech(false);
+              }
+            }}
           />
         )}
       </div>

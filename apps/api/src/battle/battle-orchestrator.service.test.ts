@@ -176,6 +176,60 @@ describe("BattleOrchestratorService", () => {
     expect(client.join).toHaveBeenCalledWith("battle:lobby:global");
   });
 
+  it("delivers user challenges over the battle socket when both players are in the lobby", async () => {
+    const { presenceGateway, repository, service } = buildService();
+    const targetEmit = vi.fn();
+    const to = vi.fn().mockReturnValue({ emit: targetEmit });
+    const challengerClient = {
+      emit: vi.fn(),
+      id: "socket-challenger",
+      join: vi.fn().mockResolvedValue(undefined),
+      nsp: { to }
+    };
+    const targetClient = {
+      emit: vi.fn(),
+      id: "socket-target",
+      join: vi.fn().mockResolvedValue(undefined),
+      nsp: { to: vi.fn().mockReturnValue({ emit: vi.fn() }) }
+    };
+
+    await service.joinLobby(targetClient as any, {
+      displayName: "B",
+      userId: "00000000-0000-4000-8000-0000000000b1"
+    });
+
+    await service.challengeUser(challengerClient as any, {
+      fromDisplayName: "A",
+      fromUserId: "00000000-0000-4000-8000-0000000000a1",
+      targetUserId: "00000000-0000-4000-8000-0000000000b1"
+    });
+
+    expect(challengerClient.emit).toHaveBeenCalledWith(
+      "battle:user_challenge_sent",
+      expect.objectContaining({ targetUserId: "00000000-0000-4000-8000-0000000000b1" })
+    );
+    expect(to).toHaveBeenCalledWith("socket-target");
+    expect(targetEmit).toHaveBeenCalledWith(
+      "battle:user_challenge_received",
+      expect.objectContaining({
+        fromUserId: "00000000-0000-4000-8000-0000000000a1",
+        targetUserId: "00000000-0000-4000-8000-0000000000b1"
+      })
+    );
+    expect(repository.createAnalyticsEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventName: "battle_user_challenge_created",
+        payload: expect.objectContaining({
+          delivered: true,
+          deliveredViaBattle: true,
+          deliveredViaPresence: false
+        }),
+        userId: "00000000-0000-4000-8000-0000000000a1"
+      })
+    );
+    expect(presenceGateway.emitToUser).not.toHaveBeenCalled();
+  });
+
   it("accepts a challenge after auto-joining the acceptor socket", async () => {
     const { service } = buildService();
     const challengerClient = {
@@ -190,6 +244,18 @@ describe("BattleOrchestratorService", () => {
       join: vi.fn().mockResolvedValue(undefined),
       nsp: { sockets: new Map(), to: vi.fn().mockReturnValue({ emit: vi.fn() }) }
     };
+
+    // Target must be present in the battle lobby for the challenge to deliver.
+    const targetPresenceClient = {
+      emit: vi.fn(),
+      id: "socket-b-lobby",
+      join: vi.fn().mockResolvedValue(undefined),
+      nsp: { to: vi.fn().mockReturnValue({ emit: vi.fn() }) }
+    };
+    await service.joinLobby(targetPresenceClient as any, {
+      displayName: "B",
+      userId: "00000000-0000-4000-8000-0000000000b1"
+    });
 
     await service.challengeUser(challengerClient as any, {
       fromDisplayName: "A",

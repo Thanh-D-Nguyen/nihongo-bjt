@@ -20,6 +20,7 @@ const autoRiveMetadataValues = new Set([
 ]);
 
 export type BattleQuestionPayload = {
+  audioScript: string | null;
   audioUrl: string | null;
   options: Array<{ isCorrect: boolean; optionKey: string; text: string }>;
   prompt: string;
@@ -224,6 +225,7 @@ export class BattleRepository {
         roundIds.push(created.id);
       }
       const questions: BattleQuestionPayload[] = picked.map((q) => ({
+        audioScript: q.audioScript ?? null,
         audioUrl: q.audioUrl ?? null,
         options: q.options.map((o) => ({
           isCorrect: o.isCorrect,
@@ -658,6 +660,7 @@ export class BattleRepository {
         roundIds.push(created.id);
       }
       const questions: BattleQuestionPayload[] = picked.map((q) => ({
+        audioScript: q.audioScript ?? null,
         audioUrl: q.audioUrl ?? null,
         options: q.options.map((o) => ({
           isCorrect: o.isCorrect,
