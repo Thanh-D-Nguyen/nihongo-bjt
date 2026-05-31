@@ -144,7 +144,7 @@ export function HeroSection({
           }} />
         </div>
 
-        <div className="relative px-6 py-10 sm:px-10 sm:py-14 lg:py-16">
+        <div className="relative px-4 py-7 sm:px-10 sm:py-14 lg:py-16">
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-center">
             <div className="min-w-0">
               {/* Eyebrow badge */}
@@ -165,7 +165,7 @@ export function HeroSection({
               </p>
 
               {/* Main greeting — much bigger */}
-              <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-[2.75rem] lg:leading-[1.15]">
+              <h1 className="mt-2 text-[1.75rem] font-extrabold leading-tight tracking-tight text-white sm:text-4xl lg:text-[2.75rem] lg:leading-[1.15]">
                 <span className="drop-shadow-[0_2px_20px_rgba(0,0,0,0.25)]">
                   {greeting}
                 </span>
@@ -176,22 +176,22 @@ export function HeroSection({
               </p>
 
               {/* CTA cluster — bigger, bolder */}
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+              <div className="mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:flex-wrap sm:items-center">
                 <Link
-                  className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white dark:bg-white px-5 text-[15px] font-bold text-[#1B2A4A] dark:text-[#1B2A4A] shadow-[0_4px_24px_rgba(255,255,255,0.25)] outline-none transition-all duration-200 hover:bg-blue-50 dark:hover:bg-blue-50 hover:shadow-[0_8px_32px_rgba(255,255,255,0.35)] focus-visible:ring-2 focus-visible:ring-white/60 active:scale-[0.97] sm:px-7"
+                  className="group inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-white px-5 text-[15px] font-bold text-[#1B2A4A] shadow-[0_4px_24px_rgba(255,255,255,0.25)] outline-none transition-all duration-200 hover:bg-blue-50 hover:shadow-[0_8px_32px_rgba(255,255,255,0.35)] focus-visible:ring-2 focus-visible:ring-white/60 active:scale-[0.97] sm:w-auto sm:px-7 dark:bg-white dark:text-[#1B2A4A] dark:hover:bg-blue-50"
                   href={primaryHref}
                 >
                   <span className="transition-transform duration-200 group-hover:translate-x-0.5">→</span>
                   {primaryCta}
                 </Link>
                 <Link
-                  className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/20 bg-white/[0.08] px-6 text-[15px] font-semibold text-white/90 outline-none backdrop-blur-md transition-all duration-200 hover:border-white/35 hover:bg-white/[0.15] focus-visible:ring-2 focus-visible:ring-white/50"
+                  className="inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-white/20 bg-white/[0.08] px-6 text-[15px] font-semibold text-white/90 outline-none backdrop-blur-md transition-all duration-200 hover:border-white/35 hover:bg-white/[0.15] focus-visible:ring-2 focus-visible:ring-white/50 sm:w-auto"
                   href={secondaryHref}
                 >
                   {secondaryLabel}
                 </Link>
                 <Link
-                  className="inline-flex min-h-12 items-center justify-center rounded-xl border border-amber-300/25 bg-amber-400/[0.1] px-5 text-[15px] font-semibold text-amber-100/90 outline-none backdrop-blur-sm transition-all duration-200 hover:border-amber-300/40 hover:bg-amber-400/[0.2] focus-visible:ring-2 focus-visible:ring-white/50"
+                  className="inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-amber-300/25 bg-amber-400/[0.1] px-5 text-[15px] font-semibold text-amber-100/90 outline-none backdrop-blur-sm transition-all duration-200 hover:border-amber-300/40 hover:bg-amber-400/[0.2] focus-visible:ring-2 focus-visible:ring-white/50 sm:w-auto"
                   href={`/${locale}/daily-standup`}
                 >
                   {labels.cockpitTertiaryToStandup}
@@ -200,7 +200,7 @@ export function HeroSection({
             </div>
 
             {/* Stats card — prominent glassmorphism */}
-            <div className="rounded-2xl border border-white/[0.12] bg-white/[0.07] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_12px_40px_rgba(0,0,0,0.2)] backdrop-blur-2xl">
+            <div className="rounded-2xl border border-white/[0.12] bg-white/[0.07] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_12px_40px_rgba(0,0,0,0.2)] backdrop-blur-2xl sm:p-6">
               <div className="flex items-center gap-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/20">
                   <svg aria-hidden className="h-4 w-4 text-blue-300" fill="currentColor" viewBox="0 0 20 20"><path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z" /></svg>

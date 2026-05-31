@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { getKcAdminBootstrap, getKcWebConfig } from "@/lib/kc-server-config";
+import { getKcUserAdminConfig, getKcWebConfig } from "@/lib/kc-server-config";
 
 import en from "../../../messages/en.json";
 import ja from "../../../messages/ja.json";
@@ -46,7 +46,7 @@ export default async function RegisterPage({
   const t = messages[loc].auth.register;
   const loginT = messages[loc].auth.login;
   const cfg = getKcWebConfig();
-  const authReady = Boolean(cfg?.clientSecret && getKcAdminBootstrap());
+  const authReady = Boolean(cfg?.clientSecret && getKcUserAdminConfig());
   const returnTo =
     sp.returnTo && sp.returnTo.startsWith("/") && !sp.returnTo.startsWith("//")
       ? sp.returnTo

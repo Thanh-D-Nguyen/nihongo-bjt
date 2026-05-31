@@ -1,0 +1,51 @@
+name: Deploy GCP production
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: gcp-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://app.34-87-55-1.sslip.io/vi
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure SSH
+        env:
+          SSH_KNOWN_HOSTS: ${{ secrets.GCP_VM_SSH_KNOWN_HOSTS }}
+          SSH_PRIVATE_KEY: ${{ secrets.GCP_VM_SSH_PRIVATE_KEY }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/gcp-deploy
+          chmod 600 ~/.ssh/gcp-deploy
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+      - name: Sync release files
+        env:
+          GCP_VM_HOST: ${{ secrets.GCP_VM_HOST }}
+          GCP_VM_USER: ${{ secrets.GCP_VM_USER }}
+        run: |
+          rsync -az --delete-delay \
+            --exclude='.env' \
+            --exclude='.git/' \
+            --exclude='**/.next/' \
+            --exclude='**/dist/' \
+            --exclude='**/node_modules/' \
+            --exclude='deploy/gcp/runtime/' \
+            -e 'ssh -i ~/.ssh/gcp-deploy -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes' \
+            ./ "$GCP_VM_USER@$GCP_VM_HOST:/home/deploy/nihongo-bjt/"
+      - name: Build and restart production
+        env:
+          GCP_VM_HOST: ${{ secrets.GCP_VM_HOST }}
+          GCP_VM_USER: ${{ secrets.GCP_VM_USER }}
+        run: |
+          ssh -i ~/.ssh/gcp-deploy \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            "$GCP_VM_USER@$GCP_VM_HOST" \
+            'cd /home/deploy/nihongo-bjt && chmod +x deploy/gcp/*.sh && ./deploy/gcp/deploy-release.sh'

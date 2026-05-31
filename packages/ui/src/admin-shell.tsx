@@ -105,13 +105,21 @@ export function isAdminNavItemActive(
   return false;
 }
 
-function NavItemRow({ active, item }: { active: boolean; item: AdminNavItemResolved }) {
+function NavItemRow({
+  active,
+  item,
+  onNavigate
+}: {
+  active: boolean;
+  item: AdminNavItemResolved;
+  onNavigate?: () => void;
+}) {
   const href = item.href;
   if (item.featureDisabled) {
     return (
       <div
         className={cn(
-          "group flex items-center gap-2.5 rounded-md px-3 py-1.5 text-[13px] font-medium text-slate-500 opacity-60",
+          "group flex min-h-11 items-center gap-2.5 rounded-md px-3 py-2 text-[13px] font-medium text-slate-500 opacity-60 lg:min-h-0 lg:py-1.5",
           "cursor-not-allowed"
         )}
         title={item.label}
@@ -132,13 +140,14 @@ function NavItemRow({ active, item }: { active: boolean; item: AdminNavItemResol
     <a
       aria-current={active ? "page" : undefined}
       className={cn(
-        "group flex items-center gap-2.5 rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors outline-none",
+        "group flex min-h-11 items-center gap-2.5 rounded-md px-3 py-2 text-[13px] font-medium transition-colors outline-none lg:min-h-0 lg:py-1.5",
         "focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1E293B]",
         active
           ? "bg-white text-slate-950 shadow-sm"
           : "text-slate-300 hover:bg-white/10 hover:text-white"
       )}
       href={href}
+      onClick={onNavigate}
     >
       {item.icon ? (
         <span
@@ -293,7 +302,7 @@ export function AdminShell({
     <div className="flex min-h-screen bg-[#F4F6F8] text-[#111827]">
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 w-72 bg-[#1E293B] text-white shadow-[4px_0_12px_rgba(15,23,42,0.12)] transition-transform lg:static lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-40 flex w-[min(18rem,calc(100vw-2rem))] flex-col bg-[#1E293B] text-white shadow-[4px_0_12px_rgba(15,23,42,0.12)] transition-transform lg:static lg:w-72 lg:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
@@ -308,11 +317,11 @@ export function AdminShell({
         </div>
         <nav
           aria-label="Admin"
-          className="flex max-h-[calc(100vh-4rem)] flex-col gap-0.5 overflow-y-auto p-3 lg:max-h-none scrollbar-thin"
+          className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto p-3 scrollbar-thin"
         >
           <div className="mb-1 flex items-center justify-end gap-1 px-1">
             <button
-              className="rounded px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-500 hover:bg-white/10 hover:text-slate-300"
+              className="min-h-9 rounded px-2 py-1 text-[10px] font-medium uppercase tracking-wide text-slate-500 hover:bg-white/10 hover:text-slate-300"
               onClick={expandAll}
               title="Mở tất cả nhóm"
               type="button"
@@ -321,7 +330,7 @@ export function AdminShell({
               <span className="ml-1">Mở rộng</span>
             </button>
             <button
-              className="rounded px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-500 hover:bg-white/10 hover:text-slate-300"
+              className="min-h-9 rounded px-2 py-1 text-[10px] font-medium uppercase tracking-wide text-slate-500 hover:bg-white/10 hover:text-slate-300"
               onClick={collapseAll}
               title="Thu gọn tất cả nhóm"
               type="button"
@@ -334,7 +343,7 @@ export function AdminShell({
             <input
               aria-label={chrome.searchPlaceholder ?? "Tìm trong menu"}
               autoComplete="off"
-              className="w-full rounded-[10px] border border-white/10 bg-white/5 px-3 py-1.5 pr-7 text-[12px] text-slate-200 placeholder:text-slate-500 outline-none focus:border-blue-400/60 focus:bg-white/10 focus:ring-2 focus:ring-blue-500/30"
+              className="w-full rounded-[10px] border border-white/10 bg-white/5 px-3 py-2.5 pr-7 text-[12px] text-slate-200 placeholder:text-slate-500 outline-none focus:border-blue-400/60 focus:bg-white/10 focus:ring-2 focus:ring-blue-500/30 lg:py-1.5"
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={chrome.searchPlaceholder ?? "Tìm trong menu"}
               type="search"
@@ -367,7 +376,7 @@ export function AdminShell({
               <div key={section.id}>
                 {isCollapsible ? (
                   <button
-                    className="group flex w-full items-center justify-between rounded-lg px-3 py-1.5 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-400 transition-colors outline-none hover:bg-white/5 hover:text-slate-300 focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1E293B]"
+                    className="group flex min-h-10 w-full items-center justify-between rounded-lg px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-400 transition-colors outline-none hover:bg-white/5 hover:text-slate-300 focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1E293B] lg:min-h-0 lg:py-1.5"
                     onClick={() => toggleSection(section.id)}
                     type="button"
                   >
@@ -396,7 +405,14 @@ export function AdminShell({
                   <div className={cn("flex flex-col gap-0.5", isCollapsible ? "mt-0.5 pl-1" : "")}>
                     {shown.map((item) => {
                       const active = isAdminNavItemActive(item.href, base, norm, item.activeMatch);
-                      return <NavItemRow active={active} item={item} key={item.id} />;
+                      return (
+                        <NavItemRow
+                          active={active}
+                          item={item}
+                          key={item.id}
+                          onNavigate={() => setOpen(false)}
+                        />
+                      );
                     })}
                   </div>
                 )}
@@ -404,6 +420,14 @@ export function AdminShell({
             );
           })}
         </nav>
+        <div className="border-t border-white/10 p-3 lg:hidden">
+          <a
+            className="flex min-h-11 items-center justify-center rounded-lg border border-white/15 px-3 py-2 text-sm font-semibold text-slate-200 transition-colors hover:bg-white/10 hover:text-white"
+            href="/auth/logout"
+          >
+            {chrome.signOut}
+          </a>
+        </div>
       </aside>
       {open ? (
         <button

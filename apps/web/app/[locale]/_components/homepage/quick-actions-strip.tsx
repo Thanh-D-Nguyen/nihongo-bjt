@@ -119,7 +119,7 @@ export function QuickActionsStrip({
             <Link
               key={a.key}
               href={a.href(locale)}
-              className={`group relative block overflow-hidden rounded-2xl outline-none transition-all duration-300 hover:-translate-y-1 hover:shadow-xl focus-visible:ring-2 focus-visible:ring-white/50 active:scale-[0.97] active:duration-100 ${isFeatured ? "sm:row-span-2" : ""}`}
+              className={`group relative block min-w-0 overflow-hidden rounded-2xl outline-none transition-all duration-300 hover:-translate-y-1 hover:shadow-xl focus-visible:ring-2 focus-visible:ring-white/50 active:scale-[0.97] active:duration-100 ${isFeatured ? "sm:row-span-2" : ""}`}
             >
               {/* Full-color gradient background */}
               <div className={`absolute inset-0 bg-gradient-to-br ${a.gradient} opacity-90 transition-opacity duration-300 group-hover:opacity-100`} />
@@ -128,10 +128,10 @@ export function QuickActionsStrip({
               <div className="pointer-events-none absolute -right-6 -top-6 h-28 w-28 rounded-full bg-white/[0.07]" />
               <div className="pointer-events-none absolute -bottom-4 -left-4 h-20 w-20 rounded-full bg-white/[0.05]" />
 
-              <div className={`relative flex flex-col ${isFeatured ? "min-h-[200px] justify-between p-6" : "min-h-[110px] justify-between p-4"}`}>
+              <div className={`relative flex flex-col ${isFeatured ? "min-h-[168px] justify-between p-4 sm:min-h-[200px] sm:p-6" : "min-h-[110px] justify-between p-3 sm:p-4"}`}>
                 {/* Icon */}
-                <div className={`flex ${isFeatured ? "h-14 w-14" : "h-11 w-11"} items-center justify-center rounded-xl ${a.iconBg} backdrop-blur-sm shadow-sm`}>
-                  <a.illustration className={`${isFeatured ? "h-8 w-8" : "h-6 w-6"} text-white drop-shadow-sm`} />
+                <div className={`flex ${isFeatured ? "h-12 w-12 sm:h-14 sm:w-14" : "h-10 w-10 sm:h-11 sm:w-11"} items-center justify-center rounded-xl ${a.iconBg} backdrop-blur-sm shadow-sm`}>
+                  <a.illustration className={`${isFeatured ? "h-7 w-7 sm:h-8 sm:w-8" : "h-5 w-5 sm:h-6 sm:w-6"} text-white drop-shadow-sm`} />
                 </div>
 
                 {/* Text */}

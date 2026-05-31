@@ -15,59 +15,122 @@ const meili = new Meilisearch({
   host: env.MEILI_HOST
 });
 
-/** Builds Meilisearch documents from **canonical** PostgreSQL content tables (staging/import must land in DB first). */
-async function main() {
-  const [lexemes, kanji, grammar, examples] = await Promise.all([
-    prisma.lexeme.findMany({
-      include: { senses: { orderBy: { position: "asc" }, take: 1 } },
-      take: 5000,
-      where: { status: "active" }
-    }),
-    prisma.kanji.findMany({ take: 5000, where: { status: "active" } }),
-    prisma.grammarPoint.findMany({ take: 5000, where: { status: "active" } }),
-    prisma.exampleSentence.findMany({ take: 5000, where: { status: "active" } })
-  ]);
+const BATCH_SIZE = 10_000;
+const SEARCHABLE_EXAMPLE_LIMIT = 5_000;
+const TASK_TIMEOUT_MS = 120_000;
 
-  const documents: SearchResult[] = [
-    ...lexemes.map((lexeme) => ({
-      description: lexeme.shortMeaningVi ?? lexeme.senses[0]?.meaningVi ?? null,
-      id: lexeme.id,
-      kind: "lexeme" as const,
-      reading: lexeme.reading,
-      title: lexeme.headword
-    })),
-    ...kanji.map((item) => ({
-      description: item.meaningVi,
-      id: item.id,
-      kind: "kanji" as const,
-      reading: [item.onyomi, item.kunyomi].filter(Boolean).join(" / ") || null,
-      title: item.character
-    })),
-    ...grammar.map((item) => ({
-      description: item.meaningVi,
-      id: item.id,
-      kind: "grammar" as const,
-      reading: item.jlptLevel,
-      title: item.pattern
-    })),
-    ...examples.map((item) => ({
+async function replaceDocuments(documents: SearchResult[]) {
+  if (documents.length === 0) return;
+
+  await meili
+    .index("content_search")
+    .addDocuments(documents, { primaryKey: "id" })
+    .waitTask({ timeout: TASK_TIMEOUT_MS });
+}
+
+/** Builds the complete Meilisearch projection from canonical PostgreSQL content tables. */
+async function main() {
+  const index = meili.index("content_search");
+
+  await index
+    .updateSettings({
+      filterableAttributes: ["kind", "jlptLevel"],
+      searchableAttributes: ["title", "reading", "description"],
+      sortableAttributes: ["kind"]
+    })
+    .waitTask({ timeout: TASK_TIMEOUT_MS });
+  await index.deleteAllDocuments().waitTask({ timeout: TASK_TIMEOUT_MS });
+
+  let indexed = 0;
+
+  for (let skip = 0; ; skip += BATCH_SIZE) {
+    const lexemes = await prisma.lexeme.findMany({
+      include: { senses: { orderBy: { position: "asc" }, take: 1 } },
+      orderBy: { id: "asc" },
+      skip,
+      take: BATCH_SIZE,
+      where: { status: "active" }
+    });
+    if (lexemes.length === 0) break;
+
+    await replaceDocuments(
+      lexemes.map((lexeme) => ({
+        description: lexeme.shortMeaningVi ?? lexeme.senses[0]?.meaningVi ?? null,
+        id: lexeme.id,
+        jlptLevel: lexeme.jlptLevel,
+        kind: "lexeme" as const,
+        reading: lexeme.reading,
+        title: lexeme.headword
+      }))
+    );
+    indexed += lexemes.length;
+  }
+
+  for (let skip = 0; ; skip += BATCH_SIZE) {
+    const kanji = await prisma.kanji.findMany({
+      orderBy: { id: "asc" },
+      skip,
+      take: BATCH_SIZE,
+      where: { status: "active" }
+    });
+    if (kanji.length === 0) break;
+
+    await replaceDocuments(
+      kanji.map((item) => ({
+        description: item.meaningVi,
+        id: item.id,
+        jlptLevel: item.level != null ? `N${item.level}` : null,
+        kind: "kanji" as const,
+        reading: [item.onyomi, item.kunyomi].filter(Boolean).join(" / ") || null,
+        title: item.character
+      }))
+    );
+    indexed += kanji.length;
+  }
+
+  for (let skip = 0; ; skip += BATCH_SIZE) {
+    const grammar = await prisma.grammarPoint.findMany({
+      orderBy: { id: "asc" },
+      skip,
+      take: BATCH_SIZE,
+      where: { status: "active" }
+    });
+    if (grammar.length === 0) break;
+
+    await replaceDocuments(
+      grammar.map((item) => ({
+        description: item.meaningVi,
+        id: item.id,
+        jlptLevel: item.jlptLevel,
+        kind: "grammar" as const,
+        reading: item.jlptLevel,
+        title: item.pattern
+      }))
+    );
+    indexed += grammar.length;
+  }
+
+  // Example sentences are supporting search documents. Keep the complete
+  // canonical dataset in PostgreSQL without making the search projection
+  // disproportionately large on the production VM.
+  const examples = await prisma.exampleSentence.findMany({
+    orderBy: { id: "asc" },
+    take: SEARCHABLE_EXAMPLE_LIMIT,
+    where: { status: "active" }
+  });
+  await replaceDocuments(
+    examples.map((item) => ({
       description: item.translationVi,
       id: item.id,
+      jlptLevel: null,
       kind: "example" as const,
       reading: item.reading,
       title: item.japaneseText
     }))
-  ];
+  );
+  indexed += examples.length;
 
-  const index = meili.index("content_search");
-  await index.updateSettings({
-    filterableAttributes: ["kind"],
-    searchableAttributes: ["title", "reading", "description"],
-    sortableAttributes: ["kind"]
-  });
-  await index.addDocuments(documents, { primaryKey: "id" });
-
-  console.log(`Indexed ${documents.length} content documents into Meilisearch.`);
+  console.log(`Indexed ${indexed} content documents into Meilisearch.`);
 }
 
 main()

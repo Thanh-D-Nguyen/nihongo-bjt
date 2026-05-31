@@ -52,10 +52,10 @@ export function LotoTeaserWidget({ locale }: { locale: string }) {
   return (
     <Link
       href={`/${locale}/magazine/loto`}
-      className="group relative flex items-center gap-4 overflow-hidden rounded-2xl border border-emerald-500/20 bg-gradient-to-r from-emerald-500/8 via-teal-500/5 to-transparent p-4 transition-all duration-300 hover:border-emerald-500/40 hover:shadow-md hover:shadow-emerald-500/8 active:scale-[0.98]"
+      className="group relative flex min-w-0 items-center gap-3 overflow-hidden rounded-2xl border border-emerald-500/20 bg-gradient-to-r from-emerald-500/8 via-teal-500/5 to-transparent p-3 transition-all duration-300 hover:border-emerald-500/40 hover:shadow-md hover:shadow-emerald-500/8 active:scale-[0.98] sm:gap-4 sm:p-4"
     >
       {/* Icon */}
-      <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-2xl transition-transform duration-300 group-hover:scale-105">
+      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-xl transition-transform duration-300 group-hover:scale-105 sm:size-12 sm:text-2xl">
         🎰
       </div>
 
@@ -71,17 +71,22 @@ export function LotoTeaserWidget({ locale }: { locale: string }) {
         </div>
         {/* Number pills preview */}
         {firstSet.length > 0 && (
-          <div className="mt-1.5 flex gap-1">
+          <div className="mt-1.5 flex min-w-0 gap-1 overflow-hidden">
             {firstSet.slice(0, 6).map((n, i) => (
               <span
                 key={i}
-                className="flex size-7 items-center justify-center rounded-full bg-emerald-500/10 text-[11px] font-bold text-emerald-700 dark:text-emerald-300"
+                className={`size-7 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 ${i >= 4 ? "hidden sm:flex" : "flex"}`}
               >
                 {n}
               </span>
             ))}
+            {firstSet.length > 4 && (
+              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] text-muted-foreground sm:hidden">
+                +{firstSet.length - 4}
+              </span>
+            )}
             {firstSet.length > 6 && (
-              <span className="flex size-7 items-center justify-center rounded-full bg-muted text-[11px] text-muted-foreground">
+              <span className="hidden size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] text-muted-foreground sm:flex">
                 +{firstSet.length - 6}
               </span>
             )}

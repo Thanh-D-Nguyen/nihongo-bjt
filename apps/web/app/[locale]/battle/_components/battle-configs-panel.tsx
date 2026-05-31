@@ -190,7 +190,7 @@ export function BattleConfigsPanel({ accessToken, onSelectConfig, selectedConfig
           <div className="flex items-center gap-1">
             <button
               aria-label="Scroll left"
-              className="grid h-7 w-7 place-items-center rounded-lg border border-ink/10 bg-white text-xs text-ink transition hover:bg-paper disabled:opacity-30"
+              className="grid h-11 w-11 place-items-center rounded-xl border border-ink/10 bg-white text-sm text-ink transition hover:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 disabled:opacity-30 sm:h-9 sm:w-9"
               disabled={!canScrollLeft}
               onClick={() => scroll("left")}
               type="button"
@@ -199,7 +199,7 @@ export function BattleConfigsPanel({ accessToken, onSelectConfig, selectedConfig
             </button>
             <button
               aria-label="Scroll right"
-              className="grid h-7 w-7 place-items-center rounded-lg border border-ink/10 bg-white text-xs text-ink transition hover:bg-paper disabled:opacity-30"
+              className="grid h-11 w-11 place-items-center rounded-xl border border-ink/10 bg-white text-sm text-ink transition hover:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 disabled:opacity-30 sm:h-9 sm:w-9"
               disabled={!canScrollRight}
               onClick={() => scroll("right")}
               type="button"
@@ -277,7 +277,7 @@ function ConfigCard({
 
   return (
     <button
-      className={`w-64 shrink-0 snap-start rounded-xl border p-3 text-left transition ${
+      className={`w-[min(16rem,calc(100vw-2.5rem))] shrink-0 snap-start rounded-xl border p-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 sm:w-64 ${
         selected
           ? "border-accent/30 bg-accent/5 shadow-sm shadow-accent/10 ring-1 ring-accent/20"
           : isUpcoming
@@ -315,7 +315,7 @@ function ConfigCard({
           ⏱️ {config.timePerQuestionSec}s
         </span>
         <span className="inline-flex items-center gap-1 rounded-full bg-white/70 px-2 py-0.5 ring-1 ring-ink/5">
-          � {durationLabel}
+          ⏳ {durationLabel}
         </span>
         <span className="inline-flex items-center gap-1 rounded-full bg-white/70 px-2 py-0.5 ring-1 ring-ink/5">
           📚 {poolLabel}

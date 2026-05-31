@@ -110,14 +110,19 @@ export class HealthService {
       socket.once("error", () => done({ message: "redis_unreachable", status: "degraded" }));
       socket.once("timeout", () => done({ message: "redis_timeout", status: "degraded" }));
       socket.connect(port, host, () => {
-        socket.write("*1\r\n$4\r\nPING\r\n");
+        const command = (...parts: string[]) =>
+          `*${parts.length}\r\n${parts.map((part) => `$${Buffer.byteLength(part)}\r\n${part}\r\n`).join("")}`;
+        const username = decodeURIComponent(redisUrl.username);
+        const password = decodeURIComponent(redisUrl.password);
+        const auth = password ? command("AUTH", ...(username ? [username] : []), password) : "";
+        socket.write(`${auth}${command("PING")}`);
       });
       socket.on("data", (chunk) => {
         const text = chunk.toString("utf8");
         if (text.includes("PONG")) {
           done({ status: "ok" });
-        } else {
-          done({ message: "redis_unexpected_response", status: "degraded" });
+        } else if (text.includes("-ERR") || text.includes("-NOAUTH")) {
+          done({ message: "redis_auth_failed", status: "degraded" });
         }
       });
     });

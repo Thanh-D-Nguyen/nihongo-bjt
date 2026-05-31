@@ -4,10 +4,10 @@ import { NextResponse } from "next/server";
 import {
   assignRealmRole,
   createRealmUser,
-  fetchMasterAdminAccessToken
+  fetchRealmAdminAccessToken
 } from "@/lib/kc-keycloak-admin";
 import { setTokenCookies } from "@/lib/kc-cookies";
-import { getKcAdminBootstrap, getKcWebConfig } from "@/lib/kc-server-config";
+import { getKcUserAdminConfig, getKcWebConfig } from "@/lib/kc-server-config";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/u;
 const USERNAME_RE = /^[A-Za-z0-9_]+$/u;
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
   if (!cfg?.clientSecret) {
     return NextResponse.json({ error: "not_configured" }, { status: 503 });
   }
-  const admin = getKcAdminBootstrap();
+  const admin = getKcUserAdminConfig();
   if (!admin) {
     return NextResponse.json({ error: "registration_unavailable" }, { status: 503 });
   }
@@ -57,10 +57,11 @@ export async function POST(request: Request) {
   const { fields } = parsedFields;
 
   try {
-    const adminToken = await fetchMasterAdminAccessToken({
+    const adminToken = await fetchRealmAdminAccessToken({
       baseUrl: admin.baseUrl,
-      password: admin.password,
-      username: admin.username
+      clientId: admin.clientId,
+      clientSecret: admin.clientSecret,
+      realm: admin.realm
     });
     const created = await createRealmUser({
       adminToken,

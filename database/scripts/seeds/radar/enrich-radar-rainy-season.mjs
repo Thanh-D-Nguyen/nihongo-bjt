@@ -2,6 +2,7 @@
  * Enrich the "rainy-season-words" radar card with production-quality vocabulary data.
  * Run: node scripts/enrich-radar-rainy-season.mjs
  */
+import "dotenv/config";
 import pg from "pg";
 
 const DATABASE_URL =

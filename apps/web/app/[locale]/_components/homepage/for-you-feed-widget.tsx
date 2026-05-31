@@ -185,7 +185,7 @@ export function ForYouFeedWidget({ locale, refreshKey = 0 }: { locale: string; r
         </div>
         <button
           onClick={() => setShowInfo(!showInfo)}
-          className="rounded-full p-1 text-muted transition hover:bg-ink/5 hover:text-ink"
+          className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full text-muted transition hover:bg-ink/5 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
           aria-label="Thông tin thuật toán"
           title="Cách hoạt động"
         >
@@ -259,13 +259,13 @@ export function ForYouFeedWidget({ locale, refreshKey = 0 }: { locale: string; r
       </ul>
 
       {/* Footer */}
-      <div className="mt-3 flex items-center justify-between border-t border-ink/5 pt-3">
-        <p className="text-[10px] text-muted">
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-ink/5 pt-3">
+        <p className="min-w-0 text-[10px] text-muted">
           {feed.meta.totalSourced} ứng viên → {feed.meta.totalReturned} gợi ý ({feed.meta.executionMs}ms)
         </p>
         <button
           onClick={() => void loadFeed()}
-          className="text-[11px] font-medium text-accent hover:underline"
+          className="inline-flex min-h-11 shrink-0 items-center rounded-lg px-2 text-[11px] font-medium text-accent hover:bg-accent/5 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
         >
           Làm mới ↻
         </button>

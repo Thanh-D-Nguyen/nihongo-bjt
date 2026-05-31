@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 
 import {
-  fetchMasterAdminAccessToken,
+  fetchRealmAdminAccessToken,
   findRealmUserByEmail,
   sendResetPasswordEmail
 } from "@/lib/kc-keycloak-admin";
-import { getKcAdminBootstrap, getKcWebConfig } from "@/lib/kc-server-config";
+import { getKcUserAdminConfig, getKcWebConfig } from "@/lib/kc-server-config";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/u;
 
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
   if (!cfg?.clientSecret) {
     return NextResponse.json({ error: "not_configured" }, { status: 503 });
   }
-  const admin = getKcAdminBootstrap();
+  const admin = getKcUserAdminConfig();
   if (!admin) {
     return NextResponse.json({ error: "not_configured" }, { status: 503 });
   }
@@ -37,10 +37,11 @@ export async function POST(request: Request) {
   }
 
   try {
-    const adminToken = await fetchMasterAdminAccessToken({
+    const adminToken = await fetchRealmAdminAccessToken({
       baseUrl: admin.baseUrl,
-      password: admin.password,
-      username: admin.username
+      clientId: admin.clientId,
+      clientSecret: admin.clientSecret,
+      realm: admin.realm
     });
 
     const user = await findRealmUserByEmail({

@@ -98,11 +98,11 @@ export function HomepageSectionsTabs({
   ];
 
   return (
-    <section aria-label="Homepage sections" className="space-y-6">
+    <section aria-label="Homepage sections" className="min-w-0 space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <TabsList
           aria-label="Homepage tabs"
-          className="flex w-full overflow-x-auto sm:w-auto"
+          className="flex w-full snap-x snap-mandatory overflow-x-auto scrollbar-none sm:w-auto"
         >
           {tabs.map((t) => (
             <TabButton
@@ -111,7 +111,7 @@ export function HomepageSectionsTabs({
               aria-controls={`homepage-tab-panel-${t.key}`}
               id={`homepage-tab-${t.key}`}
               onClick={() => setActive(t.key)}
-              className="min-w-fit whitespace-nowrap px-3.5"
+              className="min-h-11 min-w-fit snap-start whitespace-nowrap px-3.5"
             >
               <span aria-hidden className="mr-1.5">{t.emoji}</span>
               {t.label}
@@ -156,7 +156,7 @@ export function HomepageSectionsTabs({
           id="homepage-tab-panel-progress"
           role="tabpanel"
         >
-          <LearningHeatmap locale={locale} />
+          <LearningHeatmap />
           <BjtLevelsSection labels={labels.bjtLevels} locale={locale} />
           <ProgressSection
             analytics={analytics}

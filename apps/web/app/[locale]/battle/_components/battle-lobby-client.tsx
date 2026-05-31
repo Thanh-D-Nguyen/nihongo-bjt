@@ -59,6 +59,42 @@ type LobbyRosterColumnProps = {
   matchHref: string;
 };
 
+type StartBotButtonProps = {
+  labels: BattlePageLabels;
+  onStart: () => void;
+  startBusy: boolean;
+  startDisabled: boolean;
+};
+
+function StartBotButton({
+  labels,
+  onStart,
+  startBusy,
+  startDisabled
+}: StartBotButtonProps) {
+  return (
+    <button
+      className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 px-5 text-sm font-black text-white shadow-md shadow-indigo-500/20 transition hover:from-indigo-700 hover:to-blue-700 hover:shadow-lg hover:shadow-indigo-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none"
+      disabled={startDisabled || startBusy}
+      onClick={onStart}
+      title={startDisabled ? labels.startBotDisabledHint : undefined}
+      type="button"
+    >
+      {startBusy ? (
+        <>
+          <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" aria-hidden />
+          {labels.connecting}
+        </>
+      ) : (
+        <>
+          <span aria-hidden>⚔️</span>
+          {labels.start}
+        </>
+      )}
+    </button>
+  );
+}
+
 function LobbyRosterColumn({
   variant,
   labels,
@@ -278,28 +314,17 @@ function LobbyRosterColumn({
                 </p>
               </div>
             </div>
-            <button
-              className="mt-3 flex w-full min-h-12 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 px-5 text-sm font-black text-white shadow-md shadow-indigo-500/20 transition hover:from-indigo-700 hover:to-blue-700 hover:shadow-lg hover:shadow-indigo-500/25 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none"
-              disabled={startDisabled || startBusy}
-              onClick={() => {
+            <div className="mt-3">
+              <StartBotButton
+                labels={labels}
+                onStart={() => {
                 connectAndStart();
                 onAfterBattleStart?.();
               }}
-              title={startDisabled ? labels.startBotDisabledHint : undefined}
-              type="button"
-            >
-              {startBusy ? (
-                <>
-                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" aria-hidden />
-                  {labels.connecting}
-                </>
-              ) : (
-                <>
-                  <span aria-hidden>⚔️</span>
-                  {labels.start}
-                </>
-              )}
-            </button>
+                startBusy={startBusy}
+                startDisabled={startDisabled}
+              />
+            </div>
           </>
         )}
       </div>
@@ -663,6 +688,60 @@ export function BattleLobbyClient() {
         )}
       </div>
 
+      <section className="mt-4 rounded-2xl border border-indigo-200/50 bg-gradient-to-br from-indigo-50/80 via-surface to-blue-50/50 p-3 shadow-sm lg:hidden">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-[11px] font-black uppercase tracking-wide text-indigo-800/80">
+              {labels.chooseArena}
+            </p>
+            <p className="mt-1 text-xs font-semibold leading-5 text-muted">
+              {labels.pickBot}
+            </p>
+          </div>
+          <button
+            aria-controls={rosterSheetId}
+            aria-expanded={rosterOpen}
+            aria-label={labels.lobbyOpenRoster}
+            className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-xl border border-ink/15 bg-white px-3 text-xs font-black text-ink shadow-sm transition hover:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 active:scale-[0.98]"
+            onClick={() => setRosterOpen(true)}
+            type="button"
+          >
+            {labels.lobbyRoster}
+          </button>
+        </div>
+        <div className="mt-3 flex min-h-14 items-center gap-3 rounded-xl border border-ink/10 bg-white/80 px-3 py-2">
+          <BattleBotAvatar
+            className="h-11 w-11 shrink-0 rounded-xl"
+            fallback={displayedBot.avatarFallback}
+            label={botName(labels, displayedBot.label)}
+            rive={displayedBot.rive}
+            state={botState}
+            variant="card"
+          />
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-black text-ink">
+              {botName(labels, displayedBot.label)}
+            </p>
+            <p className="truncate text-xs font-semibold text-muted">
+              {localizeDifficulty(labels, displayedBot.difficulty) ?? labels.battleDeck}
+            </p>
+          </div>
+        </div>
+        <div className="mt-3">
+          <StartBotButton
+            labels={labels}
+            onStart={connectAndStart}
+            startBusy={startBusy}
+            startDisabled={startDisabled}
+          />
+        </div>
+        {startDisabled ? (
+          <p className="mt-2 text-xs font-semibold leading-5 text-muted" role="status">
+            {labels.startBotDisabledHint}
+          </p>
+        ) : null}
+      </section>
+
       <button
         aria-hidden={!rosterOpen}
         className={`fixed inset-0 z-30 bg-ink/40 transition-opacity duration-200 lg:hidden ${
@@ -676,7 +755,7 @@ export function BattleLobbyClient() {
         aria-hidden={!rosterOpen}
         aria-label={labels.lobbyRoster}
         aria-modal={rosterOpen || undefined}
-        className={`fixed inset-y-0 left-0 z-40 flex w-[min(22rem,calc(100vw-1rem))] max-w-full flex-col rounded-r-[1.5rem] border border-ink/10 border-l-0 bg-surface shadow-xl transition-transform duration-200 ease-out will-change-transform lg:hidden ${
+        className={`fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] left-0 top-0 z-40 flex w-[min(22rem,calc(100vw-1rem))] max-w-full flex-col rounded-r-[1.5rem] border border-ink/10 border-l-0 bg-surface shadow-xl transition-transform duration-200 ease-out will-change-transform lg:hidden ${
           rosterOpen ? "translate-x-0" : "pointer-events-none -translate-x-full"
         }`}
         id={rosterSheetId}
@@ -793,14 +872,14 @@ export function BattleLobbyClient() {
           >
             <div className="flex gap-2">
               <Input
-                className="min-h-10 min-w-0 flex-1 bg-paper shadow-none"
+                className="min-h-12 min-w-0 flex-1 bg-paper shadow-none"
                 maxLength={500}
                 onChange={(event) => setChatText(event.target.value)}
                 placeholder={labels.lobbyMessagePlaceholder}
                 value={chatText}
               />
               <Button
-                className="min-h-10 px-3"
+                className="min-h-12 px-4"
                 disabled={!userId || !socketConnected || chatText.trim().length === 0}
                 type="submit"
               >

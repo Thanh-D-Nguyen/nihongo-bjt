@@ -49,7 +49,7 @@ function heatmapTooltipPosition(rect: DOMRect) {
   return { left, top };
 }
 
-export function LearningHeatmap({ locale }: { locale: string }) {
+export function LearningHeatmap() {
   const { userId } = useKeycloakAuth();
   const [data, setData] = useState<HeatmapData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -110,16 +110,16 @@ export function LearningHeatmap({ locale }: { locale: string }) {
 
   return (
     <div className="rounded-2xl border border-ink/8 bg-surface p-4 shadow-sm">
-      <div className="flex items-center justify-between mb-3">
+      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <h3 className="text-sm font-bold text-ink">🟩 Lịch học tập</h3>
-        <div className="flex gap-3 text-[10px] text-muted">
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-muted">
           <span>🔥 {data.currentStreak} ngày liên tiếp</span>
           <span>📅 {data.totalDaysActive} ngày</span>
         </div>
       </div>
 
       {/* Stats pills */}
-      <div className="flex gap-2 mb-3">
+      <div className="mb-3 flex flex-wrap gap-2">
         <span className="rounded-full bg-[var(--color-matcha)]/10 px-2.5 py-1 text-[10px] font-bold text-[var(--color-matcha)]">
           Streak dài nhất: {data.longestStreak}
         </span>

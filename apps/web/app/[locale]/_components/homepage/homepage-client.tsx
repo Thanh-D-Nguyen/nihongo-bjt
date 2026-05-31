@@ -134,7 +134,7 @@ export function HomepageClient({
   const dueCount = hub?.dueReviews ?? 0;
 
   return (
-    <main className="space-y-8 overflow-x-hidden pb-12 pt-2 sm:pt-6">
+    <main className="min-w-0 space-y-6 overflow-x-clip pb-12 pt-2 sm:space-y-8 sm:pt-6">
       {showOnboarding && (
         <OnboardingFlow
           onComplete={() => {
@@ -155,7 +155,7 @@ export function HomepageClient({
         />
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
+      <div className="grid min-w-0 gap-6 sm:gap-8 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
         <div className="min-w-0 space-y-8">
           <div className="hp-enter hp-enter-d1">
             <QuickActionsStrip
@@ -167,7 +167,7 @@ export function HomepageClient({
           </div>
 
           <div className="hp-enter hp-enter-d1">
-            <SeasonalEventBanner locale={locale} />
+            <SeasonalEventBanner />
           </div>
 
           <div className="hp-enter hp-enter-d2">
@@ -191,7 +191,7 @@ export function HomepageClient({
         </div>
 
         {/* Sidebar: 4 widget cốt lõi — always-visible motivation stack */}
-        <div className="space-y-6 lg:sticky lg:top-20">
+        <div className="min-w-0 space-y-5 sm:space-y-6 lg:sticky lg:top-20">
           {isLoggedIn ? (
             <>
               <div className="hp-enter hp-enter-d1">
@@ -204,7 +204,7 @@ export function HomepageClient({
                 <StudyGoalWidget locale={locale} />
               </div>
               <div className="hp-enter hp-enter-d2">
-                <LoginBonusWidget locale={locale} />
+                <LoginBonusWidget />
               </div>
             </>
           ) : (

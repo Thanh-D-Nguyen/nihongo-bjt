@@ -49,7 +49,7 @@ function StatTile({
   const toneBg = tone === "green" ? "from-leaf/5 to-transparent" : tone === "amber" ? "from-amber/5 to-transparent" : "from-ink/[0.02] to-transparent";
   return (
     <div className={`relative overflow-hidden rounded-2xl border border-ink/10 bg-white/78 p-3.5 shadow-sm ring-1 ${toneRing} ${
-      hero ? "sm:col-span-2 lg:col-span-2" : ""
+      hero ? "col-span-2" : ""
     }`}>
       <div className={`absolute inset-0 bg-gradient-to-br ${toneBg}`} aria-hidden />
       <p className="relative text-[10px] font-black uppercase tracking-wider text-muted">{label}</p>
@@ -243,7 +243,7 @@ export function BattleMatchClient() {
     Math.abs(userScore - opponentScore) <= 1;
 
   return (
-    <main className="w-full pb-12">
+    <main className="w-full pb-24 lg:pb-12">
       <BattleCountdownOverlay
         botDifficultyLabel={isPvp ? null : localizeDifficulty(labels, displayedBot.difficulty)}
         botFallback={isPvp ? labels.pvpMonogram : displayedBot.avatarFallback}
@@ -260,7 +260,7 @@ export function BattleMatchClient() {
         visible={showCountdownOverlay}
       />
 
-      <div className={`relative overflow-hidden rounded-[1.75rem] border p-1 ${arenaShell} ${shaking ? "battle-shake" : ""} ${isIntense ? "battle-intensity-high" : ""}`}>
+      <div className={`relative overflow-hidden rounded-2xl border p-1 sm:rounded-[1.75rem] ${arenaShell} ${shaking ? "battle-shake" : ""} ${isIntense ? "battle-intensity-high" : ""}`}>
         {/* Hype commentary layer */}
         <BattleHypeLayer
           combo={combo}
@@ -274,13 +274,13 @@ export function BattleMatchClient() {
           className={`absolute inset-x-0 top-0 h-1 rounded-t-[1.6rem] bg-gradient-to-r ${vsStrip} opacity-90`}
           aria-hidden
         />
-        <div className="relative rounded-[1.55rem] bg-surface/85 p-4 backdrop-blur-sm sm:p-6">
+        <div className="relative rounded-[0.9rem] bg-surface/85 p-3 backdrop-blur-sm sm:rounded-[1.55rem] sm:p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
                 {isPvp ? labels.pvpSessionBadge : labels.matchScreenEyebrow}
               </p>
-              <h2 className="mt-1 text-2xl font-semibold tracking-tight text-ink">
+              <h2 className="mt-1 text-xl font-semibold tracking-tight text-ink sm:text-2xl">
                 {labels.matchScreenTitle}
               </h2>
               <p className="mt-1 text-sm text-muted">
@@ -292,13 +292,13 @@ export function BattleMatchClient() {
             <div className="flex flex-wrap items-center gap-2">
               <div
                 aria-live="polite"
-                className="min-w-[12rem] rounded-2xl border border-ink/10 bg-white/90 px-4 py-2.5 shadow-sm"
+                className="w-full rounded-2xl border border-ink/10 bg-white/90 px-4 py-2.5 shadow-sm sm:w-auto sm:min-w-[12rem]"
               >
                 <p className="text-[10px] font-black uppercase tracking-wider text-muted">{labels.finalScore}</p>
                 <p className="mt-0.5 text-xl font-black tabular-nums text-ink">{scoreLabel}</p>
               </div>
               <button
-                className="inline-flex min-h-10 items-center rounded-xl border border-ink/15 bg-white px-4 text-sm font-bold text-ink hover:bg-paper"
+                className="inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-ink/15 bg-white px-4 text-sm font-bold text-ink transition hover:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 active:scale-[0.98] sm:w-auto"
                 onClick={goToLobby}
                 type="button"
               >
@@ -307,7 +307,7 @@ export function BattleMatchClient() {
             </div>
           </div>
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-5 grid grid-cols-2 gap-2.5 sm:mt-6 sm:gap-3 lg:grid-cols-4">
             <StatTile
               hero
               label={labels.questionProgress}

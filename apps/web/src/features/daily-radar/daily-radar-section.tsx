@@ -41,7 +41,7 @@ function WidgetCard({ card, locale }: { card: DailyRadarCard; locale: string }) 
 
   return (
     <Link
-      className={`group relative flex w-[280px] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border shadow-sm outline-none transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:w-[300px] ${theme.card}`}
+      className={`group relative flex w-[min(18rem,calc(100vw-3rem))] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border shadow-sm outline-none transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:w-[300px] ${theme.card}`}
       href={cardHref(card, locale)}
     >
       <div className={`h-1.5 bg-gradient-to-r ${gradient}`} />
@@ -83,11 +83,11 @@ function RadarCard({ card, labels, locale }: { card: DailyRadarCard; labels: Dai
   const showDisclaimer = needsDisclaimer(card);
   return (
     <Link
-      className={`group flex min-h-[230px] w-[82vw] shrink-0 snap-start flex-col rounded-2xl border p-4 shadow-sm outline-none transition hover:-translate-y-0.5 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-blue-400 sm:w-[21rem] ${theme.card}`}
+      className={`group flex min-h-[230px] w-[min(18rem,calc(100vw-3rem))] shrink-0 snap-start flex-col rounded-2xl border p-4 shadow-sm outline-none transition hover:-translate-y-0.5 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-blue-400 sm:w-[21rem] ${theme.card}`}
       href={cardHref(card, locale)}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="flex min-w-0 items-start justify-between gap-3">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
           <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${theme.badge}`}>
             {categoryLabel(card.category, labels)}
           </span>
@@ -97,7 +97,7 @@ function RadarCard({ card, labels, locale }: { card: DailyRadarCard; labels: Dai
             </span>
           ) : null}
         </div>
-        <span className="rounded-full bg-white/80 px-2 py-1 text-[11px] font-semibold text-slate-600 ring-1 ring-slate-200">
+        <span className="max-w-[48%] shrink-0 truncate rounded-full bg-white/80 px-2 py-1 text-[11px] font-semibold text-slate-600 ring-1 ring-slate-200">
           {isComingSoon ? labels.comingSoon : (card.badgeTextVi ?? card.module.titleVi)}
         </span>
       </div>
@@ -179,7 +179,7 @@ function Skeleton({ labels }: { labels: DailyRadarLabels }) {
       </div>
       <div className="flex gap-3 overflow-hidden">
         {[0, 1, 2, 3].map((i) => (
-          <div className="h-56 w-[280px] shrink-0 animate-pulse rounded-2xl bg-gradient-to-br from-slate-100 to-slate-50 sm:w-[300px]" key={i} />
+          <div className="h-56 w-[min(18rem,calc(100vw-3rem))] shrink-0 animate-pulse rounded-2xl bg-gradient-to-br from-slate-100 to-slate-50 sm:w-[300px]" key={i} />
         ))}
       </div>
     </section>
@@ -250,7 +250,7 @@ function CategoryRail({
           ) : null}
         </div>
       </div>
-      <div ref={railRef} className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0 scrollbar-none">
+      <div ref={railRef} className="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-2 scrollbar-none sm:mx-0 sm:px-0">
         {visible.map((card) =>
           card.moduleType === "daily_widget"
             ? <WidgetCard card={card} key={card.id} locale={locale} />
@@ -334,7 +334,6 @@ export function DailyRadarSection({ labels, locale }: { labels: DailyRadarLabels
 
   useEffect(() => {
     void load();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locale]);
 
   // Group cards by category, preserving API order

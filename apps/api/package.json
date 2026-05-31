@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "tsx watch --exclude '**/node_modules/**' --exclude '**/.git/**' --exclude '**/.next/**' --exclude '**/.turbo/**' --exclude '**/dist/**' --exclude '**/coverage/**' src/main.ts",
     "dev:plain": "tsx src/main.ts",
+    "start": "tsx src/main.ts",
     "analytics:rollup": "tsx scripts/rollup-analytics.ts",
     "build": "tsc --noEmit",
     "search:index": "tsx scripts/index-search.ts",

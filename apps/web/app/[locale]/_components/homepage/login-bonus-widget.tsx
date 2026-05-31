@@ -29,7 +29,7 @@ interface ClaimResult {
   reward?: { type: string; value: string; label: string };
 }
 
-export function LoginBonusWidget({ locale }: { locale: string }) {
+export function LoginBonusWidget() {
   const { userId } = useKeycloakAuth();
   const [status, setStatus] = useState<BonusStatus | null>(null);
   const [loading, setLoading] = useState(true);
@@ -72,7 +72,7 @@ export function LoginBonusWidget({ locale }: { locale: string }) {
       return (
         <div className="rounded-2xl border border-ink/8 bg-surface p-4 shadow-sm animate-pulse">
           <div className="h-4 w-28 rounded bg-ink/10" />
-          <div className="mt-3 flex gap-2">
+          <div className="mt-3 flex gap-2 overflow-hidden">
             {Array.from({ length: 7 }).map((_, i) => (
               <div key={i} className="h-12 w-12 rounded-xl bg-ink/5" />
             ))}
@@ -112,12 +112,12 @@ export function LoginBonusWidget({ locale }: { locale: string }) {
       </div>
 
       {/* 7-day chain */}
-      <div className="mt-3 flex gap-1.5 overflow-x-auto pb-1">
+      <div className="mt-3 flex snap-x snap-mandatory gap-1.5 overflow-x-auto pb-1 scrollbar-none">
         {status.rewards.map((r) => (
           <div
             key={r.day}
             className={cn(
-              "flex flex-col items-center gap-1 rounded-xl border p-2 min-w-[3rem] transition-all",
+              "flex min-w-[3rem] snap-start flex-col items-center gap-1 rounded-xl border p-2 transition-all",
               r.claimed
                 ? "border-[var(--color-matcha)]/30 bg-[var(--color-matcha)]/10"
                 : r.current

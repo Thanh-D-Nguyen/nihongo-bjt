@@ -100,17 +100,27 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
     style: "",
   });
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(false);
 
-  const skipOnboarding = useCallback(() => {
+  const skipOnboarding = useCallback(async () => {
     // Persist skip to backend so it won't show on other devices
-    void learnerApiFetch("/api/recommendation/onboarding/skip", { method: "POST" }).catch(() => {});
-    onComplete(false);
+    setSaving(true);
+    setSaveError(false);
+    try {
+      const response = await learnerApiFetch("/api/recommendation/onboarding/skip", { method: "POST" });
+      if (!response.ok) throw new Error(`skip_onboarding:${response.status}`);
+      onComplete(false);
+    } catch {
+      setSaveError(true);
+    } finally {
+      setSaving(false);
+    }
   }, [onComplete]);
 
   // Escape key to skip onboarding
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") skipOnboarding();
+      if (e.key === "Escape") void skipOnboarding();
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
@@ -144,16 +154,17 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
     } else {
       // Final step — save to backend
       setSaving(true);
+      setSaveError(false);
       try {
-        await learnerApiFetch("/api/recommendation/onboarding/preferences", {
+        const response = await learnerApiFetch("/api/recommendation/onboarding/preferences", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(answers),
         });
+        if (!response.ok) throw new Error(`save_onboarding:${response.status}`);
         onComplete(true);
       } catch {
-        // Silently complete even if save fails — preferences are non-critical
-        onComplete(true);
+        setSaveError(true);
       } finally {
         setSaving(false);
       }
@@ -224,6 +235,12 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
               {step === "style" && "Thuật toán sẽ thiên về phong cách này"}
             </p>
           </div>
+
+          {saveError ? (
+            <p className="mb-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800" role="alert">
+              Không thể lưu lựa chọn. Vui lòng thử lại.
+            </p>
+          ) : null}
 
           {/* Options */}
           <div className="space-y-2 max-h-[50vh] overflow-y-auto pr-1">

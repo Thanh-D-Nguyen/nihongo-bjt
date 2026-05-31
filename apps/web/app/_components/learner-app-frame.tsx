@@ -41,7 +41,6 @@ import {
   IconSearch,
   IconSettings,
   IconShield,
-  IconUser
 } from "./app-icons";
 import {
   SearchDropdown,
@@ -273,7 +272,7 @@ export function LearnerAppFrame({
     { href: `${base}/flashcards`, icon: IconReview, label: nav.review },
     { href: `${base}/quiz`, icon: IconQuiz, label: nav.quiz },
     { href: `${base}/battle`, icon: IconBattle, label: nav.battle },
-    { href: `${base}/me`, icon: IconUser, label: nav.account },
+    { href: `${base}/explore`, icon: IconExplore, label: nav.explore },
   ];
 
   function submitGlobalSearch(event?: FormEvent<HTMLFormElement>) {
@@ -298,7 +297,7 @@ export function LearnerAppFrame({
           : "border-b border-transparent"
       )}>
         <div className={cn(
-          "mx-auto flex max-w-7xl items-center gap-4 transition-[min-height] duration-200",
+          "mx-auto flex max-w-7xl items-center gap-2 transition-[min-height] duration-200 sm:gap-4",
           scrolled ? "min-h-12" : "min-h-16"
         )}>
           {/* Brand */}
@@ -467,7 +466,7 @@ export function LearnerAppFrame({
           </form>
 
           {/* Right actions */}
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
             {/* Mobile search icon */}
             <Link
               aria-label={nav.search}
@@ -571,7 +570,7 @@ export function LearnerAppFrame({
                   variant="icon"
                 />
                 <Link
-                  className="inline-flex min-h-10 items-center rounded-full bg-ink px-5 text-sm font-bold text-surface shadow-sm transition hover:bg-ink/90"
+                  className="inline-flex min-h-10 items-center rounded-full bg-ink px-3 text-sm font-bold text-surface shadow-sm transition hover:bg-ink/90 sm:px-5"
                   href={`${base}/login`}
                 >
                   {nav.signIn}

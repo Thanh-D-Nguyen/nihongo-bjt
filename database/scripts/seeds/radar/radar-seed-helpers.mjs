@@ -2,6 +2,7 @@
  * Shared helper for radar seed scripts.
  * Provides DB connection and idempotent upsert for DailyRadarCard.
  */
+import "dotenv/config";
 import pg from "pg";
 
 const DATABASE_URL =

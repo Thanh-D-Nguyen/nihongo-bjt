@@ -74,6 +74,7 @@ tmp/
 temp/
 .cache/
 **/.cache/
+deploy/gcp/runtime/
 
 # Keep project docs/config tracked intentionally:
 # - .github/
@@ -88,3 +89,21 @@ temp/
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
+
+# Additional secrets & deploy artifacts (ops)
+# Private keys, PEMs, SSH deploy keys, service account JSONs
+*.pem
+*.key
+id_rsa
+id_ecdsa
+*.service-account.json
+*-credentials.json
+*-key.json
+*.private.json
+.ssh/
+*known-hosts
+
+# Backups and one-time operator files
+backups/
+database/backups/
+OPERATOR_LOGIN_READ_ONCE.txt

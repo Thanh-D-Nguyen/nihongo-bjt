@@ -8,12 +8,12 @@ export type KcWebConfig = {
   redirectUri: string;
 };
 
-/** Master-realm admin credentials for Keycloak Admin REST (e.g. self‑serve register). Omit in prod or use a least‑privilege service account. */
-export type KcAdminBootstrap = {
+/** Least-privilege service account for Keycloak Admin REST user lifecycle operations. */
+export type KcUserAdminConfig = {
   baseUrl: string;
-  password: string;
+  clientId: string;
+  clientSecret: string;
   realm: string;
-  username: string;
 };
 
 export function getKcWebConfig(): KcWebConfig | null {
@@ -36,20 +36,20 @@ export function getKcWebConfig(): KcWebConfig | null {
   };
 }
 
-export function getKcAdminBootstrap(): KcAdminBootstrap | null {
+export function getKcUserAdminConfig(): KcUserAdminConfig | null {
   const cfg = getKcWebConfig();
   if (!cfg) {
     return null;
   }
-  const username = process.env.KEYCLOAK_ADMIN_USERNAME?.trim();
-  const password = process.env.KEYCLOAK_ADMIN_PASSWORD?.trim();
-  if (!username || !password) {
+  const clientId = process.env.KEYCLOAK_USER_ADMIN_CLIENT_ID?.trim();
+  const clientSecret = process.env.KEYCLOAK_USER_ADMIN_CLIENT_SECRET?.trim();
+  if (!clientId || !clientSecret) {
     return null;
   }
   return {
     baseUrl: keycloakPublicBaseUrlFromIssuer(cfg.issuer),
-    password,
+    clientId,
+    clientSecret,
     realm: realmNameFromIssuer(cfg.issuer),
-    username
   };
 }

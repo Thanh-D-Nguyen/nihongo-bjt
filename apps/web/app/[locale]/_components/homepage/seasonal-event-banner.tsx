@@ -28,7 +28,7 @@ interface SeasonalEvent {
   challenges: Challenge[];
 }
 
-export function SeasonalEventBanner({ locale }: { locale: string }) {
+export function SeasonalEventBanner() {
   const { userId } = useKeycloakAuth();
   const [event, setEvent] = useState<SeasonalEvent | null>(null);
   const [loading, setLoading] = useState(true);
@@ -80,21 +80,21 @@ export function SeasonalEventBanner({ locale }: { locale: string }) {
     >
       {/* Header */}
       <div
-        className="px-4 py-3 flex items-center justify-between cursor-pointer"
+        className="flex cursor-pointer items-center justify-between gap-2 px-3 py-3 sm:px-4"
         style={{ background: `${event.bannerColor}15` }}
         onClick={() => setExpanded(!expanded)}
       >
-        <div className="flex items-center gap-2">
-          <span className="text-xl">{event.iconEmoji}</span>
-          <div>
-            <h3 className="text-sm font-black text-ink">{event.nameVi}</h3>
-            <p className="text-[10px] text-muted">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="shrink-0 text-xl">{event.iconEmoji}</span>
+          <div className="min-w-0">
+            <h3 className="truncate text-sm font-black text-ink">{event.nameVi}</h3>
+            <p className="truncate text-[10px] text-muted">
               {event.daysRemaining} ngày còn lại · {event.participantCount} người tham gia
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           {event.joined ? (
             <span className="rounded-full px-2 py-0.5 text-[10px] font-bold text-white" style={{ background: event.bannerColor }}>
               {completedCount}/{event.challenges.length} ✓
@@ -103,7 +103,7 @@ export function SeasonalEventBanner({ locale }: { locale: string }) {
             <button
               onClick={(e) => { e.stopPropagation(); void handleJoin(); }}
               disabled={joining}
-              className="rounded-full px-3 py-1 text-xs font-bold text-white transition-transform active:scale-95"
+              className="inline-flex min-h-11 items-center rounded-full px-3 text-xs font-bold text-white transition-transform active:scale-95"
               style={{ background: event.bannerColor }}
             >
               {joining ? "..." : "Tham gia"}
@@ -123,9 +123,9 @@ export function SeasonalEventBanner({ locale }: { locale: string }) {
           {event.challenges.map((c) => {
             const pct = Math.min(100, Math.round((c.currentValue / c.targetValue) * 100));
             return (
-              <div key={c.id} className="flex items-center gap-3">
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
+              <div key={c.id} className="flex min-w-0 items-center gap-3">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                     <span className={cn("text-xs font-medium", c.completed ? "text-[var(--color-matcha)] line-through" : "text-ink")}>
                       {c.completed ? "✅ " : ""}{c.title}
                     </span>

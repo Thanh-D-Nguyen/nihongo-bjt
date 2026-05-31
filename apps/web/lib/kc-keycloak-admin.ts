@@ -1,17 +1,16 @@
-export async function fetchMasterAdminAccessToken(params: {
+export async function fetchRealmAdminAccessToken(params: {
   baseUrl: string;
-  clientId?: string;
-  password: string;
-  username: string;
+  clientId: string;
+  clientSecret: string;
+  realm: string;
 }): Promise<string> {
-  const clientId = params.clientId ?? "admin-cli";
   const body = new URLSearchParams({
-    client_id: clientId,
-    grant_type: "password",
-    password: params.password,
-    username: params.username
+    client_id: params.clientId,
+    client_secret: params.clientSecret,
+    grant_type: "client_credentials"
   });
-  const res = await fetch(`${params.baseUrl.replace(/\/$/u, "")}/realms/master/protocol/openid-connect/token`, {
+  const realm = encodeURIComponent(params.realm);
+  const res = await fetch(`${params.baseUrl.replace(/\/$/u, "")}/realms/${realm}/protocol/openid-connect/token`, {
     body,
     headers: { "content-type": "application/x-www-form-urlencoded" },
     method: "POST"
