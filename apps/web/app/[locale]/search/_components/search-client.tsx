@@ -14,7 +14,7 @@ import {
   useState
 } from "react";
 
-import { VoiceSearchButton, type VoiceSearchLabels } from "../../../_components/search-advanced-inputs";
+import { VoiceSearchButton } from "../../../_components/search-advanced-inputs";
 import { IconSearch } from "../../../_components/nav-icons";
 import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
 import { useRecentSearches } from "../../../../lib/use-recent-searches";
@@ -153,6 +153,9 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
   const searchEpochRef = useRef(0);
   /** Debounce timer for instant search */
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  /** Deferred clear when IME emits a transient empty value mid-conversion (mobile keyboards) */
+  const clearDebounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const isComposingRef = useRef(false);
   /** Dropdown key handler for autocomplete */
   const dropdownKeyHandlerRef = useRef<DropdownKeyHandler | null>(null);
 
@@ -286,19 +289,36 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
 
-  function handleInputChange(value: string) {
-    setQuery(value);
+  function applySearchInputSideEffects(value: string) {
     if (value.trim()) {
+      clearTimeout(clearDebounceRef.current);
       setDropdownOpen(true);
-    } else {
-      setDropdownOpen(true); // show recent searches
-      // Clear results if field is emptied
+      return;
+    }
+    setDropdownOpen(true); // show recent searches
+    // Mobile IME may emit a transient empty value while committing kanji/kana conversion.
+    clearTimeout(clearDebounceRef.current);
+    clearDebounceRef.current = setTimeout(() => {
+      const live = inputRef.current?.value ?? "";
+      if (live.trim()) {
+        setQuery(live);
+        return;
+      }
       setResults([]);
       setHasSearched(false);
       setSelected(null);
       clearTimeout(debounceRef.current);
       updateUrl("", filter, levelFilter, null);
+    }, 50);
+  }
+
+  function handleInputChange(value: string) {
+    setQuery(value);
+    if (isComposingRef.current) {
+      if (value.trim()) setDropdownOpen(true);
+      return;
     }
+    applySearchInputSideEffects(value);
   }
 
   function handleFilterChange(newFilter: KindFilter) {
@@ -351,6 +371,12 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
       void runSearch(q, scope || undefined, level || undefined);
     } else {
       searchEpochRef.current += 1;
+      const live = inputRef.current?.value.trim() ?? "";
+      if (live) {
+        // URL cleared before IME finished committing; keep the live input value.
+        setQuery(live);
+        return;
+      }
       setQuery("");
       setResults([]);
       setHasSearched(false);
@@ -359,7 +385,7 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
     }
     // Intentionally only `urlSearchBootstrapKey` + runSearch: `searchParams` identity changes when
     // only `entry` is patched would otherwise re-run this effect and double-fetch / fight selection.
-  }, [urlSearchBootstrapKey, runSearch]);
+  }, [urlSearchBootstrapKey, runSearch, searchParams]);
 
   const visibleResults = useMemo(
     () => (filter === "all" ? results : results.filter((r) => r.kind === filter)),
@@ -644,6 +670,13 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
                   type="search"
                   value={query}
                   onChange={(e) => handleInputChange(e.target.value)}
+                  onCompositionStart={() => {
+                    isComposingRef.current = true;
+                  }}
+                  onCompositionEnd={(e) => {
+                    isComposingRef.current = false;
+                    applySearchInputSideEffects(e.currentTarget.value);
+                  }}
                   onFocus={() => setDropdownOpen(true)}
                   onKeyDown={(e) => {
                     if (dropdownKeyHandlerRef.current?.(e)) return;

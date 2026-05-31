@@ -1,5 +1,6 @@
 import js from "@eslint/js";
 import tseslint from "typescript-eslint";
+import reactHooks from "eslint-plugin-react-hooks";
 
 export default [
   {
@@ -26,6 +27,14 @@ export default [
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
+  // React hooks rules (exhaustive-deps, etc.) - register plugin in flat config format
+  {
+    plugins: { "react-hooks": reactHooks },
+    rules: {
+      "react-hooks/rules-of-hooks": "error",
+      "react-hooks/exhaustive-deps": "warn"
+    }
+  },
   {
     files: ["**/*.ts"],
     languageOptions: {
