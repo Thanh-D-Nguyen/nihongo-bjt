@@ -134,6 +134,7 @@ một VM qua SSH). Nếu CI chậm hoặc vượt quota free, hướng đúng l�
 | Triệu chứng | Nguyên nhân thường gặp |
 | --- | --- |
 | Deploy không chạy sau khi push | CI fail, hoặc push vào branch khác `main` |
+| CI fail tại `pnpm prisma:migrate:check` | PostgreSQL CI mới chưa có schema — URL CI cần `?schema=content`, và workflow phải chạy `prisma migrate deploy` trước `prisma:migrate:check` |
 | `Permission denied (publickey)` | `GCP_VM_SSH_PRIVATE_KEY` sai hoặc chưa add public key vào VM |
 | `Host key verification failed` | `GCP_VM_SSH_KNOWN_HOSTS` thiếu/sai — chạy lại `ssh-keyscan <host>` |
 | App chạy nhưng biến env cũ | Quên trigger deploy sau khi update secret; hoặc thiếu `--update-env` |

@@ -24,7 +24,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
-      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:15432/nihongo_bjt
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:15432/nihongo_bjt?schema=content
       API_PUBLIC_URL: http://localhost:4000
       NEXT_PUBLIC_API_URL: http://localhost:4000
       CORS_ORIGINS: http://localhost:3000,http://localhost:3001
@@ -40,6 +40,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm prisma:generate
       - run: pnpm prisma:validate
+      - run: pnpm exec prisma migrate deploy --schema packages/database/prisma/schema.prisma
       - run: pnpm prisma:migrate:check
       - run: pnpm lint
       - run: pnpm typecheck
