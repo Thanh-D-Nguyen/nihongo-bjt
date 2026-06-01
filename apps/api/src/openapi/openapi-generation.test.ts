@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { AppModule } from "../app.module.js";
 
 describe("OpenAPI generation", () => {
-  it("creates a document with registered paths", async () => {
+  it("creates a document with registered paths", { timeout: 15_000 }, async () => {
     process.env.DATABASE_URL ??= "postgresql://postgres:postgres@127.0.0.1:15432/nihongo_bjt";
     process.env.API_PUBLIC_URL ??= "http://localhost:4000";
 

@@ -28,6 +28,7 @@ flowchart LR
 | `.github/workflows/ci.yml` | Build + kiểm thử (lint, typecheck, test, prisma, openapi, build) |
 | `.github/workflows/deploy-gcp.yml` | Deploy lên GCP VM qua SSH, kích hoạt sau khi CI xanh |
 | `deploy/gcp/deploy-release.sh` | Script chạy trên VM: build, migrate, `pm2 startOrReload` |
+| `.node-version` | Node.js version chuẩn dùng cho CI, local dev và VM production |
 
 ### Trigger của deploy
 
@@ -56,6 +57,13 @@ Settings → Secrets and variables → Actions → New repository secret.
 | `GCP_VM_SSH_PRIVATE_KEY` | Private key để SSH vào VM |
 | `GCP_VM_SSH_KNOWN_HOSTS` | Output của `ssh-keyscan <host>` |
 | `PROD_ENV_FILE` | **Toàn bộ** nội dung `.env` production (nguồn chuẩn) |
+
+## Node.js version
+
+Project pin Node.js trong `.node-version`. CI đọc trực tiếp file này qua
+`actions/setup-node`, còn script deploy kiểm tra VM đang chạy đúng version trước
+khi build và restart PM2. Khi nâng Node.js, cập nhật `.node-version`, cài cùng
+version trên VM, rồi mới trigger deploy lại.
 
 ## Quản lý `.env` (mô hình hybrid)
 
