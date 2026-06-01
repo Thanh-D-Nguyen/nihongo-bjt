@@ -41,9 +41,12 @@ jobs:
           rsync -az --delete-delay \
             --exclude='.env' \
             --exclude='.git/' \
+            --exclude='.turbo/' \
             --exclude='**/.next/' \
             --exclude='**/dist/' \
+            --exclude='node_modules/' \
             --exclude='**/node_modules/' \
+            --exclude='**/.turbo/' \
             --exclude='deploy/gcp/runtime/' \
             -e 'ssh -i ~/.ssh/gcp-deploy -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes' \
             ./ "$GCP_VM_USER@$GCP_VM_HOST:/home/deploy/nihongo-bjt/"

@@ -65,6 +65,22 @@ Project pin Node.js trong `.node-version`. CI đọc trực tiếp file này qua
 khi build và restart PM2. Khi nâng Node.js, cập nhật `.node-version`, cài cùng
 version trên VM, rồi mới trigger deploy lại.
 
+Nếu NodeSource chưa phát hành đúng patch version đã pin, dùng official Node.js
+distribution thay vì cài patch gần nhất. Ví dụ với Linux x64 và Node `24.16.0`:
+
+```bash
+version=24.16.0
+archive="node-v${version}-linux-x64.tar.xz"
+curl -fsSLO "https://nodejs.org/dist/v${version}/${archive}"
+curl -fsSLO "https://nodejs.org/dist/v${version}/SHASUMS256.txt"
+grep "  ${archive}$" SHASUMS256.txt | sha256sum -c -
+sudo tar -xJf "$archive" -C /opt
+for bin in node npm npx corepack; do
+  sudo ln -sfn "/opt/node-v${version}-linux-x64/bin/$bin" "/usr/local/bin/$bin"
+done
+node --version
+```
+
 ## Quản lý `.env` (mô hình hybrid)
 
 `.env` **không** được commit lên git. Production lấy `.env` từ secret
@@ -145,6 +161,7 @@ một VM qua SSH). Nếu CI chậm hoặc vượt quota free, hướng đúng l�
 | CI fail tại `pnpm prisma:migrate:check` | PostgreSQL CI mới chưa có schema — URL CI cần `?schema=content`, và workflow phải chạy `prisma migrate deploy` trước `prisma:migrate:check` |
 | `Permission denied (publickey)` | `GCP_VM_SSH_PRIVATE_KEY` sai hoặc chưa add public key vào VM |
 | `Host key verification failed` | `GCP_VM_SSH_KNOWN_HOSTS` thiếu/sai — chạy lại `ssh-keyscan <host>` |
+| VM báo sai Node.js version | Cài đúng version trong `.node-version`; nếu NodeSource chưa có patch đó, dùng official distribution như hướng dẫn phía trên |
 | App chạy nhưng biến env cũ | Quên trigger deploy sau khi update secret; hoặc thiếu `--update-env` |
 | `.env` trên VB bị mất sau deploy | Secret `PROD_ENV_FILE` rỗng/thiếu biến — cập nhật lại đầy đủ |
 
