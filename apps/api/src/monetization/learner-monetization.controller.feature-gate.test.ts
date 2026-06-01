@@ -1,11 +1,25 @@
 import { ForbiddenException, ServiceUnavailableException } from "@nestjs/common";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { LearnerMonetizationController } from "./learner-monetization.controller.js";
 
 process.env.DATABASE_URL ??= "postgresql://postgres:postgres@127.0.0.1:15432/nihongo_bjt";
 
 describe("LearnerMonetizationController feature gate", () => {
+  const originalStripeSecretKey = process.env.STRIPE_SECRET_KEY;
+
+  beforeEach(() => {
+    process.env.STRIPE_SECRET_KEY = "test_stripe_key";
+  });
+
+  afterEach(() => {
+    if (originalStripeSecretKey === undefined) {
+      delete process.env.STRIPE_SECRET_KEY;
+    } else {
+      process.env.STRIPE_SECRET_KEY = originalStripeSecretKey;
+    }
+  });
+
   it("blocks checkout when billing feature is disabled", async () => {
     const billing = { startLocalCheckout: vi.fn() };
     const ads = { decide: vi.fn() };
@@ -37,7 +51,7 @@ describe("LearnerMonetizationController feature gate", () => {
         { planSlug: "premium", userId: "22222222-2222-4222-8222-222222222222" }
       )
     ).rejects.toBeInstanceOf(ServiceUnavailableException);
-    expect(billing.startLocalCheckout).not.toHaveBeenCalled();
+    expect(stripeBilling.startCheckout).not.toHaveBeenCalled();
   });
 
   it("blocks checkout when legal consent is missing", async () => {
@@ -73,6 +87,6 @@ describe("LearnerMonetizationController feature gate", () => {
         userId: "22222222-2222-4222-8222-222222222222"
       })
     ).rejects.toBeInstanceOf(ForbiddenException);
-    expect(billing.startLocalCheckout).not.toHaveBeenCalled();
+    expect(stripeBilling.startCheckout).not.toHaveBeenCalled();
   });
 });

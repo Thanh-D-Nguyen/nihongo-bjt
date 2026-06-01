@@ -49,7 +49,7 @@ const MOOD_ANIMATION: Record<string, string> = {
   sick: "animate-[shake_1s_ease-in-out_infinite]",
 };
 
-export function CompanionPetWidget({ locale }: { locale: string }) {
+export function CompanionPetWidget({ locale: _locale }: { locale: string }) {
   const { userId } = useKeycloakAuth();
   const [pet, setPet] = useState<PetData | null>(null);
   const [loading, setLoading] = useState(true);

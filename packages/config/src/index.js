@@ -119,7 +119,7 @@ export function isPublicKeycloakEnabled(env = process.env) {
     return Boolean(publicKeycloakIssuerUrl(env));
 }
 export const defaultLocale = "vi";
-export const supportedLocales = ["vi", "ja"];
+export const supportedLocales = ["vi", "ja", "en"];
 export function isSupportedLocale(locale) {
     return supportedLocales.includes(locale);
 }

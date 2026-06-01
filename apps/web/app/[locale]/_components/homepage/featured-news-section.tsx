@@ -1,6 +1,6 @@
 "use client";
 
-import { Badge, Button, EmptyState, ErrorState, SectionHeader, TabButton, TabsList } from "@nihongo-bjt/ui";
+import { Badge, Button, ErrorState, SectionHeader, TabButton, TabsList } from "@nihongo-bjt/ui";
 import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 

@@ -1,5 +1,5 @@
-import { Controller, Get, Inject, Query, Req, UseGuards } from "@nestjs/common";
-import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from "@nestjs/swagger";
+import { Controller, Get, Inject, Query, UseGuards } from "@nestjs/common";
+import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from "@nestjs/swagger";
 
 import { KeycloakAuthGuard } from "../../keycloak/keycloak-auth.guard.js";
 import { LotoHubService } from "./loto-hub.service.js";

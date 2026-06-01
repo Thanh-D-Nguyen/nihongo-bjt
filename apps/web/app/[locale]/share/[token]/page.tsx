@@ -107,7 +107,6 @@ export default async function PublicSharePage({ params }: PageProps) {
 
         {/* Postcard image */}
         <div className="mt-6">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={imageUrl}
             alt={snapshot.title}

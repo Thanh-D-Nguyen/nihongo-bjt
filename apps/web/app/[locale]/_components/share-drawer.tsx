@@ -404,7 +404,6 @@ export function ShareDrawer({
                 )}
 
                 {previewUrl && !previewLoading && !previewError && (
-                  /* eslint-disable-next-line @next/next/no-img-element */
                   <img
                     src={previewUrl}
                     alt={labels.preview}

@@ -2,8 +2,6 @@
 
 import Link from "next/link";
 import {
-  Card,
-  CardContent,
   LoadingSkeleton,
   SectionHeader,
 } from "@nihongo-bjt/ui";

@@ -29,7 +29,7 @@ function TrendArrow({ current, previous }: { current: number; previous: number |
   );
 }
 
-export function WeeklyReportCard({ locale }: { locale: string }) {
+export function WeeklyReportCard({ locale: _locale }: { locale: string }) {
   const { userId } = useKeycloakAuth();
   const [report, setReport] = useState<WeeklyReport | null>(null);
   const [loading, setLoading] = useState(true);

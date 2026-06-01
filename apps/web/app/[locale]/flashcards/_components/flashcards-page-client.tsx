@@ -20,7 +20,7 @@ import { queueSizeForUser } from "../../../../lib/offline-review-queue";
 import { learnerApiFetch } from "../../../../lib/learner-api";
 import { DeckBrowser, type DeckLabels, type LibraryDeckFilter } from "./deck-browser";
 import { FlashcardStylePickerModal, type StylePickerLabels } from "./flashcard-style-picker";
-import { FlashcardsClient, type FlashcardLabels } from "./flashcards-client";
+import type { FlashcardLabels } from "./flashcards-client";
 import { ReviewSession, type ReviewSessionLabels } from "./review-session";
 import { AutoGenDialog, type CardgenLabels } from "./auto-gen-dialog";
 

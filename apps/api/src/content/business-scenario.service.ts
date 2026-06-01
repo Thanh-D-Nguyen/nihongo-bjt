@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { createPrismaClient } from "@nihongo-bjt/database";
+import { createPrismaClient, type Prisma } from "@nihongo-bjt/database";
 
 @Injectable()
 export class BusinessScenarioService {
@@ -84,7 +84,7 @@ export class BusinessScenarioService {
         scenarioId,
         totalPoints,
         maxPoints,
-        choices: choices as any,
+        choices: choices as Prisma.InputJsonValue,
       },
     });
   }

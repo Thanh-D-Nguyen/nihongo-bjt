@@ -22,10 +22,10 @@ const RARITY_STYLES: Record<string, { border: string; bg: string; text: string; 
   epic: { border: "border-purple-400/30", bg: "bg-purple-400/10", text: "text-purple-500", glow: "shadow-[0_0_20px_rgba(168,85,247,0.5)]" },
 };
 
-export function MysteryBoxWidget({ locale }: { locale: string }) {
+export function MysteryBoxWidget({ locale: _locale }: { locale: string }) {
   const { userId } = useKeycloakAuth();
   const [loading, setLoading] = useState(true);
-  const [canOpen, setCanOpen] = useState(false);
+  const [, setCanOpen] = useState(false);
   const [goalComplete, setGoalComplete] = useState(false);
   const [todayReward, setTodayReward] = useState<Reward | null>(null);
   const [opening, setOpening] = useState(false);

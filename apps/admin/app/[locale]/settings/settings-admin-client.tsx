@@ -18,7 +18,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { adminApiFetch } from "@/lib/admin-api";
-import { parseApiError, useFormErrors } from "@/lib/form-errors";
+import { useFormErrors } from "@/lib/form-errors";
 import { permsFromMe, type MePayload } from "@/app/_components/admin-client-utils";
 
 type CommonLabels = { empty: string; error: string; loading: string; records: string };

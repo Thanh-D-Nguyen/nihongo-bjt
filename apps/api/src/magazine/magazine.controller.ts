@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Inject, NotFoundException, Param, Post, Query, Req } from "@nestjs/common";
 import { ApiTags, ApiOperation } from "@nestjs/swagger";
+import type { Request } from "express";
 import { MagazineRepository } from "./magazine.repository.js";
 import { ListMagazineQuery, MarkReadBody } from "./dto/magazine.dto.js";
 
@@ -12,6 +13,8 @@ function positiveInt(value: unknown, fallback: number): number {
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
 }
+
+type AuthenticatedRequest = Request & { user?: { sub?: string } };
 
 @ApiTags("Magazine")
 @Controller("magazine")
@@ -48,7 +51,7 @@ export class MagazineController {
   async markRead(
     @Param("slug") slug: string,
     @Body() body: MarkReadBody,
-    @Req() req: any,
+    @Req() req: AuthenticatedRequest,
   ) {
     const userId = req.user?.sub;
     if (!userId) return { ok: false, reason: "not_authenticated" };

@@ -25,7 +25,7 @@ export function DailyStandupPage({ labels, locale }: Props) {
   const [career, setCareer] = useState<UserCareerState>(fallbackCareer);
   const [arcs, setArcs] = useState<MissionArc[]>([]);
   const [nextChapter, setNextChapter] = useState<MissionChapter | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [isClockingIn, setIsClockingIn] = useState(false);
   const [bucket, setBucket] = useState<"morning" | "afternoon" | "evening">("morning");
   const [showNamePicker, setShowNamePicker] = useState(false);

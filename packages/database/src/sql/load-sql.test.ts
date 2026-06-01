@@ -17,7 +17,7 @@ describe("load-sql", () => {
 
   it("resolves monorepo root from package location", () => {
     const root = resolveMonorepoRoot();
-    expect(existsSync(join(root, "database", "scripts", "read"))).toBe(true);
+    expect(existsSync(join(root, "database", "scripts", "migrations", "read"))).toBe(true);
   });
 
   it("loads read SQL by relative path", () => {

@@ -18,6 +18,11 @@ function computeHits(predicted: number[], actual: number[]): number {
   return predicted.filter((n) => actualSet.has(n)).length;
 }
 
+interface LotoArticleContent {
+  generatedSets?: Array<{ mainNumbers: number[] }>;
+  sets?: Array<{ mainNumbers: number[] }>;
+}
+
 @Injectable()
 export class LotoHubAdminService {
   private readonly prisma: PrismaClient = createPrismaClient();
@@ -157,7 +162,7 @@ export class LotoHubAdminService {
       : [];
     const drawByDate = new Map(draws.map((d) => [toDateKey(d.drawDate), d]));
 
-    let totalPredictions = articles.length;
+    const totalPredictions = articles.length;
     let matchedCount = 0;
     let totalHits = 0;
     let bestHit = 0;
@@ -165,7 +170,7 @@ export class LotoHubAdminService {
     const hitDistribution: Record<number, number> = {};
 
     for (const article of articles) {
-      const content = article.contentJson as any;
+      const content = article.contentJson as LotoArticleContent | null;
       const sets = content?.sets ?? content?.generatedSets ?? [];
       const primarySet = sets[0];
       if (!primarySet) continue;

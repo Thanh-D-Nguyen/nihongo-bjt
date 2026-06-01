@@ -83,7 +83,7 @@ export function LotoHubClient({ labels, locale }: { labels: LotoLabels; locale: 
   );
 }
 
-function LotoHubInner({ labels, locale }: { labels: LotoLabels; locale: string }) {
+function LotoHubInner({ labels }: { labels: LotoLabels; locale: string }) {
   const { accessToken } = useKeycloakAuth();
   const [game, setGame] = useState<LotoGame>("loto6");
   const [nextDraw, setNextDraw] = useState<NextDrawData | null>(null);

@@ -72,7 +72,7 @@ function formatDateVi(dateStr: string): string {
 
 /* ─── Content Renderer ─── */
 
-function ContentBody({ content, kind }: { content: Record<string, unknown>; kind: string }) {
+function ContentBody({ content }: { content: Record<string, unknown> }) {
   const paragraphsJp = content.paragraphsJp as string[] | undefined;
   const paragraphsVi = content.paragraphsVi as string[] | undefined;
 
@@ -267,7 +267,7 @@ export function MagazineArticleView({
         {/* ─── Content Body ─── */}
         {article.contentJson && (
           <section className="mb-10">
-            <ContentBody content={article.contentJson} kind={article.widgetKind} />
+            <ContentBody content={article.contentJson} />
           </section>
         )}
 

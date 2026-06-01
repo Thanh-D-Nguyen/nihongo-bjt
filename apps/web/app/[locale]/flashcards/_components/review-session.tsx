@@ -119,7 +119,7 @@ function normalizeAnswer(s: string): string {
   // Katakana (U+30A1-U+30F6) → Hiragana (offset -0x60)
   out = out.replace(/[ァ-ヶ]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0x60));
   // Full-width space → half-width, collapse runs
-  out = out.replace(/　/g, " ").replace(/\s+/g, " ");
+  out = out.replace(/\u3000/g, " ").replace(/\s+/g, " ");
   return out;
 }
 
@@ -947,7 +947,7 @@ function SummaryScreen({
 
 export function ReviewSession({
   labels,
-  locale,
+  locale: _locale,
   scopeDeckId,
   styleConfig,
   onExit,

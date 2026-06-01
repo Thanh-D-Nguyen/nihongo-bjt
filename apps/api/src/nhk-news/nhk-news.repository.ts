@@ -1,6 +1,5 @@
 import { createHash } from "node:crypto";
 import * as http from "node:http";
-import * as https from "node:https";
 import * as tls from "node:tls";
 
 import { createPrismaClient } from "@nihongo-bjt/database";

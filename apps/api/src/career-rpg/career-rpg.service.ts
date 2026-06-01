@@ -1,5 +1,5 @@
 import { createPrismaClient, Prisma, type PrismaClient } from "@nihongo-bjt/database";
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException, Optional } from "@nestjs/common";
 
 export const CAREER_SKILL_AXES = ["keigo", "written", "meeting", "customer", "chart", "nuance"] as const;
 export const DEV_CAREER_USER_ID = "00000000-0000-4000-8000-000000000101";
@@ -42,8 +42,8 @@ type ContextMemo = {
 export class CareerRpgService {
   private readonly prisma: PrismaClient;
 
-  constructor(prisma: PrismaClient = createPrismaClient()) {
-    this.prisma = prisma;
+  constructor(@Optional() prisma?: PrismaClient) {
+    this.prisma = prisma ?? createPrismaClient();
   }
 
   async careerMe(userId: string) {

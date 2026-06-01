@@ -246,11 +246,11 @@ export class GamificationService {
   async browseAllAchievements(userId: string) {
     const definitions = await this.repo.enabledAchievementDefinitions();
     const userProgress = await this.repo.userAchievements(userId);
-    const progressMap = new Map(userProgress.map((p: any) => [p.tierId, p]));
+    const progressMap = new Map(userProgress.map((p) => [p.tierId, p]));
 
-    return definitions.map((def: any) => ({
+    return definitions.map((def) => ({
       ...def,
-      tiers: def.tiers.map((tier: any) => ({
+      tiers: def.tiers.map((tier) => ({
         ...tier,
         userProgress: progressMap.get(tier.id) ?? null
       }))
@@ -265,7 +265,7 @@ export class GamificationService {
   /** Mark achievements as acknowledged/shown. */
   async acknowledgeNotifications(userId: string, ids: string[]) {
     const pending = await this.repo.pendingAchievementNotifications(userId);
-    const validIds = pending.map((p: any) => p.id).filter((id: string) => ids.includes(id));
+    const validIds = pending.map((p) => p.id).filter((id) => ids.includes(id));
     if (validIds.length > 0) await this.repo.markAchievementsNotified(validIds);
     return { acknowledged: validIds.length };
   }

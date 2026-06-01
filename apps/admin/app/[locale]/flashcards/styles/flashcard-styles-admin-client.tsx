@@ -114,12 +114,11 @@ function StylePreview({ config }: { config: Record<string, string> }) {
 
 export function FlashcardStylesAdminClient({
   common,
-  labels
+  labels: _labels
 }: {
   common: CommonLabels;
   labels: Labels;
 }) {
-  const t = (k: string) => labels[k] ?? k;
   const [perms, setPerms] = useState<Set<string> | null>(null);
   const canWrite = perms != null && (perms.has("admin.content.write") || perms.has("admin_core"));
 
@@ -622,7 +621,7 @@ export function FlashcardStylesAdminClient({
 
 /** Large style preview card with front/back simulation */
 function StylePreviewLarge({ config: configJson }: { config: string }) {
-  let parsed: Record<string, string> = {};
+  let parsed: Record<string, string>;
   try {
     parsed = JSON.parse(configJson);
   } catch {

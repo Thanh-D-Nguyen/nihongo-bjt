@@ -65,7 +65,8 @@ export class StripeWebhookController {
         idempotencyKey: event.id,
         provider: "stripe",
         rawPayload: event.data.object as unknown as Record<string, unknown>,
-        signatureHeader: signature
+        signatureHeader: signature,
+        signatureVerified: true
       });
     } catch (err) {
       // Duplicate is fine — Stripe retries

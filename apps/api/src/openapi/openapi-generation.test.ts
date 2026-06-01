@@ -9,7 +9,7 @@ describe("OpenAPI generation", () => {
     process.env.DATABASE_URL ??= "postgresql://postgres:postgres@127.0.0.1:15432/nihongo_bjt";
     process.env.API_PUBLIC_URL ??= "http://localhost:4000";
 
-    const app = await NestFactory.create(AppModule, { logger: false });
+    const app = await NestFactory.create(AppModule, { abortOnError: false, logger: false });
     app.setGlobalPrefix("api");
 
     const config = new DocumentBuilder()

@@ -20,29 +20,29 @@ function defaultStartDir(): string {
 }
 
 /**
- * Resolve monorepo root (directory that contains `database/scripts/read`).
+ * Resolve monorepo root (directory that contains `database/scripts/migrations/read`).
  * Override with env `NIHONGO_BJT_REPO_ROOT` when the package is relocated (e.g. bundled without `database/`).
  */
 export function resolveMonorepoRoot(options?: { startDir?: string }): string {
   const env = process.env.NIHONGO_BJT_REPO_ROOT?.trim();
   if (env !== undefined && env !== "") {
     const r = resolve(env);
-    if (existsSync(join(r, "database", "scripts", "read"))) {
+    if (existsSync(join(r, "database", "scripts", "migrations", "read"))) {
       return r;
     }
     throw new Error(
-      `NIHONGO_BJT_REPO_ROOT is set but database/scripts/read was not found under ${r}`
+      `NIHONGO_BJT_REPO_ROOT is set but database/scripts/migrations/read was not found under ${r}`
     );
   }
 
   const fromSqlFile = join(defaultStartDir(), "..", "..", "..", "..");
-  if (existsSync(join(fromSqlFile, "database", "scripts", "read"))) {
+  if (existsSync(join(fromSqlFile, "database", "scripts", "migrations", "read"))) {
     return resolve(fromSqlFile);
   }
 
   let dir = resolve(options?.startDir ?? process.cwd());
   for (let i = 0; i < 24; i++) {
-    if (existsSync(join(dir, "database", "scripts", "read"))) {
+    if (existsSync(join(dir, "database", "scripts", "migrations", "read"))) {
       return dir;
     }
     const parent = dirname(dir);
@@ -53,7 +53,7 @@ export function resolveMonorepoRoot(options?: { startDir?: string }): string {
   }
 
   throw new Error(
-    "Could not find monorepo root (folder with database/scripts/read). Set NIHONGO_BJT_REPO_ROOT."
+    "Could not find monorepo root (folder with database/scripts/migrations/read). Set NIHONGO_BJT_REPO_ROOT."
   );
 }
 
@@ -64,7 +64,7 @@ export function resolveSqlFilePath(
 ): string {
   assertSafeRelativePath(relativePath);
   const root = options?.root ?? resolveMonorepoRoot({ startDir: options?.startDir });
-  const full = join(root, "database", "scripts", category, relativePath);
+  const full = join(root, "database", "scripts", "migrations", category, relativePath);
   if (!existsSync(full)) {
     throw new Error(`SQL file not found: ${full}`);
   }

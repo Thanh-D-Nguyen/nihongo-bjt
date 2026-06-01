@@ -1,5 +1,5 @@
 import { BadRequestException, Body, Controller, Get, Inject, Param, Put, Post, Query, Req, UseGuards } from "@nestjs/common";
-import { ApiBearerAuth, ApiBody, ApiOkResponse, ApiOperation, ApiParam, ApiQuery, ApiSecurity, ApiTags } from "@nestjs/swagger";
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiSecurity, ApiTags } from "@nestjs/swagger";
 import type { Request } from "express";
 
 import { AdminAuthService } from "../../admin/admin-auth.service.js";

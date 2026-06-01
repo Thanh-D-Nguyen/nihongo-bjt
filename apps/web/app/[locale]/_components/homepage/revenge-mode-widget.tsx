@@ -14,7 +14,7 @@ interface RevengeQuestion {
   yourAnswer: string;
 }
 
-export function RevengeModeWidget({ locale }: { locale: string }) {
+export function RevengeModeWidget({ locale: _locale }: { locale: string }) {
   const { userId } = useKeycloakAuth();
   const [questions, setQuestions] = useState<RevengeQuestion[]>([]);
   const [totalPending, setTotalPending] = useState(0);

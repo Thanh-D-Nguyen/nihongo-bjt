@@ -1126,7 +1126,6 @@ export function DeckComposerPanel({
           const isDropTarget = dragOverIndex === rowIndex;
           const isDragging = draggingIndex === rowIndex;
           const isDuplicate = r.front.trim().length > 0 && rows.some((o, oi) => oi !== rowIndex && o.front.trim().toLowerCase() === r.front.trim().toLowerCase());
-          const [showImageUrl, setShowImageUrl] = [r.imageUrl !== undefined, null]; // inline url always visible via field
           return (
               <div
                 className={`min-w-0 rounded-xl border bg-white p-3 sm:p-4 transition-all duration-200 ease-in-out shadow-sm ${

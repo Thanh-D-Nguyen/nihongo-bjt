@@ -14,11 +14,7 @@ import { ChapterCompleteScreen } from "../../../../../../src/features/career-rpg
 import { NpcReactionOverlay } from "../../../../../../src/features/career-rpg/components/npc-reaction-overlay";
 import { RankUpOverlay } from "../../../../../../src/features/career-rpg/components/rank-up-overlay";
 import { WorkplaceScenarioCard } from "../../../../../../src/features/career-rpg/components/workplace-scenario-card";
-import {
-  findRank,
-  findNextRank
-} from "../../../../../../src/features/career-rpg/mock-data";
-import { useCareerRpg } from "../../../../../../src/features/career-rpg/store";
+import { findRank } from "../../../../../../src/features/career-rpg/mock-data";
 import type { CareerRpgLabels } from "../../../../../../src/features/career-rpg/i18n";
 import type { CareerRank, ChapterResult, MissionChapter, RiskOutcomePreview } from "../../../../../../src/features/career-rpg/types";
 
@@ -31,7 +27,6 @@ interface Props {
 type Phase = "briefing" | "scenario" | "reacted" | "rankup" | "complete";
 
 export function ChapterPlayerClient({ chapterId, labels, locale }: Props) {
-  const { applyChapterResult, career } = useCareerRpg();
   const [phase, setPhase] = useState<Phase>("briefing");
   const [outcome, setOutcome] = useState<RiskOutcomePreview | null>(null);
   const [chapter, setChapter] = useState<MissionChapter | null>(null);
@@ -51,7 +46,7 @@ export function ChapterPlayerClient({ chapterId, labels, locale }: Props) {
         setLoadingChapter(false);
         if (alive) setChapter(detail.chapter);
       })
-      .catch((err) => {
+      .catch(() => {
         if (!alive) return;
         setLoadingChapter(false);
         setChapter(null);
@@ -71,7 +66,6 @@ export function ChapterPlayerClient({ chapterId, labels, locale }: Props) {
   }, [chapter]);
 
   const handleContinue = useCallback(async () => {
-    const oldRankCode = career.currentRankCode;
     try {
       await startChapterAttempt(chapterId);
       const completed = await completeCurrentChapterAttempt(chapterId);
@@ -90,7 +84,7 @@ export function ChapterPlayerClient({ chapterId, labels, locale }: Props) {
       setPhase("complete");
     }
     setPhase("complete");
-  }, [applyChapterResult, career, chapterId]);
+  }, [chapterId]);
 
   if (loadingChapter) {
     return (

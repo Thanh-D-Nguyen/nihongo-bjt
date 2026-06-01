@@ -20,6 +20,14 @@ interface PredictionFeedItem {
   publishedAt: string | null;
 }
 
+interface LotoArticleContent {
+  drawNumber?: number;
+  generatedSets?: PredictionFeedItem["sets"];
+  japaneseSentence?: PredictionFeedItem["jpSentence"];
+  jpSentence?: PredictionFeedItem["jpSentence"];
+  sets?: PredictionFeedItem["sets"];
+}
+
 function computeHits(predicted: number[], actual: number[]): { hitCount: number; hits: number[] } {
   const actualSet = new Set(actual);
   const hits = predicted.filter((n) => actualSet.has(n));
@@ -70,16 +78,16 @@ export class LotoHubService {
     const drawByDate = new Map(draws.map((d) => [toDateKey(d.drawDate), d]));
 
     const data: PredictionFeedItem[] = articles.map((article) => {
-      const content = article.contentJson as any;
+      const content = article.contentJson as LotoArticleContent | null;
       const sets: Array<{ mainNumbers: number[]; bonusNumbers: number[]; score: number }> =
         content?.sets ?? content?.generatedSets ?? [];
       const jpSentence = content?.japaneseSentence ?? content?.jpSentence ?? null;
       const result = drawByDate.get(toDateKey(article.contentDate)) ?? null;
 
       const primarySet = sets[0];
-      const { hitCount, hits } = primarySet && result
+      const { hitCount } = primarySet && result
         ? computeHits(primarySet.mainNumbers, result.mainNumbers)
-        : { hitCount: 0, hits: [] as number[] };
+        : { hitCount: 0 };
 
       const bonusHit = primarySet && result
         ? result.bonusNumbers.some((b) => primarySet.mainNumbers.includes(b))
@@ -133,7 +141,7 @@ export class LotoHubService {
 
     if (!article) return null;
 
-    const content = article.contentJson as any;
+    const content = article.contentJson as LotoArticleContent | null;
     const sets = content?.sets ?? content?.generatedSets ?? [];
     const jpSentence = content?.japaneseSentence ?? content?.jpSentence ?? null;
     const drawDate = toDateKey(article.contentDate);
@@ -202,7 +210,7 @@ export class LotoHubService {
     let streakActive = true;
 
     for (const article of articles) {
-      const content = article.contentJson as any;
+      const content = article.contentJson as LotoArticleContent | null;
       const sets = content?.sets ?? content?.generatedSets ?? [];
       const primarySet = sets[0];
       if (!primarySet) continue;

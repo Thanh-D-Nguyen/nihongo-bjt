@@ -1,6 +1,6 @@
 # Database reporting layer (views & materialized views)
 
-SQL artifacts in this folder mirror the **current** Prisma/PostgreSQL model names and schemas (`content`, `learning`, `analytics`, etc.). The **`reporting`** schema (views, MVs, MV indexes) is applied by Prisma migration `20260426190000_reporting_views_materialized_views`. Re-run `scripts/apply_reporting_layer.sh` only for dev/hotfix drift; runtime SQL files live under `scripts/read`, `scripts/write`, `scripts/batch` (see `scripts/README.md`).
+SQL artifacts in this folder mirror the **current** Prisma/PostgreSQL model names and schemas (`content`, `learning`, `analytics`, etc.). The **`reporting`** schema (views, MVs, MV indexes) is applied by Prisma migration `20260426190000_reporting_views_materialized_views`. Re-run `scripts/migrations/apply_reporting_layer.sh` only for dev/hotfix drift; runtime SQL files live under `scripts/migrations/read`, `scripts/migrations/write`, `scripts/migrations/batch` (see `scripts/README.md`).
 
 ## Layout
 
@@ -10,7 +10,7 @@ SQL artifacts in this folder mirror the **current** Prisma/PostgreSQL model name
 | `materialized_views/` | Pre-aggregated snapshots; **must be refreshed** (see below). |
 | `indexes/` | Supporting indexes for materialized views (required for `REFRESH MATERIALIZED VIEW CONCURRENTLY`). |
 | `functions/` | Optional SQL helpers (empty unless added). |
-| `scripts/` | Shell helpers + `read/` / `write/` / `batch/` SQL (see `scripts/README.md`). |
+| `scripts/migrations/` | Shell helpers + `read/` / `write/` / `batch/` SQL (see `scripts/README.md`). |
 
 ## Schema
 
@@ -39,7 +39,7 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA reporting GRANT SELECT ON TABLES TO your_role
 Suggested one-shot (psql):
 
 ```bash
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/scripts/batch/create_reporting_schema.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/scripts/migrations/batch/create_reporting_schema.sql
 # Then run each file in views/, materialized_views/, indexes/ — or use scripts/apply_all.sql when added.
 ```
 
@@ -69,8 +69,8 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/scripts/batch/create_reporti
 ## Apply helper
 
 ```bash
-chmod +x database/scripts/apply_reporting_layer.sh
-DATABASE_URL="postgres://..." ./database/scripts/apply_reporting_layer.sh
+chmod +x database/scripts/migrations/apply_reporting_layer.sh
+DATABASE_URL="postgres://..." ./database/scripts/migrations/apply_reporting_layer.sh
 ```
 
 This runs `scripts/batch/create_reporting_schema.sql`, all `views/*.sql`, all `materialized_views/*.sql`, `indexes/mv_reporting_unique_indexes.sql`, then `scripts/batch/refresh_reporting_materialized_views_non_concurrent.sql`.

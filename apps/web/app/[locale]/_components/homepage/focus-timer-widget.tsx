@@ -8,7 +8,7 @@ const DURATION_OPTIONS = [15, 25, 45];
 const RING_RADIUS = 40;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
-export function FocusTimerWidget({ locale }: { locale: string }) {
+export function FocusTimerWidget({ locale: _locale }: { locale: string }) {
   const {
     loading,
     activeSession,

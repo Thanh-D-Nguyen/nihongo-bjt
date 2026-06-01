@@ -8,9 +8,11 @@ const prismaMock = {
     findMany: vi.fn()
   },
   quizSession: {
+    count: vi.fn(),
     findMany: vi.fn()
   },
   reviewEvent: {
+    count: vi.fn(),
     findMany: vi.fn()
   },
   userFlashcard: {
@@ -53,9 +55,12 @@ describe("AnalyticsRepository learner weak skills", () => {
     prismaMock.quizAnswer.findMany
       .mockResolvedValueOnce(answerRows)
       .mockResolvedValueOnce(answersBySkill)
-      .mockResolvedValueOnce(answerRows);
+      .mockResolvedValueOnce(answerRows)
+      .mockResolvedValueOnce([]);
     prismaMock.userFlashcard.count.mockResolvedValueOnce(4);
     prismaMock.learningPath.findMany.mockResolvedValueOnce([]);
+    prismaMock.reviewEvent.count.mockResolvedValueOnce(0);
+    prismaMock.quizSession.count.mockResolvedValueOnce(0);
 
     const repo = new AnalyticsRepository();
     const result = await repo.learner(7, "11111111-1111-4111-8111-111111111111");

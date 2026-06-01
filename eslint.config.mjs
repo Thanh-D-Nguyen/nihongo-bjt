@@ -36,7 +36,7 @@ export default [
     }
   },
   {
-    files: ["**/*.ts"],
+    files: ["**/*.ts", "**/*.tsx"],
     languageOptions: {
       parserOptions: {
         projectService: true,
@@ -74,6 +74,23 @@ export default [
         setTimeout: "readonly",
         clearTimeout: "readonly",
         URL: "readonly"
+      }
+    }
+  },
+  {
+    files: ["**/*.cjs"],
+    languageOptions: {
+      globals: {
+        module: "readonly"
+      }
+    }
+  },
+  {
+    files: ["apps/web/public/sw-*.js"],
+    languageOptions: {
+      globals: {
+        clients: "readonly",
+        self: "readonly"
       }
     }
   }

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 
-import { Button, EmptyState, ErrorState, LoadingSkeleton, cn } from "@nihongo-bjt/ui";
+import { Button, EmptyState, ErrorState, LoadingSkeleton } from "@nihongo-bjt/ui";
 import Link from "next/link";
 
 import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
@@ -13,7 +13,6 @@ import {
 } from "../../../../lib/offline-review-queue";
 import { learnerApiFetch } from "../../../../lib/learner-api";
 import { FlashcardInteractiveCard } from "./flashcard-interactive-card";
-import type { MentorLabels } from "./flashcard-interactive-card";
 
 const allowedMime = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 const maxBytes = 10 * 1024 * 1024;

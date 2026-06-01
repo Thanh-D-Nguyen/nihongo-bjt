@@ -9,7 +9,7 @@ const prismaMock = {
   deckCard: {
     deleteMany: vi.fn(),
     findMany: vi.fn(),
-    count: vi.fn()
+    groupBy: vi.fn()
   },
   userFlashcard: {
     deleteMany: vi.fn()
@@ -51,7 +51,7 @@ describe("FlashcardsRepository archiveOwnedDeckForLearner", () => {
     prismaMock.deckCard.findMany.mockResolvedValue([{ cardId }, { cardId }]);
     prismaMock.deckCard.deleteMany.mockResolvedValue({ count: 2 });
     prismaMock.deck.update.mockResolvedValue({ id: deckId, status: "archived" });
-    prismaMock.deckCard.count.mockResolvedValue(0);
+    prismaMock.deckCard.groupBy.mockResolvedValue([]);
     prismaMock.userFlashcard.deleteMany.mockResolvedValue({ count: 1 });
     prismaMock.analyticsEvent.create.mockResolvedValue({ id: "ev" });
 

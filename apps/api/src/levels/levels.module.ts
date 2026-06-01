@@ -1,6 +1,6 @@
 import { createPrismaClient } from "@nihongo-bjt/database";
 import { Controller, Get, Inject, Param, Query } from "@nestjs/common";
-import { ApiOkResponse, ApiOperation, ApiParam, ApiQuery, ApiTags } from "@nestjs/swagger";
+import { ApiOperation, ApiParam, ApiQuery, ApiTags } from "@nestjs/swagger";
 import { Injectable, Module } from "@nestjs/common";
 
 /* ── Level taxonomy (BJT J5 → J1+) ────────────────────────── */

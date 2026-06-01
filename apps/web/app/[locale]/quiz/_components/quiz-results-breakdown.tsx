@@ -136,7 +136,7 @@ export function QuizResultsBreakdown({
 
       {/* Question cards */}
       <div className="space-y-3">
-        {filteredBreakdown.map((question, index) => {
+        {filteredBreakdown.map((question) => {
           const originalIndex = breakdown.breakdown.indexOf(question);
           return (
           <div

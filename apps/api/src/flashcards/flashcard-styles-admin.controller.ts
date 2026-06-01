@@ -11,7 +11,6 @@ import {
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiTags } from "@nestjs/swagger";
 
-import { AdminAuthService } from "../admin/admin-auth.service.js";
 import { AdminRbacGuard } from "../admin/admin-rbac.guard.js";
 import { LogAdminAction } from "../admin/admin-audit.decorator.js";
 import { RequireAdminPermissions } from "../admin/admin.rbac.js";

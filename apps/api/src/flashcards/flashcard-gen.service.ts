@@ -1,5 +1,4 @@
 import { createPrismaClient, type Prisma } from "@nihongo-bjt/database";
-import { randomUUID } from "node:crypto";
 import {
   BadRequestException,
   ForbiddenException,

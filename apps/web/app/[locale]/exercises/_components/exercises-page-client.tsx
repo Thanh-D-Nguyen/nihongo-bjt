@@ -921,7 +921,7 @@ function TtsPlayer({ audioUrl }: { audioUrl: string }) {
     if (typeof window === "undefined" || !window.speechSynthesis) return;
 
     // Parse tts:// URL: tts://speak?text=...&lang=ja-JP&rate=0.85
-    let text = "";
+    let text: string;
     let lang = "ja-JP";
     let rate = 0.85;
 

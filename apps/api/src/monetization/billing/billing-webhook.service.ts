@@ -24,6 +24,7 @@ export type WebhookIngestInput = {
    */
   rawPayload: Record<string, unknown>;
   signatureHeader?: string;
+  signatureVerified?: boolean;
 };
 
 export type WebhookIngestResult =
@@ -60,15 +61,14 @@ export class BillingWebhookService {
   private verifySignature(
     provider: string,
     _rawPayload: Record<string, unknown>,
-    _signatureHeader?: string
+    _signatureHeader?: string,
+    signatureVerified?: boolean
   ): boolean {
     if (provider === this.LOCAL_PROVIDER) {
       return true;
     }
-    // Stripe signature is verified by StripeBillingProvider.verifyWebhookSignature()
-    // BEFORE ingestWebhook is called. Trust it here since the controller already verified.
     if (provider === "stripe") {
-      return true;
+      return signatureVerified === true;
     }
     // SECURITY: External webhooks MUST NOT be processed without signature verification.
     // Returning false here ensures external webhooks are rejected until implemented.
@@ -107,7 +107,8 @@ export class BillingWebhookService {
     const signatureOk = this.verifySignature(
       input.provider,
       input.rawPayload,
-      input.signatureHeader
+      input.signatureHeader,
+      input.signatureVerified
     );
 
     if (!signatureOk) {

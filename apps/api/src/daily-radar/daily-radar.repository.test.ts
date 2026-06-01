@@ -16,10 +16,16 @@ const modulePublished = {
 };
 
 const prismaMock = {
+  dailyContentItem: {
+    findMany: vi.fn()
+  },
   dailyRadarCard: {
     findMany: vi.fn()
   },
   dailyRadarModuleConfig: {
+    findMany: vi.fn()
+  },
+  dailyWidgetConfig: {
     findMany: vi.fn()
   }
 };
@@ -35,6 +41,8 @@ describe("DailyRadarRepository public home", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     prismaMock.dailyRadarModuleConfig.findMany.mockResolvedValue([modulePublished]);
+    prismaMock.dailyWidgetConfig.findMany.mockResolvedValue([]);
+    prismaMock.dailyContentItem.findMany.mockResolvedValue([]);
   });
 
   it("returns spotlight and ordered cards from enabled published modules", async () => {
