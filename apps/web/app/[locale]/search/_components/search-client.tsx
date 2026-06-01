@@ -141,6 +141,9 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  /** Always-current snapshot so the bootstrap effect can read params without depending on their identity */
+  const searchParamsRef = useRef(searchParams);
+  searchParamsRef.current = searchParams;
   const { userId } = useKeycloakAuth();
   const sheetTitleId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -346,9 +349,10 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
   }
 
   useEffect(() => {
-    const q = searchParams.get("q") ?? "";
-    const scope = searchParams.get("scope") ?? "";
-    const level = searchParams.get("level") ?? "";
+    const params = searchParamsRef.current;
+    const q = params.get("q") ?? "";
+    const scope = params.get("scope") ?? "";
+    const level = params.get("level") ?? "";
 
     if (scope && (kinds as readonly string[]).includes(scope)) {
       setFilter(scope as KindFilter);
@@ -362,7 +366,7 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
       setLevelFilter("");
     }
 
-    pendingEntryRef.current = entryKeyFromUrl(searchParams.get("entry"));
+    pendingEntryRef.current = entryKeyFromUrl(params.get("entry"));
 
     if (q.trim()) {
       setQuery(q);
@@ -383,9 +387,11 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
       setSelected(null);
       inputRef.current?.focus();
     }
-    // Intentionally only `urlSearchBootstrapKey` + runSearch: `searchParams` identity changes when
-    // only `entry` is patched would otherwise re-run this effect and double-fetch / fight selection.
-  }, [urlSearchBootstrapKey, runSearch, searchParams]);
+    // Keyed ONLY on `urlSearchBootstrapKey` (q/scope/level). `searchParams` is read via
+    // `searchParamsRef` so patching `entry` into the URL on selection does NOT re-run this
+    // effect — which previously caused a double fetch and reset the active selection.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlSearchBootstrapKey, runSearch]);
 
   const visibleResults = useMemo(
     () => (filter === "all" ? results : results.filter((r) => r.kind === filter)),

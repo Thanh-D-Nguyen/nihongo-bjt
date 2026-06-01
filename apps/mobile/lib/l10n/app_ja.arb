@@ -1,0 +1,47 @@
+{
+  "@@locale": "ja",
+
+  "commonRetry": "再試行",
+
+  "homeSignOutTooltip": "ログアウト",
+  "homeWelcome": "ようこそ",
+  "homeReviewFlashcards": "フラッシュカード復習",
+  "homeContinueTitle": "学習を続ける",
+  "homeContinueBody": "デッキに戻って学習のリズムを保ちましょう。",
+  "homeReviewReadyTitle": "復習の準備",
+  "homeReviewReadyCount": "{count}枚",
+  "homeDeckSummaryTitle": "デッキ",
+  "homeDeckSummaryCount": "{count}個",
+  "homeSyncStatusTitle": "同期",
+  "homeSyncPending": "{count}件の復習が同期待ち",
+  "homeSyncAllSynced": "すべて同期済み",
+  "homeDashboardEmptyTitle": "学習コンテンツがありません",
+  "homeDashboardEmptyBody": "デッキが利用可能になるとここに表示されます。",
+  "homeDashboardError": "ダッシュボードを読み込めませんでした。",
+
+  "loginSignInTitle": "ログインして続ける",
+  "loginSignInSubtitle": "安全なログインページに移動してアカウントを認証します。",
+  "loginSignInButton": "ログイン",
+  "loginGenericError": "エラーが発生しました。もう一度お試しください。",
+
+  "flashcardTitle": "フラッシュカード",
+  "deckCardCount": "{count}枚",
+  "deckListEmpty": "デッキがまだありません。",
+  "deckListError": "デッキ一覧を読み込めませんでした。",
+
+  "reviewTitle": "復習",
+  "reviewReveal": "答えを表示",
+  "reviewComplete": "完了！",
+  "reviewCompleteSummary": "{count}枚を復習しました。",
+  "reviewRestart": "もう一度",
+  "reviewBackToList": "一覧へ戻る",
+  "reviewEmpty": "このデッキにはカードがありません。",
+  "reviewError": "デッキを読み込めませんでした。",
+
+  "ratingAgain": "もう一度",
+  "ratingHard": "難しい",
+  "ratingGood": "普通",
+  "ratingEasy": "簡単",
+  "ratingIntervalToday": "今日",
+  "ratingIntervalDays": "{days}日"
+}

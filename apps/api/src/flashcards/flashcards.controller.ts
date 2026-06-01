@@ -27,13 +27,28 @@ import {
   Query,
   UseGuards
 } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from "@nestjs/swagger";
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiTags
+} from "@nestjs/swagger";
 
 import { CurrentUser } from "../keycloak/current-user.decorator.js";
 import { KeycloakAuthGuard } from "../keycloak/keycloak-auth.guard.js";
 import { resolveLearnerUserId } from "../keycloak/learner-identity.util.js";
 import type { KeycloakAuthenticatedUser } from "../keycloak/keycloak.types.js";
 import { DocumentedHttpErrors } from "../openapi/common-decorators.js";
+import {
+  FlashcardDeckOpenApiDto,
+  FlashcardReviewItemOpenApiDto,
+  SubmitFlashcardReviewBatchRequestOpenApiDto,
+  SubmitFlashcardReviewBatchResponseOpenApiDto,
+  SubmitFlashcardReviewRequestOpenApiDto,
+  SubmitFlashcardReviewResponseOpenApiDto
+} from "../openapi/dto/flashcards-openapi.dto.js";
 import { FlashcardGenService } from "./flashcard-gen.service.js";
 import { FlashcardsRepository } from "./flashcards.repository.js";
 import { FlashcardsService } from "./flashcards.service.js";
@@ -52,6 +67,7 @@ export class FlashcardsController {
 
   @Get("decks")
   @ApiOperation({ summary: "List user decks (paginated by `flashcardsUserScopedQuerySchema`)." })
+  @ApiOkResponse({ type: [FlashcardDeckOpenApiDto] })
   decks(
     @CurrentUser() user: KeycloakAuthenticatedUser | undefined,
     @Query() query: Record<string, string | undefined>
@@ -193,6 +209,7 @@ export class FlashcardsController {
 
   @Get("reviews/due")
   @ApiOperation({ summary: "Due user flashcards for SRS (ordered by `dueAt`)." })
+  @ApiOkResponse({ type: [FlashcardReviewItemOpenApiDto] })
   dueReviews(
     @CurrentUser() user: KeycloakAuthenticatedUser | undefined,
     @Query() query: Record<string, string | undefined>
@@ -265,6 +282,8 @@ export class FlashcardsController {
     summary: "Submit many SRS reviews; **per-item transaction**; returns per-`clientMutationId` result (403 if quota).",
     description: "Ratings: again | hard | good | easy."
   })
+  @ApiBody({ type: SubmitFlashcardReviewBatchRequestOpenApiDto })
+  @ApiOkResponse({ type: SubmitFlashcardReviewBatchResponseOpenApiDto })
   submitReviewBatch(
     @CurrentUser() user: KeycloakAuthenticatedUser | undefined,
     @Body() body: unknown
@@ -290,6 +309,8 @@ export class FlashcardsController {
   @Post("reviews/:userFlashcardId")
   @ApiOperation({ summary: "Single SRS review (quota + transaction with `userFlashcard` update + `reviewEvent`)." })
   @ApiParam({ name: "userFlashcardId" })
+  @ApiBody({ type: SubmitFlashcardReviewRequestOpenApiDto })
+  @ApiOkResponse({ type: SubmitFlashcardReviewResponseOpenApiDto })
   submitReview(
     @CurrentUser() user: KeycloakAuthenticatedUser | undefined,
     @Param("userFlashcardId") userFlashcardId: string,

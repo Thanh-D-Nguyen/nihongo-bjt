@@ -1,0 +1,12 @@
+# gen-l10n configuration for the NihonGo BJT mobile app.
+#
+# Vietnamese is the template/default locale (the learner audience). Japanese is
+# a secondary locale. Generated sources live in lib/l10n/gen and are committed
+# like other generated code; they are excluded from analysis in
+# analysis_options.yaml. Regenerate with: flutter gen-l10n
+arb-dir: lib/l10n
+template-arb-file: app_vi.arb
+output-dir: lib/l10n/gen
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+nullable-getter: false

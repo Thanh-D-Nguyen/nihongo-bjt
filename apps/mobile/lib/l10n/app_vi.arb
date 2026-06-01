@@ -1,0 +1,191 @@
+{
+  "@@locale": "vi",
+
+  "commonRetry": "Thử lại",
+  "@commonRetry": {
+    "description": "Generic retry button shared by error states."
+  },
+
+  "homeSignOutTooltip": "Đăng xuất",
+  "@homeSignOutTooltip": {
+    "description": "Tooltip for the sign-out icon button on the home app bar."
+  },
+  "homeWelcome": "ようこそ",
+  "@homeWelcome": {
+    "description": "Decorative Japanese welcome greeting on the home hero card."
+  },
+  "homeReviewFlashcards": "Ôn Flashcard",
+  "@homeReviewFlashcards": {
+    "description": "Primary CTA on home that opens the flashcard deck list."
+  },
+  "homeContinueTitle": "Tiếp tục học",
+  "@homeContinueTitle": {
+    "description": "Title of the continue-learning card on the home dashboard."
+  },
+  "homeContinueBody": "Quay lại bộ thẻ và giữ nhịp học mỗi ngày.",
+  "@homeContinueBody": {
+    "description": "Body copy of the continue-learning card on the home dashboard."
+  },
+  "homeReviewReadyTitle": "Sẵn sàng ôn tập",
+  "@homeReviewReadyTitle": {
+    "description": "Title of the review-ready metric tile on the home dashboard."
+  },
+  "homeReviewReadyCount": "{count} thẻ",
+  "@homeReviewReadyCount": {
+    "description": "Total flashcards available to review across all decks.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeDeckSummaryTitle": "Bộ thẻ",
+  "@homeDeckSummaryTitle": {
+    "description": "Title of the deck-count metric tile on the home dashboard."
+  },
+  "homeDeckSummaryCount": "{count} bộ",
+  "@homeDeckSummaryCount": {
+    "description": "Number of flashcard decks the learner has.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeSyncStatusTitle": "Đồng bộ",
+  "@homeSyncStatusTitle": {
+    "description": "Title of the offline review sync status card on home."
+  },
+  "homeSyncPending": "{count} review chờ đồng bộ",
+  "@homeSyncPending": {
+    "description": "Number of offline review grades waiting to sync.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeSyncAllSynced": "Tất cả đã đồng bộ",
+  "@homeSyncAllSynced": {
+    "description": "Sync status when the offline review queue is empty."
+  },
+  "homeDashboardEmptyTitle": "Chưa có nội dung học",
+  "@homeDashboardEmptyTitle": {
+    "description": "Empty state title when no decks are available on home."
+  },
+  "homeDashboardEmptyBody": "Bộ thẻ sẽ xuất hiện ở đây khi có sẵn.",
+  "@homeDashboardEmptyBody": {
+    "description": "Empty state body when no decks are available on home."
+  },
+  "homeDashboardError": "Không tải được bảng học tập.",
+  "@homeDashboardError": {
+    "description": "Error state when the home dashboard fails to load."
+  },
+
+  "loginSignInTitle": "Đăng nhập để tiếp tục",
+  "@loginSignInTitle": {
+    "description": "Title on the login card."
+  },
+  "loginSignInSubtitle": "Bạn sẽ được chuyển tới trang đăng nhập an toàn để xác thực tài khoản.",
+  "@loginSignInSubtitle": {
+    "description": "Subtitle explaining the redirect-based sign-in flow."
+  },
+  "loginSignInButton": "Đăng nhập",
+  "@loginSignInButton": {
+    "description": "Sign-in button label on the login card."
+  },
+  "loginGenericError": "Đã xảy ra lỗi. Vui lòng thử lại.",
+  "@loginGenericError": {
+    "description": "Fallback error shown when sign-in fails for an unknown reason."
+  },
+
+  "flashcardTitle": "Flashcard",
+  "@flashcardTitle": {
+    "description": "App bar title of the flashcard deck list."
+  },
+  "deckCardCount": "{count} thẻ",
+  "@deckCardCount": {
+    "description": "Number of cards in a deck.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deckListEmpty": "Chưa có bộ thẻ nào.",
+  "@deckListEmpty": {
+    "description": "Empty state when no decks exist."
+  },
+  "deckListError": "Không tải được danh sách bộ thẻ.",
+  "@deckListError": {
+    "description": "Error state when the deck list fails to load."
+  },
+
+  "reviewTitle": "Ôn tập",
+  "@reviewTitle": {
+    "description": "App bar title of the flashcard review screen."
+  },
+  "reviewReveal": "Hiện đáp án",
+  "@reviewReveal": {
+    "description": "Button that reveals the answer side of a card."
+  },
+  "reviewComplete": "Hoàn thành!",
+  "@reviewComplete": {
+    "description": "Heading shown when a review session is finished."
+  },
+  "reviewCompleteSummary": "Bạn đã ôn {count} thẻ.",
+  "@reviewCompleteSummary": {
+    "description": "Summary of how many cards were reviewed.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reviewRestart": "Ôn lại",
+  "@reviewRestart": {
+    "description": "Button to restart the review session."
+  },
+  "reviewBackToList": "Về danh sách",
+  "@reviewBackToList": {
+    "description": "Button to return to the deck list from the completion screen."
+  },
+  "reviewEmpty": "Bộ thẻ này chưa có thẻ nào.",
+  "@reviewEmpty": {
+    "description": "Empty state when the selected deck has no cards."
+  },
+  "reviewError": "Không tải được bộ thẻ.",
+  "@reviewError": {
+    "description": "Error state when the deck fails to load for review."
+  },
+
+  "ratingAgain": "Lại",
+  "@ratingAgain": {
+    "description": "SRS grade button: schedule the card again immediately."
+  },
+  "ratingHard": "Khó",
+  "@ratingHard": {
+    "description": "SRS grade button: the card was hard."
+  },
+  "ratingGood": "Tốt",
+  "@ratingGood": {
+    "description": "SRS grade button: the card was recalled well."
+  },
+  "ratingEasy": "Dễ",
+  "@ratingEasy": {
+    "description": "SRS grade button: the card was easy."
+  },
+  "ratingIntervalToday": "Hôm nay",
+  "@ratingIntervalToday": {
+    "description": "Interval label when the next review is the same day."
+  },
+  "ratingIntervalDays": "{days} ngày",
+  "@ratingIntervalDays": {
+    "description": "Interval label in days until the next review.",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  }
+}

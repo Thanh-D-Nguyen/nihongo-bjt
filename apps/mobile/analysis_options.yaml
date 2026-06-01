@@ -1,0 +1,24 @@
+# Strict static analysis for the NihonGo BJT mobile app.
+#
+# Base ruleset: very_good_analysis (a superset of flutter_lints with stricter
+# style, error and pub rules). Treat lints seriously — analyze must stay clean.
+include: package:very_good_analysis/analysis_options.yaml
+
+analyzer:
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+  errors:
+    # Promote a few high-value lints to errors so they cannot slip through.
+    avoid_print: error
+    prefer_const_constructors: error
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "lib/l10n/gen/**"
+
+linter:
+  rules:
+    # API doc comments are not required on every public member at this stage.
+    public_member_api_docs: false

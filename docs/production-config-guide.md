@@ -338,6 +338,28 @@ services:
     # Chỉ internal network
 ```
 
+**⚠️ Presigned upload/download URLs (bắt buộc cho self-hosted MinIO):**
+
+App ký presigned URL để trình duyệt PUT/GET trực tiếp object (vd: upload ảnh
+profile). `MINIO_ENDPOINT` là host **nội bộ** → trình duyệt không truy cập được
+→ upload thất bại trên production. Phải khai báo host **public** (reverse proxy
+/ CDN) cho các URL hướng tới trình duyệt:
+
+```env
+# Host nội bộ (server ↔ MinIO)
+MINIO_ENDPOINT=minio            # tên service trong internal network
+MINIO_PORT=9000
+MINIO_USE_SSL=false
+
+# Host public (browser ↔ MinIO qua reverse proxy có TLS)
+MINIO_PUBLIC_ENDPOINT=media.nihongo-bjt.com
+MINIO_PUBLIC_PORT=443
+MINIO_PUBLIC_USE_SSL=true
+```
+
+Nếu không set `MINIO_PUBLIC_*`, app fallback về `MINIO_*` nội bộ (chỉ phù hợp
+local/dev). Với AWS S3 (Tùy chọn A) endpoint đã public nên không cần `MINIO_PUBLIC_*`.
+
 ---
 
 ### 4.5 Keycloak

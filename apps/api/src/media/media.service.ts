@@ -25,6 +25,13 @@ export class MediaService {
   private readonly prisma = createPrismaClient();
   private readonly env = parseServerEnv(process.env);
   private readonly minio: Client;
+  /**
+   * Separate client signing presigned URLs against the **browser-facing** host.
+   * The internal `minio` client is unreachable from a production browser, so any
+   * URL handed to the client must be signed for the public endpoint. Falls back
+   * to the internal endpoint when no public host is configured (dev/local).
+   */
+  private readonly minioPublic: Client;
 
   constructor() {
     this.minio = new Client({
@@ -33,6 +40,13 @@ export class MediaService {
       port: this.env.MINIO_PORT,
       secretKey: this.env.MINIO_SECRET_KEY,
       useSSL: this.env.MINIO_USE_SSL
+    });
+    this.minioPublic = new Client({
+      accessKey: this.env.MINIO_ACCESS_KEY,
+      endPoint: this.env.MINIO_PUBLIC_ENDPOINT ?? this.env.MINIO_ENDPOINT,
+      port: this.env.MINIO_PUBLIC_PORT ?? this.env.MINIO_PORT,
+      secretKey: this.env.MINIO_SECRET_KEY,
+      useSSL: this.env.MINIO_PUBLIC_USE_SSL ?? this.env.MINIO_USE_SSL
     });
   }
 
@@ -57,7 +71,7 @@ export class MediaService {
     });
 
     const bucket = this.env.MINIO_BUCKET;
-    const uploadUrl = await this.minio.presignedPutObject(bucket, objectKey, 60 * 60);
+    const uploadUrl = await this.minioPublic.presignedPutObject(bucket, objectKey, 60 * 60);
     return { assetId: asset.id, objectKey, uploadUrl };
   }
 
@@ -150,7 +164,7 @@ export class MediaService {
 
   presignedGetForObjectKey(objectKey: string, expirySec = 3600) {
     const bucket = this.env.MINIO_BUCKET;
-    return this.minio.presignedGetObject(bucket, objectKey, expirySec);
+    return this.minioPublic.presignedGetObject(bucket, objectKey, expirySec);
   }
 
   /**

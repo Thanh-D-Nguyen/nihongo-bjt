@@ -42,17 +42,25 @@ export function BrandLogo({ className, size = 28 }: { className?: string; size?:
 
 export function BrandFull({
   className,
+  labelClassName,
   markSize = 32,
   tone = "default"
 }: {
   className?: string;
+  labelClassName?: string;
   markSize?: number;
   tone?: "default" | "light";
 }) {
   return (
     <span className={`inline-flex items-center gap-2 ${className ?? ""}`}>
       <BrandLogo size={markSize} />
-      <span className={tone === "light" ? "text-base font-black tracking-tight text-white" : "text-base font-black tracking-tight text-ink"}>
+      <span
+        className={`${
+          tone === "light"
+            ? "text-base font-black tracking-tight text-white"
+            : "text-base font-black tracking-tight text-ink"
+        }${labelClassName ? ` ${labelClassName}` : ""}`}
+      >
         NihonGo
         <span className={tone === "light" ? "ml-1 text-sm font-black text-teal-100" : "ml-1 text-sm font-black text-teal-700"}>
           BJT

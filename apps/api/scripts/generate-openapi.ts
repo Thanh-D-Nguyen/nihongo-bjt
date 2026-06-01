@@ -20,6 +20,14 @@ import {
   LearnerProfileEnvelopeOpenApiDto,
   LearnerProfileOpenApiDto
 } from "../src/openapi/dto/backend-api-openapi.dto.js";
+import {
+  FlashcardDeckOpenApiDto,
+  FlashcardReviewItemOpenApiDto,
+  SubmitFlashcardReviewBatchRequestOpenApiDto,
+  SubmitFlashcardReviewBatchResponseOpenApiDto,
+  SubmitFlashcardReviewRequestOpenApiDto,
+  SubmitFlashcardReviewResponseOpenApiDto
+} from "../src/openapi/dto/flashcards-openapi.dto.js";
 
 loadEnv({ path: resolve(dirname(fileURLToPath(import.meta.url)), "../../../.env") });
 
@@ -48,7 +56,13 @@ async function main() {
       BookmarkToggleOpenApiDto,
       FeatureFlagOpenApiDto,
       AdminUserInviteRequestOpenApiDto,
-      AdminUserInviteResponseOpenApiDto
+      AdminUserInviteResponseOpenApiDto,
+      FlashcardDeckOpenApiDto,
+      FlashcardReviewItemOpenApiDto,
+      SubmitFlashcardReviewRequestOpenApiDto,
+      SubmitFlashcardReviewResponseOpenApiDto,
+      SubmitFlashcardReviewBatchRequestOpenApiDto,
+      SubmitFlashcardReviewBatchResponseOpenApiDto
     ],
     operationIdFactory: (_ctrlKey, methodKey) => methodKey
   });

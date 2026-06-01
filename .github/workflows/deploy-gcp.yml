@@ -1,6 +1,12 @@
 name: Deploy GCP production
 
 on:
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
+    branches:
+      - main
   workflow_dispatch:
 
 concurrency:
@@ -10,6 +16,8 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # Only deploy when CI succeeded (workflow_run) or when triggered manually.
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     environment:
       name: production
       url: https://app.34-87-55-1.sslip.io/vi
@@ -39,6 +47,17 @@ jobs:
             --exclude='deploy/gcp/runtime/' \
             -e 'ssh -i ~/.ssh/gcp-deploy -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes' \
             ./ "$GCP_VM_USER@$GCP_VM_HOST:/home/deploy/nihongo-bjt/"
+      - name: Write production .env on VM
+        env:
+          GCP_VM_HOST: ${{ secrets.GCP_VM_HOST }}
+          GCP_VM_USER: ${{ secrets.GCP_VM_USER }}
+          PROD_ENV_FILE: ${{ secrets.PROD_ENV_FILE }}
+        run: |
+          printf '%s' "$PROD_ENV_FILE" | ssh -i ~/.ssh/gcp-deploy \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            "$GCP_VM_USER@$GCP_VM_HOST" \
+            'umask 077 && cat > /home/deploy/nihongo-bjt/.env'
       - name: Build and restart production
         env:
           GCP_VM_HOST: ${{ secrets.GCP_VM_HOST }}

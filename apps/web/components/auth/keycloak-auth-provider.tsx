@@ -119,6 +119,43 @@ export function KeycloakAuthProvider({
     void reload();
   }, [reload]);
 
+  /**
+   * Proactive session keep-alive. The BFF rotates the short-lived access token
+   * (and re-sets fresh cookies) using the long-lived refresh cookie whenever the
+   * session endpoint is hit. Without this, a tab left open silently loses its
+   * access token once it expires, forcing a re-login. We refresh on an interval
+   * and whenever the tab becomes visible again — without toggling `loading`, so
+   * there is no UI flicker.
+   */
+  const refreshSession = useCallback(async () => {
+    if (!keycloakUiEnabled()) return;
+    try {
+      const result = await getLearnerKeycloakSession({ force: true });
+      if (result.ok) {
+        setAccessToken(result.accessToken);
+        setSessionFailedWithCookie(false);
+      }
+    } catch {
+      /* keep current state; next tick or user action retries */
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!keycloakUiEnabled()) return;
+    const REFRESH_INTERVAL_MS = 10 * 60 * 1000; // 10 min — well under access token lifespan
+    const id = window.setInterval(() => {
+      if (document.visibilityState === "visible") void refreshSession();
+    }, REFRESH_INTERVAL_MS);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void refreshSession();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [refreshSession]);
+
   const logout = useCallback(() => {
     window.location.href = `/auth/logout?locale=${encodeURIComponent(locale)}`;
   }, [locale]);

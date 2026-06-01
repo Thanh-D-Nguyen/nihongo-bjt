@@ -41,6 +41,12 @@ export const serverEnvSchema = z.object({
         .string()
         .default("false")
         .transform((value) => value === "true"),
+    MINIO_PUBLIC_ENDPOINT: z.string().min(1).optional(),
+    MINIO_PUBLIC_PORT: z.coerce.number().int().min(1).max(65535).optional(),
+    MINIO_PUBLIC_USE_SSL: z
+        .string()
+        .optional()
+        .transform((value) => (value == null ? undefined : value === "true")),
     OAUTH_STATE_SECRET: z.string().min(32).optional(),
     GOOGLE_OAUTH_CLIENT_ID: z.string().optional(),
     GOOGLE_OAUTH_CLIENT_SECRET: z.string().optional(),

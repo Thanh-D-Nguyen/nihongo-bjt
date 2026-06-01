@@ -90,6 +90,7 @@ export type LearnerNavLabels = {
   review: string;
   saved: string;
   search: string;
+  searchClose: string;
   searchPlaceholder: string;
   sessionChecking: string;
   settings: string;
@@ -146,10 +147,13 @@ export function LearnerAppFrame({
   const [mounted, setMounted] = useState(false);
   const [globalSearchQuery, setGlobalSearchQuery] = useState("");
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [exploreMenuOpen, setExploreMenuOpen] = useState(false);
   const searchKeyHandlerRef = useRef<DropdownKeyHandler | null>(null);
+  const mobileSearchKeyHandlerRef = useRef<DropdownKeyHandler | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const mobileSearchInputRef = useRef<HTMLInputElement | null>(null);
   const userMenuRef = useRef<HTMLDivElement | null>(null);
   const exploreMenuRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
@@ -169,7 +173,27 @@ export function LearnerAppFrame({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, []);
 
-  /* ── Due flashcard count for nav badge ── */
+  /* ── Mobile search overlay: autofocus on open, Escape to close ── */
+  useEffect(() => {
+    if (!mobileSearchOpen) return;
+    const id = window.setTimeout(() => mobileSearchInputRef.current?.focus(), 60);
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setMobileSearchOpen(false);
+        setGlobalSearchOpen(false);
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.clearTimeout(id);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [mobileSearchOpen]);
+
+  /* ── Close mobile search overlay on route change ── */
+  useEffect(() => {
+    setMobileSearchOpen(false);
+  }, [pathname]);
   const [dueCount, setDueCount] = useState(0);
   useEffect(() => {
     if (!accessToken) return;
@@ -291,7 +315,7 @@ export function LearnerAppFrame({
   return (
     <AppShell>
       <header className={cn(
-        "sticky top-0 z-40 -mx-4 mb-5 bg-paper/95 px-4 backdrop-blur-2xl transition-[box-shadow,border-color,min-height] duration-200 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8",
+        "sticky top-0 z-40 -mx-4 mb-5 bg-paper/95 px-4 backdrop-blur-2xl transition-[box-shadow,border-color,min-height] duration-200 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 relative",
         scrolled
           ? "border-b border-ink/10 shadow-[0_2px_16px_rgba(23,33,31,0.06)]"
           : "border-b border-transparent"
@@ -306,10 +330,13 @@ export function LearnerAppFrame({
             className="group inline-flex min-w-0 shrink-0 items-center rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
             href={base}
           >
-            <BrandFull className={cn(
-              "transition-all duration-200 group-hover:-translate-y-0.5",
-              scrolled && "scale-[0.88] origin-left"
-            )} />
+            <BrandFull
+              className={cn(
+                "transition-all duration-200 group-hover:-translate-y-0.5",
+                scrolled && "scale-[0.88] origin-left"
+              )}
+              labelClassName="hidden sm:inline"
+            />
           </Link>
 
           {/* Primary nav — only 4 core items on desktop */}
@@ -467,14 +494,19 @@ export function LearnerAppFrame({
 
           {/* Right actions */}
           <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-            {/* Mobile search icon */}
-            <Link
+            {/* Mobile search toggle — expands into an inline search field */}
+            <button
+              aria-expanded={mobileSearchOpen}
               aria-label={nav.search}
-              className="inline-flex size-10 items-center justify-center rounded-xl border border-ink/8 bg-surface text-muted shadow-sm transition hover:text-ink focus-visible:ring-2 focus-visible:ring-accent/40 md:hidden"
-              href={`${base}/search`}
+              className="inline-flex size-10 items-center justify-center rounded-xl border border-ink/8 bg-surface text-muted shadow-sm transition-all duration-150 hover:text-ink active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 md:hidden"
+              type="button"
+              onClick={() => {
+                setMobileSearchOpen(true);
+                setGlobalSearchOpen(true);
+              }}
             >
               <IconSearch aria-hidden size={18} />
-            </Link>
+            </button>
 
             {mounted && authLoading && kcAccessCookiePresent ? (
               <Badge className="hidden sm:inline-flex" role="status">
@@ -579,6 +611,81 @@ export function LearnerAppFrame({
             ) : null}
           </div>
         </div>
+
+        {/* Mobile expanded search overlay — covers topbar row */}
+        {mobileSearchOpen ? (
+          <div
+            className={cn(
+              "absolute inset-x-0 top-0 z-50 flex items-center gap-2 bg-paper/98 px-4 backdrop-blur-2xl md:hidden",
+              scrolled ? "min-h-12" : "min-h-16"
+            )}
+          >
+            <button
+              aria-label={nav.searchClose}
+              className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl text-muted transition-all duration-150 hover:bg-ink/5 hover:text-ink active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+              type="button"
+              onClick={() => {
+                setMobileSearchOpen(false);
+                setGlobalSearchOpen(false);
+              }}
+            >
+              <svg aria-hidden className="size-5" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+              </svg>
+            </button>
+            <form
+              className="relative flex-1"
+              role="search"
+              onSubmit={(event) => {
+                submitGlobalSearch(event);
+                setMobileSearchOpen(false);
+              }}
+            >
+              <label className="sr-only" htmlFor="learner-mobile-search">
+                {nav.search}
+              </label>
+              <div className="flex h-11 min-w-0 items-center rounded-2xl border border-ink/8 bg-surface text-sm text-muted shadow-sm transition focus-within:border-accent/35 focus-within:ring-2 focus-within:ring-accent/15">
+                <span className="inline-flex h-full w-11 shrink-0 items-center justify-center text-muted">
+                  <IconSearch aria-hidden size={18} />
+                </span>
+                <input
+                  ref={mobileSearchInputRef}
+                  aria-autocomplete="list"
+                  aria-expanded={globalSearchOpen}
+                  autoComplete="off"
+                  className="learner-topbar-search min-w-0 flex-1 bg-transparent pr-3 text-sm text-ink outline-none placeholder:text-muted/70"
+                  id="learner-mobile-search"
+                  placeholder={nav.searchPlaceholder}
+                  type="search"
+                  value={globalSearchQuery}
+                  onChange={(event) => {
+                    setGlobalSearchQuery(event.target.value);
+                    setGlobalSearchOpen(true);
+                  }}
+                  onFocus={() => setGlobalSearchOpen(true)}
+                  onKeyDown={(event) => {
+                    if (mobileSearchKeyHandlerRef.current?.(event)) return;
+                    if (event.key === "Escape") {
+                      setMobileSearchOpen(false);
+                      setGlobalSearchOpen(false);
+                    }
+                  }}
+                />
+              </div>
+              <SearchDropdown
+                labels={searchLabels}
+                locale={locale}
+                open={globalSearchOpen}
+                query={globalSearchQuery}
+                onClose={() => setGlobalSearchOpen(false)}
+                onKeyHandlerReady={(handler) => {
+                  mobileSearchKeyHandlerRef.current = handler;
+                }}
+                onSelect={setGlobalSearchQuery}
+              />
+            </form>
+          </div>
+        ) : null}
         <AnnouncementStrip />
       </header>
       <div className="flex-1">{children}</div>
