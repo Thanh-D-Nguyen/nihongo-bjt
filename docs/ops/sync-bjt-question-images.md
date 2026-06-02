@@ -1,23 +1,24 @@
-# Đồng bộ ảnh câu hỏi BJT từ Local lên Production
+# Đồng bộ media câu hỏi BJT từ Local lên Production
 
-Hướng dẫn sync ảnh câu hỏi BJT (do script gen ảnh OpenAI tạo trên local) lên môi
-trường production.
+Hướng dẫn sync ảnh và audio câu hỏi BJT từ local lên production. Schema hiện có
+`imageUrl` và `audioUrl`; chưa có cột `videoUrl`.
 
 ## 1. Vì sao prod bị mất ảnh?
 
-Mỗi ảnh câu hỏi BJT tồn tại ở **2 nơi tách biệt**, phải sync **cả hai**:
+Mỗi file media câu hỏi BJT tồn tại ở **2 nơi tách biệt**, phải sync **cả hai**:
 
-| Thành phần | Lưu ở đâu | Vấn đề trên prod |
-|---|---|---|
-| **File ảnh** | object trong bucket MinIO (`MINIO_BUCKET`) | Prod MinIO **chưa có** object |
-| **Con trỏ `imageUrl`** | cột `imageUrl` trên bảng `BjtQuestion` (PostgreSQL) | Prod DB chưa có, hoặc có nhưng host là `localhost:19000` → browser người dùng không tải được |
+| Thành phần                        | Lưu ở đâu                                  | Vấn đề trên prod                                                                 |
+| --------------------------------- | ------------------------------------------ | -------------------------------------------------------------------------------- |
+| **File ảnh/audio**                | object trong bucket MinIO (`MINIO_BUCKET`) | Prod MinIO **chưa có** object                                                    |
+| **Con trỏ `imageUrl`/`audioUrl`** | cột trên bảng `BjtQuestion` (PostgreSQL)   | Prod DB chưa có, hoặc có nhưng host là local → browser người dùng không tải được |
 
 Script gen ảnh lưu **URL đầy đủ có host cứng** (vd `http://localhost:19000/<bucket>/<key>`).
 Vì vậy dù copy DB sang prod, ảnh vẫn hỏng vì host `localhost` vô nghĩa với người dùng.
 
 → Sync phải làm **3 việc**:
+
 1. Copy **file object** từ MinIO local → MinIO prod.
-2. Ghi `imageUrl` + `imageAlt` vào **prod DB**.
+2. Ghi `imageUrl` + `imageAlt` + `audioUrl` vào **prod DB**.
 3. **Đổi host** `localhost:19000` → domain public của prod.
 
 ---
@@ -26,9 +27,10 @@ Vì vậy dù copy DB sang prod, ảnh vẫn hỏng vì host `localhost` vô ngh
 
 Script: [scripts/sync-bjt-images-to-prod.ts](../../scripts/sync-bjt-images-to-prod.ts)
 
-Script đọc các câu hỏi có ảnh từ **local DB**, tải object từ **local MinIO**, đẩy
-lên **prod MinIO**, rồi ghi `imageUrl` (đã đổi host) + `imageAlt` vào **prod DB**.
-Idempotent — chạy lại nhiều lần an toàn.
+Script đọc các câu hỏi có ảnh/audio từ **local DB**, tải object từ **local
+MinIO**, đẩy lên **prod MinIO**, đặt bucket policy public-read chỉ cho
+`GetObject`, rồi ghi URL đã đổi host vào **prod DB**. Idempotent — chạy lại
+nhiều lần an toàn.
 
 ### Bước 1 — Khai báo biến môi trường
 
@@ -81,8 +83,9 @@ DOTENV_CONFIG_PATH=.env.sync npx tsx scripts/sync-bjt-images-to-prod.ts
 ```
 
 Tùy chọn:
+
 - `--dry-run` : chỉ in, không ghi.
-- `--force`   : upload lại object kể cả khi prod đã có.
+- `--force` : upload lại object kể cả khi prod đã có.
 
 ### Bước 4 — Kiểm tra
 
@@ -91,8 +94,7 @@ Tùy chọn:
 SELECT count(*) FROM "BjtQuestion" WHERE "imageUrl" LIKE '%localhost%';
 ```
 
-Mở thử 1 `imageUrl` prod trên browser → phải tải được ảnh. Nếu 403, bucket prod
-cần policy public-read (hoặc app phải trả presigned URL).
+Mở thử 1 `imageUrl` hoặc `audioUrl` prod trên browser → phải tải được media.
 
 ---
 

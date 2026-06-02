@@ -13,3 +13,7 @@ api.__BASE_DOMAIN__ {
 auth.__BASE_DOMAIN__ {
   reverse_proxy 127.0.0.1:8080
 }
+
+media.__BASE_DOMAIN__ {
+  reverse_proxy 127.0.0.1:9000
+}

@@ -1,22 +1,22 @@
 /**
  * ─────────────────────────────────────────────────────────────────────────────
- *  Sync BJT question images: LOCAL → PRODUCTION
+ *  Sync BJT question media: LOCAL → PRODUCTION
  * ─────────────────────────────────────────────────────────────────────────────
  *
  *  Why this script exists
  *  ──────────────────────
- *  BJT question images live in TWO places that must both be synced:
- *    1. The image FILE          → object inside a MinIO bucket
- *    2. The pointer `imageUrl`  → a column on the `BjtQuestion` table (PostgreSQL)
+ *  BJT question media lives in TWO places that must both be synced:
+ *    1. The image/audio FILE           → object inside a MinIO bucket
+ *    2. The `imageUrl`/`audioUrl` link → columns on `BjtQuestion` (PostgreSQL)
  *
  *  The image-generation script stores a FULL URL with a hardcoded host
  *  (e.g. http://localhost:19000/<bucket>/<key>). That URL is meaningless on
  *  production, so the images "disappear" even after a DB copy.
  *
  *  This script fixes all three problems in one pass:
- *    • copies each image OBJECT from local MinIO → prod MinIO (same object key)
+ *    • copies each media OBJECT from local MinIO → prod MinIO (same object key)
  *    • rewrites the host  localhost:19000  →  the prod public base URL
- *    • writes imageUrl + imageAlt into the PROD database
+ *    • writes imageUrl + imageAlt + audioUrl into the PROD database
  *
  *  It is IDEMPOTENT and safe to re-run. Existing prod objects are skipped
  *  unless --force is passed.
@@ -50,7 +50,7 @@
  *
  *   MINIO_BUCKET            nihongo-bjt-media          (must match both sides)
  *
- *   # The host browsers will actually use to load images. Stored into imageUrl.
+ *   # The host browsers will actually use to load media. Stored into imageUrl/audioUrl.
  *   # Example: https://media.your-prod.com   (NO trailing slash, NO bucket)
  *   PROD_PUBLIC_BASE_URL    https://media.your-prod.com
  *
@@ -109,12 +109,12 @@ const prodMinio = new Minio.Client({
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 /**
- * Extract the MinIO object key from a stored imageUrl.
+ * Extract the MinIO object key from a stored media URL.
  * Handles full URLs (http://host:port/<bucket>/<key>) and bare object keys.
  * Returns null when the URL is an external/unknown source we should not touch.
  */
-function objectKeyFromImageUrl(imageUrl: string): string | null {
-  const value = imageUrl.trim();
+function objectKeyFromMediaUrl(mediaUrl: string): string | null {
+  const value = mediaUrl.trim();
   if (value === "") return null;
 
   // Bare object key (no scheme) — already storage-relative.
@@ -156,6 +156,20 @@ async function objectExists(client: Minio.Client, key: string): Promise<boolean>
   }
 }
 
+function publicReadPolicy() {
+  return JSON.stringify({
+    Version: "2012-10-17",
+    Statement: [
+      {
+        Effect: "Allow",
+        Principal: { AWS: ["*"] },
+        Action: ["s3:GetObject"],
+        Resource: [`arn:aws:s3:::${MINIO_BUCKET}/*`]
+      }
+    ]
+  });
+}
+
 function contentTypeFor(key: string): string {
   const ext = key.split(".").pop()?.toLowerCase();
   switch (ext) {
@@ -170,6 +184,18 @@ function contentTypeFor(key: string): string {
       return "image/gif";
     case "svg":
       return "image/svg+xml";
+    case "mp3":
+      return "audio/mpeg";
+    case "wav":
+      return "audio/wav";
+    case "m4a":
+      return "audio/mp4";
+    case "ogg":
+      return "audio/ogg";
+    case "mp4":
+      return "video/mp4";
+    case "webm":
+      return "video/webm";
     default:
       return "application/octet-stream";
   }
@@ -178,7 +204,8 @@ function contentTypeFor(key: string): string {
 // ── Main ─────────────────────────────────────────────────────────────────────
 
 interface Stats {
-  total: number;
+  totalQuestions: number;
+  totalMedia: number;
   copied: number;
   skippedObject: number;
   dbUpdated: number;
@@ -188,7 +215,7 @@ interface Stats {
 
 async function main() {
   console.log("╔════════════════════════════════════════════════════════════╗");
-  console.log("║  Sync BJT question images: LOCAL → PRODUCTION              ║");
+  console.log("║  Sync BJT question media: LOCAL → PRODUCTION               ║");
   console.log("╚════════════════════════════════════════════════════════════╝");
   console.log(`  Bucket:          ${MINIO_BUCKET}`);
   console.log(`  Prod public URL: ${PROD_PUBLIC_BASE_URL}`);
@@ -203,15 +230,19 @@ async function main() {
         `Prod bucket "${MINIO_BUCKET}" does not exist. Create it first (mc mb / console).`
       );
     }
+    await prodMinio.setBucketPolicy(MINIO_BUCKET, publicReadPolicy());
   }
 
   const rows = await localDb.bjtQuestion.findMany({
-    where: { imageUrl: { not: null } },
-    select: { id: true, imageUrl: true, imageAlt: true }
+    where: {
+      OR: [{ imageUrl: { not: null } }, { audioUrl: { not: null } }]
+    },
+    select: { id: true, imageUrl: true, imageAlt: true, audioUrl: true }
   });
 
   const stats: Stats = {
-    total: rows.length,
+    totalQuestions: rows.length,
+    totalMedia: 0,
     copied: 0,
     skippedObject: 0,
     dbUpdated: 0,
@@ -219,58 +250,68 @@ async function main() {
     errors: 0
   };
 
-  console.log(`  Found ${rows.length} question(s) with an imageUrl.\n`);
+  console.log(`  Found ${rows.length} question(s) with media URLs.\n`);
 
   for (const row of rows) {
-    const key = row.imageUrl ? objectKeyFromImageUrl(row.imageUrl) : null;
+    const updates: { imageUrl?: string; imageAlt?: string | null; audioUrl?: string } = {};
+    const media = [
+      { field: "imageUrl" as const, url: row.imageUrl },
+      { field: "audioUrl" as const, url: row.audioUrl }
+    ];
 
-    if (!key) {
-      stats.skippedExternal++;
-      console.log(`  ⏭  ${row.id}  external/unknown URL, left untouched: ${row.imageUrl}`);
-      continue;
+    for (const item of media) {
+      if (!item.url) continue;
+      stats.totalMedia++;
+      const key = objectKeyFromMediaUrl(item.url);
+      if (!key) {
+        stats.skippedExternal++;
+        console.log(
+          `  ⏭  ${row.id}  ${item.field} external/unknown URL, left untouched: ${item.url}`
+        );
+        continue;
+      }
+
+      const newUrl = `${PROD_PUBLIC_BASE_URL}/${MINIO_BUCKET}/${key}`;
+      try {
+        const alreadyOnProd = !FORCE && (await objectExists(prodMinio, key));
+        if (alreadyOnProd) {
+          stats.skippedObject++;
+          console.log(`  •  ${row.id}  object exists on prod, skip upload: ${key}`);
+        } else if (DRY_RUN) {
+          console.log(`  ↑  ${row.id}  WOULD upload object: ${key}`);
+        } else {
+          const srcStream = await localMinio.getObject(MINIO_BUCKET, key);
+          const buffer = await streamToBuffer(srcStream);
+          await prodMinio.putObject(MINIO_BUCKET, key, buffer, buffer.length, {
+            "Content-Type": contentTypeFor(key)
+          });
+          stats.copied++;
+          console.log(`  ↑  ${row.id}  uploaded object (${buffer.length} bytes): ${key}`);
+        }
+        updates[item.field] = newUrl;
+        if (item.field === "imageUrl") updates.imageAlt = row.imageAlt ?? null;
+      } catch (err) {
+        stats.errors++;
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error(`  ✗  ${row.id}  ${item.field} ERROR: ${msg}`);
+      }
     }
 
-    const newImageUrl = `${PROD_PUBLIC_BASE_URL}/${MINIO_BUCKET}/${key}`;
-
-    try {
-      // 1. Copy the object local → prod (unless already present and not forced).
-      const alreadyOnProd = !FORCE && (await objectExists(prodMinio, key));
-      if (alreadyOnProd) {
-        stats.skippedObject++;
-        console.log(`  •  ${row.id}  object exists on prod, skip upload: ${key}`);
-      } else if (DRY_RUN) {
-        console.log(`  ↑  ${row.id}  WOULD upload object: ${key}`);
-      } else {
-        const srcStream = await localMinio.getObject(MINIO_BUCKET, key);
-        const buffer = await streamToBuffer(srcStream);
-        await prodMinio.putObject(MINIO_BUCKET, key, buffer, buffer.length, {
-          "Content-Type": contentTypeFor(key)
-        });
-        stats.copied++;
-        console.log(`  ↑  ${row.id}  uploaded object (${buffer.length} bytes): ${key}`);
+    if (Object.keys(updates).length === 0) continue;
+    if (DRY_RUN) {
+      for (const [field, value] of Object.entries(updates)) {
+        if (field !== "imageAlt") console.log(`     WOULD set ${field} → ${value}`);
       }
-
-      // 2. Upsert the pointer into the PROD database.
-      if (DRY_RUN) {
-        console.log(`     WOULD set imageUrl → ${newImageUrl}`);
-      } else {
-        await prodDb.bjtQuestion.update({
-          where: { id: row.id },
-          data: { imageUrl: newImageUrl, imageAlt: row.imageAlt ?? null }
-        });
-        stats.dbUpdated++;
-        console.log(`     imageUrl → ${newImageUrl}`);
-      }
-    } catch (err) {
-      stats.errors++;
-      const msg = err instanceof Error ? err.message : String(err);
-      console.error(`  ✗  ${row.id}  ERROR: ${msg}`);
+    } else {
+      await prodDb.bjtQuestion.update({ where: { id: row.id }, data: updates });
+      stats.dbUpdated++;
     }
   }
 
   console.log();
   console.log("─────────────────────────────────────────────────────────────");
-  console.log(`  Total questions with image : ${stats.total}`);
+  console.log(`  Questions with media URLs  : ${stats.totalQuestions}`);
+  console.log(`  Media URLs processed       : ${stats.totalMedia}`);
   console.log(`  Objects uploaded           : ${stats.copied}`);
   console.log(`  Objects already on prod    : ${stats.skippedObject}`);
   console.log(`  DB rows updated            : ${stats.dbUpdated}`);
