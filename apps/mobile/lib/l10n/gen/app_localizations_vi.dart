@@ -12,9 +12,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String get commonRetry => 'Thử lại';
 
   @override
-  String get homeSignOutTooltip => 'Đăng xuất';
-
-  @override
   String get homeWelcome => 'ようこそ';
 
   @override
@@ -67,13 +64,86 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get loginSignInSubtitle =>
-      'Bạn sẽ được chuyển tới trang đăng nhập an toàn để xác thực tài khoản.';
+      'Dùng email/mật khẩu NihonGo BJT hoặc đăng nhập qua trình duyệt bảo mật như phiên bản web.';
 
   @override
   String get loginSignInButton => 'Đăng nhập';
 
   @override
   String get loginGenericError => 'Đã xảy ra lỗi. Vui lòng thử lại.';
+
+  @override
+  String get loginEmailLabel => 'Email hoặc tên đăng nhập';
+
+  @override
+  String get loginEmailHint => 'testuser hoặc email của bạn';
+
+  @override
+  String get loginEmailRequired => 'Vui lòng nhập email hoặc tên đăng nhập.';
+
+  @override
+  String get loginPasswordLabel => 'Mật khẩu';
+
+  @override
+  String get loginPasswordRequired => 'Vui lòng nhập mật khẩu.';
+
+  @override
+  String get loginShowPassword => 'Hiện mật khẩu';
+
+  @override
+  String get loginHidePassword => 'Ẩn mật khẩu';
+
+  @override
+  String get loginForgotPassword => 'Quên mật khẩu?';
+
+  @override
+  String get loginDivider => 'hoặc';
+
+  @override
+  String get loginBrowserButton => 'Đăng nhập bằng trình duyệt bảo mật';
+
+  @override
+  String get loginCreateAccount => 'Tạo tài khoản mới';
+
+  @override
+  String get loginTermsNotice =>
+      'Bằng cách tiếp tục, bạn đồng ý với điều khoản sử dụng và chính sách quyền riêng tư của NihonGo BJT.';
+
+  @override
+  String get loginGoogleButton => 'Google';
+
+  @override
+  String get loginFacebookButton => 'Facebook';
+
+  @override
+  String get loginAppleButton => 'Apple';
+
+  @override
+  String get loginLineButton => 'LINE';
+
+  @override
+  String get loginCancelledError => 'Đăng nhập đã bị huỷ.';
+
+  @override
+  String get loginWrongCredentialsError => 'Email hoặc mật khẩu không đúng.';
+
+  @override
+  String get loginMethodNotAllowedError =>
+      'Client mobile chưa bật đăng nhập bằng mật khẩu.';
+
+  @override
+  String get loginInvalidScopeError => 'Cấu hình phạm vi đăng nhập chưa đúng.';
+
+  @override
+  String get loginClientMisconfiguredError =>
+      'Client đăng nhập mobile đang cấu hình sai.';
+
+  @override
+  String get loginNetworkError => 'Không kết nối được máy chủ đăng nhập.';
+
+  @override
+  String get loginMissingTokenError =>
+      'Máy chủ đăng nhập trả về thiếu dữ liệu phiên.';
 
   @override
   String get flashcardTitle => 'Flashcard';
@@ -134,4 +204,44 @@ class AppLocalizationsVi extends AppLocalizations {
   String ratingIntervalDays(int days) {
     return '$days ngày';
   }
+
+  @override
+  String get profileTitle => 'Hồ sơ';
+
+  @override
+  String get profileOpenTooltip => 'Hồ sơ & cài đặt';
+
+  @override
+  String get profileLearnerFallback => 'Người học';
+
+  @override
+  String get profileAccountSection => 'Tài khoản';
+
+  @override
+  String get profilePreferencesSection => 'Tùy chỉnh';
+
+  @override
+  String get profileLanguageTitle => 'Ngôn ngữ ứng dụng';
+
+  @override
+  String get profileLanguageSystem => 'Theo thiết bị';
+
+  @override
+  String get profileLanguageVietnamese => 'Tiếng Việt';
+
+  @override
+  String get profileLanguageJapanese => 'Tiếng Nhật';
+
+  @override
+  String get profileFuriganaTitle => 'Hiển thị furigana';
+
+  @override
+  String get profileFuriganaSubtitle =>
+      'Hiện cách đọc kana phía trên kanji (trừ khi đang ôn tập).';
+
+  @override
+  String get profileSignOut => 'Đăng xuất';
+
+  @override
+  String get profileSaveError => 'Không lưu được thay đổi. Vui lòng thử lại.';
 }

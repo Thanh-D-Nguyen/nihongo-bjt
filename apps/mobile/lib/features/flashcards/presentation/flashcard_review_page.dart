@@ -11,6 +11,7 @@ import 'package:nihongo_bjt/features/flashcards/domain/srs_rating.dart';
 import 'package:nihongo_bjt/features/flashcards/presentation/flashcard_providers.dart';
 import 'package:nihongo_bjt/features/reading_assist/domain/reading_assist_policy.dart';
 import 'package:nihongo_bjt/features/reading_assist/presentation/japanese_text.dart';
+import 'package:nihongo_bjt/features/settings/presentation/settings_controller.dart';
 import 'package:nihongo_bjt/l10n/gen/app_localizations.dart';
 
 /// Reviews one deck: prompt → reveal answer → grade (Again/Hard/Good/Easy) →
@@ -120,14 +121,18 @@ class _ReviewProgress extends StatelessWidget {
   }
 }
 
-class _CardFace extends StatelessWidget {
+class _CardFace extends ConsumerWidget {
   const _CardFace({required this.card, required this.revealed});
 
   final Flashcard card;
   final bool revealed;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Reading help honours the learner's furigana preference, but only once
+    // the answer is revealed; before reveal it is always suppressed for active
+    // recall regardless of the toggle.
+    final furiganaEnabled = ref.watch(furiganaEnabledProvider);
     return DecoratedBox(
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -147,7 +152,7 @@ class _CardFace extends StatelessWidget {
                 card.front,
                 reading: card.reading,
                 policy: revealed
-                    ? const ReadingAssistPolicy()
+                    ? ReadingAssistPolicy(userEnabled: furiganaEnabled)
                     : const ReadingAssistPolicy.exam(),
                 style: AppTypography.japaneseDisplay,
               ),

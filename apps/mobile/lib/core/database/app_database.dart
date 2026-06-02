@@ -5,18 +5,26 @@ import 'package:drift/native.dart';
 import 'package:nihongo_bjt/features/flashcards/data/local/flashcard_cache_dao.dart';
 import 'package:nihongo_bjt/features/flashcards/data/local/flashcard_cache_tables.dart';
 import 'package:nihongo_bjt/features/flashcards/data/local/review_queue_dao.dart';
+import 'package:nihongo_bjt/features/settings/data/local/user_settings_dao.dart';
+import 'package:nihongo_bjt/features/settings/data/local/user_settings_table.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 part 'app_database.g.dart';
 
-/// On-device SQLite database (Drift) for the local flashcard cache (Phase 6A)
-/// and the offline review queue (Phase 6B).
+/// On-device SQLite database (Drift) for the local flashcard cache (Phase 6A),
+/// the offline review queue (Phase 6B) and device-scoped learner settings
+/// (Phase 10.2).
 ///
 /// Generated code (`app_database.g.dart`) is committed and never hand-edited.
 @DriftDatabase(
-  tables: [FlashcardDecks, FlashcardReviewCards, FlashcardReviewQueue],
-  daos: [FlashcardCacheDao, ReviewQueueDao],
+  tables: [
+    FlashcardDecks,
+    FlashcardReviewCards,
+    FlashcardReviewQueue,
+    UserSettings,
+  ],
+  daos: [FlashcardCacheDao, ReviewQueueDao, UserSettingsDao],
 )
 class AppDatabase extends _$AppDatabase {
   /// Opens the real on-device database (lazy file resolution).
@@ -27,7 +35,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -36,6 +44,10 @@ class AppDatabase extends _$AppDatabase {
       // v2 (Phase 6B): introduce the offline review queue.
       if (from < 2) {
         await m.createTable(flashcardReviewQueue);
+      }
+      // v3 (Phase 10.2): introduce the device-scoped settings store.
+      if (from < 3) {
+        await m.createTable(userSettings);
       }
     },
   );

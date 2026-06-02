@@ -22,12 +22,8 @@ final flashcardApiClientProvider = Provider<ApiClient>((ref) {
   final client = ApiClient(
     environment: ref.watch(appEnvironmentProvider),
     httpClient: http.Client(),
-    accessTokenProvider: () async {
-      final session = ref.read(authControllerProvider).value;
-      final tokens = session?.tokens;
-      if (tokens == null || tokens.isAccessTokenExpired) return null;
-      return tokens.accessToken;
-    },
+    accessTokenProvider: () =>
+        ref.read(authControllerProvider.notifier).currentAccessToken(),
   );
   ref.onDispose(client.close);
   return client;

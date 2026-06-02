@@ -1,22 +1,34 @@
+import 'dart:convert';
+
 import 'package:flutter_appauth/flutter_appauth.dart';
+import 'package:http/http.dart' as http;
 import 'package:nihongo_bjt/core/config/app_environment.dart';
 import 'package:nihongo_bjt/features/auth/domain/auth_repository.dart';
 import 'package:nihongo_bjt/features/auth/domain/auth_tokens.dart';
 
-/// [AuthRepository] implemented with `flutter_appauth` against a Keycloak
-/// realm using OIDC Authorization Code + PKCE (PKCE handled natively by
-/// AppAuth). All endpoints are discovered from the realm issuer.
+/// [AuthRepository] implemented with Keycloak.
+///
+/// Browser sign-in uses Authorization Code + PKCE via AppAuth. The first-party
+/// email/password form uses the mobile public client's password grant, which is
+/// enabled for local/dev Keycloak and returns the same token shape.
 class KeycloakAuthRepository implements AuthRepository {
   const KeycloakAuthRepository({
     required this.appAuth,
     required this.environment,
+    this.httpClient,
+    this.now,
   });
 
   final FlutterAppAuth appAuth;
   final AppEnvironment environment;
+  final http.Client? httpClient;
+  final DateTime Function()? now;
 
   @override
-  Future<AuthTokens> signIn({String? idpHint}) async {
+  Future<AuthTokens> signIn({
+    String? idpHint,
+    AuthBrowserFlow flow = AuthBrowserFlow.signIn,
+  }) async {
     final AuthorizationTokenResponse response;
     try {
       response = await appAuth.authorizeAndExchangeCode(
@@ -26,20 +38,72 @@ class KeycloakAuthRepository implements AuthRepository {
           issuer: environment.keycloakIssuer,
           scopes: AppEnvironment.oauthScopes,
           allowInsecureConnections: environment.allowInsecureAuthConnections,
-          additionalParameters: idpHint == null
-              ? null
-              : {'kc_idp_hint': idpHint},
+          additionalParameters: _browserParameters(
+            idpHint: idpHint,
+            flow: flow,
+          ),
         ),
       );
     } on FlutterAppAuthUserCancelledException catch (error) {
-      throw AuthException('Đăng nhập đã bị huỷ.', cause: error);
+      throw AuthException(
+        'browser sign-in cancelled',
+        code: AuthFailureCode.cancelled,
+        cause: error,
+      );
     } on Exception catch (error) {
       throw AuthException(
-        'Không thể đăng nhập. Vui lòng thử lại.',
+        'browser sign-in failed',
         cause: error,
       );
     }
-    return _toTokens(response, operation: 'sign-in');
+    return _toTokens(response, operation: 'browser sign-in');
+  }
+
+  Map<String, String>? _browserParameters({
+    required String? idpHint,
+    required AuthBrowserFlow flow,
+  }) {
+    final parameters = <String, String>{};
+    if (idpHint != null) parameters['kc_idp_hint'] = idpHint;
+    if (flow == AuthBrowserFlow.register) parameters['kc_action'] = 'register';
+    return parameters.isEmpty ? null : parameters;
+  }
+
+  @override
+  Future<AuthTokens> signInWithPassword({
+    required String username,
+    required String password,
+  }) async {
+    final uri = Uri.parse(
+      '${environment.keycloakIssuer}/protocol/openid-connect/token',
+    );
+    final http.Response response;
+    try {
+      response = await (httpClient?.post ?? http.post)(
+        uri,
+        headers: const {'content-type': 'application/x-www-form-urlencoded'},
+        body: {
+          'grant_type': 'password',
+          'client_id': environment.oauthClientId,
+          'username': username,
+          'password': password,
+          'scope': AppEnvironment.oauthScopes.join(' '),
+        },
+      );
+    } on Exception catch (error) {
+      throw AuthException(
+        'password sign-in network failure',
+        code: AuthFailureCode.network,
+        cause: error,
+      );
+    }
+
+    final json = _decodeBody(response);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw _exceptionForTokenError(json, response.statusCode);
+    }
+
+    return _tokensFromJson(json, operation: 'password sign-in');
   }
 
   @override
@@ -57,7 +121,10 @@ class KeycloakAuthRepository implements AuthRepository {
         ),
       );
     } on Exception catch (error) {
-      throw AuthException('Phiên đăng nhập đã hết hạn.', cause: error);
+      throw AuthException(
+        'refresh failed',
+        cause: error,
+      );
     }
     return _toTokens(response, operation: 'refresh');
   }
@@ -78,7 +145,10 @@ class KeycloakAuthRepository implements AuthRepository {
         ),
       );
     } on Exception catch (error) {
-      throw AuthException('Không thể đăng xuất hoàn toàn.', cause: error);
+      throw AuthException(
+        'remote logout failed',
+        cause: error,
+      );
     }
   }
 
@@ -91,7 +161,10 @@ class KeycloakAuthRepository implements AuthRepository {
     final expiresAt = response.accessTokenExpirationDateTime;
 
     if (access == null || refresh == null || id == null || expiresAt == null) {
-      throw AuthException('Phản hồi xác thực thiếu dữ liệu ($operation).');
+      throw AuthException(
+        'auth response missing required token fields ($operation)',
+        code: AuthFailureCode.missingToken,
+      );
     }
 
     return AuthTokens(
@@ -99,6 +172,90 @@ class KeycloakAuthRepository implements AuthRepository {
       refreshToken: refresh,
       idToken: id,
       accessTokenExpiresAt: expiresAt.toUtc(),
+    );
+  }
+
+  Map<String, Object?> _decodeBody(http.Response response) {
+    try {
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map<String, Object?>) return decoded;
+    } on Object {
+      // Status code still drives the failure category.
+    }
+    return const {};
+  }
+
+  AuthException _exceptionForTokenError(
+    Map<String, Object?> body,
+    int statusCode,
+  ) {
+    final error = body['error'];
+    final description = body['error_description'];
+    final details = '$error $description'.toLowerCase();
+
+    if (error == 'invalid_grant') {
+      return const AuthException(
+        'invalid username or password',
+        code: AuthFailureCode.invalidCredentials,
+      );
+    }
+    if (error == 'invalid_scope') {
+      return const AuthException(
+        'invalid auth scope',
+        code: AuthFailureCode.invalidScope,
+      );
+    }
+    if (details.contains('not allowed') ||
+        details.contains('direct grant') ||
+        details.contains('password grant')) {
+      return const AuthException(
+        'password sign-in is not allowed for this client',
+        code: AuthFailureCode.methodNotAllowed,
+      );
+    }
+    if (error == 'unauthorized_client' ||
+        error == 'invalid_client' ||
+        statusCode == 401) {
+      return const AuthException(
+        'auth client is misconfigured',
+        code: AuthFailureCode.clientMisconfigured,
+      );
+    }
+    return AuthException(
+      'token endpoint failed with HTTP $statusCode',
+      );
+  }
+
+  AuthTokens _tokensFromJson(
+    Map<String, Object?> body, {
+    required String operation,
+  }) {
+    final access = body['access_token'];
+    final refresh = body['refresh_token'];
+    final id = body['id_token'];
+    final expiresIn = body['expires_in'];
+    if (access is! String || refresh is! String || id is! String) {
+      throw AuthException(
+        'auth response missing required token fields ($operation)',
+        code: AuthFailureCode.missingToken,
+      );
+    }
+    final expiresInSeconds = expiresIn is int
+        ? expiresIn
+        : int.tryParse(expiresIn.toString());
+    if (expiresInSeconds == null || expiresInSeconds <= 0) {
+      throw AuthException(
+        'auth response missing token expiry ($operation)',
+        code: AuthFailureCode.missingToken,
+      );
+    }
+
+    final issuedAt = (now ?? DateTime.now)().toUtc();
+    return AuthTokens(
+      accessToken: access,
+      refreshToken: refresh,
+      idToken: id,
+      accessTokenExpiresAt: issuedAt.add(Duration(seconds: expiresInSeconds)),
     );
   }
 }

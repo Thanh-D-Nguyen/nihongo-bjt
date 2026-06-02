@@ -24,21 +24,39 @@ class _FakeTokenStore implements AuthTokenStore {
 
 /// Scriptable [AuthRepository] for tests.
 class _FakeAuthRepository implements AuthRepository {
-  _FakeAuthRepository({this.onSignIn, this.onRefresh});
+  _FakeAuthRepository({this.onSignIn, this.onPasswordSignIn, this.onRefresh});
 
   final Future<AuthTokens> Function()? onSignIn;
+  final Future<AuthTokens> Function()? onPasswordSignIn;
   final Future<AuthTokens> Function()? onRefresh;
+  int refreshCalls = 0;
+  AuthBrowserFlow? lastBrowserFlow;
   bool signOutCalled = false;
 
   @override
-  Future<AuthTokens> signIn({String? idpHint}) async {
+  Future<AuthTokens> signIn({
+    String? idpHint,
+    AuthBrowserFlow flow = AuthBrowserFlow.signIn,
+  }) async {
+    lastBrowserFlow = flow;
     final handler = onSignIn;
     if (handler == null) throw const AuthException('no sign-in');
     return handler();
   }
 
   @override
+  Future<AuthTokens> signInWithPassword({
+    required String username,
+    required String password,
+  }) async {
+    final handler = onPasswordSignIn;
+    if (handler == null) throw const AuthException('no password sign-in');
+    return handler();
+  }
+
+  @override
   Future<AuthTokens> refresh(String refreshToken) async {
+    refreshCalls += 1;
     final handler = onRefresh;
     if (handler == null) throw const AuthException('no refresh');
     return handler();
@@ -160,6 +178,102 @@ void main() {
 
       expect(container.read(authControllerProvider).hasError, isTrue);
       expect(await store.read(), isNull);
+    });
+
+    test('passes through the requested browser flow', () async {
+      final tokens = _tokens(expired: false);
+      final repository = _FakeAuthRepository(onSignIn: () async => tokens);
+      final container = _container(
+        store: _FakeTokenStore(),
+        repository: repository,
+      );
+
+      await container.read(authControllerProvider.future);
+      await container.read(authControllerProvider.notifier).signIn(
+            flow: AuthBrowserFlow.register,
+          );
+
+      expect(repository.lastBrowserFlow, AuthBrowserFlow.register);
+    });
+  });
+
+  group('AuthController.signInWithPassword', () {
+    test('persists tokens and becomes authenticated', () async {
+      final tokens = _tokens(expired: false);
+      final store = _FakeTokenStore();
+      final container = _container(
+        store: store,
+        repository: _FakeAuthRepository(onPasswordSignIn: () async => tokens),
+      );
+
+      await container.read(authControllerProvider.future);
+      await container.read(authControllerProvider.notifier).signInWithPassword(
+            username: 'testuser',
+            password: '123456',
+          );
+
+      final session = container.read(authControllerProvider).value!;
+      expect(session.status, AuthStatus.authenticated);
+      expect(await store.read(), tokens);
+    });
+  });
+
+  group('AuthController.currentAccessToken', () {
+    test('returns valid access token without refresh', () async {
+      final tokens = _tokens(expired: false);
+      final repository = _FakeAuthRepository(
+        onRefresh: () async => fail('refresh must not be called'),
+      );
+      final container = _container(
+        store: _FakeTokenStore(tokens),
+        repository: repository,
+      );
+
+      await container.read(authControllerProvider.future);
+      final accessToken = await container
+          .read(authControllerProvider.notifier)
+          .currentAccessToken();
+
+      expect(accessToken, tokens.accessToken);
+      expect(repository.refreshCalls, 0);
+    });
+
+    test('refreshes expired access token and persists session', () async {
+      final fresh = _tokens(expired: false);
+      final store = _FakeTokenStore(_tokens(expired: true));
+      final repository = _FakeAuthRepository(onRefresh: () async => fresh);
+      final container = _container(store: store, repository: repository);
+
+      await container.read(authControllerProvider.future);
+      final accessToken = await container
+          .read(authControllerProvider.notifier)
+          .currentAccessToken();
+
+      expect(accessToken, fresh.accessToken);
+      expect(await store.read(), fresh);
+      expect(repository.refreshCalls, 1);
+    });
+
+    test('clears session when refresh fails', () async {
+      final store = _FakeTokenStore(_tokens(expired: true));
+      final container = _container(
+        store: store,
+        repository: _FakeAuthRepository(
+          onRefresh: () async => throw const AuthException('expired'),
+        ),
+      );
+
+      await container.read(authControllerProvider.future);
+      final accessToken = await container
+          .read(authControllerProvider.notifier)
+          .currentAccessToken();
+
+      expect(accessToken, isNull);
+      expect(await store.read(), isNull);
+      expect(
+        container.read(authControllerProvider).value!.isAuthenticated,
+        false,
+      );
     });
   });
 

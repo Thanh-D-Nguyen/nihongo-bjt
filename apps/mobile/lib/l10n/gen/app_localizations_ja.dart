@@ -12,9 +12,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get commonRetry => '再試行';
 
   @override
-  String get homeSignOutTooltip => 'ログアウト';
-
-  @override
   String get homeWelcome => 'ようこそ';
 
   @override
@@ -66,13 +63,83 @@ class AppLocalizationsJa extends AppLocalizations {
   String get loginSignInTitle => 'ログインして続ける';
 
   @override
-  String get loginSignInSubtitle => '安全なログインページに移動してアカウントを認証します。';
+  String get loginSignInSubtitle => 'Web版と同じように、メール/パスワードまたは安全なブラウザでログインできます。';
 
   @override
   String get loginSignInButton => 'ログイン';
 
   @override
   String get loginGenericError => 'エラーが発生しました。もう一度お試しください。';
+
+  @override
+  String get loginEmailLabel => 'メールまたはユーザー名';
+
+  @override
+  String get loginEmailHint => 'testuser またはメールアドレス';
+
+  @override
+  String get loginEmailRequired => 'メールまたはユーザー名を入力してください。';
+
+  @override
+  String get loginPasswordLabel => 'パスワード';
+
+  @override
+  String get loginPasswordRequired => 'パスワードを入力してください。';
+
+  @override
+  String get loginShowPassword => 'パスワードを表示';
+
+  @override
+  String get loginHidePassword => 'パスワードを非表示';
+
+  @override
+  String get loginForgotPassword => 'パスワードをお忘れですか？';
+
+  @override
+  String get loginDivider => 'または';
+
+  @override
+  String get loginBrowserButton => '安全なブラウザでログイン';
+
+  @override
+  String get loginCreateAccount => '新しいアカウントを作成';
+
+  @override
+  String get loginTermsNotice =>
+      '続行すると、NihonGo BJTの利用規約とプライバシーポリシーに同意したものとみなされます。';
+
+  @override
+  String get loginGoogleButton => 'Google';
+
+  @override
+  String get loginFacebookButton => 'Facebook';
+
+  @override
+  String get loginAppleButton => 'Apple';
+
+  @override
+  String get loginLineButton => 'LINE';
+
+  @override
+  String get loginCancelledError => 'ログインがキャンセルされました。';
+
+  @override
+  String get loginWrongCredentialsError => 'メールまたはパスワードが正しくありません。';
+
+  @override
+  String get loginMethodNotAllowedError => 'モバイルクライアントでパスワードログインが有効になっていません。';
+
+  @override
+  String get loginInvalidScopeError => 'ログインスコープの設定が正しくありません。';
+
+  @override
+  String get loginClientMisconfiguredError => 'モバイルログインクライアントの設定に問題があります。';
+
+  @override
+  String get loginNetworkError => 'ログインサーバーに接続できません。';
+
+  @override
+  String get loginMissingTokenError => 'ログインサーバーのセッション応答に必要な情報がありません。';
 
   @override
   String get flashcardTitle => 'フラッシュカード';
@@ -133,4 +200,43 @@ class AppLocalizationsJa extends AppLocalizations {
   String ratingIntervalDays(int days) {
     return '$days日';
   }
+
+  @override
+  String get profileTitle => 'プロフィール';
+
+  @override
+  String get profileOpenTooltip => 'プロフィールと設定';
+
+  @override
+  String get profileLearnerFallback => '学習者';
+
+  @override
+  String get profileAccountSection => 'アカウント';
+
+  @override
+  String get profilePreferencesSection => '設定';
+
+  @override
+  String get profileLanguageTitle => 'アプリの言語';
+
+  @override
+  String get profileLanguageSystem => '端末に合わせる';
+
+  @override
+  String get profileLanguageVietnamese => 'ベトナム語';
+
+  @override
+  String get profileLanguageJapanese => '日本語';
+
+  @override
+  String get profileFuriganaTitle => 'ふりがなを表示';
+
+  @override
+  String get profileFuriganaSubtitle => '漢字の上にかなを表示します（復習中を除く）。';
+
+  @override
+  String get profileSignOut => 'ログアウト';
+
+  @override
+  String get profileSaveError => '変更を保存できませんでした。もう一度お試しください。';
 }

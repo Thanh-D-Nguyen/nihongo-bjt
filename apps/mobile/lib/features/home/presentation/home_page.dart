@@ -6,7 +6,6 @@ import 'package:nihongo_bjt/core/config/app_config.dart';
 import 'package:nihongo_bjt/core/theme/app_colors.dart';
 import 'package:nihongo_bjt/core/theme/app_radius.dart';
 import 'package:nihongo_bjt/core/theme/app_spacing.dart';
-import 'package:nihongo_bjt/features/auth/presentation/auth_controller.dart';
 import 'package:nihongo_bjt/features/home/domain/home_dashboard_data.dart';
 import 'package:nihongo_bjt/features/home/presentation/home_dashboard_controller.dart';
 import 'package:nihongo_bjt/l10n/gen/app_localizations.dart';
@@ -25,7 +24,6 @@ class HomePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final isSigningOut = ref.watch(authControllerProvider).isLoading;
     final dashboard = ref.watch(homeDashboardProvider);
 
     return Scaffold(
@@ -33,12 +31,10 @@ class HomePage extends ConsumerWidget {
         title: const AppLogo(fontSize: 22),
         actions: [
           IconButton(
-            tooltip: l10n.homeSignOutTooltip,
+            tooltip: l10n.profileOpenTooltip,
             iconSize: 24,
-            onPressed: isSigningOut
-                ? null
-                : () => ref.read(authControllerProvider.notifier).signOut(),
-            icon: const Icon(Icons.logout),
+            onPressed: () => context.pushNamed(Routes.profile),
+            icon: const Icon(Icons.account_circle_outlined),
           ),
         ],
       ),

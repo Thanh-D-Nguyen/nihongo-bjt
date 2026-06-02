@@ -104,12 +104,6 @@ abstract class AppLocalizations {
   /// **'Thử lại'**
   String get commonRetry;
 
-  /// Tooltip for the sign-out icon button on the home app bar.
-  ///
-  /// In vi, this message translates to:
-  /// **'Đăng xuất'**
-  String get homeSignOutTooltip;
-
   /// Decorative Japanese welcome greeting on the home hero card.
   ///
   /// In vi, this message translates to:
@@ -203,7 +197,7 @@ abstract class AppLocalizations {
   /// Subtitle explaining the redirect-based sign-in flow.
   ///
   /// In vi, this message translates to:
-  /// **'Bạn sẽ được chuyển tới trang đăng nhập an toàn để xác thực tài khoản.'**
+  /// **'Dùng email/mật khẩu NihonGo BJT hoặc đăng nhập qua trình duyệt bảo mật như phiên bản web.'**
   String get loginSignInSubtitle;
 
   /// Sign-in button label on the login card.
@@ -217,6 +211,144 @@ abstract class AppLocalizations {
   /// In vi, this message translates to:
   /// **'Đã xảy ra lỗi. Vui lòng thử lại.'**
   String get loginGenericError;
+
+  /// No description provided for @loginEmailLabel.
+  ///
+  /// In vi, this message translates to:
+  /// **'Email hoặc tên đăng nhập'**
+  String get loginEmailLabel;
+
+  /// No description provided for @loginEmailHint.
+  ///
+  /// In vi, this message translates to:
+  /// **'testuser hoặc email của bạn'**
+  String get loginEmailHint;
+
+  /// No description provided for @loginEmailRequired.
+  ///
+  /// In vi, this message translates to:
+  /// **'Vui lòng nhập email hoặc tên đăng nhập.'**
+  String get loginEmailRequired;
+
+  /// No description provided for @loginPasswordLabel.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mật khẩu'**
+  String get loginPasswordLabel;
+
+  /// No description provided for @loginPasswordRequired.
+  ///
+  /// In vi, this message translates to:
+  /// **'Vui lòng nhập mật khẩu.'**
+  String get loginPasswordRequired;
+
+  /// No description provided for @loginShowPassword.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hiện mật khẩu'**
+  String get loginShowPassword;
+
+  /// No description provided for @loginHidePassword.
+  ///
+  /// In vi, this message translates to:
+  /// **'Ẩn mật khẩu'**
+  String get loginHidePassword;
+
+  /// No description provided for @loginForgotPassword.
+  ///
+  /// In vi, this message translates to:
+  /// **'Quên mật khẩu?'**
+  String get loginForgotPassword;
+
+  /// No description provided for @loginDivider.
+  ///
+  /// In vi, this message translates to:
+  /// **'hoặc'**
+  String get loginDivider;
+
+  /// No description provided for @loginBrowserButton.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đăng nhập bằng trình duyệt bảo mật'**
+  String get loginBrowserButton;
+
+  /// No description provided for @loginCreateAccount.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tạo tài khoản mới'**
+  String get loginCreateAccount;
+
+  /// No description provided for @loginTermsNotice.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bằng cách tiếp tục, bạn đồng ý với điều khoản sử dụng và chính sách quyền riêng tư của NihonGo BJT.'**
+  String get loginTermsNotice;
+
+  /// No description provided for @loginGoogleButton.
+  ///
+  /// In vi, this message translates to:
+  /// **'Google'**
+  String get loginGoogleButton;
+
+  /// No description provided for @loginFacebookButton.
+  ///
+  /// In vi, this message translates to:
+  /// **'Facebook'**
+  String get loginFacebookButton;
+
+  /// No description provided for @loginAppleButton.
+  ///
+  /// In vi, this message translates to:
+  /// **'Apple'**
+  String get loginAppleButton;
+
+  /// No description provided for @loginLineButton.
+  ///
+  /// In vi, this message translates to:
+  /// **'LINE'**
+  String get loginLineButton;
+
+  /// No description provided for @loginCancelledError.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đăng nhập đã bị huỷ.'**
+  String get loginCancelledError;
+
+  /// No description provided for @loginWrongCredentialsError.
+  ///
+  /// In vi, this message translates to:
+  /// **'Email hoặc mật khẩu không đúng.'**
+  String get loginWrongCredentialsError;
+
+  /// No description provided for @loginMethodNotAllowedError.
+  ///
+  /// In vi, this message translates to:
+  /// **'Client mobile chưa bật đăng nhập bằng mật khẩu.'**
+  String get loginMethodNotAllowedError;
+
+  /// No description provided for @loginInvalidScopeError.
+  ///
+  /// In vi, this message translates to:
+  /// **'Cấu hình phạm vi đăng nhập chưa đúng.'**
+  String get loginInvalidScopeError;
+
+  /// No description provided for @loginClientMisconfiguredError.
+  ///
+  /// In vi, this message translates to:
+  /// **'Client đăng nhập mobile đang cấu hình sai.'**
+  String get loginClientMisconfiguredError;
+
+  /// No description provided for @loginNetworkError.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không kết nối được máy chủ đăng nhập.'**
+  String get loginNetworkError;
+
+  /// No description provided for @loginMissingTokenError.
+  ///
+  /// In vi, this message translates to:
+  /// **'Máy chủ đăng nhập trả về thiếu dữ liệu phiên.'**
+  String get loginMissingTokenError;
 
   /// App bar title of the flashcard deck list.
   ///
@@ -325,6 +457,84 @@ abstract class AppLocalizations {
   /// In vi, this message translates to:
   /// **'{days} ngày'**
   String ratingIntervalDays(int days);
+
+  /// App bar title for the profile & settings screen.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hồ sơ'**
+  String get profileTitle;
+
+  /// Tooltip for the home app-bar action that opens the profile screen.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hồ sơ & cài đặt'**
+  String get profileOpenTooltip;
+
+  /// Display name shown when no name claim is available from the session.
+  ///
+  /// In vi, this message translates to:
+  /// **'Người học'**
+  String get profileLearnerFallback;
+
+  /// Section header for account/session information.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tài khoản'**
+  String get profileAccountSection;
+
+  /// Section header for learner preferences.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tùy chỉnh'**
+  String get profilePreferencesSection;
+
+  /// Label for the app-language selector.
+  ///
+  /// In vi, this message translates to:
+  /// **'Ngôn ngữ ứng dụng'**
+  String get profileLanguageTitle;
+
+  /// Language option that follows the device locale.
+  ///
+  /// In vi, this message translates to:
+  /// **'Theo thiết bị'**
+  String get profileLanguageSystem;
+
+  /// Language option: Vietnamese.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tiếng Việt'**
+  String get profileLanguageVietnamese;
+
+  /// Language option: Japanese.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tiếng Nhật'**
+  String get profileLanguageJapanese;
+
+  /// Toggle label for showing reading help (furigana).
+  ///
+  /// In vi, this message translates to:
+  /// **'Hiển thị furigana'**
+  String get profileFuriganaTitle;
+
+  /// Explains what the furigana toggle does and that exam/review suppresses it.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hiện cách đọc kana phía trên kanji (trừ khi đang ôn tập).'**
+  String get profileFuriganaSubtitle;
+
+  /// Button that ends the session and returns to login.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đăng xuất'**
+  String get profileSignOut;
+
+  /// Snackbar shown when persisting a preference fails.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không lưu được thay đổi. Vui lòng thử lại.'**
+  String get profileSaveError;
 }
 
 class _AppLocalizationsDelegate

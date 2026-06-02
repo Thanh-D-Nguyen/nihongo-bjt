@@ -80,7 +80,7 @@ class AppEnvironment {
 
   /// Local development Keycloak realm issuer. Not a production URL.
   static const String _devKeycloakIssuer =
-      'http://localhost:9080/realms/nihongo-bjt';
+      'http://localhost:8080/realms/nihongo-bjt';
 
   /// Public client id provisioned in the Keycloak realm for mobile.
   static const String _defaultClientId = 'nihongo-mobile';

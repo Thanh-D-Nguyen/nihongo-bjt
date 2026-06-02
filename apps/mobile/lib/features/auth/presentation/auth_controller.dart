@@ -6,6 +6,7 @@ import 'package:nihongo_bjt/core/config/app_environment.dart';
 import 'package:nihongo_bjt/features/auth/data/keycloak_auth_repository.dart';
 import 'package:nihongo_bjt/features/auth/domain/auth_repository.dart';
 import 'package:nihongo_bjt/features/auth/domain/auth_session.dart';
+import 'package:nihongo_bjt/features/auth/domain/auth_tokens.dart';
 
 /// Resolved runtime configuration (single instance for the app lifetime).
 final appEnvironmentProvider = Provider<AppEnvironment>((ref) {
@@ -39,6 +40,7 @@ final authControllerProvider =
 class AuthController extends AsyncNotifier<AuthSession> {
   AuthTokenStore get _store => ref.read(authTokenStoreProvider);
   AuthRepository get _repository => ref.read(authRepositoryProvider);
+  Future<AuthTokens>? _refreshInFlight;
 
   @override
   Future<AuthSession> build() => _restoreSession();
@@ -66,13 +68,45 @@ class AuthController extends AsyncNotifier<AuthSession> {
 
   /// Starts the browser sign-in flow and persists the resulting session.
   /// On failure the state becomes an [AsyncError] and remains unauthenticated.
-  Future<void> signIn({String? idpHint}) async {
+  Future<void> signIn({
+    String? idpHint,
+    AuthBrowserFlow flow = AuthBrowserFlow.signIn,
+  }) async {
     state = const AsyncLoading<AuthSession>();
     state = await AsyncValue.guard(() async {
-      final tokens = await _repository.signIn(idpHint: idpHint);
+      final tokens = await _repository.signIn(idpHint: idpHint, flow: flow);
       await _store.write(tokens);
       return AuthSession.authenticated(tokens);
     });
+  }
+
+  /// Signs in with the first-party email/password form and persists tokens.
+  /// Passwords are passed only to the provider call and are never stored.
+  Future<void> signInWithPassword({
+    required String username,
+    required String password,
+  }) async {
+    state = const AsyncLoading<AuthSession>();
+    state = await AsyncValue.guard(() async {
+      final tokens = await _repository.signInWithPassword(
+        username: username,
+        password: password,
+      );
+      await _store.write(tokens);
+      return AuthSession.authenticated(tokens);
+    });
+  }
+
+  /// Returns a valid access token for API calls, refreshing the session when
+  /// the stored access token is near expiry. Returns `null` when no valid
+  /// session can be recovered.
+  Future<String?> currentAccessToken() async {
+    final current = state.value?.tokens;
+    if (current == null) return null;
+    if (!current.isAccessTokenExpired) return current.accessToken;
+
+    final refreshed = await _refreshCurrentSession(current.refreshToken);
+    return refreshed?.accessToken;
   }
 
   /// Ends the session locally (and remotely when possible) and clears storage.
@@ -88,5 +122,33 @@ class AuthController extends AsyncNotifier<AuthSession> {
       await _store.clear();
       return const AuthSession.unauthenticated();
     });
+  }
+
+  Future<AuthTokens?> _refreshCurrentSession(String refreshToken) async {
+    final existing = _refreshInFlight;
+    if (existing != null) {
+      try {
+        return await existing;
+      } on Object {
+        return null;
+      }
+    }
+
+    final refresh = _repository.refresh(refreshToken);
+    _refreshInFlight = refresh;
+    try {
+      final refreshed = await refresh;
+      await _store.write(refreshed);
+      state = AsyncData(AuthSession.authenticated(refreshed));
+      return refreshed;
+    } on Object {
+      await _store.clear();
+      state = const AsyncData(AuthSession.unauthenticated());
+      return null;
+    } finally {
+      if (_refreshInFlight == refresh) {
+        _refreshInFlight = null;
+      }
+    }
   }
 }

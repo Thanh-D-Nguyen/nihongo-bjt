@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nihongo_bjt/app/router.dart';
 import 'package:nihongo_bjt/core/config/app_config.dart';
 import 'package:nihongo_bjt/core/theme/app_theme.dart';
+import 'package:nihongo_bjt/features/settings/presentation/settings_controller.dart';
 import 'package:nihongo_bjt/l10n/gen/app_localizations.dart';
 
 /// Root application widget.
@@ -16,11 +17,15 @@ class NihonGoApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
+    // A non-null override forces the app language; null defers to the device
+    // locale resolution below (Vietnamese fallback).
+    final localeOverride = ref.watch(localeOverrideProvider);
 
     return MaterialApp.router(
       title: AppConfig.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
+      locale: localeOverride,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       // Prefer the first supported device locale; otherwise default to

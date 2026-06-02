@@ -17,7 +17,7 @@ void main() {
   test('fromDartDefine provides local OIDC defaults', () {
     final env = AppEnvironment.fromDartDefine();
 
-    expect(env.keycloakIssuer, 'http://localhost:9080/realms/nihongo-bjt');
+    expect(env.keycloakIssuer, 'http://localhost:8080/realms/nihongo-bjt');
     expect(env.oauthClientId, 'nihongo-mobile');
     expect(env.oauthRedirectUri, 'com.nihongobjt.app://oauth2redirect');
     expect(env.allowInsecureAuthConnections, isTrue);

@@ -6,10 +6,6 @@
     "description": "Generic retry button shared by error states."
   },
 
-  "homeSignOutTooltip": "Đăng xuất",
-  "@homeSignOutTooltip": {
-    "description": "Tooltip for the sign-out icon button on the home app bar."
-  },
   "homeWelcome": "ようこそ",
   "@homeWelcome": {
     "description": "Decorative Japanese welcome greeting on the home hero card."
@@ -86,7 +82,7 @@
   "@loginSignInTitle": {
     "description": "Title on the login card."
   },
-  "loginSignInSubtitle": "Bạn sẽ được chuyển tới trang đăng nhập an toàn để xác thực tài khoản.",
+  "loginSignInSubtitle": "Dùng email/mật khẩu NihonGo BJT hoặc đăng nhập qua trình duyệt bảo mật như phiên bản web.",
   "@loginSignInSubtitle": {
     "description": "Subtitle explaining the redirect-based sign-in flow."
   },
@@ -98,6 +94,29 @@
   "@loginGenericError": {
     "description": "Fallback error shown when sign-in fails for an unknown reason."
   },
+  "loginEmailLabel": "Email hoặc tên đăng nhập",
+  "loginEmailHint": "testuser hoặc email của bạn",
+  "loginEmailRequired": "Vui lòng nhập email hoặc tên đăng nhập.",
+  "loginPasswordLabel": "Mật khẩu",
+  "loginPasswordRequired": "Vui lòng nhập mật khẩu.",
+  "loginShowPassword": "Hiện mật khẩu",
+  "loginHidePassword": "Ẩn mật khẩu",
+  "loginForgotPassword": "Quên mật khẩu?",
+  "loginDivider": "hoặc",
+  "loginBrowserButton": "Đăng nhập bằng trình duyệt bảo mật",
+  "loginCreateAccount": "Tạo tài khoản mới",
+  "loginTermsNotice": "Bằng cách tiếp tục, bạn đồng ý với điều khoản sử dụng và chính sách quyền riêng tư của NihonGo BJT.",
+  "loginGoogleButton": "Google",
+  "loginFacebookButton": "Facebook",
+  "loginAppleButton": "Apple",
+  "loginLineButton": "LINE",
+  "loginCancelledError": "Đăng nhập đã bị huỷ.",
+  "loginWrongCredentialsError": "Email hoặc mật khẩu không đúng.",
+  "loginMethodNotAllowedError": "Client mobile chưa bật đăng nhập bằng mật khẩu.",
+  "loginInvalidScopeError": "Cấu hình phạm vi đăng nhập chưa đúng.",
+  "loginClientMisconfiguredError": "Client đăng nhập mobile đang cấu hình sai.",
+  "loginNetworkError": "Không kết nối được máy chủ đăng nhập.",
+  "loginMissingTokenError": "Máy chủ đăng nhập trả về thiếu dữ liệu phiên.",
 
   "flashcardTitle": "Flashcard",
   "@flashcardTitle": {
@@ -187,5 +206,58 @@
         "type": "int"
       }
     }
+  },
+
+  "profileTitle": "Hồ sơ",
+  "@profileTitle": {
+    "description": "App bar title for the profile & settings screen."
+  },
+  "profileOpenTooltip": "Hồ sơ & cài đặt",
+  "@profileOpenTooltip": {
+    "description": "Tooltip for the home app-bar action that opens the profile screen."
+  },
+  "profileLearnerFallback": "Người học",
+  "@profileLearnerFallback": {
+    "description": "Display name shown when no name claim is available from the session."
+  },
+  "profileAccountSection": "Tài khoản",
+  "@profileAccountSection": {
+    "description": "Section header for account/session information."
+  },
+  "profilePreferencesSection": "Tùy chỉnh",
+  "@profilePreferencesSection": {
+    "description": "Section header for learner preferences."
+  },
+  "profileLanguageTitle": "Ngôn ngữ ứng dụng",
+  "@profileLanguageTitle": {
+    "description": "Label for the app-language selector."
+  },
+  "profileLanguageSystem": "Theo thiết bị",
+  "@profileLanguageSystem": {
+    "description": "Language option that follows the device locale."
+  },
+  "profileLanguageVietnamese": "Tiếng Việt",
+  "@profileLanguageVietnamese": {
+    "description": "Language option: Vietnamese."
+  },
+  "profileLanguageJapanese": "Tiếng Nhật",
+  "@profileLanguageJapanese": {
+    "description": "Language option: Japanese."
+  },
+  "profileFuriganaTitle": "Hiển thị furigana",
+  "@profileFuriganaTitle": {
+    "description": "Toggle label for showing reading help (furigana)."
+  },
+  "profileFuriganaSubtitle": "Hiện cách đọc kana phía trên kanji (trừ khi đang ôn tập).",
+  "@profileFuriganaSubtitle": {
+    "description": "Explains what the furigana toggle does and that exam/review suppresses it."
+  },
+  "profileSignOut": "Đăng xuất",
+  "@profileSignOut": {
+    "description": "Button that ends the session and returns to login."
+  },
+  "profileSaveError": "Không lưu được thay đổi. Vui lòng thử lại.",
+  "@profileSaveError": {
+    "description": "Snackbar shown when persisting a preference fails."
   }
 }

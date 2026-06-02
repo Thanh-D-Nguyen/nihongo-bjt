@@ -9,12 +9,14 @@ import 'package:nihongo_bjt/features/auth/presentation/login_page.dart';
 import 'package:nihongo_bjt/features/flashcards/presentation/flashcard_deck_list_page.dart';
 import 'package:nihongo_bjt/features/flashcards/presentation/flashcard_review_page.dart';
 import 'package:nihongo_bjt/features/home/presentation/home_page.dart';
+import 'package:nihongo_bjt/features/settings/presentation/profile_page.dart';
 
 /// Application route names. Centralized so navigation call sites never use
 /// raw path strings.
 abstract final class Routes {
   static const String login = 'login';
   static const String home = 'home';
+  static const String profile = 'profile';
   static const String flashcards = 'flashcards';
   static const String flashcardReview = 'flashcard-review';
 }
@@ -43,6 +45,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: Routes.home,
         builder: (context, state) => const HomePage(),
         routes: [
+          GoRoute(
+            path: 'profile',
+            name: Routes.profile,
+            builder: (context, state) => const ProfilePage(),
+          ),
           GoRoute(
             path: 'flashcards',
             name: Routes.flashcards,
