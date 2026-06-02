@@ -181,8 +181,8 @@ export function SearchDropdown({
     if (!open) return;
     const handleClick = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        const form = dropdownRef.current.closest("form");
-        if (form && form.contains(e.target as Node)) return;
+        const searchForm = (e.target as Element).closest?.('form[role="search"]');
+        if (searchForm) return;
         onClose();
       }
     };
