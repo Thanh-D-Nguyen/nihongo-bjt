@@ -1,3 +1,6 @@
+import com.android.build.api.dsl.ApplicationExtension
+import com.android.build.api.dsl.LibraryExtension
+
 allprojects {
     repositories {
         google()
@@ -21,4 +24,18 @@ subprojects {
 
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
+}
+
+subprojects {
+    plugins.withId("com.android.application") {
+        extensions.configure<ApplicationExtension>("android") {
+            compileSdk = 36
+        }
+    }
+
+    plugins.withId("com.android.library") {
+        extensions.configure<LibraryExtension>("android") {
+            compileSdk = 36
+        }
+    }
 }
