@@ -5,7 +5,7 @@
 /// The constants here are the same across all flavors. User-facing copy is
 /// centralized here until the i18n layer (slang) lands in Phase 1.
 abstract final class AppConfig {
-  static const String appName = 'NihonGo BJT';
+  static const String appName = 'KotobaWorks';
 
   /// Short product tagline shown on the home placeholder.
   static const String tagline = 'Học tiếng Nhật BJT theo lộ trình';

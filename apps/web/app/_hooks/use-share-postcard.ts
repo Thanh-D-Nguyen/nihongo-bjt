@@ -23,7 +23,7 @@ export function useSharePostcard() {
 
         // Try native share API first, then clipboard
         if (navigator.share) {
-          await navigator.share({ url, title: "NihonGo BJT" }).catch(() => {});
+          await navigator.share({ url, title: "KotobaWorks" }).catch(() => {});
         } else {
           await navigator.clipboard.writeText(url);
         }

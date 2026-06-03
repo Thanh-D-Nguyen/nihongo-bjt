@@ -40,17 +40,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!snapshot) {
     return {
-      title: "NihonGo BJT",
-      description: "Học tiếng Nhật cho BJT cùng NihonGo BJT",
+      title: "KotobaWorks",
+      description: "Học tiếng Nhật cho BJT cùng KotobaWorks",
     };
   }
 
   return {
     title: snapshot.title,
-    description: "Shared from NihonGo BJT",
+    description: "Shared from KotobaWorks",
     openGraph: {
       title: snapshot.title,
-      description: "Shared from NihonGo BJT",
+      description: "Shared from KotobaWorks",
       images: [{ url: imageUrl, width: 1200, height: 630 }],
       type: "website",
     },
@@ -72,7 +72,7 @@ export default async function PublicSharePage({ params }: PageProps) {
     return (
       <main className="flex min-h-dvh flex-col items-center justify-center bg-[var(--color-paper)] px-4 py-12">
         <div className="mx-auto w-full max-w-2xl text-center">
-          <p className="text-sm text-[var(--color-muted)]">NihonGo BJT</p>
+          <p className="text-sm text-[var(--color-muted)]">KotobaWorks</p>
 
           <div className="mt-12 space-y-4">
             <p className="text-xl font-bold text-[var(--color-ink)]">
@@ -91,7 +91,7 @@ export default async function PublicSharePage({ params }: PageProps) {
           </Link>
 
           <footer className="mt-16 text-xs text-[var(--color-muted)]">
-            © NihonGo BJT
+            © KotobaWorks
           </footer>
         </div>
       </main>
@@ -102,7 +102,7 @@ export default async function PublicSharePage({ params }: PageProps) {
     <main className="flex min-h-dvh flex-col items-center bg-[var(--color-paper)] px-4 py-12">
       <div className="mx-auto w-full max-w-2xl">
         <p className="text-center text-sm text-[var(--color-muted)]">
-          NihonGo BJT
+          KotobaWorks
         </p>
 
         {/* Postcard image */}
@@ -136,7 +136,7 @@ export default async function PublicSharePage({ params }: PageProps) {
 
         {/* Footer */}
         <footer className="mt-16 text-center text-xs text-[var(--color-muted)]">
-          © NihonGo BJT
+          © KotobaWorks
         </footer>
       </div>
     </main>

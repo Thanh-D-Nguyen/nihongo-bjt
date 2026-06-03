@@ -18,7 +18,7 @@ export async function generateMetadata({
   const { locale, id } = await params;
   const t = (messages as Record<string, typeof vi>)[locale] ?? messages.vi;
   const chapter = findChapter(id);
-  return { title: `${chapter?.titleJa ?? t.careerRpg.chapter.briefingEyebrow} — NihonGo BJT` };
+  return { title: `${chapter?.titleJa ?? t.careerRpg.chapter.briefingEyebrow} — KotobaWorks` };
 }
 
 export default async function ChapterRoute({

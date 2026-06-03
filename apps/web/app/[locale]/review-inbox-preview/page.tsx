@@ -15,7 +15,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = (messages as Record<string, typeof vi>)[locale] ?? messages.vi;
-  return { title: `${t.careerRpg.inbox.title} — NihonGo BJT` };
+  return { title: `${t.careerRpg.inbox.title} — KotobaWorks` };
 }
 
 export default async function InboxRoute({

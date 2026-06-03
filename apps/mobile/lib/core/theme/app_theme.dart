@@ -4,7 +4,7 @@ import 'package:nihongo_bjt/core/theme/app_palette.dart';
 import 'package:nihongo_bjt/core/theme/app_radius.dart';
 import 'package:nihongo_bjt/core/theme/app_typography.dart';
 
-/// Brand light & dark themes for NihonGo BJT.
+/// Brand light & dark themes for KotobaWorks.
 ///
 /// Composes the color system, type scale and shape language from `DESIGN.md`
 /// and the mobile design system. Both themes register [AppPalette] as a

@@ -11,8 +11,8 @@ import 'package:nihongo_bjt/l10n/gen/app_localizations.dart';
 /// Wires the GoRouter instance, the brand theme and the gen-l10n localization
 /// delegates into a [MaterialApp.router]. Vietnamese is the default locale; the
 /// device locale selects Japanese when available and falls back to Vietnamese.
-class NihonGoApp extends ConsumerWidget {
-  const NihonGoApp({super.key});
+class KotobaWorksApp extends ConsumerWidget {
+  const KotobaWorksApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

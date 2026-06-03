@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// NihonGo BJT brand color tokens.
+/// KotobaWorks brand color tokens.
 ///
 /// Source of truth: `DESIGN.md`. Do not hardcode hex values elsewhere — read
 /// from this palette so the design system stays consistent.

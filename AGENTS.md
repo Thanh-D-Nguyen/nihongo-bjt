@@ -1,4 +1,4 @@
-# AGENTS.md — NihonGo BJT Cursor Operating Guide
+# AGENTS.md — KotobaWorks Cursor Operating Guide
 
 ## AI quickstart
 
@@ -6,7 +6,7 @@ Read `AI_CONTEXT.md` first. It is the compact, current project brief for any AI 
 
 ## Mission
 
-Build NihonGo BJT as a production-ready Japanese/BJT learning web app. The product must combine serious BJT preparation with joyful daily-life Japanese learning.
+Build KotobaWorks as a production-ready Japanese/BJT learning web app. The product must combine serious BJT preparation with joyful daily-life Japanese learning.
 
 ## Source of truth
 

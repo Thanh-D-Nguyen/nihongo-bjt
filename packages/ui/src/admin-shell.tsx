@@ -59,23 +59,22 @@ function normalizePath(p: string) {
 function AdminBrandMark() {
   return (
     <svg aria-hidden="true" className="size-9 shrink-0" fill="none" viewBox="0 0 64 64">
-      <defs>
-        <linearGradient id="admin-brand-bg" x1="8" y1="6" x2="58" y2="60" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#0F172A" />
-          <stop offset="0.55" stopColor="#12322F" />
-          <stop offset="1" stopColor="#0D9488" />
-        </linearGradient>
-        <linearGradient id="admin-brand-accent" x1="17" y1="46" x2="48" y2="16" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#5EEAD4" />
-          <stop offset="1" stopColor="#F9A8D4" />
-        </linearGradient>
-      </defs>
-      <rect fill="url(#admin-brand-bg)" height="58" rx="16" width="58" x="3" y="3" />
-      <path d="M14 49.5C20.4 45.1 25.6 39.4 29.8 32.3C34.4 24.6 40.1 19.1 47 15.8" stroke="url(#admin-brand-accent)" strokeLinecap="round" strokeWidth="5.4" />
-      <rect height="34" rx="5" stroke="#F8FAFC" strokeWidth="4" width="25" x="20" y="15" />
-      <path d="M21.5 27.5H43.5M21.5 37.5H43.5" stroke="#F8FAFC" strokeLinecap="round" strokeWidth="3.4" />
-      <circle cx="48.5" cy="15.5" fill="#F472B6" r="4.2" />
-      <path d="M16 16.5V47.5" stroke="#F8FAFC" strokeLinecap="round" strokeOpacity="0.82" strokeWidth="4" />
+      <rect fill="#1B2A4A" height="58" rx="14" width="58" x="3" y="3" />
+      <path
+        d="M20 16H44M20 29H39M20 42H44"
+        stroke="#F8FAFC"
+        strokeLinecap="round"
+        strokeWidth="4.4"
+      />
+      <path d="M20 16V48" stroke="#F8FAFC" strokeLinecap="round" strokeWidth="4.4" />
+      <path d="M34 47L47 34" stroke="#3B82F6" strokeLinecap="round" strokeWidth="4.8" />
+      <path
+        d="M44 34H47V37"
+        stroke="#F59E0B"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="4.8"
+      />
     </svg>
   );
 }

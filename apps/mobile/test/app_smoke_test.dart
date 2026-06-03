@@ -32,7 +32,7 @@ void main() {
         overrides: [
           authTokenStoreProvider.overrideWithValue(_AuthenticatedTokenStore()),
         ],
-        child: const NihonGoApp(),
+        child: const KotobaWorksApp(),
       ),
     );
     await tester.pumpAndSettle();

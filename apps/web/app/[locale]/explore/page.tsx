@@ -9,7 +9,7 @@ const messages: Record<string, typeof vi> = { ja, vi, en };
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
   const t = messages[locale] ?? messages.vi;
-  return { title: `${t.explore.title} — NihonGo BJT` };
+  return { title: `${t.explore.title} — KotobaWorks` };
 }
 
 export default async function ExplorePage({ params }: { params: Promise<{ locale: keyof typeof messages }> }) {

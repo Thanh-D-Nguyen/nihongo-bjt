@@ -1,10 +1,10 @@
-# AI_CONTEXT.md - NihonGo BJT Project Brief
+# AI_CONTEXT.md - KotobaWorks Project Brief
 
 This is the first file any AI assistant should read before changing this repository. It is a compact map of the product, architecture, non-negotiables, and current working conventions.
 
 ## Product
 
-NihonGo BJT is a production-grade Japanese and BJT learning platform. It combines serious BJT preparation with daily-life Japanese learning, reading support, gamified practice, and admin-managed content workflows.
+KotobaWorks is a production-grade Japanese and BJT learning platform. It combines serious BJT preparation with daily-life Japanese learning, reading support, gamified practice, and admin-managed content workflows.
 
 The product must not ship as demo-only UI. A feature is considered done only when the real vertical slice exists: typed model and API contract, persistence or provider abstraction, validation, auth/RBAC when relevant, i18n keys, audit logging for admin mutations, and focused tests for core logic.
 

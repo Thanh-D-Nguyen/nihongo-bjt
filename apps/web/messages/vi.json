@@ -10,7 +10,7 @@
       "configuration": "Đăng nhập chưa được bật trên môi trường này. Bạn vẫn có thể dùng trang chủ; hãy thử lại sau hoặc liên hệ quản trị viên."
     },
     "login": {
-      "metaTitle": "Đăng nhập — NihonGo BJT",
+      "metaTitle": "Đăng nhập — KotobaWorks",
       "backHome": "Về trang chủ",
       "brandTagline": "Học BJT và tiếng Nhật đời sống",
       "primaryCta": "Đăng nhập",
@@ -44,7 +44,7 @@
       "termsAnd": "và"
     },
     "register": {
-      "metaTitle": "Đăng ký — NihonGo BJT",
+      "metaTitle": "Đăng ký — KotobaWorks",
       "backHome": "Về trang chủ",
       "brandTagline": "Học BJT và tiếng Nhật đời sống",
       "eyebrow": "Tài khoản",
@@ -73,7 +73,7 @@
       "authDisabledHint": "Đăng ký chưa được bật trên hệ thống này. Vui lòng liên hệ quản trị viên."
     },
     "forgotPassword": {
-      "metaTitle": "Quên mật khẩu — NihonGo BJT",
+      "metaTitle": "Quên mật khẩu — KotobaWorks",
       "title": "Quên mật khẩu",
       "subtitle": "Nhập email đã đăng ký, chúng tôi sẽ gửi link đặt lại mật khẩu.",
       "emailLabel": "Email",
@@ -91,7 +91,7 @@
     "analytics": "Tiến độ",
     "ariaMain": "Điều hướng chính",
     "battle": "Đấu trí",
-    "brand": "NihonGo BJT",
+    "brand": "KotobaWorks",
     "cardgen": "Tạo thẻ",
     "exercises": "Luyện tập",
     "explore": "Khám phá",
@@ -120,11 +120,11 @@
     "footerLegal": "Pháp lý",
     "footerLearning": "Học tập",
     "footerPrivacy": "Quyền riêng tư",
-    "footerProductSummary": "NihonGo BJT giúp bạn luyện tiếng Nhật công sở, ôn BJT và giữ nhịp học mỗi ngày bằng tra cứu, thẻ nhớ và bài luyện có cấu trúc.",
+    "footerProductSummary": "KotobaWorks giúp bạn luyện tiếng Nhật công sở, ôn BJT và giữ nhịp học mỗi ngày bằng tra cứu, thẻ nhớ và bài luyện có cấu trúc.",
     "footerSupport": "Hỗ trợ",
     "footerTerms": "Điều khoản",
     "footerFeedback": "Góp ý",
-    "footerCopyright": "© 2026 NihonGo BJT",
+    "footerCopyright": "© 2026 KotobaWorks",
     "dailyStandup": "Đi làm ở Nhật",
     "searchPlaceholder": "Tìm từ vựng, ngữ pháp, bài học...",
     "companion": {
@@ -133,7 +133,7 @@
       "actionDaily": "Hôm nay",
       "actionQuiz": "Luyện BJT",
       "actionReview": "Ôn thẻ",
-      "ariaLabel": "Bot đồng hành NihonGo BJT",
+      "ariaLabel": "Bot đồng hành KotobaWorks",
       "close": "Ẩn bot đồng hành",
       "collapsedLabel": "Mở bot đồng hành",
       "guestCta": "Đăng nhập để bắt đầu học",
@@ -184,7 +184,7 @@
   },
   "home": {
     "actionsLabel": "Hành động chính",
-    "eyebrow": "NihonGo BJT",
+    "eyebrow": "KotobaWorks",
     "primaryAction": "Bắt đầu học",
     "quizAction": "Luyện BJT",
     "battleAction": "Đấu trí BJT",
@@ -390,7 +390,7 @@
     "commandCenterDescription": "Một hành động chính rõ ràng, tiến độ nhìn thấy được, không bị quá tải.",
     "commandCenterEyebrow": "Hôm nay",
     "commandCenterTitle": "Trung tâm điều phối học tập",
-    "compactBrand": "NihonGo BJT",
+    "compactBrand": "KotobaWorks",
     "compactHeaderTitle": "Trang chủ học tập",
     "demoStatsCaption": "Ví dụ minh họa — đăng nhập để xem số liệu thật.",
     "demoStatReviews": "12",
@@ -556,13 +556,7 @@
     "addToFlashcard": "Thêm vào thẻ ghi nhớ",
     "resultCount": "{count} kết quả",
     "resultsForQueryLabel": "{count} kết quả cho “{query}”",
-    "exampleChips": [
-      "会議",
-      "敬語",
-      "N2",
-      "報告書",
-      "email"
-    ],
+    "exampleChips": ["会議", "敬語", "N2", "報告書", "email"],
     "exampleChipsAriaLabel": "Gợi ý tìm nhanh",
     "noResultsInFilter": "Không có mục nào trong bộ lọc hiện tại. Thử “Tất cả” hoặc đổi loại / cấp độ.",
     "landingHeroGlyph": "辞",
@@ -609,7 +603,7 @@
     "openDetail": "Xem chi tiết",
     "detailActionsFootnote": "Các lựa chọn ôn luyện dùng tài khoản của bạn; quản lý hạn mức trong Cài đặt.",
     "bjtSectionTitle": "Góc BJT & công sở",
-    "bjtSectionIntro": "NihonGo BJT kết nối tra cứu với luyện đề và thẻ: ưu tiên ngữ cảnh công ty, lịch, báo cáo, đối thoại trang trọng.",
+    "bjtSectionIntro": "KotobaWorks kết nối tra cứu với luyện đề và thẻ: ưu tiên ngữ cảnh công ty, lịch, báo cáo, đối thoại trang trọng.",
     "bjtTopicsLabel": "Gợi ý ngữ cảnh",
     "bjtTopicsBody": "Với 「{headword}」, hãy luyện trong tình huống họp, trao đổi nội bộ và báo cáo — phù hợp chuẩn BJT.",
     "bjtPhrasesLabel": "Cụm thường gặp",
@@ -1194,7 +1188,7 @@
     "formatGuideBullet3": "Ba phần chính: Nghe hiểu, Nghe-đọc hiểu, Đọc hiểu.",
     "formatGuideBullet4": "Mỗi câu là trắc nghiệm 4 lựa chọn; điểm chính thức xử lý bằng IRT, không chỉ cộng số câu đúng.",
     "formatGuideBullet5": "Trong app, điểm và band là ước lượng để theo dõi tiến bộ, không phải kết quả thi chính thức.",
-    "formatGuideDisclaimer": "NihonGo BJT là công cụ luyện tập độc lập. Cấu trúc trên được tóm tắt từ thông tin chính thức của BJT/Pearson VUE; hãy đối chiếu nguồn chính thức trước khi đăng ký thi.",
+    "formatGuideDisclaimer": "KotobaWorks là công cụ luyện tập độc lập. Cấu trúc trên được tóm tắt từ thông tin chính thức của BJT/Pearson VUE; hãy đối chiếu nguồn chính thức trước khi đăng ký thi.",
     "formatGuideHelpLink": "Trợ giúp",
     "heroPrimaryMetric": "80|câu trong đề thật",
     "heroSecondaryMetric": "0–800|thang điểm scale",
@@ -1208,7 +1202,7 @@
     "officialSection1": "Nhận diện tình huống, nắm ý phát ngôn, hiểu hội thoại/tình huống tổng hợp qua audio.",
     "officialSection2": "Kết hợp âm thanh với tài liệu, hình ảnh hoặc chữ để suy luận hành động phù hợp trong công việc.",
     "officialSection3": "Từ vựng-ngữ pháp, đọc biểu đạt, đọc hiểu tổng hợp với văn bản và tài liệu công sở.",
-    "officialStrategyTitle": "Nên luyện thế nào trên NihonGo BJT",
+    "officialStrategyTitle": "Nên luyện thế nào trên KotobaWorks",
     "officialStrategy1": "J5–J4: ưu tiên từ vựng-ngữ pháp và câu ngắn để tăng độ chắc.",
     "officialStrategy2": "J3–J2: luyện tình huống mail, họp, báo cáo; xem lại giải thích từng câu sau khi làm.",
     "officialStrategy3": "J1/J1+: làm đề timed, in đề để review lỗi và theo dõi điểm scale qua nhiều lần.",
@@ -1410,7 +1404,7 @@
     "load": "Tải danh sách"
   },
   "profilePage": {
-    "metaTitle": "Hồ sơ — NihonGo BJT",
+    "metaTitle": "Hồ sơ — KotobaWorks",
     "title": "Hồ sơ của tôi",
     "eyebrow": "Người học",
     "subtitle": "Xem thành tích, thống kê và hành trình học tập",
@@ -1604,12 +1598,12 @@
     "trendVsPrevious": "So với {n} ngày trước đó"
   },
   "helpPage": {
-    "metaTitle": "Trợ giúp — NihonGo BJT",
+    "metaTitle": "Trợ giúp — KotobaWorks",
     "title": "Trung tâm trợ giúp",
     "subtitle": "Bạn cần hỗ trợ? Hãy tìm câu trả lời tại đây.",
     "faqTitle": "Câu hỏi thường gặp",
-    "faq1q": "NihonGo BJT là gì?",
-    "faq1a": "NihonGo BJT là nền tảng học tiếng Nhật và luyện thi BJT (Business Japanese Proficiency Test) dành cho người Việt.",
+    "faq1q": "KotobaWorks là gì?",
+    "faq1a": "KotobaWorks là nền tảng học tiếng Nhật và luyện thi BJT (Business Japanese Proficiency Test) dành cho người Việt.",
     "faq2q": "Tôi có thể dùng miễn phí không?",
     "faq2a": "Có. Các tính năng cốt lõi như ôn flashcard, tra cứu từ điển và bài luyện BJT cơ bản đều miễn phí.",
     "faq3q": "Làm sao để bắt đầu ôn BJT?",
@@ -1621,22 +1615,22 @@
     "contactLink": "Gửi góp ý"
   },
   "termsPage": {
-    "metaTitle": "Điều khoản sử dụng — NihonGo BJT",
+    "metaTitle": "Điều khoản sử dụng — KotobaWorks",
     "title": "Điều khoản sử dụng",
     "subtitle": "Cập nhật lần cuối: 01/05/2026",
     "section1Title": "1. Chấp nhận điều khoản",
-    "section1Body": "Bằng việc truy cập và sử dụng NihonGo BJT, bạn đồng ý tuân thủ các điều khoản được nêu tại đây.",
+    "section1Body": "Bằng việc truy cập và sử dụng KotobaWorks, bạn đồng ý tuân thủ các điều khoản được nêu tại đây.",
     "section2Title": "2. Tài khoản người dùng",
     "section2Body": "Bạn chịu trách nhiệm bảo mật tài khoản và mật khẩu của mình. Không chia sẻ thông tin đăng nhập với người khác.",
     "section3Title": "3. Nội dung học tập",
-    "section3Body": "Nội dung trên NihonGo BJT chỉ dành cho mục đích học tập. Không sao chép, phân phối lại nội dung mà không có sự cho phép.",
+    "section3Body": "Nội dung trên KotobaWorks chỉ dành cho mục đích học tập. Không sao chép, phân phối lại nội dung mà không có sự cho phép.",
     "section4Title": "4. Quyền riêng tư",
     "section4Body": "Chúng tôi tôn trọng quyền riêng tư của bạn. Xem chi tiết tại trang Chính sách Quyền riêng tư.",
     "section5Title": "5. Thay đổi điều khoản",
     "section5Body": "Chúng tôi có thể cập nhật điều khoản này. Thay đổi sẽ được thông báo trên nền tảng."
   },
   "privacyPolicyPage": {
-    "metaTitle": "Chính sách quyền riêng tư — NihonGo BJT",
+    "metaTitle": "Chính sách quyền riêng tư — KotobaWorks",
     "title": "Chính sách quyền riêng tư",
     "subtitle": "Cập nhật lần cuối: 01/05/2026",
     "section1Title": "1. Thu thập dữ liệu",
@@ -1651,9 +1645,9 @@
     "section5Body": "Nếu có thắc mắc về chính sách quyền riêng tư, vui lòng liên hệ qua trang Góp ý."
   },
   "feedbackPage": {
-    "metaTitle": "Góp ý — NihonGo BJT",
+    "metaTitle": "Góp ý — KotobaWorks",
     "title": "Gửi góp ý",
-    "subtitle": "Ý kiến của bạn giúp chúng tôi cải thiện NihonGo BJT mỗi ngày.",
+    "subtitle": "Ý kiến của bạn giúp chúng tôi cải thiện KotobaWorks mỗi ngày.",
     "nameLabel": "Tên (tùy chọn)",
     "namePlaceholder": "Tên của bạn",
     "emailLabel": "Email (tùy chọn)",
@@ -2314,7 +2308,7 @@
     "lotoPromoCta": "Xem ngay"
   },
   "mePage": {
-    "metaTitle": "Tôi — NihonGo BJT",
+    "metaTitle": "Tôi — KotobaWorks",
     "title": "Tôi",
     "eyebrow": "Hồ sơ & Tiến độ",
     "tabs": {
@@ -2409,9 +2403,9 @@
     "fallbackChallenger": "Một người học"
   },
   "publicProfile": {
-    "metaTitle": "Hồ sơ {name} — NihonGo BJT",
-    "metaTitleFallback": "Hồ sơ người dùng — NihonGo BJT",
-    "metaDescription": "Hồ sơ học viên công khai trên NihonGo BJT",
+    "metaTitle": "Hồ sơ {name} — KotobaWorks",
+    "metaTitleFallback": "Hồ sơ người dùng — KotobaWorks",
+    "metaDescription": "Hồ sơ học viên công khai trên KotobaWorks",
     "notFound": "Không tìm thấy người dùng",
     "notFoundDesc": "Người dùng không tồn tại hoặc đã bị xóa.",
     "home": "Trang chủ",

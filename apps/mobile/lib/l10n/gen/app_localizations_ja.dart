@@ -217,7 +217,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get loginSignInTitle => 'ログインして続ける';
 
   @override
-  String get loginSignInSubtitle => 'NihonGo BJT のアカウントでログインしてください。';
+  String get loginSignInSubtitle => 'KotobaWorks のアカウントでログインしてください。';
 
   @override
   String get loginSignInButton => 'ログイン';
@@ -260,7 +260,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get loginTermsNotice =>
-      '続行すると、NihonGo BJTの利用規約とプライバシーポリシーに同意したものとみなされます。';
+      '続行すると、KotobaWorksの利用規約とプライバシーポリシーに同意したものとみなされます。';
 
   @override
   String get loginGoogleButton => 'Google';
@@ -312,7 +312,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get registerSubtitle =>
-      'NihonGo BJT のアカウントを作成して、学習の進捗を保存し、すべての端末で同期しましょう。';
+      'KotobaWorks のアカウントを作成して、学習の進捗を保存し、すべての端末で同期しましょう。';
 
   @override
   String get registerDisplayNameLabel => '表示名';
@@ -358,7 +358,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get registerTermsNotice =>
-      'アカウントを作成すると、NihonGo BJTの利用規約とプライバシーポリシーに同意したものとみなされます。';
+      'アカウントを作成すると、KotobaWorksの利用規約とプライバシーポリシーに同意したものとみなされます。';
 
   @override
   String get registerGenericError => 'アカウントを作成できませんでした。もう一度お試しください。';
@@ -467,7 +467,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get profileLearnerFallback => '学習者';
 
   @override
-  String get profileHeroEyebrow => 'NihonGo BJTアカウント';
+  String get profileHeroEyebrow => 'KotobaWorksアカウント';
 
   @override
   String get profileSessionStatus => 'ログイン中のセッション';
@@ -1548,7 +1548,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get subscriptionFreeNote => '現在は無料プランをご利用中です。';
 
   @override
-  String get subscriptionUpgradeNote => 'NihonGo BJTのウェブでアップグレードできます。';
+  String get subscriptionUpgradeNote => 'KotobaWorksのウェブでアップグレードできます。';
 
   @override
   String get subscriptionPlansTitle => '利用可能なプラン';

@@ -25,7 +25,7 @@ class FlashcardRepositoryException implements Exception {
 
 /// API-backed [FlashcardRepository].
 ///
-/// Talks to the real NihonGo BJT flashcard/SRS endpoints through [ApiClient].
+/// Talks to the real KotobaWorks flashcard/SRS endpoints through [ApiClient].
 /// Authentication is enforced server-side: the [ApiClient] attaches the bearer
 /// token (Phase 4 seam) when a valid session exists. When the learner is not
 /// authenticated the server returns 401/403, which is mapped to a clear error —

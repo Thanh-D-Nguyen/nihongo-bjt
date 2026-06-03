@@ -1,4 +1,4 @@
-# gen-l10n configuration for the NihonGo BJT mobile app.
+# gen-l10n configuration for the KotobaWorks mobile app.
 #
 # Vietnamese is the template/default locale (the learner audience). Japanese is
 # a secondary locale. Generated sources live in lib/l10n/gen and are committed

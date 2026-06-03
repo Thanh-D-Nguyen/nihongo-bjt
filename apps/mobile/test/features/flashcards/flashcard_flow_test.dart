@@ -4,7 +4,7 @@ import 'package:nihongo_bjt/app/app.dart';
 
 void main() {
   testWidgets('home → deck list → review → completion', (tester) async {
-    await tester.pumpWidget(const ProviderScope(child: NihonGoApp()));
+    await tester.pumpWidget(const ProviderScope(child: KotobaWorksApp()));
     await tester.pumpAndSettle();
 
     // Home CTA opens the deck list.

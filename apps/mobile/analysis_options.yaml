@@ -1,4 +1,4 @@
-# Strict static analysis for the NihonGo BJT mobile app.
+# Strict static analysis for the KotobaWorks mobile app.
 #
 # Base ruleset: very_good_analysis (a superset of flutter_lints with stricter
 # style, error and pub rules). Treat lints seriously — analyze must stay clean.

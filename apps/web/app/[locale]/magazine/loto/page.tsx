@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const { locale } = await params;
   const t = messages[locale] ?? messages.vi;
   return {
-    title: `${t.lotoHub?.title ?? "Loto Lab"} — NihonGo BJT`,
+    title: `${t.lotoHub?.title ?? "Loto Lab"} — KotobaWorks`,
     description: t.lotoHub?.subtitle ?? "Dự đoán Loto với tiếng Nhật",
   };
 }

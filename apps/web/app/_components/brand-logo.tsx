@@ -1,7 +1,6 @@
-/** NihonGo BJT brand mark — a study card, 日 frame, and rising N path. */
+/** KotobaWorks brand mark — a minimal 言 frame with a work-path accent. */
 
-const brandGradientId = "nihongo-brand-bg";
-const accentGradientId = "nihongo-brand-accent";
+const brandName = "KotobaWorks";
 
 export function BrandLogo({ className, size = 28 }: { className?: string; size?: number }) {
   return (
@@ -14,28 +13,22 @@ export function BrandLogo({ className, size = 28 }: { className?: string; size?:
       width={size}
       xmlns="http://www.w3.org/2000/svg"
     >
-      <defs>
-        <linearGradient id={brandGradientId} x1="8" y1="6" x2="58" y2="60" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#0F172A" />
-          <stop offset="0.55" stopColor="#12322F" />
-          <stop offset="1" stopColor="#0D9488" />
-        </linearGradient>
-        <linearGradient id={accentGradientId} x1="17" y1="46" x2="48" y2="16" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#5EEAD4" />
-          <stop offset="1" stopColor="#F9A8D4" />
-        </linearGradient>
-        <filter id="nihongo-brand-shadow" x="6" y="6" width="52" height="52" colorInterpolationFilters="sRGB" filterUnits="userSpaceOnUse">
-          <feDropShadow dx="0" dy="4" floodColor="#020617" floodOpacity="0.24" stdDeviation="3" />
-        </filter>
-      </defs>
-      <rect fill={`url(#${brandGradientId})`} height="58" rx="16" width="58" x="3" y="3" />
-      <path d="M14 49.5C20.4 45.1 25.6 39.4 29.8 32.3C34.4 24.6 40.1 19.1 47 15.8" stroke={`url(#${accentGradientId})`} strokeLinecap="round" strokeWidth="5.4" />
-      <g filter="url(#nihongo-brand-shadow)">
-        <rect height="34" rx="5" stroke="#F8FAFC" strokeWidth="4" width="25" x="20" y="15" />
-        <path d="M21.5 27.5H43.5M21.5 37.5H43.5" stroke="#F8FAFC" strokeLinecap="round" strokeWidth="3.4" />
-      </g>
-      <circle cx="48.5" cy="15.5" fill="#F472B6" r="4.2" />
-      <path d="M16 16.5V47.5" stroke="#F8FAFC" strokeLinecap="round" strokeOpacity="0.82" strokeWidth="4" />
+      <rect fill="#1B2A4A" height="58" rx="14" width="58" x="3" y="3" />
+      <path
+        d="M20 16H44M20 29H39M20 42H44"
+        stroke="#F8FAFC"
+        strokeLinecap="round"
+        strokeWidth="4.4"
+      />
+      <path d="M20 16V48" stroke="#F8FAFC" strokeLinecap="round" strokeWidth="4.4" />
+      <path d="M34 47L47 34" stroke="#3B82F6" strokeLinecap="round" strokeWidth="4.8" />
+      <path
+        d="M44 34H47V37"
+        stroke="#F59E0B"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="4.8"
+      />
     </svg>
   );
 }
@@ -55,16 +48,13 @@ export function BrandFull({
     <span className={`inline-flex items-center gap-2 ${className ?? ""}`}>
       <BrandLogo size={markSize} />
       <span
-        className={`${
-          tone === "light"
-            ? "text-base font-black tracking-tight text-white"
-            : "text-base font-black tracking-tight text-ink"
-        }${labelClassName ? ` ${labelClassName}` : ""}`}
+        aria-label={brandName}
+        className={`${tone === "light" ? "text-base font-semibold text-white" : "text-base font-semibold text-ink"}${
+          labelClassName ? ` ${labelClassName}` : ""
+        }`}
       >
-        NihonGo
-        <span className={tone === "light" ? "ml-1 text-sm font-black text-teal-100" : "ml-1 text-sm font-black text-teal-700"}>
-          BJT
-        </span>
+        Kotoba
+        <span className={tone === "light" ? "text-white/80" : "text-blue-700"}>Works</span>
       </span>
     </span>
   );

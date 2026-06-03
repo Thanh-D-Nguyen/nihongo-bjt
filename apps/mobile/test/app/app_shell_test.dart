@@ -33,7 +33,7 @@ Future<void> _pumpApp(WidgetTester tester) async {
       overrides: [
         authTokenStoreProvider.overrideWithValue(_AuthenticatedTokenStore()),
       ],
-      child: const NihonGoApp(),
+      child: const KotobaWorksApp(),
     ),
   );
   await tester.pumpAndSettle();

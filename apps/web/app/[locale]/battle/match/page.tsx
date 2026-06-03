@@ -14,7 +14,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = messages[locale] ?? messages.vi;
-  return { title: `${t.battle.matchDocumentTitle} — NihonGo BJT` };
+  return { title: `${t.battle.matchDocumentTitle} — KotobaWorks` };
 }
 
 export default async function BattleMatchPage({

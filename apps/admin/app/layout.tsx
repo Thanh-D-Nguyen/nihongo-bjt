@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  description: "NihonGo BJT administration shell",
+  description: "KotobaWorks administration shell",
   icons: [{ rel: "icon", type: "image/svg+xml", url: "/pwa-icon.svg" }],
-  title: "NihonGo BJT Admin"
+  title: "KotobaWorks Admin"
 };
 
 /**

@@ -67,7 +67,7 @@ Future<void> _pumpApp(WidgetTester tester) async {
         authTokenStoreProvider.overrideWithValue(_AuthenticatedTokenStore()),
         authRepositoryProvider.overrideWithValue(_FakeAuthRepository()),
       ],
-      child: const NihonGoApp(),
+      child: const KotobaWorksApp(),
     ),
   );
   await tester.pumpAndSettle();
@@ -81,7 +81,7 @@ void main() {
     // The Profile screen reads the platform package info; provide deterministic
     // mock values so the method channel is never hit in widget tests.
     PackageInfo.setMockInitialValues(
-      appName: 'NihonGo BJT',
+      appName: 'KotobaWorks',
       packageName: 'com.nihongo.bjt',
       version: '1.0.0',
       buildNumber: '1',

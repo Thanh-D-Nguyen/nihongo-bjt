@@ -11,7 +11,7 @@ const messages = { ja, vi, en };
 
 export const metadata: Metadata = {
   robots: { index: false },
-  title: "Access denied — NihonGo BJT Admin"
+  title: "Access denied — KotobaWorks Admin"
 };
 
 export default async function AdminAccessDeniedPage({

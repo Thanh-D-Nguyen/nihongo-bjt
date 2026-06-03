@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const { locale } = await params;
   const t = messages[locale] ?? messages.vi;
   return {
-    title: `${t.magazine.title} — NihonGo BJT`,
+    title: `${t.magazine.title} — KotobaWorks`,
     description: t.magazine.subtitle,
   };
 }

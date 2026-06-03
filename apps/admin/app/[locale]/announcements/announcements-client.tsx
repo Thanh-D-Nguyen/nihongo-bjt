@@ -523,7 +523,7 @@ export default function AnnouncementsClient() {
               error={fieldError("message")}
               value={form.message}
               onChange={(e) => { setForm({ ...form, message: e.target.value }); clearFieldError("message"); }}
-              placeholder="Chào mừng bạn đến NihonGo BJT..."
+              placeholder="Chào mừng bạn đến KotobaWorks..."
             />
           </FormField>
 

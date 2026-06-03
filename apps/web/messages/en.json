@@ -10,7 +10,7 @@
       "configuration": "Sign-in isn't enabled in this environment. You can still use the home page—try again later or contact an administrator."
     },
     "login": {
-      "metaTitle": "Login — NihonGo BJT",
+      "metaTitle": "Login — KotobaWorks",
       "backHome": "Return to home",
       "brandTagline": "BJT prep and everyday Japanese",
       "primaryCta": "Sign in",
@@ -44,7 +44,7 @@
       "termsAnd": "and"
     },
     "register": {
-      "metaTitle": "Create account — NihonGo BJT",
+      "metaTitle": "Create account — KotobaWorks",
       "backHome": "Return to home",
       "brandTagline": "BJT prep and everyday Japanese",
       "eyebrow": "Account",
@@ -73,7 +73,7 @@
       "authDisabledHint": "Registration isn't enabled on this system. Please contact an administrator."
     },
     "forgotPassword": {
-      "metaTitle": "Forgot your password? — NihonGo BJT",
+      "metaTitle": "Forgot your password? — KotobaWorks",
       "title": "Forgot your password?",
       "subtitle": "Enter the email you registered with and we'll send a password reset link.",
       "emailLabel": "Email",
@@ -91,7 +91,7 @@
     "analytics": "Progress",
     "ariaMain": "main navigation",
     "battle": "Battle",
-    "brand": "NihonGo BJT",
+    "brand": "KotobaWorks",
     "cardgen": "Create cards",
     "exercises": "Practice",
     "explore": "Explore",
@@ -120,11 +120,11 @@
     "footerLegal": "Legal",
     "footerLearning": "Learning",
     "footerPrivacy": "Privacy",
-    "footerProductSummary": "NihonGo BJT supports business Japanese, BJT practice, and daily review through search, flashcards, and structured exercises.",
+    "footerProductSummary": "KotobaWorks supports business Japanese, BJT practice, and daily review through search, flashcards, and structured exercises.",
     "footerSupport": "Support",
     "footerTerms": "Terms of use",
     "footerFeedback": "feedback",
-    "footerCopyright": "© 2026 NihonGo BJT",
+    "footerCopyright": "© 2026 KotobaWorks",
     "dailyStandup": "Clock in",
     "searchPlaceholder": "Search words, grammar, lessons…",
     "companion": {
@@ -133,7 +133,7 @@
       "actionDaily": "today",
       "actionQuiz": "BJT practice",
       "actionReview": "card review",
-      "ariaLabel": "NihonGo BJT Companion Bot",
+      "ariaLabel": "KotobaWorks Companion Bot",
       "close": "Close companion",
       "collapsedLabel": "Open companion",
       "guestCta": "Sign in to start learning",
@@ -184,7 +184,7 @@
   },
   "home": {
     "actionsLabel": "Quick actions",
-    "eyebrow": "NihonGo BJT",
+    "eyebrow": "KotobaWorks",
     "primaryAction": "Start learning",
     "quizAction": "BJT practice",
     "battleAction": "BJT Battle",
@@ -390,7 +390,7 @@
     "commandCenterDescription": "The screen makes your next step clear, allows you to see your progress, and doesn't feel overwhelming.",
     "commandCenterEyebrow": "today",
     "commandCenterTitle": "learning command center",
-    "compactBrand": "NihonGo BJT",
+    "compactBrand": "KotobaWorks",
     "compactHeaderTitle": "learning home",
     "demoStatsCaption": "This is a display example. When you log in, you will see the actual data.",
     "demoStatReviews": "12",
@@ -556,13 +556,7 @@
     "addToFlashcard": "Add to flashcards",
     "resultCount": "{count} results",
     "resultsForQueryLabel": "{count} results for “{query}”",
-    "exampleChips": [
-      "会議",
-      "敬語",
-      "N2",
-      "報告書",
-      "email"
-    ],
+    "exampleChips": ["会議", "敬語", "N2", "報告書", "email"],
     "exampleChipsAriaLabel": "Quick search suggestions",
     "noResultsInFilter": "Nothing matches the current filters. Try “All” or switch type / level.",
     "landingHeroGlyph": "辞",
@@ -609,7 +603,7 @@
     "openDetail": "View details",
     "detailActionsFootnote": "Practice actions use your account; manage quotas in Settings.",
     "bjtSectionTitle": "BJT & workplace corner",
-    "bjtSectionIntro": "NihonGo BJT links lookup with drills and cards—prioritizing meetings, schedules, reports, and polite dialogue.",
+    "bjtSectionIntro": "KotobaWorks links lookup with drills and cards—prioritizing meetings, schedules, reports, and polite dialogue.",
     "bjtTopicsLabel": "Context ideas",
     "bjtTopicsBody": "With 「{headword}」, practice meetings, internal updates, and reports—aligned with BJT-style tasks.",
     "bjtPhrasesLabel": "Common phrases",
@@ -1194,7 +1188,7 @@
     "formatGuideBullet3": "The main structure consists of three parts: listening comprehension, listening comprehension, and reading comprehension.",
     "formatGuideBullet4": "Each question is multiple-choice and official scores are processed based on IRT.",
     "formatGuideBullet5": "Scores and bands in the app are estimates of your learning progress and are not official results.",
-    "formatGuideDisclaimer": "NihonGo BJT is a learning product that is not affiliated with the organizer. The above is a summary of BJT/Pearson VUE official information, so please check the official information before taking the exam.",
+    "formatGuideDisclaimer": "KotobaWorks is a learning product that is not affiliated with the organizer. The above is a summary of BJT/Pearson VUE official information, so please check the official information before taking the exam.",
     "formatGuideHelpLink": "help",
     "heroPrimaryMetric": "80|Number of official exam questions",
     "heroSecondaryMetric": "0–800|Scale score",
@@ -1208,7 +1202,7 @@
     "officialSection1": "Understanding the scene, understanding what is being said, and comprehensive listening comprehension. Understand the situation and intent from audio.",
     "officialSection2": "Make work-related decisions by combining audio with materials, charts, and text information.",
     "officialSection3": "Vocabulary/grammar, expressive reading comprehension, comprehensive reading comprehension. Read and judge documents and materials.",
-    "officialStrategyTitle": "How to use with NihonGo BJT",
+    "officialStrategyTitle": "How to use with KotobaWorks",
     "officialStrategy1": "J5-J4: Solidify the foundation with vocabulary, grammar, and short contexts.",
     "officialStrategy2": "J3-J2: Review situational problems such as emails, meetings, and reports with explanations.",
     "officialStrategy3": "J1/J1+: Solve with a time limit and see print reviews and estimated score trends.",
@@ -1410,7 +1404,7 @@
     "load": "Load list"
   },
   "profilePage": {
-    "metaTitle": "Profile — NihonGo BJT",
+    "metaTitle": "Profile — KotobaWorks",
     "title": "My Profile",
     "eyebrow": "Learner",
     "subtitle": "View your achievements, stats and learning journey",
@@ -1604,12 +1598,12 @@
     "trendVsPrevious": "Compared to previous {n} days"
   },
   "helpPage": {
-    "metaTitle": "Help — NihonGo BJT",
+    "metaTitle": "Help — KotobaWorks",
     "title": "Help center",
     "subtitle": "Need help?Find the answer here.",
     "faqTitle": "Frequently asked questions",
-    "faq1q": "What is NihonGo BJT?",
-    "faq1a": "NihonGo BJT is a Japanese learning and BJT (Business Japanese Test) prep platform.",
+    "faq1q": "What is KotobaWorks?",
+    "faq1a": "KotobaWorks is a Japanese learning and BJT (Business Japanese Test) prep platform.",
     "faq2q": "Can I use it for free?",
     "faq2a": "yes. Flashcard reviews, dictionary searches, and basic BJT practice questions are free.",
     "faq3q": "How to start BJT preparation?",
@@ -1621,22 +1615,22 @@
     "contactLink": "send feedback"
   },
   "termsPage": {
-    "metaTitle": "Terms of Use — NihonGo BJT",
+    "metaTitle": "Terms of Use — KotobaWorks",
     "title": "Terms of use",
     "subtitle": "Last updated: May 1, 2026",
     "section1Title": "1. Acceptance of terms and conditions",
-    "section1Body": "By accessing and using NihonGo BJT, you are deemed to have agreed to these Terms.",
+    "section1Body": "By accessing and using KotobaWorks, you are deemed to have agreed to these Terms.",
     "section2Title": "2. User account",
     "section2Body": "You are responsible for managing your account and password. Do not share your login information with third parties.",
     "section3Title": "3. Learning content",
-    "section3Body": "NihonGo BJT content may be used for learning purposes only. Please do not copy or redistribute without permission.",
+    "section3Body": "KotobaWorks content may be used for learning purposes only. Please do not copy or redistribute without permission.",
     "section4Title": "4. Privacy",
     "section4Body": "We respect your privacy. Please see our privacy policy for details.",
     "section5Title": "5. Changes to terms and conditions",
     "section5Body": "These Terms may be updated from time to time. Changes will be notified on the Platform."
   },
   "privacyPolicyPage": {
-    "metaTitle": "Privacy Policy — NihonGo BJT",
+    "metaTitle": "Privacy Policy — KotobaWorks",
     "title": "Privacy policy",
     "subtitle": "Last updated: May 1, 2026",
     "section1Title": "1. Data collection",
@@ -1651,9 +1645,9 @@
     "section5Body": "If you have any questions regarding our privacy policy, please contact us via our feedback page."
   },
   "feedbackPage": {
-    "metaTitle": "Feedback — NihonGo BJT",
+    "metaTitle": "Feedback — KotobaWorks",
     "title": "send feedback",
-    "subtitle": "Your feedback will help us improve NihonGo BJT.",
+    "subtitle": "Your feedback will help us improve KotobaWorks.",
     "nameLabel": "Name (optional)",
     "namePlaceholder": "name",
     "emailLabel": "Email (optional)",
@@ -2314,7 +2308,7 @@
     "lotoPromoCta": "View now"
   },
   "mePage": {
-    "metaTitle": "Me — NihonGo BJT",
+    "metaTitle": "Me — KotobaWorks",
     "title": "Me",
     "eyebrow": "Profile & Progress",
     "tabs": {
@@ -2409,9 +2403,9 @@
     "fallbackChallenger": "Someone"
   },
   "publicProfile": {
-    "metaTitle": "{name}'s Profile — NihonGo BJT",
-    "metaTitleFallback": "User Profile — NihonGo BJT",
-    "metaDescription": "Public learner profile on NihonGo BJT",
+    "metaTitle": "{name}'s Profile — KotobaWorks",
+    "metaTitleFallback": "User Profile — KotobaWorks",
+    "metaDescription": "Public learner profile on KotobaWorks",
     "notFound": "User not found",
     "notFoundDesc": "This user does not exist or has been deleted.",
     "home": "Home",

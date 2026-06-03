@@ -40,7 +40,7 @@ export function AuthHeroLayout({
           <h2 className="max-w-md text-4xl font-black leading-[1.15] text-white xl:text-5xl">
             Chinh phục BJT
             <br />
-            <span className="text-yellow-200">cùng NihonGo.</span>
+            <span className="text-yellow-200">cùng KotobaWorks.</span>
           </h2>
           <p className="mt-5 max-w-sm text-base font-medium leading-relaxed text-white/75">
             Học tiếng Nhật thực tế, luyện thi BJT, đấu trí cùng bạn bè — mọi lúc, mọi nơi.

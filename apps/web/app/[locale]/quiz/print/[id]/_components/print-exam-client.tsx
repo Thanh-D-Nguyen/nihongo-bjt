@@ -218,7 +218,7 @@ export function PrintExamClient({
         <div className="print:page-break-after-always px-8 py-12 text-center">
           <div className="border-2 border-gray-800 rounded-lg p-12 mx-auto max-w-lg">
             <p className="text-sm tracking-widest text-gray-500 uppercase mb-4">
-              NihonGo BJT Practice Test
+              KotobaWorks Practice Test
             </p>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               BJTビジネス日本語能力テスト
@@ -339,8 +339,8 @@ export function PrintExamClient({
               </li>
               <li>
                 {isJa
-                  ? "この練習問題はNihonGo BJTの独自教材です。公式試験とは形式が異なる場合があります。"
-                  : "Đây là đề luyện tập của NihonGo BJT, không phải đề thi chính thức."}
+                  ? "この練習問題はKotobaWorksの独自教材です。公式試験とは形式が異なる場合があります。"
+                  : "Đây là đề luyện tập của KotobaWorks, không phải đề thi chính thức."}
               </li>
               <li>
                 {isJa
@@ -525,7 +525,7 @@ export function PrintExamClient({
 
           <div className="mt-6 text-xs text-gray-400 text-center">
             <p>
-              NihonGo BJT — {isJa ? "独自練習教材" : "Đề luyện tập độc lập"}
+              KotobaWorks — {isJa ? "独自練習教材" : "Đề luyện tập độc lập"}
             </p>
             <p>
               {isJa

@@ -34,7 +34,7 @@ export async function generateMetadata({
   if (!article) return { title: "Not Found" };
 
   return {
-    title: `${article.titleJp} — NihonGo Magazine`,
+    title: `${article.titleJp} — KotobaWorks Magazine`,
     description: article.seoDescription ?? article.summaryVi ?? "",
     openGraph: {
       title: `${article.titleJp} | ${article.titleVi}`,

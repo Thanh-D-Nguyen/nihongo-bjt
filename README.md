@@ -1,4 +1,4 @@
-# NihonGo BJT
+# KotobaWorks
 
 Production-shaped monorepo for a BJT and daily Japanese learning platform.
 

@@ -13,7 +13,7 @@
       "configuration": "この環境ではログインが有効になっていません。しばらくしてから再度お試しください。管理者にお問い合わせください。"
     },
     "login": {
-      "metaTitle": "管理ログイン — NihonGo BJT",
+      "metaTitle": "管理ログイン — KotobaWorks",
       "backHome": "管理ホームへ戻る",
       "brandTagline": "運用コンソール",
       "primaryCta": "ログイン",
@@ -55,7 +55,7 @@
     "eyebrow": "Admin",
     "navigationLabel": "管理エリア",
     "subtitle": "RBACを前提にした管理シェルです。次のフェーズでCMS、監査ログ、メディア権利、分析へ接続します。",
-    "title": "NihonGo BJT 管理センター",
+    "title": "KotobaWorks 管理センター",
     "growthLink": "Growth / 共有",
     "iamLink": "IAM",
     "usersLink": "ユーザー",
@@ -174,7 +174,7 @@
     "ads": "広告",
     "audit": "監査ログ",
     "bjt": "BJT問題",
-    "brand": "NihonGo BJT Admin",
+    "brand": "KotobaWorks Admin",
     "content": "コンテンツ概要",
     "daily": "Daily Hub",
     "decks": "デッキ",

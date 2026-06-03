@@ -15,7 +15,7 @@ Future<void> bootstrap() async {
     () {
       WidgetsFlutterBinding.ensureInitialized();
       registerErrorHandlers();
-      runApp(const ProviderScope(child: NihonGoApp()));
+      runApp(const ProviderScope(child: KotobaWorksApp()));
     },
     reportError,
   );

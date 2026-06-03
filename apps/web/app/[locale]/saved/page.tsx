@@ -9,7 +9,7 @@ const messages: Record<string, typeof vi> = { ja, vi, en };
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
   const t = messages[locale] ?? messages.vi;
-  return { title: `${t.saved.title} — NihonGo BJT` };
+  return { title: `${t.saved.title} — KotobaWorks` };
 }
 
 export default async function SavedPage({ params }: { params: Promise<{ locale: keyof typeof messages }> }) {

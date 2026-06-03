@@ -64,7 +64,7 @@ export async function generateMetadata({
   const card = await fetchCard(slug);
   if (!card) return { title: "Not Found" };
 
-  const title = `${card.titleVi} | NihonGo BJT`;
+  const title = `${card.titleVi} | KotobaWorks`;
   const description = card.descriptionVi;
 
   return {

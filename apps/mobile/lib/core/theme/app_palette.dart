@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:nihongo_bjt/core/theme/app_colors.dart';
 
-/// Theme-aware semantic color roles for NihonGo BJT.
+/// Theme-aware semantic color roles for KotobaWorks.
 ///
 /// [AppColors] holds raw brand constants that never change with the theme
 /// (navy/blue). This [AppPalette] holds the **semantic** roles that screens and

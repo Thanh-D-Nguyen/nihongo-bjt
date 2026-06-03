@@ -14,7 +14,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = messages[locale] ?? messages.vi;
-  return { title: `${t.appearancePage.title} — NihonGo BJT` };
+  return { title: `${t.appearancePage.title} — KotobaWorks` };
 }
 
 export default async function AppearanceSettingsPage({

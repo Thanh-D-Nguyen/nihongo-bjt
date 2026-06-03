@@ -1,6 +1,6 @@
 import 'package:flutter/animation.dart';
 
-/// Motion tokens for NihonGo BJT.
+/// Motion tokens for KotobaWorks.
 ///
 /// Motion is purposeful and calm — used for state changes, tab transitions and
 /// press feedback, never decoration. Honour reduced-motion at call sites via

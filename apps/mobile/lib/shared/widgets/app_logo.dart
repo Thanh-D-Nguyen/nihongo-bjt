@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:nihongo_bjt/core/theme/app_palette.dart';
 
-/// Brand wordmark for NihonGo BJT.
+/// Brand wordmark for KotobaWorks.
 ///
 /// Reused across the home shell, auth, and splash surfaces. The lead word uses
-/// the primary ink color (so it stays readable on dark canvas) and `BJT` uses
+/// the primary ink color (so it stays readable on dark canvas) and `Works` uses
 /// the interactive accent, per the brand color system in `DESIGN.md`.
 class AppLogo extends StatelessWidget {
   const AppLogo({this.fontSize = 28, super.key});
@@ -24,11 +24,11 @@ class AppLogo extends StatelessWidget {
       TextSpan(
         children: [
           TextSpan(
-            text: 'NihonGo ',
+            text: 'Kotoba',
             style: style.copyWith(color: palette.ink),
           ),
           TextSpan(
-            text: 'BJT',
+            text: 'Works',
             style: style.copyWith(color: palette.accent),
           ),
         ],

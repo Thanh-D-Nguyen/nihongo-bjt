@@ -170,7 +170,7 @@
   "@loginSignInTitle": {
     "description": "Title on the login card."
   },
-  "loginSignInSubtitle": "Đăng nhập bằng tài khoản NihonGo BJT của bạn.",
+  "loginSignInSubtitle": "Đăng nhập bằng tài khoản KotobaWorks của bạn.",
   "@loginSignInSubtitle": {
     "description": "Subtitle explaining the account sign-in flow."
   },
@@ -193,7 +193,7 @@
   "loginDivider": "hoặc",
   "loginBrowserButton": "Đăng nhập bằng trình duyệt bảo mật",
   "loginCreateAccount": "Tạo tài khoản mới",
-  "loginTermsNotice": "Bằng cách tiếp tục, bạn đồng ý với điều khoản sử dụng và chính sách quyền riêng tư của NihonGo BJT.",
+  "loginTermsNotice": "Bằng cách tiếp tục, bạn đồng ý với điều khoản sử dụng và chính sách quyền riêng tư của KotobaWorks.",
   "loginGoogleButton": "Google",
   "loginFacebookButton": "Facebook",
   "loginAppleButton": "Apple",
@@ -227,7 +227,7 @@
   "@registerTitle": {
     "description": "Title on the register screen."
   },
-  "registerSubtitle": "Tạo tài khoản NihonGo BJT để lưu tiến độ và đồng bộ trên mọi thiết bị.",
+  "registerSubtitle": "Tạo tài khoản KotobaWorks để lưu tiến độ và đồng bộ trên mọi thiết bị.",
   "@registerSubtitle": {
     "description": "Subtitle on the register screen."
   },
@@ -245,7 +245,7 @@
   "registerSubmitButton": "Tạo tài khoản",
   "registerHaveAccountPrompt": "Đã có tài khoản?",
   "registerSignInAction": "Đăng nhập",
-  "registerTermsNotice": "Bằng cách tạo tài khoản, bạn đồng ý với điều khoản sử dụng và chính sách quyền riêng tư của NihonGo BJT.",
+  "registerTermsNotice": "Bằng cách tạo tài khoản, bạn đồng ý với điều khoản sử dụng và chính sách quyền riêng tư của KotobaWorks.",
   "registerGenericError": "Không tạo được tài khoản. Vui lòng thử lại.",
   "registerEmailTakenError": "Email này đã được đăng ký.",
   "registerInvalidEmailError": "Email không hợp lệ.",
@@ -376,7 +376,7 @@
   "@profileLearnerFallback": {
     "description": "Display name shown when no name claim is available from the session."
   },
-  "profileHeroEyebrow": "Tài khoản NihonGo BJT",
+  "profileHeroEyebrow": "Tài khoản KotobaWorks",
   "@profileHeroEyebrow": {
     "description": "Small label in the profile hero card."
   },
@@ -1744,7 +1744,7 @@
   "@subscriptionCancelError": { "description": "Cancel error snackbar." },
   "subscriptionFreeNote": "Bạn đang dùng gói miễn phí.",
   "@subscriptionFreeNote": { "description": "Free plan note." },
-  "subscriptionUpgradeNote": "Nâng cấp gói trên web NihonGo BJT.",
+  "subscriptionUpgradeNote": "Nâng cấp gói trên web KotobaWorks.",
   "@subscriptionUpgradeNote": { "description": "Upgrade note for free plan." },
   "subscriptionPlansTitle": "Các gói có sẵn",
   "@subscriptionPlansTitle": { "description": "Available plans section title." },

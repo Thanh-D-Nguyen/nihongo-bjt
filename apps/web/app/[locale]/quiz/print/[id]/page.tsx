@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { PrintExamClient } from "./_components/print-exam-client";
 
 export const metadata: Metadata = {
-  title: "In đề thi BJT — NihonGo BJT",
+  title: "In đề thi BJT — KotobaWorks",
   robots: "noindex"
 };
 

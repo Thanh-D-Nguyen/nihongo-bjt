@@ -217,7 +217,7 @@ export function ShareDrawer({
     }
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
-        await navigator.share({ title: "NihonGo BJT", url });
+        await navigator.share({ title: "KotobaWorks", url });
       } catch {
         /* user cancelled share — not an error */
       }
@@ -250,7 +250,7 @@ export function ShareDrawer({
     if (!previewUrl) return;
     const a = document.createElement("a");
     a.href = previewUrl;
-    a.download = `nihongo-bjt-${kind}.png`;
+    a.download = `kotobaworks-${kind}.png`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

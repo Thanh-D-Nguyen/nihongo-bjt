@@ -227,7 +227,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get loginSignInSubtitle =>
-      'Đăng nhập bằng tài khoản NihonGo BJT của bạn.';
+      'Đăng nhập bằng tài khoản KotobaWorks của bạn.';
 
   @override
   String get loginSignInButton => 'Đăng nhập';
@@ -270,7 +270,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get loginTermsNotice =>
-      'Bằng cách tiếp tục, bạn đồng ý với điều khoản sử dụng và chính sách quyền riêng tư của NihonGo BJT.';
+      'Bằng cách tiếp tục, bạn đồng ý với điều khoản sử dụng và chính sách quyền riêng tư của KotobaWorks.';
 
   @override
   String get loginGoogleButton => 'Google';
@@ -326,7 +326,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get registerSubtitle =>
-      'Tạo tài khoản NihonGo BJT để lưu tiến độ và đồng bộ trên mọi thiết bị.';
+      'Tạo tài khoản KotobaWorks để lưu tiến độ và đồng bộ trên mọi thiết bị.';
 
   @override
   String get registerDisplayNameLabel => 'Tên hiển thị';
@@ -372,7 +372,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get registerTermsNotice =>
-      'Bằng cách tạo tài khoản, bạn đồng ý với điều khoản sử dụng và chính sách quyền riêng tư của NihonGo BJT.';
+      'Bằng cách tạo tài khoản, bạn đồng ý với điều khoản sử dụng và chính sách quyền riêng tư của KotobaWorks.';
 
   @override
   String get registerGenericError =>
@@ -483,7 +483,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get profileLearnerFallback => 'Người học';
 
   @override
-  String get profileHeroEyebrow => 'Tài khoản NihonGo BJT';
+  String get profileHeroEyebrow => 'Tài khoản KotobaWorks';
 
   @override
   String get profileSessionStatus => 'Phiên đăng nhập đang hoạt động';
@@ -1592,7 +1592,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get subscriptionFreeNote => 'Bạn đang dùng gói miễn phí.';
 
   @override
-  String get subscriptionUpgradeNote => 'Nâng cấp gói trên web NihonGo BJT.';
+  String get subscriptionUpgradeNote => 'Nâng cấp gói trên web KotobaWorks.';
 
   @override
   String get subscriptionPlansTitle => 'Các gói có sẵn';

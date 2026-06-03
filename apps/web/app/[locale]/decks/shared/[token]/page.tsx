@@ -35,14 +35,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { token } = await params;
   const preview = await fetchPreview(token);
   if (!preview) {
-    return { title: "Shared Deck — NihonGo BJT" };
+    return { title: "Shared Deck — KotobaWorks" };
   }
   return {
-    title: `${preview.titleVi} — NihonGo BJT`,
+    title: `${preview.titleVi} — KotobaWorks`,
     description: preview.descriptionVi ?? `Bộ thẻ ${preview.cardCount} thẻ`,
     openGraph: {
       title: preview.titleVi,
-      description: preview.descriptionVi ?? `Bộ thẻ ${preview.cardCount} thẻ từ NihonGo BJT`,
+      description: preview.descriptionVi ?? `Bộ thẻ ${preview.cardCount} thẻ từ KotobaWorks`,
       type: "website",
     },
   };
@@ -138,7 +138,7 @@ export default async function SharedDeckPage({ params }: PageProps) {
           href={`/${locale}`}
           className="text-sm font-semibold text-accent hover:underline"
         >
-          Khám phá NihonGo BJT →
+          Khám phá KotobaWorks →
         </Link>
       </footer>
     </main>

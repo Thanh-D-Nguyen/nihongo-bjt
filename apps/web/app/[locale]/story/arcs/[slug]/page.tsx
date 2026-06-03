@@ -18,7 +18,7 @@ export async function generateMetadata({
   const { locale, slug } = await params;
   const t = (messages as Record<string, typeof vi>)[locale] ?? messages.vi;
   const arc = findArc(slug);
-  return { title: `${arc?.titleJa ?? t.careerRpg.arcs.title} — NihonGo BJT` };
+  return { title: `${arc?.titleJa ?? t.careerRpg.arcs.title} — KotobaWorks` };
 }
 
 export default async function ArcDetailRoute({

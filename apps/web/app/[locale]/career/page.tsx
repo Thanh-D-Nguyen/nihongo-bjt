@@ -16,7 +16,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = (messages as Record<string, typeof vi>)[locale] ?? messages.vi;
-  return { title: `${t.careerRpg.career.title} — NihonGo BJT` };
+  return { title: `${t.careerRpg.career.title} — KotobaWorks` };
 }
 
 export default async function CareerRoute({

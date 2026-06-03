@@ -66,7 +66,7 @@ Future<AppDatabase> _pumpProfile(
         authControllerProvider.overrideWith(() => _StubAuthController(session)),
         appPackageInfoProvider.overrideWith(
           (ref) async => PackageInfo(
-            appName: 'NihonGo BJT',
+            appName: 'KotobaWorks',
             packageName: 'com.nihongo.bjt',
             version: '1.0.0',
             buildNumber: '1',
@@ -104,7 +104,7 @@ void main() {
 
     expect(find.text('Tanaka Hana'), findsWidgets);
     expect(find.text('hana@example.com'), findsWidgets);
-    expect(find.text('Tài khoản NihonGo BJT'), findsOneWidget);
+    expect(find.text('Tài khoản KotobaWorks'), findsOneWidget);
     expect(find.text('Thông tin đăng nhập'), findsOneWidget);
     expect(find.text('LỐI TẮT'), findsOneWidget);
     expect(find.text('Tiến độ học'), findsOneWidget);
@@ -143,7 +143,7 @@ void main() {
       tester,
       session: _sessionWithIdToken(
         unsignedJwt({
-          'name': '山田 花子 NihonGo Business Learner',
+          'name': '山田 花子 KotobaWorks Learner',
           'preferred_username': 'hanako.yamada',
           'email': 'hanako.yamada@example.com',
         }),
@@ -155,7 +155,7 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.byType(ProfilePage), findsOneWidget);
-    expect(find.text('NihonGo BJTアカウント'), findsOneWidget);
+    expect(find.text('KotobaWorksアカウント'), findsOneWidget);
     expect(find.text('ショートカット'), findsOneWidget);
     expect(find.text('学習進捗'), findsOneWidget);
   });

@@ -54,7 +54,7 @@ class AppEnvironment {
     );
   }
 
-  /// Base URL of the NihonGo BJT API, without a trailing slash.
+  /// Base URL of the KotobaWorks API, without a trailing slash.
   final String apiBaseUrl;
 
   /// OpenID Connect issuer for the Keycloak realm (without a trailing slash),

@@ -432,7 +432,7 @@ export function GrowthPostcardsClient({
             brandBgEnd: form.brandBgEnd,
             brandFg: form.brandFg,
             brandAccent: form.brandAccent,
-            badgeKey: "NihonGo BJT",
+            badgeKey: "KotobaWorks",
             pattern: form.pattern !== "none" ? form.pattern : undefined,
           },
         }),

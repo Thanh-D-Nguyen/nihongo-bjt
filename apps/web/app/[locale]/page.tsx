@@ -13,7 +13,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = (messages as Record<string, typeof vi>)[locale] ?? messages.vi;
-  return { title: `${t.dashboard.compactHeaderTitle} — NihonGo BJT` };
+  return { title: `${t.dashboard.compactHeaderTitle} — KotobaWorks` };
 }
 
 export default async function LearnerHome({

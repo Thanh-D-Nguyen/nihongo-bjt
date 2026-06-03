@@ -1,6 +1,6 @@
-# DESIGN.md — NihonGo BJT
+# DESIGN.md — KotobaWorks
 
-> AI agents read this file to generate consistent, distinctive UI for NihonGo BJT.
+> AI agents read this file to generate consistent, distinctive UI for KotobaWorks.
 > Format follows the [awesome-design-md-jp](https://github.com/kzhrknt/awesome-design-md-jp) 9-section standard, extended for bilingual (Japanese + Vietnamese) learning product needs.
 > Section headers in English for AI readability. Values and guidelines in English with Japanese typography specifics.
 
@@ -12,9 +12,9 @@
 - **Density**: Study surfaces are spacious with generous Japanese line-height; admin/reference surfaces are moderately dense for scan speed
 - **Keywords**: Calm, Premium, Precise, Supportive, Japanese-editorial
 
-**Product North Star**: NihonGo BJT is a serious BJT learning product for Vietnamese adults preparing for work, exams, and life in Japan. The interface must feel clear, protective during focus, coaching after mistakes, and backed by real data.
+**Product North Star**: KotobaWorks is a serious BJT learning product for Vietnamese adults preparing for work, exams, and life in Japan. The interface must feel clear, protective during focus, coaching after mistakes, and backed by real data.
 
-**Identity differentiators** (what makes NihonGo BJT visually distinct):
+**Identity differentiators** (what makes KotobaWorks visually distinct):
 - Deep navy (`#1B2A4A`) as the authoritative anchor — not the typical blue SaaS accent
 - Off-white canvas (`#F8FAFC`) for eye comfort during long study sessions
 - Sakura pink (`#F9A8D4`) and gold (`#F59E0B`) used sparingly for achievement moments — not as brand color
@@ -24,7 +24,7 @@
 **"Quiet" must not become bland.** A calm screen must have:
 - Strong visual hierarchy with a clear focal point
 - Decisive, high-contrast buttons
-- A memorable NihonGo BJT identity distinct from generic LMS products
+- A memorable KotobaWorks identity distinct from generic LMS products
 
 **Inspiration synthesis** (do not copy any brand directly):
 - Linear-like precision for workflow clarity
@@ -197,7 +197,7 @@ font-feature-settings: "kern" 1;
 
 ### 3.8 縦書き (Vertical writing)
 
-- Not applicable. NihonGo BJT uses horizontal writing (横書き) only.
+- Not applicable. KotobaWorks uses horizontal writing (横書き) only.
 
 ---
 
@@ -436,7 +436,7 @@ Min Tap Target: 44px
 ### Prompt Example
 
 ```
-NihonGo BJT のデザインシステムに従って、BJT practice quiz 画面を作成してください。
+KotobaWorks のデザインシステムに従って、BJT practice quiz 画面を作成してください。
 - フォント: 'Inter', 'Noto Sans JP', system-ui, sans-serif
 - テキスト色: #111827
 - 背景: #F8FAFC

@@ -25,7 +25,7 @@ const THEME_INIT_SCRIPT = `
 export const metadata: Metadata = {
   description: "BJT and daily Japanese learning platform",
   icons: [{ rel: "icon", type: "image/svg+xml", url: "/pwa-icon.svg" }],
-  title: "NihonGo BJT"
+  title: "KotobaWorks"
 };
 
 export const viewport: Viewport = {

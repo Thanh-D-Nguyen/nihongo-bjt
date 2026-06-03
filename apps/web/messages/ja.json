@@ -10,7 +10,7 @@
       "configuration": "この環境ではログインが有効になっていません。ホームから学習は続けられます。しばらくしてから再度お試しください。管理者にお問い合わせください。"
     },
     "login": {
-      "metaTitle": "ログイン — NihonGo BJT",
+      "metaTitle": "ログイン — KotobaWorks",
       "backHome": "ホームへ戻る",
       "brandTagline": "BJT・生活日本語の学び",
       "primaryCta": "ログイン",
@@ -44,7 +44,7 @@
       "termsAnd": "と"
     },
     "register": {
-      "metaTitle": "新規登録 — NihonGo BJT",
+      "metaTitle": "新規登録 — KotobaWorks",
       "backHome": "ホームへ戻る",
       "brandTagline": "BJT・生活日本語の学び",
       "eyebrow": "アカウント",
@@ -73,7 +73,7 @@
       "authDisabledHint": "現在この環境では新規登録ができません。管理者にお問い合わせください。"
     },
     "forgotPassword": {
-      "metaTitle": "パスワードをお忘れですか — NihonGo BJT",
+      "metaTitle": "パスワードをお忘れですか — KotobaWorks",
       "title": "パスワードをお忘れですか",
       "subtitle": "登録済みのメールアドレスを入力してください。パスワード再設定リンクをお送りします。",
       "emailLabel": "メールアドレス",
@@ -91,7 +91,7 @@
     "analytics": "進捗",
     "ariaMain": "メインナビゲーション",
     "battle": "バトル",
-    "brand": "NihonGo BJT",
+    "brand": "KotobaWorks",
     "cardgen": "カード生成",
     "exercises": "練習",
     "explore": "探索",
@@ -120,11 +120,11 @@
     "footerLegal": "法務",
     "footerLearning": "学習",
     "footerPrivacy": "プライバシー",
-    "footerProductSummary": "NihonGo BJT は、ビジネス日本語、BJT対策、日々の復習を検索・カード・演習で支える学習プロダクトです。",
+    "footerProductSummary": "KotobaWorks は、ビジネス日本語、BJT対策、日々の復習を検索・カード・演習で支える学習プロダクトです。",
     "footerSupport": "サポート",
     "footerTerms": "利用規約",
     "footerFeedback": "フィードバック",
-    "footerCopyright": "© 2026 NihonGo BJT",
+    "footerCopyright": "© 2026 KotobaWorks",
     "dailyStandup": "出勤する",
     "searchPlaceholder": "単語・文法・レッスンを検索...",
     "companion": {
@@ -133,7 +133,7 @@
       "actionDaily": "今日",
       "actionQuiz": "BJT練習",
       "actionReview": "カード復習",
-      "ariaLabel": "NihonGo BJT コンパニオン Bot",
+      "ariaLabel": "KotobaWorks コンパニオン Bot",
       "close": "コンパニオン Bot を閉じる",
       "collapsedLabel": "コンパニオン Bot を開く",
       "guestCta": "ログインして学習を始めよう",
@@ -184,7 +184,7 @@
   },
   "home": {
     "actionsLabel": "主な操作",
-    "eyebrow": "NihonGo BJT",
+    "eyebrow": "KotobaWorks",
     "primaryAction": "学習を始める",
     "quizAction": "BJT練習",
     "battleAction": "BJTバトル",
@@ -390,7 +390,7 @@
     "commandCenterDescription": "次の一歩がはっきりし、進捗が見えて、圧迫感のない画面にします。",
     "commandCenterEyebrow": "今日",
     "commandCenterTitle": "学習コマンドセンター",
-    "compactBrand": "NihonGo BJT",
+    "compactBrand": "KotobaWorks",
     "compactHeaderTitle": "学習ホーム",
     "demoStatsCaption": "表示例です。ログインすると実データが出ます。",
     "demoStatReviews": "12",
@@ -556,13 +556,7 @@
     "addToFlashcard": "フラッシュカードに追加",
     "resultCount": "{count} 件",
     "resultsForQueryLabel": "「{query}」の検索結果 {count} 件",
-    "exampleChips": [
-      "会議",
-      "敬語",
-      "N2",
-      "報告書",
-      "email"
-    ],
+    "exampleChips": ["会議", "敬語", "N2", "報告書", "email"],
     "exampleChipsAriaLabel": "クイック検索の候補",
     "noResultsInFilter": "この絞り込みでは該当がありません。「すべて」に戻すか、種類・レベルを変えてみてください。",
     "landingHeroGlyph": "辞",
@@ -609,7 +603,7 @@
     "openDetail": "詳細を開く",
     "detailActionsFootnote": "練習系の導線はアカウントと上限設定に従います。",
     "bjtSectionTitle": "BJT・ビジネス文脈",
-    "bjtSectionIntro": "NihonGo BJT は検索と演習・カードをつなぎ、会議・社内連絡・報告・敬語など実務に寄せます。",
+    "bjtSectionIntro": "KotobaWorks は検索と演習・カードをつなぎ、会議・社内連絡・報告・敬語など実務に寄せます。",
     "bjtTopicsLabel": "学習コンテキスト",
     "bjtTopicsBody": "「{headword}」は会議・社内調整・報告などで使い勝手を確認し、BJT形式の演習へつなげましょう。",
     "bjtPhrasesLabel": "よく使う表現",
@@ -1194,7 +1188,7 @@
     "formatGuideBullet3": "主な構成は聴解、聴読解、読解の3パートです。",
     "formatGuideBullet4": "各問は4択形式で、公式スコアはIRTに基づき処理されます。",
     "formatGuideBullet5": "アプリ内のスコアとバンドは学習進捗の推定値で、公式結果ではありません。",
-    "formatGuideDisclaimer": "NihonGo BJTは主催者とは無関係の学習プロダクトです。上記はBJT/Pearson VUE公式情報を要約したもので、受験前には公式情報をご確認ください。",
+    "formatGuideDisclaimer": "KotobaWorksは主催者とは無関係の学習プロダクトです。上記はBJT/Pearson VUE公式情報を要約したもので、受験前には公式情報をご確認ください。",
     "formatGuideHelpLink": "ヘルプ",
     "heroPrimaryMetric": "80|公式試験の問題数",
     "heroSecondaryMetric": "0–800|スケールドスコア",
@@ -1208,7 +1202,7 @@
     "officialSection1": "場面把握、発言把握、総合聴解。音声から状況と意図をつかみます。",
     "officialSection2": "音声と資料・図表・文字情報を組み合わせ、仕事上の判断を行います。",
     "officialSection3": "語彙・文法、表現読解、総合読解。文書や資料を読んで判断します。",
-    "officialStrategyTitle": "NihonGo BJTでの使い方",
+    "officialStrategyTitle": "KotobaWorksでの使い方",
     "officialStrategy1": "J5〜J4: 語彙・文法と短い文脈で基礎を固める。",
     "officialStrategy2": "J3〜J2: メール、会議、報告などの場面問題を解説つきで復習する。",
     "officialStrategy3": "J1/J1+: 時間制限つきで解き、印刷レビューと推定スコア推移を見る。",
@@ -1410,7 +1404,7 @@
     "load": "一覧を読み込む"
   },
   "profilePage": {
-    "metaTitle": "プロフィール — NihonGo BJT",
+    "metaTitle": "プロフィール — KotobaWorks",
     "title": "マイプロフィール",
     "eyebrow": "学習者",
     "subtitle": "実績、統計、学習の旅を確認しましょう",
@@ -1604,12 +1598,12 @@
     "trendVsPrevious": "前の{n}日間との比較"
   },
   "helpPage": {
-    "metaTitle": "ヘルプ — NihonGo BJT",
+    "metaTitle": "ヘルプ — KotobaWorks",
     "title": "ヘルプセンター",
     "subtitle": "お困りですか？こちらで回答をお探しください。",
     "faqTitle": "よくある質問",
-    "faq1q": "NihonGo BJTとは？",
-    "faq1a": "NihonGo BJTは、ベトナム人向けの日本語学習・BJT（ビジネス日本語能力テスト）対策プラットフォームです。",
+    "faq1q": "KotobaWorksとは？",
+    "faq1a": "KotobaWorksは、ベトナム人向けの日本語学習・BJT（ビジネス日本語能力テスト）対策プラットフォームです。",
     "faq2q": "無料で使えますか？",
     "faq2a": "はい。フラッシュカード復習、辞書検索、基本的なBJT練習問題は無料です。",
     "faq3q": "BJT対策の始め方は？",
@@ -1621,22 +1615,22 @@
     "contactLink": "フィードバックを送る"
   },
   "termsPage": {
-    "metaTitle": "利用規約 — NihonGo BJT",
+    "metaTitle": "利用規約 — KotobaWorks",
     "title": "利用規約",
     "subtitle": "最終更新: 2026年5月1日",
     "section1Title": "1. 規約の同意",
-    "section1Body": "NihonGo BJTにアクセスし利用することで、本規約に同意したものとみなされます。",
+    "section1Body": "KotobaWorksにアクセスし利用することで、本規約に同意したものとみなされます。",
     "section2Title": "2. ユーザーアカウント",
     "section2Body": "アカウントとパスワードの管理はご自身の責任です。ログイン情報を第三者と共有しないでください。",
     "section3Title": "3. 学習コンテンツ",
-    "section3Body": "NihonGo BJTのコンテンツは学習目的のみに使用できます。許可なく複製・再配布しないでください。",
+    "section3Body": "KotobaWorksのコンテンツは学習目的のみに使用できます。許可なく複製・再配布しないでください。",
     "section4Title": "4. プライバシー",
     "section4Body": "プライバシーを尊重しています。詳細はプライバシーポリシーをご覧ください。",
     "section5Title": "5. 規約の変更",
     "section5Body": "本規約は更新される場合があります。変更はプラットフォーム上で通知されます。"
   },
   "privacyPolicyPage": {
-    "metaTitle": "プライバシーポリシー — NihonGo BJT",
+    "metaTitle": "プライバシーポリシー — KotobaWorks",
     "title": "プライバシーポリシー",
     "subtitle": "最終更新: 2026年5月1日",
     "section1Title": "1. データの収集",
@@ -1651,9 +1645,9 @@
     "section5Body": "プライバシーポリシーに関するご質問は、フィードバックページからお問い合わせください。"
   },
   "feedbackPage": {
-    "metaTitle": "フィードバック — NihonGo BJT",
+    "metaTitle": "フィードバック — KotobaWorks",
     "title": "フィードバックを送る",
-    "subtitle": "ご意見はNihonGo BJTの改善に役立ちます。",
+    "subtitle": "ご意見はKotobaWorksの改善に役立ちます。",
     "nameLabel": "お名前（任意）",
     "namePlaceholder": "お名前",
     "emailLabel": "メール（任意）",
@@ -2314,7 +2308,7 @@
     "lotoPromoCta": "見る"
   },
   "mePage": {
-    "metaTitle": "マイページ — NihonGo BJT",
+    "metaTitle": "マイページ — KotobaWorks",
     "title": "マイページ",
     "eyebrow": "プロフィール＆進捗",
     "tabs": {
@@ -2409,9 +2403,9 @@
     "fallbackChallenger": "ユーザー"
   },
   "publicProfile": {
-    "metaTitle": "{name}のプロフィール — NihonGo BJT",
-    "metaTitleFallback": "ユーザープロフィール — NihonGo BJT",
-    "metaDescription": "NihonGo BJTの公開学習プロフィール",
+    "metaTitle": "{name}のプロフィール — KotobaWorks",
+    "metaTitleFallback": "ユーザープロフィール — KotobaWorks",
+    "metaDescription": "KotobaWorksの公開学習プロフィール",
     "notFound": "ユーザーが見つかりません",
     "notFoundDesc": "このユーザーは存在しないか、削除されています。",
     "home": "ホーム",

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:nihongo_bjt/core/theme/app_colors.dart';
 
-/// Type scale for NihonGo BJT, mapped onto Material's [TextTheme] slots.
+/// Type scale for KotobaWorks, mapped onto Material's [TextTheme] slots.
 ///
 /// Two policies live here:
 /// - Latin/Vietnamese body & UI chrome use the Material [textTheme] slots.

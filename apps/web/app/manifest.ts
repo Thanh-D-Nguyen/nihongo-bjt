@@ -13,8 +13,8 @@ export default function manifest(): MetadataRoute.Manifest {
         type: "image/svg+xml"
       }
     ],
-    name: "NihonGo BJT",
-    short_name: "NihonGo BJT",
+    name: "KotobaWorks",
+    short_name: "KotobaWorks",
     start_url: "/",
     theme_color: "#0f172a"
   };

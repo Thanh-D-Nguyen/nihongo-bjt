@@ -467,7 +467,7 @@ abstract class AppLocalizations {
   /// Subtitle explaining the account sign-in flow.
   ///
   /// In vi, this message translates to:
-  /// **'Đăng nhập bằng tài khoản NihonGo BJT của bạn.'**
+  /// **'Đăng nhập bằng tài khoản KotobaWorks của bạn.'**
   String get loginSignInSubtitle;
 
   /// Sign-in button label on the login card.
@@ -551,7 +551,7 @@ abstract class AppLocalizations {
   /// No description provided for @loginTermsNotice.
   ///
   /// In vi, this message translates to:
-  /// **'Bằng cách tiếp tục, bạn đồng ý với điều khoản sử dụng và chính sách quyền riêng tư của NihonGo BJT.'**
+  /// **'Bằng cách tiếp tục, bạn đồng ý với điều khoản sử dụng và chính sách quyền riêng tư của KotobaWorks.'**
   String get loginTermsNotice;
 
   /// No description provided for @loginGoogleButton.
@@ -653,7 +653,7 @@ abstract class AppLocalizations {
   /// Subtitle on the register screen.
   ///
   /// In vi, this message translates to:
-  /// **'Tạo tài khoản NihonGo BJT để lưu tiến độ và đồng bộ trên mọi thiết bị.'**
+  /// **'Tạo tài khoản KotobaWorks để lưu tiến độ và đồng bộ trên mọi thiết bị.'**
   String get registerSubtitle;
 
   /// No description provided for @registerDisplayNameLabel.
@@ -743,7 +743,7 @@ abstract class AppLocalizations {
   /// No description provided for @registerTermsNotice.
   ///
   /// In vi, this message translates to:
-  /// **'Bằng cách tạo tài khoản, bạn đồng ý với điều khoản sử dụng và chính sách quyền riêng tư của NihonGo BJT.'**
+  /// **'Bằng cách tạo tài khoản, bạn đồng ý với điều khoản sử dụng và chính sách quyền riêng tư của KotobaWorks.'**
   String get registerTermsNotice;
 
   /// No description provided for @registerGenericError.
@@ -947,7 +947,7 @@ abstract class AppLocalizations {
   /// Small label in the profile hero card.
   ///
   /// In vi, this message translates to:
-  /// **'Tài khoản NihonGo BJT'**
+  /// **'Tài khoản KotobaWorks'**
   String get profileHeroEyebrow;
 
   /// Fallback status line when the profile token has no secondary identity label.
@@ -2891,7 +2891,7 @@ abstract class AppLocalizations {
   /// Upgrade note for free plan.
   ///
   /// In vi, this message translates to:
-  /// **'Nâng cấp gói trên web NihonGo BJT.'**
+  /// **'Nâng cấp gói trên web KotobaWorks.'**
   String get subscriptionUpgradeNote;
 
   /// Available plans section title.

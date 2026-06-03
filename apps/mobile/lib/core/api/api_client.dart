@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:nihongo_bjt/core/api/api_exception.dart';
 import 'package:nihongo_bjt/core/config/app_environment.dart';
 
-/// Thin HTTP client for the NihonGo BJT API.
+/// Thin HTTP client for the KotobaWorks API.
 ///
 /// Owns base-URL resolution, JSON decoding, and error normalization so feature
 /// repositories depend on a small, testable surface instead of `package:http`
