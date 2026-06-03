@@ -50,6 +50,35 @@ final flashcardReviewSyncServiceProvider = Provider<FlashcardReviewSyncService>(
   },
 );
 
+/// Production controller for the user-triggered "sync now" action on home.
+///
+/// Wraps the review sync service so the UI gets a real loading/result/
+/// error lifecycle (the service itself is stateless). The last sync outcome
+/// is held in the controller state (`null` until the first run). A no-op in
+/// mock/dev mode, where there is no offline queue to drain.
+final reviewSyncControllerProvider =
+    AsyncNotifierProvider<ReviewSyncController, ReviewSyncResult?>(
+      ReviewSyncController.new,
+    );
+
+class ReviewSyncController extends AsyncNotifier<ReviewSyncResult?> {
+  @override
+  Future<ReviewSyncResult?> build() async => null;
+
+  /// Drains the offline review queue once. Surfaces loading/error through
+  /// [state]; returns the result on success, or `null` when it could not run
+  /// (mock/dev mode) or the drain itself failed (e.g. still offline).
+  Future<ReviewSyncResult?> sync() async {
+    if (!ref.read(appEnvironmentProvider).useApiFlashcards) return null;
+    state = const AsyncValue<ReviewSyncResult?>.loading();
+    final guarded = await AsyncValue.guard(
+      () => ref.read(flashcardReviewSyncServiceProvider).sync(),
+    );
+    state = guarded;
+    return guarded.value;
+  }
+}
+
 /// The active flashcard data source. Defaults to the in-memory mock for stable
 /// dev/test; switches to [ApiFlashcardRepository] (cache + offline queue) when
 /// the environment selects `FLASHCARD_DATA_SOURCE=api`. Consumers are
@@ -168,7 +197,30 @@ class ReviewSessionController extends AsyncNotifier<ReviewSessionState> {
         ratings: {...session.ratings, card.id: rating},
       ),
     );
+    _recordStudyEvent(rating);
     unawaited(_submitRating(card.userFlashcardId, rating));
+  }
+
+  /// Appends a local study-log event for the graded review. Analytics is
+  /// best-effort: it only runs against the real data source (the on-device
+  /// database is not used in mock/dev mode), and a failure here must never
+  /// affect the review flow, so it is fire-and-forget and swallows errors.
+  void _recordStudyEvent(SrsRating rating) {
+    if (!ref.read(appEnvironmentProvider).useApiFlashcards) return;
+    unawaited(
+      Future(() async {
+        try {
+          await ref
+              .read(studyLogDaoProvider)
+              .recordFlashcardReview(
+                rating: rating,
+                occurredAt: DateTime.now().toUtc(),
+              );
+        } on Object {
+          // Best-effort analytics; never surface to the learner.
+        }
+      }),
+    );
   }
 
   Future<void> _submitRating(String userFlashcardId, SrsRating rating) async {

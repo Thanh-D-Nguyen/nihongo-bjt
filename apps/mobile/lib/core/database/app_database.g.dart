@@ -1705,6 +1705,314 @@ class UserSettingsCompanion extends UpdateCompanion<UserSettingRow> {
   }
 }
 
+class $StudyEventsTable extends StudyEvents
+    with TableInfo<$StudyEventsTable, StudyEventRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $StudyEventsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+    'kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _ratingMeta = const VerificationMeta('rating');
+  @override
+  late final GeneratedColumn<String> rating = GeneratedColumn<String>(
+    'rating',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _occurredAtMeta = const VerificationMeta(
+    'occurredAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> occurredAt = GeneratedColumn<DateTime>(
+    'occurred_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, kind, rating, occurredAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'study_events';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<StudyEventRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('kind')) {
+      context.handle(
+        _kindMeta,
+        kind.isAcceptableOrUnknown(data['kind']!, _kindMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_kindMeta);
+    }
+    if (data.containsKey('rating')) {
+      context.handle(
+        _ratingMeta,
+        rating.isAcceptableOrUnknown(data['rating']!, _ratingMeta),
+      );
+    }
+    if (data.containsKey('occurred_at')) {
+      context.handle(
+        _occurredAtMeta,
+        occurredAt.isAcceptableOrUnknown(data['occurred_at']!, _occurredAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_occurredAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  StudyEventRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return StudyEventRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      kind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}kind'],
+      )!,
+      rating: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}rating'],
+      ),
+      occurredAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}occurred_at'],
+      )!,
+    );
+  }
+
+  @override
+  $StudyEventsTable createAlias(String alias) {
+    return $StudyEventsTable(attachedDatabase, alias);
+  }
+}
+
+class StudyEventRow extends DataClass implements Insertable<StudyEventRow> {
+  /// Local autoincrement id.
+  final int id;
+
+  /// Event kind (e.g. `flashcard_review`). Stored as a stable string so new
+  /// kinds can be added without a schema change.
+  final String kind;
+
+  /// SRS grade for review events, stored as the enum name
+  /// (`again|hard|good|easy`); null for kinds that have no grade.
+  final String? rating;
+
+  /// When the event happened (UTC).
+  final DateTime occurredAt;
+  const StudyEventRow({
+    required this.id,
+    required this.kind,
+    this.rating,
+    required this.occurredAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['kind'] = Variable<String>(kind);
+    if (!nullToAbsent || rating != null) {
+      map['rating'] = Variable<String>(rating);
+    }
+    map['occurred_at'] = Variable<DateTime>(occurredAt);
+    return map;
+  }
+
+  StudyEventsCompanion toCompanion(bool nullToAbsent) {
+    return StudyEventsCompanion(
+      id: Value(id),
+      kind: Value(kind),
+      rating: rating == null && nullToAbsent
+          ? const Value.absent()
+          : Value(rating),
+      occurredAt: Value(occurredAt),
+    );
+  }
+
+  factory StudyEventRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return StudyEventRow(
+      id: serializer.fromJson<int>(json['id']),
+      kind: serializer.fromJson<String>(json['kind']),
+      rating: serializer.fromJson<String?>(json['rating']),
+      occurredAt: serializer.fromJson<DateTime>(json['occurredAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'kind': serializer.toJson<String>(kind),
+      'rating': serializer.toJson<String?>(rating),
+      'occurredAt': serializer.toJson<DateTime>(occurredAt),
+    };
+  }
+
+  StudyEventRow copyWith({
+    int? id,
+    String? kind,
+    Value<String?> rating = const Value.absent(),
+    DateTime? occurredAt,
+  }) => StudyEventRow(
+    id: id ?? this.id,
+    kind: kind ?? this.kind,
+    rating: rating.present ? rating.value : this.rating,
+    occurredAt: occurredAt ?? this.occurredAt,
+  );
+  StudyEventRow copyWithCompanion(StudyEventsCompanion data) {
+    return StudyEventRow(
+      id: data.id.present ? data.id.value : this.id,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      rating: data.rating.present ? data.rating.value : this.rating,
+      occurredAt: data.occurredAt.present
+          ? data.occurredAt.value
+          : this.occurredAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('StudyEventRow(')
+          ..write('id: $id, ')
+          ..write('kind: $kind, ')
+          ..write('rating: $rating, ')
+          ..write('occurredAt: $occurredAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, kind, rating, occurredAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is StudyEventRow &&
+          other.id == this.id &&
+          other.kind == this.kind &&
+          other.rating == this.rating &&
+          other.occurredAt == this.occurredAt);
+}
+
+class StudyEventsCompanion extends UpdateCompanion<StudyEventRow> {
+  final Value<int> id;
+  final Value<String> kind;
+  final Value<String?> rating;
+  final Value<DateTime> occurredAt;
+  const StudyEventsCompanion({
+    this.id = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.rating = const Value.absent(),
+    this.occurredAt = const Value.absent(),
+  });
+  StudyEventsCompanion.insert({
+    this.id = const Value.absent(),
+    required String kind,
+    this.rating = const Value.absent(),
+    required DateTime occurredAt,
+  }) : kind = Value(kind),
+       occurredAt = Value(occurredAt);
+  static Insertable<StudyEventRow> custom({
+    Expression<int>? id,
+    Expression<String>? kind,
+    Expression<String>? rating,
+    Expression<DateTime>? occurredAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (kind != null) 'kind': kind,
+      if (rating != null) 'rating': rating,
+      if (occurredAt != null) 'occurred_at': occurredAt,
+    });
+  }
+
+  StudyEventsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? kind,
+    Value<String?>? rating,
+    Value<DateTime>? occurredAt,
+  }) {
+    return StudyEventsCompanion(
+      id: id ?? this.id,
+      kind: kind ?? this.kind,
+      rating: rating ?? this.rating,
+      occurredAt: occurredAt ?? this.occurredAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    if (rating.present) {
+      map['rating'] = Variable<String>(rating.value);
+    }
+    if (occurredAt.present) {
+      map['occurred_at'] = Variable<DateTime>(occurredAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('StudyEventsCompanion(')
+          ..write('id: $id, ')
+          ..write('kind: $kind, ')
+          ..write('rating: $rating, ')
+          ..write('occurredAt: $occurredAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -1714,6 +2022,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $FlashcardReviewQueueTable flashcardReviewQueue =
       $FlashcardReviewQueueTable(this);
   late final $UserSettingsTable userSettings = $UserSettingsTable(this);
+  late final $StudyEventsTable studyEvents = $StudyEventsTable(this);
   late final FlashcardCacheDao flashcardCacheDao = FlashcardCacheDao(
     this as AppDatabase,
   );
@@ -1723,6 +2032,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final UserSettingsDao userSettingsDao = UserSettingsDao(
     this as AppDatabase,
   );
+  late final StudyLogDao studyLogDao = StudyLogDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -1732,6 +2042,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     flashcardReviewCards,
     flashcardReviewQueue,
     userSettings,
+    studyEvents,
   ];
 }
 
@@ -2651,6 +2962,183 @@ typedef $$UserSettingsTableProcessedTableManager =
       UserSettingRow,
       PrefetchHooks Function()
     >;
+typedef $$StudyEventsTableCreateCompanionBuilder =
+    StudyEventsCompanion Function({
+      Value<int> id,
+      required String kind,
+      Value<String?> rating,
+      required DateTime occurredAt,
+    });
+typedef $$StudyEventsTableUpdateCompanionBuilder =
+    StudyEventsCompanion Function({
+      Value<int> id,
+      Value<String> kind,
+      Value<String?> rating,
+      Value<DateTime> occurredAt,
+    });
+
+class $$StudyEventsTableFilterComposer
+    extends Composer<_$AppDatabase, $StudyEventsTable> {
+  $$StudyEventsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get rating => $composableBuilder(
+    column: $table.rating,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get occurredAt => $composableBuilder(
+    column: $table.occurredAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$StudyEventsTableOrderingComposer
+    extends Composer<_$AppDatabase, $StudyEventsTable> {
+  $$StudyEventsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get rating => $composableBuilder(
+    column: $table.rating,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get occurredAt => $composableBuilder(
+    column: $table.occurredAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$StudyEventsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $StudyEventsTable> {
+  $$StudyEventsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<String> get rating =>
+      $composableBuilder(column: $table.rating, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get occurredAt => $composableBuilder(
+    column: $table.occurredAt,
+    builder: (column) => column,
+  );
+}
+
+class $$StudyEventsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $StudyEventsTable,
+          StudyEventRow,
+          $$StudyEventsTableFilterComposer,
+          $$StudyEventsTableOrderingComposer,
+          $$StudyEventsTableAnnotationComposer,
+          $$StudyEventsTableCreateCompanionBuilder,
+          $$StudyEventsTableUpdateCompanionBuilder,
+          (
+            StudyEventRow,
+            BaseReferences<_$AppDatabase, $StudyEventsTable, StudyEventRow>,
+          ),
+          StudyEventRow,
+          PrefetchHooks Function()
+        > {
+  $$StudyEventsTableTableManager(_$AppDatabase db, $StudyEventsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$StudyEventsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$StudyEventsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$StudyEventsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> kind = const Value.absent(),
+                Value<String?> rating = const Value.absent(),
+                Value<DateTime> occurredAt = const Value.absent(),
+              }) => StudyEventsCompanion(
+                id: id,
+                kind: kind,
+                rating: rating,
+                occurredAt: occurredAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String kind,
+                Value<String?> rating = const Value.absent(),
+                required DateTime occurredAt,
+              }) => StudyEventsCompanion.insert(
+                id: id,
+                kind: kind,
+                rating: rating,
+                occurredAt: occurredAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$StudyEventsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $StudyEventsTable,
+      StudyEventRow,
+      $$StudyEventsTableFilterComposer,
+      $$StudyEventsTableOrderingComposer,
+      $$StudyEventsTableAnnotationComposer,
+      $$StudyEventsTableCreateCompanionBuilder,
+      $$StudyEventsTableUpdateCompanionBuilder,
+      (
+        StudyEventRow,
+        BaseReferences<_$AppDatabase, $StudyEventsTable, StudyEventRow>,
+      ),
+      StudyEventRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -2663,4 +3151,6 @@ class $AppDatabaseManager {
       $$FlashcardReviewQueueTableTableManager(_db, _db.flashcardReviewQueue);
   $$UserSettingsTableTableManager get userSettings =>
       $$UserSettingsTableTableManager(_db, _db.userSettings);
+  $$StudyEventsTableTableManager get studyEvents =>
+      $$StudyEventsTableTableManager(_db, _db.studyEvents);
 }

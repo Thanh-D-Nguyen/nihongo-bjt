@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:nihongo_bjt/core/theme/app_colors.dart';
+import 'package:nihongo_bjt/core/theme/app_palette.dart';
 
 /// Brand wordmark for NihonGo BJT.
 ///
-/// Reused across the home shell, auth, and splash surfaces. Navy lead word +
-/// blue accent per the brand color system in `DESIGN.md`.
+/// Reused across the home shell, auth, and splash surfaces. The lead word uses
+/// the primary ink color (so it stays readable on dark canvas) and `BJT` uses
+/// the interactive accent, per the brand color system in `DESIGN.md`.
 class AppLogo extends StatelessWidget {
   const AppLogo({this.fontSize = 28, super.key});
 
@@ -12,6 +13,7 @@ class AppLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     final style = TextStyle(
       fontSize: fontSize,
       fontWeight: FontWeight.w700,
@@ -23,11 +25,11 @@ class AppLogo extends StatelessWidget {
         children: [
           TextSpan(
             text: 'NihonGo ',
-            style: style.copyWith(color: AppColors.navy),
+            style: style.copyWith(color: palette.ink),
           ),
           TextSpan(
             text: 'BJT',
-            style: style.copyWith(color: AppColors.blue),
+            style: style.copyWith(color: palette.accent),
           ),
         ],
       ),

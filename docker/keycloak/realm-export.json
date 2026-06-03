@@ -136,6 +136,53 @@
           }
         }
       ]
+    },
+    {
+      "id": "e5e5e5e5-e5e5-e5e5-e5e5-e5e5e5e5e5e5",
+      "clientId": "nihongo-mobile",
+      "name": "NihonGo Mobile",
+      "description": "Flutter mobile app (public client, PKCE)",
+      "surrogateAuthRequired": false,
+      "enabled": true,
+      "alwaysDisplayInConsole": false,
+      "clientAuthenticatorType": "client-secret",
+      "redirectUris": [
+        "com.nihongobjt.app://oauth2redirect",
+        "http://localhost:4000/*"
+      ],
+      "webOrigins": [
+        "+"
+      ],
+      "notBefore": 0,
+      "bearerOnly": false,
+      "consentRequired": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "publicClient": true,
+      "frontchannelLogout": true,
+      "protocol": "openid-connect",
+      "attributes": {
+        "post.logout.redirect.uris": "com.nihongobjt.app://oauth2redirect",
+        "pkce.code.challenge.method": "S256"
+      },
+      "authenticationFlowBindingOverrides": {},
+      "fullScopeAllowed": true,
+      "nodeReRegistrationTimeout": -1,
+      "protocolMappers": [
+        {
+          "name": "nihongo-mobile audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "nihongo-mobile",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ]
     }
   ],
   "users": [
@@ -154,7 +201,8 @@
         }
       ],
       "realmRoles": [
-        "user"
+        "user",
+        "offline_access"
       ],
       "clientRoles": {},
       "groups": []
@@ -167,7 +215,8 @@
       "lastName": "Admin",
       "emailVerified": true,
       "realmRoles": [
-        "admin"
+        "admin",
+        "offline_access"
       ],
       "credentials": [
         {

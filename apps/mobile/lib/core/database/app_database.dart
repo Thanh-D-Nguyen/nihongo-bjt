@@ -5,6 +5,8 @@ import 'package:drift/native.dart';
 import 'package:nihongo_bjt/features/flashcards/data/local/flashcard_cache_dao.dart';
 import 'package:nihongo_bjt/features/flashcards/data/local/flashcard_cache_tables.dart';
 import 'package:nihongo_bjt/features/flashcards/data/local/review_queue_dao.dart';
+import 'package:nihongo_bjt/features/progress/data/local/study_log_dao.dart';
+import 'package:nihongo_bjt/features/progress/data/local/study_log_tables.dart';
 import 'package:nihongo_bjt/features/settings/data/local/user_settings_dao.dart';
 import 'package:nihongo_bjt/features/settings/data/local/user_settings_table.dart';
 import 'package:path/path.dart' as p;
@@ -23,8 +25,9 @@ part 'app_database.g.dart';
     FlashcardReviewCards,
     FlashcardReviewQueue,
     UserSettings,
+    StudyEvents,
   ],
-  daos: [FlashcardCacheDao, ReviewQueueDao, UserSettingsDao],
+  daos: [FlashcardCacheDao, ReviewQueueDao, UserSettingsDao, StudyLogDao],
 )
 class AppDatabase extends _$AppDatabase {
   /// Opens the real on-device database (lazy file resolution).
@@ -35,7 +38,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -48,6 +51,10 @@ class AppDatabase extends _$AppDatabase {
       // v3 (Phase 10.2): introduce the device-scoped settings store.
       if (from < 3) {
         await m.createTable(userSettings);
+      }
+      // v4 (Phase 02 Progress): introduce the on-device study log.
+      if (from < 4) {
+        await m.createTable(studyEvents);
       }
     },
   );

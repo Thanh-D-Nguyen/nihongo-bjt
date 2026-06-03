@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:nihongo_bjt/core/theme/app_colors.dart';
+import 'package:nihongo_bjt/core/theme/app_motion.dart';
+import 'package:nihongo_bjt/core/theme/app_palette.dart';
 import 'package:nihongo_bjt/core/theme/app_radius.dart';
 import 'package:nihongo_bjt/core/theme/app_spacing.dart';
 import 'package:nihongo_bjt/features/auth/presentation/auth_controller.dart';
@@ -10,6 +11,7 @@ import 'package:nihongo_bjt/features/settings/domain/user_settings.dart';
 import 'package:nihongo_bjt/features/settings/presentation/settings_controller.dart';
 import 'package:nihongo_bjt/l10n/gen/app_localizations.dart';
 import 'package:nihongo_bjt/shared/widgets/app_card.dart';
+import 'package:nihongo_bjt/shared/widgets/app_scaffold.dart';
 
 /// Profile & settings screen (Phase 10.2).
 ///
@@ -28,28 +30,25 @@ class ProfilePage extends ConsumerWidget {
     final settings =
         ref.watch(settingsControllerProvider).value ?? UserSettings.defaults;
 
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.profileTitle)),
-      body: SafeArea(
-        top: false,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSpacing.m),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _SectionLabel(l10n.profileAccountSection),
-              const SizedBox(height: AppSpacing.s),
-              _AccountCard(claims: claims),
-              const SizedBox(height: AppSpacing.l),
-              _SectionLabel(l10n.profilePreferencesSection),
-              const SizedBox(height: AppSpacing.s),
-              _LanguageCard(selected: settings.localeOption),
-              const SizedBox(height: AppSpacing.m),
-              _FuriganaCard(enabled: settings.furiganaEnabled),
-              const SizedBox(height: AppSpacing.xl),
-              const _SignOutButton(),
-            ],
-          ),
+    return AppScaffold(
+      title: l10n.profileTitle,
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppSpacing.l),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _SectionLabel(l10n.profileAccountSection),
+            const SizedBox(height: AppSpacing.s),
+            _AccountCard(claims: claims),
+            const SizedBox(height: AppSpacing.l),
+            _SectionLabel(l10n.profilePreferencesSection),
+            const SizedBox(height: AppSpacing.s),
+            _LanguageCard(selected: settings.localeOption),
+            const SizedBox(height: AppSpacing.m),
+            _FuriganaCard(enabled: settings.furiganaEnabled),
+            const SizedBox(height: AppSpacing.xl),
+            const _SignOutButton(),
+          ],
         ),
       ),
     );
@@ -86,7 +85,7 @@ class _SectionLabel extends StatelessWidget {
       child: Text(
         text.toUpperCase(),
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
-          color: AppColors.inkTertiary,
+          color: context.palette.inkTertiary,
           letterSpacing: 0.8,
           fontWeight: FontWeight.w600,
         ),
@@ -129,7 +128,7 @@ class _AccountCard extends ConsumerWidget {
                   Text(
                     secondary,
                     style: text.bodySmall?.copyWith(
-                      color: AppColors.inkSecondary,
+                      color: context.palette.inkSecondary,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -158,14 +157,14 @@ class _Avatar extends StatelessWidget {
       width: 56,
       height: 56,
       alignment: Alignment.center,
-      decoration: const BoxDecoration(
-        color: AppColors.navy,
+      decoration: BoxDecoration(
+        color: context.palette.accent,
         shape: BoxShape.circle,
       ),
       child: Text(
         initial,
         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-          color: AppColors.surface,
+          color: Colors.white,
           fontWeight: FontWeight.w700,
         ),
       ),
@@ -242,14 +241,16 @@ class _OptionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     final text = Theme.of(context).textTheme;
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
     return Semantics(
       selected: selected,
       button: true,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        focusColor: AppColors.blue.withValues(alpha: 0.12),
+        focusColor: palette.accent.withValues(alpha: 0.12),
         child: Container(
           constraints: const BoxConstraints(minHeight: 48),
           padding: const EdgeInsets.symmetric(
@@ -262,17 +263,17 @@ class _OptionRow extends StatelessWidget {
                 child: Text(
                   label,
                   style: text.bodyLarge?.copyWith(
-                    color: selected ? AppColors.navy : AppColors.ink,
+                    color: selected ? palette.accent : palette.ink,
                     fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
                   ),
                 ),
               ),
               AnimatedScale(
                 scale: selected ? 1 : 0,
-                duration: const Duration(milliseconds: 150),
-                child: const Icon(
+                duration: reduceMotion ? Duration.zero : AppMotion.fast,
+                child: Icon(
                   Icons.check_circle_rounded,
-                  color: AppColors.navy,
+                  color: palette.accent,
                   size: 22,
                 ),
               ),
@@ -292,6 +293,7 @@ class _FuriganaCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final palette = context.palette;
     final text = Theme.of(context).textTheme;
 
     void toggle() => _persistChange(
@@ -323,7 +325,7 @@ class _FuriganaCard extends ConsumerWidget {
                   Text(
                     l10n.profileFuriganaSubtitle,
                     style: text.bodySmall?.copyWith(
-                      color: AppColors.inkSecondary,
+                      color: palette.inkSecondary,
                     ),
                   ),
                 ],
@@ -332,7 +334,7 @@ class _FuriganaCard extends ConsumerWidget {
             const SizedBox(width: AppSpacing.m),
             Switch.adaptive(
               value: enabled,
-              activeThumbColor: AppColors.navy,
+              activeThumbColor: palette.accent,
               onChanged: (_) => toggle(),
             ),
           ],
@@ -348,6 +350,7 @@ class _SignOutButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final palette = context.palette;
     final isSigningOut = ref.watch(authControllerProvider).isLoading;
 
     return SizedBox(
@@ -357,19 +360,19 @@ class _SignOutButton extends ConsumerWidget {
             ? null
             : () => ref.read(authControllerProvider.notifier).signOut(),
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.danger,
-          side: const BorderSide(color: AppColors.danger),
+          foregroundColor: palette.danger,
+          side: BorderSide(color: palette.danger),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.md),
           ),
         ),
         icon: isSigningOut
-            ? const SizedBox(
+            ? SizedBox(
                 width: 18,
                 height: 18,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: AppColors.danger,
+                  color: palette.danger,
                 ),
               )
             : const Icon(Icons.logout_rounded, size: 20),

@@ -74,6 +74,34 @@ For context, start from:
 - Keep diffs surgical — no drive-by refactors.
 - After implementation, report files changed and verification steps.
 
+## Agent Execution Rules (mandatory)
+
+- **Never fake completion.** Do not claim a task is done unless verification
+  actually passed, or state precisely what could not be verified and why.
+- **Always inspect before editing.** Read the relevant files and existing
+  patterns first; preserve the existing architecture unless there is a clear,
+  stated reason to change it.
+- **Report exact files changed** after every task.
+- **Always run the available verification commands** for the area you touched
+  (e.g. `flutter analyze` / `flutter test` for mobile, `pnpm lint` /
+  `pnpm typecheck` / `pnpm test` for the monorepo). If a command cannot run,
+  say exactly which one and why.
+- **Do not modify unrelated files.** Keep changes small, focused, reviewable.
+- **Prefer production-quality code over quick demos.** No throwaway patterns.
+- **Do not hardcode user-facing strings** — use the project i18n layer.
+- **Do not rename public APIs/routes or change backend contracts** without a
+  clear reason.
+
+## Mobile (Flutter) app
+
+The mobile app lives in `apps/mobile` (Flutter + Riverpod + go_router + drift).
+Before any mobile change, read
+`.github/instructions/mobile.instructions.md` and `docs/mobile/MOBILE_DESIGN_SYSTEM.md`,
+and follow `docs/mobile/MOBILE_SCREEN_CHECKLIST.md` for every screen. Reusable
+prompts live in `.github/prompts/implement-mobile-screen.prompt.md`,
+`.github/prompts/polish-mobile-screen.prompt.md`, and
+`.github/prompts/review-mobile-screen.prompt.md`.
+
 ## Caveman Mode (Token Saving)
 
 Respond terse like smart caveman. All technical substance stay. Only fluff die.

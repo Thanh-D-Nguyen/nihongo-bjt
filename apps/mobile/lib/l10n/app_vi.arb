@@ -6,6 +6,11 @@
     "description": "Generic retry button shared by error states."
   },
 
+  "a11yProgressLabel": "Tiến độ",
+  "@a11yProgressLabel": {
+    "description": "Screen-reader label for progress bars (the percentage is announced automatically)."
+  },
+
   "homeWelcome": "ようこそ",
   "@homeWelcome": {
     "description": "Decorative Japanese welcome greeting on the home hero card."
@@ -64,6 +69,36 @@
   "homeSyncAllSynced": "Tất cả đã đồng bộ",
   "@homeSyncAllSynced": {
     "description": "Sync status when the offline review queue is empty."
+  },
+  "homeSyncAction": "Đồng bộ ngay",
+  "@homeSyncAction": {
+    "description": "Button that manually drains the offline review queue."
+  },
+  "homeSyncInProgress": "Đang đồng bộ…",
+  "@homeSyncInProgress": {
+    "description": "Sync button label while the queue is being drained."
+  },
+  "homeSyncResultDone": "{synced, plural, =0{Không có review nào cần đồng bộ} =1{Đã đồng bộ 1 review} other{Đã đồng bộ {synced} review}}",
+  "@homeSyncResultDone": {
+    "description": "Snackbar shown after a fully successful sync.",
+    "placeholders": {
+      "synced": {
+        "type": "int"
+      }
+    }
+  },
+  "homeSyncResultPartial": "{failed, plural, =1{Còn 1 review chưa đồng bộ. Sẽ thử lại sau.} other{Còn {failed} review chưa đồng bộ. Sẽ thử lại sau.}}",
+  "@homeSyncResultPartial": {
+    "description": "Snackbar shown when some reviews could not be synced.",
+    "placeholders": {
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
+  "homeSyncResultError": "Không đồng bộ được. Kiểm tra kết nối và thử lại.",
+  "@homeSyncResultError": {
+    "description": "Snackbar shown when the sync attempt fails entirely (e.g. offline)."
   },
   "homeDashboardEmptyTitle": "Chưa có nội dung học",
   "@homeDashboardEmptyTitle": {
@@ -131,9 +166,17 @@
       }
     }
   },
+  "deckListEmptyTitle": "Chưa có bộ thẻ",
+  "@deckListEmptyTitle": {
+    "description": "Title of the empty state when no decks exist."
+  },
   "deckListEmpty": "Chưa có bộ thẻ nào.",
   "@deckListEmpty": {
     "description": "Empty state when no decks exist."
+  },
+  "deckListErrorTitle": "Không tải được",
+  "@deckListErrorTitle": {
+    "description": "Title of the error state when the deck list fails to load."
   },
   "deckListError": "Không tải được danh sách bộ thẻ.",
   "@deckListError": {
@@ -147,6 +190,10 @@
   "reviewReveal": "Hiện đáp án",
   "@reviewReveal": {
     "description": "Button that reveals the answer side of a card."
+  },
+  "reviewRevealHint": "Tự nhớ lại trước, rồi chạm để xem đáp án.",
+  "@reviewRevealHint": {
+    "description": "Hint above the reveal button encouraging active recall."
   },
   "reviewComplete": "Hoàn thành!",
   "@reviewComplete": {
@@ -169,9 +216,17 @@
   "@reviewBackToList": {
     "description": "Button to return to the deck list from the completion screen."
   },
+  "reviewEmptyTitle": "Bộ thẻ trống",
+  "@reviewEmptyTitle": {
+    "description": "Title of the empty state when the deck has no cards."
+  },
   "reviewEmpty": "Bộ thẻ này chưa có thẻ nào.",
   "@reviewEmpty": {
     "description": "Empty state when the selected deck has no cards."
+  },
+  "reviewErrorTitle": "Không tải được",
+  "@reviewErrorTitle": {
+    "description": "Title of the error state when the deck fails to load."
   },
   "reviewError": "Không tải được bộ thẻ.",
   "@reviewError": {
@@ -259,5 +314,334 @@
   "profileSaveError": "Không lưu được thay đổi. Vui lòng thử lại.",
   "@profileSaveError": {
     "description": "Snackbar shown when persisting a preference fails."
+  },
+
+  "navHome": "Trang chủ",
+  "@navHome": {
+    "description": "Bottom navigation label for the Home tab."
+  },
+  "navLearn": "Học",
+  "@navLearn": {
+    "description": "Bottom navigation label for the Learn tab."
+  },
+  "navReview": "Ôn tập",
+  "@navReview": {
+    "description": "Bottom navigation label for the Review tab."
+  },
+  "navProgress": "Tiến độ",
+  "@navProgress": {
+    "description": "Bottom navigation label for the Progress tab."
+  },
+  "navSettings": "Cài đặt",
+  "@navSettings": {
+    "description": "Bottom navigation label for the Settings tab."
+  },
+
+  "learnTitle": "Học",
+  "@learnTitle": {
+    "description": "App bar title for the Learn tab."
+  },
+  "learnPreviewBadge": "Nội dung mẫu",
+  "@learnPreviewBadge": {
+    "description": "Badge marking lesson content as a preview, not from a backend."
+  },
+  "learnPreviewNotice": "Đây là nội dung học mẫu để xem trước. Bài học thật sẽ được kết nối sau.",
+  "@learnPreviewNotice": {
+    "description": "Honest notice on the Learn hub explaining the content is preview-only."
+  },
+  "learnDailyLessonTitle": "Bài học hôm nay",
+  "@learnDailyLessonTitle": {
+    "description": "Title of the daily recommended lesson card on the Learn hub."
+  },
+  "learnDailyLessonCta": "Học ngay",
+  "@learnDailyLessonCta": {
+    "description": "CTA to open today's recommended lesson."
+  },
+  "learnCategoriesTitle": "Danh mục",
+  "@learnCategoriesTitle": {
+    "description": "Section header above the lesson categories."
+  },
+  "learnLessonsTitle": "Bài học",
+  "@learnLessonsTitle": {
+    "description": "Section header above the lesson list."
+  },
+  "learnLessonsInCategory": "{count,plural, =1{{count} bài} other{{count} bài}}",
+  "@learnLessonsInCategory": {
+    "description": "Number of lessons in a category.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "learnMinutes": "{count} phút",
+  "@learnMinutes": {
+    "description": "Estimated reading time of a lesson in minutes.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "learnQuestionCount": "{count,plural, =1{{count} câu hỏi} other{{count} câu hỏi}}",
+  "@learnQuestionCount": {
+    "description": "Number of practice questions in a lesson.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "learnEmptyTitle": "Chưa có bài học",
+  "@learnEmptyTitle": {
+    "description": "Empty state title on the Learn hub when no lessons exist."
+  },
+  "learnEmptyBody": "Bài học sẽ xuất hiện ở đây khi có sẵn.",
+  "@learnEmptyBody": {
+    "description": "Empty state body on the Learn hub."
+  },
+  "learnErrorTitle": "Không tải được bài học",
+  "@learnErrorTitle": {
+    "description": "Error state title on the Learn hub."
+  },
+  "learnErrorBody": "Đã xảy ra lỗi khi tải nội dung học. Vui lòng thử lại.",
+  "@learnErrorBody": {
+    "description": "Error state body on the Learn hub."
+  },
+  "levelFoundational": "Cơ bản",
+  "@levelFoundational": {
+    "description": "Lesson level label: foundational."
+  },
+  "levelPractical": "Thực hành",
+  "@levelPractical": {
+    "description": "Lesson level label: practical."
+  },
+  "levelAdvanced": "Nâng cao",
+  "@levelAdvanced": {
+    "description": "Lesson level label: advanced."
+  },
+  "lessonDetailNotFound": "Không tìm thấy bài học này.",
+  "@lessonDetailNotFound": {
+    "description": "Shown when a lesson id cannot be resolved."
+  },
+  "lessonDetailContentTitle": "Nội dung",
+  "@lessonDetailContentTitle": {
+    "description": "Section header above the lesson's readable sections."
+  },
+  "lessonPracticeCta": "{count,plural, =1{Luyện tập ({count} câu)} other{Luyện tập ({count} câu)}}",
+  "@lessonPracticeCta": {
+    "description": "CTA on the lesson detail screen to start practice.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "practiceTitle": "Luyện tập",
+  "@practiceTitle": {
+    "description": "App bar title for the practice player."
+  },
+  "practiceProgress": "Câu {current} / {total}",
+  "@practiceProgress": {
+    "description": "Progress label showing current question position.",
+    "placeholders": {
+      "current": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "practiceNext": "Tiếp theo",
+  "@practiceNext": {
+    "description": "Button to advance to the next question."
+  },
+  "practicePrevious": "Quay lại",
+  "@practicePrevious": {
+    "description": "Button to go back to the previous question."
+  },
+  "practiceFinish": "Hoàn thành",
+  "@practiceFinish": {
+    "description": "Button to finish the practice run."
+  },
+  "practiceCompleteTitle": "Hoàn thành bài luyện tập",
+  "@practiceCompleteTitle": {
+    "description": "Title shown when the practice run is complete."
+  },
+  "practiceScore": "Bạn trả lời đúng {correct}/{total} câu.",
+  "@practiceScore": {
+    "description": "Score summary after completing practice.",
+    "placeholders": {
+      "correct": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "practiceRestart": "Làm lại",
+  "@practiceRestart": {
+    "description": "Button to restart the practice run."
+  },
+  "practiceBackToLesson": "Về bài học",
+  "@practiceBackToLesson": {
+    "description": "Button to return to the lesson from the practice summary."
+  },
+  "practiceReviewTitle": "Xem lại đáp án",
+  "@practiceReviewTitle": {
+    "description": "Section header above the per-question review on the result screen."
+  },
+  "practiceResultQuestionLabel": "Câu {position}",
+  "@practiceResultQuestionLabel": {
+    "description": "Label for a question in the result review list.",
+    "placeholders": {
+      "position": { "type": "int" }
+    }
+  },
+  "practiceResultCorrect": "Đúng",
+  "@practiceResultCorrect": {
+    "description": "Verdict tag shown when the learner answered correctly."
+  },
+  "practiceResultIncorrect": "Sai",
+  "@practiceResultIncorrect": {
+    "description": "Verdict tag shown when the learner answered incorrectly."
+  },
+  "practiceCorrectAnswer": "Đáp án đúng",
+  "@practiceCorrectAnswer": {
+    "description": "Marker on the correct option in the result review."
+  },
+  "practiceYourAnswer": "Bạn đã chọn",
+  "@practiceYourAnswer": {
+    "description": "Marker on the learner's wrong selection in the result review."
+  },
+  "practiceExplanationTitle": "Giải thích",
+  "@practiceExplanationTitle": {
+    "description": "Title of the explanation box on the result review."
+  },
+  "practiceEmptyTitle": "Chưa có câu hỏi",
+  "@practiceEmptyTitle": {
+    "description": "Empty state title when a lesson has no questions."
+  },
+  "practiceEmptyBody": "Bài học này chưa có câu hỏi luyện tập.",
+  "@practiceEmptyBody": {
+    "description": "Empty state body when a lesson has no questions."
+  },
+  "practiceErrorTitle": "Không tải được câu hỏi",
+  "@practiceErrorTitle": {
+    "description": "Error state title in the practice player."
+  },
+  "practiceErrorBody": "Đã xảy ra lỗi khi tải câu hỏi. Vui lòng thử lại.",
+  "@practiceErrorBody": {
+    "description": "Error state body in the practice player."
+  },
+
+  "reviewTabTitle": "Ôn tập",
+  "@reviewTabTitle": {
+    "description": "App bar title for the Review hub tab."
+  },
+  "reviewHubTitle": "Ôn tập tất cả",
+  "@reviewHubTitle": {
+    "description": "Heading on the Review hub above the review surfaces."
+  },
+  "reviewHubIntro": "Củng cố những gì đã học. Chọn một cách ôn tập bên dưới.",
+  "@reviewHubIntro": {
+    "description": "Subtitle introducing the Review hub."
+  },
+  "reviewFlashcardsTitle": "Flashcard",
+  "@reviewFlashcardsTitle": {
+    "description": "Title of the flashcards review section on the Review hub."
+  },
+  "reviewFlashcardsStat": "{deckCount} bộ · {cardCount} thẻ",
+  "@reviewFlashcardsStat": {
+    "description": "Available flashcard decks and total cards.",
+    "placeholders": {
+      "deckCount": { "type": "int" },
+      "cardCount": { "type": "int" }
+    }
+  },
+  "reviewFlashcardsEmpty": "Chưa có bộ flashcard nào.",
+  "@reviewFlashcardsEmpty": {
+    "description": "Shown when there are no flashcard decks to review."
+  },
+  "reviewFlashcardsCta": "Ôn flashcard",
+  "@reviewFlashcardsCta": {
+    "description": "CTA to open the flashcard deck list."
+  },
+  "reviewPracticeTitle": "Luyện tập",
+  "@reviewPracticeTitle": {
+    "description": "Title of the practice review section on the Review hub."
+  },
+  "reviewPracticeStat": "{count} bài có câu hỏi luyện tập",
+  "@reviewPracticeStat": {
+    "description": "Number of lessons that have practice questions.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "reviewPracticeEmpty": "Chưa có bài luyện tập nào.",
+  "@reviewPracticeEmpty": {
+    "description": "Shown when no lessons have practice questions."
+  },
+  "reviewPracticeCta": "Chọn bài luyện tập",
+  "@reviewPracticeCta": {
+    "description": "CTA to open the lesson list to start practice."
+  },
+  "reviewSectionError": "Không tải được nội dung. Vui lòng thử lại.",
+  "@reviewSectionError": {
+    "description": "Compact error message inside a Review hub section card."
+  },
+
+  "progressTitle": "Tiến độ",
+  "@progressTitle": {
+    "description": "App bar title for the Progress tab."
+  },
+  "progressIntro": "Hoạt động học tập của bạn trên thiết bị này.",
+  "@progressIntro": {
+    "description": "Short subtitle under the Progress header."
+  },
+  "progressEmptyTitle": "Chưa có hoạt động học tập",
+  "@progressEmptyTitle": {
+    "description": "Empty-state title shown before any review is recorded."
+  },
+  "progressEmptyBody": "Hoàn thành một phiên ôn flashcard để bắt đầu theo dõi tiến độ thật của bạn.",
+  "@progressEmptyBody": {
+    "description": "Empty-state body on the Progress tab."
+  },
+  "progressErrorTitle": "Không tải được tiến độ",
+  "@progressErrorTitle": {
+    "description": "Error-state title on the Progress tab."
+  },
+  "progressError": "Đã xảy ra lỗi khi đọc dữ liệu học tập trên thiết bị.",
+  "@progressError": {
+    "description": "Error-state body on the Progress tab."
+  },
+  "progressTodayLabel": "Hôm nay",
+  "@progressTodayLabel": {
+    "description": "Label for today's review count stat."
+  },
+  "progressStreakLabel": "Chuỗi ngày học",
+  "@progressStreakLabel": {
+    "description": "Label for the consecutive study-day streak stat."
+  },
+  "progressStreakValue": "{days, plural, =0{0 ngày} =1{1 ngày} other{{days} ngày}}",
+  "@progressStreakValue": {
+    "description": "Streak value in days.",
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  },
+  "progressWeekLabel": "7 ngày qua",
+  "@progressWeekLabel": {
+    "description": "Label for the last-7-days review-count stat."
+  },
+  "progressTotalLabel": "Tổng lượt ôn",
+  "@progressTotalLabel": {
+    "description": "Label for the all-time review-count stat."
+  },
+  "progressCardsValue": "{count, plural, =1{1 thẻ} other{{count} thẻ}}",
+  "@progressCardsValue": {
+    "description": "A count of reviewed cards.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "progressActivityTitle": "Hoạt động 7 ngày",
+  "@progressActivityTitle": {
+    "description": "Section title for the 7-day activity chart."
+  },
+  "progressRatingTitle": "Phân loại đánh giá",
+  "@progressRatingTitle": {
+    "description": "Section title for the SRS rating breakdown."
+  },
+
+  "offlineBannerMessage": "Bạn đang ngoại tuyến. Một số nội dung có thể chưa cập nhật.",
+  "@offlineBannerMessage": {
+    "description": "Slim non-blocking banner shown while the device is offline."
   }
 }

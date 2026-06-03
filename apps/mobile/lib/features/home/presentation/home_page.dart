@@ -3,9 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nihongo_bjt/app/router.dart';
 import 'package:nihongo_bjt/core/config/app_config.dart';
-import 'package:nihongo_bjt/core/theme/app_colors.dart';
+import 'package:nihongo_bjt/core/theme/app_palette.dart';
 import 'package:nihongo_bjt/core/theme/app_radius.dart';
 import 'package:nihongo_bjt/core/theme/app_spacing.dart';
+import 'package:nihongo_bjt/features/flashcards/presentation/flashcard_providers.dart';
 import 'package:nihongo_bjt/features/home/domain/home_dashboard_data.dart';
 import 'package:nihongo_bjt/features/home/presentation/home_dashboard_controller.dart';
 import 'package:nihongo_bjt/l10n/gen/app_localizations.dart';
@@ -175,21 +176,22 @@ class _MetricTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    final palette = context.palette;
     return AppCard(
       padding: const EdgeInsets.all(AppSpacing.m),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 24, color: AppColors.blue),
+          Icon(icon, size: 24, color: palette.accent),
           const SizedBox(height: AppSpacing.s),
           Text(
             value,
-            style: text.headlineSmall?.copyWith(color: AppColors.ink),
+            style: text.headlineSmall?.copyWith(color: palette.ink),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
             label,
-            style: text.bodySmall?.copyWith(color: AppColors.inkSecondary),
+            style: text.bodySmall?.copyWith(color: palette.inkSecondary),
           ),
         ],
       ),
@@ -197,46 +199,95 @@ class _MetricTile extends StatelessWidget {
   }
 }
 
-class _SyncStatusCard extends StatelessWidget {
+class _SyncStatusCard extends ConsumerWidget {
   const _SyncStatusCard({required this.pendingCount});
 
   final int pendingCount;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final text = Theme.of(context).textTheme;
+    final palette = context.palette;
     final synced = pendingCount == 0;
+    final syncing = ref.watch(reviewSyncControllerProvider).isLoading;
     return AppCard(
       padding: const EdgeInsets.all(AppSpacing.m),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Icon(
-            synced ? Icons.cloud_done_outlined : Icons.cloud_sync_outlined,
-            size: 24,
-            color: synced ? AppColors.success : AppColors.warning,
-          ),
-          const SizedBox(width: AppSpacing.m),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(l10n.homeSyncStatusTitle, style: text.titleMedium),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  synced
-                      ? l10n.homeSyncAllSynced
-                      : l10n.homeSyncPending(pendingCount),
-                  style: text.bodySmall?.copyWith(
-                    color: AppColors.inkSecondary,
-                  ),
+          Row(
+            children: [
+              Icon(
+                synced ? Icons.cloud_done_outlined : Icons.cloud_sync_outlined,
+                size: 24,
+                color: synced ? palette.success : palette.warning,
+              ),
+              const SizedBox(width: AppSpacing.m),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(l10n.homeSyncStatusTitle, style: text.titleMedium),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      synced
+                          ? l10n.homeSyncAllSynced
+                          : l10n.homeSyncPending(pendingCount),
+                      style: text.bodySmall?.copyWith(
+                        color: palette.inkSecondary,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
+          if (!synced) ...[
+            const SizedBox(height: AppSpacing.m),
+            SizedBox(
+              height: 48,
+              child: FilledButton.tonalIcon(
+                onPressed: syncing ? null : () => _sync(context, ref, l10n),
+                icon: syncing
+                    ? SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: palette.warning,
+                        ),
+                      )
+                    : const Icon(Icons.cloud_upload_outlined, size: 20),
+                label: Text(
+                  syncing ? l10n.homeSyncInProgress : l10n.homeSyncAction,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
+  }
+
+  Future<void> _sync(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l10n,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final result = await ref.read(reviewSyncControllerProvider.notifier).sync();
+    // Refresh the pending count after draining the queue.
+    ref.invalidate(homeDashboardProvider);
+    final String message;
+    if (result == null) {
+      message = l10n.homeSyncResultError;
+    } else if (result.failed == 0) {
+      message = l10n.homeSyncResultDone(result.synced);
+    } else {
+      message = l10n.homeSyncResultPartial(result.failed);
+    }
+    messenger.showSnackBar(SnackBar(content: Text(message)));
   }
 }
 
@@ -247,14 +298,15 @@ class _DashboardEmpty extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final text = Theme.of(context).textTheme;
+    final palette = context.palette;
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
+          Icon(
             Icons.auto_stories_outlined,
             size: 32,
-            color: AppColors.inkTertiary,
+            color: palette.inkTertiary,
           ),
           const SizedBox(height: AppSpacing.s),
           Text(l10n.homeDashboardEmptyTitle, style: text.titleLarge),
@@ -275,14 +327,15 @@ class _DashboardError extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final text = Theme.of(context).textTheme;
+    final palette = context.palette;
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
+          Icon(
             Icons.error_outline,
             size: 32,
-            color: AppColors.danger,
+            color: palette.danger,
           ),
           const SizedBox(height: AppSpacing.s),
           Text(l10n.homeDashboardError, style: text.bodyMedium),
@@ -330,12 +383,13 @@ class _SkeletonBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     return Container(
       height: height,
       decoration: BoxDecoration(
-        color: AppColors.surfaceHover,
+        color: palette.skeleton,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: palette.border),
       ),
     );
   }

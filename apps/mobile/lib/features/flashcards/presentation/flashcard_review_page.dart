@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nihongo_bjt/app/router.dart';
-import 'package:nihongo_bjt/core/theme/app_colors.dart';
+import 'package:nihongo_bjt/core/theme/app_motion.dart';
+import 'package:nihongo_bjt/core/theme/app_palette.dart';
 import 'package:nihongo_bjt/core/theme/app_radius.dart';
 import 'package:nihongo_bjt/core/theme/app_spacing.dart';
 import 'package:nihongo_bjt/core/theme/app_typography.dart';
@@ -13,6 +14,11 @@ import 'package:nihongo_bjt/features/reading_assist/domain/reading_assist_policy
 import 'package:nihongo_bjt/features/reading_assist/presentation/japanese_text.dart';
 import 'package:nihongo_bjt/features/settings/presentation/settings_controller.dart';
 import 'package:nihongo_bjt/l10n/gen/app_localizations.dart';
+import 'package:nihongo_bjt/shared/widgets/app_scaffold.dart';
+import 'package:nihongo_bjt/shared/widgets/empty_state_view.dart';
+import 'package:nihongo_bjt/shared/widgets/error_state_view.dart';
+import 'package:nihongo_bjt/shared/widgets/loading_state_view.dart';
+import 'package:nihongo_bjt/shared/widgets/primary_button.dart';
 
 /// Reviews one deck: prompt → reveal answer → grade (Again/Hard/Good/Easy) →
 /// next card → completion. All session state is in memory (Phase 2).
@@ -23,32 +29,41 @@ class FlashcardReviewPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final session = ref.watch(reviewSessionProvider(deckId));
     final controller = ref.read(reviewSessionProvider(deckId).notifier);
 
-    return Scaffold(
-      appBar: AppBar(title: Text(AppLocalizations.of(context).reviewTitle)),
-      body: SafeArea(
-        top: false,
-        child: session.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, _) => _ReviewError(
-            onRetry: () => ref.invalidate(reviewSessionProvider(deckId)),
-          ),
-          data: (state) {
-            if (state.totalCount == 0) {
-              return const _ReviewEmpty();
-            }
-            if (state.isComplete) {
-              return _ReviewComplete(
-                state: state,
-                onRestart: controller.restart,
-                onExit: () => context.goNamed(Routes.flashcards),
-              );
-            }
-            return _ReviewActive(state: state, controller: controller);
-          },
+    return AppScaffold(
+      title: l10n.reviewTitle,
+      body: session.when(
+        loading: () => const Padding(
+          padding: EdgeInsets.all(AppSpacing.m),
+          child: _ReviewLoading(),
         ),
+        error: (_, _) => ErrorStateView(
+          title: l10n.reviewErrorTitle,
+          message: l10n.reviewError,
+          retryLabel: l10n.commonRetry,
+          icon: Icons.cloud_off_rounded,
+          onRetry: () => ref.invalidate(reviewSessionProvider(deckId)),
+        ),
+        data: (state) {
+          if (state.totalCount == 0) {
+            return EmptyStateView(
+              title: l10n.reviewEmptyTitle,
+              message: l10n.reviewEmpty,
+              icon: Icons.style_outlined,
+            );
+          }
+          if (state.isComplete) {
+            return _ReviewComplete(
+              state: state,
+              onRestart: controller.restart,
+              onExit: () => context.goNamed(Routes.flashcards),
+            );
+          }
+          return _ReviewActive(state: state, controller: controller);
+        },
       ),
     );
   }
@@ -79,13 +94,22 @@ class _ReviewActive extends StatelessWidget {
           if (state.answerRevealed)
             _RatingBar(onRate: controller.rate)
           else
-            SizedBox(
-              height: 52,
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: controller.revealAnswer,
-                child: Text(AppLocalizations.of(context).reviewReveal),
-              ),
+            Column(
+              children: [
+                Text(
+                  AppLocalizations.of(context).reviewRevealHint,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: context.palette.inkTertiary,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.s),
+                PrimaryButton(
+                  label: AppLocalizations.of(context).reviewReveal,
+                  icon: Icons.visibility_outlined,
+                  onPressed: controller.revealAnswer,
+                ),
+              ],
             ),
         ],
       ),
@@ -101,6 +125,7 @@ class _ReviewProgress extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     final text = Theme.of(context).textTheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -110,12 +135,16 @@ class _ReviewProgress extends StatelessWidget {
           child: LinearProgressIndicator(
             value: total == 0 ? 0 : reviewed / total,
             minHeight: 8,
-            backgroundColor: AppColors.surfaceHover,
-            color: AppColors.navy,
+            semanticsLabel: AppLocalizations.of(context).a11yProgressLabel,
+            backgroundColor: palette.surfaceHover,
+            color: palette.accent,
           ),
         ),
         const SizedBox(height: AppSpacing.s),
-        Text('$reviewed / $total', style: text.labelSmall),
+        Text(
+          '$reviewed / $total',
+          style: text.labelSmall?.copyWith(color: palette.inkSecondary),
+        ),
       ],
     );
   }
@@ -133,11 +162,13 @@ class _CardFace extends ConsumerWidget {
     // the answer is revealed; before reveal it is always suppressed for active
     // recall regardless of the toggle.
     final furiganaEnabled = ref.watch(furiganaEnabledProvider);
+    final palette = context.palette;
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: palette.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: palette.border),
       ),
       child: Center(
         child: Padding(
@@ -156,17 +187,37 @@ class _CardFace extends ConsumerWidget {
                     : const ReadingAssistPolicy.exam(),
                 style: AppTypography.japaneseDisplay,
               ),
-              if (revealed) ...[
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: AppSpacing.l),
-                  child: Divider(height: 1),
+              AnimatedSwitcher(
+                duration: reduceMotion ? Duration.zero : AppMotion.base,
+                switchInCurve: AppMotion.standard,
+                transitionBuilder: (child, animation) => FadeTransition(
+                  opacity: animation,
+                  child: SizeTransition(
+                    sizeFactor: animation,
+                    child: child,
+                  ),
                 ),
-                Text(
-                  card.back,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-              ],
+                child: revealed
+                    ? Column(
+                        key: const ValueKey('answer'),
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: AppSpacing.l,
+                            ),
+                            child: Divider(height: 1, color: palette.border),
+                          ),
+                          Text(
+                            card.back,
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(color: palette.ink),
+                          ),
+                        ],
+                      )
+                    : const SizedBox.shrink(key: ValueKey('hidden')),
+              ),
             ],
           ),
         ),
@@ -208,7 +259,7 @@ class _RatingButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final color = ratingColor(rating);
+    final color = ratingColor(context.palette, rating);
     final days = srsIntervalDays(rating);
     return SizedBox(
       height: 64,
@@ -256,6 +307,7 @@ class _ReviewComplete extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final palette = context.palette;
     final text = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.m),
@@ -263,36 +315,31 @@ class _ReviewComplete extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const SizedBox(height: AppSpacing.l),
-          const Icon(Icons.check_circle, size: 56, color: AppColors.success),
+          Icon(Icons.check_circle, size: 56, color: palette.success),
           const SizedBox(height: AppSpacing.m),
           Text(
             l10n.reviewComplete,
             textAlign: TextAlign.center,
-            style: text.headlineSmall,
+            style: text.headlineSmall?.copyWith(color: palette.ink),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
             l10n.reviewCompleteSummary(state.totalCount),
             textAlign: TextAlign.center,
-            style: text.bodyMedium,
+            style: text.bodyMedium?.copyWith(color: palette.inkSecondary),
           ),
           const SizedBox(height: AppSpacing.l),
           _RatingSummary(ratings: state.ratings),
           const Spacer(),
-          SizedBox(
-            height: 52,
-            child: FilledButton(
-              onPressed: onRestart,
-              child: Text(l10n.reviewRestart),
-            ),
+          PrimaryButton(
+            label: l10n.reviewRestart,
+            icon: Icons.refresh_rounded,
+            onPressed: onRestart,
           ),
           const SizedBox(height: AppSpacing.s),
-          SizedBox(
-            height: 52,
-            child: OutlinedButton(
-              onPressed: onExit,
-              child: Text(l10n.reviewBackToList),
-            ),
+          SecondaryButton(
+            label: l10n.reviewBackToList,
+            onPressed: onExit,
           ),
         ],
       ),
@@ -328,7 +375,7 @@ class _RatingTally extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = ratingColor(rating);
+    final color = ratingColor(context.palette, rating);
     return Column(
       children: [
         Text(
@@ -342,63 +389,30 @@ class _RatingTally extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           ratingLabel(AppLocalizations.of(context), rating),
-          style: const TextStyle(fontSize: 12, color: AppColors.inkSecondary),
+          style: TextStyle(
+            fontSize: 12,
+            color: context.palette.inkSecondary,
+          ),
         ),
       ],
     );
   }
 }
 
-class _ReviewEmpty extends StatelessWidget {
-  const _ReviewEmpty();
+class _ReviewLoading extends StatelessWidget {
+  const _ReviewLoading();
 
   @override
   Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.l),
-        child: Text(
-          AppLocalizations.of(context).reviewEmpty,
-          textAlign: TextAlign.center,
-          style: text.bodyMedium,
-        ),
-      ),
-    );
-  }
-}
-
-class _ReviewError extends StatelessWidget {
-  const _ReviewError({required this.onRetry});
-
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final text = Theme.of(context).textTheme;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.l),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              l10n.reviewError,
-              textAlign: TextAlign.center,
-              style: text.bodyMedium,
-            ),
-            const SizedBox(height: AppSpacing.m),
-            SizedBox(
-              height: 48,
-              child: FilledButton(
-                onPressed: onRetry,
-                child: Text(l10n.commonRetry),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SkeletonBox(height: 8, radius: AppRadius.md),
+        SizedBox(height: AppSpacing.l),
+        Expanded(child: SkeletonBox(radius: AppRadius.lg)),
+        SizedBox(height: AppSpacing.l),
+        SkeletonBox(height: 52, radius: AppRadius.md),
+      ],
     );
   }
 }
@@ -412,9 +426,9 @@ String ratingLabel(AppLocalizations l10n, SrsRating rating) => switch (rating) {
 };
 
 /// Status color for each SRS grade (`DESIGN.md` semantic palette).
-Color ratingColor(SrsRating rating) => switch (rating) {
-  SrsRating.again => AppColors.danger,
-  SrsRating.hard => AppColors.warning,
-  SrsRating.good => AppColors.blue,
-  SrsRating.easy => AppColors.success,
+Color ratingColor(AppPalette palette, SrsRating rating) => switch (rating) {
+  SrsRating.again => palette.danger,
+  SrsRating.hard => palette.warning,
+  SrsRating.good => palette.accent,
+  SrsRating.easy => palette.success,
 };

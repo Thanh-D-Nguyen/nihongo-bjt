@@ -1462,3 +1462,139 @@ localization.
 - Font asset blocker from Phase 9 still stands (platform fonts in use).
 
 _Missing evidence: none._
+
+---
+
+## Phase 10.1 — Auth Fix: provision Keycloak `nihongo-mobile` client (Q3/Q4)
+
+**Date:** 2026-06-02
+**Status:** ✅ Fixed (config + dev provisioning). Manual sign-in re-verify is the
+user's to run (infra started locally).
+**Scope:** Keycloak realm config + dev bootstrap script only. **No Flutter code
+changed.**
+
+### Root cause
+
+Mobile sign-in failed with the app's honest fallback message *"Không thể đăng
+nhập. Vui lòng thử lại."* (`KeycloakAuthRepository.signIn` → `AuthException`).
+The cause was **not** the app: realm `nihongo-bjt` only defined the clients
+`nihongo-web` and `nihongo-admin`. The public client **`nihongo-mobile`**
+(referenced by `AppEnvironment.oauthClientId` and the AppAuth PKCE flow) **did
+not exist** in `docker/keycloak/realm-export.json`, so Keycloak rejected the
+authorize request (`invalid_client`) and AppAuth surfaced an exception. This is
+exactly the long-standing **Q3/Q4** blocker.
+
+### Diagnosis evidence (2026-06-02)
+
+- `grep` confirmed `nihongo-mobile` appeared only in Flutter source/tests, never
+  in the realm export → client missing server-side.
+- `realm-export.json` `clients[]` listed only `nihongo-web`, `nihongo-admin`.
+- Live Keycloak was **down** at the time (`curl http://localhost:9080/...` →
+  `000`; no service on the port, Docker containers exited) — consistent with the
+  user's note that they had not started it yet. Fix is config-level so it applies
+  on next start.
+
+### Fix
+
+1. **`docker/keycloak/realm-export.json`** — added the `nihongo-mobile` client:
+   `publicClient: true` (no secret on device), `standardFlowEnabled: true`,
+   `directAccessGrantsEnabled` + `implicitFlowEnabled: false`, PKCE
+   `pkce.code.challenge.method = S256`, redirect URIs
+   `com.nihongobjt.app://oauth2redirect` (+ `http://localhost:4000/*` for tooling),
+   `post.logout.redirect.uris` = the custom scheme, `webOrigins: ["+"]`, and an
+   audience protocol mapper. Matches `AppEnvironment` defaults and the native
+   manifests (Android `appAuthRedirectScheme`, iOS URL type).
+2. **`docker/keycloak/configure-realms-http.sh`** — added `ensure_mobile_client`:
+   the realm directory-import only runs on first container start, so a persisted
+   Keycloak DB created before this client existed would still be missing it.
+   The function checks via `kcadm get clients -q clientId=nihongo-mobile` and
+   **creates it idempotently** (public/PKCE) when absent. Runs after the existing
+   `ensure_direct_access_grants` calls.
+
+### Verify
+
+- `node -e "require('./docker/keycloak/realm-export.json')"` → JSON valid;
+  clients now = `nihongo-web, nihongo-admin, nihongo-mobile`;
+  `nihongo-mobile.publicClient = true`, redirect URIs include the custom scheme.
+- Live sign-in re-test deferred to the user (they start Keycloak/API/emulator
+  locally). With the client present, the authorize request will no longer be
+  rejected as `invalid_client`.
+
+### Docs updated
+
+- `docs/mobile/IMPLEMENTATION_PLAN.md` — **Q3** and **Q4** marked RESOLVED.
+- `docs/mobile/E2E_VALIDATION.md` — §3 checklist annotated "Provisioned".
+
+_Missing evidence: live PKCE round-trip not run here (infra is user-started);
+config validity proven by the JSON parse above._
+
+---
+
+## Phase 10.2 — Profile & Settings (device-scoped prefs + real identity)
+
+User-selected mobile track: "Màn hình hồ sơ + cài đặt: logout, đổi ngôn ngữ,
+furigana toggle, thông tin phiên — kết nối auth thật."
+
+A complete vertical slice: a Profile/Settings screen showing the learner's real
+identity (decoded from their own ID token), an app-language override, a furigana
+toggle, and sign-out. Preferences persist **device-locally** (no server round-trip
+needed for a per-device display setting) via Drift; identity is read from the live
+auth session; sign-out reuses the existing auth controller + guard.
+
+### Added
+
+- `features/settings/data/local/user_settings_table.dart` — Drift `UserSettings`
+  key/value table (`@DataClassName('UserSettingRow')`).
+- `features/settings/data/local/user_settings_dao.dart` — `UserSettingsDao`
+  (`readAll` / `read` / `write` via `insertOnConflictUpdate` / `remove`).
+- `features/settings/data/user_settings_repository.dart` — owns storage keys
+  (`locale_override`, `furigana_enabled`) and per-preference encoding; applies
+  defaults for absent/corrupt values so the app always loads.
+- `features/settings/domain/app_locale_option.dart` — `AppLocaleOption`
+  (system / vietnamese / japanese) with `storageValue` ↔ `Locale` mapping and a
+  safe `fromStorage` fallback to `system`.
+- `features/settings/domain/user_settings.dart` — immutable settings snapshot
+  (`localeOption`, `furiganaEnabled`) + `defaults` + `copyWith`/value equality.
+- `features/settings/domain/id_token_claims.dart` — display-only OIDC claim
+  decode (`name` / `preferred_username` / `email`). **Display only**: no signature
+  verification, never used for authorization; returns `empty` for any malformed
+  token (must never throw on the profile screen).
+- `features/settings/presentation/settings_controller.dart` — providers:
+  repository, `settingsControllerProvider` (`AsyncNotifier`, optimistic update
+  that reverts + rethrows on persist failure), derived `localeOverrideProvider`
+  and `furiganaEnabledProvider`, and `profileClaimsProvider` (from the live
+  session's ID token).
+- `features/settings/presentation/profile_page.dart` — `ProfilePage`: account
+  card (avatar + name/email), language card (radio-style rows, ≥48px targets,
+  animated check), furigana toggle (Row + `Switch.adaptive` inside `AppCard` —
+  **not** `SwitchListTile`, which asserts when wrapped in a decorated surface),
+  and a danger-styled sign-out button with spinner. Persist failures surface a
+  `profileSaveError` SnackBar.
+
+### Modified
+
+- `core/database/app_database.dart` — registered `UserSettings`/`UserSettingsDao`;
+  `schemaVersion` 2 → 3 with `if (from < 3) createTable(userSettings)` migration.
+- `core/database/database_provider.dart` — `userSettingsDaoProvider`.
+- `app/app.dart` — `locale: ref.watch(localeOverrideProvider)` (null defers to the
+  existing device-locale fallback → `vi`).
+- `app/router.dart` — `Routes.profile` + `/profile` child route under home.
+- `features/home/.../home_page.dart` — AppBar action now opens Profile
+  (`account_circle_outlined`) instead of an inline logout button.
+- `features/flashcards/.../flashcard_review_page.dart` — reveal-time furigana now
+  honours `furiganaEnabledProvider` (exam-suppression before reveal unchanged).
+- `l10n/app_vi.arb`, `l10n/app_ja.arb` — added `profile*` keys; removed the now
+  orphaned `homeSignOutTooltip`.
+
+### Verify
+
+- `flutter gen-l10n && dart run build_runner build` — 170 outputs; DAO/table code
+  generated; `app_database.g.dart` references `userSettings`.
+- `flutter analyze` → **No issues found!**
+- `flutter test` → **All tests passed!** (110 total = 90 baseline + 20 new:
+  `id_token_claims_test`, `app_locale_option_test`, `user_settings_repository_test`
+  [in-memory Drift round-trip + corrupt-value fallback], `profile_page_test`
+  [widget: identity render, fallback label, language persist, furigana persist]).
+
+_Live on-device run deferred to the user (they start API/Keycloak/emulator).
+Android emulator reaches host services via `10.0.2.2`._

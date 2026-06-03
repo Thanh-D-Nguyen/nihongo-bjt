@@ -2,6 +2,7 @@
   "@@locale": "ja",
 
   "commonRetry": "再試行",
+  "a11yProgressLabel": "進捗",
 
   "homeWelcome": "ようこそ",
   "homeReviewFlashcards": "フラッシュカード復習",
@@ -14,6 +15,25 @@
   "homeSyncStatusTitle": "同期",
   "homeSyncPending": "{count}件の復習が同期待ち",
   "homeSyncAllSynced": "すべて同期済み",
+  "homeSyncAction": "今すぐ同期",
+  "homeSyncInProgress": "同期中…",
+  "homeSyncResultDone": "{synced, plural, =0{同期が必要な復習はありません} other{{synced}件の復習を同期しました}}",
+  "@homeSyncResultDone": {
+    "placeholders": {
+      "synced": {
+        "type": "int"
+      }
+    }
+  },
+  "homeSyncResultPartial": "{failed, plural, other{{failed}件の復習が未同期です。後で再試行します。}}",
+  "@homeSyncResultPartial": {
+    "placeholders": {
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
+  "homeSyncResultError": "同期できませんでした。接続を確認して再試行してください。",
   "homeDashboardEmptyTitle": "学習コンテンツがありません",
   "homeDashboardEmptyBody": "デッキが利用可能になるとここに表示されます。",
   "homeDashboardError": "ダッシュボードを読み込めませんでした。",
@@ -48,16 +68,21 @@
 
   "flashcardTitle": "フラッシュカード",
   "deckCardCount": "{count}枚",
+  "deckListEmptyTitle": "デッキがありません",
   "deckListEmpty": "デッキがまだありません。",
+  "deckListErrorTitle": "読み込めません",
   "deckListError": "デッキ一覧を読み込めませんでした。",
 
   "reviewTitle": "復習",
   "reviewReveal": "答えを表示",
+  "reviewRevealHint": "まず思い出してから、タップして答えを表示します。",
   "reviewComplete": "完了！",
   "reviewCompleteSummary": "{count}枚を復習しました。",
   "reviewRestart": "もう一度",
   "reviewBackToList": "一覧へ戻る",
+  "reviewEmptyTitle": "カードがありません",
   "reviewEmpty": "このデッキにはカードがありません。",
+  "reviewErrorTitle": "読み込めません",
   "reviewError": "デッキを読み込めませんでした。",
 
   "ratingAgain": "もう一度",
@@ -79,5 +104,140 @@
   "profileFuriganaTitle": "ふりがなを表示",
   "profileFuriganaSubtitle": "漢字の上にかなを表示します（復習中を除く）。",
   "profileSignOut": "ログアウト",
-  "profileSaveError": "変更を保存できませんでした。もう一度お試しください。"
+  "profileSaveError": "変更を保存できませんでした。もう一度お試しください。",
+
+  "navHome": "ホーム",
+  "navLearn": "学習",
+  "navReview": "復習",
+  "navProgress": "進捗",
+  "navSettings": "設定",
+
+  "learnTitle": "学習",
+  "learnPreviewBadge": "サンプル",
+  "learnPreviewNotice": "これはプレビュー用のサンプル学習コンテンツです。実際のレッスンは後で接続されます。",
+  "learnDailyLessonTitle": "今日のレッスン",
+  "learnDailyLessonCta": "今すぐ学習",
+  "learnCategoriesTitle": "カテゴリー",
+  "learnLessonsTitle": "レッスン",
+  "learnLessonsInCategory": "{count,plural, =1{{count}件} other{{count}件}}",
+  "@learnLessonsInCategory": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "learnMinutes": "{count}分",
+  "@learnMinutes": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "learnQuestionCount": "{count,plural, =1{{count}問} other{{count}問}}",
+  "@learnQuestionCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "learnEmptyTitle": "レッスンがありません",
+  "learnEmptyBody": "利用可能になると、ここにレッスンが表示されます。",
+  "learnErrorTitle": "レッスンを読み込めませんでした",
+  "learnErrorBody": "学習コンテンツの読み込み中にエラーが発生しました。もう一度お試しください。",
+  "levelFoundational": "基礎",
+  "levelPractical": "実践",
+  "levelAdvanced": "応用",
+  "lessonDetailNotFound": "このレッスンが見つかりませんでした。",
+  "lessonDetailContentTitle": "内容",
+  "lessonPracticeCta": "{count,plural, =1{練習する（{count}問）} other{練習する（{count}問）}}",
+  "@lessonPracticeCta": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "practiceTitle": "練習",
+  "practiceProgress": "{current} / {total}問",
+  "@practiceProgress": {
+    "placeholders": {
+      "current": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "practiceNext": "次へ",
+  "practicePrevious": "戻る",
+  "practiceFinish": "完了",
+  "practiceCompleteTitle": "練習が完了しました",
+  "practiceScore": "{total}問中{correct}問正解しました。",
+  "@practiceScore": {
+    "placeholders": {
+      "correct": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "practiceRestart": "もう一度",
+  "practiceBackToLesson": "レッスンに戻る",
+  "practiceReviewTitle": "解答を見直す",
+  "practiceResultQuestionLabel": "問{position}",
+  "@practiceResultQuestionLabel": {
+    "placeholders": {
+      "position": { "type": "int" }
+    }
+  },
+  "practiceResultCorrect": "正解",
+  "practiceResultIncorrect": "不正解",
+  "practiceCorrectAnswer": "正解",
+  "practiceYourAnswer": "あなたの解答",
+  "practiceExplanationTitle": "解説",
+  "practiceEmptyTitle": "問題がありません",
+  "practiceEmptyBody": "このレッスンには練習問題がまだありません。",
+  "practiceErrorTitle": "問題を読み込めませんでした",
+  "practiceErrorBody": "問題の読み込み中にエラーが発生しました。もう一度お試しください。",
+
+  "reviewTabTitle": "復習",
+  "reviewHubTitle": "まとめて復習",
+  "reviewHubIntro": "学んだ内容を定着させましょう。下から復習方法を選びます。",
+  "reviewFlashcardsTitle": "フラッシュカード",
+  "reviewFlashcardsStat": "{deckCount}デッキ・{cardCount}枚",
+  "@reviewFlashcardsStat": {
+    "placeholders": {
+      "deckCount": { "type": "int" },
+      "cardCount": { "type": "int" }
+    }
+  },
+  "reviewFlashcardsEmpty": "デッキがまだありません。",
+  "reviewFlashcardsCta": "カードを復習",
+  "reviewPracticeTitle": "練習",
+  "reviewPracticeStat": "練習問題のあるレッスン{count}件",
+  "@reviewPracticeStat": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "reviewPracticeEmpty": "練習問題のあるレッスンがありません。",
+  "reviewPracticeCta": "レッスンを選ぶ",
+  "reviewSectionError": "読み込めませんでした。もう一度お試しください。",
+
+  "progressTitle": "進捗",
+  "progressIntro": "この端末での学習アクティビティ。",
+  "progressEmptyTitle": "まだ学習記録がありません",
+  "progressEmptyBody": "フラッシュカードのセッションを完了すると、実際の進捗の記録が始まります。",
+  "progressErrorTitle": "進捗を読み込めません",
+  "progressError": "端末の学習データの読み取り中にエラーが発生しました。",
+  "progressTodayLabel": "今日",
+  "progressStreakLabel": "連続学習日数",
+  "progressStreakValue": "{days, plural, other{{days}日}}",
+  "@progressStreakValue": {
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  },
+  "progressWeekLabel": "過去7日間",
+  "progressTotalLabel": "総復習回数",
+  "progressCardsValue": "{count, plural, other{{count}枚}}",
+  "@progressCardsValue": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "progressActivityTitle": "7日間のアクティビティ",
+  "progressRatingTitle": "評価の内訳",
+
+  "offlineBannerMessage": "オフラインです。一部の内容は最新ではない場合があります。"
 }

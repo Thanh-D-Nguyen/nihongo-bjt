@@ -19,6 +19,7 @@
 | 06 | [Offline sync & storage](06-offline-sync-storage.md) | drift cache, sync queue, server-authoritative rules, conflict policy |
 | 07 | [Design system & UI](07-design-system-ui.md) | Theme tokens from `DESIGN.md`, Japanese text, Reading Assist layer |
 | 08 | [Testing, CI/CD & roadmap](08-testing-ci-cd.md) | Test pyramid, flavors, pipelines, phased delivery plan |
+| ▶ | [Setup & run guide](SETUP_AND_RUN.md) | Cài Flutter, codegen, `--dart-define` config, chạy emulator/thiết bị, build release, troubleshooting |
 
 ---
 
@@ -56,7 +57,7 @@ These map directly to `.github/instructions/production-first.instructions.md`:
 |---------|-------|-------|
 | API (NestJS) | `http://localhost:4000` | REST, OpenAPI at `docs/openapi.json` |
 | Realtime | Socket.IO (same host) | Battle flow |
-| Keycloak | `http://localhost:9080` | Realm `nihongo-bjt` |
+| Keycloak | `http://localhost:8080` | Realm `nihongo-bjt` |
 | Search | Meilisearch `:7700` | Projection only — query via backend API, not directly |
 
 > The mobile app must talk to backend endpoints, **not** directly to Meilisearch/Postgres.

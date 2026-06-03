@@ -14,7 +14,7 @@ Phase 6B manual offline-review sync.
 ## 0. Prerequisites
 
 - Backend API running and reachable (`pnpm dev:api`, port 4000 in dev).
-- Keycloak realm `nihongo-bjt` running (dev: `http://localhost:9080`).
+- Keycloak realm `nihongo-bjt` running (dev: `http://localhost:8080`).
 - Postgres/Redis/etc. up (see user infra notes — Docker runs in WSL).
 - A seeded learner account in Keycloak that can authenticate.
 - Flutter toolchain on PATH; device or emulator booted.
@@ -30,8 +30,8 @@ or logged. Source defaults target local dev; override per environment.
 
 | Define | Purpose | Dev example |
 | --- | --- | --- |
-| `API_BASE_URL` | API base, no trailing slash | `http://10.0.2.2:4000` (Android emu) |
-| `KEYCLOAK_ISSUER` | OIDC issuer (realm), no trailing slash | `http://10.0.2.2:9080/realms/nihongo-bjt` |
+| `API_BASE_URL` | API base, no trailing slash | `http://localhost:4000` via `adb reverse` (Android emu) |
+| `KEYCLOAK_ISSUER` | OIDC issuer (realm), no trailing slash | `http://localhost:8080/realms/nihongo-bjt` via `adb reverse` |
 | `OAUTH_CLIENT_ID` | Public mobile client id | `nihongo-mobile` |
 | `OAUTH_REDIRECT_URI` | Custom-scheme redirect (matches native manifests) | `com.nihongobjt.app://oauth2redirect` |
 | `FLASHCARD_DATA_SOURCE` | Selects repo: `mock` (default) or `api` | `api` |
@@ -39,10 +39,15 @@ or logged. Source defaults target local dev; override per environment.
 ### Run command (Android emulator → host backend)
 
 ```bash
+adb reverse tcp:4000 tcp:4000
+adb reverse tcp:8080 tcp:8080
+```
+
+```bash
 flutter run \
   --dart-define=FLASHCARD_DATA_SOURCE=api \
-  --dart-define=API_BASE_URL=http://10.0.2.2:4000 \
-  --dart-define=KEYCLOAK_ISSUER=http://10.0.2.2:9080/realms/nihongo-bjt \
+  --dart-define=API_BASE_URL=http://localhost:4000 \
+  --dart-define=KEYCLOAK_ISSUER=http://localhost:8080/realms/nihongo-bjt \
   --dart-define=OAUTH_CLIENT_ID=nihongo-mobile \
   --dart-define=OAUTH_REDIRECT_URI=com.nihongobjt.app://oauth2redirect
 ```
@@ -55,7 +60,7 @@ iOS simulator shares the host network, so `localhost` works directly:
 flutter run \
   --dart-define=FLASHCARD_DATA_SOURCE=api \
   --dart-define=API_BASE_URL=http://localhost:4000 \
-  --dart-define=KEYCLOAK_ISSUER=http://localhost:9080/realms/nihongo-bjt \
+  --dart-define=KEYCLOAK_ISSUER=http://localhost:8080/realms/nihongo-bjt \
   --dart-define=OAUTH_CLIENT_ID=nihongo-mobile \
   --dart-define=OAUTH_REDIRECT_URI=com.nihongobjt.app://oauth2redirect
 ```
@@ -82,6 +87,12 @@ HTTPS, so cleartext is never silently allowed there.
 ---
 
 ## 3. Keycloak client config checklist
+
+> **Provisioned (2026-06-02):** the `nihongo-mobile` client is now defined in
+> `docker/keycloak/realm-export.json` (fresh import) and created idempotently by
+> `docker/keycloak/configure-realms-http.sh` (`ensure_mobile_client`) for an
+> already-persisted Keycloak DB. The boxes below are verification points, not
+> outstanding setup.
 
 Client `nihongo-mobile` in realm `nihongo-bjt`:
 

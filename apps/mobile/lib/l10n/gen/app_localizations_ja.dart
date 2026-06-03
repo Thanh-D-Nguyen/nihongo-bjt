@@ -12,6 +12,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get commonRetry => '再試行';
 
   @override
+  String get a11yProgressLabel => '進捗';
+
+  @override
   String get homeWelcome => 'ようこそ';
 
   @override
@@ -49,6 +52,36 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get homeSyncAllSynced => 'すべて同期済み';
+
+  @override
+  String get homeSyncAction => '今すぐ同期';
+
+  @override
+  String get homeSyncInProgress => '同期中…';
+
+  @override
+  String homeSyncResultDone(int synced) {
+    String _temp0 = intl.Intl.pluralLogic(
+      synced,
+      locale: localeName,
+      other: '$synced件の復習を同期しました',
+      zero: '同期が必要な復習はありません',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String homeSyncResultPartial(int failed) {
+    String _temp0 = intl.Intl.pluralLogic(
+      failed,
+      locale: localeName,
+      other: '$failed件の復習が未同期です。後で再試行します。',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeSyncResultError => '同期できませんでした。接続を確認して再試行してください。';
 
   @override
   String get homeDashboardEmptyTitle => '学習コンテンツがありません';
@@ -150,7 +183,13 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String get deckListEmptyTitle => 'デッキがありません';
+
+  @override
   String get deckListEmpty => 'デッキがまだありません。';
+
+  @override
+  String get deckListErrorTitle => '読み込めません';
 
   @override
   String get deckListError => 'デッキ一覧を読み込めませんでした。';
@@ -160,6 +199,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get reviewReveal => '答えを表示';
+
+  @override
+  String get reviewRevealHint => 'まず思い出してから、タップして答えを表示します。';
 
   @override
   String get reviewComplete => '完了！';
@@ -176,7 +218,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get reviewBackToList => '一覧へ戻る';
 
   @override
+  String get reviewEmptyTitle => 'カードがありません';
+
+  @override
   String get reviewEmpty => 'このデッキにはカードがありません。';
+
+  @override
+  String get reviewErrorTitle => '読み込めません';
 
   @override
   String get reviewError => 'デッキを読み込めませんでした。';
@@ -239,4 +287,270 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get profileSaveError => '変更を保存できませんでした。もう一度お試しください。';
+
+  @override
+  String get navHome => 'ホーム';
+
+  @override
+  String get navLearn => '学習';
+
+  @override
+  String get navReview => '復習';
+
+  @override
+  String get navProgress => '進捗';
+
+  @override
+  String get navSettings => '設定';
+
+  @override
+  String get learnTitle => '学習';
+
+  @override
+  String get learnPreviewBadge => 'サンプル';
+
+  @override
+  String get learnPreviewNotice => 'これはプレビュー用のサンプル学習コンテンツです。実際のレッスンは後で接続されます。';
+
+  @override
+  String get learnDailyLessonTitle => '今日のレッスン';
+
+  @override
+  String get learnDailyLessonCta => '今すぐ学習';
+
+  @override
+  String get learnCategoriesTitle => 'カテゴリー';
+
+  @override
+  String get learnLessonsTitle => 'レッスン';
+
+  @override
+  String learnLessonsInCategory(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count件',
+      one: '$count件',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String learnMinutes(int count) {
+    return '$count分';
+  }
+
+  @override
+  String learnQuestionCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count問',
+      one: '$count問',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get learnEmptyTitle => 'レッスンがありません';
+
+  @override
+  String get learnEmptyBody => '利用可能になると、ここにレッスンが表示されます。';
+
+  @override
+  String get learnErrorTitle => 'レッスンを読み込めませんでした';
+
+  @override
+  String get learnErrorBody => '学習コンテンツの読み込み中にエラーが発生しました。もう一度お試しください。';
+
+  @override
+  String get levelFoundational => '基礎';
+
+  @override
+  String get levelPractical => '実践';
+
+  @override
+  String get levelAdvanced => '応用';
+
+  @override
+  String get lessonDetailNotFound => 'このレッスンが見つかりませんでした。';
+
+  @override
+  String get lessonDetailContentTitle => '内容';
+
+  @override
+  String lessonPracticeCta(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '練習する（$count問）',
+      one: '練習する（$count問）',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get practiceTitle => '練習';
+
+  @override
+  String practiceProgress(int current, int total) {
+    return '$current / $total問';
+  }
+
+  @override
+  String get practiceNext => '次へ';
+
+  @override
+  String get practicePrevious => '戻る';
+
+  @override
+  String get practiceFinish => '完了';
+
+  @override
+  String get practiceCompleteTitle => '練習が完了しました';
+
+  @override
+  String practiceScore(int correct, int total) {
+    return '$total問中$correct問正解しました。';
+  }
+
+  @override
+  String get practiceRestart => 'もう一度';
+
+  @override
+  String get practiceBackToLesson => 'レッスンに戻る';
+
+  @override
+  String get practiceReviewTitle => '解答を見直す';
+
+  @override
+  String practiceResultQuestionLabel(int position) {
+    return '問$position';
+  }
+
+  @override
+  String get practiceResultCorrect => '正解';
+
+  @override
+  String get practiceResultIncorrect => '不正解';
+
+  @override
+  String get practiceCorrectAnswer => '正解';
+
+  @override
+  String get practiceYourAnswer => 'あなたの解答';
+
+  @override
+  String get practiceExplanationTitle => '解説';
+
+  @override
+  String get practiceEmptyTitle => '問題がありません';
+
+  @override
+  String get practiceEmptyBody => 'このレッスンには練習問題がまだありません。';
+
+  @override
+  String get practiceErrorTitle => '問題を読み込めませんでした';
+
+  @override
+  String get practiceErrorBody => '問題の読み込み中にエラーが発生しました。もう一度お試しください。';
+
+  @override
+  String get reviewTabTitle => '復習';
+
+  @override
+  String get reviewHubTitle => 'まとめて復習';
+
+  @override
+  String get reviewHubIntro => '学んだ内容を定着させましょう。下から復習方法を選びます。';
+
+  @override
+  String get reviewFlashcardsTitle => 'フラッシュカード';
+
+  @override
+  String reviewFlashcardsStat(int deckCount, int cardCount) {
+    return '$deckCountデッキ・$cardCount枚';
+  }
+
+  @override
+  String get reviewFlashcardsEmpty => 'デッキがまだありません。';
+
+  @override
+  String get reviewFlashcardsCta => 'カードを復習';
+
+  @override
+  String get reviewPracticeTitle => '練習';
+
+  @override
+  String reviewPracticeStat(int count) {
+    return '練習問題のあるレッスン$count件';
+  }
+
+  @override
+  String get reviewPracticeEmpty => '練習問題のあるレッスンがありません。';
+
+  @override
+  String get reviewPracticeCta => 'レッスンを選ぶ';
+
+  @override
+  String get reviewSectionError => '読み込めませんでした。もう一度お試しください。';
+
+  @override
+  String get progressTitle => '進捗';
+
+  @override
+  String get progressIntro => 'この端末での学習アクティビティ。';
+
+  @override
+  String get progressEmptyTitle => 'まだ学習記録がありません';
+
+  @override
+  String get progressEmptyBody => 'フラッシュカードのセッションを完了すると、実際の進捗の記録が始まります。';
+
+  @override
+  String get progressErrorTitle => '進捗を読み込めません';
+
+  @override
+  String get progressError => '端末の学習データの読み取り中にエラーが発生しました。';
+
+  @override
+  String get progressTodayLabel => '今日';
+
+  @override
+  String get progressStreakLabel => '連続学習日数';
+
+  @override
+  String progressStreakValue(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days日',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get progressWeekLabel => '過去7日間';
+
+  @override
+  String get progressTotalLabel => '総復習回数';
+
+  @override
+  String progressCardsValue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count枚',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get progressActivityTitle => '7日間のアクティビティ';
+
+  @override
+  String get progressRatingTitle => '評価の内訳';
+
+  @override
+  String get offlineBannerMessage => 'オフラインです。一部の内容は最新ではない場合があります。';
 }

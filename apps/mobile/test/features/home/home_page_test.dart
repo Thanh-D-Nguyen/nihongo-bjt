@@ -71,6 +71,32 @@ void main() {
     expect(find.text('2 review chờ đồng bộ'), findsOneWidget);
   });
 
+  testWidgets('offers a sync action when reviews are pending', (tester) async {
+    await _pumpHome(
+      tester,
+      build: (ref) async => const HomeDashboardData(
+        deckCount: 1,
+        totalCardCount: 3,
+        pendingSyncCount: 2,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // The production sync button is shown when there are pending grades.
+    expect(find.text('Đồng bộ ngay'), findsOneWidget);
+
+    // In mock/dev mode there is no queue to drain, so a tap surfaces the
+    // honest "could not sync" feedback rather than a fake success.
+    await tester.ensureVisible(find.text('Đồng bộ ngay'));
+    await tester.tap(find.text('Đồng bộ ngay'));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Không đồng bộ được. Kiểm tra kết nối và thử lại.'),
+      findsOneWidget,
+    );
+  });
+
+
   testWidgets('renders an empty state when there are no decks', (tester) async {
     await _pumpHome(
       tester,

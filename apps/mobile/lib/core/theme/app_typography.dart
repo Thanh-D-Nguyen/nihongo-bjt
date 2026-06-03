@@ -18,75 +18,103 @@ abstract final class AppTypography {
   static const List<String> fallback = ['Inter', 'Noto Sans JP'];
 
   /// Large Japanese term shown on the flashcard front.
+  ///
+  /// No explicit color: the term inherits the ambient `onSurface` color so it
+  /// reads correctly in both light and dark themes.
   static const TextStyle japaneseDisplay = TextStyle(
     fontFamilyFallback: fallback,
     fontSize: 44,
     fontWeight: FontWeight.w700,
     height: 1.5,
-    color: AppColors.ink,
   );
 
   /// Default Japanese running text (sentences). Line-height ≥ 1.8 per
-  /// `production-first` so multi-line Japanese stays readable.
+  /// `production-first` so multi-line Japanese stays readable. Inherits the
+  /// ambient `onSurface` color (theme-aware).
   static const TextStyle japaneseBody = TextStyle(
     fontFamilyFallback: fallback,
     fontSize: 18,
     fontWeight: FontWeight.w500,
     height: 1.8,
-    color: AppColors.ink,
   );
 
-  /// Reading help (kana / furigana) rendered above a Japanese term.
+  /// Reading help (kana / furigana) rendered above a Japanese term. Inherits
+  /// the ambient text color (theme-aware).
   static const TextStyle japaneseReading = TextStyle(
     fontFamilyFallback: fallback,
     fontSize: 16,
     fontWeight: FontWeight.w500,
     height: 1.4,
-    color: AppColors.inkSecondary,
   );
 
-  static TextTheme get textTheme => const TextTheme(
+  /// Light text theme (default ink colors).
+  static TextTheme get textTheme => _build(
+    ink: AppColors.ink,
+    secondary: AppColors.inkSecondary,
+    tertiary: AppColors.inkTertiary,
+  );
+
+  /// Dark text theme — same scale, theme-appropriate ink colors so text never
+  /// renders dark-on-dark.
+  static TextTheme get darkTextTheme => _build(
+    ink: const Color(0xFFF1F5F9),
+    secondary: const Color(0xFFA6B2C6),
+    tertiary: const Color(0xFF6B7892),
+  );
+
+  static TextTheme _build({
+    required Color ink,
+    required Color secondary,
+    required Color tertiary,
+  }) => TextTheme(
     headlineSmall: TextStyle(
       fontFamilyFallback: fallback,
       fontSize: 24,
       fontWeight: FontWeight.w700,
       height: 1.3,
-      color: AppColors.ink,
+      color: ink,
     ),
     titleLarge: TextStyle(
       fontFamilyFallback: fallback,
       fontSize: 20,
       fontWeight: FontWeight.w600,
       height: 1.35,
-      color: AppColors.ink,
+      color: ink,
     ),
     titleMedium: TextStyle(
       fontFamilyFallback: fallback,
       fontSize: 18,
       fontWeight: FontWeight.w600,
       height: 1.4,
-      color: AppColors.ink,
+      color: ink,
     ),
     bodyMedium: TextStyle(
       fontFamilyFallback: fallback,
       fontSize: 14,
       fontWeight: FontWeight.w400,
       height: 1.6,
-      color: AppColors.ink,
+      color: ink,
     ),
     bodySmall: TextStyle(
       fontFamilyFallback: fallback,
       fontSize: 13,
       fontWeight: FontWeight.w400,
       height: 1.5,
-      color: AppColors.inkSecondary,
+      color: secondary,
+    ),
+    labelMedium: TextStyle(
+      fontFamilyFallback: fallback,
+      fontSize: 12,
+      fontWeight: FontWeight.w600,
+      height: 1.4,
+      color: secondary,
     ),
     labelSmall: TextStyle(
       fontFamilyFallback: fallback,
       fontSize: 12,
       fontWeight: FontWeight.w400,
       height: 1.4,
-      color: AppColors.inkTertiary,
+      color: tertiary,
     ),
   );
 }
