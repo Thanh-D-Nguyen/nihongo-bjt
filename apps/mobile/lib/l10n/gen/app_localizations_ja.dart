@@ -467,7 +467,51 @@ class AppLocalizationsJa extends AppLocalizations {
   String get profileLearnerFallback => '学習者';
 
   @override
+  String get profileHeroEyebrow => 'NihonGo BJTアカウント';
+
+  @override
+  String get profileSessionStatus => 'ログイン中のセッション';
+
+  @override
   String get profileAccountSection => 'アカウント';
+
+  @override
+  String get profileAccountDetailsTitle => 'ログイン情報';
+
+  @override
+  String get profileDisplayName => '表示名';
+
+  @override
+  String get profileUsername => 'ユーザー名';
+
+  @override
+  String get profileEmail => 'メール';
+
+  @override
+  String get profileIdentityUnavailableTitle => 'プロフィール詳細を読み取れません';
+
+  @override
+  String get profileIdentityUnavailableBody =>
+      'この画面には現在のログインセッションに含まれる実データだけを表示します。情報が空のままの場合は、もう一度ログインしてください。';
+
+  @override
+  String get profileIdentityPrivacy =>
+      '現在のKeycloakセッションのプロフィールclaimだけを表示します。この画面にパスワードや生トークンは保存しません。';
+
+  @override
+  String get profileActionsSection => 'ショートカット';
+
+  @override
+  String get profileProgressAction => '学習進捗';
+
+  @override
+  String get profileProgressSubtitle => '統計と学習履歴を見る';
+
+  @override
+  String get profileSavedAction => '保存済み';
+
+  @override
+  String get profileSavedSubtitle => '単語・記事・ブックマークした内容';
 
   @override
   String get profilePreferencesSection => '設定';

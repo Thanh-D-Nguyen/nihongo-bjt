@@ -376,9 +376,65 @@
   "@profileLearnerFallback": {
     "description": "Display name shown when no name claim is available from the session."
   },
+  "profileHeroEyebrow": "Tài khoản NihonGo BJT",
+  "@profileHeroEyebrow": {
+    "description": "Small label in the profile hero card."
+  },
+  "profileSessionStatus": "Phiên đăng nhập đang hoạt động",
+  "@profileSessionStatus": {
+    "description": "Fallback status line when the profile token has no secondary identity label."
+  },
   "profileAccountSection": "Tài khoản",
   "@profileAccountSection": {
     "description": "Section header for account/session information."
+  },
+  "profileAccountDetailsTitle": "Thông tin đăng nhập",
+  "@profileAccountDetailsTitle": {
+    "description": "Title for the account identity details card."
+  },
+  "profileDisplayName": "Tên hiển thị",
+  "@profileDisplayName": {
+    "description": "Label for the display name claim."
+  },
+  "profileUsername": "Tên đăng nhập",
+  "@profileUsername": {
+    "description": "Label for the preferred username claim."
+  },
+  "profileEmail": "Email",
+  "@profileEmail": {
+    "description": "Label for the email claim."
+  },
+  "profileIdentityUnavailableTitle": "Chưa đọc được chi tiết hồ sơ",
+  "@profileIdentityUnavailableTitle": {
+    "description": "Title shown when no display claims can be decoded from the ID token."
+  },
+  "profileIdentityUnavailableBody": "Ứng dụng chỉ hiển thị thông tin có thật trong phiên đăng nhập hiện tại. Hãy đăng nhập lại nếu thông tin hồ sơ vẫn trống.",
+  "@profileIdentityUnavailableBody": {
+    "description": "Body shown when no display claims can be decoded from the ID token."
+  },
+  "profileIdentityPrivacy": "Chỉ hiển thị claim hồ sơ từ phiên Keycloak hiện tại; không lưu mật khẩu hay token thô trên màn hình này.",
+  "@profileIdentityPrivacy": {
+    "description": "Privacy note for displayed identity data."
+  },
+  "profileActionsSection": "Lối tắt",
+  "@profileActionsSection": {
+    "description": "Section header for profile shortcut actions."
+  },
+  "profileProgressAction": "Tiến độ học",
+  "@profileProgressAction": {
+    "description": "Shortcut title to the progress screen."
+  },
+  "profileProgressSubtitle": "Xem thống kê và lịch sử học",
+  "@profileProgressSubtitle": {
+    "description": "Shortcut subtitle to the progress screen."
+  },
+  "profileSavedAction": "Mục đã lưu",
+  "@profileSavedAction": {
+    "description": "Shortcut title to saved items."
+  },
+  "profileSavedSubtitle": "Từ vựng, bài đọc và nội dung đã đánh dấu",
+  "@profileSavedSubtitle": {
+    "description": "Shortcut subtitle to saved items."
   },
   "profilePreferencesSection": "Tùy chỉnh",
   "@profilePreferencesSection": {

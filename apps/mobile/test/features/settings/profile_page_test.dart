@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nihongo_bjt/core/database/app_database.dart';
 import 'package:nihongo_bjt/core/database/database_provider.dart';
+import 'package:nihongo_bjt/core/theme/app_theme.dart';
 import 'package:nihongo_bjt/features/auth/domain/auth_session.dart';
 import 'package:nihongo_bjt/features/auth/domain/auth_tokens.dart';
 import 'package:nihongo_bjt/features/auth/presentation/auth_controller.dart';
@@ -43,9 +44,20 @@ Future<AppDatabase> _pumpProfile(
   WidgetTester tester, {
   required AuthSession session,
   Locale locale = const Locale('vi'),
+  ThemeMode themeMode = ThemeMode.light,
+  double logicalWidth = 390,
 }) async {
   final db = AppDatabase.forTesting(NativeDatabase.memory());
   addTearDown(db.close);
+
+  const devicePixelRatio = 3.0;
+  tester.view.physicalSize = Size(
+    logicalWidth * devicePixelRatio,
+    844 * devicePixelRatio,
+  );
+  tester.view.devicePixelRatio = devicePixelRatio;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
 
   await tester.pumpWidget(
     ProviderScope(
@@ -63,6 +75,9 @@ Future<AppDatabase> _pumpProfile(
       ],
       child: MaterialApp(
         locale: locale,
+        theme: AppTheme.light,
+        darkTheme: AppTheme.dark,
+        themeMode: themeMode,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: const ProfilePage(),
@@ -87,9 +102,13 @@ void main() {
       ),
     );
 
-    expect(find.text('Tanaka Hana'), findsOneWidget);
-    expect(find.text('hana@example.com'), findsOneWidget);
-    expect(find.text('TÀI KHOẢN'), findsOneWidget);
+    expect(find.text('Tanaka Hana'), findsWidgets);
+    expect(find.text('hana@example.com'), findsWidgets);
+    expect(find.text('Tài khoản NihonGo BJT'), findsOneWidget);
+    expect(find.text('Thông tin đăng nhập'), findsOneWidget);
+    expect(find.text('LỐI TẮT'), findsOneWidget);
+    expect(find.text('Tiến độ học'), findsOneWidget);
+    expect(find.text('Mục đã lưu'), findsOneWidget);
   });
 
   testWidgets('falls back to a generic learner label without a name', (
@@ -101,6 +120,7 @@ void main() {
     );
 
     expect(find.text('Người học'), findsOneWidget);
+    expect(find.text('Chưa đọc được chi tiết hồ sơ'), findsOneWidget);
   });
 
   testWidgets('shows the real app version in the About section', (
@@ -116,6 +136,30 @@ void main() {
     expect(find.text('1.0.0 (bản dựng 1)'), findsOneWidget);
   });
 
+  testWidgets('renders production profile at 360 dp in dark mode', (
+    tester,
+  ) async {
+    await _pumpProfile(
+      tester,
+      session: _sessionWithIdToken(
+        unsignedJwt({
+          'name': '山田 花子 NihonGo Business Learner',
+          'preferred_username': 'hanako.yamada',
+          'email': 'hanako.yamada@example.com',
+        }),
+      ),
+      locale: const Locale('ja'),
+      themeMode: ThemeMode.dark,
+      logicalWidth: 360,
+    );
+
+    expect(tester.takeException(), isNull);
+    expect(find.byType(ProfilePage), findsOneWidget);
+    expect(find.text('NihonGo BJTアカウント'), findsOneWidget);
+    expect(find.text('ショートカット'), findsOneWidget);
+    expect(find.text('学習進捗'), findsOneWidget);
+  });
+
   testWidgets('selecting a language persists it to the controller', (
     tester,
   ) async {
@@ -124,6 +168,8 @@ void main() {
       session: _sessionWithIdToken(unsignedJwt({'name': 'A'})),
     );
 
+    await tester.ensureVisible(find.text('Tiếng Nhật'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Tiếng Nhật'));
     await tester.pumpAndSettle();
 

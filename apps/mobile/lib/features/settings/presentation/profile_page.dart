@@ -25,7 +25,6 @@ final appPackageInfoProvider = FutureProvider<PackageInfo>((ref) {
   return PackageInfo.fromPlatform();
 });
 
-
 /// Profile & settings screen (Phase 10.2).
 ///
 /// Shows the authenticated learner's identity (decoded from their own ID
@@ -58,28 +57,40 @@ class ProfilePage extends ConsumerWidget {
     return AppScaffold(
       title: l10n.profileTitle,
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.l),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _SectionLabel(l10n.profileAccountSection),
-            const SizedBox(height: AppSpacing.s),
-            _AccountCard(claims: claims),
-            const SizedBox(height: AppSpacing.m),
-            const _SubscriptionEntryCard(),
-            const SizedBox(height: AppSpacing.l),
-            _SectionLabel(l10n.profilePreferencesSection),
-            const SizedBox(height: AppSpacing.s),
-            _LanguageCard(selected: settings.localeOption),
-            const SizedBox(height: AppSpacing.m),
-            _FuriganaCard(enabled: settings.furiganaEnabled),
-            const SizedBox(height: AppSpacing.l),
-            _SectionLabel(l10n.profileAboutSection),
-            const SizedBox(height: AppSpacing.s),
-            const _AboutCard(),
-            const SizedBox(height: AppSpacing.xl),
-            const _SignOutButton(),
-          ],
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.m,
+          AppSpacing.m,
+          AppSpacing.m,
+          AppSpacing.xl,
+        ),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 720),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _ProfileHero(claims: claims),
+                const SizedBox(height: AppSpacing.m),
+                _IdentityDetailsCard(claims: claims),
+                const SizedBox(height: AppSpacing.l),
+                _SectionLabel(l10n.profileActionsSection),
+                const SizedBox(height: AppSpacing.s),
+                const _ProfileActionGrid(),
+                const SizedBox(height: AppSpacing.l),
+                _SectionLabel(l10n.profilePreferencesSection),
+                const SizedBox(height: AppSpacing.s),
+                _LanguageCard(selected: settings.localeOption),
+                const SizedBox(height: AppSpacing.m),
+                _FuriganaCard(enabled: settings.furiganaEnabled),
+                const SizedBox(height: AppSpacing.l),
+                _SectionLabel(l10n.profileAboutSection),
+                const SizedBox(height: AppSpacing.s),
+                const _AboutCard(),
+                const SizedBox(height: AppSpacing.xl),
+                const _SignOutButton(),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -111,10 +122,9 @@ class _SigningOutView extends StatelessWidget {
           const SizedBox(height: AppSpacing.m),
           Text(
             message,
-            style: Theme.of(context)
-                .textTheme
-                .bodyMedium
-                ?.copyWith(color: palette.inkSecondary),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: palette.inkSecondary),
           ),
         ],
       ),
@@ -161,19 +171,351 @@ class _SectionLabel extends StatelessWidget {
   }
 }
 
-/// Navigation card into the subscription & plans screen. Lives in the account
-/// section so billing is discoverable from the learner's profile.
-class _SubscriptionEntryCard extends StatelessWidget {
-  const _SubscriptionEntryCard();
+class _ProfileHero extends StatelessWidget {
+  const _ProfileHero({required this.claims});
+
+  final IdTokenClaims claims;
 
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
     final text = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
+    final displayName = claims.displayName ?? l10n.profileLearnerFallback;
+    final secondary = claims.secondaryLabel ?? l10n.profileSessionStatus;
 
     return AppCard(
-      onTap: () => unawaited(context.pushNamed(Routes.subscription)),
+      padding: const EdgeInsets.all(AppSpacing.m),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: palette.accentSoft,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(color: palette.accent.withValues(alpha: 0.16)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.m),
+          child: Row(
+            children: [
+              _Avatar(label: displayName, size: 72),
+              const SizedBox(width: AppSpacing.m),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _HeroPill(text: l10n.profileHeroEyebrow),
+                    const SizedBox(height: AppSpacing.s),
+                    Text(
+                      displayName,
+                      style: text.headlineSmall?.copyWith(
+                        color: palette.ink,
+                        fontWeight: FontWeight.w800,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      secondary,
+                      style: text.bodyMedium?.copyWith(
+                        color: palette.inkSecondary,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HeroPill extends StatelessWidget {
+  const _HeroPill({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: palette.surface.withValues(alpha: 0.72),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: palette.border),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s,
+          vertical: AppSpacing.xs,
+        ),
+        child: Text(
+          text,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: palette.accent,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _IdentityDetailsCard extends StatelessWidget {
+  const _IdentityDetailsCard({required this.claims});
+
+  final IdTokenClaims claims;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final text = Theme.of(context).textTheme;
+    final palette = context.palette;
+
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            l10n.profileAccountDetailsTitle,
+            style: text.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: AppSpacing.m),
+          if (claims.isEmpty)
+            _UnavailableIdentityNotice()
+          else ...[
+            if (claims.displayName != null)
+              _DetailRow(
+                icon: Icons.badge_outlined,
+                label: l10n.profileDisplayName,
+                value: claims.displayName!,
+              ),
+            if (claims.preferredUsername != null)
+              _DetailRow(
+                icon: Icons.alternate_email_rounded,
+                label: l10n.profileUsername,
+                value: claims.preferredUsername!,
+              ),
+            if (claims.email != null)
+              _DetailRow(
+                icon: Icons.mail_outline_rounded,
+                label: l10n.profileEmail,
+                value: claims.email!,
+              ),
+          ],
+          const SizedBox(height: AppSpacing.m),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: palette.surfaceMuted,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.m),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.verified_user_outlined,
+                    color: palette.success,
+                    size: 20,
+                  ),
+                  const SizedBox(width: AppSpacing.s),
+                  Expanded(
+                    child: Text(
+                      l10n.profileIdentityPrivacy,
+                      style: text.bodySmall?.copyWith(
+                        color: palette.inkSecondary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _UnavailableIdentityNotice extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final palette = context.palette;
+    final text = Theme.of(context).textTheme;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: palette.warningSoft,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: palette.warning.withValues(alpha: 0.24)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.m),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.info_outline_rounded, color: palette.warning, size: 20),
+            const SizedBox(width: AppSpacing.s),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.profileIdentityUnavailableTitle,
+                    style: text.titleSmall?.copyWith(
+                      color: palette.ink,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    l10n.profileIdentityUnavailableBody,
+                    style: text.bodySmall?.copyWith(
+                      color: palette.inkSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DetailRow extends StatelessWidget {
+  const _DetailRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    final text = Theme.of(context).textTheme;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.s),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: palette.inkTertiary),
+          const SizedBox(width: AppSpacing.s),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: text.labelSmall?.copyWith(
+                    color: palette.inkTertiary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  value,
+                  style: text.bodyMedium?.copyWith(color: palette.ink),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProfileActionGrid extends StatelessWidget {
+  const _ProfileActionGrid();
+
+  @override
+  Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    final isWide = width >= 560;
+    final cards = [
+      _ActionCard(
+        icon: Icons.insights_rounded,
+        title: AppLocalizations.of(context).profileProgressAction,
+        subtitle: AppLocalizations.of(context).profileProgressSubtitle,
+        onTap: () => context.goNamed(Routes.progress),
+      ),
+      _ActionCard(
+        icon: Icons.bookmark_border_rounded,
+        title: AppLocalizations.of(context).profileSavedAction,
+        subtitle: AppLocalizations.of(context).profileSavedSubtitle,
+        onTap: () => context.goNamed(Routes.saved),
+      ),
+      _ActionCard(
+        icon: Icons.workspace_premium_outlined,
+        title: AppLocalizations.of(context).subscriptionTitle,
+        subtitle: AppLocalizations.of(context).subscriptionSubtitle,
+        onTap: () => unawaited(context.pushNamed(Routes.subscription)),
+      ),
+    ];
+
+    if (!isWide) {
+      return Column(
+        children: [
+          for (final card in cards) ...[
+            card,
+            if (card != cards.last) const SizedBox(height: AppSpacing.s),
+          ],
+        ],
+      );
+    }
+
+    return Wrap(
+      spacing: AppSpacing.s,
+      runSpacing: AppSpacing.s,
+      children: [
+        for (final card in cards)
+          SizedBox(
+            width:
+                (MediaQuery.sizeOf(context).width.clamp(0, 720) -
+                    AppSpacing.s -
+                    AppSpacing.m * 2) /
+                2,
+            child: card,
+          ),
+      ],
+    );
+  }
+}
+
+class _ActionCard extends StatelessWidget {
+  const _ActionCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    final text = Theme.of(context).textTheme;
+
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpacing.m),
+      onTap: onTap,
       child: Row(
         children: [
           Container(
@@ -184,11 +526,7 @@ class _SubscriptionEntryCard extends StatelessWidget {
               color: palette.accentSoft,
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
-            child: Icon(
-              Icons.workspace_premium_outlined,
-              size: 22,
-              color: palette.accent,
-            ),
+            child: Icon(icon, size: 21, color: palette.accent),
           ),
           const SizedBox(width: AppSpacing.m),
           Expanded(
@@ -196,74 +534,25 @@ class _SubscriptionEntryCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  l10n.subscriptionTitle,
-                  style: text.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                  title,
+                  style: text.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  l10n.subscriptionSubtitle,
+                  subtitle,
                   style: text.bodySmall?.copyWith(
                     color: palette.inkSecondary,
                   ),
-                  maxLines: 1,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
           ),
-          Icon(
-            Icons.chevron_right_rounded,
-            color: palette.inkTertiary,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AccountCard extends ConsumerWidget {
-  const _AccountCard({required this.claims});
-
-  final IdTokenClaims claims;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final text = Theme.of(context).textTheme;
-    final displayName = claims.displayName ?? l10n.profileLearnerFallback;
-    final secondary = claims.secondaryLabel;
-
-    return AppCard(
-      child: Row(
-        children: [
-          _Avatar(label: displayName),
-          const SizedBox(width: AppSpacing.m),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  displayName,
-                  style: text.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                if (secondary != null) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    secondary,
-                    style: text.bodySmall?.copyWith(
-                      color: context.palette.inkSecondary,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ],
-            ),
-          ),
+          const SizedBox(width: AppSpacing.s),
+          Icon(Icons.chevron_right_rounded, color: palette.inkTertiary),
         ],
       ),
     );
@@ -271,9 +560,10 @@ class _AccountCard extends ConsumerWidget {
 }
 
 class _Avatar extends StatelessWidget {
-  const _Avatar({required this.label});
+  const _Avatar({required this.label, this.size = 56});
 
   final String label;
+  final double size;
 
   @override
   Widget build(BuildContext context) {
@@ -281,8 +571,8 @@ class _Avatar extends StatelessWidget {
         ? '?'
         : label.trim().characters.first.toUpperCase();
     return Container(
-      width: 56,
-      height: 56,
+      width: size,
+      height: size,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: context.palette.accent,

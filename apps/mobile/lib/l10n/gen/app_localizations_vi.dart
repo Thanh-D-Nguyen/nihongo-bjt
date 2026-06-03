@@ -483,7 +483,51 @@ class AppLocalizationsVi extends AppLocalizations {
   String get profileLearnerFallback => 'Người học';
 
   @override
+  String get profileHeroEyebrow => 'Tài khoản NihonGo BJT';
+
+  @override
+  String get profileSessionStatus => 'Phiên đăng nhập đang hoạt động';
+
+  @override
   String get profileAccountSection => 'Tài khoản';
+
+  @override
+  String get profileAccountDetailsTitle => 'Thông tin đăng nhập';
+
+  @override
+  String get profileDisplayName => 'Tên hiển thị';
+
+  @override
+  String get profileUsername => 'Tên đăng nhập';
+
+  @override
+  String get profileEmail => 'Email';
+
+  @override
+  String get profileIdentityUnavailableTitle => 'Chưa đọc được chi tiết hồ sơ';
+
+  @override
+  String get profileIdentityUnavailableBody =>
+      'Ứng dụng chỉ hiển thị thông tin có thật trong phiên đăng nhập hiện tại. Hãy đăng nhập lại nếu thông tin hồ sơ vẫn trống.';
+
+  @override
+  String get profileIdentityPrivacy =>
+      'Chỉ hiển thị claim hồ sơ từ phiên Keycloak hiện tại; không lưu mật khẩu hay token thô trên màn hình này.';
+
+  @override
+  String get profileActionsSection => 'Lối tắt';
+
+  @override
+  String get profileProgressAction => 'Tiến độ học';
+
+  @override
+  String get profileProgressSubtitle => 'Xem thống kê và lịch sử học';
+
+  @override
+  String get profileSavedAction => 'Mục đã lưu';
+
+  @override
+  String get profileSavedSubtitle => 'Từ vựng, bài đọc và nội dung đã đánh dấu';
 
   @override
   String get profilePreferencesSection => 'Tùy chỉnh';

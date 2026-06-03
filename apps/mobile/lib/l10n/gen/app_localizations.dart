@@ -944,11 +944,95 @@ abstract class AppLocalizations {
   /// **'Người học'**
   String get profileLearnerFallback;
 
+  /// Small label in the profile hero card.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tài khoản NihonGo BJT'**
+  String get profileHeroEyebrow;
+
+  /// Fallback status line when the profile token has no secondary identity label.
+  ///
+  /// In vi, this message translates to:
+  /// **'Phiên đăng nhập đang hoạt động'**
+  String get profileSessionStatus;
+
   /// Section header for account/session information.
   ///
   /// In vi, this message translates to:
   /// **'Tài khoản'**
   String get profileAccountSection;
+
+  /// Title for the account identity details card.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thông tin đăng nhập'**
+  String get profileAccountDetailsTitle;
+
+  /// Label for the display name claim.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tên hiển thị'**
+  String get profileDisplayName;
+
+  /// Label for the preferred username claim.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tên đăng nhập'**
+  String get profileUsername;
+
+  /// Label for the email claim.
+  ///
+  /// In vi, this message translates to:
+  /// **'Email'**
+  String get profileEmail;
+
+  /// Title shown when no display claims can be decoded from the ID token.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa đọc được chi tiết hồ sơ'**
+  String get profileIdentityUnavailableTitle;
+
+  /// Body shown when no display claims can be decoded from the ID token.
+  ///
+  /// In vi, this message translates to:
+  /// **'Ứng dụng chỉ hiển thị thông tin có thật trong phiên đăng nhập hiện tại. Hãy đăng nhập lại nếu thông tin hồ sơ vẫn trống.'**
+  String get profileIdentityUnavailableBody;
+
+  /// Privacy note for displayed identity data.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chỉ hiển thị claim hồ sơ từ phiên Keycloak hiện tại; không lưu mật khẩu hay token thô trên màn hình này.'**
+  String get profileIdentityPrivacy;
+
+  /// Section header for profile shortcut actions.
+  ///
+  /// In vi, this message translates to:
+  /// **'Lối tắt'**
+  String get profileActionsSection;
+
+  /// Shortcut title to the progress screen.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tiến độ học'**
+  String get profileProgressAction;
+
+  /// Shortcut subtitle to the progress screen.
+  ///
+  /// In vi, this message translates to:
+  /// **'Xem thống kê và lịch sử học'**
+  String get profileProgressSubtitle;
+
+  /// Shortcut title to saved items.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mục đã lưu'**
+  String get profileSavedAction;
+
+  /// Shortcut subtitle to saved items.
+  ///
+  /// In vi, this message translates to:
+  /// **'Từ vựng, bài đọc và nội dung đã đánh dấu'**
+  String get profileSavedSubtitle;
 
   /// Section header for learner preferences.
   ///
