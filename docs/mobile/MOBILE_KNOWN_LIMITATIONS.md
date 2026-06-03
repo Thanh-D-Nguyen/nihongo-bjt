@@ -11,6 +11,8 @@ Companion docs: `MOBILE_AI_QA_REPORT.md`, `MOBILE_BATCH_LOG.md`,
 
 ## 1. Content & backend integration
 
+- **Home is now feature-entry parity, not full web-widget parity.** The 2026-06-03 Home rebuild surfaces real mobile routes and real local/provider data, but intentionally omits or routes around web-only widgets such as personalized feed, weekly server report, ads, push prompt, focus timer, companion pet, mystery box, login bonus, and battle. These need dedicated mobile contracts/product decisions before appearing as Home widgets.
+- **Home runtime API verification is blocked unless local Keycloak/API are running.** The Home implementation targets existing mobile repositories/routes; live API-backed destinations still need device retest with local services available.
 - **Lessons and BJT questions have no backend API yet.** They are served by a
   clearly-labeled **local preview** content set (`LocalPreviewLessonRepository`,
   `LocalPreviewQuestionRepository`) behind `LessonRepository` /
@@ -52,9 +54,9 @@ Companion docs: `MOBILE_AI_QA_REPORT.md`, `MOBILE_BATCH_LOG.md`,
 
 ## 5. Responsive / layout
 
-- `home_page` still uses a raw `Scaffold` (not `AppScaffold`), so it does **not**
-  inherit the `maxContentWidth` cap — on tablets/foldables it may render
-  over-wide. Other screens use `AppScaffold` and are capped.
+- **Home tablet width cap is resolved in code/tests.** `HomePage` now centers
+  content with a 640 dp cap and has widget coverage for wide tablet surfaces.
+  Real tablet/foldable visual QA is still pending.
 - Long-text screens were hardened this phase (meta rows / header chips now
   wrap/ellipsize), but the *visual quality* of the truncation/wrap still wants a
   human eye on a real narrow device.

@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nihongo_bjt/app/app.dart';
 import 'package:nihongo_bjt/core/auth/auth_token_store.dart';
-import 'package:nihongo_bjt/core/config/app_config.dart';
 import 'package:nihongo_bjt/features/auth/domain/auth_tokens.dart';
 import 'package:nihongo_bjt/features/auth/presentation/auth_controller.dart';
 import 'package:nihongo_bjt/features/home/presentation/home_page.dart';
@@ -27,7 +26,7 @@ class _AuthenticatedTokenStore implements AuthTokenStore {
 }
 
 void main() {
-  testWidgets('app boots and renders the Home placeholder', (tester) async {
+  testWidgets('app boots and renders the Home dashboard', (tester) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -40,6 +39,6 @@ void main() {
 
     expect(find.byType(MaterialApp), findsOneWidget);
     expect(find.byType(HomePage), findsOneWidget);
-    expect(find.text(AppConfig.tagline), findsOneWidget);
+    expect(find.text('Bảng học hôm nay'), findsOneWidget);
   });
 }

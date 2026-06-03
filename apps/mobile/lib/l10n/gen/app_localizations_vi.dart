@@ -96,6 +96,133 @@ class AppLocalizationsVi extends AppLocalizations {
   String get homeDashboardError => 'Không tải được bảng học tập.';
 
   @override
+  String get homeHeroTitle => 'Bảng học hôm nay';
+
+  @override
+  String get homeHeroBody =>
+      'Giữ nhịp học tiếng Nhật công sở với ôn tập, BJT và nội dung đọc thật.';
+
+  @override
+  String get homePrimaryReviewCta => 'Ôn tập ngay';
+
+  @override
+  String get homePrimaryLearnCta => 'Bắt đầu học';
+
+  @override
+  String get homeSecondaryExamCta => 'Vào BJT';
+
+  @override
+  String get homeTodaySectionTitle => 'Hôm nay';
+
+  @override
+  String get homeTodaySectionSubtitle =>
+      'Một bước học rõ ràng, không cần đoán.';
+
+  @override
+  String get homeDailyLessonEyebrow => 'Bài học hôm nay';
+
+  @override
+  String get homePreviewBadge => 'Nội dung preview';
+
+  @override
+  String homeLessonMinutes(int minutes) {
+    return '$minutes phút';
+  }
+
+  @override
+  String homeLessonQuestions(int count) {
+    return '$count câu luyện tập';
+  }
+
+  @override
+  String get homeOpenLessonCta => 'Mở bài học';
+
+  @override
+  String get homeDailyLessonUnavailableTitle => 'Chưa tải được bài học hôm nay';
+
+  @override
+  String get homeDailyLessonUnavailableBody =>
+      'Bạn vẫn có thể mở Learn để chọn bài học hiện có.';
+
+  @override
+  String get homeReviewSectionTitle => 'Ôn tập & tiến độ';
+
+  @override
+  String get homeReviewSectionSubtitle =>
+      'Chỉ hiển thị số liệu app đang có nguồn thật.';
+
+  @override
+  String get homeFlashcardsUnavailableTitle => 'Không tải được thẻ ôn tập';
+
+  @override
+  String get homeFlashcardsUnavailableBody =>
+      'Kiểm tra kết nối hoặc thử lại khi API cục bộ đã chạy.';
+
+  @override
+  String get homeProgressDeviceNote => 'Tiến độ trên thiết bị này';
+
+  @override
+  String get homeProgressEmptyMini => 'Chưa có lượt ôn thật nào được ghi nhận.';
+
+  @override
+  String get homeProgressUnavailable =>
+      'Chưa đọc được tiến độ. Bạn vẫn có thể học và thử lại sau.';
+
+  @override
+  String get homeShortcutsCoreTitle => 'Lối vào chính';
+
+  @override
+  String get homeShortcutsLibraryTitle => 'Tra cứu & lưu lại';
+
+  @override
+  String get homeShortcutsContentTitle => 'Đọc & luyện tình huống';
+
+  @override
+  String get homeShortcutLearnBody => 'Bài học tiếng Nhật công sở';
+
+  @override
+  String get homeShortcutExamBody => 'Đề mô phỏng có tính giờ';
+
+  @override
+  String get homeShortcutReviewBody => 'Thẻ và chế độ ôn tập';
+
+  @override
+  String get homeShortcutProgressBody => 'Nhật ký học thật';
+
+  @override
+  String get homeShortcutDictionaryBody => 'Tra Nhật - Việt';
+
+  @override
+  String get homeShortcutSearchBody => 'Tìm trên toàn bộ nội dung';
+
+  @override
+  String get homeShortcutKanjiBody => 'Đọc, nghĩa, ví dụ';
+
+  @override
+  String get homeShortcutGrammarBody => 'Mẫu câu và cách dùng';
+
+  @override
+  String get homeShortcutSavedBody => 'Mục đã lưu để ôn lại';
+
+  @override
+  String get homeShortcutScenariosBody => 'Hội thoại công sở';
+
+  @override
+  String get homeShortcutNewsBody => 'NHK với từ vựng';
+
+  @override
+  String get homeShortcutMagazineBody => 'Bài đọc và quiz ngắn';
+
+  @override
+  String get homeShortcutCareerBody => 'Nhiệm vụ BJT công việc';
+
+  @override
+  String get homeShortcutRewardsBody => 'Chuỗi ngày và huy hiệu thật';
+
+  @override
+  String get homeShortcutSubscriptionBody => 'Gói và quyền lợi';
+
+  @override
   String get loginSignInTitle => 'Đăng nhập để tiếp tục';
 
   @override

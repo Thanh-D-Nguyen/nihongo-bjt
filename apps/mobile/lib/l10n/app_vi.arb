@@ -112,6 +112,59 @@
   "@homeDashboardError": {
     "description": "Error state when the home dashboard fails to load."
   },
+  "homeHeroTitle": "Bảng học hôm nay",
+  "homeHeroBody": "Giữ nhịp học tiếng Nhật công sở với ôn tập, BJT và nội dung đọc thật.",
+  "homePrimaryReviewCta": "Ôn tập ngay",
+  "homePrimaryLearnCta": "Bắt đầu học",
+  "homeSecondaryExamCta": "Vào BJT",
+  "homeTodaySectionTitle": "Hôm nay",
+  "homeTodaySectionSubtitle": "Một bước học rõ ràng, không cần đoán.",
+  "homeDailyLessonEyebrow": "Bài học hôm nay",
+  "homePreviewBadge": "Nội dung preview",
+  "homeLessonMinutes": "{minutes} phút",
+  "@homeLessonMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "homeLessonQuestions": "{count} câu luyện tập",
+  "@homeLessonQuestions": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeOpenLessonCta": "Mở bài học",
+  "homeDailyLessonUnavailableTitle": "Chưa tải được bài học hôm nay",
+  "homeDailyLessonUnavailableBody": "Bạn vẫn có thể mở Learn để chọn bài học hiện có.",
+  "homeReviewSectionTitle": "Ôn tập & tiến độ",
+  "homeReviewSectionSubtitle": "Chỉ hiển thị số liệu app đang có nguồn thật.",
+  "homeFlashcardsUnavailableTitle": "Không tải được thẻ ôn tập",
+  "homeFlashcardsUnavailableBody": "Kiểm tra kết nối hoặc thử lại khi API cục bộ đã chạy.",
+  "homeProgressDeviceNote": "Tiến độ trên thiết bị này",
+  "homeProgressEmptyMini": "Chưa có lượt ôn thật nào được ghi nhận.",
+  "homeProgressUnavailable": "Chưa đọc được tiến độ. Bạn vẫn có thể học và thử lại sau.",
+  "homeShortcutsCoreTitle": "Lối vào chính",
+  "homeShortcutsLibraryTitle": "Tra cứu & lưu lại",
+  "homeShortcutsContentTitle": "Đọc & luyện tình huống",
+  "homeShortcutLearnBody": "Bài học tiếng Nhật công sở",
+  "homeShortcutExamBody": "Đề mô phỏng có tính giờ",
+  "homeShortcutReviewBody": "Thẻ và chế độ ôn tập",
+  "homeShortcutProgressBody": "Nhật ký học thật",
+  "homeShortcutDictionaryBody": "Tra Nhật - Việt",
+  "homeShortcutSearchBody": "Tìm trên toàn bộ nội dung",
+  "homeShortcutKanjiBody": "Đọc, nghĩa, ví dụ",
+  "homeShortcutGrammarBody": "Mẫu câu và cách dùng",
+  "homeShortcutSavedBody": "Mục đã lưu để ôn lại",
+  "homeShortcutScenariosBody": "Hội thoại công sở",
+  "homeShortcutNewsBody": "NHK với từ vựng",
+  "homeShortcutMagazineBody": "Bài đọc và quiz ngắn",
+  "homeShortcutCareerBody": "Nhiệm vụ BJT công việc",
+  "homeShortcutRewardsBody": "Chuỗi ngày và huy hiệu thật",
+  "homeShortcutSubscriptionBody": "Gói và quyền lợi",
 
   "loginSignInTitle": "Đăng nhập để tiếp tục",
   "@loginSignInTitle": {

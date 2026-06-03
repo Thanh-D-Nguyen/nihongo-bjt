@@ -224,6 +224,240 @@ abstract class AppLocalizations {
   /// **'Không tải được bảng học tập.'**
   String get homeDashboardError;
 
+  /// No description provided for @homeHeroTitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bảng học hôm nay'**
+  String get homeHeroTitle;
+
+  /// No description provided for @homeHeroBody.
+  ///
+  /// In vi, this message translates to:
+  /// **'Giữ nhịp học tiếng Nhật công sở với ôn tập, BJT và nội dung đọc thật.'**
+  String get homeHeroBody;
+
+  /// No description provided for @homePrimaryReviewCta.
+  ///
+  /// In vi, this message translates to:
+  /// **'Ôn tập ngay'**
+  String get homePrimaryReviewCta;
+
+  /// No description provided for @homePrimaryLearnCta.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bắt đầu học'**
+  String get homePrimaryLearnCta;
+
+  /// No description provided for @homeSecondaryExamCta.
+  ///
+  /// In vi, this message translates to:
+  /// **'Vào BJT'**
+  String get homeSecondaryExamCta;
+
+  /// No description provided for @homeTodaySectionTitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hôm nay'**
+  String get homeTodaySectionTitle;
+
+  /// No description provided for @homeTodaySectionSubtitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Một bước học rõ ràng, không cần đoán.'**
+  String get homeTodaySectionSubtitle;
+
+  /// No description provided for @homeDailyLessonEyebrow.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bài học hôm nay'**
+  String get homeDailyLessonEyebrow;
+
+  /// No description provided for @homePreviewBadge.
+  ///
+  /// In vi, this message translates to:
+  /// **'Nội dung preview'**
+  String get homePreviewBadge;
+
+  /// No description provided for @homeLessonMinutes.
+  ///
+  /// In vi, this message translates to:
+  /// **'{minutes} phút'**
+  String homeLessonMinutes(int minutes);
+
+  /// No description provided for @homeLessonQuestions.
+  ///
+  /// In vi, this message translates to:
+  /// **'{count} câu luyện tập'**
+  String homeLessonQuestions(int count);
+
+  /// No description provided for @homeOpenLessonCta.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mở bài học'**
+  String get homeOpenLessonCta;
+
+  /// No description provided for @homeDailyLessonUnavailableTitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa tải được bài học hôm nay'**
+  String get homeDailyLessonUnavailableTitle;
+
+  /// No description provided for @homeDailyLessonUnavailableBody.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bạn vẫn có thể mở Learn để chọn bài học hiện có.'**
+  String get homeDailyLessonUnavailableBody;
+
+  /// No description provided for @homeReviewSectionTitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Ôn tập & tiến độ'**
+  String get homeReviewSectionTitle;
+
+  /// No description provided for @homeReviewSectionSubtitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chỉ hiển thị số liệu app đang có nguồn thật.'**
+  String get homeReviewSectionSubtitle;
+
+  /// No description provided for @homeFlashcardsUnavailableTitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không tải được thẻ ôn tập'**
+  String get homeFlashcardsUnavailableTitle;
+
+  /// No description provided for @homeFlashcardsUnavailableBody.
+  ///
+  /// In vi, this message translates to:
+  /// **'Kiểm tra kết nối hoặc thử lại khi API cục bộ đã chạy.'**
+  String get homeFlashcardsUnavailableBody;
+
+  /// No description provided for @homeProgressDeviceNote.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tiến độ trên thiết bị này'**
+  String get homeProgressDeviceNote;
+
+  /// No description provided for @homeProgressEmptyMini.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa có lượt ôn thật nào được ghi nhận.'**
+  String get homeProgressEmptyMini;
+
+  /// No description provided for @homeProgressUnavailable.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa đọc được tiến độ. Bạn vẫn có thể học và thử lại sau.'**
+  String get homeProgressUnavailable;
+
+  /// No description provided for @homeShortcutsCoreTitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Lối vào chính'**
+  String get homeShortcutsCoreTitle;
+
+  /// No description provided for @homeShortcutsLibraryTitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tra cứu & lưu lại'**
+  String get homeShortcutsLibraryTitle;
+
+  /// No description provided for @homeShortcutsContentTitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đọc & luyện tình huống'**
+  String get homeShortcutsContentTitle;
+
+  /// No description provided for @homeShortcutLearnBody.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bài học tiếng Nhật công sở'**
+  String get homeShortcutLearnBody;
+
+  /// No description provided for @homeShortcutExamBody.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đề mô phỏng có tính giờ'**
+  String get homeShortcutExamBody;
+
+  /// No description provided for @homeShortcutReviewBody.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thẻ và chế độ ôn tập'**
+  String get homeShortcutReviewBody;
+
+  /// No description provided for @homeShortcutProgressBody.
+  ///
+  /// In vi, this message translates to:
+  /// **'Nhật ký học thật'**
+  String get homeShortcutProgressBody;
+
+  /// No description provided for @homeShortcutDictionaryBody.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tra Nhật - Việt'**
+  String get homeShortcutDictionaryBody;
+
+  /// No description provided for @homeShortcutSearchBody.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tìm trên toàn bộ nội dung'**
+  String get homeShortcutSearchBody;
+
+  /// No description provided for @homeShortcutKanjiBody.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đọc, nghĩa, ví dụ'**
+  String get homeShortcutKanjiBody;
+
+  /// No description provided for @homeShortcutGrammarBody.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mẫu câu và cách dùng'**
+  String get homeShortcutGrammarBody;
+
+  /// No description provided for @homeShortcutSavedBody.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mục đã lưu để ôn lại'**
+  String get homeShortcutSavedBody;
+
+  /// No description provided for @homeShortcutScenariosBody.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hội thoại công sở'**
+  String get homeShortcutScenariosBody;
+
+  /// No description provided for @homeShortcutNewsBody.
+  ///
+  /// In vi, this message translates to:
+  /// **'NHK với từ vựng'**
+  String get homeShortcutNewsBody;
+
+  /// No description provided for @homeShortcutMagazineBody.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bài đọc và quiz ngắn'**
+  String get homeShortcutMagazineBody;
+
+  /// No description provided for @homeShortcutCareerBody.
+  ///
+  /// In vi, this message translates to:
+  /// **'Nhiệm vụ BJT công việc'**
+  String get homeShortcutCareerBody;
+
+  /// No description provided for @homeShortcutRewardsBody.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chuỗi ngày và huy hiệu thật'**
+  String get homeShortcutRewardsBody;
+
+  /// No description provided for @homeShortcutSubscriptionBody.
+  ///
+  /// In vi, this message translates to:
+  /// **'Gói và quyền lợi'**
+  String get homeShortcutSubscriptionBody;
+
   /// Title on the login card.
   ///
   /// In vi, this message translates to:

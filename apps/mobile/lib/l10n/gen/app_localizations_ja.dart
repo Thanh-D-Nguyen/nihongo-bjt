@@ -93,6 +93,127 @@ class AppLocalizationsJa extends AppLocalizations {
   String get homeDashboardError => 'ダッシュボードを読み込めませんでした。';
 
   @override
+  String get homeHeroTitle => '今日の学習ダッシュボード';
+
+  @override
+  String get homeHeroBody => '復習、BJT、実用的な読み物でビジネス日本語のリズムを保ちましょう。';
+
+  @override
+  String get homePrimaryReviewCta => '今すぐ復習';
+
+  @override
+  String get homePrimaryLearnCta => '学習を始める';
+
+  @override
+  String get homeSecondaryExamCta => 'BJTへ';
+
+  @override
+  String get homeTodaySectionTitle => '今日';
+
+  @override
+  String get homeTodaySectionSubtitle => '迷わず進める、明確な一歩。';
+
+  @override
+  String get homeDailyLessonEyebrow => '今日のレッスン';
+
+  @override
+  String get homePreviewBadge => 'プレビュー教材';
+
+  @override
+  String homeLessonMinutes(int minutes) {
+    return '$minutes分';
+  }
+
+  @override
+  String homeLessonQuestions(int count) {
+    return '$count問の練習';
+  }
+
+  @override
+  String get homeOpenLessonCta => 'レッスンを開く';
+
+  @override
+  String get homeDailyLessonUnavailableTitle => '今日のレッスンを読み込めません';
+
+  @override
+  String get homeDailyLessonUnavailableBody => 'Learnから利用可能なレッスンを選べます。';
+
+  @override
+  String get homeReviewSectionTitle => '復習と進捗';
+
+  @override
+  String get homeReviewSectionSubtitle => '実際のデータソースがある数値だけを表示します。';
+
+  @override
+  String get homeFlashcardsUnavailableTitle => '復習カードを読み込めません';
+
+  @override
+  String get homeFlashcardsUnavailableBody => '接続を確認するか、ローカルAPIの起動後に再試行してください。';
+
+  @override
+  String get homeProgressDeviceNote => 'この端末の進捗';
+
+  @override
+  String get homeProgressEmptyMini => 'まだ実際の復習記録がありません。';
+
+  @override
+  String get homeProgressUnavailable => '進捗を読み取れません。学習は続けられます。';
+
+  @override
+  String get homeShortcutsCoreTitle => '主要入口';
+
+  @override
+  String get homeShortcutsLibraryTitle => '検索と保存';
+
+  @override
+  String get homeShortcutsContentTitle => '読む・場面練習';
+
+  @override
+  String get homeShortcutLearnBody => 'ビジネス日本語レッスン';
+
+  @override
+  String get homeShortcutExamBody => '時間制限付き模擬試験';
+
+  @override
+  String get homeShortcutReviewBody => 'カードと復習モード';
+
+  @override
+  String get homeShortcutProgressBody => '実際の学習ログ';
+
+  @override
+  String get homeShortcutDictionaryBody => '日越辞書';
+
+  @override
+  String get homeShortcutSearchBody => '全コンテンツ検索';
+
+  @override
+  String get homeShortcutKanjiBody => '読み・意味・例';
+
+  @override
+  String get homeShortcutGrammarBody => '文型と使い方';
+
+  @override
+  String get homeShortcutSavedBody => '保存した項目を復習';
+
+  @override
+  String get homeShortcutScenariosBody => '職場会話練習';
+
+  @override
+  String get homeShortcutNewsBody => '語彙付きNHK';
+
+  @override
+  String get homeShortcutMagazineBody => '短い記事とクイズ';
+
+  @override
+  String get homeShortcutCareerBody => 'BJT仕事ミッション';
+
+  @override
+  String get homeShortcutRewardsBody => '実データの連続日数とバッジ';
+
+  @override
+  String get homeShortcutSubscriptionBody => 'プランと権限';
+
+  @override
   String get loginSignInTitle => 'ログインして続ける';
 
   @override

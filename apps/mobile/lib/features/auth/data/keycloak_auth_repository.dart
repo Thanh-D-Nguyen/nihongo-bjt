@@ -74,36 +74,63 @@ class KeycloakAuthRepository implements AuthRepository {
     required String username,
     required String password,
   }) async {
-    final uri = Uri.parse(
+    final networkErrors = <Object>[];
+    for (final uri in _passwordTokenUris()) {
+      final http.Response response;
+      try {
+        response = await (httpClient?.post ?? http.post)(
+          uri,
+          headers: const {'content-type': 'application/x-www-form-urlencoded'},
+          body: {
+            'grant_type': 'password',
+            'client_id': environment.oauthClientId,
+            'username': username,
+            'password': password,
+            'scope': AppEnvironment.oauthScopes.join(' '),
+          },
+        );
+      } on Exception catch (error) {
+        networkErrors.add(error);
+        continue;
+      }
+
+      final json = _decodeBody(response);
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw _exceptionForTokenError(json, response.statusCode);
+      }
+
+      return _tokensFromJson(json, operation: 'password sign-in');
+    }
+
+    throw AuthException(
+      'password sign-in network failure',
+      code: AuthFailureCode.network,
+      cause: networkErrors.isEmpty ? null : networkErrors.last,
+    );
+  }
+
+  Iterable<Uri> _passwordTokenUris() sync* {
+    final primary = Uri.parse(
       '${environment.keycloakIssuer}/protocol/openid-connect/token',
     );
-    final http.Response response;
-    try {
-      response = await (httpClient?.post ?? http.post)(
-        uri,
-        headers: const {'content-type': 'application/x-www-form-urlencoded'},
-        body: {
-          'grant_type': 'password',
-          'client_id': environment.oauthClientId,
-          'username': username,
-          'password': password,
-          'scope': AppEnvironment.oauthScopes.join(' '),
-        },
-      );
-    } on Exception catch (error) {
-      throw AuthException(
-        'password sign-in network failure',
-        code: AuthFailureCode.network,
-        cause: error,
-      );
-    }
+    yield primary;
 
-    final json = _decodeBody(response);
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw _exceptionForTokenError(json, response.statusCode);
-    }
+    final fallback = _androidEmulatorLoopbackAlias(primary);
+    if (fallback != null) yield fallback;
+  }
 
-    return _tokensFromJson(json, operation: 'password sign-in');
+  /// Android emulator cannot reach host services through `localhost`; the host
+  /// loopback is exposed as `10.0.2.2`. Keep the configured issuer primary so
+  /// iOS simulator/desktop/dev proxy setups continue to work, then retry only
+  /// after a network failure.
+  Uri? _androidEmulatorLoopbackAlias(Uri uri) {
+    if (uri.scheme != 'http') return null;
+    if (uri.host != 'localhost' &&
+        uri.host != '127.0.0.1' &&
+        uri.host != '::1') {
+      return null;
+    }
+    return uri.replace(host: '10.0.2.2');
   }
 
   @override
@@ -223,7 +250,7 @@ class KeycloakAuthRepository implements AuthRepository {
     }
     return AuthException(
       'token endpoint failed with HTTP $statusCode',
-      );
+    );
   }
 
   AuthTokens _tokensFromJson(

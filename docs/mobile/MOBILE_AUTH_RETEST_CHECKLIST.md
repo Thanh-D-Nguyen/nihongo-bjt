@@ -17,7 +17,10 @@ Companion docs: `MOBILE_AUTH_PRODUCTION_AUDIT.md`, `MOBILE_AUTH_GAP_REPORT.md`,
 
 - [ ] `cd apps/mobile && flutter run -d <emulator-or-device-id>` launches the
       app and lands on **Login** (unauthenticated).
-- [ ] Confirm the dev Keycloak issuer is reachable (`KEYCLOAK_ISSUER`).
+- [ ] Confirm the dev Keycloak issuer is reachable (`KEYCLOAK_ISSUER`). On
+      Android emulator, run `adb reverse tcp:8080 tcp:8080` for browser/AppAuth
+      flows; password login also retries the token endpoint via `10.0.2.2` when
+      `localhost` is unreachable.
 - [ ] To test Google end-to-end, the realm must have a Google IdP alias
       `google` (see `MOBILE_AUTH_GAP_REPORT.md` §2). If not configured, expect
       the localized "Google sign-in unavailable" error — that is correct.
@@ -33,6 +36,10 @@ Companion docs: `MOBILE_AUTH_PRODUCTION_AUDIT.md`, `MOBILE_AUTH_GAP_REPORT.md`,
        stays on Login (no token, no crash).
 5. [ ] **Valid login.** Correct credentials → returns to Home, no profile flash,
        no auth loop, no hosted-Keycloak browser opening.
+      - Use the local retest account provided by the test owner at runtime only;
+        do not commit credentials to docs, code, screenshots, or logs.
+      - If the first `localhost` token call is unreachable on Android emulator,
+        expected behavior is retry via host alias and then proceed normally.
 6. [ ] **No removed controls.** Confirm there is **no** "secure browser" button,
        **no** "forgot password", and **no** Facebook/Apple/LINE buttons.
 7. [ ] **Keyboard safety.** With the keyboard open, the form scrolls; the

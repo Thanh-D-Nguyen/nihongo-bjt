@@ -45,11 +45,15 @@ SDK); it remains validated only on the Mac.
 - [ ] SafeArea respected (notch, status bar, home indicator).
 
 ## 2. Home dashboard
-- [ ] Welcome hero renders; metrics reflect real deck/card data.
+- [ ] Home hero renders; primary CTA reflects real flashcard availability.
 - [ ] Loading shows content-shaped skeleton, not a bare spinner.
 - [ ] Empty state (no decks) is encouraging with a clear next action.
 - [ ] Error state shows retry and recovers on retry.
-- [ ] Continue / review CTA navigates correctly.
+- [ ] Partial-data state keeps route-backed shortcuts usable.
+- [ ] Today's lesson card is honest about preview content when preview-backed.
+- [ ] Review/progress metrics reflect real deck/card and device-local study data only.
+- [ ] Every Home shortcut navigates to the expected route in `MOBILE_HOME_RETEST_CHECKLIST.md`.
+- [ ] No fake streak, XP, rank, plan, ad, or recommendation count appears.
 
 ## 3. Learn flow
 - [ ] Learn hub lists lesson categories/sections and a daily-lesson entry.

@@ -97,6 +97,12 @@ adb reverse tcp:8080 tcp:8080
 | iOS **simulator**        | `http://localhost:4000`   | `http://localhost:8080/realms/nihongo-bjt`       |
 | **Thiết bị thật** (cùng Wi‑Fi) | `http://<IP-LAN-máy>:4000` | Cần cấu hình hostname HTTPS dev/proxy phù hợp     |
 
+Password login có fallback riêng cho Android emulator: nếu token endpoint
+`localhost` không kết nối được, app thử lại cùng endpoint qua host alias
+`10.0.2.2`. Fallback này chỉ áp dụng cho form username/password; các flow
+browser/AppAuth như Google/register hosted vẫn nên dùng `adb reverse` hoặc
+`--dart-define=KEYCLOAK_ISSUER=...` đúng môi trường.
+
 > Lấy IP LAN máy host: Windows `ipconfig` (IPv4), macOS/Linux `ifconfig`/`ip a`.
 > Thiết bị thật và máy host phải cùng mạng; mở firewall cho port 4000 nếu cần.
 
