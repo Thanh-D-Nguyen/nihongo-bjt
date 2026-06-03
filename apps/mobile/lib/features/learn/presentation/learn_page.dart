@@ -89,6 +89,38 @@ class _LearnContent extends ConsumerWidget {
           const SizedBox(height: AppSpacing.m),
         ],
         _DailyLessonCard(onOpenLesson: onOpenLesson),
+        const SizedBox(height: AppSpacing.l),
+        SectionHeader(title: l10n.learnReferenceTitle),
+        const SizedBox(height: AppSpacing.s),
+        const _ReferenceTools(),
+        const SizedBox(height: AppSpacing.l),
+        SectionHeader(title: l10n.scenariosTitle),
+        const SizedBox(height: AppSpacing.s),
+        const _ScenarioEntryCard(),
+        const SizedBox(height: AppSpacing.l),
+        SectionHeader(title: l10n.examTitle),
+        const SizedBox(height: AppSpacing.s),
+        const _ExamEntryCard(),
+        const SizedBox(height: AppSpacing.l),
+        SectionHeader(title: l10n.newsTitle),
+        const SizedBox(height: AppSpacing.s),
+        const _NewsEntryCard(),
+        const SizedBox(height: AppSpacing.l),
+        SectionHeader(title: l10n.magazineTitle),
+        const SizedBox(height: AppSpacing.s),
+        const _MagazineEntryCard(),
+        const SizedBox(height: AppSpacing.l),
+        SectionHeader(title: l10n.careerTitle),
+        const SizedBox(height: AppSpacing.s),
+        const _CareerEntryCard(),
+        const SizedBox(height: AppSpacing.l),
+        SectionHeader(title: l10n.learnLibraryTitle),
+        const SizedBox(height: AppSpacing.s),
+        const _SearchEntryCard(),
+        const SizedBox(height: AppSpacing.s),
+        const _SavedEntryCard(),
+        const SizedBox(height: AppSpacing.s),
+        const _RewardsEntryCard(),
         if (categories.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.l),
           SectionHeader(title: l10n.learnCategoriesTitle),
@@ -133,6 +165,456 @@ class _PreviewNotice extends StatelessWidget {
               l10n.learnPreviewNotice,
               style: text.bodySmall?.copyWith(color: palette.ink),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Quick links to the reference tools (dictionary, kanji, grammar) — all
+/// backed by the live `/api/dictionary`, `/api/kanji` and `/api/grammar`
+/// endpoints.
+class _ReferenceTools extends StatelessWidget {
+  const _ReferenceTools();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Row(
+      children: [
+        Expanded(
+          child: _ReferenceCard(
+            icon: Icons.menu_book_rounded,
+            label: l10n.learnDictionaryLabel,
+            onTap: () => unawaited(context.pushNamed(Routes.dictionary)),
+          ),
+        ),
+        const SizedBox(width: AppSpacing.s),
+        Expanded(
+          child: _ReferenceCard(
+            icon: Icons.translate_rounded,
+            label: l10n.learnKanjiLabel,
+            onTap: () => unawaited(context.pushNamed(Routes.kanji)),
+          ),
+        ),
+        const SizedBox(width: AppSpacing.s),
+        Expanded(
+          child: _ReferenceCard(
+            icon: Icons.auto_stories_rounded,
+            label: l10n.learnGrammarLabel,
+            onTap: () => unawaited(context.pushNamed(Routes.grammar)),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Entry point for the business-scenario practice flow (`/api/scenarios`).
+class _ScenarioEntryCard extends StatelessWidget {
+  const _ScenarioEntryCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final palette = context.palette;
+    final text = Theme.of(context).textTheme;
+    return AppCard(
+      onTap: () => unawaited(context.pushNamed(Routes.scenarios)),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: palette.accentSoft,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            child: Icon(Icons.work_outline_rounded, color: palette.accent),
+          ),
+          const SizedBox(width: AppSpacing.m),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.scenariosTitle,
+                  style: text.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: palette.ink,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  l10n.scenariosSubtitle,
+                  style: text.bodyMedium?.copyWith(
+                    color: palette.inkSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(Icons.chevron_right_rounded, color: palette.inkTertiary),
+        ],
+      ),
+    );
+  }
+}
+
+class _NewsEntryCard extends StatelessWidget {
+  const _NewsEntryCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final palette = context.palette;
+    final text = Theme.of(context).textTheme;
+    return AppCard(
+      onTap: () => unawaited(context.pushNamed(Routes.news)),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: palette.accentSoft,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            child: Icon(Icons.article_outlined, color: palette.accent),
+          ),
+          const SizedBox(width: AppSpacing.m),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.newsTitle,
+                  style: text.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: palette.ink,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  l10n.newsSubtitle,
+                  style: text.bodyMedium?.copyWith(
+                    color: palette.inkSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(Icons.chevron_right_rounded, color: palette.inkTertiary),
+        ],
+      ),
+    );
+  }
+}
+
+class _MagazineEntryCard extends StatelessWidget {
+  const _MagazineEntryCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final palette = context.palette;
+    final text = Theme.of(context).textTheme;
+    return AppCard(
+      onTap: () => unawaited(context.pushNamed(Routes.magazine)),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: palette.accentSoft,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            child: Icon(Icons.menu_book_outlined, color: palette.accent),
+          ),
+          const SizedBox(width: AppSpacing.m),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.magazineTitle,
+                  style: text.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: palette.ink,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  l10n.magazineSubtitle,
+                  style: text.bodyMedium?.copyWith(
+                    color: palette.inkSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(Icons.chevron_right_rounded, color: palette.inkTertiary),
+        ],
+      ),
+    );
+  }
+}
+
+class _CareerEntryCard extends StatelessWidget {
+  const _CareerEntryCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final palette = context.palette;
+    final text = Theme.of(context).textTheme;
+    return AppCard(
+      onTap: () => unawaited(context.pushNamed(Routes.career)),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: palette.accentSoft,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            child: Icon(Icons.military_tech_outlined, color: palette.accent),
+          ),
+          const SizedBox(width: AppSpacing.m),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.careerTitle,
+                  style: text.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: palette.ink,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  l10n.careerSubtitle,
+                  style: text.bodyMedium?.copyWith(
+                    color: palette.inkSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(Icons.chevron_right_rounded, color: palette.inkTertiary),
+        ],
+      ),
+    );
+  }
+}
+
+/// Entry point for global content search (`/api/search`).
+class _SearchEntryCard extends StatelessWidget {
+  const _SearchEntryCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return _LibraryEntryCard(
+      icon: Icons.search_rounded,
+      title: l10n.searchTitle,
+      subtitle: l10n.searchSubtitle,
+      onTap: () => unawaited(context.pushNamed(Routes.search)),
+    );
+  }
+}
+
+/// Entry point for the learner's saved library (`/api/bookmarks/*`).
+class _SavedEntryCard extends StatelessWidget {
+  const _SavedEntryCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return _LibraryEntryCard(
+      icon: Icons.bookmark_outline_rounded,
+      title: l10n.savedTitle,
+      subtitle: l10n.savedSubtitle,
+      onTap: () => unawaited(context.pushNamed(Routes.saved)),
+    );
+  }
+}
+
+/// Entry point for the learner Rewards hub (`/api/gamification/*`).
+class _RewardsEntryCard extends StatelessWidget {
+  const _RewardsEntryCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return _LibraryEntryCard(
+      icon: Icons.emoji_events_outlined,
+      title: l10n.rewardsTitle,
+      subtitle: l10n.rewardsSubtitle,
+      onTap: () => unawaited(context.pushNamed(Routes.rewards)),
+    );
+  }
+}
+
+/// Shared row card for the Library section (search / saved / rewards).
+class _LibraryEntryCard extends StatelessWidget {
+  const _LibraryEntryCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    final text = Theme.of(context).textTheme;
+    return AppCard(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: palette.accentSoft,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            child: Icon(icon, color: palette.accent),
+          ),
+          const SizedBox(width: AppSpacing.m),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: text.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: palette.ink,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  subtitle,
+                  style: text.bodyMedium?.copyWith(
+                    color: palette.inkSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(Icons.chevron_right_rounded, color: palette.inkTertiary),
+        ],
+      ),
+    );
+  }
+}
+
+class _ExamEntryCard extends StatelessWidget {
+  const _ExamEntryCard();
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final palette = context.palette;
+    final text = Theme.of(context).textTheme;
+    return AppCard(
+      onTap: () => unawaited(context.pushNamed(Routes.exam)),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: palette.accentSoft,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            child: Icon(Icons.fact_check_outlined, color: palette.accent),
+          ),
+          const SizedBox(width: AppSpacing.m),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.examTitle,
+                  style: text.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: palette.ink,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  l10n.examSubtitle,
+                  style: text.bodyMedium?.copyWith(
+                    color: palette.inkSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(Icons.chevron_right_rounded, color: palette.inkTertiary),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReferenceCard extends StatelessWidget {
+  const _ReferenceCard({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    final text = Theme.of(context).textTheme;
+    return AppCard(
+      onTap: onTap,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s,
+        vertical: AppSpacing.m,
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: palette.accentSoft,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            child: Icon(icon, color: palette.accent),
+          ),
+          const SizedBox(height: AppSpacing.s),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: text.labelMedium?.copyWith(color: palette.ink),
           ),
         ],
       ),

@@ -15,7 +15,7 @@ NestJS sẵn có (REST + Keycloak OIDC), nên backend phải chạy trước.
 | ---------------- | ------------------------------- | ------------------------------------------------------------------- |
 | **Flutter SDK**  | kênh stable, Dart `>= 3.12.0`   | `pubspec.yaml` yêu cầu `sdk: ^3.12.0`. Kiểm tra: `flutter --version` |
 | **Android**      | Android Studio + SDK + emulator | Cho build Android. `applicationId = com.nihongobjt.nihongo_bjt`     |
-| **iOS** (tùy)    | Xcode + CocoaPods (macOS)       | Chỉ build được iOS trên macOS                                       |
+| **iOS** (tùy)    | Xcode + CocoaPods (macOS)       | Chỉ build được iOS trên macOS. Nên dùng CocoaPods `>= 1.16.2`       |
 | **Backend BJT**  | đang chạy                       | API `:4000`, Keycloak `:8080` — xem mục 3                           |
 
 Sau khi cài, chạy `flutter doctor` và sửa hết các mục báo lỗi (✗) trước khi tiếp tục.
@@ -38,7 +38,7 @@ flutter pub get
 
 # 2) Sinh code (Drift DAO + json_serializable DTO). *.g.dart được commit nên
 #    chỉ cần chạy lại khi sửa model/table.
-dart run build_runner build --delete-conflicting-outputs
+dart run build_runner build
 
 # 3) Sinh localization (gen-l10n) từ lib/l10n/*.arb
 flutter gen-l10n
@@ -184,9 +184,44 @@ flutter build appbundle --release --dart-define-from-file=config/prod.json
 
 **iOS (macOS):**
 
+Build để kiểm tra project iOS compile được, chưa ký code và chưa tạo IPA:
+
+```bash
+flutter build ios --release --no-codesign \
+  --dart-define=API_BASE_URL=http://localhost:4000 \
+  --dart-define=KEYCLOAK_ISSUER=http://localhost:8080/realms/nihongo-bjt \
+  --dart-define=FLASHCARD_DATA_SOURCE=api
+```
+
+Artifact sau build nằm ở:
+
+```text
+apps/mobile/build/ios/iphoneos/Runner.app
+```
+
+Build IPA để cài TestFlight/App Store cần Apple Developer Team, signing
+certificate, provisioning profile và cấu hình bundle id trong Xcode:
+
 ```bash
 flutter build ipa --release --dart-define-from-file=config/prod.json
 ```
+
+Nếu muốn debug trên iPhone/iPad thật trong cùng Wi-Fi, không dùng `localhost`
+cho API/Keycloak. Truyền host mà thiết bị truy cập được, ví dụ:
+
+```bash
+flutter run -d <ios-device-id> \
+  --dart-define=API_BASE_URL=http://<IP-LAN-may-mac>:4000 \
+  --dart-define=KEYCLOAK_ISSUER=http://<IP-LAN-may-mac>:8080/realms/nihongo-bjt \
+  --dart-define=FLASHCARD_DATA_SOURCE=api
+```
+
+Ghi chú môi trường hiện tại:
+
+- `flutter_secure_storage` chưa hỗ trợ Swift Package Manager cho iOS, nên build
+  hiện vẫn cần CocoaPods.
+- Nếu `flutter doctor -v` cảnh báo CocoaPods cũ, nâng bằng Homebrew hoặc RubyGems
+  theo cách bạn quản lý máy. Ví dụ Homebrew: `brew upgrade cocoapods`.
 
 ---
 
@@ -213,7 +248,7 @@ dart format .                   # format
 flutter clean && flutter pub get  # reset khi build lỗi lạ
 
 # Regenerate code sau khi sửa model/table/DTO:
-dart run build_runner build --delete-conflicting-outputs
+dart run build_runner build
 flutter gen-l10n
 ```
 
@@ -225,7 +260,9 @@ flutter gen-l10n
 | --------------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------- |
 | `Connection refused` / API timeout (Android)  | dùng `localhost` trên emulator           | Đổi sang `http://10.0.2.2:4000`                                          |
 | Đăng nhập xong không quay lại app             | redirect scheme sai                      | Khớp `OAUTH_REDIRECT_URI` với `appAuthRedirectScheme=com.nihongobjt.app` |
-| Lỗi thiếu `*.g.dart` / `AppLocalizations`     | chưa chạy codegen                        | `dart run build_runner build -d ...` + `flutter gen-l10n`                |
+| Lỗi thiếu `*.g.dart` / `AppLocalizations`     | chưa chạy codegen                        | `dart run build_runner build` + `flutter gen-l10n`                       |
+| iOS build báo signing/provisioning            | build IPA/device cần Apple signing       | Dùng `flutter build ios --release --no-codesign` để kiểm tra compile, hoặc cấu hình Team/Profile trong Xcode |
+| iOS build báo Pods không đồng bộ              | `Podfile.lock` và Pods lệch nhau         | Chạy `cd apps/mobile/ios && pod install`, hoặc `flutter clean && flutter pub get` rồi build lại |
 | Cleartext HTTP bị chặn (Android release)      | Android chặn `http://` mặc định          | Dev dùng HTTP ổn; **prod phải HTTPS** cho cả API và Keycloak             |
 | Ảnh không hiện trên thiết bị thật             | URL media là `localhost`                 | Sync media + đổi host prod (guide ở mục 7)                               |
 | `flutter doctor` báo Android licenses         | chưa accept SDK license                  | `flutter doctor --android-licenses`                                       |

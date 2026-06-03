@@ -117,9 +117,9 @@
   "@loginSignInTitle": {
     "description": "Title on the login card."
   },
-  "loginSignInSubtitle": "Dùng email/mật khẩu NihonGo BJT hoặc đăng nhập qua trình duyệt bảo mật như phiên bản web.",
+  "loginSignInSubtitle": "Đăng nhập bằng tài khoản NihonGo BJT của bạn.",
   "@loginSignInSubtitle": {
-    "description": "Subtitle explaining the redirect-based sign-in flow."
+    "description": "Subtitle explaining the account sign-in flow."
   },
   "loginSignInButton": "Đăng nhập",
   "@loginSignInButton": {
@@ -152,6 +152,54 @@
   "loginClientMisconfiguredError": "Client đăng nhập mobile đang cấu hình sai.",
   "loginNetworkError": "Không kết nối được máy chủ đăng nhập.",
   "loginMissingTokenError": "Máy chủ đăng nhập trả về thiếu dữ liệu phiên.",
+
+  "loginContinueWithGoogle": "Tiếp tục với Google",
+  "@loginContinueWithGoogle": {
+    "description": "Federated Google sign-in button label."
+  },
+  "loginNoAccountPrompt": "Chưa có tài khoản?",
+  "@loginNoAccountPrompt": {
+    "description": "Prompt before the register link on the login screen."
+  },
+  "loginRegisterAction": "Đăng ký",
+  "@loginRegisterAction": {
+    "description": "Register link label on the login screen."
+  },
+  "loginRegisteredSuccess": "Tạo tài khoản thành công. Hãy đăng nhập để bắt đầu.",
+  "@loginRegisteredSuccess": {
+    "description": "Success banner shown on login after a successful registration."
+  },
+
+  "registerTitle": "Tạo tài khoản",
+  "@registerTitle": {
+    "description": "Title on the register screen."
+  },
+  "registerSubtitle": "Tạo tài khoản NihonGo BJT để lưu tiến độ và đồng bộ trên mọi thiết bị.",
+  "@registerSubtitle": {
+    "description": "Subtitle on the register screen."
+  },
+  "registerDisplayNameLabel": "Tên hiển thị",
+  "registerDisplayNameRequired": "Vui lòng nhập tên hiển thị.",
+  "registerEmailLabel": "Email",
+  "registerEmailRequired": "Vui lòng nhập email.",
+  "registerEmailInvalid": "Email không hợp lệ.",
+  "registerPasswordLabel": "Mật khẩu",
+  "registerPasswordRequired": "Vui lòng nhập mật khẩu.",
+  "registerPasswordTooShort": "Mật khẩu cần ít nhất 8 ký tự.",
+  "registerConfirmPasswordLabel": "Nhập lại mật khẩu",
+  "registerConfirmPasswordRequired": "Vui lòng nhập lại mật khẩu.",
+  "registerPasswordMismatch": "Mật khẩu nhập lại không khớp.",
+  "registerSubmitButton": "Tạo tài khoản",
+  "registerHaveAccountPrompt": "Đã có tài khoản?",
+  "registerSignInAction": "Đăng nhập",
+  "registerTermsNotice": "Bằng cách tạo tài khoản, bạn đồng ý với điều khoản sử dụng và chính sách quyền riêng tư của NihonGo BJT.",
+  "registerGenericError": "Không tạo được tài khoản. Vui lòng thử lại.",
+  "registerEmailTakenError": "Email này đã được đăng ký.",
+  "registerInvalidEmailError": "Email không hợp lệ.",
+  "registerInvalidPasswordError": "Mật khẩu không đáp ứng yêu cầu bảo mật.",
+  "registerInvalidDisplayNameError": "Tên hiển thị không hợp lệ.",
+  "registerUnavailableError": "Tính năng đăng ký chưa được bật trên máy chủ. Vui lòng liên hệ quản trị viên.",
+  "registerNetworkError": "Không kết nối được máy chủ đăng ký.",
 
   "flashcardTitle": "Flashcard",
   "@flashcardTitle": {
@@ -311,9 +359,30 @@
   "@profileSignOut": {
     "description": "Button that ends the session and returns to login."
   },
+  "profileSigningOut": "Đang đăng xuất…",
+  "@profileSigningOut": {
+    "description": "Status shown while the sign-out is in progress, before the redirect to login."
+  },
   "profileSaveError": "Không lưu được thay đổi. Vui lòng thử lại.",
   "@profileSaveError": {
     "description": "Snackbar shown when persisting a preference fails."
+  },
+
+  "profileAboutSection": "Giới thiệu",
+  "@profileAboutSection": {
+    "description": "Section header for app/about information."
+  },
+  "profileAppVersion": "Phiên bản ứng dụng",
+  "@profileAppVersion": {
+    "description": "Label for the installed app version row."
+  },
+  "profileVersionValue": "{version} (bản dựng {build})",
+  "@profileVersionValue": {
+    "description": "Formats the app version and build number.",
+    "placeholders": {
+      "version": { "type": "String", "example": "1.0.0" },
+      "build": { "type": "String", "example": "1" }
+    }
   },
 
   "navHome": "Trang chủ",
@@ -643,5 +712,950 @@
   "offlineBannerMessage": "Bạn đang ngoại tuyến. Một số nội dung có thể chưa cập nhật.",
   "@offlineBannerMessage": {
     "description": "Slim non-blocking banner shown while the device is offline."
-  }
+  },
+
+  "learnReferenceTitle": "Tra cứu",
+  "@learnReferenceTitle": {
+    "description": "Section header on Learn for the dictionary/kanji/grammar reference tools."
+  },
+  "learnDictionaryLabel": "Từ điển",
+  "@learnDictionaryLabel": {
+    "description": "Label for the dictionary tool entry on Learn."
+  },
+  "learnKanjiLabel": "Kanji",
+  "@learnKanjiLabel": {
+    "description": "Label for the kanji browser entry on Learn."
+  },
+  "learnGrammarLabel": "Ngữ pháp",
+  "@learnGrammarLabel": {
+    "description": "Label for the grammar browser entry on Learn."
+  },
+
+  "contentExamplesTitle": "Ví dụ",
+  "@contentExamplesTitle": {
+    "description": "Section header above example sentences in content detail screens."
+  },
+
+  "dictionaryTitle": "Từ điển",
+  "@dictionaryTitle": {
+    "description": "App bar title for the dictionary search screen."
+  },
+  "dictionarySearchHint": "Tìm từ tiếng Nhật hoặc nghĩa tiếng Việt",
+  "@dictionarySearchHint": {
+    "description": "Placeholder text in the dictionary search field."
+  },
+  "dictionaryIdleTitle": "Tra từ điển Nhật–Việt",
+  "@dictionaryIdleTitle": {
+    "description": "Title of the idle prompt shown before the user searches the dictionary."
+  },
+  "dictionaryIdleBody": "Nhập kanji, kana hoặc nghĩa tiếng Việt để bắt đầu.",
+  "@dictionaryIdleBody": {
+    "description": "Body of the idle prompt on the dictionary screen."
+  },
+  "dictionaryEmptyTitle": "Không tìm thấy từ",
+  "@dictionaryEmptyTitle": {
+    "description": "Empty-state title when a dictionary search returns no results."
+  },
+  "dictionaryEmptyBody": "Thử từ khóa khác hoặc kiểm tra chính tả.",
+  "@dictionaryEmptyBody": {
+    "description": "Empty-state body when a dictionary search returns no results."
+  },
+  "dictionaryErrorTitle": "Không tải được kết quả",
+  "@dictionaryErrorTitle": {
+    "description": "Error-state title for the dictionary screen."
+  },
+  "dictionaryErrorBody": "Đã có lỗi khi tìm kiếm. Vui lòng thử lại.",
+  "@dictionaryErrorBody": {
+    "description": "Error-state body for the dictionary screen."
+  },
+  "dictionarySensesTitle": "Nghĩa",
+  "@dictionarySensesTitle": {
+    "description": "Section header above the list of word senses in word detail."
+  },
+
+  "kanjiTitle": "Kanji",
+  "@kanjiTitle": {
+    "description": "App bar title for the kanji browser screen."
+  },
+  "kanjiSearchHint": "Tìm kanji theo chữ, âm đọc hoặc cấp độ",
+  "@kanjiSearchHint": {
+    "description": "Placeholder text in the kanji search field."
+  },
+  "kanjiEmptyTitle": "Không có kanji phù hợp",
+  "@kanjiEmptyTitle": {
+    "description": "Empty-state title when the kanji list is empty."
+  },
+  "kanjiEmptyBody": "Thử chữ khác hoặc một cấp độ khác.",
+  "@kanjiEmptyBody": {
+    "description": "Empty-state body when the kanji list is empty."
+  },
+  "kanjiErrorTitle": "Không tải được Kanji",
+  "@kanjiErrorTitle": {
+    "description": "Error-state title for the kanji screens."
+  },
+  "kanjiErrorBody": "Đã có lỗi khi tải dữ liệu. Vui lòng thử lại.",
+  "@kanjiErrorBody": {
+    "description": "Error-state body for the kanji screens."
+  },
+  "kanjiOnyomiLabel": "Âm On",
+  "@kanjiOnyomiLabel": {
+    "description": "Label for the on'yomi reading in kanji detail."
+  },
+  "kanjiKunyomiLabel": "Âm Kun",
+  "@kanjiKunyomiLabel": {
+    "description": "Label for the kun'yomi reading in kanji detail."
+  },
+  "kanjiMeaningLabel": "Nghĩa",
+  "@kanjiMeaningLabel": {
+    "description": "Label for the Vietnamese meaning in kanji detail."
+  },
+  "kanjiStrokesLabel": "{count, plural, other{{count} nét}}",
+  "@kanjiStrokesLabel": {
+    "description": "Stroke-count label in kanji detail.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "kanjiStrokeOrderTitle": "Thứ tự nét",
+  "@kanjiStrokeOrderTitle": {
+    "description": "Section header above the stroke-order diagram in kanji detail."
+  },
+  "kanjiComponentsTitle": "Bộ thủ & thành phần",
+  "@kanjiComponentsTitle": {
+    "description": "Section header above the kanji components list."
+  },
+  "kanjiExamplesTitle": "Từ ví dụ",
+  "@kanjiExamplesTitle": {
+    "description": "Section header above example words in kanji detail."
+  },
+
+  "grammarTitle": "Ngữ pháp",
+  "@grammarTitle": {
+    "description": "App bar title for the grammar browser screen."
+  },
+  "grammarSearchHint": "Tìm mẫu ngữ pháp hoặc cấp độ",
+  "@grammarSearchHint": {
+    "description": "Placeholder text in the grammar search field."
+  },
+  "grammarEmptyTitle": "Không tìm thấy mẫu ngữ pháp",
+  "@grammarEmptyTitle": {
+    "description": "Empty-state title when the grammar list is empty."
+  },
+  "grammarEmptyBody": "Thử từ khóa khác.",
+  "@grammarEmptyBody": {
+    "description": "Empty-state body when the grammar list is empty."
+  },
+  "grammarErrorTitle": "Không tải được ngữ pháp",
+  "@grammarErrorTitle": {
+    "description": "Error-state title for the grammar screens."
+  },
+  "grammarErrorBody": "Đã có lỗi khi tải dữ liệu. Vui lòng thử lại.",
+  "@grammarErrorBody": {
+    "description": "Error-state body for the grammar screens."
+  },
+  "grammarExplanationLabel": "Giải thích",
+  "@grammarExplanationLabel": {
+    "description": "Label for the explanation block in grammar detail."
+  },
+  "grammarNoteLabel": "Lưu ý",
+  "@grammarNoteLabel": {
+    "description": "Label for the note block in grammar detail."
+  },
+  "scenariosTitle": "Tình huống công việc",
+  "@scenariosTitle": {
+    "description": "App bar title for the business-scenario browser."
+  },
+  "scenariosSubtitle": "Luyện giao tiếp công sở qua các tình huống thực tế.",
+  "@scenariosSubtitle": {
+    "description": "Subtitle/description for the scenario browser."
+  },
+  "scenariosEmptyTitle": "Chưa có tình huống",
+  "@scenariosEmptyTitle": {
+    "description": "Empty-state title when no scenarios are available."
+  },
+  "scenariosEmptyBody": "Hãy quay lại sau nhé.",
+  "@scenariosEmptyBody": {
+    "description": "Empty-state body when no scenarios are available."
+  },
+  "scenariosErrorTitle": "Không tải được tình huống",
+  "@scenariosErrorTitle": {
+    "description": "Error-state title for the scenario screens."
+  },
+  "scenariosErrorBody": "Đã có lỗi khi tải dữ liệu. Vui lòng thử lại.",
+  "@scenariosErrorBody": {
+    "description": "Error-state body for the scenario screens."
+  },
+  "scenariosAllCategories": "Tất cả",
+  "@scenariosAllCategories": {
+    "description": "Label for the category filter chip that shows all scenarios."
+  },
+  "scenarioStepLabel": "Bước {current}/{total}",
+  "@scenarioStepLabel": {
+    "description": "Progress label inside the scenario player.",
+    "placeholders": {
+      "current": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "scenarioEstimatedMinutes": "{minutes} phút",
+  "@scenarioEstimatedMinutes": {
+    "description": "Estimated duration for a scenario.",
+    "placeholders": {
+      "minutes": { "type": "int" }
+    }
+  },
+  "scenarioStepCount": "{count} bước",
+  "@scenarioStepCount": {
+    "description": "Number of steps in a scenario.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "scenarioStartCta": "Bắt đầu",
+  "@scenarioStartCta": {
+    "description": "CTA to start a scenario."
+  },
+  "scenarioContinueCta": "Tiếp tục",
+  "@scenarioContinueCta": {
+    "description": "CTA to advance to the next scenario step after feedback."
+  },
+  "scenarioFinishCta": "Hoàn thành",
+  "@scenarioFinishCta": {
+    "description": "CTA to finish the final scenario step."
+  },
+  "scenarioOptimalBadge": "Lựa chọn tối ưu",
+  "@scenarioOptimalBadge": {
+    "description": "Badge shown when the learner picked the optimal choice."
+  },
+  "scenarioSuboptimalBadge": "Có thể tốt hơn",
+  "@scenarioSuboptimalBadge": {
+    "description": "Badge shown when the learner picked a non-optimal choice."
+  },
+  "scenarioPointsAwarded": "+{points} điểm",
+  "@scenarioPointsAwarded": {
+    "description": "Points awarded for a scenario choice.",
+    "placeholders": {
+      "points": { "type": "int" }
+    }
+  },
+  "scenarioResultTitle": "Kết quả tình huống",
+  "@scenarioResultTitle": {
+    "description": "App bar title for the scenario result screen."
+  },
+  "scenarioResultScore": "{total}/{max} điểm",
+  "@scenarioResultScore": {
+    "description": "Score summary on the scenario result screen.",
+    "placeholders": {
+      "total": { "type": "int" },
+      "max": { "type": "int" }
+    }
+  },
+  "scenarioResultDone": "Xong",
+  "@scenarioResultDone": {
+    "description": "CTA to leave the scenario result screen."
+  },
+  "scenarioRetryCta": "Làm lại",
+  "@scenarioRetryCta": {
+    "description": "CTA to retry a scenario from the result screen."
+  },
+  "examTitle": "Thi thử BJT",
+  "@examTitle": {
+    "description": "App bar title for the BJT mock-test browser."
+  },
+  "examSubtitle": "Làm bài thi thử có tính giờ và chấm điểm.",
+  "@examSubtitle": {
+    "description": "Subtitle/description for the exam browser."
+  },
+  "examEmptyTitle": "Chưa có đề thi",
+  "@examEmptyTitle": {
+    "description": "Empty-state title when no exam templates are available."
+  },
+  "examEmptyBody": "Hãy quay lại sau nhé.",
+  "@examEmptyBody": {
+    "description": "Empty-state body when no exam templates are available."
+  },
+  "examErrorTitle": "Không tải được đề thi",
+  "@examErrorTitle": {
+    "description": "Error-state title for the exam screens."
+  },
+  "examErrorBody": "Đã có lỗi khi tải dữ liệu. Vui lòng thử lại.",
+  "@examErrorBody": {
+    "description": "Error-state body for the exam screens."
+  },
+  "examQuestionCount": "{count} câu hỏi",
+  "@examQuestionCount": {
+    "description": "Number of questions in an exam template.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "examStartCta": "Bắt đầu thi",
+  "@examStartCta": {
+    "description": "CTA to start a BJT mock test."
+  },
+  "examProgressLabel": "Câu {current}/{total}",
+  "@examProgressLabel": {
+    "description": "Question progress label inside the exam player.",
+    "placeholders": {
+      "current": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "examSubmitCta": "Trả lời",
+  "@examSubmitCta": {
+    "description": "CTA to submit the selected answer."
+  },
+  "examNextCta": "Câu tiếp theo",
+  "@examNextCta": {
+    "description": "CTA to advance to the next exam question."
+  },
+  "examTimeUpTitle": "Hết giờ",
+  "@examTimeUpTitle": {
+    "description": "Title shown when the exam timer expires."
+  },
+  "examTimeUpBody": "Bài thi đã kết thúc. Xem kết quả của bạn.",
+  "@examTimeUpBody": {
+    "description": "Body shown when the exam timer expires."
+  },
+  "examResultTitle": "Kết quả thi thử",
+  "@examResultTitle": {
+    "description": "App bar title for the exam result screen."
+  },
+  "examResultScore": "{correct}/{total} câu đúng",
+  "@examResultScore": {
+    "description": "Correct-count summary on the exam result screen.",
+    "placeholders": {
+      "correct": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "examResultBand": "Mức BJT ước tính: {band}",
+  "@examResultBand": {
+    "description": "Estimated BJT band on the exam result screen.",
+    "placeholders": {
+      "band": { "type": "String" }
+    }
+  },
+  "examResultDone": "Xong",
+  "@examResultDone": {
+    "description": "CTA to leave the exam result screen."
+  },
+  "examUpgradeRequiredTitle": "Cần nâng cấp",
+  "@examUpgradeRequiredTitle": {
+    "description": "Error title when an exam requires a higher plan/entitlement."
+  },
+  "examUpgradeRequiredBody": "Gói hiện tại của bạn chưa bao gồm bài thi này.",
+  "@examUpgradeRequiredBody": {
+    "description": "Error body when an exam requires a higher plan/entitlement."
+  },
+  "newsTitle": "Tin tức NHK",
+  "@newsTitle": {
+    "description": "Title of the NHK news reading feature."
+  },
+  "newsSubtitle": "Đọc tin thật bằng tiếng Nhật, kèm từ vựng và phụ đề.",
+  "@newsSubtitle": {
+    "description": "Subtitle describing the NHK news feature."
+  },
+  "newsFilterAll": "Tất cả",
+  "@newsFilterAll": {
+    "description": "News source filter chip: all sources."
+  },
+  "newsFilterEasy": "NHK Easy",
+  "@newsFilterEasy": {
+    "description": "News source filter chip: NHK Easy (simplified, with furigana)."
+  },
+  "newsFilterNormal": "NHK",
+  "@newsFilterNormal": {
+    "description": "News source filter chip: standard NHK."
+  },
+  "newsEmptyTitle": "Chưa có bài viết",
+  "@newsEmptyTitle": {
+    "description": "Empty state title when no news articles are available."
+  },
+  "newsEmptyBody": "Hãy quay lại sau để đọc tin mới từ NHK.",
+  "@newsEmptyBody": {
+    "description": "Empty state body when no news articles are available."
+  },
+  "newsErrorTitle": "Không tải được tin tức",
+  "@newsErrorTitle": {
+    "description": "Error state title when news fails to load."
+  },
+  "newsErrorBody": "Kiểm tra kết nối mạng rồi thử lại.",
+  "@newsErrorBody": {
+    "description": "Error state body when news fails to load."
+  },
+  "newsVocabularyTitle": "Từ vựng",
+  "@newsVocabularyTitle": {
+    "description": "Section header for the vocabulary list inside an article."
+  },
+  "newsVocabularyEmpty": "Bài viết này chưa có danh sách từ vựng.",
+  "@newsVocabularyEmpty": {
+    "description": "Shown when an article has no extracted vocabulary."
+  },
+  "newsBookmarkAdd": "Lưu bài",
+  "@newsBookmarkAdd": {
+    "description": "Tooltip/label to bookmark an article."
+  },
+  "newsBookmarkRemove": "Bỏ lưu",
+  "@newsBookmarkRemove": {
+    "description": "Tooltip/label to remove a bookmark."
+  },
+  "commonSignInRequired": "Hãy đăng nhập để dùng tính năng này.",
+  "@commonSignInRequired": {
+    "description": "Snackbar shown when an action requires the learner to sign in."
+  },
+  "magazineTitle": "Tạp chí",
+  "@magazineTitle": {
+    "description": "Title of the daily learning magazine feature."
+  },
+  "magazineSubtitle": "Bài đọc hằng ngày kèm từ vựng và quiz.",
+  "@magazineSubtitle": {
+    "description": "Subtitle describing the magazine feature."
+  },
+  "magazineFilterAll": "Tất cả",
+  "@magazineFilterAll": {
+    "description": "Filter chip for all magazine widget kinds."
+  },
+  "magazineFilterVocab": "Từ vựng",
+  "@magazineFilterVocab": {
+    "description": "Filter chip for the vocabulary magazine kind."
+  },
+  "magazineFilterWeather": "Thời tiết",
+  "@magazineFilterWeather": {
+    "description": "Filter chip for the weather magazine kind."
+  },
+  "magazineFilterHoroscope": "Tử vi",
+  "@magazineFilterHoroscope": {
+    "description": "Filter chip for the horoscope magazine kind."
+  },
+  "magazineFilterBjt": "BJT",
+  "@magazineFilterBjt": {
+    "description": "Filter chip for the BJT business-phrase magazine kind."
+  },
+  "magazineEmptyTitle": "Chưa có bài viết",
+  "@magazineEmptyTitle": {
+    "description": "Empty-state title when no magazine articles are available."
+  },
+  "magazineEmptyBody": "Hãy quay lại sau để đọc bài mới.",
+  "@magazineEmptyBody": {
+    "description": "Empty-state body for the magazine list."
+  },
+  "magazineErrorTitle": "Không tải được tạp chí",
+  "@magazineErrorTitle": {
+    "description": "Error-state title for the magazine feature."
+  },
+  "magazineErrorBody": "Đã xảy ra lỗi. Vui lòng thử lại.",
+  "@magazineErrorBody": {
+    "description": "Error-state body for the magazine feature."
+  },
+  "magazineVocabularyTitle": "Từ vựng",
+  "@magazineVocabularyTitle": {
+    "description": "Section title for the magazine vocabulary list."
+  },
+  "magazineQuizTitle": "Quiz nhanh",
+  "@magazineQuizTitle": {
+    "description": "Section title for the magazine mini-quiz."
+  },
+  "magazineQuizProgress": "Câu {current}/{total}",
+  "@magazineQuizProgress": {
+    "description": "Quiz progress label, e.g. Question 1/3.",
+    "placeholders": {
+      "current": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "careerTitle": "Sự nghiệp",
+  "@careerTitle": {
+    "description": "Title of the Career RPG hub screen."
+  },
+  "careerSubtitle": "Lên cấp kỹ năng công sở qua các nhiệm vụ BJT.",
+  "@careerSubtitle": {
+    "description": "Subtitle for the Career entry card on the Learn screen."
+  },
+  "careerRankEyebrow": "Cấp bậc hiện tại",
+  "@careerRankEyebrow": {
+    "description": "Eyebrow label above the current rank title."
+  },
+  "careerXpProgress": "{current}/{total} XP đến {nextRank}",
+  "@careerXpProgress": {
+    "description": "Rank XP progress toward the next rank.",
+    "placeholders": {
+      "current": { "type": "int" },
+      "total": { "type": "int" },
+      "nextRank": { "type": "String" }
+    }
+  },
+  "careerRankMax": "Bạn đã đạt cấp bậc cao nhất.",
+  "@careerRankMax": {
+    "description": "Shown when the learner is at the maximum rank."
+  },
+  "careerStreakDays": "Chuỗi {days} ngày",
+  "@careerStreakDays": {
+    "description": "Daily clock-in streak length.",
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  },
+  "careerStreakSubtitle": "Điểm danh mỗi ngày để giữ chuỗi.",
+  "@careerStreakSubtitle": {
+    "description": "Helper text under the streak count."
+  },
+  "careerClockIn": "Điểm danh hôm nay",
+  "@careerClockIn": {
+    "description": "Clock-in button label."
+  },
+  "careerClockInDone": "Đã điểm danh hôm nay.",
+  "@careerClockInDone": {
+    "description": "Snackbar shown after a successful clock-in."
+  },
+  "careerSkillsTitle": "Kỹ năng",
+  "@careerSkillsTitle": {
+    "description": "Section title for the skill axes."
+  },
+  "careerSkillsEmpty": "Chưa có dữ liệu kỹ năng.",
+  "@careerSkillsEmpty": {
+    "description": "Empty state inside the skills card."
+  },
+  "careerAxisKeigo": "Kính ngữ",
+  "@careerAxisKeigo": { "description": "Skill axis: keigo." },
+  "careerAxisWritten": "Văn viết",
+  "@careerAxisWritten": { "description": "Skill axis: written business." },
+  "careerAxisMeeting": "Họp hành",
+  "@careerAxisMeeting": { "description": "Skill axis: meetings." },
+  "careerAxisCustomer": "Khách hàng",
+  "@careerAxisCustomer": { "description": "Skill axis: customer service." },
+  "careerAxisChart": "Biểu đồ",
+  "@careerAxisChart": { "description": "Skill axis: charts/data." },
+  "careerAxisNuance": "Sắc thái",
+  "@careerAxisNuance": { "description": "Skill axis: nuance." },
+  "careerRelationsTitle": "Quan hệ đồng nghiệp",
+  "@careerRelationsTitle": {
+    "description": "Section title for NPC relationships."
+  },
+  "careerArcsTitle": "Tuyến nhiệm vụ",
+  "@careerArcsTitle": {
+    "description": "Title for the story arcs list."
+  },
+  "careerArcsSubtitle": "Chọn một tuyến để bắt đầu hành trình công sở.",
+  "@careerArcsSubtitle": {
+    "description": "Subtitle for the story arcs list."
+  },
+  "careerArcsEmptyTitle": "Chưa có tuyến nhiệm vụ",
+  "@careerArcsEmptyTitle": {
+    "description": "Empty state title for story arcs."
+  },
+  "careerArcsEmptyBody": "Hãy quay lại sau khi mở khoá tuyến đầu tiên.",
+  "@careerArcsEmptyBody": {
+    "description": "Empty state body for story arcs."
+  },
+  "careerArcLocked": "Mở khoá ở cấp {rank}",
+  "@careerArcLocked": {
+    "description": "Locked arc hint showing the required rank code.",
+    "placeholders": {
+      "rank": { "type": "String" }
+    }
+  },
+  "careerArcProgress": "{completed}/{total} chương",
+  "@careerArcProgress": {
+    "description": "Arc chapter completion progress.",
+    "placeholders": {
+      "completed": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "careerStatusLocked": "Khoá",
+  "@careerStatusLocked": { "description": "Arc status: locked." },
+  "careerStatusActive": "Đang mở",
+  "@careerStatusActive": { "description": "Arc status: active." },
+  "careerStatusCompleted": "Hoàn thành",
+  "@careerStatusCompleted": { "description": "Arc status: completed." },
+  "careerChaptersTitle": "Các chương",
+  "@careerChaptersTitle": {
+    "description": "Section title for the chapter list in an arc."
+  },
+  "careerChapterMinutes": "{minutes} phút",
+  "@careerChapterMinutes": {
+    "description": "Estimated chapter duration in minutes.",
+    "placeholders": {
+      "minutes": { "type": "int" }
+    }
+  },
+  "careerChapterStart": "Bắt đầu",
+  "@careerChapterStart": {
+    "description": "Start button on the chapter briefing."
+  },
+  "careerChapterRole": "Vai trò của bạn",
+  "@careerChapterRole": {
+    "description": "Label for the learner's role in the chapter."
+  },
+  "careerChapterComplete": "Hoàn thành chương",
+  "@careerChapterComplete": {
+    "description": "Complete-chapter button label."
+  },
+  "careerChapterCompleteTitle": "Hoàn thành chương!",
+  "@careerChapterCompleteTitle": {
+    "description": "Heading on the chapter completion screen."
+  },
+  "careerScenarioProgress": "Tình huống {current}/{total}",
+  "@careerScenarioProgress": {
+    "description": "Scenario progress within a chapter.",
+    "placeholders": {
+      "current": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "careerScenarioGoal": "Mục tiêu",
+  "@careerScenarioGoal": {
+    "description": "Label for the scenario goal chip."
+  },
+  "careerOutcomeGood": "Lựa chọn tốt",
+  "@careerOutcomeGood": {
+    "description": "Header shown when the chosen option is correct."
+  },
+  "careerOutcomeRisk": "Có rủi ro",
+  "@careerOutcomeRisk": {
+    "description": "Header shown when the chosen option is risky."
+  },
+  "careerXpEarned": "+{xp} XP",
+  "@careerXpEarned": {
+    "description": "XP earned from completing a chapter.",
+    "placeholders": {
+      "xp": { "type": "int" }
+    }
+  },
+  "careerRankUp": "Thăng cấp: {rank}",
+  "@careerRankUp": {
+    "description": "Rank-up announcement with the new rank title.",
+    "placeholders": {
+      "rank": { "type": "String" }
+    }
+  },
+  "careerBackToArcs": "Quay lại tuyến nhiệm vụ",
+  "@careerBackToArcs": {
+    "description": "Button to return to the arc after completion."
+  },
+  "careerContinue": "Tiếp tục",
+  "@careerContinue": {
+    "description": "Continue button between scenario questions."
+  },
+  "careerErrorTitle": "Không tải được dữ liệu",
+  "@careerErrorTitle": {
+    "description": "Generic Career error title."
+  },
+  "careerErrorBody": "Đã có lỗi xảy ra. Vui lòng thử lại.",
+  "@careerErrorBody": {
+    "description": "Generic Career error body."
+  },
+  "learnLibraryTitle": "Thư viện",
+  "@learnLibraryTitle": {
+    "description": "Section header for the Library tools (search and saved) on the Learn hub."
+  },
+  "searchTitle": "Tìm kiếm",
+  "@searchTitle": {
+    "description": "Title of the global content search screen."
+  },
+  "searchSubtitle": "Tra từ vựng, kanji và ngữ pháp",
+  "@searchSubtitle": {
+    "description": "Subtitle for the search entry card on the Learn hub."
+  },
+  "searchHint": "Tìm từ vựng, kanji, ngữ pháp…",
+  "@searchHint": {
+    "description": "Placeholder text inside the global search input."
+  },
+  "searchIdleTitle": "Bắt đầu tìm kiếm",
+  "@searchIdleTitle": {
+    "description": "Title shown before the learner has typed a search query."
+  },
+  "searchIdleBody": "Nhập một từ tiếng Nhật hoặc tiếng Việt để tra cứu trên toàn bộ nội dung.",
+  "@searchIdleBody": {
+    "description": "Body shown before the learner has typed a search query."
+  },
+  "searchEmptyTitle": "Không có kết quả",
+  "@searchEmptyTitle": {
+    "description": "Title shown when a search returns no results."
+  },
+  "searchEmptyBody": "Thử từ khóa khác hoặc kiểm tra lại chính tả.",
+  "@searchEmptyBody": {
+    "description": "Body shown when a search returns no results."
+  },
+  "searchErrorTitle": "Không tìm kiếm được",
+  "@searchErrorTitle": {
+    "description": "Title shown when the search request fails."
+  },
+  "searchErrorBody": "Đã có lỗi xảy ra. Vui lòng thử lại.",
+  "@searchErrorBody": {
+    "description": "Body shown when the search request fails."
+  },
+  "searchKindWord": "Từ vựng",
+  "@searchKindWord": {
+    "description": "Label for a dictionary word (lexeme) search result."
+  },
+  "searchKindKanji": "Kanji",
+  "@searchKindKanji": {
+    "description": "Label for a kanji search result."
+  },
+  "searchKindGrammar": "Ngữ pháp",
+  "@searchKindGrammar": {
+    "description": "Label for a grammar search result."
+  },
+  "searchKindExample": "Ví dụ",
+  "@searchKindExample": {
+    "description": "Label for an example-sentence search result."
+  },
+  "searchKindOther": "Khác",
+  "@searchKindOther": {
+    "description": "Label for an unclassified search result."
+  },
+  "savedTitle": "Đã lưu",
+  "@savedTitle": {
+    "description": "Title of the saved bookmarks library screen."
+  },
+  "savedSubtitle": "Từ vựng, kanji và ngữ pháp bạn đã lưu",
+  "@savedSubtitle": {
+    "description": "Subtitle for the saved-library entry card on the Learn hub."
+  },
+  "savedTabWords": "Từ vựng",
+  "@savedTabWords": {
+    "description": "Tab label for saved dictionary words."
+  },
+  "savedTabKanji": "Kanji",
+  "@savedTabKanji": {
+    "description": "Tab label for saved kanji."
+  },
+  "savedTabGrammar": "Ngữ pháp",
+  "@savedTabGrammar": {
+    "description": "Tab label for saved grammar points."
+  },
+  "savedEmptyTitle": "Chưa có mục đã lưu",
+  "@savedEmptyTitle": {
+    "description": "Title shown when a saved tab has no bookmarks."
+  },
+  "savedEmptyWords": "Lưu từ vựng khi tra cứu để ôn lại sau.",
+  "@savedEmptyWords": {
+    "description": "Empty-state body for the saved words tab."
+  },
+  "savedEmptyKanji": "Lưu kanji khi học để ôn lại sau.",
+  "@savedEmptyKanji": {
+    "description": "Empty-state body for the saved kanji tab."
+  },
+  "savedEmptyGrammar": "Lưu mẫu ngữ pháp khi học để ôn lại sau.",
+  "@savedEmptyGrammar": {
+    "description": "Empty-state body for the saved grammar tab."
+  },
+  "savedSignInTitle": "Cần đăng nhập",
+  "@savedSignInTitle": {
+    "description": "Title shown when an unauthenticated learner opens the saved library."
+  },
+  "savedSignInBody": "Đăng nhập để xem và đồng bộ các mục đã lưu.",
+  "@savedSignInBody": {
+    "description": "Body shown when an unauthenticated learner opens the saved library."
+  },
+  "savedErrorTitle": "Không tải được mục đã lưu",
+  "@savedErrorTitle": {
+    "description": "Title shown when loading saved bookmarks fails."
+  },
+  "savedErrorBody": "Đã có lỗi xảy ra. Vui lòng thử lại.",
+  "@savedErrorBody": {
+    "description": "Body shown when loading saved bookmarks fails."
+  },
+  "rewardsTitle": "Thành tựu & Phần thưởng",
+  "@rewardsTitle": {
+    "description": "Title of the learner Rewards hub (streaks, achievements, leaderboards)."
+  },
+  "rewardsSubtitle": "Chuỗi ngày, huy hiệu và bảng xếp hạng của bạn.",
+  "@rewardsSubtitle": {
+    "description": "Subtitle/entry description for the Rewards hub."
+  },
+  "rewardsTabStreaks": "Chuỗi ngày",
+  "@rewardsTabStreaks": {
+    "description": "Rewards tab label for the streaks section."
+  },
+  "rewardsTabAchievements": "Huy hiệu",
+  "@rewardsTabAchievements": {
+    "description": "Rewards tab label for the achievements section."
+  },
+  "rewardsTabLeaderboards": "Xếp hạng",
+  "@rewardsTabLeaderboards": {
+    "description": "Rewards tab label for the leaderboards section."
+  },
+  "rewardsErrorTitle": "Không tải được phần thưởng",
+  "@rewardsErrorTitle": {
+    "description": "Title shown when a Rewards section fails to load."
+  },
+  "rewardsErrorBody": "Đã có lỗi xảy ra. Vui lòng thử lại.",
+  "@rewardsErrorBody": {
+    "description": "Body shown when a Rewards section fails to load."
+  },
+  "rewardsSignInTitle": "Đăng nhập để xem phần thưởng",
+  "@rewardsSignInTitle": {
+    "description": "Title shown when an unauthenticated learner opens Rewards."
+  },
+  "rewardsSignInBody": "Đăng nhập để theo dõi chuỗi ngày, huy hiệu và thứ hạng của bạn.",
+  "@rewardsSignInBody": {
+    "description": "Body shown when an unauthenticated learner opens Rewards."
+  },
+  "rewardsStreaksEmptyTitle": "Chưa có chuỗi ngày nào",
+  "@rewardsStreaksEmptyTitle": {
+    "description": "Title for the empty streaks state."
+  },
+  "rewardsStreaksEmptyBody": "Học mỗi ngày để bắt đầu chuỗi ngày đầu tiên.",
+  "@rewardsStreaksEmptyBody": {
+    "description": "Body for the empty streaks state."
+  },
+  "rewardsStreakDefaultName": "Chuỗi ngày học",
+  "@rewardsStreakDefaultName": {
+    "description": "Fallback name when a streak track has no configured name."
+  },
+  "rewardsStreakCurrent": "Chuỗi hiện tại: {days} ngày",
+  "@rewardsStreakCurrent": {
+    "description": "Current streak length in days.",
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  },
+  "rewardsStreakLongest": "Dài nhất",
+  "@rewardsStreakLongest": {
+    "description": "Label for the longest-streak stat."
+  },
+  "rewardsStreakFreezes": "Lượt giữ chuỗi",
+  "@rewardsStreakFreezes": {
+    "description": "Label for the remaining streak-freeze stat."
+  },
+  "rewardsStreakDays": "{days} ngày",
+  "@rewardsStreakDays": {
+    "description": "A streak length expressed in days.",
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  },
+  "rewardsAchievementsEmptyTitle": "Chưa có huy hiệu",
+  "@rewardsAchievementsEmptyTitle": {
+    "description": "Title for the empty achievements state."
+  },
+  "rewardsAchievementsEmptyBody": "Hoàn thành mục tiêu học tập để mở khóa huy hiệu.",
+  "@rewardsAchievementsEmptyBody": {
+    "description": "Body for the empty achievements state."
+  },
+  "rewardsAchievementTiers": "{earned}/{total}",
+  "@rewardsAchievementTiers": {
+    "description": "Earned vs total tiers for an achievement.",
+    "placeholders": {
+      "earned": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "rewardsAchievementProgress": "{current}/{target}",
+  "@rewardsAchievementProgress": {
+    "description": "Progress toward the next achievement tier threshold.",
+    "placeholders": {
+      "current": { "type": "int" },
+      "target": { "type": "int" }
+    }
+  },
+  "rewardsLeaderboardsEmptyTitle": "Chưa có bảng xếp hạng",
+  "@rewardsLeaderboardsEmptyTitle": {
+    "description": "Title for the empty leaderboards list state."
+  },
+  "rewardsLeaderboardsEmptyBody": "Hiện chưa có bảng xếp hạng nào đang mở.",
+  "@rewardsLeaderboardsEmptyBody": {
+    "description": "Body for the empty leaderboards list state."
+  },
+  "rewardsLeaderboardEmptyTitle": "Chưa có thứ hạng",
+  "@rewardsLeaderboardEmptyTitle": {
+    "description": "Title for the empty rankings state of a single leaderboard."
+  },
+  "rewardsLeaderboardEmptyBody": "Hãy là người đầu tiên ghi điểm trên bảng này.",
+  "@rewardsLeaderboardEmptyBody": {
+    "description": "Body for the empty rankings state of a single leaderboard."
+  },
+  "rewardsLeaderboardAnonymous": "Người học ẩn danh",
+  "@rewardsLeaderboardAnonymous": {
+    "description": "Fallback name for a leaderboard entry without a display name."
+  },
+  "rewardsLeaderboardScore": "{score} đ",
+  "@rewardsLeaderboardScore": {
+    "description": "Formatted leaderboard score.",
+    "placeholders": {
+      "score": { "type": "int" }
+    }
+  },
+  "subscriptionTitle": "Gói đăng ký",
+  "@subscriptionTitle": { "description": "Subscription screen title." },
+  "subscriptionSubtitle": "Quản lý gói và quyền lợi của bạn",
+  "@subscriptionSubtitle": { "description": "Subscription screen subtitle." },
+  "subscriptionErrorTitle": "Không tải được gói đăng ký",
+  "@subscriptionErrorTitle": { "description": "Subscription load error title." },
+  "subscriptionErrorBody": "Đã xảy ra lỗi. Vui lòng thử lại.",
+  "@subscriptionErrorBody": { "description": "Subscription load error body." },
+  "subscriptionSignInTitle": "Đăng nhập để xem gói",
+  "@subscriptionSignInTitle": { "description": "Subscription sign-in prompt title." },
+  "subscriptionSignInBody": "Đăng nhập để xem và quản lý gói đăng ký của bạn.",
+  "@subscriptionSignInBody": { "description": "Subscription sign-in prompt body." },
+  "subscriptionCurrentPlan": "Gói hiện tại",
+  "@subscriptionCurrentPlan": { "description": "Current plan label." },
+  "subscriptionStatusActive": "Đang hoạt động",
+  "@subscriptionStatusActive": { "description": "Active subscription status." },
+  "subscriptionStatusTrialing": "Dùng thử",
+  "@subscriptionStatusTrialing": { "description": "Trialing subscription status." },
+  "subscriptionStatusCanceled": "Đã hủy",
+  "@subscriptionStatusCanceled": { "description": "Canceled subscription status." },
+  "subscriptionRenewsOn": "Gia hạn vào",
+  "@subscriptionRenewsOn": { "description": "Renewal date label." },
+  "subscriptionCancelsOn": "Kết thúc vào",
+  "@subscriptionCancelsOn": { "description": "Cancellation date label." },
+  "subscriptionEntitlements": "Quyền lợi",
+  "@subscriptionEntitlements": { "description": "Entitlements section label." },
+  "subscriptionQuotas": "Hạn mức",
+  "@subscriptionQuotas": { "description": "Quotas section label." },
+  "subscriptionUnlimited": "Không giới hạn",
+  "@subscriptionUnlimited": { "description": "Unlimited quota label." },
+  "subscriptionQuotaValue": "{limit}/{window}",
+  "@subscriptionQuotaValue": {
+    "description": "Quota limit per window.",
+    "placeholders": {
+      "limit": { "type": "String" },
+      "window": { "type": "String" }
+    }
+  },
+  "subscriptionCancelButton": "Hủy gia hạn",
+  "@subscriptionCancelButton": { "description": "Cancel subscription button." },
+  "subscriptionCancelConfirmTitle": "Hủy gói đăng ký?",
+  "@subscriptionCancelConfirmTitle": { "description": "Cancel confirm dialog title." },
+  "subscriptionCancelConfirmBody": "Gói của bạn vẫn hoạt động đến hết kỳ thanh toán hiện tại.",
+  "@subscriptionCancelConfirmBody": { "description": "Cancel confirm dialog body." },
+  "subscriptionCancelConfirmAction": "Xác nhận hủy",
+  "@subscriptionCancelConfirmAction": { "description": "Cancel confirm action." },
+  "subscriptionCancelDismiss": "Giữ lại gói",
+  "@subscriptionCancelDismiss": { "description": "Cancel dialog dismiss action." },
+  "subscriptionCancelPending": "Gói sẽ kết thúc vào cuối kỳ thanh toán.",
+  "@subscriptionCancelPending": { "description": "Pending cancellation note." },
+  "subscriptionCancelSuccess": "Đã yêu cầu hủy gói.",
+  "@subscriptionCancelSuccess": { "description": "Cancel success snackbar." },
+  "subscriptionCancelError": "Không hủy được. Vui lòng thử lại.",
+  "@subscriptionCancelError": { "description": "Cancel error snackbar." },
+  "subscriptionFreeNote": "Bạn đang dùng gói miễn phí.",
+  "@subscriptionFreeNote": { "description": "Free plan note." },
+  "subscriptionUpgradeNote": "Nâng cấp gói trên web NihonGo BJT.",
+  "@subscriptionUpgradeNote": { "description": "Upgrade note for free plan." },
+  "subscriptionPlansTitle": "Các gói có sẵn",
+  "@subscriptionPlansTitle": { "description": "Available plans section title." },
+  "subscriptionPlansError": "Không tải được danh sách gói.",
+  "@subscriptionPlansError": { "description": "Plans load error message." },
+  "subscriptionPlansEmptyBody": "Hiện chưa có gói nào.",
+  "@subscriptionPlansEmptyBody": { "description": "Empty plans message." },
+  "subscriptionPlanCurrent": "Gói hiện tại",
+  "@subscriptionPlanCurrent": { "description": "Current plan marker on a plan card." },
+  "subscriptionPlanFree": "Miễn phí",
+  "@subscriptionPlanFree": { "description": "Free price label." },
+  "subscriptionPlanPrice": "{price}đ",
+  "@subscriptionPlanPrice": {
+    "description": "Formatted plan price in VND.",
+    "placeholders": {
+      "price": { "type": "String" }
+    }
+  },
+  "subscriptionPlanPerMonth": "/tháng",
+  "@subscriptionPlanPerMonth": { "description": "Per-month price suffix." },
+  "subscriptionPlanRecommended": "Đề xuất",
+  "@subscriptionPlanRecommended": { "description": "Recommended plan badge." }
 }

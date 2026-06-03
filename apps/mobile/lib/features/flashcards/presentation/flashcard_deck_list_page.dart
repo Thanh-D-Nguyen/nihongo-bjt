@@ -78,7 +78,7 @@ class _DeckTile extends StatelessWidget {
     final text = Theme.of(context).textTheme;
 
     return AppCard(
-      onTap: () => context.goNamed(
+      onTap: () => context.pushNamed(
         Routes.flashcardReview,
         pathParameters: {'deckId': deck.id},
       ),

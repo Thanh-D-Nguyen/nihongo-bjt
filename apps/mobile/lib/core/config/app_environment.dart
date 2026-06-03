@@ -11,6 +11,8 @@ class AppEnvironment {
     required this.oauthClientId,
     required this.oauthRedirectUri,
     required this.flashcardDataSource,
+    this.googleSignInEnabled = true,
+    this.googleIdpHint = _defaultGoogleIdpHint,
   });
 
   /// Builds the configuration from compile-time `--dart-define` values.
@@ -35,6 +37,19 @@ class AppEnvironment {
       flashcardDataSource: String.fromEnvironment(
         'FLASHCARD_DATA_SOURCE',
         defaultValue: _defaultFlashcardDataSource,
+      ),
+      // Keeps all `--dart-define` keys discoverable in one place; the values
+      // equal the constructor defaults only when the define is absent.
+      // ignore: avoid_redundant_argument_values
+      googleSignInEnabled: bool.fromEnvironment(
+        'ENABLE_GOOGLE_SIGN_IN',
+        defaultValue: true,
+      ),
+      // Same rationale as above: explicit define key over an implicit default.
+      // ignore: avoid_redundant_argument_values
+      googleIdpHint: String.fromEnvironment(
+        'OAUTH_GOOGLE_IDP_HINT',
+        defaultValue: _defaultGoogleIdpHint,
       ),
     );
   }
@@ -75,6 +90,15 @@ class AppEnvironment {
   /// True when the flashcard feature should hit the real API.
   bool get useApiFlashcards => flashcardDataSource.toLowerCase() == 'api';
 
+  /// Whether the "Continue with Google" button is surfaced on the auth screens.
+  /// Disable via `--dart-define=ENABLE_GOOGLE_SIGN_IN=false` on environments
+  /// whose Keycloak realm has no Google identity provider.
+  final bool googleSignInEnabled;
+
+  /// Keycloak identity-provider alias passed as `kc_idp_hint` for the federated
+  /// Google flow. Must match the realm's Google IdP alias.
+  final String googleIdpHint;
+
   /// Local development default (matches `pnpm dev:api`). Not a production URL.
   static const String _devApiBaseUrl = 'http://localhost:4000';
 
@@ -91,4 +115,7 @@ class AppEnvironment {
 
   /// Default flashcard data source: the in-memory mock used for dev/test.
   static const String _defaultFlashcardDataSource = 'mock';
+
+  /// Default Keycloak Google identity-provider alias (`kc_idp_hint=google`).
+  static const String _defaultGoogleIdpHint = 'google';
 }

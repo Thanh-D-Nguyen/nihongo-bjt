@@ -41,25 +41,35 @@ class HomePage extends ConsumerWidget {
       ),
       body: SafeArea(
         top: false,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSpacing.m),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const _WelcomeCard(),
-              const SizedBox(height: AppSpacing.m),
-              // Prioritise a concrete result or error over the loading flag:
-              // Riverpod keeps a first failed load flagged as loading, so a
-              // plain `.when` would show the skeleton indefinitely on error.
-              if (dashboard.hasValue)
-                _DashboardBody(data: dashboard.requireValue)
-              else if (dashboard.hasError)
-                _DashboardError(
-                  onRetry: () => ref.invalidate(homeDashboardProvider),
-                )
-              else
-                const _DashboardSkeleton(),
-            ],
+        child: Align(
+          alignment: Alignment.topCenter,
+          // Cap the content width on tablets/foldables for readable line
+          // lengths (parity with AppScaffold's 640 dp cap). On phones this is
+          // wider than the screen, so the body fills the width as usual.
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 640),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(AppSpacing.m),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const _WelcomeCard(),
+                  const SizedBox(height: AppSpacing.m),
+                  // Prioritise a concrete result or error over the loading
+                  // flag: Riverpod keeps a first failed load flagged as
+                  // loading, so a plain `.when` would show the skeleton
+                  // indefinitely on error.
+                  if (dashboard.hasValue)
+                    _DashboardBody(data: dashboard.requireValue)
+                  else if (dashboard.hasError)
+                    _DashboardError(
+                      onRetry: () => ref.invalidate(homeDashboardProvider),
+                    )
+                  else
+                    const _DashboardSkeleton(),
+                ],
+              ),
+            ),
           ),
         ),
       ),

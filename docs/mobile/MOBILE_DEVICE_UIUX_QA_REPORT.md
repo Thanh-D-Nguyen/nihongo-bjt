@@ -460,3 +460,64 @@ Manual emulator QA:
 Physical Android QA:
 
 - Still blocked. No physical Android device was connected.
+
+## Copilot Fix Pass (code + automated gates only)
+
+Date: 2026-06-04
+Scope: focused fix pass for the P1/P2 findings above. No new features, no
+redesign, no backend/web/API/DB changes. Code + automated tests only.
+
+**This is not a device or emulator sign-off.** The fixes are verified by
+`flutter analyze` and `flutter test` on a Windows host. The app was **not** run
+on an emulator or physical device in this pass, so the items below are
+**ready for emulator retest**, not visually confirmed.
+
+### Root causes
+
+- `ANDROID-QA-P1-001` / `ANDROID-QA-P1-002`: the practice and flashcard-review
+  screens were rendered **inside** the bottom-navigation `StatefulShellRoute`.
+  The persistent `NavigationBar` plus the gesture inset crowded the sticky
+  "Next"/"Reveal" CTAs, so taps near the bottom were unreliable. The CTA
+  enable/advance logic itself was already correct (covered by passing tests);
+  the gap was the absence of a multi-question lesson test that exercised
+  Question 2 as a true middle step, and the lack of a whole-card reveal target.
+- `ANDROID-QA-P2-001`: same root cause — bottom nav competing for vertical space
+  on the practice player.
+- `ANDROID-QA-P2-002`: the flashcard deck list lived under the **Home** branch,
+  so opening decks highlighted Home instead of Review.
+- `ANDROID-QA-P2-003`: `signOut()` sets `AsyncLoading` and drops the session
+  value, making the auth status briefly "unknown". During that window the
+  profile screen rebuilt a disabled fallback-identity state before the
+  unauthenticated redirect fired.
+
+### Fixes applied
+
+- Hardened the practice CTA logic and added a whole-`_CardFace` tap reveal
+  target for flashcard review.
+- Moved `practice` (`/practice/:id`) and `flashcardReview`
+  (`/flashcards/:deckId/review`) to **top-level full-screen routes** outside the
+  shell, so focused learning screens no longer fight the bottom nav. Practice
+  and review are now pushed (back returns to the originating screen).
+- Moved the flashcard **deck list** under the **Review** branch so the Review
+  tab stays active while browsing decks.
+- Added an explicit signing-out view on the profile screen during logout so the
+  transition reads as intentional instead of a broken fallback profile.
+
+### Newly observed (not in original report, NOT fixed here)
+
+- `LoginPage` overflows horizontally by ~145px at a 390px logical width because
+  the logo row is too wide. Surfaced by the new navigation test; left untouched
+  as it is outside this fix pass's P1/P2 scope. Logged in
+  `MOBILE_KNOWN_LIMITATIONS.md`.
+
+### Verification (this pass)
+
+- `flutter analyze`: passed — `No issues found!`
+- `flutter test`: passed — 174 tests (was 166; +8 across practice, flashcard
+  review, and navigation coverage).
+- `flutter build apk --debug`: **could not run on the Windows host** — the
+  configured Android SDK (`C:\Android\sdk`) contains only cmdline-tools (no
+  platforms/build-tools). The original QA build passed on macOS. On this host,
+  analyze + tests are the verifiable gates.
+
+See `MOBILE_EMULATOR_RETEST_CHECKLIST.md` for the exact retest steps.

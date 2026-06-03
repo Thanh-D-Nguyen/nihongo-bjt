@@ -143,6 +143,68 @@ void main() {
       expect(enabled.onPressed, isNotNull);
     });
 
+    testWidgets('advances through a three-question set to the result summary', (
+      tester,
+    ) async {
+      await _pumpPractice(
+        tester,
+        repository: _FakeQuestionRepository(
+          questions: [
+            _question('q1'),
+            _question('q2'),
+            _question('q3'),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final l10n = await AppLocalizations.delegate.load(const Locale('vi'));
+
+      // Question 1: Next disabled until answered, then advances exactly once.
+      expect(
+        tester
+            .widget<PrimaryButton>(
+              find.widgetWithText(PrimaryButton, l10n.practiceNext),
+            )
+            .onPressed,
+        isNull,
+      );
+      await tester.tap(find.byType(QuestionOptionTile).at(0));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(PrimaryButton, l10n.practiceNext));
+      await tester.pumpAndSettle();
+      expect(find.text(l10n.practiceProgress(2, 3)), findsOneWidget);
+
+      // Question 2 (the middle question): Next is disabled again until an
+      // answer is selected, then a single tap advances to question 3.
+      expect(
+        tester
+            .widget<PrimaryButton>(
+              find.widgetWithText(PrimaryButton, l10n.practiceNext),
+            )
+            .onPressed,
+        isNull,
+      );
+      await tester.tap(find.byType(QuestionOptionTile).at(0));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(PrimaryButton, l10n.practiceNext));
+      await tester.pumpAndSettle();
+      expect(find.text(l10n.practiceProgress(3, 3)), findsOneWidget);
+
+      // Question 3 (last): the CTA becomes Finish and reaches the result.
+      expect(
+        find.widgetWithText(PrimaryButton, l10n.practiceNext),
+        findsNothing,
+      );
+      await tester.tap(find.byType(QuestionOptionTile).at(0));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(PrimaryButton, l10n.practiceFinish));
+      await tester.pumpAndSettle();
+
+      expect(find.text(l10n.practiceCompleteTitle), findsOneWidget);
+      expect(find.text(l10n.practiceReviewTitle), findsOneWidget);
+    });
+
     testWidgets('answering all questions reaches an honest score summary', (
       tester,
     ) async {

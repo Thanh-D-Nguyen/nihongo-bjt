@@ -230,10 +230,10 @@ abstract class AppLocalizations {
   /// **'Đăng nhập để tiếp tục'**
   String get loginSignInTitle;
 
-  /// Subtitle explaining the redirect-based sign-in flow.
+  /// Subtitle explaining the account sign-in flow.
   ///
   /// In vi, this message translates to:
-  /// **'Dùng email/mật khẩu NihonGo BJT hoặc đăng nhập qua trình duyệt bảo mật như phiên bản web.'**
+  /// **'Đăng nhập bằng tài khoản NihonGo BJT của bạn.'**
   String get loginSignInSubtitle;
 
   /// Sign-in button label on the login card.
@@ -385,6 +385,174 @@ abstract class AppLocalizations {
   /// In vi, this message translates to:
   /// **'Máy chủ đăng nhập trả về thiếu dữ liệu phiên.'**
   String get loginMissingTokenError;
+
+  /// Federated Google sign-in button label.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tiếp tục với Google'**
+  String get loginContinueWithGoogle;
+
+  /// Prompt before the register link on the login screen.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa có tài khoản?'**
+  String get loginNoAccountPrompt;
+
+  /// Register link label on the login screen.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đăng ký'**
+  String get loginRegisterAction;
+
+  /// Success banner shown on login after a successful registration.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tạo tài khoản thành công. Hãy đăng nhập để bắt đầu.'**
+  String get loginRegisteredSuccess;
+
+  /// Title on the register screen.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tạo tài khoản'**
+  String get registerTitle;
+
+  /// Subtitle on the register screen.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tạo tài khoản NihonGo BJT để lưu tiến độ và đồng bộ trên mọi thiết bị.'**
+  String get registerSubtitle;
+
+  /// No description provided for @registerDisplayNameLabel.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tên hiển thị'**
+  String get registerDisplayNameLabel;
+
+  /// No description provided for @registerDisplayNameRequired.
+  ///
+  /// In vi, this message translates to:
+  /// **'Vui lòng nhập tên hiển thị.'**
+  String get registerDisplayNameRequired;
+
+  /// No description provided for @registerEmailLabel.
+  ///
+  /// In vi, this message translates to:
+  /// **'Email'**
+  String get registerEmailLabel;
+
+  /// No description provided for @registerEmailRequired.
+  ///
+  /// In vi, this message translates to:
+  /// **'Vui lòng nhập email.'**
+  String get registerEmailRequired;
+
+  /// No description provided for @registerEmailInvalid.
+  ///
+  /// In vi, this message translates to:
+  /// **'Email không hợp lệ.'**
+  String get registerEmailInvalid;
+
+  /// No description provided for @registerPasswordLabel.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mật khẩu'**
+  String get registerPasswordLabel;
+
+  /// No description provided for @registerPasswordRequired.
+  ///
+  /// In vi, this message translates to:
+  /// **'Vui lòng nhập mật khẩu.'**
+  String get registerPasswordRequired;
+
+  /// No description provided for @registerPasswordTooShort.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mật khẩu cần ít nhất 8 ký tự.'**
+  String get registerPasswordTooShort;
+
+  /// No description provided for @registerConfirmPasswordLabel.
+  ///
+  /// In vi, this message translates to:
+  /// **'Nhập lại mật khẩu'**
+  String get registerConfirmPasswordLabel;
+
+  /// No description provided for @registerConfirmPasswordRequired.
+  ///
+  /// In vi, this message translates to:
+  /// **'Vui lòng nhập lại mật khẩu.'**
+  String get registerConfirmPasswordRequired;
+
+  /// No description provided for @registerPasswordMismatch.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mật khẩu nhập lại không khớp.'**
+  String get registerPasswordMismatch;
+
+  /// No description provided for @registerSubmitButton.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tạo tài khoản'**
+  String get registerSubmitButton;
+
+  /// No description provided for @registerHaveAccountPrompt.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã có tài khoản?'**
+  String get registerHaveAccountPrompt;
+
+  /// No description provided for @registerSignInAction.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đăng nhập'**
+  String get registerSignInAction;
+
+  /// No description provided for @registerTermsNotice.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bằng cách tạo tài khoản, bạn đồng ý với điều khoản sử dụng và chính sách quyền riêng tư của NihonGo BJT.'**
+  String get registerTermsNotice;
+
+  /// No description provided for @registerGenericError.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không tạo được tài khoản. Vui lòng thử lại.'**
+  String get registerGenericError;
+
+  /// No description provided for @registerEmailTakenError.
+  ///
+  /// In vi, this message translates to:
+  /// **'Email này đã được đăng ký.'**
+  String get registerEmailTakenError;
+
+  /// No description provided for @registerInvalidEmailError.
+  ///
+  /// In vi, this message translates to:
+  /// **'Email không hợp lệ.'**
+  String get registerInvalidEmailError;
+
+  /// No description provided for @registerInvalidPasswordError.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mật khẩu không đáp ứng yêu cầu bảo mật.'**
+  String get registerInvalidPasswordError;
+
+  /// No description provided for @registerInvalidDisplayNameError.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tên hiển thị không hợp lệ.'**
+  String get registerInvalidDisplayNameError;
+
+  /// No description provided for @registerUnavailableError.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tính năng đăng ký chưa được bật trên máy chủ. Vui lòng liên hệ quản trị viên.'**
+  String get registerUnavailableError;
+
+  /// No description provided for @registerNetworkError.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không kết nối được máy chủ đăng ký.'**
+  String get registerNetworkError;
 
   /// App bar title of the flashcard deck list.
   ///
@@ -596,11 +764,35 @@ abstract class AppLocalizations {
   /// **'Đăng xuất'**
   String get profileSignOut;
 
+  /// Status shown while the sign-out is in progress, before the redirect to login.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đang đăng xuất…'**
+  String get profileSigningOut;
+
   /// Snackbar shown when persisting a preference fails.
   ///
   /// In vi, this message translates to:
   /// **'Không lưu được thay đổi. Vui lòng thử lại.'**
   String get profileSaveError;
+
+  /// Section header for app/about information.
+  ///
+  /// In vi, this message translates to:
+  /// **'Giới thiệu'**
+  String get profileAboutSection;
+
+  /// Label for the installed app version row.
+  ///
+  /// In vi, this message translates to:
+  /// **'Phiên bản ứng dụng'**
+  String get profileAppVersion;
+
+  /// Formats the app version and build number.
+  ///
+  /// In vi, this message translates to:
+  /// **'{version} (bản dựng {build})'**
+  String profileVersionValue(String version, String build);
 
   /// Bottom navigation label for the Home tab.
   ///
@@ -1033,6 +1225,1404 @@ abstract class AppLocalizations {
   /// In vi, this message translates to:
   /// **'Bạn đang ngoại tuyến. Một số nội dung có thể chưa cập nhật.'**
   String get offlineBannerMessage;
+
+  /// Section header on Learn for the dictionary/kanji/grammar reference tools.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tra cứu'**
+  String get learnReferenceTitle;
+
+  /// Label for the dictionary tool entry on Learn.
+  ///
+  /// In vi, this message translates to:
+  /// **'Từ điển'**
+  String get learnDictionaryLabel;
+
+  /// Label for the kanji browser entry on Learn.
+  ///
+  /// In vi, this message translates to:
+  /// **'Kanji'**
+  String get learnKanjiLabel;
+
+  /// Label for the grammar browser entry on Learn.
+  ///
+  /// In vi, this message translates to:
+  /// **'Ngữ pháp'**
+  String get learnGrammarLabel;
+
+  /// Section header above example sentences in content detail screens.
+  ///
+  /// In vi, this message translates to:
+  /// **'Ví dụ'**
+  String get contentExamplesTitle;
+
+  /// App bar title for the dictionary search screen.
+  ///
+  /// In vi, this message translates to:
+  /// **'Từ điển'**
+  String get dictionaryTitle;
+
+  /// Placeholder text in the dictionary search field.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tìm từ tiếng Nhật hoặc nghĩa tiếng Việt'**
+  String get dictionarySearchHint;
+
+  /// Title of the idle prompt shown before the user searches the dictionary.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tra từ điển Nhật–Việt'**
+  String get dictionaryIdleTitle;
+
+  /// Body of the idle prompt on the dictionary screen.
+  ///
+  /// In vi, this message translates to:
+  /// **'Nhập kanji, kana hoặc nghĩa tiếng Việt để bắt đầu.'**
+  String get dictionaryIdleBody;
+
+  /// Empty-state title when a dictionary search returns no results.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không tìm thấy từ'**
+  String get dictionaryEmptyTitle;
+
+  /// Empty-state body when a dictionary search returns no results.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thử từ khóa khác hoặc kiểm tra chính tả.'**
+  String get dictionaryEmptyBody;
+
+  /// Error-state title for the dictionary screen.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không tải được kết quả'**
+  String get dictionaryErrorTitle;
+
+  /// Error-state body for the dictionary screen.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã có lỗi khi tìm kiếm. Vui lòng thử lại.'**
+  String get dictionaryErrorBody;
+
+  /// Section header above the list of word senses in word detail.
+  ///
+  /// In vi, this message translates to:
+  /// **'Nghĩa'**
+  String get dictionarySensesTitle;
+
+  /// App bar title for the kanji browser screen.
+  ///
+  /// In vi, this message translates to:
+  /// **'Kanji'**
+  String get kanjiTitle;
+
+  /// Placeholder text in the kanji search field.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tìm kanji theo chữ, âm đọc hoặc cấp độ'**
+  String get kanjiSearchHint;
+
+  /// Empty-state title when the kanji list is empty.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không có kanji phù hợp'**
+  String get kanjiEmptyTitle;
+
+  /// Empty-state body when the kanji list is empty.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thử chữ khác hoặc một cấp độ khác.'**
+  String get kanjiEmptyBody;
+
+  /// Error-state title for the kanji screens.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không tải được Kanji'**
+  String get kanjiErrorTitle;
+
+  /// Error-state body for the kanji screens.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã có lỗi khi tải dữ liệu. Vui lòng thử lại.'**
+  String get kanjiErrorBody;
+
+  /// Label for the on'yomi reading in kanji detail.
+  ///
+  /// In vi, this message translates to:
+  /// **'Âm On'**
+  String get kanjiOnyomiLabel;
+
+  /// Label for the kun'yomi reading in kanji detail.
+  ///
+  /// In vi, this message translates to:
+  /// **'Âm Kun'**
+  String get kanjiKunyomiLabel;
+
+  /// Label for the Vietnamese meaning in kanji detail.
+  ///
+  /// In vi, this message translates to:
+  /// **'Nghĩa'**
+  String get kanjiMeaningLabel;
+
+  /// Stroke-count label in kanji detail.
+  ///
+  /// In vi, this message translates to:
+  /// **'{count, plural, other{{count} nét}}'**
+  String kanjiStrokesLabel(int count);
+
+  /// Section header above the stroke-order diagram in kanji detail.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thứ tự nét'**
+  String get kanjiStrokeOrderTitle;
+
+  /// Section header above the kanji components list.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bộ thủ & thành phần'**
+  String get kanjiComponentsTitle;
+
+  /// Section header above example words in kanji detail.
+  ///
+  /// In vi, this message translates to:
+  /// **'Từ ví dụ'**
+  String get kanjiExamplesTitle;
+
+  /// App bar title for the grammar browser screen.
+  ///
+  /// In vi, this message translates to:
+  /// **'Ngữ pháp'**
+  String get grammarTitle;
+
+  /// Placeholder text in the grammar search field.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tìm mẫu ngữ pháp hoặc cấp độ'**
+  String get grammarSearchHint;
+
+  /// Empty-state title when the grammar list is empty.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không tìm thấy mẫu ngữ pháp'**
+  String get grammarEmptyTitle;
+
+  /// Empty-state body when the grammar list is empty.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thử từ khóa khác.'**
+  String get grammarEmptyBody;
+
+  /// Error-state title for the grammar screens.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không tải được ngữ pháp'**
+  String get grammarErrorTitle;
+
+  /// Error-state body for the grammar screens.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã có lỗi khi tải dữ liệu. Vui lòng thử lại.'**
+  String get grammarErrorBody;
+
+  /// Label for the explanation block in grammar detail.
+  ///
+  /// In vi, this message translates to:
+  /// **'Giải thích'**
+  String get grammarExplanationLabel;
+
+  /// Label for the note block in grammar detail.
+  ///
+  /// In vi, this message translates to:
+  /// **'Lưu ý'**
+  String get grammarNoteLabel;
+
+  /// App bar title for the business-scenario browser.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tình huống công việc'**
+  String get scenariosTitle;
+
+  /// Subtitle/description for the scenario browser.
+  ///
+  /// In vi, this message translates to:
+  /// **'Luyện giao tiếp công sở qua các tình huống thực tế.'**
+  String get scenariosSubtitle;
+
+  /// Empty-state title when no scenarios are available.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa có tình huống'**
+  String get scenariosEmptyTitle;
+
+  /// Empty-state body when no scenarios are available.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hãy quay lại sau nhé.'**
+  String get scenariosEmptyBody;
+
+  /// Error-state title for the scenario screens.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không tải được tình huống'**
+  String get scenariosErrorTitle;
+
+  /// Error-state body for the scenario screens.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã có lỗi khi tải dữ liệu. Vui lòng thử lại.'**
+  String get scenariosErrorBody;
+
+  /// Label for the category filter chip that shows all scenarios.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tất cả'**
+  String get scenariosAllCategories;
+
+  /// Progress label inside the scenario player.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bước {current}/{total}'**
+  String scenarioStepLabel(int current, int total);
+
+  /// Estimated duration for a scenario.
+  ///
+  /// In vi, this message translates to:
+  /// **'{minutes} phút'**
+  String scenarioEstimatedMinutes(int minutes);
+
+  /// Number of steps in a scenario.
+  ///
+  /// In vi, this message translates to:
+  /// **'{count} bước'**
+  String scenarioStepCount(int count);
+
+  /// CTA to start a scenario.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bắt đầu'**
+  String get scenarioStartCta;
+
+  /// CTA to advance to the next scenario step after feedback.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tiếp tục'**
+  String get scenarioContinueCta;
+
+  /// CTA to finish the final scenario step.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hoàn thành'**
+  String get scenarioFinishCta;
+
+  /// Badge shown when the learner picked the optimal choice.
+  ///
+  /// In vi, this message translates to:
+  /// **'Lựa chọn tối ưu'**
+  String get scenarioOptimalBadge;
+
+  /// Badge shown when the learner picked a non-optimal choice.
+  ///
+  /// In vi, this message translates to:
+  /// **'Có thể tốt hơn'**
+  String get scenarioSuboptimalBadge;
+
+  /// Points awarded for a scenario choice.
+  ///
+  /// In vi, this message translates to:
+  /// **'+{points} điểm'**
+  String scenarioPointsAwarded(int points);
+
+  /// App bar title for the scenario result screen.
+  ///
+  /// In vi, this message translates to:
+  /// **'Kết quả tình huống'**
+  String get scenarioResultTitle;
+
+  /// Score summary on the scenario result screen.
+  ///
+  /// In vi, this message translates to:
+  /// **'{total}/{max} điểm'**
+  String scenarioResultScore(int total, int max);
+
+  /// CTA to leave the scenario result screen.
+  ///
+  /// In vi, this message translates to:
+  /// **'Xong'**
+  String get scenarioResultDone;
+
+  /// CTA to retry a scenario from the result screen.
+  ///
+  /// In vi, this message translates to:
+  /// **'Làm lại'**
+  String get scenarioRetryCta;
+
+  /// App bar title for the BJT mock-test browser.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thi thử BJT'**
+  String get examTitle;
+
+  /// Subtitle/description for the exam browser.
+  ///
+  /// In vi, this message translates to:
+  /// **'Làm bài thi thử có tính giờ và chấm điểm.'**
+  String get examSubtitle;
+
+  /// Empty-state title when no exam templates are available.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa có đề thi'**
+  String get examEmptyTitle;
+
+  /// Empty-state body when no exam templates are available.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hãy quay lại sau nhé.'**
+  String get examEmptyBody;
+
+  /// Error-state title for the exam screens.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không tải được đề thi'**
+  String get examErrorTitle;
+
+  /// Error-state body for the exam screens.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã có lỗi khi tải dữ liệu. Vui lòng thử lại.'**
+  String get examErrorBody;
+
+  /// Number of questions in an exam template.
+  ///
+  /// In vi, this message translates to:
+  /// **'{count} câu hỏi'**
+  String examQuestionCount(int count);
+
+  /// CTA to start a BJT mock test.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bắt đầu thi'**
+  String get examStartCta;
+
+  /// Question progress label inside the exam player.
+  ///
+  /// In vi, this message translates to:
+  /// **'Câu {current}/{total}'**
+  String examProgressLabel(int current, int total);
+
+  /// CTA to submit the selected answer.
+  ///
+  /// In vi, this message translates to:
+  /// **'Trả lời'**
+  String get examSubmitCta;
+
+  /// CTA to advance to the next exam question.
+  ///
+  /// In vi, this message translates to:
+  /// **'Câu tiếp theo'**
+  String get examNextCta;
+
+  /// Title shown when the exam timer expires.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hết giờ'**
+  String get examTimeUpTitle;
+
+  /// Body shown when the exam timer expires.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bài thi đã kết thúc. Xem kết quả của bạn.'**
+  String get examTimeUpBody;
+
+  /// App bar title for the exam result screen.
+  ///
+  /// In vi, this message translates to:
+  /// **'Kết quả thi thử'**
+  String get examResultTitle;
+
+  /// Correct-count summary on the exam result screen.
+  ///
+  /// In vi, this message translates to:
+  /// **'{correct}/{total} câu đúng'**
+  String examResultScore(int correct, int total);
+
+  /// Estimated BJT band on the exam result screen.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mức BJT ước tính: {band}'**
+  String examResultBand(String band);
+
+  /// CTA to leave the exam result screen.
+  ///
+  /// In vi, this message translates to:
+  /// **'Xong'**
+  String get examResultDone;
+
+  /// Error title when an exam requires a higher plan/entitlement.
+  ///
+  /// In vi, this message translates to:
+  /// **'Cần nâng cấp'**
+  String get examUpgradeRequiredTitle;
+
+  /// Error body when an exam requires a higher plan/entitlement.
+  ///
+  /// In vi, this message translates to:
+  /// **'Gói hiện tại của bạn chưa bao gồm bài thi này.'**
+  String get examUpgradeRequiredBody;
+
+  /// Title of the NHK news reading feature.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tin tức NHK'**
+  String get newsTitle;
+
+  /// Subtitle describing the NHK news feature.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đọc tin thật bằng tiếng Nhật, kèm từ vựng và phụ đề.'**
+  String get newsSubtitle;
+
+  /// News source filter chip: all sources.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tất cả'**
+  String get newsFilterAll;
+
+  /// News source filter chip: NHK Easy (simplified, with furigana).
+  ///
+  /// In vi, this message translates to:
+  /// **'NHK Easy'**
+  String get newsFilterEasy;
+
+  /// News source filter chip: standard NHK.
+  ///
+  /// In vi, this message translates to:
+  /// **'NHK'**
+  String get newsFilterNormal;
+
+  /// Empty state title when no news articles are available.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa có bài viết'**
+  String get newsEmptyTitle;
+
+  /// Empty state body when no news articles are available.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hãy quay lại sau để đọc tin mới từ NHK.'**
+  String get newsEmptyBody;
+
+  /// Error state title when news fails to load.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không tải được tin tức'**
+  String get newsErrorTitle;
+
+  /// Error state body when news fails to load.
+  ///
+  /// In vi, this message translates to:
+  /// **'Kiểm tra kết nối mạng rồi thử lại.'**
+  String get newsErrorBody;
+
+  /// Section header for the vocabulary list inside an article.
+  ///
+  /// In vi, this message translates to:
+  /// **'Từ vựng'**
+  String get newsVocabularyTitle;
+
+  /// Shown when an article has no extracted vocabulary.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bài viết này chưa có danh sách từ vựng.'**
+  String get newsVocabularyEmpty;
+
+  /// Tooltip/label to bookmark an article.
+  ///
+  /// In vi, this message translates to:
+  /// **'Lưu bài'**
+  String get newsBookmarkAdd;
+
+  /// Tooltip/label to remove a bookmark.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bỏ lưu'**
+  String get newsBookmarkRemove;
+
+  /// Snackbar shown when an action requires the learner to sign in.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hãy đăng nhập để dùng tính năng này.'**
+  String get commonSignInRequired;
+
+  /// Title of the daily learning magazine feature.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tạp chí'**
+  String get magazineTitle;
+
+  /// Subtitle describing the magazine feature.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bài đọc hằng ngày kèm từ vựng và quiz.'**
+  String get magazineSubtitle;
+
+  /// Filter chip for all magazine widget kinds.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tất cả'**
+  String get magazineFilterAll;
+
+  /// Filter chip for the vocabulary magazine kind.
+  ///
+  /// In vi, this message translates to:
+  /// **'Từ vựng'**
+  String get magazineFilterVocab;
+
+  /// Filter chip for the weather magazine kind.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thời tiết'**
+  String get magazineFilterWeather;
+
+  /// Filter chip for the horoscope magazine kind.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tử vi'**
+  String get magazineFilterHoroscope;
+
+  /// Filter chip for the BJT business-phrase magazine kind.
+  ///
+  /// In vi, this message translates to:
+  /// **'BJT'**
+  String get magazineFilterBjt;
+
+  /// Empty-state title when no magazine articles are available.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa có bài viết'**
+  String get magazineEmptyTitle;
+
+  /// Empty-state body for the magazine list.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hãy quay lại sau để đọc bài mới.'**
+  String get magazineEmptyBody;
+
+  /// Error-state title for the magazine feature.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không tải được tạp chí'**
+  String get magazineErrorTitle;
+
+  /// Error-state body for the magazine feature.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã xảy ra lỗi. Vui lòng thử lại.'**
+  String get magazineErrorBody;
+
+  /// Section title for the magazine vocabulary list.
+  ///
+  /// In vi, this message translates to:
+  /// **'Từ vựng'**
+  String get magazineVocabularyTitle;
+
+  /// Section title for the magazine mini-quiz.
+  ///
+  /// In vi, this message translates to:
+  /// **'Quiz nhanh'**
+  String get magazineQuizTitle;
+
+  /// Quiz progress label, e.g. Question 1/3.
+  ///
+  /// In vi, this message translates to:
+  /// **'Câu {current}/{total}'**
+  String magazineQuizProgress(int current, int total);
+
+  /// Title of the Career RPG hub screen.
+  ///
+  /// In vi, this message translates to:
+  /// **'Sự nghiệp'**
+  String get careerTitle;
+
+  /// Subtitle for the Career entry card on the Learn screen.
+  ///
+  /// In vi, this message translates to:
+  /// **'Lên cấp kỹ năng công sở qua các nhiệm vụ BJT.'**
+  String get careerSubtitle;
+
+  /// Eyebrow label above the current rank title.
+  ///
+  /// In vi, this message translates to:
+  /// **'Cấp bậc hiện tại'**
+  String get careerRankEyebrow;
+
+  /// Rank XP progress toward the next rank.
+  ///
+  /// In vi, this message translates to:
+  /// **'{current}/{total} XP đến {nextRank}'**
+  String careerXpProgress(int current, int total, String nextRank);
+
+  /// Shown when the learner is at the maximum rank.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bạn đã đạt cấp bậc cao nhất.'**
+  String get careerRankMax;
+
+  /// Daily clock-in streak length.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chuỗi {days} ngày'**
+  String careerStreakDays(int days);
+
+  /// Helper text under the streak count.
+  ///
+  /// In vi, this message translates to:
+  /// **'Điểm danh mỗi ngày để giữ chuỗi.'**
+  String get careerStreakSubtitle;
+
+  /// Clock-in button label.
+  ///
+  /// In vi, this message translates to:
+  /// **'Điểm danh hôm nay'**
+  String get careerClockIn;
+
+  /// Snackbar shown after a successful clock-in.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã điểm danh hôm nay.'**
+  String get careerClockInDone;
+
+  /// Section title for the skill axes.
+  ///
+  /// In vi, this message translates to:
+  /// **'Kỹ năng'**
+  String get careerSkillsTitle;
+
+  /// Empty state inside the skills card.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa có dữ liệu kỹ năng.'**
+  String get careerSkillsEmpty;
+
+  /// Skill axis: keigo.
+  ///
+  /// In vi, this message translates to:
+  /// **'Kính ngữ'**
+  String get careerAxisKeigo;
+
+  /// Skill axis: written business.
+  ///
+  /// In vi, this message translates to:
+  /// **'Văn viết'**
+  String get careerAxisWritten;
+
+  /// Skill axis: meetings.
+  ///
+  /// In vi, this message translates to:
+  /// **'Họp hành'**
+  String get careerAxisMeeting;
+
+  /// Skill axis: customer service.
+  ///
+  /// In vi, this message translates to:
+  /// **'Khách hàng'**
+  String get careerAxisCustomer;
+
+  /// Skill axis: charts/data.
+  ///
+  /// In vi, this message translates to:
+  /// **'Biểu đồ'**
+  String get careerAxisChart;
+
+  /// Skill axis: nuance.
+  ///
+  /// In vi, this message translates to:
+  /// **'Sắc thái'**
+  String get careerAxisNuance;
+
+  /// Section title for NPC relationships.
+  ///
+  /// In vi, this message translates to:
+  /// **'Quan hệ đồng nghiệp'**
+  String get careerRelationsTitle;
+
+  /// Title for the story arcs list.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tuyến nhiệm vụ'**
+  String get careerArcsTitle;
+
+  /// Subtitle for the story arcs list.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chọn một tuyến để bắt đầu hành trình công sở.'**
+  String get careerArcsSubtitle;
+
+  /// Empty state title for story arcs.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa có tuyến nhiệm vụ'**
+  String get careerArcsEmptyTitle;
+
+  /// Empty state body for story arcs.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hãy quay lại sau khi mở khoá tuyến đầu tiên.'**
+  String get careerArcsEmptyBody;
+
+  /// Locked arc hint showing the required rank code.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mở khoá ở cấp {rank}'**
+  String careerArcLocked(String rank);
+
+  /// Arc chapter completion progress.
+  ///
+  /// In vi, this message translates to:
+  /// **'{completed}/{total} chương'**
+  String careerArcProgress(int completed, int total);
+
+  /// Arc status: locked.
+  ///
+  /// In vi, this message translates to:
+  /// **'Khoá'**
+  String get careerStatusLocked;
+
+  /// Arc status: active.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đang mở'**
+  String get careerStatusActive;
+
+  /// Arc status: completed.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hoàn thành'**
+  String get careerStatusCompleted;
+
+  /// Section title for the chapter list in an arc.
+  ///
+  /// In vi, this message translates to:
+  /// **'Các chương'**
+  String get careerChaptersTitle;
+
+  /// Estimated chapter duration in minutes.
+  ///
+  /// In vi, this message translates to:
+  /// **'{minutes} phút'**
+  String careerChapterMinutes(int minutes);
+
+  /// Start button on the chapter briefing.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bắt đầu'**
+  String get careerChapterStart;
+
+  /// Label for the learner's role in the chapter.
+  ///
+  /// In vi, this message translates to:
+  /// **'Vai trò của bạn'**
+  String get careerChapterRole;
+
+  /// Complete-chapter button label.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hoàn thành chương'**
+  String get careerChapterComplete;
+
+  /// Heading on the chapter completion screen.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hoàn thành chương!'**
+  String get careerChapterCompleteTitle;
+
+  /// Scenario progress within a chapter.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tình huống {current}/{total}'**
+  String careerScenarioProgress(int current, int total);
+
+  /// Label for the scenario goal chip.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mục tiêu'**
+  String get careerScenarioGoal;
+
+  /// Header shown when the chosen option is correct.
+  ///
+  /// In vi, this message translates to:
+  /// **'Lựa chọn tốt'**
+  String get careerOutcomeGood;
+
+  /// Header shown when the chosen option is risky.
+  ///
+  /// In vi, this message translates to:
+  /// **'Có rủi ro'**
+  String get careerOutcomeRisk;
+
+  /// XP earned from completing a chapter.
+  ///
+  /// In vi, this message translates to:
+  /// **'+{xp} XP'**
+  String careerXpEarned(int xp);
+
+  /// Rank-up announcement with the new rank title.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thăng cấp: {rank}'**
+  String careerRankUp(String rank);
+
+  /// Button to return to the arc after completion.
+  ///
+  /// In vi, this message translates to:
+  /// **'Quay lại tuyến nhiệm vụ'**
+  String get careerBackToArcs;
+
+  /// Continue button between scenario questions.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tiếp tục'**
+  String get careerContinue;
+
+  /// Generic Career error title.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không tải được dữ liệu'**
+  String get careerErrorTitle;
+
+  /// Generic Career error body.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã có lỗi xảy ra. Vui lòng thử lại.'**
+  String get careerErrorBody;
+
+  /// Section header for the Library tools (search and saved) on the Learn hub.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thư viện'**
+  String get learnLibraryTitle;
+
+  /// Title of the global content search screen.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tìm kiếm'**
+  String get searchTitle;
+
+  /// Subtitle for the search entry card on the Learn hub.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tra từ vựng, kanji và ngữ pháp'**
+  String get searchSubtitle;
+
+  /// Placeholder text inside the global search input.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tìm từ vựng, kanji, ngữ pháp…'**
+  String get searchHint;
+
+  /// Title shown before the learner has typed a search query.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bắt đầu tìm kiếm'**
+  String get searchIdleTitle;
+
+  /// Body shown before the learner has typed a search query.
+  ///
+  /// In vi, this message translates to:
+  /// **'Nhập một từ tiếng Nhật hoặc tiếng Việt để tra cứu trên toàn bộ nội dung.'**
+  String get searchIdleBody;
+
+  /// Title shown when a search returns no results.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không có kết quả'**
+  String get searchEmptyTitle;
+
+  /// Body shown when a search returns no results.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thử từ khóa khác hoặc kiểm tra lại chính tả.'**
+  String get searchEmptyBody;
+
+  /// Title shown when the search request fails.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không tìm kiếm được'**
+  String get searchErrorTitle;
+
+  /// Body shown when the search request fails.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã có lỗi xảy ra. Vui lòng thử lại.'**
+  String get searchErrorBody;
+
+  /// Label for a dictionary word (lexeme) search result.
+  ///
+  /// In vi, this message translates to:
+  /// **'Từ vựng'**
+  String get searchKindWord;
+
+  /// Label for a kanji search result.
+  ///
+  /// In vi, this message translates to:
+  /// **'Kanji'**
+  String get searchKindKanji;
+
+  /// Label for a grammar search result.
+  ///
+  /// In vi, this message translates to:
+  /// **'Ngữ pháp'**
+  String get searchKindGrammar;
+
+  /// Label for an example-sentence search result.
+  ///
+  /// In vi, this message translates to:
+  /// **'Ví dụ'**
+  String get searchKindExample;
+
+  /// Label for an unclassified search result.
+  ///
+  /// In vi, this message translates to:
+  /// **'Khác'**
+  String get searchKindOther;
+
+  /// Title of the saved bookmarks library screen.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã lưu'**
+  String get savedTitle;
+
+  /// Subtitle for the saved-library entry card on the Learn hub.
+  ///
+  /// In vi, this message translates to:
+  /// **'Từ vựng, kanji và ngữ pháp bạn đã lưu'**
+  String get savedSubtitle;
+
+  /// Tab label for saved dictionary words.
+  ///
+  /// In vi, this message translates to:
+  /// **'Từ vựng'**
+  String get savedTabWords;
+
+  /// Tab label for saved kanji.
+  ///
+  /// In vi, this message translates to:
+  /// **'Kanji'**
+  String get savedTabKanji;
+
+  /// Tab label for saved grammar points.
+  ///
+  /// In vi, this message translates to:
+  /// **'Ngữ pháp'**
+  String get savedTabGrammar;
+
+  /// Title shown when a saved tab has no bookmarks.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa có mục đã lưu'**
+  String get savedEmptyTitle;
+
+  /// Empty-state body for the saved words tab.
+  ///
+  /// In vi, this message translates to:
+  /// **'Lưu từ vựng khi tra cứu để ôn lại sau.'**
+  String get savedEmptyWords;
+
+  /// Empty-state body for the saved kanji tab.
+  ///
+  /// In vi, this message translates to:
+  /// **'Lưu kanji khi học để ôn lại sau.'**
+  String get savedEmptyKanji;
+
+  /// Empty-state body for the saved grammar tab.
+  ///
+  /// In vi, this message translates to:
+  /// **'Lưu mẫu ngữ pháp khi học để ôn lại sau.'**
+  String get savedEmptyGrammar;
+
+  /// Title shown when an unauthenticated learner opens the saved library.
+  ///
+  /// In vi, this message translates to:
+  /// **'Cần đăng nhập'**
+  String get savedSignInTitle;
+
+  /// Body shown when an unauthenticated learner opens the saved library.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đăng nhập để xem và đồng bộ các mục đã lưu.'**
+  String get savedSignInBody;
+
+  /// Title shown when loading saved bookmarks fails.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không tải được mục đã lưu'**
+  String get savedErrorTitle;
+
+  /// Body shown when loading saved bookmarks fails.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã có lỗi xảy ra. Vui lòng thử lại.'**
+  String get savedErrorBody;
+
+  /// Title of the learner Rewards hub (streaks, achievements, leaderboards).
+  ///
+  /// In vi, this message translates to:
+  /// **'Thành tựu & Phần thưởng'**
+  String get rewardsTitle;
+
+  /// Subtitle/entry description for the Rewards hub.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chuỗi ngày, huy hiệu và bảng xếp hạng của bạn.'**
+  String get rewardsSubtitle;
+
+  /// Rewards tab label for the streaks section.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chuỗi ngày'**
+  String get rewardsTabStreaks;
+
+  /// Rewards tab label for the achievements section.
+  ///
+  /// In vi, this message translates to:
+  /// **'Huy hiệu'**
+  String get rewardsTabAchievements;
+
+  /// Rewards tab label for the leaderboards section.
+  ///
+  /// In vi, this message translates to:
+  /// **'Xếp hạng'**
+  String get rewardsTabLeaderboards;
+
+  /// Title shown when a Rewards section fails to load.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không tải được phần thưởng'**
+  String get rewardsErrorTitle;
+
+  /// Body shown when a Rewards section fails to load.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã có lỗi xảy ra. Vui lòng thử lại.'**
+  String get rewardsErrorBody;
+
+  /// Title shown when an unauthenticated learner opens Rewards.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đăng nhập để xem phần thưởng'**
+  String get rewardsSignInTitle;
+
+  /// Body shown when an unauthenticated learner opens Rewards.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đăng nhập để theo dõi chuỗi ngày, huy hiệu và thứ hạng của bạn.'**
+  String get rewardsSignInBody;
+
+  /// Title for the empty streaks state.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa có chuỗi ngày nào'**
+  String get rewardsStreaksEmptyTitle;
+
+  /// Body for the empty streaks state.
+  ///
+  /// In vi, this message translates to:
+  /// **'Học mỗi ngày để bắt đầu chuỗi ngày đầu tiên.'**
+  String get rewardsStreaksEmptyBody;
+
+  /// Fallback name when a streak track has no configured name.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chuỗi ngày học'**
+  String get rewardsStreakDefaultName;
+
+  /// Current streak length in days.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chuỗi hiện tại: {days} ngày'**
+  String rewardsStreakCurrent(int days);
+
+  /// Label for the longest-streak stat.
+  ///
+  /// In vi, this message translates to:
+  /// **'Dài nhất'**
+  String get rewardsStreakLongest;
+
+  /// Label for the remaining streak-freeze stat.
+  ///
+  /// In vi, this message translates to:
+  /// **'Lượt giữ chuỗi'**
+  String get rewardsStreakFreezes;
+
+  /// A streak length expressed in days.
+  ///
+  /// In vi, this message translates to:
+  /// **'{days} ngày'**
+  String rewardsStreakDays(int days);
+
+  /// Title for the empty achievements state.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa có huy hiệu'**
+  String get rewardsAchievementsEmptyTitle;
+
+  /// Body for the empty achievements state.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hoàn thành mục tiêu học tập để mở khóa huy hiệu.'**
+  String get rewardsAchievementsEmptyBody;
+
+  /// Earned vs total tiers for an achievement.
+  ///
+  /// In vi, this message translates to:
+  /// **'{earned}/{total}'**
+  String rewardsAchievementTiers(int earned, int total);
+
+  /// Progress toward the next achievement tier threshold.
+  ///
+  /// In vi, this message translates to:
+  /// **'{current}/{target}'**
+  String rewardsAchievementProgress(int current, int target);
+
+  /// Title for the empty leaderboards list state.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa có bảng xếp hạng'**
+  String get rewardsLeaderboardsEmptyTitle;
+
+  /// Body for the empty leaderboards list state.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hiện chưa có bảng xếp hạng nào đang mở.'**
+  String get rewardsLeaderboardsEmptyBody;
+
+  /// Title for the empty rankings state of a single leaderboard.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa có thứ hạng'**
+  String get rewardsLeaderboardEmptyTitle;
+
+  /// Body for the empty rankings state of a single leaderboard.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hãy là người đầu tiên ghi điểm trên bảng này.'**
+  String get rewardsLeaderboardEmptyBody;
+
+  /// Fallback name for a leaderboard entry without a display name.
+  ///
+  /// In vi, this message translates to:
+  /// **'Người học ẩn danh'**
+  String get rewardsLeaderboardAnonymous;
+
+  /// Formatted leaderboard score.
+  ///
+  /// In vi, this message translates to:
+  /// **'{score} đ'**
+  String rewardsLeaderboardScore(int score);
+
+  /// Subscription screen title.
+  ///
+  /// In vi, this message translates to:
+  /// **'Gói đăng ký'**
+  String get subscriptionTitle;
+
+  /// Subscription screen subtitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Quản lý gói và quyền lợi của bạn'**
+  String get subscriptionSubtitle;
+
+  /// Subscription load error title.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không tải được gói đăng ký'**
+  String get subscriptionErrorTitle;
+
+  /// Subscription load error body.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã xảy ra lỗi. Vui lòng thử lại.'**
+  String get subscriptionErrorBody;
+
+  /// Subscription sign-in prompt title.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đăng nhập để xem gói'**
+  String get subscriptionSignInTitle;
+
+  /// Subscription sign-in prompt body.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đăng nhập để xem và quản lý gói đăng ký của bạn.'**
+  String get subscriptionSignInBody;
+
+  /// Current plan label.
+  ///
+  /// In vi, this message translates to:
+  /// **'Gói hiện tại'**
+  String get subscriptionCurrentPlan;
+
+  /// Active subscription status.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đang hoạt động'**
+  String get subscriptionStatusActive;
+
+  /// Trialing subscription status.
+  ///
+  /// In vi, this message translates to:
+  /// **'Dùng thử'**
+  String get subscriptionStatusTrialing;
+
+  /// Canceled subscription status.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã hủy'**
+  String get subscriptionStatusCanceled;
+
+  /// Renewal date label.
+  ///
+  /// In vi, this message translates to:
+  /// **'Gia hạn vào'**
+  String get subscriptionRenewsOn;
+
+  /// Cancellation date label.
+  ///
+  /// In vi, this message translates to:
+  /// **'Kết thúc vào'**
+  String get subscriptionCancelsOn;
+
+  /// Entitlements section label.
+  ///
+  /// In vi, this message translates to:
+  /// **'Quyền lợi'**
+  String get subscriptionEntitlements;
+
+  /// Quotas section label.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hạn mức'**
+  String get subscriptionQuotas;
+
+  /// Unlimited quota label.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không giới hạn'**
+  String get subscriptionUnlimited;
+
+  /// Quota limit per window.
+  ///
+  /// In vi, this message translates to:
+  /// **'{limit}/{window}'**
+  String subscriptionQuotaValue(String limit, String window);
+
+  /// Cancel subscription button.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hủy gia hạn'**
+  String get subscriptionCancelButton;
+
+  /// Cancel confirm dialog title.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hủy gói đăng ký?'**
+  String get subscriptionCancelConfirmTitle;
+
+  /// Cancel confirm dialog body.
+  ///
+  /// In vi, this message translates to:
+  /// **'Gói của bạn vẫn hoạt động đến hết kỳ thanh toán hiện tại.'**
+  String get subscriptionCancelConfirmBody;
+
+  /// Cancel confirm action.
+  ///
+  /// In vi, this message translates to:
+  /// **'Xác nhận hủy'**
+  String get subscriptionCancelConfirmAction;
+
+  /// Cancel dialog dismiss action.
+  ///
+  /// In vi, this message translates to:
+  /// **'Giữ lại gói'**
+  String get subscriptionCancelDismiss;
+
+  /// Pending cancellation note.
+  ///
+  /// In vi, this message translates to:
+  /// **'Gói sẽ kết thúc vào cuối kỳ thanh toán.'**
+  String get subscriptionCancelPending;
+
+  /// Cancel success snackbar.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã yêu cầu hủy gói.'**
+  String get subscriptionCancelSuccess;
+
+  /// Cancel error snackbar.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không hủy được. Vui lòng thử lại.'**
+  String get subscriptionCancelError;
+
+  /// Free plan note.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bạn đang dùng gói miễn phí.'**
+  String get subscriptionFreeNote;
+
+  /// Upgrade note for free plan.
+  ///
+  /// In vi, this message translates to:
+  /// **'Nâng cấp gói trên web NihonGo BJT.'**
+  String get subscriptionUpgradeNote;
+
+  /// Available plans section title.
+  ///
+  /// In vi, this message translates to:
+  /// **'Các gói có sẵn'**
+  String get subscriptionPlansTitle;
+
+  /// Plans load error message.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không tải được danh sách gói.'**
+  String get subscriptionPlansError;
+
+  /// Empty plans message.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hiện chưa có gói nào.'**
+  String get subscriptionPlansEmptyBody;
+
+  /// Current plan marker on a plan card.
+  ///
+  /// In vi, this message translates to:
+  /// **'Gói hiện tại'**
+  String get subscriptionPlanCurrent;
+
+  /// Free price label.
+  ///
+  /// In vi, this message translates to:
+  /// **'Miễn phí'**
+  String get subscriptionPlanFree;
+
+  /// Formatted plan price in VND.
+  ///
+  /// In vi, this message translates to:
+  /// **'{price}đ'**
+  String subscriptionPlanPrice(String price);
+
+  /// Per-month price suffix.
+  ///
+  /// In vi, this message translates to:
+  /// **'/tháng'**
+  String get subscriptionPlanPerMonth;
+
+  /// Recommended plan badge.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đề xuất'**
+  String get subscriptionPlanRecommended;
 }
 
 class _AppLocalizationsDelegate

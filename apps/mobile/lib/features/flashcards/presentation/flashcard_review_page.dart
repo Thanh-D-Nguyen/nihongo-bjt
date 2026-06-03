@@ -88,7 +88,13 @@ class _ReviewActive extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.l),
           Expanded(
-            child: _CardFace(card: card, revealed: state.answerRevealed),
+            // The whole card is a reveal target so the action stays usable even
+            // when the dedicated button is crowded near the bottom edge.
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: state.answerRevealed ? null : controller.revealAnswer,
+              child: _CardFace(card: card, revealed: state.answerRevealed),
+            ),
           ),
           const SizedBox(height: AppSpacing.l),
           if (state.answerRevealed)

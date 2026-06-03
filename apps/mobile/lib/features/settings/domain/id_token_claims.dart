@@ -49,6 +49,11 @@ class IdTokenClaims {
   /// Email (`email` claim), when present.
   final String? email;
 
+  /// Whether no identity claim could be decoded (e.g. no authenticated
+  /// session). Equivalent to [empty].
+  bool get isEmpty =>
+      name == null && preferredUsername == null && email == null;
+
   /// Best available display label: name → username → email → `null`.
   String? get displayName => _firstNonBlank([name, preferredUsername, email]);
 

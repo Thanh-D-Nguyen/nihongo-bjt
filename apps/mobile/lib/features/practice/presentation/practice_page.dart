@@ -22,8 +22,8 @@ import 'package:nihongo_bjt/shared/widgets/section_header.dart';
 /// Multiple-choice practice player for one lesson.
 ///
 /// Exam-style core: the learner answers each question and moves through the
-/// set. Correctness is summarised honestly on completion; the rich per-question
-/// explanation review is built in the next batch.
+/// set. Correctness is summarised honestly on completion, with a per-question
+/// review (selected vs. correct answer + explanation) on the summary screen.
 class PracticePage extends ConsumerStatefulWidget {
   const PracticePage({required this.lessonId, super.key});
 
@@ -284,11 +284,11 @@ class _RunnerActions extends StatelessWidget {
             Expanded(
               child: PrimaryButton(
                 label: isLast ? l10n.practiceFinish : l10n.practiceNext,
-                onPressed: !canAdvance
-                    ? null
-                    : isLast
-                    ? (state.isComplete ? onFinish : null)
-                    : onNext,
+                // Enabled only when the current question is answered. Reaching
+                // the last question requires answering every prior one, so an
+                // answered last question is always a complete set — the CTA
+                // never appears enabled while it cannot act.
+                onPressed: canAdvance ? (isLast ? onFinish : onNext) : null,
               ),
             ),
           ],

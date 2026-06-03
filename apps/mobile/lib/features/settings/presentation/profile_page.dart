@@ -1,5 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:nihongo_bjt/app/router.dart';
 import 'package:nihongo_bjt/core/theme/app_motion.dart';
 import 'package:nihongo_bjt/core/theme/app_palette.dart';
 import 'package:nihongo_bjt/core/theme/app_radius.dart';
@@ -12,6 +16,15 @@ import 'package:nihongo_bjt/features/settings/presentation/settings_controller.d
 import 'package:nihongo_bjt/l10n/gen/app_localizations.dart';
 import 'package:nihongo_bjt/shared/widgets/app_card.dart';
 import 'package:nihongo_bjt/shared/widgets/app_scaffold.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+
+/// Resolves the real installed app version + build number from the platform
+/// (CFBundleShortVersionString / versionName). No hardcoded version strings, so
+/// the About row can never drift from the actual build.
+final appPackageInfoProvider = FutureProvider<PackageInfo>((ref) {
+  return PackageInfo.fromPlatform();
+});
+
 
 /// Profile & settings screen (Phase 10.2).
 ///
@@ -26,9 +39,21 @@ class ProfilePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
 
+    final auth = ref.watch(authControllerProvider);
     final claims = ref.watch(profileClaimsProvider);
     final settings =
         ref.watch(settingsControllerProvider).value ?? UserSettings.defaults;
+
+    // During sign-out the session is being torn down: show an explicit
+    // signing-out state instead of the fallback learner identity so the
+    // learner gets clear feedback and never sees a confusing authenticated
+    // profile flash before the redirect to login (ANDROID-QA-P2-003).
+    if (auth.isLoading && claims.isEmpty) {
+      return AppScaffold(
+        title: l10n.profileTitle,
+        body: _SigningOutView(message: l10n.profileSigningOut),
+      );
+    }
 
     return AppScaffold(
       title: l10n.profileTitle,
@@ -40,16 +65,58 @@ class ProfilePage extends ConsumerWidget {
             _SectionLabel(l10n.profileAccountSection),
             const SizedBox(height: AppSpacing.s),
             _AccountCard(claims: claims),
+            const SizedBox(height: AppSpacing.m),
+            const _SubscriptionEntryCard(),
             const SizedBox(height: AppSpacing.l),
             _SectionLabel(l10n.profilePreferencesSection),
             const SizedBox(height: AppSpacing.s),
             _LanguageCard(selected: settings.localeOption),
             const SizedBox(height: AppSpacing.m),
             _FuriganaCard(enabled: settings.furiganaEnabled),
+            const SizedBox(height: AppSpacing.l),
+            _SectionLabel(l10n.profileAboutSection),
+            const SizedBox(height: AppSpacing.s),
+            const _AboutCard(),
             const SizedBox(height: AppSpacing.xl),
             const _SignOutButton(),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Centered signing-out indicator shown while the auth session is being torn
+/// down, before the auth guard redirects to login.
+class _SigningOutView extends StatelessWidget {
+  const _SigningOutView({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 28,
+            height: 28,
+            child: CircularProgressIndicator(
+              strokeWidth: 2.5,
+              color: palette.accent,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.m),
+          Text(
+            message,
+            style: Theme.of(context)
+                .textTheme
+                .bodyMedium
+                ?.copyWith(color: palette.inkSecondary),
+          ),
+        ],
       ),
     );
   }
@@ -89,6 +156,66 @@ class _SectionLabel extends StatelessWidget {
           letterSpacing: 0.8,
           fontWeight: FontWeight.w600,
         ),
+      ),
+    );
+  }
+}
+
+/// Navigation card into the subscription & plans screen. Lives in the account
+/// section so billing is discoverable from the learner's profile.
+class _SubscriptionEntryCard extends StatelessWidget {
+  const _SubscriptionEntryCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
+
+    return AppCard(
+      onTap: () => unawaited(context.pushNamed(Routes.subscription)),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: palette.accentSoft,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            child: Icon(
+              Icons.workspace_premium_outlined,
+              size: 22,
+              color: palette.accent,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.m),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.subscriptionTitle,
+                  style: text.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  l10n.subscriptionSubtitle,
+                  style: text.bodySmall?.copyWith(
+                    color: palette.inkSecondary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            Icons.chevron_right_rounded,
+            color: palette.inkTertiary,
+          ),
+        ],
       ),
     );
   }
@@ -339,6 +466,64 @@ class _FuriganaCard extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// About card showing the real installed app version + build number. While the
+/// platform value resolves, the version row renders an em dash placeholder —
+/// never a fabricated version.
+class _AboutCard extends ConsumerWidget {
+  const _AboutCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final palette = context.palette;
+    final text = Theme.of(context).textTheme;
+    final info = ref.watch(appPackageInfoProvider);
+
+    final value = info.maybeWhen(
+      data: (data) => l10n.profileVersionValue(data.version, data.buildNumber),
+      orElse: () => '—',
+    );
+
+    return AppCard(
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: palette.surfaceMuted,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            child: Icon(
+              Icons.info_outline_rounded,
+              size: 20,
+              color: palette.inkSecondary,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.m),
+          Expanded(
+            child: Text(
+              l10n.profileAppVersion,
+              style: text.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.s),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: text.bodyMedium?.copyWith(color: palette.inkSecondary),
+            ),
+          ),
+        ],
       ),
     );
   }

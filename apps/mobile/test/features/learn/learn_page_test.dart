@@ -139,6 +139,11 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Bài học hôm nay'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('Giao tiếp'),
+        240,
+        scrollable: find.byType(Scrollable).first,
+      );
       expect(find.text('Giao tiếp'), findsOneWidget);
     });
 

@@ -62,5 +62,26 @@ void main() {
         isNull,
       );
     });
+
+    test('sends unauthenticated users away from protected routes but lets '
+        'them reach register', () {
+      expect(
+        authRedirect(
+          status: AuthStatus.unauthenticated,
+          location: registerLocation,
+        ),
+        isNull,
+      );
+    });
+
+    test('keeps authenticated users out of register', () {
+      expect(
+        authRedirect(
+          status: AuthStatus.authenticated,
+          location: registerLocation,
+        ),
+        '/',
+      );
+    });
   });
 }

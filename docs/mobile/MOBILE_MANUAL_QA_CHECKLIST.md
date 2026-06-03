@@ -31,6 +31,14 @@ This is not a physical-device pass. Core blockers found:
 stuck. Do not mark Practice/Explanation/Flashcard review complete until those
 are fixed and retested.
 
+2026-06-04 Copilot-fix-pass note: The P1/P2 findings were addressed in **code +
+automated tests only** (`flutter analyze` clean, 174 tests pass). The app was
+**not** run on an emulator or device in that pass, so the affected flows are
+**ready for emulator retest**, not visually confirmed. Use
+`MOBILE_EMULATOR_RETEST_CHECKLIST.md` to confirm before marking them passed. The
+Android debug APK build could not run on the Windows host (incomplete Android
+SDK); it remains validated only on the Mac.
+
 ## 1. First launch
 - [ ] App opens to login when unauthenticated; to Home when authenticated.
 - [ ] No flash of unstyled / wrong-theme content.

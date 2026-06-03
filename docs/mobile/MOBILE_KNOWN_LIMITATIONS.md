@@ -60,6 +60,13 @@ Companion docs: `MOBILE_AI_QA_REPORT.md`, `MOBILE_BATCH_LOG.md`,
   human eye on a real narrow device.
 - Extremely tall practice prompts push option tiles below the lazy `ListView`
   fold; scrolling to reach them is unverified on-device.
+- **`LoginPage` horizontal overflow (~145px at 390 dp) is RESOLVED.** The 2026
+  auth rebuild replaced the login screen with `AuthScreenShell`, whose brand
+  header wraps the wordmark in a `FittedBox` and caps content at 420 dp. The
+  login layout is now covered by widget tests across 320–390 dp in light/dark
+  and JA ([test/features/auth/login_page_test.dart](apps/mobile/test/features/auth/login_page_test.dart)).
+  Still not visually confirmed on-device — see
+  `MOBILE_AUTH_RETEST_CHECKLIST.md`.
 
 ## 6. Tooling / build
 
@@ -75,6 +82,14 @@ Companion docs: `MOBILE_AI_QA_REPORT.md`, `MOBILE_BATCH_LOG.md`,
   on Question 2 with an enabled `Tiếp theo` button that does not advance, and
   Flashcard review can fail to reveal the answer after tapping `Hiện đáp án`.
   See `MOBILE_DEVICE_UIUX_QA_REPORT.md` for evidence and acceptance criteria.
+- **2026-06-04 Copilot fix pass addressed those blockers in code + tests only**
+  (full-screen practice/review routes outside the bottom nav, whole-card reveal
+  target, deck list moved under Review, explicit signing-out view). These are
+  **ready for emulator retest**, not visually confirmed. The Android debug APK
+  build **could not run on the Windows host** (the configured Android SDK at
+  `C:\Android\sdk` has only cmdline-tools, no platforms/build-tools); analyze +
+  tests are the verifiable gates there. See
+  `MOBILE_EMULATOR_RETEST_CHECKLIST.md`.
 - iOS build likewise unverified here.
 
 ## 7. What the automated tests do NOT prove
@@ -88,5 +103,5 @@ Companion docs: `MOBILE_AI_QA_REPORT.md`, `MOBILE_BATCH_LOG.md`,
 ---
 
 These limitations are **safe-to-ship-for-review** caveats, not blockers for the
-code itself: `analyze` is clean and all 166 tests pass. They are the precise set
+code itself: `analyze` is clean and all 174 tests pass. They are the precise set
 of things a human must confirm once a device is available.

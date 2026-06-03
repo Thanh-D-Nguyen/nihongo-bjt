@@ -93,6 +93,41 @@ class ApiClient {
     return jsonDecode(response.body);
   }
 
+  /// Performs a PATCH request with an optional JSON [body] and returns the
+  /// decoded JSON response.
+  ///
+  /// [path] is appended to [AppEnvironment.apiBaseUrl] and must start with `/`.
+  /// Returns `null` for an empty response body. Throws [HttpApiException] on a
+  /// non-2xx response and [NetworkApiException] when the request fails before a
+  /// response is received.
+  Future<Object?> patchJson(String path, {Object? body}) async {
+    final uri = Uri.parse('${environment.apiBaseUrl}$path');
+
+    final http.Response response;
+    try {
+      response = await httpClient.patch(
+        uri,
+        headers: await _headers(withJsonContentType: true),
+        body: body == null ? null : jsonEncode(body),
+      );
+    } on Exception catch (error) {
+      throw NetworkApiException('PATCH $uri failed: $error');
+    }
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw HttpApiException(
+        statusCode: response.statusCode,
+        message: 'PATCH $uri returned ${response.statusCode}',
+        body: response.body.isEmpty ? null : response.body,
+      );
+    }
+
+    if (response.body.isEmpty) {
+      return null;
+    }
+    return jsonDecode(response.body);
+  }
+
   /// Builds request headers, attaching a bearer token when one is available.
   ///
   /// Sets a JSON `content-type` only when [withJsonContentType] is true (i.e.

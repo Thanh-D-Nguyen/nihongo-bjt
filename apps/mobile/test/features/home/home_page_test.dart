@@ -174,6 +174,29 @@ void main() {
     expect(find.text('7枚'), findsOneWidget);
     expect(find.text('2個'), findsOneWidget);
   });
+
+  testWidgets('caps body width on wide tablet surfaces', (tester) async {
+    // Wide tablet/foldable surface: 1280 dp logical width.
+    tester.view.physicalSize = const Size(2560, 1600);
+    tester.view.devicePixelRatio = 2.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await _pumpHome(
+      tester,
+      build: (ref) async => const HomeDashboardData(
+        deckCount: 2,
+        totalCardCount: 7,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    // The continue CTA is laid out within the 640 dp content cap, not stretched
+    // across the full 1280 dp width.
+    final ctaWidth = tester.getSize(find.text('Tiếp tục học')).width;
+    expect(ctaWidth, lessThanOrEqualTo(640));
+  });
 }
 
 /// Repository whose deck fetch always fails, to exercise the dashboard's error

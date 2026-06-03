@@ -48,6 +48,9 @@ dependencies:
   # Encrypted token storage (Keychain / EncryptedSharedPreferences) — never
   # plain SharedPreferences. Backs core/auth/secure_auth_token_store.dart.
   flutter_secure_storage: ^9.2.4
+  # Renders the kanji stroke-order diagrams served as SVG by the public
+  # `/api/kanji/{id}/stroke` endpoint (features/kanji detail screen).
+  flutter_svg: ^2.0.10+1
   # Declarative routing.
   go_router: ^17.2.3
   # HTTP transport for the core API client (core/api/api_client.dart).
@@ -60,6 +63,9 @@ dependencies:
   json_annotation: ^4.12.0
   # `@immutable` annotation for value types (auth domain).
   meta: ^1.18.0
+  # Reads the real platform app version + build number (CFBundleShortVersionString
+  # / versionName) for the Profile → About section. No hardcoded version strings.
+  package_info_plus: ^8.0.0
   # Cross-platform path joining for the local Drift database file location.
   path: ^1.9.0
   # Resolves the platform app-documents directory where the Drift SQLite file

@@ -11,6 +11,7 @@ import 'package:nihongo_bjt/features/settings/domain/app_locale_option.dart';
 import 'package:nihongo_bjt/features/settings/presentation/profile_page.dart';
 import 'package:nihongo_bjt/features/settings/presentation/settings_controller.dart';
 import 'package:nihongo_bjt/l10n/gen/app_localizations.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import 'support/jwt_fixtures.dart';
 
@@ -51,6 +52,14 @@ Future<AppDatabase> _pumpProfile(
       overrides: [
         appDatabaseProvider.overrideWithValue(db),
         authControllerProvider.overrideWith(() => _StubAuthController(session)),
+        appPackageInfoProvider.overrideWith(
+          (ref) async => PackageInfo(
+            appName: 'NihonGo BJT',
+            packageName: 'com.nihongo.bjt',
+            version: '1.0.0',
+            buildNumber: '1',
+          ),
+        ),
       ],
       child: MaterialApp(
         locale: locale,
@@ -94,6 +103,19 @@ void main() {
     expect(find.text('Người học'), findsOneWidget);
   });
 
+  testWidgets('shows the real app version in the About section', (
+    tester,
+  ) async {
+    await _pumpProfile(
+      tester,
+      session: _sessionWithIdToken(unsignedJwt({'name': 'A'})),
+    );
+
+    expect(find.text('GIỚI THIỆU'), findsOneWidget);
+    expect(find.text('Phiên bản ứng dụng'), findsOneWidget);
+    expect(find.text('1.0.0 (bản dựng 1)'), findsOneWidget);
+  });
+
   testWidgets('selecting a language persists it to the controller', (
     tester,
   ) async {
@@ -124,6 +146,8 @@ void main() {
       session: _sessionWithIdToken(unsignedJwt({'name': 'A'})),
     );
 
+    await tester.ensureVisible(find.byType(Switch));
+    await tester.pumpAndSettle();
     await tester.tap(find.byType(Switch));
     await tester.pumpAndSettle();
 
