@@ -10,11 +10,26 @@ apply.
 > caveats so you don't re-file them as bugs).
 
 ## Global setup
-- [ ] Build runs (`flutter run` / debug APK installs).
+- [x] Debug APK build runs on local Mac:
+      `cd apps/mobile && flutter build apk --debug`.
+- [ ] Physical Android device connected and authorized.
+- [ ] App installed/launched on physical Android device with
+      `flutter run -d <physical-device-id>`.
 - [ ] System locale = Vietnamese → UI is Vietnamese.
 - [ ] System locale = Japanese → UI is Japanese.
 - [ ] System dark mode toggles app light/dark live.
 - [ ] System large text scale does not clip any screen.
+
+2026-06-03 device-QA note: `adb devices` detected only Android emulator
+`emulator-5556`; no physical Android device was available. Real-device visual
+inspection was stopped and documented in `MOBILE_DEVICE_UIUX_QA_REPORT.md`.
+
+2026-06-03 emulator-QA note: The app launched on `emulator-5556`, login with the
+local account succeeded, and several screens were inspected with screenshots.
+This is not a physical-device pass. Core blockers found:
+`ANDROID-QA-P1-001` Practice Next stuck and `ANDROID-QA-P1-002` Flashcard Reveal
+stuck. Do not mark Practice/Explanation/Flashcard review complete until those
+are fixed and retested.
 
 ## 1. First launch
 - [ ] App opens to login when unauthenticated; to Home when authenticated.
@@ -44,8 +59,11 @@ apply.
 - [ ] Scenario/prompt renders with long Japanese text intact.
 - [ ] Answer options are tappable with ≥ 48 dp targets.
 - [ ] Selecting an option shows a clear selected state.
+- [x] Selecting an option shows a clear selected state on emulator.
 - [ ] Submit/check is disabled until an answer is selected.
 - [ ] Reading help is suppressed while answering (exam policy).
+- [ ] `Tiếp theo` advances after every selected answer. **Blocked on emulator by
+      `ANDROID-QA-P1-001`: Question 2 did not advance after repeated taps.**
 
 ## 6. Answer selection
 - [ ] Correct answer → clear, non-punishing positive feedback.
@@ -59,6 +77,8 @@ apply.
 - [ ] Save-for-later / add-to-flashcards works (or is honestly absent).
 - [ ] Continue advances to the next question or completes the set.
 
+2026-06-03 emulator-QA: Not reached because Practice was blocked at Question 2.
+
 ## 8. Review flow
 - [ ] Review Hub lists review modes.
 - [ ] Real modes (flashcards) work; not-yet-available modes show honest states.
@@ -70,6 +90,10 @@ apply.
 - [ ] Completion summary is accurate.
 - [ ] Offline grading queues and the sync status is honest.
 - [ ] Dark mode: card front/back readable, no dark-on-dark.
+
+2026-06-03 emulator-QA: Deck list and card front opened. Review reveal/grade
+flow is blocked by `ANDROID-QA-P1-002`: `Hiện đáp án` did not reveal after
+repeated taps.
 
 ## 10. Progress
 - [ ] Only real metrics shown; honest empty/preview state otherwise.
@@ -130,4 +154,3 @@ treat as a tracked design fix, not a blocker introduced by this phase.
 - [ ] Phone widths (< 640 dp) still fill the width with no regression.
 - [ ] Home (raw Scaffold) is acceptable at large width — known: not yet capped.
 - [ ] Landscape: no overflow, controls remain reachable.
-

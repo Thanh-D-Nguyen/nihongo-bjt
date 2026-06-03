@@ -63,10 +63,18 @@ Companion docs: `MOBILE_AI_QA_REPORT.md`, `MOBILE_BATCH_LOG.md`,
 
 ## 6. Tooling / build
 
-- **`flutter build apk --debug` cannot run in this environment — no Android
-  SDK.** Compilation is otherwise proven by `flutter analyze` (clean) and
-  `flutter test` (166 passing). APK build/install must be confirmed on a machine
-  with the Android SDK before release.
+- **2026-06-03 Android debug APK build now passes on the local Mac.**
+  `cd apps/mobile && flutter build apk --debug` produced
+  `build/app/outputs/flutter-apk/app-debug.apk`.
+- **Physical Android device QA is still blocked.** `adb devices` and
+  `flutter devices` detected only Android emulator `emulator-5556`; no physical
+  Android phone/tablet was connected or authorized. Per the manual QA
+  instructions, no real-device screen can be marked passed until a physical
+  Android device is available.
+- **2026-06-03 emulator QA found core mobile blockers.** Practice can get stuck
+  on Question 2 with an enabled `Tiếp theo` button that does not advance, and
+  Flashcard review can fail to reveal the answer after tapping `Hiện đáp án`.
+  See `MOBILE_DEVICE_UIUX_QA_REPORT.md` for evidence and acceptance criteria.
 - iOS build likewise unverified here.
 
 ## 7. What the automated tests do NOT prove
