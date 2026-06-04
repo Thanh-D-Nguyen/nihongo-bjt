@@ -85,6 +85,10 @@ dev_dependencies:
   drift_dev: ^2.20.0
   flutter_test:
     sdk: flutter
+  # Drives the headless integration-test flows in `integration_test/` (run with
+  # `flutter test integration_test`). Mocks repositories — no live backend.
+  integration_test:
+    sdk: flutter
   # Generates fromJson for the flashcard API DTOs.
   json_serializable: ^6.9.0
   # Strict lint ruleset; activated via analysis_options.yaml.

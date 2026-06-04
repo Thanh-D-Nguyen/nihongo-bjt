@@ -17,6 +17,9 @@ import 'package:nihongo_bjt/features/dictionary/presentation/dictionary_page.dar
 import 'package:nihongo_bjt/features/dictionary/presentation/dictionary_word_page.dart';
 import 'package:nihongo_bjt/features/exam/presentation/exam_browser_page.dart';
 import 'package:nihongo_bjt/features/exam/presentation/exam_player_page.dart';
+import 'package:nihongo_bjt/features/flashcards/presentation/flashcard_card_form_page.dart';
+import 'package:nihongo_bjt/features/flashcards/presentation/flashcard_deck_detail_page.dart';
+import 'package:nihongo_bjt/features/flashcards/presentation/flashcard_deck_form_page.dart';
 import 'package:nihongo_bjt/features/flashcards/presentation/flashcard_deck_list_page.dart';
 import 'package:nihongo_bjt/features/flashcards/presentation/flashcard_review_page.dart';
 import 'package:nihongo_bjt/features/gamification/presentation/rewards_page.dart';
@@ -50,10 +53,16 @@ abstract final class Routes {
   static const String lesson = 'lesson';
   static const String practice = 'practice';
   static const String review = 'review';
+  static const String me = 'me';
   static const String progress = 'progress';
   static const String settings = 'settings';
   static const String profile = 'profile';
   static const String flashcards = 'flashcards';
+  static const String flashcardDeck = 'flashcard-deck';
+  static const String flashcardCreate = 'flashcard-create';
+  static const String flashcardEdit = 'flashcard-edit';
+  static const String flashcardCardCreate = 'flashcard-card-create';
+  static const String flashcardCardEdit = 'flashcard-card-edit';
   static const String flashcardReview = 'flashcard-review';
   static const String dictionary = 'dictionary';
   static const String dictionaryWord = 'dictionary-word';
@@ -88,6 +97,10 @@ final routerProvider = Provider<GoRouter>((ref) {
     initialLocation: '/',
     refreshListenable: refresh,
     redirect: (context, state) {
+      // Back-compat: remap legacy paths to their new branch owners so old deep
+      // links / saved routes keep working after the shell restructure.
+      final legacy = _legacyPathRedirect(state.matchedLocation);
+      if (legacy != null) return legacy;
       final status =
           ref.read(authControllerProvider).value?.status ?? AuthStatus.unknown;
       return authRedirect(status: status, location: state.matchedLocation);
@@ -160,31 +173,20 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state, navigationShell) =>
             AppShell(navigationShell: navigationShell),
         branches: [
-          // Branch 0 — Home (keeps nested profile subroute).
+          // Branch 0 — Home (dashboard hub). Profile/billing moved to the Me
+          // branch so the Home stack stays focused on the dashboard.
           StatefulShellBranch(
             routes: [
               GoRoute(
                 path: '/',
                 name: Routes.home,
                 builder: (context, state) => const HomePage(),
-                routes: [
-                  GoRoute(
-                    path: 'profile',
-                    name: Routes.profile,
-                    builder: (context, state) => const ProfilePage(),
-                    routes: [
-                      GoRoute(
-                        path: 'subscription',
-                        name: Routes.subscription,
-                        builder: (context, state) => const SubscriptionPage(),
-                      ),
-                    ],
-                  ),
-                ],
               ),
             ],
           ),
-          // Branch 1 — Learn.
+          // Branch 1 — Learn (structured learning + editorial content). Lookup
+          // tools (dictionary/kanji/grammar/saved) now live under the Search
+          // branch so they highlight the Search tab.
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -198,48 +200,6 @@ final routerProvider = Provider<GoRouter>((ref) {
                     builder: (context, state) => LessonDetailPage(
                       lessonId: state.pathParameters['id']!,
                     ),
-                  ),
-                  GoRoute(
-                    path: 'dictionary',
-                    name: Routes.dictionary,
-                    builder: (context, state) => const DictionaryPage(),
-                    routes: [
-                      GoRoute(
-                        path: ':id',
-                        name: Routes.dictionaryWord,
-                        builder: (context, state) => DictionaryWordPage(
-                          wordId: state.pathParameters['id']!,
-                        ),
-                      ),
-                    ],
-                  ),
-                  GoRoute(
-                    path: 'kanji',
-                    name: Routes.kanji,
-                    builder: (context, state) => const KanjiBrowserPage(),
-                    routes: [
-                      GoRoute(
-                        path: ':id',
-                        name: Routes.kanjiDetail,
-                        builder: (context, state) => KanjiDetailPage(
-                          kanjiId: state.pathParameters['id']!,
-                        ),
-                      ),
-                    ],
-                  ),
-                  GoRoute(
-                    path: 'grammar',
-                    name: Routes.grammar,
-                    builder: (context, state) => const GrammarBrowserPage(),
-                    routes: [
-                      GoRoute(
-                        path: ':id',
-                        name: Routes.grammarDetail,
-                        builder: (context, state) => GrammarDetailPage(
-                          grammarId: state.pathParameters['id']!,
-                        ),
-                      ),
-                    ],
                   ),
                   GoRoute(
                     path: 'scenarios',
@@ -301,16 +261,6 @@ final routerProvider = Provider<GoRouter>((ref) {
                     ],
                   ),
                   GoRoute(
-                    path: 'search',
-                    name: Routes.search,
-                    builder: (context, state) => const SearchPage(),
-                  ),
-                  GoRoute(
-                    path: 'saved',
-                    name: Routes.saved,
-                    builder: (context, state) => const SavedPage(),
-                  ),
-                  GoRoute(
                     path: 'rewards',
                     name: Routes.rewards,
                     builder: (context, state) => const RewardsPage(),
@@ -332,28 +282,133 @@ final routerProvider = Provider<GoRouter>((ref) {
                     path: 'flashcards',
                     name: Routes.flashcards,
                     builder: (context, state) => const FlashcardDeckListPage(),
+                    routes: [
+                      GoRoute(
+                        path: 'new',
+                        name: Routes.flashcardCreate,
+                        builder: (context, state) =>
+                            const FlashcardDeckFormPage(),
+                      ),
+                      GoRoute(
+                        path: ':deckId',
+                        name: Routes.flashcardDeck,
+                        builder: (context, state) => FlashcardDeckDetailPage(
+                          deckId: state.pathParameters['deckId']!,
+                        ),
+                        routes: [
+                          GoRoute(
+                            path: 'edit',
+                            name: Routes.flashcardEdit,
+                            builder: (context, state) => FlashcardDeckFormPage(
+                              deckId: state.pathParameters['deckId'],
+                            ),
+                          ),
+                          GoRoute(
+                            path: 'cards/new',
+                            name: Routes.flashcardCardCreate,
+                            builder: (context, state) => FlashcardCardFormPage(
+                              deckId: state.pathParameters['deckId']!,
+                            ),
+                          ),
+                          GoRoute(
+                            path: 'cards/:cardIndex/edit',
+                            name: Routes.flashcardCardEdit,
+                            builder: (context, state) => FlashcardCardFormPage(
+                              deckId: state.pathParameters['deckId']!,
+                              cardIndex: int.tryParse(
+                                state.pathParameters['cardIndex'] ?? '',
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ],
               ),
             ],
           ),
-          // Branch 3 — Progress.
+          // Branch 3 — Search (lookup hub): global search + dictionary, kanji,
+          // grammar and saved items. These routes highlight the Search tab.
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/progress',
-                name: Routes.progress,
-                builder: (context, state) => const ProgressPage(),
+                path: '/search',
+                name: Routes.search,
+                builder: (context, state) => const SearchPage(),
+                routes: [
+                  GoRoute(
+                    path: 'dictionary',
+                    name: Routes.dictionary,
+                    builder: (context, state) => const DictionaryPage(),
+                    routes: [
+                      GoRoute(
+                        path: ':id',
+                        name: Routes.dictionaryWord,
+                        builder: (context, state) => DictionaryWordPage(
+                          wordId: state.pathParameters['id']!,
+                        ),
+                      ),
+                    ],
+                  ),
+                  GoRoute(
+                    path: 'kanji',
+                    name: Routes.kanji,
+                    builder: (context, state) => const KanjiBrowserPage(),
+                    routes: [
+                      GoRoute(
+                        path: ':id',
+                        name: Routes.kanjiDetail,
+                        builder: (context, state) => KanjiDetailPage(
+                          kanjiId: state.pathParameters['id']!,
+                        ),
+                      ),
+                    ],
+                  ),
+                  GoRoute(
+                    path: 'grammar',
+                    name: Routes.grammar,
+                    builder: (context, state) => const GrammarBrowserPage(),
+                    routes: [
+                      GoRoute(
+                        path: ':id',
+                        name: Routes.grammarDetail,
+                        builder: (context, state) => GrammarDetailPage(
+                          grammarId: state.pathParameters['id']!,
+                        ),
+                      ),
+                    ],
+                  ),
+                  GoRoute(
+                    path: 'saved',
+                    name: Routes.saved,
+                    builder: (context, state) => const SavedPage(),
+                  ),
+                ],
               ),
             ],
           ),
-          // Branch 4 — Settings (reuses the existing profile screen).
+          // Branch 4 — Me (account hub): profile, progress detail, billing,
+          // settings and sign-out all live here so these routes highlight the
+          // Me tab. The hub screen is the profile/settings page.
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/settings',
-                name: Routes.settings,
+                path: '/me',
+                name: Routes.me,
                 builder: (context, state) => const ProfilePage(),
+                routes: [
+                  GoRoute(
+                    path: 'progress',
+                    name: Routes.progress,
+                    builder: (context, state) => const ProgressPage(),
+                  ),
+                  GoRoute(
+                    path: 'subscription',
+                    name: Routes.subscription,
+                    builder: (context, state) => const SubscriptionPage(),
+                  ),
+                ],
               ),
             ],
           ),
@@ -363,6 +418,30 @@ final routerProvider = Provider<GoRouter>((ref) {
   );
 });
 
+/// Remaps legacy paths to their new branch owners after the app-shell
+/// restructure (Home / Learn / Review / Search / Me). Prefix-based so nested
+/// detail paths and ids are preserved. Returns the new location, or `null` when
+/// the location is already current.
+String? _legacyPathRedirect(String location) {
+  const prefixMap = <String, String>{
+    '/learn/dictionary': '/search/dictionary',
+    '/learn/kanji': '/search/kanji',
+    '/learn/grammar': '/search/grammar',
+    '/learn/saved': '/search/saved',
+    '/learn/search': '/search',
+    '/progress': '/me/progress',
+    '/settings': '/me',
+    '/profile/subscription': '/me/subscription',
+    '/profile': '/me',
+  };
+  for (final entry in prefixMap.entries) {
+    if (location == entry.key) return entry.value;
+    if (location.startsWith('${entry.key}/')) {
+      return entry.value + location.substring(entry.key.length);
+    }
+  }
+  return null;
+}
 
 /// Bridges the Riverpod auth state to a [Listenable] so GoRouter re-evaluates
 /// its redirect whenever the authentication status changes.

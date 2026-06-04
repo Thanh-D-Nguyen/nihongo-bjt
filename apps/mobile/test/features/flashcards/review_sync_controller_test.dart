@@ -7,6 +7,9 @@ import 'package:nihongo_bjt/features/auth/presentation/auth_controller.dart'
     show appEnvironmentProvider;
 import 'package:nihongo_bjt/features/flashcards/data/flashcard_review_sync_service.dart';
 import 'package:nihongo_bjt/features/flashcards/data/offline_review_queue.dart';
+import 'package:nihongo_bjt/features/flashcards/domain/deck_card_input.dart';
+import 'package:nihongo_bjt/features/flashcards/domain/deck_detail.dart';
+import 'package:nihongo_bjt/features/flashcards/domain/deck_form_input.dart';
 import 'package:nihongo_bjt/features/flashcards/domain/flashcard.dart';
 import 'package:nihongo_bjt/features/flashcards/domain/flashcard_deck.dart';
 import 'package:nihongo_bjt/features/flashcards/domain/flashcard_repository.dart';
@@ -26,6 +29,28 @@ AppEnvironment _env(String source) => AppEnvironment(
 class _SucceedingRemote implements FlashcardRepository {
   @override
   Future<List<FlashcardDeck>> fetchDecks() => throw UnimplementedError();
+
+  @override
+  Future<DeckDetail> fetchDeckDetail(String deckId) =>
+      throw UnimplementedError();
+
+  @override
+  Future<String> createDeck(DeckFormInput input) => throw UnimplementedError();
+
+  @override
+  Future<void> updateDeckMeta(String deckId, DeckFormInput input) =>
+      throw UnimplementedError();
+
+  @override
+  Future<void> archiveDeck(String deckId) => throw UnimplementedError();
+
+  @override
+  Future<void> saveDeckCards(
+    String deckId,
+    DeckFormInput meta,
+    List<DeckCardInput> cards,
+  ) =>
+      throw UnimplementedError();
 
   @override
   Future<List<Flashcard>> fetchCards(String deckId) =>

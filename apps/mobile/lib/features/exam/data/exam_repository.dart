@@ -52,4 +52,15 @@ class ExamRepository {
     final map = ExamDto.asMap(json);
     return ExamDto.session(ExamDto.asMap(map['session']));
   }
+
+  /// Fetches the per-question review for a completed session. Only available
+  /// once the session is completed (the server returns 404 otherwise → mapped
+  /// to [RepositoryErrorKind.notFound]). Correctness here is post-session and
+  /// safe to show.
+  Future<ExamBreakdown> breakdown(String sessionId) async {
+    final json = await guardApiCall(
+      () => _client.getJson('/api/quiz/session/$sessionId/results/breakdown'),
+    );
+    return ExamDto.breakdown(ExamDto.asMap(json));
+  }
 }

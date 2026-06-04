@@ -61,6 +61,12 @@ class ExamPlayerView extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.s),
+                  if (question.audioUrl != null) ...[
+                    _AudioUnavailableNote(
+                      message: l10n.examAudioUnavailable,
+                    ),
+                    const SizedBox(height: AppSpacing.m),
+                  ],
                   if (question.scenario != null) ...[
                     _ScenarioBlock(scenario: question.scenario!),
                     const SizedBox(height: AppSpacing.m),
@@ -201,13 +207,53 @@ class _ScenarioBlock extends StatelessWidget {
   }
 }
 
+/// Calm, honest note shown for listening questions. Audio playback is not yet
+/// available on mobile, so the learner is directed to the readable content
+/// instead of being given a broken/fake player.
+class _AudioUnavailableNote extends StatelessWidget {
+  const _AudioUnavailableNote({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    final text = Theme.of(context).textTheme;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.m),
+      decoration: BoxDecoration(
+        color: palette.surfaceMuted,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: palette.border),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.headphones_outlined,
+            size: 20,
+            color: palette.inkSecondary,
+          ),
+          const SizedBox(width: AppSpacing.s),
+          Expanded(
+            child: Text(
+              message,
+              style: text.bodyMedium?.copyWith(color: palette.inkSecondary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _OptionTile extends StatelessWidget {
   const _OptionTile({
     required this.option,
     required this.selected,
     required this.onTap,
   });
-
   final ExamOption option;
   final bool selected;
   final VoidCallback? onTap;

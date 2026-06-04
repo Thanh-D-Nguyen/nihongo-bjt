@@ -5,10 +5,24 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:nihongo_bjt/core/api/repository_result.dart';
 import 'package:nihongo_bjt/core/content/domain/content_models.dart';
 import 'package:nihongo_bjt/core/content/presentation/content_providers.dart';
+import 'package:nihongo_bjt/features/saved/data/saved_repository.dart';
 import 'package:nihongo_bjt/features/saved/domain/saved_models.dart';
 import 'package:nihongo_bjt/features/saved/presentation/saved_page.dart';
 import 'package:nihongo_bjt/features/saved/presentation/saved_providers.dart';
 import 'package:nihongo_bjt/l10n/gen/app_localizations.dart';
+
+class _FakeSavedRepository implements SavedRepository {
+  int toggleCalls = 0;
+
+  @override
+  Future<bool> toggle(BookmarkKind kind, String targetId) async {
+    toggleCalls++;
+    return false;
+  }
+
+  @override
+  Future<List<BookmarkItem>> list(BookmarkKind kind) async => const [];
+}
 
 Future<void> _pump(
   WidgetTester tester,
@@ -84,5 +98,45 @@ void main() {
 
     final l10n = await AppLocalizations.delegate.load(const Locale('vi'));
     expect(find.text(l10n.savedSignInTitle), findsOneWidget);
+  });
+
+  testWidgets('Removing a saved row un-bookmarks it and shows an Undo toast', (
+    tester,
+  ) async {
+    final repo = _FakeSavedRepository();
+    await _pump(
+      tester,
+      const SavedPage(),
+      overrides: [
+        savedListProvider.overrideWith(
+          (ref, kind) async => kind == BookmarkKind.word
+              ? const [
+                  BookmarkItem(
+                    id: 'bm-1',
+                    targetId: 'lex-1',
+                    targetType: 'lexeme',
+                  ),
+                ]
+              : const [],
+        ),
+        dictionaryWordProvider.overrideWith(
+          (ref, id) async => const Lexeme(
+            id: 'lex-1',
+            headword: '会議',
+            reading: 'かいぎ',
+          ),
+        ),
+        savedRepositoryProvider.overrideWithValue(repo),
+      ],
+    );
+    await tester.pumpAndSettle();
+
+    final l10n = await AppLocalizations.delegate.load(const Locale('vi'));
+    await tester.tap(find.byTooltip(l10n.savedRemoveTooltip));
+    await tester.pumpAndSettle();
+
+    expect(repo.toggleCalls, 1);
+    expect(find.text(l10n.savedRemovedToast), findsOneWidget);
+    expect(find.text(l10n.commonUndo), findsOneWidget);
   });
 }

@@ -1,5 +1,7 @@
+import 'package:nihongo_bjt/features/flashcards/data/dto/deck_detail_dto.dart';
 import 'package:nihongo_bjt/features/flashcards/data/dto/flashcard_deck_dto.dart';
 import 'package:nihongo_bjt/features/flashcards/data/dto/flashcard_review_item_dto.dart';
+import 'package:nihongo_bjt/features/flashcards/domain/deck_detail.dart';
 import 'package:nihongo_bjt/features/flashcards/domain/flashcard.dart';
 import 'package:nihongo_bjt/features/flashcards/domain/flashcard_deck.dart';
 
@@ -20,6 +22,38 @@ extension FlashcardDeckDtoMapper on FlashcardDeckDto {
       title: (japanese != null && japanese.isNotEmpty) ? japanese : titleVi,
       description: descriptionVi ?? '',
       cardCount: count.cards,
+      visibility: DeckVisibility.fromWire(visibility),
+    );
+  }
+}
+
+/// Maps a deck-detail wire model to the domain [DeckDetail].
+extension DeckDetailDtoMapper on DeckDetailDto {
+  DeckDetail toDomain() {
+    return DeckDetail(
+      id: id,
+      titleVi: titleVi,
+      titleJa: titleJa?.trim().isNotEmpty ?? false ? titleJa!.trim() : null,
+      descriptionVi: descriptionVi,
+      descriptionJa: descriptionJa,
+      visibility: DeckVisibility.fromWire(visibility),
+      cards: cards.map((row) => row.toDomain()).toList(),
+    );
+  }
+}
+
+/// Maps a single `deck_card` row to the domain [DeckCard].
+extension DeckCardRowDtoMapper on DeckCardRowDto {
+  DeckCard toDomain() {
+    return DeckCard(
+      deckCardId: id,
+      cardId: cardId,
+      position: position,
+      frontText: card.frontText,
+      backText: card.backText,
+      reading: card.reading ?? '',
+      imageUrl: primaryImage?.readUrl,
+      audioUrl: primaryAudio?.readUrl,
     );
   }
 }

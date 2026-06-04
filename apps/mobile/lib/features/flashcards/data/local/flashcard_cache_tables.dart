@@ -22,6 +22,10 @@ class FlashcardDecks extends Table {
   /// Number of cards in the deck.
   IntColumn get cardCount => integer()();
 
+  /// Deck visibility wire value (`private` | `public`). Defaults to `private`
+  /// so rows written before this column existed read back as private.
+  TextColumn get visibility => text().withDefault(const Constant('private'))();
+
   /// When this row was last written to the cache (UTC).
   DateTimeColumn get cachedAt => dateTime()();
 

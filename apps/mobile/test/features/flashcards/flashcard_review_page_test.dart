@@ -28,6 +28,31 @@ Future<void> _pumpReview(
   await tester.pumpAndSettle();
 }
 
+/// Pumps the review screen on the narrowest supported phone (320 dp) so the
+/// four-button grading bar with Japanese labels is exercised at its tightest
+/// horizontal budget.
+Future<void> _pumpReviewNarrow(
+  WidgetTester tester, {
+  String deckId = 'business-basics',
+}) async {
+  tester.view.physicalSize = const Size(640, 1600);
+  tester.view.devicePixelRatio = 2.0;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+
+  await tester.pumpWidget(
+    ProviderScope(
+      child: MaterialApp(
+        locale: const Locale('vi'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: FlashcardReviewPage(deckId: deckId),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
 void main() {
   group('FlashcardReviewPage reveal', () {
     testWidgets('hides the answer until the learner reveals it', (
@@ -86,6 +111,27 @@ void main() {
 
       expect(find.text('báo cáo'), findsOneWidget);
       expect(find.text(l10n.ratingGood), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('FlashcardReviewPage layout', () {
+    testWidgets('grading bar fits the narrowest screen without overflow', (
+      tester,
+    ) async {
+      await _pumpReviewNarrow(tester);
+      final l10n = await AppLocalizations.delegate.load(const Locale('vi'));
+
+      // Reveal to surface the four-button grading bar (Again/Hard/Good/Easy)
+      // with its Japanese labels + interval captions at 320 dp.
+      await tester.tap(find.text(l10n.reviewReveal));
+      await tester.pumpAndSettle();
+
+      // All four grade actions are laid out and no RenderFlex overflows.
+      expect(find.text(l10n.ratingAgain), findsOneWidget);
+      expect(find.text(l10n.ratingHard), findsOneWidget);
+      expect(find.text(l10n.ratingGood), findsOneWidget);
+      expect(find.text(l10n.ratingEasy), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   });

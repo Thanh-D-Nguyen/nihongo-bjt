@@ -12,6 +12,8 @@ class ContentSearchField extends StatefulWidget {
   const ContentSearchField({
     required this.hintText,
     required this.onChanged,
+    this.controller,
+    this.onSubmitted,
     this.autofocus = true,
     super.key,
   });
@@ -20,6 +22,17 @@ class ContentSearchField extends StatefulWidget {
 
   /// Called with the trimmed, settled query.
   final ValueChanged<String> onChanged;
+
+  /// Optional externally-owned controller, so callers can set the text
+  /// programmatically (e.g. tapping a recent-search chip). When null the field
+  /// owns its own controller.
+  final TextEditingController? controller;
+
+  /// Called with the trimmed query when the learner presses the keyboard search
+  /// action (in addition to [onChanged]). Lets callers record submitted
+  /// queries without recording every debounced keystroke.
+  final ValueChanged<String>? onSubmitted;
+
   final bool autofocus;
 
   @override
@@ -27,32 +40,48 @@ class ContentSearchField extends StatefulWidget {
 }
 
 class _ContentSearchFieldState extends State<ContentSearchField> {
-  final TextEditingController _controller = TextEditingController();
+  late final TextEditingController _controller =
+      widget.controller ?? TextEditingController();
   final Debouncer _debouncer = Debouncer();
   bool _hasText = false;
 
+  bool get _ownsController => widget.controller == null;
+
+  @override
+  void initState() {
+    super.initState();
+    _hasText = _controller.text.trim().isNotEmpty;
+    // Keep the clear button in sync when the text is set programmatically.
+    _controller.addListener(_syncHasText);
+  }
+
   @override
   void dispose() {
+    _controller.removeListener(_syncHasText);
     _debouncer.dispose();
-    _controller.dispose();
+    if (_ownsController) _controller.dispose();
     super.dispose();
   }
 
-  void _onChanged(String value) {
-    final hasText = value.trim().isNotEmpty;
+  void _syncHasText() {
+    final hasText = _controller.text.trim().isNotEmpty;
     if (hasText != _hasText) setState(() => _hasText = hasText);
+  }
+
+  void _onChanged(String value) {
     _debouncer.run(() => widget.onChanged(value.trim()));
   }
 
   void _submit(String value) {
     _debouncer.cancel();
-    widget.onChanged(value.trim());
+    final trimmed = value.trim();
+    widget.onChanged(trimmed);
+    widget.onSubmitted?.call(trimmed);
   }
 
   void _clear() {
     _debouncer.cancel();
     _controller.clear();
-    setState(() => _hasText = false);
     widget.onChanged('');
   }
 

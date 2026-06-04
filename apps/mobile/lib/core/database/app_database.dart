@@ -7,6 +7,8 @@ import 'package:nihongo_bjt/features/flashcards/data/local/flashcard_cache_table
 import 'package:nihongo_bjt/features/flashcards/data/local/review_queue_dao.dart';
 import 'package:nihongo_bjt/features/progress/data/local/study_log_dao.dart';
 import 'package:nihongo_bjt/features/progress/data/local/study_log_tables.dart';
+import 'package:nihongo_bjt/features/search/data/local/recent_search_dao.dart';
+import 'package:nihongo_bjt/features/search/data/local/recent_search_table.dart';
 import 'package:nihongo_bjt/features/settings/data/local/user_settings_dao.dart';
 import 'package:nihongo_bjt/features/settings/data/local/user_settings_table.dart';
 import 'package:path/path.dart' as p;
@@ -26,8 +28,15 @@ part 'app_database.g.dart';
     FlashcardReviewQueue,
     UserSettings,
     StudyEvents,
+    RecentSearches,
   ],
-  daos: [FlashcardCacheDao, ReviewQueueDao, UserSettingsDao, StudyLogDao],
+  daos: [
+    FlashcardCacheDao,
+    ReviewQueueDao,
+    UserSettingsDao,
+    StudyLogDao,
+    RecentSearchDao,
+  ],
 )
 class AppDatabase extends _$AppDatabase {
   /// Opens the real on-device database (lazy file resolution).
@@ -38,7 +47,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -55,6 +64,14 @@ class AppDatabase extends _$AppDatabase {
       // v4 (Phase 02 Progress): introduce the on-device study log.
       if (from < 4) {
         await m.createTable(studyEvents);
+      }
+      // v5 (Deck mgmt): cache deck visibility for offline filtering.
+      if (from < 5) {
+        await m.addColumn(flashcardDecks, flashcardDecks.visibility);
+      }
+      // v6 (Search hub): introduce the on-device recent-search history.
+      if (from < 6) {
+        await m.createTable(recentSearches);
       }
     },
   );

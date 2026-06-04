@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:nihongo_bjt/core/theme/app_palette.dart';
 import 'package:nihongo_bjt/core/theme/app_radius.dart';
 import 'package:nihongo_bjt/core/theme/app_spacing.dart';
+import 'package:nihongo_bjt/shared/widgets/pressable_scale.dart';
 
 /// Primary filled call-to-action.
 ///
@@ -36,27 +37,34 @@ class PrimaryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return SizedBox(
-      height: 52,
-      width: expand ? double.infinity : null,
-      child: FilledButton(
-        onPressed: isLoading ? null : onPressed,
-        style: FilledButton.styleFrom(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.md),
+    final enabled = !isLoading && onPressed != null;
+    return PressableScale(
+      enabled: enabled,
+      child: SizedBox(
+        height: 52,
+        width: expand ? double.infinity : null,
+        child: FilledButton(
+          onPressed: isLoading ? null : onPressed,
+          style: FilledButton.styleFrom(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          child: isLoading
+              ? SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.4,
+                    color: scheme.onPrimary,
+                  ),
+                )
+              : _ButtonContent(label: label, icon: icon),
         ),
-        child: isLoading
-            ? SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.4,
-                  color: scheme.onPrimary,
-                ),
-              )
-            : _ButtonContent(label: label, icon: icon),
       ),
     );
   }
@@ -109,29 +117,36 @@ class SecondaryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
-    return SizedBox(
-      height: 52,
-      width: expand ? double.infinity : null,
-      child: OutlinedButton(
-        onPressed: isLoading ? null : onPressed,
-        style: OutlinedButton.styleFrom(
-          foregroundColor: palette.accent,
-          side: BorderSide(color: palette.border),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.md),
+    final enabled = !isLoading && onPressed != null;
+    return PressableScale(
+      enabled: enabled,
+      child: SizedBox(
+        height: 52,
+        width: expand ? double.infinity : null,
+        child: OutlinedButton(
+          onPressed: isLoading ? null : onPressed,
+          style: OutlinedButton.styleFrom(
+            foregroundColor: palette.accent,
+            side: BorderSide(color: palette.border),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          child: isLoading
+              ? SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.4,
+                    color: palette.accent,
+                  ),
+                )
+              : _ButtonContent(label: label, icon: icon),
         ),
-        child: isLoading
-            ? SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.4,
-                  color: palette.accent,
-                ),
-              )
-            : _ButtonContent(label: label, icon: icon),
       ),
     );
   }

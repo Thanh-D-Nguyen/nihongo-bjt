@@ -10,6 +10,9 @@ import 'package:nihongo_bjt/features/flashcards/data/cached_flashcard_repository
 import 'package:nihongo_bjt/features/flashcards/data/flashcard_review_sync_service.dart';
 import 'package:nihongo_bjt/features/flashcards/data/mock_flashcard_repository.dart';
 import 'package:nihongo_bjt/features/flashcards/data/offline_review_queue.dart';
+import 'package:nihongo_bjt/features/flashcards/domain/deck_card_input.dart';
+import 'package:nihongo_bjt/features/flashcards/domain/deck_detail.dart';
+import 'package:nihongo_bjt/features/flashcards/domain/deck_form_input.dart';
 import 'package:nihongo_bjt/features/flashcards/domain/flashcard.dart';
 import 'package:nihongo_bjt/features/flashcards/domain/flashcard_deck.dart';
 import 'package:nihongo_bjt/features/flashcards/domain/flashcard_repository.dart';
@@ -98,6 +101,110 @@ final flashcardRepositoryProvider = Provider<FlashcardRepository>((ref) {
 final deckListProvider = FutureProvider<List<FlashcardDeck>>((ref) {
   return ref.watch(flashcardRepositoryProvider).fetchDecks();
 });
+
+/// Full detail (metadata + ordered cards) for a single deck, keyed by deck id.
+// ignore: specify_nonobvious_property_types
+final deckDetailProvider = FutureProvider.autoDispose
+    .family<DeckDetail, String>((ref, deckId) {
+      return ref.watch(flashcardRepositoryProvider).fetchDeckDetail(deckId);
+    });
+
+/// Drives deck metadata mutations (create / update / archive) with a real
+/// loading/error lifecycle the form can bind to. Auto-disposed: each form gets
+/// a fresh controller, and the state is gone once the form closes.
+// ignore: specify_nonobvious_property_types
+final deckMutationControllerProvider =
+    AsyncNotifierProvider.autoDispose<DeckMutationController, void>(
+      DeckMutationController.new,
+    );
+
+class DeckMutationController extends AsyncNotifier<void> {
+  @override
+  Future<void> build() async {}
+
+  /// Creates a deck from [input]. On success invalidates the deck list and
+  /// returns the new deck id; on failure records the error in [state] and
+  /// returns `null` so the form can surface a real message (never a fake id).
+  Future<String?> create(DeckFormInput input) async {
+    state = const AsyncValue<void>.loading();
+    final result = await AsyncValue.guard(
+      () => ref.read(flashcardRepositoryProvider).createDeck(input),
+    );
+    return result.when(
+      data: (id) {
+        state = const AsyncValue<void>.data(null);
+        ref.invalidate(deckListProvider);
+        return id;
+      },
+      error: (error, stackTrace) {
+        state = AsyncValue<void>.error(error, stackTrace);
+        return null;
+      },
+      loading: () => null,
+    );
+  }
+
+  /// Updates the metadata of [deckId]. On success invalidates the deck list and
+  /// that deck's detail, returning `true`; records the error and returns
+  /// `false` on failure.
+  Future<bool> updateMeta(String deckId, DeckFormInput input) async {
+    state = const AsyncValue<void>.loading();
+    final result = await AsyncValue.guard(
+      () => ref.read(flashcardRepositoryProvider).updateDeckMeta(deckId, input),
+    );
+    if (result.hasError) {
+      state = AsyncValue<void>.error(result.error!, result.stackTrace!);
+      return false;
+    }
+    state = const AsyncValue<void>.data(null);
+    ref
+      ..invalidate(deckListProvider)
+      ..invalidate(deckDetailProvider(deckId));
+    return true;
+  }
+
+  /// Archives [deckId]. On success invalidates the deck list, returning `true`;
+  /// records the error and returns `false` on failure.
+  Future<bool> archive(String deckId) async {
+    state = const AsyncValue<void>.loading();
+    final result = await AsyncValue.guard(
+      () => ref.read(flashcardRepositoryProvider).archiveDeck(deckId),
+    );
+    if (result.hasError) {
+      state = AsyncValue<void>.error(result.error!, result.stackTrace!);
+      return false;
+    }
+    state = const AsyncValue<void>.data(null);
+    ref.invalidate(deckListProvider);
+    return true;
+  }
+
+  /// Replaces the full card set of [deckId] with [cards], resending [meta] so
+  /// the update schema's `titleVi` validation passes. On success invalidates
+  /// the deck list and that deck's detail, returning `true`; records the error
+  /// and returns `false` on failure.
+  Future<bool> saveCards(
+    String deckId,
+    DeckFormInput meta,
+    List<DeckCardInput> cards,
+  ) async {
+    state = const AsyncValue<void>.loading();
+    final result = await AsyncValue.guard(
+      () => ref
+          .read(flashcardRepositoryProvider)
+          .saveDeckCards(deckId, meta, cards),
+    );
+    if (result.hasError) {
+      state = AsyncValue<void>.error(result.error!, result.stackTrace!);
+      return false;
+    }
+    state = const AsyncValue<void>.data(null);
+    ref
+      ..invalidate(deckListProvider)
+      ..invalidate(deckDetailProvider(deckId));
+    return true;
+  }
+}
 
 /// Immutable state of one review session, held in memory for Phase 2.
 class ReviewSessionState {

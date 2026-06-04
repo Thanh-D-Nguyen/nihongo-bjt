@@ -29,6 +29,7 @@ class FlashcardCacheDao extends DatabaseAccessor<AppDatabase>
               title: deck.title,
               description: deck.description,
               cardCount: deck.cardCount,
+              visibility: Value(deck.visibility.wire),
               cachedAt: now,
             ),
         ],
@@ -46,6 +47,7 @@ class FlashcardCacheDao extends DatabaseAccessor<AppDatabase>
           title: row.title,
           description: row.description,
           cardCount: row.cardCount,
+          visibility: DeckVisibility.fromWire(row.visibility),
         ),
     ];
   }

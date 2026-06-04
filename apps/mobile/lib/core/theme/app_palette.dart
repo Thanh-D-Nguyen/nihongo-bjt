@@ -30,6 +30,10 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.warningSoft,
     required this.danger,
     required this.dangerSoft,
+    required this.info,
+    required this.infoSoft,
+    required this.premium,
+    required this.premiumSoft,
     required this.skeleton,
   });
 
@@ -70,8 +74,46 @@ class AppPalette extends ThemeExtension<AppPalette> {
   final Color danger;
   final Color dangerSoft;
 
+  /// Informational accent (calm cyan/blue) for neutral notices — distinct from
+  /// [warning] so info surfaces never read as a caution.
+  final Color info;
+  final Color infoSoft;
+
+  /// Restrained gold for premium / achievement / streak. Deliberately distinct
+  /// from [warning] (amber) so premium never reads as a caution state.
+  final Color premium;
+  final Color premiumSoft;
+
   /// Shimmer/placeholder base for loading skeletons.
   final Color skeleton;
+
+  // --- Learning-state roles -------------------------------------------------
+  // Semantic aliases over the base roles so screens express learning intent
+  // (active/completed/due/weak/locked/recommended) without re-deriving colors.
+  // Always pair with an icon + label, never color alone.
+
+  /// In-progress lesson/unit.
+  Color get learningActive => accent;
+  Color get learningActiveSoft => accentSoft;
+
+  /// Finished lesson/unit.
+  Color get learningCompleted => success;
+  Color get learningCompletedSoft => successSoft;
+
+  /// Due for review.
+  Color get learningDue => premium;
+  Color get learningDueSoft => premiumSoft;
+
+  /// Low mastery / needs work.
+  Color get learningWeak => danger;
+  Color get learningWeakSoft => dangerSoft;
+
+  /// Not yet available.
+  Color get learningLocked => inkTertiary;
+
+  /// Suggested next step.
+  Color get learningRecommended => accent;
+  Color get learningRecommendedSoft => accentSoft;
 
   /// Light theme roles (mirror `DESIGN.md`).
   static const AppPalette light = AppPalette(
@@ -91,6 +133,10 @@ class AppPalette extends ThemeExtension<AppPalette> {
     warningSoft: Color(0xFFFFFBEB),
     danger: Color(0xFFDC2626),
     dangerSoft: Color(0xFFFEF2F2),
+    info: Color(0xFF0EA5E9),
+    infoSoft: Color(0xFFE0F2FE),
+    premium: Color(0xFFB7791F),
+    premiumSoft: Color(0xFFFDF6E3),
     skeleton: Color(0xFFE9EEF4),
   );
 
@@ -113,6 +159,10 @@ class AppPalette extends ThemeExtension<AppPalette> {
     warningSoft: Color(0xFF2A2113),
     danger: Color(0xFFF87171),
     dangerSoft: Color(0xFF2A1517),
+    info: Color(0xFF38BDF8),
+    infoSoft: Color(0xFF112433),
+    premium: Color(0xFFE0B355),
+    premiumSoft: Color(0xFF2A2413),
     skeleton: Color(0xFF1B2740),
   );
 
@@ -134,6 +184,10 @@ class AppPalette extends ThemeExtension<AppPalette> {
     Color? warningSoft,
     Color? danger,
     Color? dangerSoft,
+    Color? info,
+    Color? infoSoft,
+    Color? premium,
+    Color? premiumSoft,
     Color? skeleton,
   }) {
     return AppPalette(
@@ -153,6 +207,10 @@ class AppPalette extends ThemeExtension<AppPalette> {
       warningSoft: warningSoft ?? this.warningSoft,
       danger: danger ?? this.danger,
       dangerSoft: dangerSoft ?? this.dangerSoft,
+      info: info ?? this.info,
+      infoSoft: infoSoft ?? this.infoSoft,
+      premium: premium ?? this.premium,
+      premiumSoft: premiumSoft ?? this.premiumSoft,
       skeleton: skeleton ?? this.skeleton,
     );
   }
@@ -177,6 +235,10 @@ class AppPalette extends ThemeExtension<AppPalette> {
       warningSoft: Color.lerp(warningSoft, other.warningSoft, t)!,
       danger: Color.lerp(danger, other.danger, t)!,
       dangerSoft: Color.lerp(dangerSoft, other.dangerSoft, t)!,
+      info: Color.lerp(info, other.info, t)!,
+      infoSoft: Color.lerp(infoSoft, other.infoSoft, t)!,
+      premium: Color.lerp(premium, other.premium, t)!,
+      premiumSoft: Color.lerp(premiumSoft, other.premiumSoft, t)!,
       skeleton: Color.lerp(skeleton, other.skeleton, t)!,
     );
   }

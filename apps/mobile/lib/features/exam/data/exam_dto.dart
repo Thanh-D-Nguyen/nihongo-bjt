@@ -102,4 +102,25 @@ abstract final class ExamDto {
       session: session(asMap(json['session'])),
     );
   }
+
+  static ExamBreakdownItem breakdownItem(Map<String, dynamic> json) =>
+      ExamBreakdownItem(
+        questionId: _str(json['questionId']),
+        prompt: _str(json['prompt']),
+        selectedOption: _str(json['selectedOption']),
+        isCorrect: json['isCorrect'] == true,
+        explanationVi: _strOrNull(json['explanationVi']),
+        skillTag: _strOrNull(json['skillTag']),
+        sectionCode: _strOrNull(json['sectionCode']),
+        remediationCardId: _strOrNull(json['remediationCardId']),
+      );
+
+  static ExamBreakdown breakdown(Map<String, dynamic> json) => ExamBreakdown(
+    sessionId: _str(json['sessionId']),
+    testTitleVi: _strOrNull(json['testTitleVi']),
+    testTitleJa: _strOrNull(json['testTitleJa']),
+    estimatedScore: _intOrNull(json['estimatedScore']),
+    estimatedBjtBand: _strOrNull(json['estimatedBjtBand']),
+    items: _childList(json['breakdown']).map(breakdownItem).toList(),
+  );
 }

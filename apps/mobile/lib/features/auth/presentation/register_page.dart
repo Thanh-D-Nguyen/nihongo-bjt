@@ -76,6 +76,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
         const SizedBox(height: AppSpacing.l),
         Form(
           key: _formKey,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [

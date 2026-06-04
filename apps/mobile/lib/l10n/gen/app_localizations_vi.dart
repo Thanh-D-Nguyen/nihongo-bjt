@@ -12,10 +12,25 @@ class AppLocalizationsVi extends AppLocalizations {
   String get commonRetry => 'Thử lại';
 
   @override
+  String get commonUndo => 'Hoàn tác';
+
+  @override
   String get a11yProgressLabel => 'Tiến độ';
 
   @override
   String get homeWelcome => 'ようこそ';
+
+  @override
+  String get homeGreetingMorning => 'Chào buổi sáng';
+
+  @override
+  String get homeGreetingAfternoon => 'Chào buổi chiều';
+
+  @override
+  String get homeGreetingEvening => 'Chào buổi tối';
+
+  @override
+  String get homeGreetingNight => 'Chào buổi đêm';
 
   @override
   String get homeReviewFlashcards => 'Ôn Flashcard';
@@ -419,6 +434,244 @@ class AppLocalizationsVi extends AppLocalizations {
   String get deckListError => 'Không tải được danh sách bộ thẻ.';
 
   @override
+  String get deckSearchHint => 'Tìm bộ thẻ';
+
+  @override
+  String get deckSearchClear => 'Xoá tìm kiếm';
+
+  @override
+  String get deckFilterAll => 'Tất cả';
+
+  @override
+  String get deckFilterPrivate => 'Riêng tư';
+
+  @override
+  String get deckFilterPublic => 'Công khai';
+
+  @override
+  String get deckVisibilityPublic => 'Công khai';
+
+  @override
+  String get deckSortLabel => 'Sắp xếp';
+
+  @override
+  String get deckSortRecent => 'Mới nhất';
+
+  @override
+  String get deckSortTitle => 'Theo tên';
+
+  @override
+  String get deckSortCards => 'Nhiều thẻ nhất';
+
+  @override
+  String get deckSearchEmptyTitle => 'Không có kết quả';
+
+  @override
+  String get deckSearchEmpty => 'Không tìm thấy bộ thẻ phù hợp.';
+
+  @override
+  String get flashcardDeckDetailTitle => 'Chi tiết bộ thẻ';
+
+  @override
+  String get deckDetailStudyCta => 'Học bộ thẻ';
+
+  @override
+  String get deckDetailCardsHeader => 'Thẻ trong bộ';
+
+  @override
+  String get deckDetailEmptyTitle => 'Chưa có thẻ';
+
+  @override
+  String get deckDetailEmpty => 'Bộ thẻ này chưa có thẻ nào.';
+
+  @override
+  String get deckDetailErrorTitle => 'Không tải được bộ thẻ';
+
+  @override
+  String get deckDetailError =>
+      'Không tải được chi tiết bộ thẻ. Vui lòng thử lại.';
+
+  @override
+  String get commonCancel => 'Huỷ';
+
+  @override
+  String get deckCreateCta => 'Tạo bộ thẻ';
+
+  @override
+  String get deckListCreateFirst => 'Tạo bộ thẻ đầu tiên';
+
+  @override
+  String get deckCreateTitle => 'Tạo bộ thẻ';
+
+  @override
+  String get deckEditTitle => 'Sửa bộ thẻ';
+
+  @override
+  String get deckFormTitleViLabel => 'Tiêu đề tiếng Việt';
+
+  @override
+  String get deckFormTitleViHint => 'Nhập tên bộ thẻ';
+
+  @override
+  String get deckFormTitleJaLabel => 'Tiêu đề tiếng Nhật (tuỳ chọn)';
+
+  @override
+  String get deckFormDescriptionViLabel => 'Mô tả tiếng Việt (tuỳ chọn)';
+
+  @override
+  String get deckFormDescriptionJaLabel => 'Mô tả tiếng Nhật (tuỳ chọn)';
+
+  @override
+  String get deckFormVisibilityLabel => 'Hiển thị';
+
+  @override
+  String get deckFormVisibilityPrivate => 'Riêng tư';
+
+  @override
+  String get deckFormVisibilityPublic => 'Công khai';
+
+  @override
+  String get deckFormSaveCreate => 'Tạo bộ thẻ';
+
+  @override
+  String get deckFormSaveUpdate => 'Lưu thay đổi';
+
+  @override
+  String get deckFormTitleRequired => 'Vui lòng nhập tiêu đề.';
+
+  @override
+  String deckFormTitleTooLong(int max) {
+    return 'Tiêu đề tối đa $max ký tự.';
+  }
+
+  @override
+  String deckFormDescriptionTooLong(int max) {
+    return 'Mô tả tối đa $max ký tự.';
+  }
+
+  @override
+  String get deckFormErrorGeneric => 'Không lưu được bộ thẻ. Vui lòng thử lại.';
+
+  @override
+  String get deckSaveSuccess => 'Đã lưu bộ thẻ.';
+
+  @override
+  String get deckDetailEditAction => 'Sửa';
+
+  @override
+  String get deckDetailArchiveAction => 'Lưu trữ';
+
+  @override
+  String get deckArchiveConfirmTitle => 'Lưu trữ bộ thẻ?';
+
+  @override
+  String get deckArchiveConfirmMessage =>
+      'Bộ thẻ sẽ được gỡ khỏi thư viện đang hoạt động.';
+
+  @override
+  String get deckArchiveConfirmCta => 'Lưu trữ';
+
+  @override
+  String get deckArchiveSuccess => 'Đã lưu trữ bộ thẻ.';
+
+  @override
+  String get cardCreateTitle => 'Thêm thẻ';
+
+  @override
+  String get cardEditTitle => 'Sửa thẻ';
+
+  @override
+  String get cardAddAction => 'Thêm thẻ';
+
+  @override
+  String get cardDeleteAction => 'Xóa thẻ';
+
+  @override
+  String get cardNotFound =>
+      'Không tìm thấy thẻ này. Có thể nó đã bị thay đổi.';
+
+  @override
+  String get cardFormFrontLabel => 'Mặt trước (tiếng Nhật)';
+
+  @override
+  String get cardFormFrontHint => 'Ví dụ: 会議';
+
+  @override
+  String get cardFormReadingLabel => 'Cách đọc (tùy chọn)';
+
+  @override
+  String get cardFormReadingHint => 'Ví dụ: かいぎ';
+
+  @override
+  String get cardFormBackLabel => 'Mặt sau (nghĩa)';
+
+  @override
+  String get cardFormBackHint => 'Ví dụ: cuộc họp';
+
+  @override
+  String get cardFormSaveCreate => 'Thêm thẻ';
+
+  @override
+  String get cardFormSaveUpdate => 'Lưu thay đổi';
+
+  @override
+  String get cardFrontRequired => 'Vui lòng nhập mặt trước.';
+
+  @override
+  String get cardBackRequired => 'Vui lòng nhập mặt sau.';
+
+  @override
+  String cardFieldTooLong(int max) {
+    return 'Tối đa $max ký tự.';
+  }
+
+  @override
+  String cardLimitReached(int max) {
+    return 'Bộ thẻ đã đạt giới hạn $max thẻ.';
+  }
+
+  @override
+  String get cardSaveSuccess => 'Đã lưu thẻ.';
+
+  @override
+  String get cardDeleteSuccess => 'Đã xóa thẻ.';
+
+  @override
+  String get cardDeleteConfirmTitle => 'Xóa thẻ này?';
+
+  @override
+  String get cardDeleteConfirmMessage => 'Thao tác này không thể hoàn tác.';
+
+  @override
+  String get cardDeleteConfirmCta => 'Xóa';
+
+  @override
+  String get cardSearchHint => 'Tìm thẻ…';
+
+  @override
+  String get cardSortPosition => 'Thứ tự';
+
+  @override
+  String get cardSortAlphabetical => 'A–Z';
+
+  @override
+  String get cardSearchEmptyTitle => 'Không có thẻ phù hợp';
+
+  @override
+  String get cardSearchEmptyMessage => 'Thử từ khóa khác.';
+
+  @override
+  String cardSearchResultCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count thẻ',
+      one: '1 thẻ',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get reviewTitle => 'Ôn tập';
 
   @override
@@ -530,6 +783,31 @@ class AppLocalizationsVi extends AppLocalizations {
   String get profileSavedSubtitle => 'Từ vựng, bài đọc và nội dung đã đánh dấu';
 
   @override
+  String get profilePlanFree => 'Gói miễn phí';
+
+  @override
+  String get profileSnapshotTitle => 'Tổng quan học tập';
+
+  @override
+  String get profileSnapshotStreak => 'Chuỗi ngày';
+
+  @override
+  String get profileSnapshotToday => 'Hôm nay';
+
+  @override
+  String get profileSnapshotWeek => '7 ngày qua';
+
+  @override
+  String get profileSnapshotTotal => 'Tổng lượt ôn';
+
+  @override
+  String get profileSnapshotEmptyTitle => 'Chưa có dữ liệu học';
+
+  @override
+  String get profileSnapshotEmptyBody =>
+      'Hãy hoàn thành một phiên ôn tập để thấy tiến độ thật ở đây.';
+
+  @override
   String get profilePreferencesSection => 'Tùy chỉnh';
 
   @override
@@ -545,11 +823,30 @@ class AppLocalizationsVi extends AppLocalizations {
   String get profileLanguageJapanese => 'Tiếng Nhật';
 
   @override
+  String get profileThemeTitle => 'Giao diện';
+
+  @override
+  String get profileThemeSystem => 'Theo thiết bị';
+
+  @override
+  String get profileThemeLight => 'Sáng';
+
+  @override
+  String get profileThemeDark => 'Tối';
+
+  @override
   String get profileFuriganaTitle => 'Hiển thị furigana';
 
   @override
   String get profileFuriganaSubtitle =>
       'Hiện cách đọc kana phía trên kanji (trừ khi đang ôn tập).';
+
+  @override
+  String get profileHapticsTitle => 'Phản hồi rung';
+
+  @override
+  String get profileHapticsSubtitle =>
+      'Rung nhẹ khi chọn đáp án, lật thẻ và hoàn thành phiên học.';
 
   @override
   String get profileSignOut => 'Đăng xuất';
@@ -579,6 +876,12 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get navReview => 'Ôn tập';
+
+  @override
+  String get navSearch => 'Tra cứu';
+
+  @override
+  String get navMe => 'Cá nhân';
 
   @override
   String get navProgress => 'Tiến độ';
@@ -1067,6 +1370,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get examSubmitCta => 'Trả lời';
 
   @override
+  String get examAudioUnavailable =>
+      'Câu hỏi nghe — phần phát âm thanh chưa có trên di động. Hãy đọc nội dung bên dưới để trả lời.';
+
+  @override
   String get examNextCta => 'Câu tiếp theo';
 
   @override
@@ -1097,6 +1404,54 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get examUpgradeRequiredBody =>
       'Gói hiện tại của bạn chưa bao gồm bài thi này.';
+
+  @override
+  String get examReviewCta => 'Xem lại bài làm';
+
+  @override
+  String get examReviewTitle => 'Xem lại bài làm';
+
+  @override
+  String examReviewScore(int correct, int total) {
+    return 'Đúng $correct/$total câu';
+  }
+
+  @override
+  String get examReviewFilterAll => 'Tất cả';
+
+  @override
+  String get examReviewFilterWrong => 'Sai';
+
+  @override
+  String get examReviewFilterCorrect => 'Đúng';
+
+  @override
+  String examReviewQuestionLabel(int position) {
+    return 'Câu $position';
+  }
+
+  @override
+  String get examReviewCorrect => 'Đúng';
+
+  @override
+  String get examReviewIncorrect => 'Chưa đúng';
+
+  @override
+  String examReviewYourAnswer(String option) {
+    return 'Bạn chọn: $option';
+  }
+
+  @override
+  String get examReviewExplanationTitle => 'Giải thích';
+
+  @override
+  String get examReviewEmptyFilter => 'Không có câu nào trong mục này.';
+
+  @override
+  String get examReviewErrorTitle => 'Không tải được phần xem lại';
+
+  @override
+  String get examReviewErrorBody => 'Kiểm tra kết nối và thử lại.';
 
   @override
   String get newsTitle => 'Tin tức NHK';
@@ -1377,6 +1732,48 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get searchKindOther => 'Khác';
+
+  @override
+  String get searchToolsTitle => 'Công cụ tra cứu';
+
+  @override
+  String get searchToolDictionarySubtitle => 'Tra từ Nhật–Việt';
+
+  @override
+  String get searchToolKanjiSubtitle => 'Tra kanji theo chữ và âm đọc';
+
+  @override
+  String get searchToolGrammarSubtitle => 'Tra mẫu ngữ pháp';
+
+  @override
+  String get searchRecentTitle => 'Tìm kiếm gần đây';
+
+  @override
+  String get searchRecentClear => 'Xóa hết';
+
+  @override
+  String get searchRecentRemoveTooltip => 'Xóa khỏi lịch sử';
+
+  @override
+  String get searchFilterAll => 'Tất cả';
+
+  @override
+  String get savedBookmarkAdd => 'Lưu';
+
+  @override
+  String get savedBookmarkRemove => 'Bỏ lưu';
+
+  @override
+  String get savedBookmarkSignIn => 'Đăng nhập để lưu mục này.';
+
+  @override
+  String get savedBookmarkError => 'Không lưu được. Vui lòng thử lại.';
+
+  @override
+  String get savedRemoveTooltip => 'Xóa khỏi mục đã lưu';
+
+  @override
+  String get savedRemovedToast => 'Đã xóa khỏi mục đã lưu';
 
   @override
   String get savedTitle => 'Đã lưu';

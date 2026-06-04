@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nihongo_bjt/app/router.dart';
 import 'package:nihongo_bjt/core/config/app_config.dart';
+import 'package:nihongo_bjt/core/feedback/app_haptics.dart';
 import 'package:nihongo_bjt/core/theme/app_theme.dart';
 import 'package:nihongo_bjt/features/settings/presentation/settings_controller.dart';
 import 'package:nihongo_bjt/l10n/gen/app_localizations.dart';
@@ -20,12 +21,19 @@ class KotobaWorksApp extends ConsumerWidget {
     // A non-null override forces the app language; null defers to the device
     // locale resolution below (Vietnamese fallback).
     final localeOverride = ref.watch(localeOverrideProvider);
+    // The persisted appearance choice (system/light/dark) drives the theme.
+    final themeMode = ref.watch(themeModeProvider);
+
+    // Mirror the persisted haptics preference into the global gate so every
+    // AppHaptics call across the app respects the user's choice immediately.
+    AppHaptics.enabled = ref.watch(hapticsEnabledProvider);
 
     return MaterialApp.router(
       title: AppConfig.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
+      themeMode: themeMode,
       locale: localeOverride,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,

@@ -9,6 +9,8 @@ import 'package:nihongo_bjt/core/theme/app_spacing.dart';
 import 'package:nihongo_bjt/core/theme/app_typography.dart';
 import 'package:nihongo_bjt/features/auth/presentation/auth_controller.dart';
 import 'package:nihongo_bjt/features/content/presentation/widgets/content_tag.dart';
+import 'package:nihongo_bjt/features/saved/domain/saved_models.dart';
+import 'package:nihongo_bjt/features/saved/presentation/widgets/saved_bookmark_button.dart';
 import 'package:nihongo_bjt/l10n/gen/app_localizations.dart';
 import 'package:nihongo_bjt/shared/widgets/app_card.dart';
 import 'package:nihongo_bjt/shared/widgets/app_scaffold.dart';
@@ -31,6 +33,9 @@ class KanjiDetailPage extends ConsumerWidget {
 
     return AppScaffold(
       title: l10n.kanjiTitle,
+      actions: [
+        SavedBookmarkButton(kind: BookmarkKind.kanji, targetId: kanjiId),
+      ],
       body: kanji.when(
         loading: () => const Padding(
           padding: EdgeInsets.all(AppSpacing.m),

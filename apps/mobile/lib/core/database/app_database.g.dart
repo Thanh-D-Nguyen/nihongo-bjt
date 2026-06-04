@@ -49,6 +49,18 @@ class $FlashcardDecksTable extends FlashcardDecks
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _visibilityMeta = const VerificationMeta(
+    'visibility',
+  );
+  @override
+  late final GeneratedColumn<String> visibility = GeneratedColumn<String>(
+    'visibility',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('private'),
+  );
   static const VerificationMeta _cachedAtMeta = const VerificationMeta(
     'cachedAt',
   );
@@ -66,6 +78,7 @@ class $FlashcardDecksTable extends FlashcardDecks
     title,
     description,
     cardCount,
+    visibility,
     cachedAt,
   ];
   @override
@@ -112,6 +125,12 @@ class $FlashcardDecksTable extends FlashcardDecks
     } else if (isInserting) {
       context.missing(_cardCountMeta);
     }
+    if (data.containsKey('visibility')) {
+      context.handle(
+        _visibilityMeta,
+        visibility.isAcceptableOrUnknown(data['visibility']!, _visibilityMeta),
+      );
+    }
     if (data.containsKey('cached_at')) {
       context.handle(
         _cachedAtMeta,
@@ -145,6 +164,10 @@ class $FlashcardDecksTable extends FlashcardDecks
         DriftSqlType.int,
         data['${effectivePrefix}card_count'],
       )!,
+      visibility: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}visibility'],
+      )!,
       cachedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}cached_at'],
@@ -172,6 +195,10 @@ class FlashcardDeckRow extends DataClass
   /// Number of cards in the deck.
   final int cardCount;
 
+  /// Deck visibility wire value (`private` | `public`). Defaults to `private`
+  /// so rows written before this column existed read back as private.
+  final String visibility;
+
   /// When this row was last written to the cache (UTC).
   final DateTime cachedAt;
   const FlashcardDeckRow({
@@ -179,6 +206,7 @@ class FlashcardDeckRow extends DataClass
     required this.title,
     required this.description,
     required this.cardCount,
+    required this.visibility,
     required this.cachedAt,
   });
   @override
@@ -188,6 +216,7 @@ class FlashcardDeckRow extends DataClass
     map['title'] = Variable<String>(title);
     map['description'] = Variable<String>(description);
     map['card_count'] = Variable<int>(cardCount);
+    map['visibility'] = Variable<String>(visibility);
     map['cached_at'] = Variable<DateTime>(cachedAt);
     return map;
   }
@@ -198,6 +227,7 @@ class FlashcardDeckRow extends DataClass
       title: Value(title),
       description: Value(description),
       cardCount: Value(cardCount),
+      visibility: Value(visibility),
       cachedAt: Value(cachedAt),
     );
   }
@@ -212,6 +242,7 @@ class FlashcardDeckRow extends DataClass
       title: serializer.fromJson<String>(json['title']),
       description: serializer.fromJson<String>(json['description']),
       cardCount: serializer.fromJson<int>(json['cardCount']),
+      visibility: serializer.fromJson<String>(json['visibility']),
       cachedAt: serializer.fromJson<DateTime>(json['cachedAt']),
     );
   }
@@ -223,6 +254,7 @@ class FlashcardDeckRow extends DataClass
       'title': serializer.toJson<String>(title),
       'description': serializer.toJson<String>(description),
       'cardCount': serializer.toJson<int>(cardCount),
+      'visibility': serializer.toJson<String>(visibility),
       'cachedAt': serializer.toJson<DateTime>(cachedAt),
     };
   }
@@ -232,12 +264,14 @@ class FlashcardDeckRow extends DataClass
     String? title,
     String? description,
     int? cardCount,
+    String? visibility,
     DateTime? cachedAt,
   }) => FlashcardDeckRow(
     id: id ?? this.id,
     title: title ?? this.title,
     description: description ?? this.description,
     cardCount: cardCount ?? this.cardCount,
+    visibility: visibility ?? this.visibility,
     cachedAt: cachedAt ?? this.cachedAt,
   );
   FlashcardDeckRow copyWithCompanion(FlashcardDecksCompanion data) {
@@ -248,6 +282,9 @@ class FlashcardDeckRow extends DataClass
           ? data.description.value
           : this.description,
       cardCount: data.cardCount.present ? data.cardCount.value : this.cardCount,
+      visibility: data.visibility.present
+          ? data.visibility.value
+          : this.visibility,
       cachedAt: data.cachedAt.present ? data.cachedAt.value : this.cachedAt,
     );
   }
@@ -259,13 +296,15 @@ class FlashcardDeckRow extends DataClass
           ..write('title: $title, ')
           ..write('description: $description, ')
           ..write('cardCount: $cardCount, ')
+          ..write('visibility: $visibility, ')
           ..write('cachedAt: $cachedAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, title, description, cardCount, cachedAt);
+  int get hashCode =>
+      Object.hash(id, title, description, cardCount, visibility, cachedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -274,6 +313,7 @@ class FlashcardDeckRow extends DataClass
           other.title == this.title &&
           other.description == this.description &&
           other.cardCount == this.cardCount &&
+          other.visibility == this.visibility &&
           other.cachedAt == this.cachedAt);
 }
 
@@ -282,6 +322,7 @@ class FlashcardDecksCompanion extends UpdateCompanion<FlashcardDeckRow> {
   final Value<String> title;
   final Value<String> description;
   final Value<int> cardCount;
+  final Value<String> visibility;
   final Value<DateTime> cachedAt;
   final Value<int> rowid;
   const FlashcardDecksCompanion({
@@ -289,6 +330,7 @@ class FlashcardDecksCompanion extends UpdateCompanion<FlashcardDeckRow> {
     this.title = const Value.absent(),
     this.description = const Value.absent(),
     this.cardCount = const Value.absent(),
+    this.visibility = const Value.absent(),
     this.cachedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -297,6 +339,7 @@ class FlashcardDecksCompanion extends UpdateCompanion<FlashcardDeckRow> {
     required String title,
     required String description,
     required int cardCount,
+    this.visibility = const Value.absent(),
     required DateTime cachedAt,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -309,6 +352,7 @@ class FlashcardDecksCompanion extends UpdateCompanion<FlashcardDeckRow> {
     Expression<String>? title,
     Expression<String>? description,
     Expression<int>? cardCount,
+    Expression<String>? visibility,
     Expression<DateTime>? cachedAt,
     Expression<int>? rowid,
   }) {
@@ -317,6 +361,7 @@ class FlashcardDecksCompanion extends UpdateCompanion<FlashcardDeckRow> {
       if (title != null) 'title': title,
       if (description != null) 'description': description,
       if (cardCount != null) 'card_count': cardCount,
+      if (visibility != null) 'visibility': visibility,
       if (cachedAt != null) 'cached_at': cachedAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -327,6 +372,7 @@ class FlashcardDecksCompanion extends UpdateCompanion<FlashcardDeckRow> {
     Value<String>? title,
     Value<String>? description,
     Value<int>? cardCount,
+    Value<String>? visibility,
     Value<DateTime>? cachedAt,
     Value<int>? rowid,
   }) {
@@ -335,6 +381,7 @@ class FlashcardDecksCompanion extends UpdateCompanion<FlashcardDeckRow> {
       title: title ?? this.title,
       description: description ?? this.description,
       cardCount: cardCount ?? this.cardCount,
+      visibility: visibility ?? this.visibility,
       cachedAt: cachedAt ?? this.cachedAt,
       rowid: rowid ?? this.rowid,
     );
@@ -355,6 +402,9 @@ class FlashcardDecksCompanion extends UpdateCompanion<FlashcardDeckRow> {
     if (cardCount.present) {
       map['card_count'] = Variable<int>(cardCount.value);
     }
+    if (visibility.present) {
+      map['visibility'] = Variable<String>(visibility.value);
+    }
     if (cachedAt.present) {
       map['cached_at'] = Variable<DateTime>(cachedAt.value);
     }
@@ -371,6 +421,7 @@ class FlashcardDecksCompanion extends UpdateCompanion<FlashcardDeckRow> {
           ..write('title: $title, ')
           ..write('description: $description, ')
           ..write('cardCount: $cardCount, ')
+          ..write('visibility: $visibility, ')
           ..write('cachedAt: $cachedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -2013,6 +2064,232 @@ class StudyEventsCompanion extends UpdateCompanion<StudyEventRow> {
   }
 }
 
+class $RecentSearchesTable extends RecentSearches
+    with TableInfo<$RecentSearchesTable, RecentSearchRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RecentSearchesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _queryMeta = const VerificationMeta('query');
+  @override
+  late final GeneratedColumn<String> query = GeneratedColumn<String>(
+    'query',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _searchedAtMicrosMeta = const VerificationMeta(
+    'searchedAtMicros',
+  );
+  @override
+  late final GeneratedColumn<int> searchedAtMicros = GeneratedColumn<int>(
+    'searched_at_micros',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [query, searchedAtMicros];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'recent_searches';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RecentSearchRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('query')) {
+      context.handle(
+        _queryMeta,
+        query.isAcceptableOrUnknown(data['query']!, _queryMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_queryMeta);
+    }
+    if (data.containsKey('searched_at_micros')) {
+      context.handle(
+        _searchedAtMicrosMeta,
+        searchedAtMicros.isAcceptableOrUnknown(
+          data['searched_at_micros']!,
+          _searchedAtMicrosMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_searchedAtMicrosMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {query};
+  @override
+  RecentSearchRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RecentSearchRow(
+      query: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}query'],
+      )!,
+      searchedAtMicros: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}searched_at_micros'],
+      )!,
+    );
+  }
+
+  @override
+  $RecentSearchesTable createAlias(String alias) {
+    return $RecentSearchesTable(attachedDatabase, alias);
+  }
+}
+
+class RecentSearchRow extends DataClass implements Insertable<RecentSearchRow> {
+  /// The trimmed query text the learner searched for.
+  final String query;
+
+  /// When the query was last issued, as microseconds since epoch. Stored as an
+  /// integer (not a Drift `dateTime`, which truncates to whole seconds) so
+  /// rapid successive searches keep a stable most-recent-first order.
+  final int searchedAtMicros;
+  const RecentSearchRow({required this.query, required this.searchedAtMicros});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['query'] = Variable<String>(query);
+    map['searched_at_micros'] = Variable<int>(searchedAtMicros);
+    return map;
+  }
+
+  RecentSearchesCompanion toCompanion(bool nullToAbsent) {
+    return RecentSearchesCompanion(
+      query: Value(query),
+      searchedAtMicros: Value(searchedAtMicros),
+    );
+  }
+
+  factory RecentSearchRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RecentSearchRow(
+      query: serializer.fromJson<String>(json['query']),
+      searchedAtMicros: serializer.fromJson<int>(json['searchedAtMicros']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'query': serializer.toJson<String>(query),
+      'searchedAtMicros': serializer.toJson<int>(searchedAtMicros),
+    };
+  }
+
+  RecentSearchRow copyWith({String? query, int? searchedAtMicros}) =>
+      RecentSearchRow(
+        query: query ?? this.query,
+        searchedAtMicros: searchedAtMicros ?? this.searchedAtMicros,
+      );
+  RecentSearchRow copyWithCompanion(RecentSearchesCompanion data) {
+    return RecentSearchRow(
+      query: data.query.present ? data.query.value : this.query,
+      searchedAtMicros: data.searchedAtMicros.present
+          ? data.searchedAtMicros.value
+          : this.searchedAtMicros,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecentSearchRow(')
+          ..write('query: $query, ')
+          ..write('searchedAtMicros: $searchedAtMicros')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(query, searchedAtMicros);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RecentSearchRow &&
+          other.query == this.query &&
+          other.searchedAtMicros == this.searchedAtMicros);
+}
+
+class RecentSearchesCompanion extends UpdateCompanion<RecentSearchRow> {
+  final Value<String> query;
+  final Value<int> searchedAtMicros;
+  final Value<int> rowid;
+  const RecentSearchesCompanion({
+    this.query = const Value.absent(),
+    this.searchedAtMicros = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RecentSearchesCompanion.insert({
+    required String query,
+    required int searchedAtMicros,
+    this.rowid = const Value.absent(),
+  }) : query = Value(query),
+       searchedAtMicros = Value(searchedAtMicros);
+  static Insertable<RecentSearchRow> custom({
+    Expression<String>? query,
+    Expression<int>? searchedAtMicros,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (query != null) 'query': query,
+      if (searchedAtMicros != null) 'searched_at_micros': searchedAtMicros,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RecentSearchesCompanion copyWith({
+    Value<String>? query,
+    Value<int>? searchedAtMicros,
+    Value<int>? rowid,
+  }) {
+    return RecentSearchesCompanion(
+      query: query ?? this.query,
+      searchedAtMicros: searchedAtMicros ?? this.searchedAtMicros,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (query.present) {
+      map['query'] = Variable<String>(query.value);
+    }
+    if (searchedAtMicros.present) {
+      map['searched_at_micros'] = Variable<int>(searchedAtMicros.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecentSearchesCompanion(')
+          ..write('query: $query, ')
+          ..write('searchedAtMicros: $searchedAtMicros, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -2023,6 +2300,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $FlashcardReviewQueueTable(this);
   late final $UserSettingsTable userSettings = $UserSettingsTable(this);
   late final $StudyEventsTable studyEvents = $StudyEventsTable(this);
+  late final $RecentSearchesTable recentSearches = $RecentSearchesTable(this);
   late final FlashcardCacheDao flashcardCacheDao = FlashcardCacheDao(
     this as AppDatabase,
   );
@@ -2033,6 +2311,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     this as AppDatabase,
   );
   late final StudyLogDao studyLogDao = StudyLogDao(this as AppDatabase);
+  late final RecentSearchDao recentSearchDao = RecentSearchDao(
+    this as AppDatabase,
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2043,6 +2324,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     flashcardReviewQueue,
     userSettings,
     studyEvents,
+    recentSearches,
   ];
 }
 
@@ -2052,6 +2334,7 @@ typedef $$FlashcardDecksTableCreateCompanionBuilder =
       required String title,
       required String description,
       required int cardCount,
+      Value<String> visibility,
       required DateTime cachedAt,
       Value<int> rowid,
     });
@@ -2061,6 +2344,7 @@ typedef $$FlashcardDecksTableUpdateCompanionBuilder =
       Value<String> title,
       Value<String> description,
       Value<int> cardCount,
+      Value<String> visibility,
       Value<DateTime> cachedAt,
       Value<int> rowid,
     });
@@ -2091,6 +2375,11 @@ class $$FlashcardDecksTableFilterComposer
 
   ColumnFilters<int> get cardCount => $composableBuilder(
     column: $table.cardCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get visibility => $composableBuilder(
+    column: $table.visibility,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2129,6 +2418,11 @@ class $$FlashcardDecksTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get visibility => $composableBuilder(
+    column: $table.visibility,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get cachedAt => $composableBuilder(
     column: $table.cachedAt,
     builder: (column) => ColumnOrderings(column),
@@ -2157,6 +2451,11 @@ class $$FlashcardDecksTableAnnotationComposer
 
   GeneratedColumn<int> get cardCount =>
       $composableBuilder(column: $table.cardCount, builder: (column) => column);
+
+  GeneratedColumn<String> get visibility => $composableBuilder(
+    column: $table.visibility,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<DateTime> get cachedAt =>
       $composableBuilder(column: $table.cachedAt, builder: (column) => column);
@@ -2203,6 +2502,7 @@ class $$FlashcardDecksTableTableManager
                 Value<String> title = const Value.absent(),
                 Value<String> description = const Value.absent(),
                 Value<int> cardCount = const Value.absent(),
+                Value<String> visibility = const Value.absent(),
                 Value<DateTime> cachedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => FlashcardDecksCompanion(
@@ -2210,6 +2510,7 @@ class $$FlashcardDecksTableTableManager
                 title: title,
                 description: description,
                 cardCount: cardCount,
+                visibility: visibility,
                 cachedAt: cachedAt,
                 rowid: rowid,
               ),
@@ -2219,6 +2520,7 @@ class $$FlashcardDecksTableTableManager
                 required String title,
                 required String description,
                 required int cardCount,
+                Value<String> visibility = const Value.absent(),
                 required DateTime cachedAt,
                 Value<int> rowid = const Value.absent(),
               }) => FlashcardDecksCompanion.insert(
@@ -2226,6 +2528,7 @@ class $$FlashcardDecksTableTableManager
                 title: title,
                 description: description,
                 cardCount: cardCount,
+                visibility: visibility,
                 cachedAt: cachedAt,
                 rowid: rowid,
               ),
@@ -3139,6 +3442,157 @@ typedef $$StudyEventsTableProcessedTableManager =
       StudyEventRow,
       PrefetchHooks Function()
     >;
+typedef $$RecentSearchesTableCreateCompanionBuilder =
+    RecentSearchesCompanion Function({
+      required String query,
+      required int searchedAtMicros,
+      Value<int> rowid,
+    });
+typedef $$RecentSearchesTableUpdateCompanionBuilder =
+    RecentSearchesCompanion Function({
+      Value<String> query,
+      Value<int> searchedAtMicros,
+      Value<int> rowid,
+    });
+
+class $$RecentSearchesTableFilterComposer
+    extends Composer<_$AppDatabase, $RecentSearchesTable> {
+  $$RecentSearchesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get query => $composableBuilder(
+    column: $table.query,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get searchedAtMicros => $composableBuilder(
+    column: $table.searchedAtMicros,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$RecentSearchesTableOrderingComposer
+    extends Composer<_$AppDatabase, $RecentSearchesTable> {
+  $$RecentSearchesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get query => $composableBuilder(
+    column: $table.query,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get searchedAtMicros => $composableBuilder(
+    column: $table.searchedAtMicros,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$RecentSearchesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $RecentSearchesTable> {
+  $$RecentSearchesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get query =>
+      $composableBuilder(column: $table.query, builder: (column) => column);
+
+  GeneratedColumn<int> get searchedAtMicros => $composableBuilder(
+    column: $table.searchedAtMicros,
+    builder: (column) => column,
+  );
+}
+
+class $$RecentSearchesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $RecentSearchesTable,
+          RecentSearchRow,
+          $$RecentSearchesTableFilterComposer,
+          $$RecentSearchesTableOrderingComposer,
+          $$RecentSearchesTableAnnotationComposer,
+          $$RecentSearchesTableCreateCompanionBuilder,
+          $$RecentSearchesTableUpdateCompanionBuilder,
+          (
+            RecentSearchRow,
+            BaseReferences<
+              _$AppDatabase,
+              $RecentSearchesTable,
+              RecentSearchRow
+            >,
+          ),
+          RecentSearchRow,
+          PrefetchHooks Function()
+        > {
+  $$RecentSearchesTableTableManager(
+    _$AppDatabase db,
+    $RecentSearchesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RecentSearchesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$RecentSearchesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$RecentSearchesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> query = const Value.absent(),
+                Value<int> searchedAtMicros = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RecentSearchesCompanion(
+                query: query,
+                searchedAtMicros: searchedAtMicros,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String query,
+                required int searchedAtMicros,
+                Value<int> rowid = const Value.absent(),
+              }) => RecentSearchesCompanion.insert(
+                query: query,
+                searchedAtMicros: searchedAtMicros,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$RecentSearchesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $RecentSearchesTable,
+      RecentSearchRow,
+      $$RecentSearchesTableFilterComposer,
+      $$RecentSearchesTableOrderingComposer,
+      $$RecentSearchesTableAnnotationComposer,
+      $$RecentSearchesTableCreateCompanionBuilder,
+      $$RecentSearchesTableUpdateCompanionBuilder,
+      (
+        RecentSearchRow,
+        BaseReferences<_$AppDatabase, $RecentSearchesTable, RecentSearchRow>,
+      ),
+      RecentSearchRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -3153,4 +3607,6 @@ class $AppDatabaseManager {
       $$UserSettingsTableTableManager(_db, _db.userSettings);
   $$StudyEventsTableTableManager get studyEvents =>
       $$StudyEventsTableTableManager(_db, _db.studyEvents);
+  $$RecentSearchesTableTableManager get recentSearches =>
+      $$RecentSearchesTableTableManager(_db, _db.recentSearches);
 }

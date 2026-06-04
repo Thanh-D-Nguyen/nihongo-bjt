@@ -8,7 +8,13 @@ import 'package:nihongo_bjt/core/theme/app_theme.dart';
 import 'package:nihongo_bjt/features/auth/domain/auth_session.dart';
 import 'package:nihongo_bjt/features/auth/domain/auth_tokens.dart';
 import 'package:nihongo_bjt/features/auth/presentation/auth_controller.dart';
+import 'package:nihongo_bjt/features/billing/domain/billing_models.dart';
+import 'package:nihongo_bjt/features/billing/presentation/billing_providers.dart';
+import 'package:nihongo_bjt/features/flashcards/domain/srs_rating.dart';
+import 'package:nihongo_bjt/features/progress/domain/study_summary.dart';
+import 'package:nihongo_bjt/features/progress/presentation/progress_providers.dart';
 import 'package:nihongo_bjt/features/settings/domain/app_locale_option.dart';
+import 'package:nihongo_bjt/features/settings/domain/app_theme_option.dart';
 import 'package:nihongo_bjt/features/settings/presentation/profile_page.dart';
 import 'package:nihongo_bjt/features/settings/presentation/settings_controller.dart';
 import 'package:nihongo_bjt/l10n/gen/app_localizations.dart';
@@ -46,6 +52,8 @@ Future<AppDatabase> _pumpProfile(
   Locale locale = const Locale('vi'),
   ThemeMode themeMode = ThemeMode.light,
   double logicalWidth = 390,
+  SubscriptionView? subscription,
+  StudySummary? summary,
 }) async {
   final db = AppDatabase.forTesting(NativeDatabase.memory());
   addTearDown(db.close);
@@ -72,6 +80,10 @@ Future<AppDatabase> _pumpProfile(
             buildNumber: '1',
           ),
         ),
+        if (subscription != null)
+          subscriptionProvider.overrideWith((ref) async => subscription),
+        if (summary != null)
+          studySummaryProvider.overrideWith((ref) async => summary),
       ],
       child: MaterialApp(
         locale: locale,
@@ -192,14 +204,136 @@ void main() {
       session: _sessionWithIdToken(unsignedJwt({'name': 'A'})),
     );
 
-    await tester.ensureVisible(find.byType(Switch));
+    // The furigana switch is the first toggle in the preferences section.
+    final furiganaSwitch = find.byType(Switch).first;
+    await tester.ensureVisible(furiganaSwitch);
     await tester.pumpAndSettle();
-    await tester.tap(find.byType(Switch));
+    await tester.tap(furiganaSwitch);
     await tester.pumpAndSettle();
 
     final reloaded = await ProviderScope.containerOf(
       tester.element(find.byType(ProfilePage)),
     ).read(userSettingsRepositoryProvider).load();
     expect(reloaded.furiganaEnabled, isFalse);
+  });
+
+  testWidgets('toggling haptics off persists the preference', (tester) async {
+    await _pumpProfile(
+      tester,
+      session: _sessionWithIdToken(unsignedJwt({'name': 'A'})),
+    );
+
+    // The haptics switch is the second toggle in the preferences section.
+    final hapticsSwitch = find.byType(Switch).last;
+    await tester.ensureVisible(hapticsSwitch);
+    await tester.pumpAndSettle();
+    await tester.tap(hapticsSwitch);
+    await tester.pumpAndSettle();
+
+    final reloaded = await ProviderScope.containerOf(
+      tester.element(find.byType(ProfilePage)),
+    ).read(userSettingsRepositoryProvider).load();
+    expect(reloaded.hapticsEnabled, isFalse);
+  });
+
+  testWidgets('selecting a theme persists it to the controller', (
+    tester,
+  ) async {
+    await _pumpProfile(
+      tester,
+      session: _sessionWithIdToken(unsignedJwt({'name': 'A'})),
+    );
+
+    await tester.ensureVisible(find.text('Tối'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Tối'));
+    await tester.pumpAndSettle();
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(ProfilePage)),
+    );
+    expect(
+      container.read(settingsControllerProvider).value?.themeOption,
+      AppThemeOption.dark,
+    );
+    expect(container.read(themeModeProvider), ThemeMode.dark);
+
+    final reloaded = await container
+        .read(userSettingsRepositoryProvider)
+        .load();
+    expect(reloaded.themeOption, AppThemeOption.dark);
+  });
+
+  testWidgets('shows an honest empty learning snapshot by default', (
+    tester,
+  ) async {
+    await _pumpProfile(
+      tester,
+      session: _sessionWithIdToken(unsignedJwt({'name': 'A'})),
+      summary: StudySummary.empty(),
+    );
+
+    expect(find.text('Tổng quan học tập'), findsOneWidget);
+    expect(find.text('Chưa có dữ liệu học'), findsOneWidget);
+  });
+
+  testWidgets('renders real metrics in the learning snapshot', (tester) async {
+    await _pumpProfile(
+      tester,
+      session: _sessionWithIdToken(unsignedJwt({'name': 'A'})),
+      summary: const StudySummary(
+        totalReviews: 128,
+        reviewedToday: 12,
+        last7DayTotal: 47,
+        currentStreakDays: 5,
+        dailyCounts: <StudyDayCount>[],
+        ratingTotals: <SrsRating, int>{},
+      ),
+    );
+
+    expect(find.text('Tổng quan học tập'), findsOneWidget);
+    expect(find.text('Chưa có dữ liệu học'), findsNothing);
+    expect(find.text('5'), findsOneWidget);
+    expect(find.text('12'), findsOneWidget);
+    expect(find.text('47'), findsOneWidget);
+    expect(find.text('128'), findsOneWidget);
+  });
+
+  testWidgets('shows a premium plan badge from a real subscription', (
+    tester,
+  ) async {
+    await _pumpProfile(
+      tester,
+      session: _sessionWithIdToken(unsignedJwt({'name': 'A'})),
+      subscription: const SubscriptionView(
+        planSlug: 'pro',
+        planName: 'Pro',
+        planNameVi: 'Gói Pro',
+        source: PlanSource.subscription,
+        status: 'active',
+        cancelAtPeriodEnd: false,
+        entitlements: <String>[],
+        quotas: <PlanQuota>[],
+      ),
+    );
+
+    expect(find.text('Gói Pro'), findsOneWidget);
+  });
+
+  testWidgets('shows a free plan badge on the default plan', (tester) async {
+    await _pumpProfile(
+      tester,
+      session: _sessionWithIdToken(unsignedJwt({'name': 'A'})),
+      subscription: const SubscriptionView(
+        planSlug: 'free',
+        planName: 'Free',
+        source: PlanSource.defaultPlan,
+        cancelAtPeriodEnd: false,
+        entitlements: <String>[],
+        quotas: <PlanQuota>[],
+      ),
+    );
+
+    expect(find.text('Gói miễn phí'), findsOneWidget);
   });
 }

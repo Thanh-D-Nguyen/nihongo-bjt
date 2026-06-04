@@ -8,6 +8,9 @@ import 'package:nihongo_bjt/app/router.dart';
 import 'package:nihongo_bjt/core/api/repository_result.dart';
 import 'package:nihongo_bjt/core/theme/app_theme.dart';
 import 'package:nihongo_bjt/features/flashcards/data/api_flashcard_repository.dart';
+import 'package:nihongo_bjt/features/flashcards/domain/deck_card_input.dart';
+import 'package:nihongo_bjt/features/flashcards/domain/deck_detail.dart';
+import 'package:nihongo_bjt/features/flashcards/domain/deck_form_input.dart';
 import 'package:nihongo_bjt/features/flashcards/domain/flashcard.dart';
 import 'package:nihongo_bjt/features/flashcards/domain/flashcard_deck.dart';
 import 'package:nihongo_bjt/features/flashcards/domain/flashcard_repository.dart';
@@ -274,6 +277,33 @@ void main() {
     expect(find.text('2個'), findsOneWidget);
   });
 
+  testWidgets('shortcut grid scrolls without overflow at 320 dp (ja)', (
+    tester,
+  ) async {
+    // Narrowest supported width + the longer Japanese shortcut labels are the
+    // worst case for the fixed-aspect-ratio shortcut cards. Scroll the whole
+    // dashboard and assert no RenderFlex overflow is thrown on any card.
+    await _pumpHome(
+      tester,
+      locale: const Locale('ja'),
+      build: (_) async => _dashboard(),
+      surfaceSize: const Size(320, 800),
+    );
+    await tester.pumpAndSettle();
+
+    final scrollable = find.byType(Scrollable).first;
+    for (final label in <String>['辞書', 'ビジネスシナリオ', '実績とごほうび']) {
+      await tester.scrollUntilVisible(
+        find.text(label),
+        200,
+        scrollable: scrollable,
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.text(label), findsOneWidget);
+    }
+  });
+
   testWidgets('caps body width on wide tablet surfaces', (tester) async {
     await _pumpHome(
       tester,
@@ -326,6 +356,33 @@ void main() {
 
     expect(find.text('Không tải được thẻ ôn tập'), findsOneWidget);
     expect(find.text('Bài học hôm nay'), findsOneWidget);
+  });
+
+  testWidgets('hero shows a time-of-day greeting, not the static welcome', (
+    tester,
+  ) async {
+    await _pumpHome(tester, build: (_) async => _dashboard());
+    await tester.pumpAndSettle();
+
+    final l10n = await AppLocalizations.delegate.load(const Locale('vi'));
+    final expected = homeGreetingForHour(DateTime.now().hour, l10n);
+    expect(find.text(expected), findsOneWidget);
+    // The previous static decorative welcome must no longer be the eyebrow.
+    expect(find.text('ようこそ'), findsNothing);
+  });
+
+  test('homeGreetingForHour buckets every hour to a greeting', () async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('vi'));
+    expect(homeGreetingForHour(7, l10n), l10n.homeGreetingMorning);
+    expect(homeGreetingForHour(13, l10n), l10n.homeGreetingAfternoon);
+    expect(homeGreetingForHour(19, l10n), l10n.homeGreetingEvening);
+    expect(homeGreetingForHour(23, l10n), l10n.homeGreetingNight);
+    expect(homeGreetingForHour(3, l10n), l10n.homeGreetingNight);
+    // Boundaries.
+    expect(homeGreetingForHour(5, l10n), l10n.homeGreetingMorning);
+    expect(homeGreetingForHour(11, l10n), l10n.homeGreetingAfternoon);
+    expect(homeGreetingForHour(17, l10n), l10n.homeGreetingEvening);
+    expect(homeGreetingForHour(22, l10n), l10n.homeGreetingNight);
   });
 }
 
@@ -380,6 +437,28 @@ class _ThrowingFlashcardRepository implements FlashcardRepository {
   @override
   Future<List<FlashcardDeck>> fetchDecks() async =>
       throw const FlashcardRepositoryException('boom');
+
+  @override
+  Future<DeckDetail> fetchDeckDetail(String deckId) =>
+      throw UnimplementedError();
+
+  @override
+  Future<String> createDeck(DeckFormInput input) => throw UnimplementedError();
+
+  @override
+  Future<void> updateDeckMeta(String deckId, DeckFormInput input) =>
+      throw UnimplementedError();
+
+  @override
+  Future<void> archiveDeck(String deckId) => throw UnimplementedError();
+
+  @override
+  Future<void> saveDeckCards(
+    String deckId,
+    DeckFormInput meta,
+    List<DeckCardInput> cards,
+  ) =>
+      throw UnimplementedError();
 
   @override
   Future<List<Flashcard>> fetchCards(String deckId) async => const [];

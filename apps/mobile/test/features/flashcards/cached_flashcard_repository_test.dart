@@ -6,6 +6,9 @@ import 'package:nihongo_bjt/features/flashcards/data/cached_flashcard_repository
 import 'package:nihongo_bjt/features/flashcards/data/local/flashcard_cache_dao.dart';
 import 'package:nihongo_bjt/features/flashcards/data/local/review_queue_dao.dart';
 import 'package:nihongo_bjt/features/flashcards/data/offline_review_queue.dart';
+import 'package:nihongo_bjt/features/flashcards/domain/deck_card_input.dart';
+import 'package:nihongo_bjt/features/flashcards/domain/deck_detail.dart';
+import 'package:nihongo_bjt/features/flashcards/domain/deck_form_input.dart';
 import 'package:nihongo_bjt/features/flashcards/domain/flashcard.dart';
 import 'package:nihongo_bjt/features/flashcards/domain/flashcard_deck.dart';
 import 'package:nihongo_bjt/features/flashcards/domain/flashcard_repository.dart';
@@ -25,6 +28,28 @@ class _FakeRemote implements FlashcardRepository {
     if (fail) throw const FlashcardRepositoryException('offline');
     return decks;
   }
+
+  @override
+  Future<DeckDetail> fetchDeckDetail(String deckId) =>
+      throw UnimplementedError();
+
+  @override
+  Future<String> createDeck(DeckFormInput input) => throw UnimplementedError();
+
+  @override
+  Future<void> updateDeckMeta(String deckId, DeckFormInput input) =>
+      throw UnimplementedError();
+
+  @override
+  Future<void> archiveDeck(String deckId) => throw UnimplementedError();
+
+  @override
+  Future<void> saveDeckCards(
+    String deckId,
+    DeckFormInput meta,
+    List<DeckCardInput> cards,
+  ) =>
+      throw UnimplementedError();
 
   @override
   Future<List<Flashcard>> fetchCards(String deckId) async {

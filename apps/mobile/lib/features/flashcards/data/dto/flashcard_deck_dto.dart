@@ -15,6 +15,8 @@ class FlashcardDeckDto {
     required this.count,
     this.titleJa,
     this.descriptionVi,
+    this.descriptionJa,
+    this.visibility,
   });
 
   factory FlashcardDeckDto.fromJson(Map<String, dynamic> json) =>
@@ -30,6 +32,12 @@ class FlashcardDeckDto {
 
   /// Vietnamese description; null when the deck has none.
   final String? descriptionVi;
+
+  /// Japanese description; null when the deck has none.
+  final String? descriptionJa;
+
+  /// Deck visibility (`private` | `public`); null treated as private.
+  final String? visibility;
 
   /// Aggregate counts; `cards` drives the list summary.
   @JsonKey(name: '_count')

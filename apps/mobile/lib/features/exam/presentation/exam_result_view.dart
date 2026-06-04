@@ -12,11 +12,16 @@ class ExamResultView extends StatelessWidget {
   const ExamResultView({
     required this.session,
     required this.onDone,
+    this.onReview,
     super.key,
   });
 
   final ExamSession session;
   final VoidCallback onDone;
+
+  /// Optional handler to open the per-question review. When null the review CTA
+  /// is hidden (e.g. when no completed-session breakdown is available).
+  final VoidCallback? onReview;
 
   @override
   Widget build(BuildContext context) {
@@ -82,6 +87,14 @@ class ExamResultView extends StatelessWidget {
               ),
             ],
             const Spacer(),
+            if (onReview != null) ...[
+              SecondaryButton(
+                label: l10n.examReviewCta,
+                icon: Icons.fact_check_outlined,
+                onPressed: onReview,
+              ),
+              const SizedBox(height: AppSpacing.s),
+            ],
             PrimaryButton(label: l10n.examResultDone, onPressed: onDone),
           ],
         ),

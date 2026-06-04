@@ -129,8 +129,8 @@ void main() {
   ) async {
     await _pumpApp(tester);
 
-    // Open Settings (index 4) and sign out.
-    await tester.tap(find.text('Cài đặt'));
+    // Open the Me tab (index 4); it renders the profile/settings hub.
+    await tester.tap(find.text('Cá nhân'));
     await tester.pumpAndSettle();
     expect(find.byType(ProfilePage), findsOneWidget);
 

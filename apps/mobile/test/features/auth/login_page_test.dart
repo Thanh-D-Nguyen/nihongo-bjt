@@ -96,7 +96,7 @@ void main() {
         expect(tester.takeException(), isNull);
         expect(find.byType(LoginPage), findsOneWidget);
         // The brand wordmark is still present (shrunk, not dropped).
-        expect(find.textContaining('NihonGo'), findsWidgets);
+        expect(find.textContaining('Kotoba'), findsWidgets);
       });
     }
 
@@ -144,6 +144,31 @@ void main() {
       expect(find.text(l10n.loginPasswordRequired), findsOneWidget);
       // No layout exception was raised while showing inline errors.
       expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('clears a field error after the user fixes it', (
+      tester,
+    ) async {
+      await _pumpLogin(
+        tester,
+        logicalWidth: 390,
+        themeMode: ThemeMode.light,
+      );
+      final l10n = await AppLocalizations.delegate.load(const Locale('vi'));
+
+      // First submit fails → inline errors appear.
+      await tester.tap(find.byType(AuthPrimaryButton));
+      await tester.pumpAndSettle();
+      expect(find.text(l10n.loginEmailRequired), findsOneWidget);
+
+      // With onUserInteraction autovalidation, typing a valid value clears the
+      // error without needing a second submit.
+      await tester.enterText(
+        find.byType(TextFormField).first,
+        'mai@example.com',
+      );
+      await tester.pumpAndSettle();
+      expect(find.text(l10n.loginEmailRequired), findsNothing);
     });
 
     testWidgets('password visibility toggle reveals and hides the field', (

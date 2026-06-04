@@ -149,6 +149,28 @@ void main() {
       expect(find.text(l10n.registerPasswordTooShort), findsOneWidget);
     });
 
+    testWidgets('clears a field error after the user fixes it', (
+      tester,
+    ) async {
+      await _pumpRegister(
+        tester,
+        logicalWidth: 390,
+        themeMode: ThemeMode.light,
+      );
+      final l10n = await AppLocalizations.delegate.load(const Locale('vi'));
+      final fields = find.byType(TextFormField);
+
+      // First submit fails → required errors appear.
+      await tester.tap(find.byType(AuthPrimaryButton));
+      await tester.pumpAndSettle();
+      expect(find.text(l10n.registerDisplayNameRequired), findsOneWidget);
+
+      // Typing a valid display name clears its error live (onUserInteraction).
+      await tester.enterText(fields.at(0), 'Mai');
+      await tester.pumpAndSettle();
+      expect(find.text(l10n.registerDisplayNameRequired), findsNothing);
+    });
+
     testWidgets('flags a password / confirm mismatch', (tester) async {
       await _pumpRegister(
         tester,

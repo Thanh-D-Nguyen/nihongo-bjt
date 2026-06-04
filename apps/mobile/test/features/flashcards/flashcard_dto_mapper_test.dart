@@ -1,7 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nihongo_bjt/features/flashcards/data/dto/deck_detail_dto.dart';
 import 'package:nihongo_bjt/features/flashcards/data/dto/flashcard_deck_dto.dart';
 import 'package:nihongo_bjt/features/flashcards/data/dto/flashcard_review_item_dto.dart';
 import 'package:nihongo_bjt/features/flashcards/data/flashcard_dto_mapper.dart';
+import 'package:nihongo_bjt/features/flashcards/domain/flashcard_deck.dart';
 
 void main() {
   group('FlashcardDeckDto.toDomain', () {
@@ -81,6 +83,81 @@ void main() {
       });
 
       expect(dto.toDomain().reading, '');
+    });
+  });
+
+  group('DeckDetailDto.toDomain', () {
+    test('maps deck metadata, visibility and ordered cards with media', () {
+      final dto = DeckDetailDto.fromJson(const {
+        'id': 'deck-9',
+        'titleVi': 'Bộ thẻ họp',
+        'titleJa': '会議の語彙',
+        'descriptionVi': 'Từ vựng cuộc họp.',
+        'descriptionJa': '会議で使う語彙。',
+        'visibility': 'public',
+        'cards': [
+          {
+            'id': 'dc-1',
+            'cardId': 'card-1',
+            'position': 0,
+            'card': {
+              'frontText': '議題',
+              'backText': 'chủ đề',
+              'reading': 'ぎだい',
+            },
+            'primaryImage': {'readUrl': 'https://cdn.test/i.png'},
+            'primaryAudio': {'readUrl': 'https://cdn.test/a.mp3'},
+          },
+          {
+            'id': 'dc-2',
+            'cardId': 'card-2',
+            'position': 1,
+            'card': {
+              'frontText': '議事録',
+              'backText': 'biên bản',
+            },
+          },
+        ],
+      });
+
+      final deck = dto.toDomain();
+
+      expect(deck.id, 'deck-9');
+      expect(deck.titleVi, 'Bộ thẻ họp');
+      expect(deck.titleJa, '会議の語彙');
+      expect(deck.displayTitle, '会議の語彙');
+      expect(deck.displayDescription, 'Từ vựng cuộc họp.');
+      expect(deck.visibility, DeckVisibility.public);
+      expect(deck.cardCount, 2);
+
+      final first = deck.cards.first;
+      expect(first.deckCardId, 'dc-1');
+      expect(first.cardId, 'card-1');
+      expect(first.position, 0);
+      expect(first.frontText, '議題');
+      expect(first.backText, 'chủ đề');
+      expect(first.reading, 'ぎだい');
+      expect(first.imageUrl, 'https://cdn.test/i.png');
+      expect(first.audioUrl, 'https://cdn.test/a.mp3');
+
+      final second = deck.cards[1];
+      expect(second.reading, '');
+      expect(second.imageUrl, isNull);
+      expect(second.audioUrl, isNull);
+    });
+
+    test('defaults to private when visibility is absent', () {
+      final dto = DeckDetailDto.fromJson(const {
+        'id': 'deck-10',
+        'titleVi': 'Riêng tư',
+        'cards': <Object?>[],
+      });
+
+      final deck = dto.toDomain();
+
+      expect(deck.visibility, DeckVisibility.private);
+      expect(deck.cards, isEmpty);
+      expect(deck.displayTitle, 'Riêng tư');
     });
   });
 }

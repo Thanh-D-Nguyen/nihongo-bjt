@@ -21,3 +21,20 @@ final savedListProvider = FutureProvider.autoDispose
       ref.keepAlive();
       return ref.watch(savedRepositoryProvider).list(kind);
     });
+
+/// Identity of a single bookmarkable target, used as the [isSavedProvider] key.
+typedef SavedTarget = ({BookmarkKind kind, String targetId});
+
+/// Whether [SavedTarget] is currently in the learner's saved library, derived
+/// from [savedListProvider]. Returns `false` while loading or when the list
+/// cannot be read (e.g. signed-out) — never fabricates a saved state.
+final isSavedProvider = Provider.autoDispose.family<bool, SavedTarget>((
+  ref,
+  target,
+) {
+  final list = ref.watch(savedListProvider(target.kind));
+  return list.maybeWhen(
+    data: (items) => items.any((item) => item.targetId == target.targetId),
+    orElse: () => false,
+  );
+});

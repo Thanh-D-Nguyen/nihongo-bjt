@@ -1,0 +1,196 @@
+# BJT Deck & Flashcard Management Skill
+
+Use this skill when implementing, reviewing, or polishing Deck / Flashcard management features for the Nihongo BJT mobile app.
+
+## Goal
+
+Implement mobile Deck and Flashcard management with full parity to the web app where appropriate, while keeping the UX mobile-native, production-grade, and suitable for Japanese/Vietnamese learning.
+
+This includes:
+- deck list
+- deck detail
+- create deck
+- edit deck
+- delete/archive deck
+- flashcard list inside deck
+- create flashcard
+- edit flashcard
+- delete/archive flashcard
+- search/filter/sort
+- import/export if web supports it
+- saved/review/SRS integration
+- empty/loading/error/offline states
+- Japanese/Vietnamese typography
+- widget/integration tests
+
+## Hard rules
+
+- Do not fake deck or flashcard data.
+- Do not invent API responses.
+- Do not mark a web feature as deferred unless the API/client/model was searched and the blocker is documented.
+- Reuse existing web API contracts when available.
+- Reuse existing mobile repositories/providers/patterns.
+- Do not modify backend/API/database unless explicitly required.
+- Do not break Review/SRS flow.
+- Do not break existing Flashcard reveal behavior.
+- Keep Review tab active for flashcard/deck flows launched from Review.
+- Do not show bottom navigation on focused review/practice flows if it interferes with CTA/touch behavior.
+- Add/update tests for every management action.
+- Keep Vietnamese and Japanese localization in sync.
+- Do not claim device QA passed unless actually tested.
+
+## Required audit before coding
+
+Before coding, inspect:
+- web deck management routes/pages/components
+- web flashcard management routes/pages/components
+- web API hooks/services/clients
+- shared models/types/schemas
+- mobile flashcard implementation
+- mobile review implementation
+- mobile router/AppShell
+- mobile providers/repositories
+- drift/local cache if used
+- l10n files
+- existing tests
+- mobile design system
+
+Create or update:
+- docs/mobile/DECK_FLASHCARD_WEB_PARITY_AUDIT.md
+- docs/mobile/DECK_FLASHCARD_API_CONTRACT.md
+- docs/mobile/DECK_FLASHCARD_MOBILE_IMPLEMENTATION_PLAN.md
+
+## Web parity matrix
+
+For every web feature, document:
+
+- web file/route
+- API/client/model
+- mobile current status
+- implementation decision
+- risk
+- required screens
+- required tests
+
+Classify each feature:
+- Implement now
+- API exists but needs adapter
+- Needs mobile UX decision
+- Not applicable to mobile
+- Blocked with proof
+
+Do not use “missing backend” unless proven.
+
+## Required mobile screens
+
+Implement or polish:
+
+1. Deck List
+- list user decks
+- search/filter/sort if web supports it
+- create deck CTA
+- empty state
+- loading/error/offline states
+
+2. Deck Detail
+- deck metadata
+- flashcard count if real
+- study/review entry
+- edit/delete/archive actions
+- flashcard list
+- empty state
+
+3. Create/Edit Deck
+- native mobile form
+- validation
+- loading/error/success state
+- keyboard-safe
+- no overflow
+
+4. Flashcard List
+- cards inside deck
+- search/filter if supported
+- create flashcard CTA
+- edit/delete actions
+- empty/loading/error/offline states
+
+5. Create/Edit Flashcard
+- Japanese front field
+- Vietnamese/back/explanation field
+- reading/furigana if API supports it
+- tags/level/category if web supports it
+- validation
+- preview if useful
+- keyboard-safe
+
+6. Flashcard Review
+- keep reveal behavior working
+- large tap target
+- front/back readability
+- SRS actions if supported
+- no bottom-nav CTA conflict
+
+## UI/UX rules
+
+- Mobile-native, not desktop clone.
+- Consistent with web brand.
+- Premium but calm.
+- Serious learning product tone.
+- Clear hierarchy.
+- Strong primary action.
+- No clutter.
+- No fake stats.
+- No noisy gradients.
+- No unreadable glass/blur.
+- Excellent Japanese/Vietnamese readability.
+- Safe at 360–390 dp width.
+- Good tablet width constraints.
+- Dark mode polished.
+- Accessible touch targets.
+
+## Tests required
+
+Add/update tests for:
+- deck list loading/populated/empty/error
+- create deck validation/success/error
+- edit deck
+- delete/archive deck confirmation
+- deck detail navigation
+- flashcard list
+- create flashcard validation
+- edit flashcard
+- delete flashcard confirmation
+- reveal answer behavior
+- Review → Deck → Flashcard Review route
+- narrow screen layout
+- dark mode render
+- long Japanese/Vietnamese text
+
+Add integration test if feasible:
+- Review → Deck list → Deck detail → Flashcard review → Reveal
+- Deck list → Create deck → Add flashcard → Review card
+
+## Verification
+
+After each batch run:
+- cd mobile && flutter analyze
+- cd mobile && flutter test
+- git diff --check
+
+If Android SDK is available:
+- cd mobile && flutter build apk --debug
+
+Stop if verification is red.
+
+## Final docs
+
+Update:
+- docs/mobile/DECK_FLASHCARD_WEB_PARITY_AUDIT.md
+- docs/mobile/DECK_FLASHCARD_API_CONTRACT.md
+- docs/mobile/DECK_FLASHCARD_MOBILE_IMPLEMENTATION_PLAN.md
+- docs/mobile/MOBILE_KNOWN_LIMITATIONS.md
+- docs/mobile/MOBILE_MANUAL_QA_CHECKLIST.md
+
+Create:
+- docs/mobile/DECK_FLASHCARD_RETEST_CHECKLIST.md
+- docs/mobile/DECK_FLASHCARD_RETEST_PROMPT_FOR_CODEX.md

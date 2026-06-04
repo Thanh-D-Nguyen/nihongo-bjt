@@ -12,8 +12,12 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('ビジネス基礎'), findsOneWidget);
 
-    // Open the 4-card business-basics deck.
+    // Open the 4-card business-basics deck → deck detail.
     await tester.tap(find.text('ビジネス基礎'));
+    await tester.pumpAndSettle();
+
+    // Start the review session from the deck detail.
+    await tester.tap(find.text('Học bộ thẻ'));
     await tester.pumpAndSettle();
 
     // Active recall: before reveal the reading help and answer stay hidden.

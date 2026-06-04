@@ -112,3 +112,63 @@ class ExamCurrentQuestion {
   final ExamQuestion? question;
   final ExamSession session;
 }
+
+/// One reviewed question from the completed-session breakdown
+/// (`GET /api/quiz/session/:id/results/breakdown`).
+///
+/// The API intentionally does not expose the correct-option text mid- or
+/// post-session, so this model carries only the chosen option key and an
+/// honest correct/incorrect verdict plus the explanation. The UI must not
+/// fabricate a "correct answer" string.
+@immutable
+class ExamBreakdownItem {
+  const ExamBreakdownItem({
+    required this.questionId,
+    required this.prompt,
+    required this.selectedOption,
+    required this.isCorrect,
+    this.explanationVi,
+    this.skillTag,
+    this.sectionCode,
+    this.remediationCardId,
+  });
+
+  final String questionId;
+  final String prompt;
+
+  /// The option key the learner chose (e.g. `A`).
+  final String selectedOption;
+  final bool isCorrect;
+  final String? explanationVi;
+  final String? skillTag;
+  final String? sectionCode;
+
+  /// Present only for wrong answers that have a remediation flashcard.
+  final String? remediationCardId;
+
+  bool get hasRemediation =>
+      remediationCardId != null && remediationCardId!.isNotEmpty;
+}
+
+/// Detailed per-question review for a completed exam session.
+@immutable
+class ExamBreakdown {
+  const ExamBreakdown({
+    required this.sessionId,
+    required this.items,
+    this.testTitleVi,
+    this.testTitleJa,
+    this.estimatedScore,
+    this.estimatedBjtBand,
+  });
+
+  final String sessionId;
+  final String? testTitleVi;
+  final String? testTitleJa;
+  final int? estimatedScore;
+  final String? estimatedBjtBand;
+  final List<ExamBreakdownItem> items;
+
+  int get correctCount => items.where((i) => i.isCorrect).length;
+  int get total => items.length;
+}

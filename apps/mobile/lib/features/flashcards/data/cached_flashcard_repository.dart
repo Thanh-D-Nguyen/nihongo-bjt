@@ -1,6 +1,9 @@
 import 'package:nihongo_bjt/features/flashcards/data/api_flashcard_repository.dart';
 import 'package:nihongo_bjt/features/flashcards/data/local/flashcard_cache_dao.dart';
 import 'package:nihongo_bjt/features/flashcards/data/offline_review_queue.dart';
+import 'package:nihongo_bjt/features/flashcards/domain/deck_card_input.dart';
+import 'package:nihongo_bjt/features/flashcards/domain/deck_detail.dart';
+import 'package:nihongo_bjt/features/flashcards/domain/deck_form_input.dart';
 import 'package:nihongo_bjt/features/flashcards/domain/flashcard.dart';
 import 'package:nihongo_bjt/features/flashcards/domain/flashcard_deck.dart';
 import 'package:nihongo_bjt/features/flashcards/domain/flashcard_repository.dart';
@@ -34,6 +37,41 @@ class CachedFlashcardRepository implements FlashcardRepository {
       if (cached.isNotEmpty) return cached;
       rethrow;
     }
+  }
+
+  @override
+  Future<DeckDetail> fetchDeckDetail(String deckId) async {
+    // Deck detail is not yet locally cached (no detail cache table), so it is
+    // served live. Failures surface as real errors — never faked.
+    return _remote.fetchDeckDetail(deckId);
+  }
+
+  @override
+  Future<String> createDeck(DeckFormInput input) {
+    // Write-through: the deck-list cache is refreshed on the next fetchDecks
+    // (the presentation layer invalidates the list provider after a mutation).
+    return _remote.createDeck(input);
+  }
+
+  @override
+  Future<void> updateDeckMeta(String deckId, DeckFormInput input) {
+    return _remote.updateDeckMeta(deckId, input);
+  }
+
+  @override
+  Future<void> saveDeckCards(
+    String deckId,
+    DeckFormInput meta,
+    List<DeckCardInput> cards,
+  ) {
+    // Write-through: the deck detail is served live and the presentation layer
+    // invalidates the detail/list providers after a successful save.
+    return _remote.saveDeckCards(deckId, meta, cards);
+  }
+
+  @override
+  Future<void> archiveDeck(String deckId) {
+    return _remote.archiveDeck(deckId);
   }
 
   @override

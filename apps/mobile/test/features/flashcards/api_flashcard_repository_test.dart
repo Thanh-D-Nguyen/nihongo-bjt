@@ -119,6 +119,7 @@ void main() {
       final repo = repositoryReturning(
         (request) {
           expect(request.url.path, '/api/flashcards/reviews/due');
+          expect(request.url.queryParameters['deckId'], 'any-deck');
           return jsonOk([
             {
               'id': 'uf-100',
@@ -155,6 +156,20 @@ void main() {
         repo.fetchCards('any-deck'),
         throwsA(isA<FlashcardRepositoryException>()),
       );
+    });
+
+    test('omits the deckId param for a blank deck id', () async {
+      final repo = repositoryReturning(
+        (request) {
+          expect(request.url.path, '/api/flashcards/reviews/due');
+          expect(request.url.queryParameters.containsKey('deckId'), isFalse);
+          return jsonOk(<Object?>[]);
+        },
+      );
+
+      final cards = await repo.fetchCards('   ');
+
+      expect(cards, isEmpty);
     });
   });
 

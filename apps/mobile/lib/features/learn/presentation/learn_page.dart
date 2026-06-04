@@ -187,7 +187,7 @@ class _ReferenceTools extends StatelessWidget {
           child: _ReferenceCard(
             icon: Icons.menu_book_rounded,
             label: l10n.learnDictionaryLabel,
-            onTap: () => unawaited(context.pushNamed(Routes.dictionary)),
+            onTap: () => context.goNamed(Routes.dictionary),
           ),
         ),
         const SizedBox(width: AppSpacing.s),
@@ -195,7 +195,7 @@ class _ReferenceTools extends StatelessWidget {
           child: _ReferenceCard(
             icon: Icons.translate_rounded,
             label: l10n.learnKanjiLabel,
-            onTap: () => unawaited(context.pushNamed(Routes.kanji)),
+            onTap: () => context.goNamed(Routes.kanji),
           ),
         ),
         const SizedBox(width: AppSpacing.s),
@@ -203,7 +203,7 @@ class _ReferenceTools extends StatelessWidget {
           child: _ReferenceCard(
             icon: Icons.auto_stories_rounded,
             label: l10n.learnGrammarLabel,
-            onTap: () => unawaited(context.pushNamed(Routes.grammar)),
+            onTap: () => context.goNamed(Routes.grammar),
           ),
         ),
       ],
@@ -427,7 +427,7 @@ class _SearchEntryCard extends StatelessWidget {
       icon: Icons.search_rounded,
       title: l10n.searchTitle,
       subtitle: l10n.searchSubtitle,
-      onTap: () => unawaited(context.pushNamed(Routes.search)),
+      onTap: () => context.goNamed(Routes.search),
     );
   }
 }
@@ -443,7 +443,7 @@ class _SavedEntryCard extends StatelessWidget {
       icon: Icons.bookmark_outline_rounded,
       title: l10n.savedTitle,
       subtitle: l10n.savedSubtitle,
-      onTap: () => unawaited(context.pushNamed(Routes.saved)),
+      onTap: () => context.goNamed(Routes.saved),
     );
   }
 }

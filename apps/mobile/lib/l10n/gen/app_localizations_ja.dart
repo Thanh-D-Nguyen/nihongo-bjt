@@ -12,10 +12,25 @@ class AppLocalizationsJa extends AppLocalizations {
   String get commonRetry => '再試行';
 
   @override
+  String get commonUndo => '元に戻す';
+
+  @override
   String get a11yProgressLabel => '進捗';
 
   @override
   String get homeWelcome => 'ようこそ';
+
+  @override
+  String get homeGreetingMorning => 'おはようございます';
+
+  @override
+  String get homeGreetingAfternoon => 'こんにちは';
+
+  @override
+  String get homeGreetingEvening => 'こんばんは';
+
+  @override
+  String get homeGreetingNight => 'お疲れさまです';
 
   @override
   String get homeReviewFlashcards => 'フラッシュカード復習';
@@ -403,6 +418,240 @@ class AppLocalizationsJa extends AppLocalizations {
   String get deckListError => 'デッキ一覧を読み込めませんでした。';
 
   @override
+  String get deckSearchHint => 'デッキを検索';
+
+  @override
+  String get deckSearchClear => '検索をクリア';
+
+  @override
+  String get deckFilterAll => 'すべて';
+
+  @override
+  String get deckFilterPrivate => '非公開';
+
+  @override
+  String get deckFilterPublic => '公開';
+
+  @override
+  String get deckVisibilityPublic => '公開';
+
+  @override
+  String get deckSortLabel => '並び替え';
+
+  @override
+  String get deckSortRecent => '新しい順';
+
+  @override
+  String get deckSortTitle => '名前順';
+
+  @override
+  String get deckSortCards => 'カード数順';
+
+  @override
+  String get deckSearchEmptyTitle => '結果がありません';
+
+  @override
+  String get deckSearchEmpty => '条件に合うデッキが見つかりません。';
+
+  @override
+  String get flashcardDeckDetailTitle => 'デッキの詳細';
+
+  @override
+  String get deckDetailStudyCta => 'デッキを学習';
+
+  @override
+  String get deckDetailCardsHeader => 'デッキ内のカード';
+
+  @override
+  String get deckDetailEmptyTitle => 'カードがありません';
+
+  @override
+  String get deckDetailEmpty => 'このデッキにはまだカードがありません。';
+
+  @override
+  String get deckDetailErrorTitle => 'デッキを読み込めません';
+
+  @override
+  String get deckDetailError => 'デッキの詳細を読み込めませんでした。もう一度お試しください。';
+
+  @override
+  String get commonCancel => 'キャンセル';
+
+  @override
+  String get deckCreateCta => 'デッキを作成';
+
+  @override
+  String get deckListCreateFirst => '最初のデッキを作成';
+
+  @override
+  String get deckCreateTitle => 'デッキを作成';
+
+  @override
+  String get deckEditTitle => 'デッキを編集';
+
+  @override
+  String get deckFormTitleViLabel => 'タイトル（ベトナム語）';
+
+  @override
+  String get deckFormTitleViHint => 'デッキ名を入力';
+
+  @override
+  String get deckFormTitleJaLabel => 'タイトル（日本語・任意）';
+
+  @override
+  String get deckFormDescriptionViLabel => '説明（ベトナム語・任意）';
+
+  @override
+  String get deckFormDescriptionJaLabel => '説明（日本語・任意）';
+
+  @override
+  String get deckFormVisibilityLabel => '公開設定';
+
+  @override
+  String get deckFormVisibilityPrivate => '非公開';
+
+  @override
+  String get deckFormVisibilityPublic => '公開';
+
+  @override
+  String get deckFormSaveCreate => 'デッキを作成';
+
+  @override
+  String get deckFormSaveUpdate => '変更を保存';
+
+  @override
+  String get deckFormTitleRequired => 'タイトルを入力してください。';
+
+  @override
+  String deckFormTitleTooLong(int max) {
+    return 'タイトルは最大$max文字です。';
+  }
+
+  @override
+  String deckFormDescriptionTooLong(int max) {
+    return '説明は最大$max文字です。';
+  }
+
+  @override
+  String get deckFormErrorGeneric => 'デッキを保存できませんでした。もう一度お試しください。';
+
+  @override
+  String get deckSaveSuccess => 'デッキを保存しました。';
+
+  @override
+  String get deckDetailEditAction => '編集';
+
+  @override
+  String get deckDetailArchiveAction => 'アーカイブ';
+
+  @override
+  String get deckArchiveConfirmTitle => 'デッキをアーカイブしますか？';
+
+  @override
+  String get deckArchiveConfirmMessage => 'デッキはアクティブなライブラリから削除されます。';
+
+  @override
+  String get deckArchiveConfirmCta => 'アーカイブ';
+
+  @override
+  String get deckArchiveSuccess => 'デッキをアーカイブしました。';
+
+  @override
+  String get cardCreateTitle => 'カードを追加';
+
+  @override
+  String get cardEditTitle => 'カードを編集';
+
+  @override
+  String get cardAddAction => 'カードを追加';
+
+  @override
+  String get cardDeleteAction => 'カードを削除';
+
+  @override
+  String get cardNotFound => 'このカードが見つかりません。変更された可能性があります。';
+
+  @override
+  String get cardFormFrontLabel => '表面（日本語）';
+
+  @override
+  String get cardFormFrontHint => '例：会議';
+
+  @override
+  String get cardFormReadingLabel => '読み（任意）';
+
+  @override
+  String get cardFormReadingHint => '例：かいぎ';
+
+  @override
+  String get cardFormBackLabel => '裏面（意味）';
+
+  @override
+  String get cardFormBackHint => '例：cuộc họp';
+
+  @override
+  String get cardFormSaveCreate => 'カードを追加';
+
+  @override
+  String get cardFormSaveUpdate => '変更を保存';
+
+  @override
+  String get cardFrontRequired => '表面を入力してください。';
+
+  @override
+  String get cardBackRequired => '裏面を入力してください。';
+
+  @override
+  String cardFieldTooLong(int max) {
+    return '最大 $max 文字です。';
+  }
+
+  @override
+  String cardLimitReached(int max) {
+    return 'デッキはカード上限 $max 枚に達しています。';
+  }
+
+  @override
+  String get cardSaveSuccess => 'カードを保存しました。';
+
+  @override
+  String get cardDeleteSuccess => 'カードを削除しました。';
+
+  @override
+  String get cardDeleteConfirmTitle => 'このカードを削除しますか？';
+
+  @override
+  String get cardDeleteConfirmMessage => 'この操作は元に戻せません。';
+
+  @override
+  String get cardDeleteConfirmCta => '削除';
+
+  @override
+  String get cardSearchHint => 'カードを検索…';
+
+  @override
+  String get cardSortPosition => '順序';
+
+  @override
+  String get cardSortAlphabetical => 'A–Z';
+
+  @override
+  String get cardSearchEmptyTitle => '一致するカードがありません';
+
+  @override
+  String get cardSearchEmptyMessage => '別のキーワードを試してください。';
+
+  @override
+  String cardSearchResultCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 枚のカード',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get reviewTitle => '復習';
 
   @override
@@ -514,6 +763,30 @@ class AppLocalizationsJa extends AppLocalizations {
   String get profileSavedSubtitle => '単語・記事・ブックマークした内容';
 
   @override
+  String get profilePlanFree => '無料プラン';
+
+  @override
+  String get profileSnapshotTitle => '学習サマリー';
+
+  @override
+  String get profileSnapshotStreak => '連続日数';
+
+  @override
+  String get profileSnapshotToday => '今日';
+
+  @override
+  String get profileSnapshotWeek => '直近7日';
+
+  @override
+  String get profileSnapshotTotal => '累計復習数';
+
+  @override
+  String get profileSnapshotEmptyTitle => '学習データはまだありません';
+
+  @override
+  String get profileSnapshotEmptyBody => '復習セッションを完了すると、ここに実際の進捗が表示されます。';
+
+  @override
   String get profilePreferencesSection => '設定';
 
   @override
@@ -529,10 +802,28 @@ class AppLocalizationsJa extends AppLocalizations {
   String get profileLanguageJapanese => '日本語';
 
   @override
+  String get profileThemeTitle => 'テーマ';
+
+  @override
+  String get profileThemeSystem => '端末に合わせる';
+
+  @override
+  String get profileThemeLight => 'ライト';
+
+  @override
+  String get profileThemeDark => 'ダーク';
+
+  @override
   String get profileFuriganaTitle => 'ふりがなを表示';
 
   @override
   String get profileFuriganaSubtitle => '漢字の上にかなを表示します（復習中を除く）。';
+
+  @override
+  String get profileHapticsTitle => '触覚フィードバック';
+
+  @override
+  String get profileHapticsSubtitle => '解答の選択・カードめくり・セッション完了時に軽く振動します。';
 
   @override
   String get profileSignOut => 'ログアウト';
@@ -562,6 +853,12 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get navReview => '復習';
+
+  @override
+  String get navSearch => '検索';
+
+  @override
+  String get navMe => 'マイ';
 
   @override
   String get navProgress => '進捗';
@@ -1037,6 +1334,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get examSubmitCta => '回答';
 
   @override
+  String get examAudioUnavailable =>
+      '聴解問題です。モバイルではまだ音声を再生できません。下の内容を読んで回答してください。';
+
+  @override
   String get examNextCta => '次の問題';
 
   @override
@@ -1066,6 +1367,54 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get examUpgradeRequiredBody => '現在のプランにはこの試験が含まれていません。';
+
+  @override
+  String get examReviewCta => '解答を見直す';
+
+  @override
+  String get examReviewTitle => '解答の見直し';
+
+  @override
+  String examReviewScore(int correct, int total) {
+    return '$correct/$total問正解';
+  }
+
+  @override
+  String get examReviewFilterAll => 'すべて';
+
+  @override
+  String get examReviewFilterWrong => '不正解';
+
+  @override
+  String get examReviewFilterCorrect => '正解';
+
+  @override
+  String examReviewQuestionLabel(int position) {
+    return '第$position問';
+  }
+
+  @override
+  String get examReviewCorrect => '正解';
+
+  @override
+  String get examReviewIncorrect => '不正解';
+
+  @override
+  String examReviewYourAnswer(String option) {
+    return 'あなたの解答：$option';
+  }
+
+  @override
+  String get examReviewExplanationTitle => '解説';
+
+  @override
+  String get examReviewEmptyFilter => 'この条件に該当する問題はありません。';
+
+  @override
+  String get examReviewErrorTitle => '見直しを読み込めません';
+
+  @override
+  String get examReviewErrorBody => '通信状況を確認してもう一度お試しください。';
 
   @override
   String get newsTitle => 'NHKニュース';
@@ -1342,6 +1691,48 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get searchKindOther => 'その他';
+
+  @override
+  String get searchToolsTitle => '辞書ツール';
+
+  @override
+  String get searchToolDictionarySubtitle => '和越辞書を引く';
+
+  @override
+  String get searchToolKanjiSubtitle => '漢字を字形・読みで検索';
+
+  @override
+  String get searchToolGrammarSubtitle => '文法パターンを調べる';
+
+  @override
+  String get searchRecentTitle => '最近の検索';
+
+  @override
+  String get searchRecentClear => 'すべて消去';
+
+  @override
+  String get searchRecentRemoveTooltip => '履歴から削除';
+
+  @override
+  String get searchFilterAll => 'すべて';
+
+  @override
+  String get savedBookmarkAdd => '保存';
+
+  @override
+  String get savedBookmarkRemove => '保存を解除';
+
+  @override
+  String get savedBookmarkSignIn => 'この項目を保存するにはログインしてください。';
+
+  @override
+  String get savedBookmarkError => '保存できませんでした。もう一度お試しください。';
+
+  @override
+  String get savedRemoveTooltip => '保存済みから削除';
+
+  @override
+  String get savedRemovedToast => '保存済みから削除しました';
 
   @override
   String get savedTitle => '保存済み';

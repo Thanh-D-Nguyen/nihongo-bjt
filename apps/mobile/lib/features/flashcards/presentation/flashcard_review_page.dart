@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nihongo_bjt/app/router.dart';
+import 'package:nihongo_bjt/core/feedback/app_haptics.dart';
 import 'package:nihongo_bjt/core/theme/app_motion.dart';
 import 'package:nihongo_bjt/core/theme/app_palette.dart';
 import 'package:nihongo_bjt/core/theme/app_radius.dart';
@@ -92,13 +93,23 @@ class _ReviewActive extends StatelessWidget {
             // when the dedicated button is crowded near the bottom edge.
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onTap: state.answerRevealed ? null : controller.revealAnswer,
+              onTap: state.answerRevealed
+                  ? null
+                  : () {
+                      AppHaptics.selection();
+                      controller.revealAnswer();
+                    },
               child: _CardFace(card: card, revealed: state.answerRevealed),
             ),
           ),
           const SizedBox(height: AppSpacing.l),
           if (state.answerRevealed)
-            _RatingBar(onRate: controller.rate)
+            _RatingBar(
+              onRate: (rating) {
+                AppHaptics.selection();
+                controller.rate(rating);
+              },
+            )
           else
             Column(
               children: [
@@ -113,7 +124,10 @@ class _ReviewActive extends StatelessWidget {
                 PrimaryButton(
                   label: AppLocalizations.of(context).reviewReveal,
                   icon: Icons.visibility_outlined,
-                  onPressed: controller.revealAnswer,
+                  onPressed: () {
+                    AppHaptics.selection();
+                    controller.revealAnswer();
+                  },
                 ),
               ],
             ),
@@ -299,7 +313,7 @@ class _RatingButton extends StatelessWidget {
   }
 }
 
-class _ReviewComplete extends StatelessWidget {
+class _ReviewComplete extends StatefulWidget {
   const _ReviewComplete({
     required this.state,
     required this.onRestart,
@@ -311,7 +325,21 @@ class _ReviewComplete extends StatelessWidget {
   final VoidCallback onExit;
 
   @override
+  State<_ReviewComplete> createState() => _ReviewCompleteState();
+}
+
+class _ReviewCompleteState extends State<_ReviewComplete> {
+  @override
+  void initState() {
+    super.initState();
+    // Finishing a review set earns a slightly weightier confirmation than a
+    // routine tap — fired once on entry, gated by the global haptics switch.
+    AppHaptics.medium();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final state = widget.state;
     final l10n = AppLocalizations.of(context);
     final palette = context.palette;
     final text = Theme.of(context).textTheme;
@@ -340,12 +368,12 @@ class _ReviewComplete extends StatelessWidget {
           PrimaryButton(
             label: l10n.reviewRestart,
             icon: Icons.refresh_rounded,
-            onPressed: onRestart,
+            onPressed: widget.onRestart,
           ),
           const SizedBox(height: AppSpacing.s),
           SecondaryButton(
             label: l10n.reviewBackToList,
-            onPressed: onExit,
+            onPressed: widget.onExit,
           ),
         ],
       ),

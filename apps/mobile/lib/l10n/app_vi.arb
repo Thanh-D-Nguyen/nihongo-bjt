@@ -6,6 +6,11 @@
     "description": "Generic retry button shared by error states."
   },
 
+  "commonUndo": "Hoàn tác",
+  "@commonUndo": {
+    "description": "Generic undo action shown in snackbars after a destructive action."
+  },
+
   "a11yProgressLabel": "Tiến độ",
   "@a11yProgressLabel": {
     "description": "Screen-reader label for progress bars (the percentage is announced automatically)."
@@ -14,6 +19,22 @@
   "homeWelcome": "ようこそ",
   "@homeWelcome": {
     "description": "Decorative Japanese welcome greeting on the home hero card."
+  },
+  "homeGreetingMorning": "Chào buổi sáng",
+  "@homeGreetingMorning": {
+    "description": "Home hero greeting shown in the morning (05:00–10:59), derived from the device clock."
+  },
+  "homeGreetingAfternoon": "Chào buổi chiều",
+  "@homeGreetingAfternoon": {
+    "description": "Home hero greeting shown in the afternoon (11:00–16:59)."
+  },
+  "homeGreetingEvening": "Chào buổi tối",
+  "@homeGreetingEvening": {
+    "description": "Home hero greeting shown in the evening (17:00–21:59)."
+  },
+  "homeGreetingNight": "Chào buổi đêm",
+  "@homeGreetingNight": {
+    "description": "Home hero greeting shown late at night (22:00–04:59)."
   },
   "homeReviewFlashcards": "Ôn Flashcard",
   "@homeReviewFlashcards": {
@@ -284,6 +305,321 @@
     "description": "Error state when the deck list fails to load."
   },
 
+  "deckSearchHint": "Tìm bộ thẻ",
+  "@deckSearchHint": {
+    "description": "Placeholder of the deck list search field."
+  },
+  "deckSearchClear": "Xoá tìm kiếm",
+  "@deckSearchClear": {
+    "description": "Tooltip of the clear-search button in the deck list."
+  },
+  "deckFilterAll": "Tất cả",
+  "@deckFilterAll": {
+    "description": "Deck list filter chip showing every deck."
+  },
+  "deckFilterPrivate": "Riêng tư",
+  "@deckFilterPrivate": {
+    "description": "Deck list filter chip showing only private decks."
+  },
+  "deckFilterPublic": "Công khai",
+  "@deckFilterPublic": {
+    "description": "Deck list filter chip showing only public decks."
+  },
+  "deckVisibilityPublic": "Công khai",
+  "@deckVisibilityPublic": {
+    "description": "Badge label on a deck that is publicly shared."
+  },
+  "deckSortLabel": "Sắp xếp",
+  "@deckSortLabel": {
+    "description": "Tooltip/label of the deck list sort control."
+  },
+  "deckSortRecent": "Mới nhất",
+  "@deckSortRecent": {
+    "description": "Deck list sort option: most recently created first."
+  },
+  "deckSortTitle": "Theo tên",
+  "@deckSortTitle": {
+    "description": "Deck list sort option: by title A to Z."
+  },
+  "deckSortCards": "Nhiều thẻ nhất",
+  "@deckSortCards": {
+    "description": "Deck list sort option: most cards first."
+  },
+  "deckSearchEmptyTitle": "Không có kết quả",
+  "@deckSearchEmptyTitle": {
+    "description": "Title shown when search/filter returns no decks."
+  },
+  "deckSearchEmpty": "Không tìm thấy bộ thẻ phù hợp.",
+  "@deckSearchEmpty": {
+    "description": "Message shown when search/filter returns no decks."
+  },
+
+  "flashcardDeckDetailTitle": "Chi tiết bộ thẻ",
+  "@flashcardDeckDetailTitle": {
+    "description": "App bar title of the deck detail screen."
+  },
+  "deckDetailStudyCta": "Học bộ thẻ",
+  "@deckDetailStudyCta": {
+    "description": "Primary action that starts a review session for the deck."
+  },
+  "deckDetailCardsHeader": "Thẻ trong bộ",
+  "@deckDetailCardsHeader": {
+    "description": "Section header above the list of cards in the deck."
+  },
+  "deckDetailEmptyTitle": "Chưa có thẻ",
+  "@deckDetailEmptyTitle": {
+    "description": "Title shown when a deck has no cards yet."
+  },
+  "deckDetailEmpty": "Bộ thẻ này chưa có thẻ nào.",
+  "@deckDetailEmpty": {
+    "description": "Message shown when a deck has no cards yet."
+  },
+  "deckDetailErrorTitle": "Không tải được bộ thẻ",
+  "@deckDetailErrorTitle": {
+    "description": "Title of the deck detail error state."
+  },
+  "deckDetailError": "Không tải được chi tiết bộ thẻ. Vui lòng thử lại.",
+  "@deckDetailError": {
+    "description": "Message of the deck detail error state."
+  },
+
+  "commonCancel": "Huỷ",
+  "@commonCancel": {
+    "description": "Generic cancel action label."
+  },
+  "deckCreateCta": "Tạo bộ thẻ",
+  "@deckCreateCta": {
+    "description": "Action that opens the create-deck form."
+  },
+  "deckListCreateFirst": "Tạo bộ thẻ đầu tiên",
+  "@deckListCreateFirst": {
+    "description": "Empty-state call to action to create the first deck."
+  },
+  "deckCreateTitle": "Tạo bộ thẻ",
+  "@deckCreateTitle": {
+    "description": "App bar title of the create-deck form."
+  },
+  "deckEditTitle": "Sửa bộ thẻ",
+  "@deckEditTitle": {
+    "description": "App bar title of the edit-deck form."
+  },
+  "deckFormTitleViLabel": "Tiêu đề tiếng Việt",
+  "@deckFormTitleViLabel": {
+    "description": "Label of the required Vietnamese title field."
+  },
+  "deckFormTitleViHint": "Nhập tên bộ thẻ",
+  "@deckFormTitleViHint": {
+    "description": "Hint of the Vietnamese title field."
+  },
+  "deckFormTitleJaLabel": "Tiêu đề tiếng Nhật (tuỳ chọn)",
+  "@deckFormTitleJaLabel": {
+    "description": "Label of the optional Japanese title field."
+  },
+  "deckFormDescriptionViLabel": "Mô tả tiếng Việt (tuỳ chọn)",
+  "@deckFormDescriptionViLabel": {
+    "description": "Label of the optional Vietnamese description field."
+  },
+  "deckFormDescriptionJaLabel": "Mô tả tiếng Nhật (tuỳ chọn)",
+  "@deckFormDescriptionJaLabel": {
+    "description": "Label of the optional Japanese description field."
+  },
+  "deckFormVisibilityLabel": "Hiển thị",
+  "@deckFormVisibilityLabel": {
+    "description": "Label of the deck visibility selector."
+  },
+  "deckFormVisibilityPrivate": "Riêng tư",
+  "@deckFormVisibilityPrivate": {
+    "description": "Visibility option: deck is private to the learner."
+  },
+  "deckFormVisibilityPublic": "Công khai",
+  "@deckFormVisibilityPublic": {
+    "description": "Visibility option: deck is publicly shared."
+  },
+  "deckFormSaveCreate": "Tạo bộ thẻ",
+  "@deckFormSaveCreate": {
+    "description": "Submit button of the create-deck form."
+  },
+  "deckFormSaveUpdate": "Lưu thay đổi",
+  "@deckFormSaveUpdate": {
+    "description": "Submit button of the edit-deck form."
+  },
+  "deckFormTitleRequired": "Vui lòng nhập tiêu đề.",
+  "@deckFormTitleRequired": {
+    "description": "Validation error when the required title is empty."
+  },
+  "deckFormTitleTooLong": "Tiêu đề tối đa {max} ký tự.",
+  "@deckFormTitleTooLong": {
+    "description": "Validation error when a title exceeds its max length.",
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "deckFormDescriptionTooLong": "Mô tả tối đa {max} ký tự.",
+  "@deckFormDescriptionTooLong": {
+    "description": "Validation error when a description exceeds its max length.",
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "deckFormErrorGeneric": "Không lưu được bộ thẻ. Vui lòng thử lại.",
+  "@deckFormErrorGeneric": {
+    "description": "Fallback message when saving a deck fails."
+  },
+  "deckSaveSuccess": "Đã lưu bộ thẻ.",
+  "@deckSaveSuccess": {
+    "description": "Snackbar confirmation after a deck is saved."
+  },
+  "deckDetailEditAction": "Sửa",
+  "@deckDetailEditAction": {
+    "description": "Deck detail action that opens the edit form."
+  },
+  "deckDetailArchiveAction": "Lưu trữ",
+  "@deckDetailArchiveAction": {
+    "description": "Deck detail action that archives the deck."
+  },
+  "deckArchiveConfirmTitle": "Lưu trữ bộ thẻ?",
+  "@deckArchiveConfirmTitle": {
+    "description": "Title of the archive confirmation dialog."
+  },
+  "deckArchiveConfirmMessage": "Bộ thẻ sẽ được gỡ khỏi thư viện đang hoạt động.",
+  "@deckArchiveConfirmMessage": {
+    "description": "Body of the archive confirmation dialog."
+  },
+  "deckArchiveConfirmCta": "Lưu trữ",
+  "@deckArchiveConfirmCta": {
+    "description": "Confirm button of the archive dialog."
+  },
+  "deckArchiveSuccess": "Đã lưu trữ bộ thẻ.",
+  "@deckArchiveSuccess": {
+    "description": "Snackbar confirmation after a deck is archived."
+  },
+
+  "cardCreateTitle": "Thêm thẻ",
+  "@cardCreateTitle": {
+    "description": "App bar title when adding a new card to a deck."
+  },
+  "cardEditTitle": "Sửa thẻ",
+  "@cardEditTitle": {
+    "description": "App bar title when editing an existing card."
+  },
+  "cardAddAction": "Thêm thẻ",
+  "@cardAddAction": {
+    "description": "Button that opens the add-card form."
+  },
+  "cardDeleteAction": "Xóa thẻ",
+  "@cardDeleteAction": {
+    "description": "Button that deletes the current card."
+  },
+  "cardNotFound": "Không tìm thấy thẻ này. Có thể nó đã bị thay đổi.",
+  "@cardNotFound": {
+    "description": "Error shown when the edited card no longer exists."
+  },
+  "cardFormFrontLabel": "Mặt trước (tiếng Nhật)",
+  "@cardFormFrontLabel": {
+    "description": "Label for the front-text field of the card form."
+  },
+  "cardFormFrontHint": "Ví dụ: 会議",
+  "@cardFormFrontHint": {
+    "description": "Placeholder for the front-text field."
+  },
+  "cardFormReadingLabel": "Cách đọc (tùy chọn)",
+  "@cardFormReadingLabel": {
+    "description": "Label for the optional reading field of the card form."
+  },
+  "cardFormReadingHint": "Ví dụ: かいぎ",
+  "@cardFormReadingHint": {
+    "description": "Placeholder for the reading field."
+  },
+  "cardFormBackLabel": "Mặt sau (nghĩa)",
+  "@cardFormBackLabel": {
+    "description": "Label for the back-text field of the card form."
+  },
+  "cardFormBackHint": "Ví dụ: cuộc họp",
+  "@cardFormBackHint": {
+    "description": "Placeholder for the back-text field."
+  },
+  "cardFormSaveCreate": "Thêm thẻ",
+  "@cardFormSaveCreate": {
+    "description": "Submit button when adding a new card."
+  },
+  "cardFormSaveUpdate": "Lưu thay đổi",
+  "@cardFormSaveUpdate": {
+    "description": "Submit button when editing an existing card."
+  },
+  "cardFrontRequired": "Vui lòng nhập mặt trước.",
+  "@cardFrontRequired": {
+    "description": "Validation error when the front field is empty."
+  },
+  "cardBackRequired": "Vui lòng nhập mặt sau.",
+  "@cardBackRequired": {
+    "description": "Validation error when the back field is empty."
+  },
+  "cardFieldTooLong": "Tối đa {max} ký tự.",
+  "@cardFieldTooLong": {
+    "description": "Validation error when a card field exceeds its maximum.",
+    "placeholders": {
+      "max": { "type": "int" }
+    }
+  },
+  "cardLimitReached": "Bộ thẻ đã đạt giới hạn {max} thẻ.",
+  "@cardLimitReached": {
+    "description": "Shown when the deck already has the maximum number of cards.",
+    "placeholders": {
+      "max": { "type": "int" }
+    }
+  },
+  "cardSaveSuccess": "Đã lưu thẻ.",
+  "@cardSaveSuccess": {
+    "description": "Snackbar after a card is created or updated."
+  },
+  "cardDeleteSuccess": "Đã xóa thẻ.",
+  "@cardDeleteSuccess": {
+    "description": "Snackbar after a card is deleted."
+  },
+  "cardDeleteConfirmTitle": "Xóa thẻ này?",
+  "@cardDeleteConfirmTitle": {
+    "description": "Title of the delete-card confirmation dialog."
+  },
+  "cardDeleteConfirmMessage": "Thao tác này không thể hoàn tác.",
+  "@cardDeleteConfirmMessage": {
+    "description": "Body of the delete-card confirmation dialog."
+  },
+  "cardDeleteConfirmCta": "Xóa",
+  "@cardDeleteConfirmCta": {
+    "description": "Confirm button of the delete-card dialog."
+  },
+  "cardSearchHint": "Tìm thẻ…",
+  "@cardSearchHint": {
+    "description": "Placeholder for the card search field."
+  },
+  "cardSortPosition": "Thứ tự",
+  "@cardSortPosition": {
+    "description": "Sort option that keeps the original card order."
+  },
+  "cardSortAlphabetical": "A–Z",
+  "@cardSortAlphabetical": {
+    "description": "Sort option that orders cards alphabetically by front text."
+  },
+  "cardSearchEmptyTitle": "Không có thẻ phù hợp",
+  "@cardSearchEmptyTitle": {
+    "description": "Title shown when a card search returns no results."
+  },
+  "cardSearchEmptyMessage": "Thử từ khóa khác.",
+  "@cardSearchEmptyMessage": {
+    "description": "Message shown when a card search returns no results."
+  },
+  "cardSearchResultCount": "{count, plural, =1{1 thẻ} other{{count} thẻ}}",
+  "@cardSearchResultCount": {
+    "description": "Count of cards matching the current search.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+
   "reviewTitle": "Ôn tập",
   "@reviewTitle": {
     "description": "App bar title of the flashcard review screen."
@@ -436,6 +772,38 @@
   "@profileSavedSubtitle": {
     "description": "Shortcut subtitle to saved items."
   },
+  "profilePlanFree": "Gói miễn phí",
+  "@profilePlanFree": {
+    "description": "Hero badge label when the learner is on the free plan."
+  },
+  "profileSnapshotTitle": "Tổng quan học tập",
+  "@profileSnapshotTitle": {
+    "description": "Title of the learning snapshot card."
+  },
+  "profileSnapshotStreak": "Chuỗi ngày",
+  "@profileSnapshotStreak": {
+    "description": "Learning snapshot metric: current study-day streak."
+  },
+  "profileSnapshotToday": "Hôm nay",
+  "@profileSnapshotToday": {
+    "description": "Learning snapshot metric: reviews completed today."
+  },
+  "profileSnapshotWeek": "7 ngày qua",
+  "@profileSnapshotWeek": {
+    "description": "Learning snapshot metric: reviews in the last 7 days."
+  },
+  "profileSnapshotTotal": "Tổng lượt ôn",
+  "@profileSnapshotTotal": {
+    "description": "Learning snapshot metric: all-time review count."
+  },
+  "profileSnapshotEmptyTitle": "Chưa có dữ liệu học",
+  "@profileSnapshotEmptyTitle": {
+    "description": "Honest empty state title when no study activity is recorded yet."
+  },
+  "profileSnapshotEmptyBody": "Hãy hoàn thành một phiên ôn tập để thấy tiến độ thật ở đây.",
+  "@profileSnapshotEmptyBody": {
+    "description": "Honest empty state body encouraging the learner to start studying."
+  },
   "profilePreferencesSection": "Tùy chỉnh",
   "@profilePreferencesSection": {
     "description": "Section header for learner preferences."
@@ -456,6 +824,22 @@
   "@profileLanguageJapanese": {
     "description": "Language option: Japanese."
   },
+  "profileThemeTitle": "Giao diện",
+  "@profileThemeTitle": {
+    "description": "Label for the app appearance (light/dark/system) selector."
+  },
+  "profileThemeSystem": "Theo thiết bị",
+  "@profileThemeSystem": {
+    "description": "Appearance option that follows the device light/dark setting."
+  },
+  "profileThemeLight": "Sáng",
+  "@profileThemeLight": {
+    "description": "Appearance option: light theme."
+  },
+  "profileThemeDark": "Tối",
+  "@profileThemeDark": {
+    "description": "Appearance option: dark theme."
+  },
   "profileFuriganaTitle": "Hiển thị furigana",
   "@profileFuriganaTitle": {
     "description": "Toggle label for showing reading help (furigana)."
@@ -463,6 +847,14 @@
   "profileFuriganaSubtitle": "Hiện cách đọc kana phía trên kanji (trừ khi đang ôn tập).",
   "@profileFuriganaSubtitle": {
     "description": "Explains what the furigana toggle does and that exam/review suppresses it."
+  },
+  "profileHapticsTitle": "Phản hồi rung",
+  "@profileHapticsTitle": {
+    "description": "Toggle label for subtle haptic feedback on interactions."
+  },
+  "profileHapticsSubtitle": "Rung nhẹ khi chọn đáp án, lật thẻ và hoàn thành phiên học.",
+  "@profileHapticsSubtitle": {
+    "description": "Explains what the haptic feedback toggle controls."
   },
   "profileSignOut": "Đăng xuất",
   "@profileSignOut": {
@@ -505,6 +897,14 @@
   "navReview": "Ôn tập",
   "@navReview": {
     "description": "Bottom navigation label for the Review tab."
+  },
+  "navSearch": "Tra cứu",
+  "@navSearch": {
+    "description": "Bottom navigation label for the Search lookup hub tab."
+  },
+  "navMe": "Cá nhân",
+  "@navMe": {
+    "description": "Bottom navigation label for the Me account hub tab."
   },
   "navProgress": "Tiến độ",
   "@navProgress": {
@@ -1114,6 +1514,10 @@
   "@examSubmitCta": {
     "description": "CTA to submit the selected answer."
   },
+  "examAudioUnavailable": "Câu hỏi nghe — phần phát âm thanh chưa có trên di động. Hãy đọc nội dung bên dưới để trả lời.",
+  "@examAudioUnavailable": {
+    "description": "Calm note shown for listening questions when audio playback is not yet available on mobile."
+  },
   "examNextCta": "Câu tiếp theo",
   "@examNextCta": {
     "description": "CTA to advance to the next exam question."
@@ -1156,6 +1560,72 @@
   "examUpgradeRequiredBody": "Gói hiện tại của bạn chưa bao gồm bài thi này.",
   "@examUpgradeRequiredBody": {
     "description": "Error body when an exam requires a higher plan/entitlement."
+  },
+  "examReviewCta": "Xem lại bài làm",
+  "@examReviewCta": {
+    "description": "CTA on the result screen to open the per-question review."
+  },
+  "examReviewTitle": "Xem lại bài làm",
+  "@examReviewTitle": {
+    "description": "Title of the exam per-question review screen."
+  },
+  "examReviewScore": "Đúng {correct}/{total} câu",
+  "@examReviewScore": {
+    "description": "Score summary on the exam review screen.",
+    "placeholders": {
+      "correct": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "examReviewFilterAll": "Tất cả",
+  "@examReviewFilterAll": {
+    "description": "Review filter chip: show all questions."
+  },
+  "examReviewFilterWrong": "Sai",
+  "@examReviewFilterWrong": {
+    "description": "Review filter chip: show only incorrect answers."
+  },
+  "examReviewFilterCorrect": "Đúng",
+  "@examReviewFilterCorrect": {
+    "description": "Review filter chip: show only correct answers."
+  },
+  "examReviewQuestionLabel": "Câu {position}",
+  "@examReviewQuestionLabel": {
+    "description": "Per-question label in the exam review list.",
+    "placeholders": {
+      "position": { "type": "int" }
+    }
+  },
+  "examReviewCorrect": "Đúng",
+  "@examReviewCorrect": {
+    "description": "Verdict badge for a correct answer in review."
+  },
+  "examReviewIncorrect": "Chưa đúng",
+  "@examReviewIncorrect": {
+    "description": "Verdict badge for an incorrect answer in review (gentle wording)."
+  },
+  "examReviewYourAnswer": "Bạn chọn: {option}",
+  "@examReviewYourAnswer": {
+    "description": "Shows which option key the learner chose.",
+    "placeholders": {
+      "option": { "type": "String" }
+    }
+  },
+  "examReviewExplanationTitle": "Giải thích",
+  "@examReviewExplanationTitle": {
+    "description": "Heading above the explanation text in review."
+  },
+  "examReviewEmptyFilter": "Không có câu nào trong mục này.",
+  "@examReviewEmptyFilter": {
+    "description": "Empty state when a review filter matches no questions."
+  },
+  "examReviewErrorTitle": "Không tải được phần xem lại",
+  "@examReviewErrorTitle": {
+    "description": "Error title when the review breakdown fails to load."
+  },
+  "examReviewErrorBody": "Kiểm tra kết nối và thử lại.",
+  "@examReviewErrorBody": {
+    "description": "Error body when the review breakdown fails to load."
   },
   "newsTitle": "Tin tức NHK",
   "@newsTitle": {
@@ -1514,6 +1984,62 @@
   "searchKindOther": "Khác",
   "@searchKindOther": {
     "description": "Label for an unclassified search result."
+  },
+  "searchToolsTitle": "Công cụ tra cứu",
+  "@searchToolsTitle": {
+    "description": "Section header above the lookup tools on the Search hub."
+  },
+  "searchToolDictionarySubtitle": "Tra từ Nhật–Việt",
+  "@searchToolDictionarySubtitle": {
+    "description": "Subtitle for the Dictionary tool card on the Search hub."
+  },
+  "searchToolKanjiSubtitle": "Tra kanji theo chữ và âm đọc",
+  "@searchToolKanjiSubtitle": {
+    "description": "Subtitle for the Kanji tool card on the Search hub."
+  },
+  "searchToolGrammarSubtitle": "Tra mẫu ngữ pháp",
+  "@searchToolGrammarSubtitle": {
+    "description": "Subtitle for the Grammar tool card on the Search hub."
+  },
+  "searchRecentTitle": "Tìm kiếm gần đây",
+  "@searchRecentTitle": {
+    "description": "Section header above the learner's recent search queries."
+  },
+  "searchRecentClear": "Xóa hết",
+  "@searchRecentClear": {
+    "description": "Button that clears all recent searches."
+  },
+  "searchRecentRemoveTooltip": "Xóa khỏi lịch sử",
+  "@searchRecentRemoveTooltip": {
+    "description": "Tooltip for removing a single recent search chip."
+  },
+  "searchFilterAll": "Tất cả",
+  "@searchFilterAll": {
+    "description": "Label for the segmented filter that shows all search result kinds."
+  },
+  "savedBookmarkAdd": "Lưu",
+  "@savedBookmarkAdd": {
+    "description": "Tooltip for the bookmark button when the item is not saved."
+  },
+  "savedBookmarkRemove": "Bỏ lưu",
+  "@savedBookmarkRemove": {
+    "description": "Tooltip for the bookmark button when the item is already saved."
+  },
+  "savedBookmarkSignIn": "Đăng nhập để lưu mục này.",
+  "@savedBookmarkSignIn": {
+    "description": "Snackbar shown when an unauthenticated learner taps bookmark."
+  },
+  "savedBookmarkError": "Không lưu được. Vui lòng thử lại.",
+  "@savedBookmarkError": {
+    "description": "Snackbar shown when a bookmark toggle fails."
+  },
+  "savedRemoveTooltip": "Xóa khỏi mục đã lưu",
+  "@savedRemoveTooltip": {
+    "description": "Tooltip for removing an item from the saved list."
+  },
+  "savedRemovedToast": "Đã xóa khỏi mục đã lưu",
+  "@savedRemovedToast": {
+    "description": "Snackbar confirming a saved item was removed."
   },
   "savedTitle": "Đã lưu",
   "@savedTitle": {

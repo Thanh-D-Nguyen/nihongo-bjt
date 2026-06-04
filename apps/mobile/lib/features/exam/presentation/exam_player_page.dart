@@ -4,19 +4,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nihongo_bjt/core/api/repository_result.dart';
+import 'package:nihongo_bjt/core/feedback/app_haptics.dart';
 import 'package:nihongo_bjt/core/theme/app_radius.dart';
 import 'package:nihongo_bjt/core/theme/app_spacing.dart';
 import 'package:nihongo_bjt/features/exam/domain/exam_models.dart';
 import 'package:nihongo_bjt/features/exam/presentation/exam_player_view.dart';
 import 'package:nihongo_bjt/features/exam/presentation/exam_providers.dart';
 import 'package:nihongo_bjt/features/exam/presentation/exam_result_view.dart';
+import 'package:nihongo_bjt/features/exam/presentation/exam_review_view.dart';
 import 'package:nihongo_bjt/l10n/gen/app_localizations.dart';
 import 'package:nihongo_bjt/shared/widgets/app_scaffold.dart';
 import 'package:nihongo_bjt/shared/widgets/error_state_view.dart';
 import 'package:nihongo_bjt/shared/widgets/loading_state_view.dart';
 
 /// The phase of the live exam session.
-enum _Phase { starting, playing, submitting, completed, error }
+enum _Phase { starting, playing, submitting, completed, reviewShown, error }
 
 /// Full-screen scored BJT exam player backed by `/api/quiz`. Lives outside the
 /// bottom-nav shell so the timer/question/CTA never compete with navigation.
@@ -125,6 +127,7 @@ class _ExamPlayerPageState extends ConsumerState<ExamPlayerPage> {
     final key = _selectedKey;
     if (session == null || question == null || key == null) return;
     if (_phase == _Phase.submitting) return;
+    AppHaptics.light();
     _timer?.cancel();
     setState(() => _phase = _Phase.submitting);
     try {
@@ -149,6 +152,7 @@ class _ExamPlayerPageState extends ConsumerState<ExamPlayerPage> {
 
   void _finish(ExamSession session) {
     _timer?.cancel();
+    AppHaptics.medium();
     setState(() {
       _phase = _Phase.completed;
       _session = session;
@@ -202,7 +206,15 @@ class _ExamPlayerPageState extends ConsumerState<ExamPlayerPage> {
           body: ExamResultView(
             session: session,
             onDone: () => context.pop(),
+            onReview: session.isCompleted
+                ? () => setState(() => _phase = _Phase.reviewShown)
+                : null,
           ),
+        );
+      case _Phase.reviewShown:
+        return ExamReviewView(
+          sessionId: _session!.id,
+          onBack: () => setState(() => _phase = _Phase.completed),
         );
       case _Phase.playing:
       case _Phase.submitting:
@@ -212,7 +224,10 @@ class _ExamPlayerPageState extends ConsumerState<ExamPlayerPage> {
           remainingSeconds: _remaining,
           selectedKey: _selectedKey,
           submitting: _phase == _Phase.submitting,
-          onSelect: (key) => setState(() => _selectedKey = key),
+          onSelect: (key) {
+            AppHaptics.selection();
+            setState(() => _selectedKey = key);
+          },
           onSubmit: _submit,
         );
     }

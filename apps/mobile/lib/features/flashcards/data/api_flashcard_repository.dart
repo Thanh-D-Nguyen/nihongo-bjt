@@ -1,8 +1,12 @@
 import 'package:nihongo_bjt/core/api/api_client.dart';
 import 'package:nihongo_bjt/core/api/api_exception.dart';
+import 'package:nihongo_bjt/features/flashcards/data/dto/deck_detail_dto.dart';
 import 'package:nihongo_bjt/features/flashcards/data/dto/flashcard_deck_dto.dart';
 import 'package:nihongo_bjt/features/flashcards/data/dto/flashcard_review_item_dto.dart';
 import 'package:nihongo_bjt/features/flashcards/data/flashcard_dto_mapper.dart';
+import 'package:nihongo_bjt/features/flashcards/domain/deck_card_input.dart';
+import 'package:nihongo_bjt/features/flashcards/domain/deck_detail.dart';
+import 'package:nihongo_bjt/features/flashcards/domain/deck_form_input.dart';
 import 'package:nihongo_bjt/features/flashcards/domain/flashcard.dart';
 import 'package:nihongo_bjt/features/flashcards/domain/flashcard_deck.dart';
 import 'package:nihongo_bjt/features/flashcards/domain/flashcard_repository.dart';
@@ -37,9 +41,13 @@ class ApiFlashcardRepository implements FlashcardRepository {
 
   static const String _decksPath = '/api/flashcards/decks';
 
-  /// The contract exposes the due-review queue globally (no deck filter on
-  /// `GET /api/flashcards/reviews/due`), so a deck review session uses the
-  /// learner's due cards.
+  /// `GET /api/decks/{id}` — canonical deck detail (metadata + ordered cards),
+  /// scoped to the learner's own + public decks server-side.
+  static const String _deckDetailBasePath = '/api/decks';
+
+  /// `GET /api/flashcards/reviews/due` — the learner's due-review queue. The
+  /// endpoint accepts an optional `deckId` query parameter to scope the queue
+  /// to a single deck (validated by `flashcardsDueQuerySchema` server-side).
   static const String _dueReviewsPath = '/api/flashcards/reviews/due';
 
   /// `POST /api/flashcards/reviews/{userFlashcardId}` — the learner is resolved
@@ -55,11 +63,84 @@ class ApiFlashcardRepository implements FlashcardRepository {
   }
 
   @override
+  Future<DeckDetail> fetchDeckDetail(String deckId) async {
+    final json = await _guard(
+      () => _client.getJson('$_deckDetailBasePath/$deckId'),
+    );
+    return DeckDetailDto.fromJson(_asMap(json)).toDomain();
+  }
+
+  @override
+  Future<String> createDeck(DeckFormInput input) async {
+    // `POST /api/flashcards/decks` — the server derives the learner from the
+    // bearer token; only deck metadata is sent (no userId, no cards).
+    final json = await _guard(
+      () => _client.postJson(_decksPath, body: input.toRequestBody()),
+    );
+    final id = _asMap(json)['id'];
+    if (id is! String || id.isEmpty) {
+      throw const FlashcardRepositoryException(
+        'Máy chủ không trả về mã bộ thẻ vừa tạo.',
+      );
+    }
+    return id;
+  }
+
+  @override
+  Future<void> updateDeckMeta(String deckId, DeckFormInput input) async {
+    // `PATCH /api/flashcards/decks/{id}` with metadata only (no `cards`), so the
+    // deck's existing card set is left untouched.
+    await _guard(
+      () => _client.patchJson(
+        '$_decksPath/$deckId',
+        body: input.toRequestBody(),
+      ),
+    );
+  }
+
+  @override
+  Future<void> saveDeckCards(
+    String deckId,
+    DeckFormInput meta,
+    List<DeckCardInput> cards,
+  ) async {
+    // `PATCH /api/flashcards/decks/{id}` with the deck metadata plus the FULL
+    // card set. The server replaces every card link when `cards` is present, so
+    // the complete desired list is sent. `titleVi` is included because the
+    // update schema validates it on every call.
+    await _guard(
+      () => _client.patchJson(
+        '$_decksPath/$deckId',
+        body: <String, Object?>{
+          ...meta.toRequestBody(),
+          'cards': cards.map((c) => c.toRequestBody()).toList(),
+        },
+      ),
+    );
+  }
+
+  @override
+  Future<void> archiveDeck(String deckId) async {
+    // `POST /api/flashcards/decks/{id}/archive` (ApiClient has no DELETE); the
+    // body is empty because the learner is resolved server-side.
+    await _guard(
+      () => _client.postJson(
+        '$_decksPath/$deckId/archive',
+        body: const <String, Object?>{},
+      ),
+    );
+  }
+
+  @override
   Future<List<Flashcard>> fetchCards(String deckId) async {
-    // `deckId` is accepted to satisfy the repository contract, but the current
-    // OpenAPI due-reviews endpoint is not deck-scoped; it returns the learner's
-    // global due queue. Per-deck filtering is a future server capability.
-    final json = await _guard(() => _client.getJson(_dueReviewsPath));
+    // Scope the due-review queue to this deck via the `deckId` query parameter
+    // so a deck review session only surfaces that deck's due cards. A blank id
+    // falls back to the learner's global queue.
+    final trimmed = deckId.trim();
+    final path = trimmed.isEmpty
+        ? _dueReviewsPath
+        : '$_dueReviewsPath?deckId=${Uri.encodeQueryComponent(trimmed)}';
+    final json = await _guard(() => _client.getJson(path));
     return _asList(json)
         .map((e) => FlashcardReviewItemDto.fromJson(_asMap(e)).toDomain())
         .toList();

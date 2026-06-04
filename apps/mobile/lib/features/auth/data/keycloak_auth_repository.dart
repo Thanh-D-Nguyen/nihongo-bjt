@@ -158,25 +158,16 @@ class KeycloakAuthRepository implements AuthRepository {
 
   @override
   Future<void> signOut({String? idToken}) async {
-    // The provider end-session call requires either both id_token_hint and a
-    // post-logout redirect, or neither. When no id token is available, the
-    // local session is cleared by the caller and no remote call is made.
-    if (idToken == null) return;
-    try {
-      await appAuth.endSession(
-        EndSessionRequest(
-          idTokenHint: idToken,
-          postLogoutRedirectUrl: environment.oauthRedirectUri,
-          issuer: environment.keycloakIssuer,
-          allowInsecureConnections: environment.allowInsecureAuthConnections,
-        ),
-      );
-    } on Exception catch (error) {
-      throw AuthException(
-        'remote logout failed',
-        cause: error,
-      );
-    }
+    // Sign-out is intentionally local-only: we do NOT launch the OIDC
+    // end-session flow (`appAuth.endSession`), because that opens the system
+    // browser onto the raw Keycloak logout page — a jarring, off-brand
+    // experience for a native app. The caller (AuthController) clears the
+    // encrypted token store immediately, so the access/refresh/id tokens are
+    // destroyed on-device and the router redirects to Login after a brief
+    // "signing out" state. The IdP's own session cookie (only relevant for the
+    // federated Google path) expires server-side on its normal schedule; no
+    // tokens remain on the device. This keeps logout calm and predictable and
+    // never surfaces a Keycloak browser prompt.
   }
 
   /// Maps an AppAuth token response to [AuthTokens], failing loudly if the

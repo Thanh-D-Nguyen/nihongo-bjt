@@ -1,6 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nihongo_bjt/features/flashcards/data/mock_flashcard_repository.dart';
+import 'package:nihongo_bjt/features/flashcards/domain/deck_card_input.dart';
+import 'package:nihongo_bjt/features/flashcards/domain/deck_detail.dart';
+import 'package:nihongo_bjt/features/flashcards/domain/deck_form_input.dart';
 import 'package:nihongo_bjt/features/flashcards/domain/flashcard.dart';
 import 'package:nihongo_bjt/features/flashcards/domain/flashcard_deck.dart';
 import 'package:nihongo_bjt/features/flashcards/domain/flashcard_repository.dart';
@@ -17,6 +20,29 @@ class _RecordingRepository implements FlashcardRepository {
 
   @override
   Future<List<FlashcardDeck>> fetchDecks() => _delegate.fetchDecks();
+
+  @override
+  Future<DeckDetail> fetchDeckDetail(String deckId) =>
+      _delegate.fetchDeckDetail(deckId);
+
+  @override
+  Future<String> createDeck(DeckFormInput input) =>
+      _delegate.createDeck(input);
+
+  @override
+  Future<void> updateDeckMeta(String deckId, DeckFormInput input) =>
+      _delegate.updateDeckMeta(deckId, input);
+
+  @override
+  Future<void> archiveDeck(String deckId) => _delegate.archiveDeck(deckId);
+
+  @override
+  Future<void> saveDeckCards(
+    String deckId,
+    DeckFormInput meta,
+    List<DeckCardInput> cards,
+  ) =>
+      _delegate.saveDeckCards(deckId, meta, cards);
 
   @override
   Future<List<Flashcard>> fetchCards(String deckId) =>

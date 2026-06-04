@@ -46,13 +46,14 @@ SDK); it remains validated only on the Mac.
 
 ## 2. Home dashboard
 - [ ] Home hero renders; primary CTA reflects real flashcard availability.
+- [ ] Hero greeting matches device clock (morning/afternoon/evening/night) in vi and ja.
 - [ ] Loading shows content-shaped skeleton, not a bare spinner.
 - [ ] Empty state (no decks) is encouraging with a clear next action.
 - [ ] Error state shows retry and recovers on retry.
 - [ ] Partial-data state keeps route-backed shortcuts usable.
 - [ ] Today's lesson card is honest about preview content when preview-backed.
 - [ ] Review/progress metrics reflect real deck/card and device-local study data only.
-- [ ] Every Home shortcut navigates to the expected route in `MOBILE_HOME_RETEST_CHECKLIST.md`.
+- [ ] Every Home shortcut navigates to the expected route in `HOME_RETEST_CHECKLIST.md`.
 - [ ] No fake streak, XP, rank, plan, ad, or recommendation count appears.
 
 ## 3. Learn flow
@@ -107,6 +108,23 @@ SDK); it remains validated only on the Mac.
 flow is blocked by `ANDROID-QA-P1-002`: `Hiện đáp án` did not reveal after
 repeated taps.
 
+## 9a. Deck & flashcard management (web parity)
+- [ ] Deck list filter (All / Private / Public) shows the honest subset.
+- [ ] Create deck: required title validation, save → deck appears in list.
+- [ ] Edit deck metadata (title/description/visibility) → persists on return.
+- [ ] Archive deck: confirm dialog → deck leaves the active list.
+- [ ] Deck detail: card search filters by front/back/reading.
+- [ ] Deck detail: sort toggle (Position / A–Z) reorders the list.
+- [ ] Add card: required front/back, max-length errors, save → card appears.
+- [ ] Edit card: form prefilled, update → change persists.
+- [ ] Delete card: confirm dialog → card leaves the deck.
+- [ ] Study CTA launches a review session scoped to that deck's due cards.
+- [ ] Owner-only actions on someone else's public deck surface a server error
+      via SnackBar (no client-side crash).
+- [ ] JA card front uses generous line-height; no overflow at 320 dp.
+
+> Full per-step matrix: `MOBILE_DECK_FLASHCARD_RETEST_CHECKLIST.md`.
+
 ## 10. Progress
 - [ ] Only real metrics shown; honest empty/preview state otherwise.
 - [ ] No fabricated streaks or inflated numbers.
@@ -117,6 +135,43 @@ repeated taps.
 - [ ] Language preference applies.
 - [ ] Theme-mode setting (if present) persists across restart.
 - [ ] Furigana preference toggles reading help app-wide.
+- [ ] Haptics preference toggles app-wide vibration; persists across restart.
+
+## 11b. Sensory feedback (color / press / haptics)
+- [ ] Premium/subscription surfaces use the gold premium tone, not warning amber.
+- [ ] Correct vs incorrect answers differ by color **+ icon + text**, not color alone.
+- [ ] Buttons scale slightly on press; disabled/loading buttons do not scale.
+- [ ] With Reduce Motion ON, press scaling and decorative motion stop.
+- [ ] Haptics ON: answer select, set finish, card reveal, SRS rating, session
+      complete, and tab change each give a tick (needs a physical device).
+- [ ] Haptics OFF: none of the above vibrate.
+- [ ] App emits **no** sound anywhere (system volume up to confirm).
+- Full pass: `MOBILE_SENSORY_RETEST_CHECKLIST.md`.
+
+## 11a. App shell navigation (5-tab redesign)
+- [ ] Bottom nav shows exactly 5 tabs: Home / Learn / Review / Search / Me.
+- [ ] **Search** tab is the lookup hub (Dictionary, Kanji, Grammar, Saved +
+      global search); opening a tool keeps the Search tab active.
+- [ ] **Me** tab aggregates profile, progress, subscription, settings, about,
+      sign-out — no dead actions.
+- [ ] Fullscreen flows (Practice, Flashcard review, Scenario, Exam, Career
+      chapter) have **no** bottom nav and return to the launching tab.
+- [ ] Legacy paths redirect (see `APP_SHELL_RETEST_CHECKLIST.md` §13).
+- [ ] ≥600 dp width shows a NavigationRail instead of the bottom bar.
+- Full pass: `APP_SHELL_RETEST_CHECKLIST.md`.
+
+## 11c. Search / Reference hub + Saved (web parity)
+- [ ] Idle Search hub shows the prompt + tool cards; every card routes.
+- [ ] Recent searches record, re-run on tap, remove one, clear all, and survive
+      an app restart (device-local). Newest-first, no duplicates.
+- [ ] Search results come from `/api/search`; no fabricated rows; tapping a
+      result opens the matching word/kanji/grammar detail.
+- [ ] Kind filter appears only with >1 result kind; selecting narrows; changing
+      the query resets to All.
+- [ ] Detail bookmark icon reflects real saved state; optimistic toggle with
+      rollback; signed-out tap prompts sign-in.
+- [ ] Saved library remove un-bookmarks with a working Undo toast.
+- Full pass: `SEARCH_RETEST_CHECKLIST.md`.
 
 ## 12. Dark mode
 - [ ] Every screen is legible in dark; colors from palette, no light-only consts.

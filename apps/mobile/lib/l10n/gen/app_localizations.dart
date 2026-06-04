@@ -104,6 +104,12 @@ abstract class AppLocalizations {
   /// **'Thử lại'**
   String get commonRetry;
 
+  /// Generic undo action shown in snackbars after a destructive action.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hoàn tác'**
+  String get commonUndo;
+
   /// Screen-reader label for progress bars (the percentage is announced automatically).
   ///
   /// In vi, this message translates to:
@@ -115,6 +121,30 @@ abstract class AppLocalizations {
   /// In vi, this message translates to:
   /// **'ようこそ'**
   String get homeWelcome;
+
+  /// Home hero greeting shown in the morning (05:00–10:59), derived from the device clock.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chào buổi sáng'**
+  String get homeGreetingMorning;
+
+  /// Home hero greeting shown in the afternoon (11:00–16:59).
+  ///
+  /// In vi, this message translates to:
+  /// **'Chào buổi chiều'**
+  String get homeGreetingAfternoon;
+
+  /// Home hero greeting shown in the evening (17:00–21:59).
+  ///
+  /// In vi, this message translates to:
+  /// **'Chào buổi tối'**
+  String get homeGreetingEvening;
+
+  /// Home hero greeting shown late at night (22:00–04:59).
+  ///
+  /// In vi, this message translates to:
+  /// **'Chào buổi đêm'**
+  String get homeGreetingNight;
 
   /// Primary CTA on home that opens the flashcard deck list.
   ///
@@ -824,6 +854,444 @@ abstract class AppLocalizations {
   /// **'Không tải được danh sách bộ thẻ.'**
   String get deckListError;
 
+  /// Placeholder of the deck list search field.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tìm bộ thẻ'**
+  String get deckSearchHint;
+
+  /// Tooltip of the clear-search button in the deck list.
+  ///
+  /// In vi, this message translates to:
+  /// **'Xoá tìm kiếm'**
+  String get deckSearchClear;
+
+  /// Deck list filter chip showing every deck.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tất cả'**
+  String get deckFilterAll;
+
+  /// Deck list filter chip showing only private decks.
+  ///
+  /// In vi, this message translates to:
+  /// **'Riêng tư'**
+  String get deckFilterPrivate;
+
+  /// Deck list filter chip showing only public decks.
+  ///
+  /// In vi, this message translates to:
+  /// **'Công khai'**
+  String get deckFilterPublic;
+
+  /// Badge label on a deck that is publicly shared.
+  ///
+  /// In vi, this message translates to:
+  /// **'Công khai'**
+  String get deckVisibilityPublic;
+
+  /// Tooltip/label of the deck list sort control.
+  ///
+  /// In vi, this message translates to:
+  /// **'Sắp xếp'**
+  String get deckSortLabel;
+
+  /// Deck list sort option: most recently created first.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mới nhất'**
+  String get deckSortRecent;
+
+  /// Deck list sort option: by title A to Z.
+  ///
+  /// In vi, this message translates to:
+  /// **'Theo tên'**
+  String get deckSortTitle;
+
+  /// Deck list sort option: most cards first.
+  ///
+  /// In vi, this message translates to:
+  /// **'Nhiều thẻ nhất'**
+  String get deckSortCards;
+
+  /// Title shown when search/filter returns no decks.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không có kết quả'**
+  String get deckSearchEmptyTitle;
+
+  /// Message shown when search/filter returns no decks.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không tìm thấy bộ thẻ phù hợp.'**
+  String get deckSearchEmpty;
+
+  /// App bar title of the deck detail screen.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chi tiết bộ thẻ'**
+  String get flashcardDeckDetailTitle;
+
+  /// Primary action that starts a review session for the deck.
+  ///
+  /// In vi, this message translates to:
+  /// **'Học bộ thẻ'**
+  String get deckDetailStudyCta;
+
+  /// Section header above the list of cards in the deck.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thẻ trong bộ'**
+  String get deckDetailCardsHeader;
+
+  /// Title shown when a deck has no cards yet.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa có thẻ'**
+  String get deckDetailEmptyTitle;
+
+  /// Message shown when a deck has no cards yet.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bộ thẻ này chưa có thẻ nào.'**
+  String get deckDetailEmpty;
+
+  /// Title of the deck detail error state.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không tải được bộ thẻ'**
+  String get deckDetailErrorTitle;
+
+  /// Message of the deck detail error state.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không tải được chi tiết bộ thẻ. Vui lòng thử lại.'**
+  String get deckDetailError;
+
+  /// Generic cancel action label.
+  ///
+  /// In vi, this message translates to:
+  /// **'Huỷ'**
+  String get commonCancel;
+
+  /// Action that opens the create-deck form.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tạo bộ thẻ'**
+  String get deckCreateCta;
+
+  /// Empty-state call to action to create the first deck.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tạo bộ thẻ đầu tiên'**
+  String get deckListCreateFirst;
+
+  /// App bar title of the create-deck form.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tạo bộ thẻ'**
+  String get deckCreateTitle;
+
+  /// App bar title of the edit-deck form.
+  ///
+  /// In vi, this message translates to:
+  /// **'Sửa bộ thẻ'**
+  String get deckEditTitle;
+
+  /// Label of the required Vietnamese title field.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tiêu đề tiếng Việt'**
+  String get deckFormTitleViLabel;
+
+  /// Hint of the Vietnamese title field.
+  ///
+  /// In vi, this message translates to:
+  /// **'Nhập tên bộ thẻ'**
+  String get deckFormTitleViHint;
+
+  /// Label of the optional Japanese title field.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tiêu đề tiếng Nhật (tuỳ chọn)'**
+  String get deckFormTitleJaLabel;
+
+  /// Label of the optional Vietnamese description field.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mô tả tiếng Việt (tuỳ chọn)'**
+  String get deckFormDescriptionViLabel;
+
+  /// Label of the optional Japanese description field.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mô tả tiếng Nhật (tuỳ chọn)'**
+  String get deckFormDescriptionJaLabel;
+
+  /// Label of the deck visibility selector.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hiển thị'**
+  String get deckFormVisibilityLabel;
+
+  /// Visibility option: deck is private to the learner.
+  ///
+  /// In vi, this message translates to:
+  /// **'Riêng tư'**
+  String get deckFormVisibilityPrivate;
+
+  /// Visibility option: deck is publicly shared.
+  ///
+  /// In vi, this message translates to:
+  /// **'Công khai'**
+  String get deckFormVisibilityPublic;
+
+  /// Submit button of the create-deck form.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tạo bộ thẻ'**
+  String get deckFormSaveCreate;
+
+  /// Submit button of the edit-deck form.
+  ///
+  /// In vi, this message translates to:
+  /// **'Lưu thay đổi'**
+  String get deckFormSaveUpdate;
+
+  /// Validation error when the required title is empty.
+  ///
+  /// In vi, this message translates to:
+  /// **'Vui lòng nhập tiêu đề.'**
+  String get deckFormTitleRequired;
+
+  /// Validation error when a title exceeds its max length.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tiêu đề tối đa {max} ký tự.'**
+  String deckFormTitleTooLong(int max);
+
+  /// Validation error when a description exceeds its max length.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mô tả tối đa {max} ký tự.'**
+  String deckFormDescriptionTooLong(int max);
+
+  /// Fallback message when saving a deck fails.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không lưu được bộ thẻ. Vui lòng thử lại.'**
+  String get deckFormErrorGeneric;
+
+  /// Snackbar confirmation after a deck is saved.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã lưu bộ thẻ.'**
+  String get deckSaveSuccess;
+
+  /// Deck detail action that opens the edit form.
+  ///
+  /// In vi, this message translates to:
+  /// **'Sửa'**
+  String get deckDetailEditAction;
+
+  /// Deck detail action that archives the deck.
+  ///
+  /// In vi, this message translates to:
+  /// **'Lưu trữ'**
+  String get deckDetailArchiveAction;
+
+  /// Title of the archive confirmation dialog.
+  ///
+  /// In vi, this message translates to:
+  /// **'Lưu trữ bộ thẻ?'**
+  String get deckArchiveConfirmTitle;
+
+  /// Body of the archive confirmation dialog.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bộ thẻ sẽ được gỡ khỏi thư viện đang hoạt động.'**
+  String get deckArchiveConfirmMessage;
+
+  /// Confirm button of the archive dialog.
+  ///
+  /// In vi, this message translates to:
+  /// **'Lưu trữ'**
+  String get deckArchiveConfirmCta;
+
+  /// Snackbar confirmation after a deck is archived.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã lưu trữ bộ thẻ.'**
+  String get deckArchiveSuccess;
+
+  /// App bar title when adding a new card to a deck.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thêm thẻ'**
+  String get cardCreateTitle;
+
+  /// App bar title when editing an existing card.
+  ///
+  /// In vi, this message translates to:
+  /// **'Sửa thẻ'**
+  String get cardEditTitle;
+
+  /// Button that opens the add-card form.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thêm thẻ'**
+  String get cardAddAction;
+
+  /// Button that deletes the current card.
+  ///
+  /// In vi, this message translates to:
+  /// **'Xóa thẻ'**
+  String get cardDeleteAction;
+
+  /// Error shown when the edited card no longer exists.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không tìm thấy thẻ này. Có thể nó đã bị thay đổi.'**
+  String get cardNotFound;
+
+  /// Label for the front-text field of the card form.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mặt trước (tiếng Nhật)'**
+  String get cardFormFrontLabel;
+
+  /// Placeholder for the front-text field.
+  ///
+  /// In vi, this message translates to:
+  /// **'Ví dụ: 会議'**
+  String get cardFormFrontHint;
+
+  /// Label for the optional reading field of the card form.
+  ///
+  /// In vi, this message translates to:
+  /// **'Cách đọc (tùy chọn)'**
+  String get cardFormReadingLabel;
+
+  /// Placeholder for the reading field.
+  ///
+  /// In vi, this message translates to:
+  /// **'Ví dụ: かいぎ'**
+  String get cardFormReadingHint;
+
+  /// Label for the back-text field of the card form.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mặt sau (nghĩa)'**
+  String get cardFormBackLabel;
+
+  /// Placeholder for the back-text field.
+  ///
+  /// In vi, this message translates to:
+  /// **'Ví dụ: cuộc họp'**
+  String get cardFormBackHint;
+
+  /// Submit button when adding a new card.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thêm thẻ'**
+  String get cardFormSaveCreate;
+
+  /// Submit button when editing an existing card.
+  ///
+  /// In vi, this message translates to:
+  /// **'Lưu thay đổi'**
+  String get cardFormSaveUpdate;
+
+  /// Validation error when the front field is empty.
+  ///
+  /// In vi, this message translates to:
+  /// **'Vui lòng nhập mặt trước.'**
+  String get cardFrontRequired;
+
+  /// Validation error when the back field is empty.
+  ///
+  /// In vi, this message translates to:
+  /// **'Vui lòng nhập mặt sau.'**
+  String get cardBackRequired;
+
+  /// Validation error when a card field exceeds its maximum.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tối đa {max} ký tự.'**
+  String cardFieldTooLong(int max);
+
+  /// Shown when the deck already has the maximum number of cards.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bộ thẻ đã đạt giới hạn {max} thẻ.'**
+  String cardLimitReached(int max);
+
+  /// Snackbar after a card is created or updated.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã lưu thẻ.'**
+  String get cardSaveSuccess;
+
+  /// Snackbar after a card is deleted.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã xóa thẻ.'**
+  String get cardDeleteSuccess;
+
+  /// Title of the delete-card confirmation dialog.
+  ///
+  /// In vi, this message translates to:
+  /// **'Xóa thẻ này?'**
+  String get cardDeleteConfirmTitle;
+
+  /// Body of the delete-card confirmation dialog.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thao tác này không thể hoàn tác.'**
+  String get cardDeleteConfirmMessage;
+
+  /// Confirm button of the delete-card dialog.
+  ///
+  /// In vi, this message translates to:
+  /// **'Xóa'**
+  String get cardDeleteConfirmCta;
+
+  /// Placeholder for the card search field.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tìm thẻ…'**
+  String get cardSearchHint;
+
+  /// Sort option that keeps the original card order.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thứ tự'**
+  String get cardSortPosition;
+
+  /// Sort option that orders cards alphabetically by front text.
+  ///
+  /// In vi, this message translates to:
+  /// **'A–Z'**
+  String get cardSortAlphabetical;
+
+  /// Title shown when a card search returns no results.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không có thẻ phù hợp'**
+  String get cardSearchEmptyTitle;
+
+  /// Message shown when a card search returns no results.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thử từ khóa khác.'**
+  String get cardSearchEmptyMessage;
+
+  /// Count of cards matching the current search.
+  ///
+  /// In vi, this message translates to:
+  /// **'{count, plural, =1{1 thẻ} other{{count} thẻ}}'**
+  String cardSearchResultCount(int count);
+
   /// App bar title of the flashcard review screen.
   ///
   /// In vi, this message translates to:
@@ -1034,6 +1502,54 @@ abstract class AppLocalizations {
   /// **'Từ vựng, bài đọc và nội dung đã đánh dấu'**
   String get profileSavedSubtitle;
 
+  /// Hero badge label when the learner is on the free plan.
+  ///
+  /// In vi, this message translates to:
+  /// **'Gói miễn phí'**
+  String get profilePlanFree;
+
+  /// Title of the learning snapshot card.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tổng quan học tập'**
+  String get profileSnapshotTitle;
+
+  /// Learning snapshot metric: current study-day streak.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chuỗi ngày'**
+  String get profileSnapshotStreak;
+
+  /// Learning snapshot metric: reviews completed today.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hôm nay'**
+  String get profileSnapshotToday;
+
+  /// Learning snapshot metric: reviews in the last 7 days.
+  ///
+  /// In vi, this message translates to:
+  /// **'7 ngày qua'**
+  String get profileSnapshotWeek;
+
+  /// Learning snapshot metric: all-time review count.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tổng lượt ôn'**
+  String get profileSnapshotTotal;
+
+  /// Honest empty state title when no study activity is recorded yet.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa có dữ liệu học'**
+  String get profileSnapshotEmptyTitle;
+
+  /// Honest empty state body encouraging the learner to start studying.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hãy hoàn thành một phiên ôn tập để thấy tiến độ thật ở đây.'**
+  String get profileSnapshotEmptyBody;
+
   /// Section header for learner preferences.
   ///
   /// In vi, this message translates to:
@@ -1064,6 +1580,30 @@ abstract class AppLocalizations {
   /// **'Tiếng Nhật'**
   String get profileLanguageJapanese;
 
+  /// Label for the app appearance (light/dark/system) selector.
+  ///
+  /// In vi, this message translates to:
+  /// **'Giao diện'**
+  String get profileThemeTitle;
+
+  /// Appearance option that follows the device light/dark setting.
+  ///
+  /// In vi, this message translates to:
+  /// **'Theo thiết bị'**
+  String get profileThemeSystem;
+
+  /// Appearance option: light theme.
+  ///
+  /// In vi, this message translates to:
+  /// **'Sáng'**
+  String get profileThemeLight;
+
+  /// Appearance option: dark theme.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tối'**
+  String get profileThemeDark;
+
   /// Toggle label for showing reading help (furigana).
   ///
   /// In vi, this message translates to:
@@ -1075,6 +1615,18 @@ abstract class AppLocalizations {
   /// In vi, this message translates to:
   /// **'Hiện cách đọc kana phía trên kanji (trừ khi đang ôn tập).'**
   String get profileFuriganaSubtitle;
+
+  /// Toggle label for subtle haptic feedback on interactions.
+  ///
+  /// In vi, this message translates to:
+  /// **'Phản hồi rung'**
+  String get profileHapticsTitle;
+
+  /// Explains what the haptic feedback toggle controls.
+  ///
+  /// In vi, this message translates to:
+  /// **'Rung nhẹ khi chọn đáp án, lật thẻ và hoàn thành phiên học.'**
+  String get profileHapticsSubtitle;
 
   /// Button that ends the session and returns to login.
   ///
@@ -1129,6 +1681,18 @@ abstract class AppLocalizations {
   /// In vi, this message translates to:
   /// **'Ôn tập'**
   String get navReview;
+
+  /// Bottom navigation label for the Search lookup hub tab.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tra cứu'**
+  String get navSearch;
+
+  /// Bottom navigation label for the Me account hub tab.
+  ///
+  /// In vi, this message translates to:
+  /// **'Cá nhân'**
+  String get navMe;
 
   /// Bottom navigation label for the Progress tab.
   ///
@@ -1934,6 +2498,12 @@ abstract class AppLocalizations {
   /// **'Trả lời'**
   String get examSubmitCta;
 
+  /// Calm note shown for listening questions when audio playback is not yet available on mobile.
+  ///
+  /// In vi, this message translates to:
+  /// **'Câu hỏi nghe — phần phát âm thanh chưa có trên di động. Hãy đọc nội dung bên dưới để trả lời.'**
+  String get examAudioUnavailable;
+
   /// CTA to advance to the next exam question.
   ///
   /// In vi, this message translates to:
@@ -1987,6 +2557,90 @@ abstract class AppLocalizations {
   /// In vi, this message translates to:
   /// **'Gói hiện tại của bạn chưa bao gồm bài thi này.'**
   String get examUpgradeRequiredBody;
+
+  /// CTA on the result screen to open the per-question review.
+  ///
+  /// In vi, this message translates to:
+  /// **'Xem lại bài làm'**
+  String get examReviewCta;
+
+  /// Title of the exam per-question review screen.
+  ///
+  /// In vi, this message translates to:
+  /// **'Xem lại bài làm'**
+  String get examReviewTitle;
+
+  /// Score summary on the exam review screen.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đúng {correct}/{total} câu'**
+  String examReviewScore(int correct, int total);
+
+  /// Review filter chip: show all questions.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tất cả'**
+  String get examReviewFilterAll;
+
+  /// Review filter chip: show only incorrect answers.
+  ///
+  /// In vi, this message translates to:
+  /// **'Sai'**
+  String get examReviewFilterWrong;
+
+  /// Review filter chip: show only correct answers.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đúng'**
+  String get examReviewFilterCorrect;
+
+  /// Per-question label in the exam review list.
+  ///
+  /// In vi, this message translates to:
+  /// **'Câu {position}'**
+  String examReviewQuestionLabel(int position);
+
+  /// Verdict badge for a correct answer in review.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đúng'**
+  String get examReviewCorrect;
+
+  /// Verdict badge for an incorrect answer in review (gentle wording).
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa đúng'**
+  String get examReviewIncorrect;
+
+  /// Shows which option key the learner chose.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bạn chọn: {option}'**
+  String examReviewYourAnswer(String option);
+
+  /// Heading above the explanation text in review.
+  ///
+  /// In vi, this message translates to:
+  /// **'Giải thích'**
+  String get examReviewExplanationTitle;
+
+  /// Empty state when a review filter matches no questions.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không có câu nào trong mục này.'**
+  String get examReviewEmptyFilter;
+
+  /// Error title when the review breakdown fails to load.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không tải được phần xem lại'**
+  String get examReviewErrorTitle;
+
+  /// Error body when the review breakdown fails to load.
+  ///
+  /// In vi, this message translates to:
+  /// **'Kiểm tra kết nối và thử lại.'**
+  String get examReviewErrorBody;
 
   /// Title of the NHK news reading feature.
   ///
@@ -2503,6 +3157,90 @@ abstract class AppLocalizations {
   /// In vi, this message translates to:
   /// **'Khác'**
   String get searchKindOther;
+
+  /// Section header above the lookup tools on the Search hub.
+  ///
+  /// In vi, this message translates to:
+  /// **'Công cụ tra cứu'**
+  String get searchToolsTitle;
+
+  /// Subtitle for the Dictionary tool card on the Search hub.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tra từ Nhật–Việt'**
+  String get searchToolDictionarySubtitle;
+
+  /// Subtitle for the Kanji tool card on the Search hub.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tra kanji theo chữ và âm đọc'**
+  String get searchToolKanjiSubtitle;
+
+  /// Subtitle for the Grammar tool card on the Search hub.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tra mẫu ngữ pháp'**
+  String get searchToolGrammarSubtitle;
+
+  /// Section header above the learner's recent search queries.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tìm kiếm gần đây'**
+  String get searchRecentTitle;
+
+  /// Button that clears all recent searches.
+  ///
+  /// In vi, this message translates to:
+  /// **'Xóa hết'**
+  String get searchRecentClear;
+
+  /// Tooltip for removing a single recent search chip.
+  ///
+  /// In vi, this message translates to:
+  /// **'Xóa khỏi lịch sử'**
+  String get searchRecentRemoveTooltip;
+
+  /// Label for the segmented filter that shows all search result kinds.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tất cả'**
+  String get searchFilterAll;
+
+  /// Tooltip for the bookmark button when the item is not saved.
+  ///
+  /// In vi, this message translates to:
+  /// **'Lưu'**
+  String get savedBookmarkAdd;
+
+  /// Tooltip for the bookmark button when the item is already saved.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bỏ lưu'**
+  String get savedBookmarkRemove;
+
+  /// Snackbar shown when an unauthenticated learner taps bookmark.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đăng nhập để lưu mục này.'**
+  String get savedBookmarkSignIn;
+
+  /// Snackbar shown when a bookmark toggle fails.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không lưu được. Vui lòng thử lại.'**
+  String get savedBookmarkError;
+
+  /// Tooltip for removing an item from the saved list.
+  ///
+  /// In vi, this message translates to:
+  /// **'Xóa khỏi mục đã lưu'**
+  String get savedRemoveTooltip;
+
+  /// Snackbar confirming a saved item was removed.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã xóa khỏi mục đã lưu'**
+  String get savedRemovedToast;
 
   /// Title of the saved bookmarks library screen.
   ///

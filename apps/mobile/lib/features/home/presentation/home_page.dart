@@ -16,6 +16,17 @@ import 'package:nihongo_bjt/shared/widgets/app_card.dart';
 import 'package:nihongo_bjt/shared/widgets/app_logo.dart';
 import 'package:nihongo_bjt/shared/widgets/section_header.dart';
 
+/// Returns the localized time-of-day greeting for [hour] (0–23, device clock).
+///
+/// Buckets: morning 05–10, afternoon 11–16, evening 17–21, otherwise night.
+/// Pure and side-effect free so it is unit-testable without a fake clock.
+String homeGreetingForHour(int hour, AppLocalizations l10n) {
+  if (hour >= 5 && hour < 11) return l10n.homeGreetingMorning;
+  if (hour >= 11 && hour < 17) return l10n.homeGreetingAfternoon;
+  if (hour >= 17 && hour < 22) return l10n.homeGreetingEvening;
+  return l10n.homeGreetingNight;
+}
+
 /// Production Home dashboard.
 ///
 /// Mirrors the web Home hierarchy with mobile-native density and only real
@@ -36,7 +47,7 @@ class HomePage extends ConsumerWidget {
           IconButton(
             tooltip: l10n.profileOpenTooltip,
             iconSize: 24,
-            onPressed: () => context.pushNamed(Routes.profile),
+            onPressed: () => context.goNamed(Routes.me),
             icon: const Icon(Icons.account_circle_outlined),
           ),
         ],
@@ -144,7 +155,7 @@ class _HeroCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              l10n.homeWelcome,
+              homeGreetingForHour(DateTime.now().hour, l10n),
               style: AppTypography.japaneseReading.copyWith(
                 color: palette.accent,
                 fontWeight: FontWeight.w700,
@@ -667,7 +678,9 @@ class _ShortcutSection extends StatelessWidget {
                 crossAxisCount: columns,
                 mainAxisSpacing: AppSpacing.s,
                 crossAxisSpacing: AppSpacing.s,
-                childAspectRatio: columns == 3 ? 1.05 : 0.88,
+                // Taller 2-col cards so a 2-line JA title + 2-line subtitle
+                // never overflows on the narrowest (320 dp) screens.
+                childAspectRatio: columns == 3 ? 1.05 : 0.78,
               ),
               itemBuilder: (context, index) =>
                   _ShortcutCard(item: items[index], featured: featured),
@@ -885,6 +898,7 @@ class _ShortcutItem {
     _Tone.success => context.palette.successSoft,
     _Tone.warning => context.palette.warningSoft,
     _Tone.danger => context.palette.dangerSoft,
+    _Tone.premium => context.palette.premiumSoft,
   };
 
   Color iconColor(BuildContext context) => switch (tone) {
@@ -892,10 +906,11 @@ class _ShortcutItem {
     _Tone.success => context.palette.success,
     _Tone.warning => context.palette.warning,
     _Tone.danger => context.palette.danger,
+    _Tone.premium => context.palette.premium,
   };
 }
 
-enum _Tone { accent, success, warning, danger }
+enum _Tone { accent, success, warning, danger, premium }
 
 List<_ShortcutItem> _coreShortcuts(BuildContext context) {
   final l10n = AppLocalizations.of(context);
@@ -974,7 +989,7 @@ List<_ShortcutItem> _libraryShortcuts(BuildContext context) {
       subtitle: l10n.homeShortcutSubscriptionBody,
       icon: Icons.workspace_premium_outlined,
       routeName: Routes.subscription,
-      tone: _Tone.warning,
+      tone: _Tone.premium,
     ),
   ];
 }

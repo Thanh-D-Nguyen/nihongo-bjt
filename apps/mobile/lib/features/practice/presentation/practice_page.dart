@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nihongo_bjt/core/feedback/app_haptics.dart';
 import 'package:nihongo_bjt/core/theme/app_palette.dart';
 import 'package:nihongo_bjt/core/theme/app_radius.dart';
 import 'package:nihongo_bjt/core/theme/app_spacing.dart';
@@ -89,7 +90,12 @@ class _PracticePageState extends ConsumerState<PracticePage> {
           return _PracticeRunner(
             lessonId: widget.lessonId,
             state: state,
-            onFinish: () => setState(() => _finished = true),
+            onFinish: () {
+              // Completing the set is a meaningful moment — a touch more
+              // weight than a routine tap.
+              AppHaptics.medium();
+              setState(() => _finished = true);
+            },
           );
         },
       ),
@@ -136,7 +142,12 @@ class _PracticeRunner extends ConsumerWidget {
                   option: question.options[i],
                   index: i,
                   selected: state.currentSelection == i,
-                  onTap: () => controller.select(i),
+                  onTap: () {
+                    // Subtle tick when an answer is chosen — reinforcement
+                    // only; the selection is already shown visually.
+                    AppHaptics.selection();
+                    controller.select(i);
+                  },
                 ),
                 const SizedBox(height: AppSpacing.s),
               ],

@@ -201,37 +201,91 @@ String _emptyBody(AppLocalizations l10n, BookmarkKind kind) => switch (kind) {
 };
 
 /// A single saved row. Resolves its display title/subtitle from the canonical
-/// content detail provider for [kind], then opens that detail on tap.
-class _SavedItemTile extends ConsumerWidget {
+/// content detail provider for [kind], then opens that detail on tap. Exposes a
+/// remove action that un-bookmarks the target server-side (with Undo).
+class _SavedItemTile extends ConsumerStatefulWidget {
   const _SavedItemTile({required this.kind, required this.item});
 
   final BookmarkKind kind;
   final BookmarkItem item;
 
-  void _open(BuildContext context) {
-    final route = switch (kind) {
+  @override
+  ConsumerState<_SavedItemTile> createState() => _SavedItemTileState();
+}
+
+class _SavedItemTileState extends ConsumerState<_SavedItemTile> {
+  bool _busy = false;
+
+  void _open() {
+    final route = switch (widget.kind) {
       BookmarkKind.word => Routes.dictionaryWord,
       BookmarkKind.kanji => Routes.kanjiDetail,
       BookmarkKind.grammar => Routes.grammarDetail,
     };
     unawaited(
-      context.pushNamed(route, pathParameters: {'id': item.targetId}),
+      context.pushNamed(route, pathParameters: {'id': widget.item.targetId}),
     );
   }
 
+  Future<void> _remove() async {
+    if (_busy) return;
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    // The container outlives this row, which is disposed once the list
+    // refetches — Undo must keep working after that.
+    final container = ProviderScope.containerOf(context, listen: false);
+    setState(() => _busy = true);
+    try {
+      await container
+          .read(savedRepositoryProvider)
+          .toggle(widget.kind, widget.item.targetId);
+      container.invalidate(savedListProvider(widget.kind));
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(l10n.savedRemovedToast),
+            action: SnackBarAction(
+              label: l10n.commonUndo,
+              onPressed: () => _undo(container),
+            ),
+          ),
+        );
+    } on RepositoryException catch (error) {
+      final message = error.kind == RepositoryErrorKind.unauthorized
+          ? l10n.savedBookmarkSignIn
+          : l10n.savedBookmarkError;
+      messenger.showSnackBar(SnackBar(content: Text(message)));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _undo(ProviderContainer container) async {
+    try {
+      await container
+          .read(savedRepositoryProvider)
+          .toggle(widget.kind, widget.item.targetId);
+      container.invalidate(savedListProvider(widget.kind));
+    } on RepositoryException {
+      // The bookmark could not be restored; the list already reflects reality.
+    }
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final palette = context.palette;
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
     final (title, subtitle) = _resolve(ref);
 
     return AppCard(
-      onTap: () => _open(context),
+      onTap: _open,
       padding: const EdgeInsets.all(AppSpacing.m),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _KindIcon(kind: kind),
+          _KindIcon(kind: widget.kind),
           const SizedBox(width: AppSpacing.m),
           Expanded(
             child: Column(
@@ -262,8 +316,15 @@ class _SavedItemTile extends ConsumerWidget {
               ],
             ),
           ),
-          const SizedBox(width: AppSpacing.s),
-          Icon(Icons.chevron_right_rounded, color: palette.inkTertiary),
+          const SizedBox(width: AppSpacing.xs),
+          IconButton(
+            tooltip: l10n.savedRemoveTooltip,
+            onPressed: _busy ? null : _remove,
+            icon: Icon(
+              Icons.bookmark_remove_outlined,
+              color: palette.inkTertiary,
+            ),
+          ),
         ],
       ),
     );
@@ -273,26 +334,28 @@ class _SavedItemTile extends ConsumerWidget {
   /// title means "still resolving" (renders a shimmer); on failure the row
   /// falls back to the target id so it never shows a blank line.
   (String?, String?) _resolve(WidgetRef ref) {
-    switch (kind) {
+    switch (widget.kind) {
       case BookmarkKind.word:
-        final word = ref.watch(dictionaryWordProvider(item.targetId));
+        final word = ref.watch(dictionaryWordProvider(widget.item.targetId));
         return word.when(
           loading: () => (null, null),
-          error: (_, _) => (item.targetId, null),
+          error: (_, _) => (widget.item.targetId, null),
           data: (w) => (w.headword, w.reading ?? w.primaryGloss),
         );
       case BookmarkKind.kanji:
-        final kanji = ref.watch(kanjiDetailProvider(item.targetId));
+        final kanji = ref.watch(kanjiDetailProvider(widget.item.targetId));
         return kanji.when(
           loading: () => (null, null),
-          error: (_, _) => (item.targetId, null),
+          error: (_, _) => (widget.item.targetId, null),
           data: (k) => (k.character, k.meaningVi),
         );
       case BookmarkKind.grammar:
-        final grammar = ref.watch(grammarDetailProvider(item.targetId));
+        final grammar = ref.watch(
+          grammarDetailProvider(widget.item.targetId),
+        );
         return grammar.when(
           loading: () => (null, null),
-          error: (_, _) => (item.targetId, null),
+          error: (_, _) => (widget.item.targetId, null),
           data: (g) => (g.pattern, g.meaningVi),
         );
     }

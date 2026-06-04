@@ -15,6 +15,8 @@ FlashcardDeckDto _$FlashcardDeckDtoFromJson(Map<String, dynamic> json) =>
       ),
       titleJa: json['titleJa'] as String?,
       descriptionVi: json['descriptionVi'] as String?,
+      descriptionJa: json['descriptionJa'] as String?,
+      visibility: json['visibility'] as String?,
     );
 
 FlashcardDeckCountDto _$FlashcardDeckCountDtoFromJson(
