@@ -66,7 +66,7 @@ Local login is standardized around Keycloak + Next.js BFF route handlers:
 - Admin (`apps/admin`, `:3001`) uses the `nihongo-admin` Keycloak client and stores HttpOnly cookies prefixed with `bjt_admin_`.
 - Next.js route handlers exchange password/OAuth login for cookies, refresh sessions, and attach Bearer tokens to API calls.
 - NestJS (`apps/api`, `:4000`) is the backend auth boundary. It validates Keycloak JWTs through JWKS. Admin APIs additionally require the Keycloak admin realm/resource role and a linked active `authz.admin_actor.keycloak_subject`; RBAC permissions are loaded from PostgreSQL.
-- Keep `KEYCLOAK_EXPECTED_AUDIENCE=nihongo-web,nihongo-admin` in the API env so both learner and admin access tokens are accepted.
+- Keep `KEYCLOAK_EXPECTED_AUDIENCE=nihongo-web,nihongo-admin,nihongo-mobile` in the API env so learner web, admin, and mobile access tokens are accepted.
 - Do not rely on frontend-only admin checks. Admin pages may hide actions, but the API must enforce RBAC.
 
 For admin login to work locally, the Keycloak user must have the configured admin portal role (`admin` by default) and the matching `admin_actor` row must be seeded/linked. Run `pnpm seed:foundation`; if needed, use `database/scripts/link-keycloak-admin.ts` as the linking utility.

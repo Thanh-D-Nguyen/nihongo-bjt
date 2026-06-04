@@ -91,7 +91,7 @@ Copy the example env files into your apps (or merge into existing `.env`):
 - `env.api.example` → merge into the API process env (e.g. repo `.env` or `apps/api` loader)
 
 Set `WEB_KEYCLOAK_*` for learner and `ADMIN_KEYCLOAK_*` for admin. The API should accept both audiences:
-`KEYCLOAK_EXPECTED_AUDIENCE=nihongo-web,nihongo-admin`.
+`KEYCLOAK_EXPECTED_AUDIENCE=nihongo-web,nihongo-admin,nihongo-mobile`.
 
 `NEXT_PUBLIC_*` variables can use either **`NEXT_PUBLIC_KEYCLOAK_ISSUER_URL`** or **`NEXT_PUBLIC_KEYCLOAK_URL` + `NEXT_PUBLIC_KEYCLOAK_REALM`** (see examples).
 

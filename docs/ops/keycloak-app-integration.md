@@ -8,7 +8,7 @@ Use separate OIDC clients for learner and admin. The API validates both access-t
 |----------|------|
 | `KEYCLOAK_ISSUER_URL` | API: OIDC issuer (`/realms/{realm}`) |
 | `KEYCLOAK_JWKS_URL` | Optional JWKS override |
-| `KEYCLOAK_EXPECTED_AUDIENCE` | API JWT `aud`, e.g. `nihongo-web,nihongo-admin` |
+| `KEYCLOAK_EXPECTED_AUDIENCE` | API JWT `aud`, e.g. `nihongo-web,nihongo-admin,nihongo-mobile` |
 | `WEB_KEYCLOAK_CLIENT_ID` / `WEB_KEYCLOAK_CLIENT_SECRET` | Learner Next.js token exchange |
 | `ADMIN_KEYCLOAK_CLIENT_ID` / `ADMIN_KEYCLOAK_CLIENT_SECRET` | Admin Next.js token exchange |
 | `KEYCLOAK_ADMIN_REALM_ROLES` | Comma-separated realm or resource role names that may use the **admin** app shell; default `admin` |

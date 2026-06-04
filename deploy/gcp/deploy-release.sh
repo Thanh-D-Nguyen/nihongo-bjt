@@ -24,6 +24,7 @@ pnpm install --frozen-lockfile
 pnpm prisma:generate
 pnpm exec prisma migrate deploy --schema packages/database/prisma/schema.prisma
 ./deploy/gcp/apply-recommendation-schema.sh
+./deploy/gcp/configure-keycloak-mobile-client.sh
 ./deploy/gcp/link-keycloak-admin.sh
 pnpm build
 

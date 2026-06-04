@@ -29,6 +29,7 @@ import 'package:nihongo_bjt/features/learn/presentation/widgets/lesson_card.dart
 import 'package:nihongo_bjt/features/review/presentation/review_hub_page.dart';
 import 'package:nihongo_bjt/features/settings/presentation/profile_page.dart';
 import 'package:nihongo_bjt/l10n/gen/app_localizations.dart';
+import 'package:nihongo_bjt/shared/widgets/primary_button.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 /// Reports a valid session so the shell lands on Home (no platform storage).
@@ -235,11 +236,16 @@ void main() {
     const newFront = 'テスト単語';
     await tester.enterText(find.byType(TextField).at(0), newFront);
     await tester.enterText(find.byType(TextField).at(2), 'từ kiểm thử');
-    await tester.tap(find.text(l10n.cardFormSaveCreate));
+    await tester.tap(find.byType(PrimaryButton));
     await tester.pumpAndSettle();
 
     // Back on the deck detail, the new card is visible.
     expect(find.byType(FlashcardDeckDetailPage), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text(newFront),
+      400,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text(newFront), findsOneWidget);
   });
 

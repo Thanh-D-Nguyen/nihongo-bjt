@@ -575,7 +575,7 @@ MINIO_USE_SSL=true
 # ─── Keycloak (JWT validation) ───────────────────
 KEYCLOAK_ISSUER_URL=https://auth.nihongo-bjt.com/realms/nihongo-bjt
 KEYCLOAK_CLIENT_ID=nihongo-web
-KEYCLOAK_EXPECTED_AUDIENCE=nihongo-web,nihongo-admin
+KEYCLOAK_EXPECTED_AUDIENCE=nihongo-web,nihongo-admin,nihongo-mobile
 
 # ─── Keycloak Admin REST (user management) ───────
 # Option A: Service account client (khuyến nghị production)
