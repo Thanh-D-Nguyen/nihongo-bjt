@@ -15,6 +15,7 @@ class ApiClient {
     required this.environment,
     required this.httpClient,
     this.accessTokenProvider,
+    this.requestTimeout = const Duration(seconds: 15),
   });
 
   /// Resolved environment configuration (base URL, etc.).
@@ -28,6 +29,11 @@ class ApiClient {
   /// auth-agnostic (backward compatible).
   final Future<String?> Function()? accessTokenProvider;
 
+  /// Maximum time one API request may spend preparing headers and waiting for
+  /// the transport. Prevents Riverpod loaders from staying pending forever when
+  /// auth refresh or the network stalls.
+  final Duration requestTimeout;
+
   /// Performs a GET request and returns the decoded JSON body.
   ///
   /// [path] is appended to [AppEnvironment.apiBaseUrl] and must start with `/`.
@@ -39,7 +45,11 @@ class ApiClient {
 
     final http.Response response;
     try {
-      response = await httpClient.get(uri, headers: await _headers());
+      response = await _withTimeout(
+        () async => httpClient.get(uri, headers: await _headers()),
+        method: 'GET',
+        uri: uri,
+      );
     } on Exception catch (error) {
       throw NetworkApiException('GET $uri failed: $error');
     }
@@ -70,10 +80,14 @@ class ApiClient {
 
     final http.Response response;
     try {
-      response = await httpClient.post(
-        uri,
-        headers: await _headers(withJsonContentType: true),
-        body: body == null ? null : jsonEncode(body),
+      response = await _withTimeout(
+        () async => httpClient.post(
+          uri,
+          headers: await _headers(withJsonContentType: true),
+          body: body == null ? null : jsonEncode(body),
+        ),
+        method: 'POST',
+        uri: uri,
       );
     } on Exception catch (error) {
       throw NetworkApiException('POST $uri failed: $error');
@@ -105,10 +119,14 @@ class ApiClient {
 
     final http.Response response;
     try {
-      response = await httpClient.patch(
-        uri,
-        headers: await _headers(withJsonContentType: true),
-        body: body == null ? null : jsonEncode(body),
+      response = await _withTimeout(
+        () async => httpClient.patch(
+          uri,
+          headers: await _headers(withJsonContentType: true),
+          body: body == null ? null : jsonEncode(body),
+        ),
+        method: 'PATCH',
+        uri: uri,
       );
     } on Exception catch (error) {
       throw NetworkApiException('PATCH $uri failed: $error');
@@ -126,6 +144,21 @@ class ApiClient {
       return null;
     }
     return jsonDecode(response.body);
+  }
+
+  Future<http.Response> _withTimeout(
+    Future<http.Response> Function() request, {
+    required String method,
+    required Uri uri,
+  }) {
+    return request().timeout(
+      requestTimeout,
+      onTimeout: () {
+        throw NetworkApiException(
+          '$method $uri timed out after ${requestTimeout.inSeconds}s',
+        );
+      },
+    );
   }
 
   /// Builds request headers, attaching a bearer token when one is available.

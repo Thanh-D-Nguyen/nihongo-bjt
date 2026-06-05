@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nihongo_bjt/core/auth/auth_token_store.dart';
@@ -81,11 +83,13 @@ AuthTokens _tokens({required bool expired}) {
 ProviderContainer _container({
   required AuthTokenStore store,
   required AuthRepository repository,
+  Duration refreshTimeout = const Duration(seconds: 12),
 }) {
   final container = ProviderContainer(
     overrides: [
       authTokenStoreProvider.overrideWithValue(store),
       authRepositoryProvider.overrideWithValue(repository),
+      authRefreshTimeoutProvider.overrideWithValue(refreshTimeout),
     ],
   );
   addTearDown(container.dispose);
@@ -145,6 +149,22 @@ void main() {
       expect(session.status, AuthStatus.unauthenticated);
       expect(await store.read(), isNull);
     });
+
+    test('expired tokens with stuck refresh -> clears session', () async {
+      final store = _FakeTokenStore(_tokens(expired: true));
+      final container = _container(
+        store: store,
+        repository: _FakeAuthRepository(
+          onRefresh: () => Completer<AuthTokens>().future,
+        ),
+        refreshTimeout: const Duration(milliseconds: 1),
+      );
+
+      final session = await container.read(authControllerProvider.future);
+
+      expect(session.status, AuthStatus.unauthenticated);
+      expect(await store.read(), isNull);
+    });
   });
 
   group('AuthController.signIn', () {
@@ -189,7 +209,9 @@ void main() {
       );
 
       await container.read(authControllerProvider.future);
-      await container.read(authControllerProvider.notifier).signIn(
+      await container
+          .read(authControllerProvider.notifier)
+          .signIn(
             flow: AuthBrowserFlow.register,
           );
 
@@ -207,7 +229,9 @@ void main() {
       );
 
       await container.read(authControllerProvider.future);
-      await container.read(authControllerProvider.notifier).signInWithPassword(
+      await container
+          .read(authControllerProvider.notifier)
+          .signInWithPassword(
             username: 'testuser',
             password: '123456',
           );
@@ -264,6 +288,37 @@ void main() {
       );
 
       await container.read(authControllerProvider.future);
+      final accessToken = await container
+          .read(authControllerProvider.notifier)
+          .currentAccessToken();
+
+      expect(accessToken, isNull);
+      expect(await store.read(), isNull);
+      expect(
+        container.read(authControllerProvider).value!.isAuthenticated,
+        false,
+      );
+    });
+
+    test('clears session when refresh hangs after token expiry', () async {
+      final expired = _tokens(expired: true);
+      final store = _FakeTokenStore();
+      final container = _container(
+        store: store,
+        repository: _FakeAuthRepository(
+          onPasswordSignIn: () async => expired,
+          onRefresh: () => Completer<AuthTokens>().future,
+        ),
+        refreshTimeout: const Duration(milliseconds: 1),
+      );
+
+      await container.read(authControllerProvider.future);
+      await container
+          .read(authControllerProvider.notifier)
+          .signInWithPassword(
+            username: 'testuser',
+            password: '123456',
+          );
       final accessToken = await container
           .read(authControllerProvider.notifier)
           .currentAccessToken();

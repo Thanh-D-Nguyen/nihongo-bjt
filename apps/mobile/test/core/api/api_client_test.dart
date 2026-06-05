@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -17,11 +18,13 @@ void main() {
   );
 
   ApiClient clientReturning(
-    http.Response Function(http.Request request) handler,
-  ) {
+    http.Response Function(http.Request request) handler, {
+    Duration requestTimeout = const Duration(seconds: 15),
+  }) {
     return ApiClient(
       environment: env,
       httpClient: MockClient((request) async => handler(request)),
+      requestTimeout: requestTimeout,
     );
   }
 
@@ -82,6 +85,40 @@ void main() {
 
       await expectLater(
         client.getJson('/down'),
+        throwsA(isA<NetworkApiException>()),
+      );
+    });
+
+    test(
+      'throws NetworkApiException when the transport never returns',
+      () async {
+        final client = ApiClient(
+          environment: env,
+          httpClient: MockClient(
+            (request) => Completer<http.Response>().future,
+          ),
+          requestTimeout: const Duration(milliseconds: 1),
+        );
+
+        await expectLater(
+          client.getJson('/slow'),
+          throwsA(isA<NetworkApiException>()),
+        );
+      },
+    );
+
+    test('times out while waiting for an access token', () async {
+      final client = ApiClient(
+        environment: env,
+        httpClient: MockClient((request) async {
+          fail('request must not be sent before token resolution');
+        }),
+        accessTokenProvider: () => Completer<String?>().future,
+        requestTimeout: const Duration(milliseconds: 1),
+      );
+
+      await expectLater(
+        client.getJson('/needs-token'),
         throwsA(isA<NetworkApiException>()),
       );
     });

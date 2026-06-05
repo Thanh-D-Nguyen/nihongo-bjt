@@ -31,6 +31,13 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   );
 });
 
+/// Upper bound for silent token refresh. If the identity provider or network
+/// stalls, protected API screens should fall back to unauthenticated/error
+/// states instead of leaving loaders pending forever.
+final authRefreshTimeoutProvider = Provider<Duration>((ref) {
+  return const Duration(seconds: 12);
+});
+
 /// Owns the authentication session: restore on startup, sign-in, sign-out.
 ///
 /// Kept alive for the app lifetime (the router depends on it continuously).
@@ -56,7 +63,9 @@ class AuthController extends AsyncNotifier<AuthSession> {
     }
 
     try {
-      final refreshed = await _repository.refresh(stored.refreshToken);
+      final refreshed = await _repository
+          .refresh(stored.refreshToken)
+          .timeout(ref.read(authRefreshTimeoutProvider));
       await _store.write(refreshed);
       return AuthSession.authenticated(refreshed);
     } on Object {
@@ -134,7 +143,9 @@ class AuthController extends AsyncNotifier<AuthSession> {
       }
     }
 
-    final refresh = _repository.refresh(refreshToken);
+    final refresh = _repository
+        .refresh(refreshToken)
+        .timeout(ref.read(authRefreshTimeoutProvider));
     _refreshInFlight = refresh;
     try {
       final refreshed = await refresh;
