@@ -1232,6 +1232,48 @@ abstract class AppLocalizations {
   /// **'Đã lưu thẻ.'**
   String get cardSaveSuccess;
 
+  /// Button that appends another empty card row in bulk add.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thêm hàng'**
+  String get cardBulkAddRow;
+
+  /// Toggle to show the optional reading field on every row.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hiện cách đọc'**
+  String get cardBulkShowReading;
+
+  /// Tooltip/label for removing one card row in bulk add.
+  ///
+  /// In vi, this message translates to:
+  /// **'Xóa hàng'**
+  String get cardBulkRemoveRow;
+
+  /// Header above each card row in bulk add.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thẻ {number}'**
+  String cardBulkRowTitle(int number);
+
+  /// Primary button that saves every filled row at once.
+  ///
+  /// In vi, this message translates to:
+  /// **'Lưu tất cả'**
+  String get cardBulkSaveAll;
+
+  /// Shown when the learner taps save without filling any row.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hãy nhập ít nhất một thẻ.'**
+  String get cardBulkEmptyWarning;
+
+  /// Snackbar after bulk-adding cards.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã thêm {count} thẻ.'**
+  String cardBulkSaveSuccess(int count);
+
   /// Snackbar after a card is deleted.
   ///
   /// In vi, this message translates to:
@@ -1309,6 +1351,48 @@ abstract class AppLocalizations {
   /// In vi, this message translates to:
   /// **'Tự nhớ lại trước, rồi chạm để xem đáp án.'**
   String get reviewRevealHint;
+
+  /// Prompt above the typing field in type-recall review mode.
+  ///
+  /// In vi, this message translates to:
+  /// **'Nhập nghĩa hoặc cách đọc'**
+  String get reviewTypePrompt;
+
+  /// Placeholder text inside the typing field in type-recall mode.
+  ///
+  /// In vi, this message translates to:
+  /// **'Câu trả lời của bạn…'**
+  String get reviewTypePlaceholder;
+
+  /// Button that grades the typed answer in type-recall mode.
+  ///
+  /// In vi, this message translates to:
+  /// **'Kiểm tra'**
+  String get reviewTypeSubmit;
+
+  /// Button that advances to the next card after a typed answer is graded.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tiếp tục'**
+  String get reviewTypeContinue;
+
+  /// Feedback label when a typed answer is an exact match.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chính xác'**
+  String get reviewTypeCorrect;
+
+  /// Feedback label when a typed answer is a near miss.
+  ///
+  /// In vi, this message translates to:
+  /// **'Gần đúng'**
+  String get reviewTypeAlmost;
+
+  /// Feedback label when a typed answer is incorrect.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa đúng'**
+  String get reviewTypeWrong;
 
   /// Heading shown when a review session is finished.
   ///
@@ -1820,6 +1904,24 @@ abstract class AppLocalizations {
   /// **'Nội dung'**
   String get lessonDetailContentTitle;
 
+  /// Header above the previous/next lesson navigation row.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bài học khác'**
+  String get lessonNavTitle;
+
+  /// Label for the button that opens the previous lesson.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bài trước'**
+  String get lessonNavPrevious;
+
+  /// Label for the button that opens the next lesson.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bài tiếp'**
+  String get lessonNavNext;
+
   /// CTA on the lesson detail screen to start practice.
   ///
   /// In vi, this message translates to:
@@ -2018,6 +2120,30 @@ abstract class AppLocalizations {
   /// **'Không tải được nội dung. Vui lòng thử lại.'**
   String get reviewSectionError;
 
+  /// Title of the due-now SRS entry on the Review hub.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đến hạn hôm nay'**
+  String get reviewDueTitle;
+
+  /// Number of flashcards due across all decks.
+  ///
+  /// In vi, this message translates to:
+  /// **'{count} thẻ cần ôn ngay'**
+  String reviewDueStat(int count);
+
+  /// Shown when no flashcards are due for review.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bạn đã ôn xong các thẻ đến hạn.'**
+  String get reviewDueEmpty;
+
+  /// CTA to start the cross-deck due-review session.
+  ///
+  /// In vi, this message translates to:
+  /// **'Ôn ngay'**
+  String get reviewDueCta;
+
   /// App bar title for the Progress tab.
   ///
   /// In vi, this message translates to:
@@ -2029,6 +2155,84 @@ abstract class AppLocalizations {
   /// In vi, this message translates to:
   /// **'Hoạt động học tập của bạn trên thiết bị này.'**
   String get progressIntro;
+
+  /// Title of the coaching next-step card on the Progress tab.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bước gợi ý tiếp theo'**
+  String get progressCoachingTitle;
+
+  /// Primary-action button label when reviewing flashcards is recommended.
+  ///
+  /// In vi, this message translates to:
+  /// **'Ôn thẻ đến hạn'**
+  String get progressCoachingCtaFlashcards;
+
+  /// Primary-action button label when a short BJT set is recommended.
+  ///
+  /// In vi, this message translates to:
+  /// **'Luyện BJT ngắn'**
+  String get progressCoachingCtaQuiz;
+
+  /// Hint under the action card when flashcards are due.
+  ///
+  /// In vi, this message translates to:
+  /// **'{n} thẻ đang đến hạn — ưu tiên giữ nhịp SRS.'**
+  String progressCoachingHintFlashcardsDue(int n);
+
+  /// Hint when a BJT set is recommended to reinforce weak skills.
+  ///
+  /// In vi, this message translates to:
+  /// **'Có kỹ năng cần củng cố — luyện theo dạng đề giúp ổn định.'**
+  String get progressCoachingHintQuizSkills;
+
+  /// Hint when a BJT set is recommended to lift accuracy.
+  ///
+  /// In vi, this message translates to:
+  /// **'Độ chính xác còn dư địa — thêm vài câu BJT sẽ rõ tiến bộ.'**
+  String get progressCoachingHintQuizAccuracy;
+
+  /// Hint when the learner only needs to keep a light cadence.
+  ///
+  /// In vi, this message translates to:
+  /// **'Giữ đà nhẹ: vài phút ôn hoặc một set BJT ngắn.'**
+  String get progressCoachingHintMaintain;
+
+  /// Eyebrow label above the encouraging nudge line.
+  ///
+  /// In vi, this message translates to:
+  /// **'Động viên nhẹ'**
+  String get progressCoachingNudgeTitle;
+
+  /// Eyebrow label above the server-derived coaching insight line.
+  ///
+  /// In vi, this message translates to:
+  /// **'Gợi ý'**
+  String get progressCoachingInsightTitle;
+
+  /// Nudge line when flashcards are due.
+  ///
+  /// In vi, this message translates to:
+  /// **'{n} thẻ đang chờ — mỗi phiên ngắn đều có giá trị.'**
+  String progressCoachingNudgeDue(int n);
+
+  /// Nudge line when weak skills were detected.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã xác định vài kỹ năng cần chú ý — luyện đều sẽ dễ hơn.'**
+  String get progressCoachingNudgeWeak;
+
+  /// Nudge line celebrating an active study streak.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chuỗi {n} ngày đang chạy — đều đặn quan trọng hơn tốc độ.'**
+  String progressCoachingNudgeStreak(int n);
+
+  /// Calm nudge line when there is no urgent signal.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không cần vội — chọn một hoạt động ngắn phù hợp hôm nay.'**
+  String get progressCoachingNudgeCalm;
 
   /// Empty-state title shown before any review is recorded.
   ///
@@ -2252,6 +2456,12 @@ abstract class AppLocalizations {
   /// **'{count, plural, other{{count} nét}}'**
   String kanjiStrokesLabel(int count);
 
+  /// Frequency-rank badge in kanji detail (lower is more common).
+  ///
+  /// In vi, this message translates to:
+  /// **'Tần suất #{rank}'**
+  String kanjiFrequencyLabel(int rank);
+
   /// Section header above the stroke-order diagram in kanji detail.
   ///
   /// In vi, this message translates to:
@@ -2377,6 +2587,12 @@ abstract class AppLocalizations {
   /// In vi, this message translates to:
   /// **'{count} bước'**
   String scenarioStepCount(int count);
+
+  /// Number of times a scenario has been played.
+  ///
+  /// In vi, this message translates to:
+  /// **'{count} lượt chơi'**
+  String scenarioAttemptCount(int count);
 
   /// CTA to start a scenario.
   ///
@@ -2641,6 +2857,54 @@ abstract class AppLocalizations {
   /// In vi, this message translates to:
   /// **'Kiểm tra kết nối và thử lại.'**
   String get examReviewErrorBody;
+
+  /// Title of the save-mistakes-to-deck card on exam review.
+  ///
+  /// In vi, this message translates to:
+  /// **'Lưu câu sai để ôn lại'**
+  String get examRemediationTitle;
+
+  /// Body of the remediation card; count of explained mistakes.
+  ///
+  /// In vi, this message translates to:
+  /// **'{count} câu sai có giải thích. Tạo bộ thẻ flashcard để ôn lại.'**
+  String examRemediationBody(int count);
+
+  /// Button that creates a review deck from exam mistakes.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tạo bộ thẻ ôn tập'**
+  String get examRemediationCta;
+
+  /// Success message after the review deck is created.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã tạo bộ thẻ với {count} thẻ.'**
+  String examRemediationSuccess(int count);
+
+  /// Button to open the newly created remediation deck.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mở bộ thẻ'**
+  String get examRemediationOpenDeck;
+
+  /// Error shown when creating the remediation deck fails.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không tạo được bộ thẻ. Thử lại.'**
+  String get examRemediationError;
+
+  /// Generated title for a remediation deck from a named test.
+  ///
+  /// In vi, this message translates to:
+  /// **'Ôn lỗi: {test}'**
+  String examRemediationDeckTitle(String test);
+
+  /// Generated remediation deck title when the test is unnamed.
+  ///
+  /// In vi, this message translates to:
+  /// **'Ôn lỗi bài thi BJT'**
+  String get examRemediationDeckTitleFallback;
 
   /// Title of the NHK news reading feature.
   ///
@@ -2948,6 +3212,12 @@ abstract class AppLocalizations {
   /// **'Mở khoá ở cấp {rank}'**
   String careerArcLocked(String rank);
 
+  /// Eyebrow label on an arc card showing the entry rank.
+  ///
+  /// In vi, this message translates to:
+  /// **'Yêu cầu rank {rank}'**
+  String careerArcRankRequired(String rank);
+
   /// Arc chapter completion progress.
   ///
   /// In vi, this message translates to:
@@ -3242,6 +3512,12 @@ abstract class AppLocalizations {
   /// **'Đã xóa khỏi mục đã lưu'**
   String get savedRemovedToast;
 
+  /// Secondary line on a saved item tile showing the bookmark date.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã lưu: {date}'**
+  String savedSavedOn(DateTime date);
+
   /// Title of the saved bookmarks library screen.
   ///
   /// In vi, this message translates to:
@@ -3416,6 +3692,24 @@ abstract class AppLocalizations {
   /// **'{days} ngày'**
   String rewardsStreakDays(int days);
 
+  /// Label above the 12-week streak activity heatmap.
+  ///
+  /// In vi, this message translates to:
+  /// **'Lịch học tập'**
+  String get rewardsStreakCalendar;
+
+  /// Localized name of an achievement tier.
+  ///
+  /// In vi, this message translates to:
+  /// **'{tier, select, bronze{Đồng} silver{Bạc} gold{Vàng} platinum{Bạch Kim} other{{tier}}}'**
+  String rewardsAchievementTierLabel(String tier);
+
+  /// Localized name of an achievement category.
+  ///
+  /// In vi, this message translates to:
+  /// **'{category, select, learning{Học tập} social{Xã hội} streak{Chuỗi ngày} mastery{Thành thạo} battle{Đối kháng} other{{category}}}'**
+  String rewardsAchievementCategoryLabel(String category);
+
   /// Title for the empty achievements state.
   ///
   /// In vi, this message translates to:
@@ -3469,6 +3763,12 @@ abstract class AppLocalizations {
   /// In vi, this message translates to:
   /// **'Người học ẩn danh'**
   String get rewardsLeaderboardAnonymous;
+
+  /// Fallback leaderboard name using a short user id when no display name is set.
+  ///
+  /// In vi, this message translates to:
+  /// **'Người dùng {id}'**
+  String rewardsLeaderboardUserFallback(String id);
 
   /// Formatted leaderboard score.
   ///
@@ -3679,6 +3979,72 @@ abstract class AppLocalizations {
   /// In vi, this message translates to:
   /// **'Đề xuất'**
   String get subscriptionPlanRecommended;
+
+  /// Label for the reading (kana) row in the reading-assist lookup sheet.
+  ///
+  /// In vi, this message translates to:
+  /// **'Cách đọc'**
+  String get readingDetailReadingLabel;
+
+  /// Label for the meaning row in the reading-assist lookup sheet.
+  ///
+  /// In vi, this message translates to:
+  /// **'Nghĩa'**
+  String get readingDetailMeaningLabel;
+
+  /// Button to add the term to flashcards from the lookup sheet.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thêm vào thẻ ghi nhớ'**
+  String get readingDetailAddFlashcard;
+
+  /// Confirmation shown after adding a term to flashcards.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã thêm vào thẻ ghi nhớ'**
+  String get readingDetailAdded;
+
+  /// Error shown when adding a term to flashcards fails.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không thêm được. Vui lòng thử lại.'**
+  String get readingDetailAddError;
+
+  /// Title of the add-to-flashcard deck picker sheet.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thêm vào thẻ ghi nhớ'**
+  String get addFlashcardTitle;
+
+  /// Subtitle prompting the learner to pick a deck.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chọn bộ thẻ để lưu từ này'**
+  String get addFlashcardChooseDeck;
+
+  /// Error shown when the deck list fails to load in the picker.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không tải được bộ thẻ.'**
+  String get addFlashcardLoadError;
+
+  /// Empty state title when the learner has no decks.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa có bộ thẻ nào'**
+  String get addFlashcardEmptyTitle;
+
+  /// Empty state body when the learner has no decks.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tạo một bộ thẻ để bắt đầu lưu từ vựng.'**
+  String get addFlashcardEmptyBody;
+
+  /// Button to go create a deck from the empty picker.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tạo bộ thẻ'**
+  String get addFlashcardCreateDeck;
 }
 
 class _AppLocalizationsDelegate

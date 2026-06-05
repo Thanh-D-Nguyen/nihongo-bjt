@@ -88,8 +88,7 @@ class _NewsDetailPageState extends ConsumerState<NewsDetailPage> {
           title: l10n.newsErrorTitle,
           message: l10n.newsErrorBody,
           retryLabel: l10n.commonRetry,
-          onRetry: () =>
-              ref.invalidate(newsDetailProvider(widget.articleId)),
+          onRetry: () => ref.invalidate(newsDetailProvider(widget.articleId)),
         ),
         data: (article) => _ArticleBody(article: article),
       ),
@@ -145,8 +144,14 @@ class _ArticleBody extends StatelessWidget {
                   ? Icons.auto_stories_outlined
                   : Icons.public_outlined,
               label: summary.sourceLabel,
-            ),            if (summary.difficulty != null)
+            ),
+            if (summary.difficulty != null)
               ContentTag(label: summary.difficulty!),
+            if (summary.publishedAt != null)
+              ContentTag(
+                icon: Icons.schedule_outlined,
+                label: _formatDate(summary.publishedAt!),
+              ),
           ],
         ),
         const SizedBox(height: AppSpacing.l),
@@ -172,6 +177,14 @@ class _ArticleBody extends StatelessWidget {
           ],
       ],
     );
+  }
+
+  String _formatDate(DateTime date) {
+    final local = date.toLocal();
+    final y = local.year.toString().padLeft(4, '0');
+    final m = local.month.toString().padLeft(2, '0');
+    final d = local.day.toString().padLeft(2, '0');
+    return '$y-$m-$d';
   }
 }
 

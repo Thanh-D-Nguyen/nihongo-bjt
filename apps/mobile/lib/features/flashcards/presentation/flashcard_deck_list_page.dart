@@ -78,7 +78,8 @@ class _DeckListViewState extends State<_DeckListView> {
   List<FlashcardDeck> get _visibleDecks {
     final query = _query.trim().toLowerCase();
     final filtered = widget.decks.where((deck) {
-      final matchesQuery = query.isEmpty ||
+      final matchesQuery =
+          query.isEmpty ||
           deck.title.toLowerCase().contains(query) ||
           deck.description.toLowerCase().contains(query);
       final matchesFilter = switch (_filter) {

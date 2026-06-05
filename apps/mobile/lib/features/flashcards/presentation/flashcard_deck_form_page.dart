@@ -2,7 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';import 'package:nihongo_bjt/app/router.dart';
+import 'package:go_router/go_router.dart';
+import 'package:nihongo_bjt/app/router.dart';
 import 'package:nihongo_bjt/core/theme/app_palette.dart';
 import 'package:nihongo_bjt/core/theme/app_radius.dart';
 import 'package:nihongo_bjt/core/theme/app_spacing.dart';
@@ -186,16 +187,18 @@ class _DeckFormState extends ConsumerState<_DeckForm> {
     return switch (error) {
       null => null,
       DeckFieldError.required => l10n.deckFormTitleRequired,
-      DeckFieldError.tooLong =>
-        l10n.deckFormTitleTooLong(DeckFormLimits.titleMaxLength),
+      DeckFieldError.tooLong => l10n.deckFormTitleTooLong(
+        DeckFormLimits.titleMaxLength,
+      ),
     };
   }
 
   String? _descriptionErrorText(DeckFieldError? error, AppLocalizations l10n) {
     return switch (error) {
       null || DeckFieldError.required => null,
-      DeckFieldError.tooLong =>
-        l10n.deckFormDescriptionTooLong(DeckFormLimits.descriptionMaxLength),
+      DeckFieldError.tooLong => l10n.deckFormDescriptionTooLong(
+        DeckFormLimits.descriptionMaxLength,
+      ),
     };
   }
 

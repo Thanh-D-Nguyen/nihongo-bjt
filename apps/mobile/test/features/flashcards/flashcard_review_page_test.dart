@@ -135,4 +135,58 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   });
+
+  group('FlashcardReviewPage type mode', () {
+    testWidgets('grades a typed answer and advances to the next card', (
+      tester,
+    ) async {
+      await _pumpReview(tester);
+      final l10n = await AppLocalizations.delegate.load(const Locale('vi'));
+
+      // Card 0 ('報告') uses flip mode — grade it to reach the type-mode card.
+      await tester.tap(find.text(l10n.reviewReveal));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.ratingGood));
+      await tester.pumpAndSettle();
+
+      // Card 1 ('取引先') is type mode: a typing field replaces the reveal CTA.
+      expect(find.text(l10n.reviewTypePrompt), findsOneWidget);
+      expect(find.byType(TextField), findsOneWidget);
+      expect(find.text(l10n.reviewReveal), findsNothing);
+
+      // Typing the correct kana reading grades the answer as correct.
+      await tester.enterText(find.byType(TextField), 'とりひきさき');
+      await tester.tap(find.text(l10n.reviewTypeSubmit));
+      await tester.pumpAndSettle();
+
+      expect(find.text(l10n.reviewTypeCorrect), findsOneWidget);
+      expect(find.text(l10n.reviewTypeContinue), findsOneWidget);
+
+      // Continuing advances to card 2 ('納期'), back to flip mode.
+      await tester.tap(find.text(l10n.reviewTypeContinue));
+      await tester.pumpAndSettle();
+
+      expect(find.text('納期'), findsOneWidget);
+      expect(find.text(l10n.reviewReveal), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('marks an unrelated typed answer as wrong', (tester) async {
+      await _pumpReview(tester);
+      final l10n = await AppLocalizations.delegate.load(const Locale('vi'));
+
+      await tester.tap(find.text(l10n.reviewReveal));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.ratingGood));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), 'sai hoàn toàn');
+      await tester.tap(find.text(l10n.reviewTypeSubmit));
+      await tester.pumpAndSettle();
+
+      expect(find.text(l10n.reviewTypeWrong), findsOneWidget);
+      expect(find.text(l10n.reviewTypeContinue), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  });
 }

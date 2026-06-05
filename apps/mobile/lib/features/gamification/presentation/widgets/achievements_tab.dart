@@ -74,7 +74,8 @@ class _AchievementCard extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
     final active = achievement.activeTier;
-    final emoji = _achievementIcon[achievement.slug] ??
+    final emoji =
+        _achievementIcon[achievement.slug] ??
         (achievement.isFullyEarned ? '⭐' : '☆');
 
     return AppCard(
@@ -109,6 +110,19 @@ class _AchievementCard extends StatelessWidget {
                         color: palette.ink,
                       ),
                     ),
+                    if (active != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        '${l10n.rewardsAchievementTierLabel(active.tier)}'
+                        ' • '
+                        '${l10n.rewardsAchievementCategoryLabel(
+                          achievement.category,
+                        )}',
+                        style: text.bodySmall?.copyWith(
+                          color: palette.inkTertiary,
+                        ),
+                      ),
+                    ],
                     if (achievement.description.isNotEmpty) ...[
                       const SizedBox(height: AppSpacing.xs),
                       Text(

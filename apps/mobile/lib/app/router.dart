@@ -17,6 +17,7 @@ import 'package:nihongo_bjt/features/dictionary/presentation/dictionary_page.dar
 import 'package:nihongo_bjt/features/dictionary/presentation/dictionary_word_page.dart';
 import 'package:nihongo_bjt/features/exam/presentation/exam_browser_page.dart';
 import 'package:nihongo_bjt/features/exam/presentation/exam_player_page.dart';
+import 'package:nihongo_bjt/features/flashcards/presentation/flashcard_card_bulk_add_page.dart';
 import 'package:nihongo_bjt/features/flashcards/presentation/flashcard_card_form_page.dart';
 import 'package:nihongo_bjt/features/flashcards/presentation/flashcard_deck_detail_page.dart';
 import 'package:nihongo_bjt/features/flashcards/presentation/flashcard_deck_form_page.dart';
@@ -64,6 +65,7 @@ abstract final class Routes {
   static const String flashcardCardCreate = 'flashcard-card-create';
   static const String flashcardCardEdit = 'flashcard-card-edit';
   static const String flashcardReview = 'flashcard-review';
+  static const String flashcardDueReview = 'flashcard-due-review';
   static const String dictionary = 'dictionary';
   static const String dictionaryWord = 'dictionary-word';
   static const String kanji = 'kanji';
@@ -139,6 +141,15 @@ final routerProvider = Provider<GoRouter>((ref) {
           deckId: state.pathParameters['deckId']!,
         ),
       ),
+      // Cross-deck "due now" SRS session: an empty deck id maps to the
+      // learner's global due queue (`/reviews/due` with no deckId). Like the
+      // per-deck review it is a full-screen focus flow; back returns to the
+      // Review tab.
+      GoRoute(
+        path: '/review/due',
+        name: Routes.flashcardDueReview,
+        builder: (context, state) => const FlashcardReviewPage(deckId: ''),
+      ),
       // Scenario player is a full-screen focus flow: it lives outside the shell
       // so the choices/CTA never compete with the bottom navigation. Back
       // returns to the scenario browser under the Learn branch.
@@ -169,7 +180,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => ExamPlayerPage(
           testId: state.pathParameters['id']!,
         ),
-      ),      StatefulShellRoute.indexedStack(
+      ),
+      StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>
             AppShell(navigationShell: navigationShell),
         branches: [
@@ -306,9 +318,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                           GoRoute(
                             path: 'cards/new',
                             name: Routes.flashcardCardCreate,
-                            builder: (context, state) => FlashcardCardFormPage(
-                              deckId: state.pathParameters['deckId']!,
-                            ),
+                            builder: (context, state) =>
+                                FlashcardCardBulkAddPage(
+                                  deckId: state.pathParameters['deckId']!,
+                                ),
                           ),
                           GoRoute(
                             path: 'cards/:cardIndex/edit',

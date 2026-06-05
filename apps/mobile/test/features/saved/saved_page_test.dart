@@ -80,6 +80,38 @@ void main() {
     expect(find.text('会議'), findsOneWidget);
   });
 
+  testWidgets('SavedPage shows the saved date when present', (tester) async {
+    await _pump(
+      tester,
+      const SavedPage(),
+      overrides: [
+        savedListProvider.overrideWith(
+          (ref, kind) async => kind == BookmarkKind.word
+              ? [
+                  BookmarkItem(
+                    id: 'bm-1',
+                    targetId: 'lex-1',
+                    targetType: 'lexeme',
+                    createdAt: DateTime(2024, 3, 15),
+                  ),
+                ]
+              : const [],
+        ),
+        dictionaryWordProvider.overrideWith(
+          (ref, id) async => const Lexeme(
+            id: 'lex-1',
+            headword: '会議',
+            reading: 'かいぎ',
+          ),
+        ),
+      ],
+    );
+    await tester.pumpAndSettle();
+
+    final l10n = await AppLocalizations.delegate.load(const Locale('vi'));
+    expect(find.text(l10n.savedSavedOn(DateTime(2024, 3, 15))), findsOneWidget);
+  });
+
   testWidgets('SavedPage shows the sign-in state when unauthorized', (
     tester,
   ) async {

@@ -1,3 +1,8 @@
+---
+name: bjt-deck-flashcard-management
+description: Implement, review, or polish Deck and Flashcard management in the Nihongo BJT Flutter mobile app — deck list/detail, create/edit/delete decks and cards, search/filter/sort, import/export, and SRS/review integration. Use when building flashcard CRUD screens or deck management with real API contracts and Japanese/Vietnamese typography.
+---
+
 # BJT Deck & Flashcard Management Skill
 
 Use this skill when implementing, reviewing, or polishing Deck / Flashcard management features for the Nihongo BJT mobile app.

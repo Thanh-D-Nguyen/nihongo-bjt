@@ -1,3 +1,8 @@
+---
+name: bjt-mobile-app-shell-navigation
+description: Design, implement, audit, or polish the Nihongo BJT Flutter mobile app shell — bottom navigation, adaptive rails, the 5 primary tabs (Home/Learn/Review/Search/Me), full-screen focus routes, and active-tab mapping for nested routes. Use when working on the global mobile navigation structure, tab shell, or routing behavior in apps/mobile.
+---
+
 # BJT Mobile App Shell & Navigation Skill
 
 Use this skill when designing, implementing, auditing, or polishing the global mobile app shell, navigation structure, tabs, rails, focused routes, and cross-screen navigation behavior for the Nihongo BJT app.

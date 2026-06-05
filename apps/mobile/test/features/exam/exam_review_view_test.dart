@@ -10,6 +10,9 @@ import 'package:nihongo_bjt/core/config/app_environment.dart';
 import 'package:nihongo_bjt/features/exam/data/exam_repository.dart';
 import 'package:nihongo_bjt/features/exam/presentation/exam_providers.dart';
 import 'package:nihongo_bjt/features/exam/presentation/exam_review_view.dart';
+import 'package:nihongo_bjt/features/flashcards/data/mock_flashcard_repository.dart';
+import 'package:nihongo_bjt/features/flashcards/domain/add_mistakes_to_deck.dart';
+import 'package:nihongo_bjt/features/flashcards/presentation/flashcard_providers.dart';
 import 'package:nihongo_bjt/l10n/gen/app_localizations.dart';
 
 void main() {
@@ -68,7 +71,7 @@ void main() {
     WidgetTester tester,
     ExamRepository repository,
   ) async {
-    tester.view.physicalSize = const Size(1170, 2532);
+    tester.view.physicalSize = const Size(1170, 6000);
     tester.view.devicePixelRatio = 3.0;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -134,5 +137,84 @@ void main() {
     );
 
     expect(find.text('Không tải được phần xem lại'), findsOneWidget);
+  });
+
+  Object allCorrectPayload() => {
+    'sessionId': 's1',
+    'testId': 't1',
+    'testTitleVi': 'Đề thi thử BJT',
+    'estimatedScore': 100,
+    'estimatedBjtBand': 'N1',
+    'breakdown': [
+      {
+        'questionId': 'q1',
+        'prompt': '正しい敬語はどれですか。',
+        'selectedOption': 'A',
+        'isCorrect': true,
+        'explanationVi': 'Đáp án đúng vì là khiêm nhường ngữ.',
+      },
+    ],
+  };
+
+  Future<void> pumpReviewWithRemediation(
+    WidgetTester tester,
+    ExamRepository repository,
+  ) async {
+    tester.view.physicalSize = const Size(1170, 6000);
+    tester.view.devicePixelRatio = 3.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          examRepositoryProvider.overrideWithValue(repository),
+          // A deterministic in-memory deck store so the CTA performs a real
+          // create + save (no network) and we can assert the success UI.
+          addMistakesToDeckProvider.overrideWithValue(
+            AddMistakesToDeck(MockFlashcardRepository()),
+          ),
+        ],
+        child: const MaterialApp(
+          locale: Locale('vi'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: ExamReviewView(sessionId: 's1'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('offers a save-mistakes CTA and confirms after saving', (
+    tester,
+  ) async {
+    await pumpReviewWithRemediation(
+      tester,
+      repoReturning((_) => jsonOk(breakdownPayload())),
+    );
+
+    // One wrong answer with an explanation -> the remediation card appears.
+    expect(find.text('Lưu câu sai để ôn lại'), findsOneWidget);
+    expect(find.text('Tạo bộ thẻ ôn tập'), findsOneWidget);
+
+    await tester.tap(find.text('Tạo bộ thẻ ôn tập'));
+    await tester.pumpAndSettle();
+
+    // Real deck created from the single explained mistake.
+    expect(find.text('Đã tạo bộ thẻ với 1 thẻ.'), findsOneWidget);
+    expect(find.text('Mở bộ thẻ'), findsOneWidget);
+  });
+
+  testWidgets('hides the remediation CTA when there are no mistakes', (
+    tester,
+  ) async {
+    await pumpReviewWithRemediation(
+      tester,
+      repoReturning((_) => jsonOk(allCorrectPayload())),
+    );
+
+    expect(find.text('Lưu câu sai để ôn lại'), findsNothing);
+    expect(find.text('Tạo bộ thẻ ôn tập'), findsNothing);
   });
 }

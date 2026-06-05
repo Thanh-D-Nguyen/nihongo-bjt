@@ -66,6 +66,7 @@ void main() {
       await _pumpReview(
         tester,
         overrides: [
+          dueReviewCountProvider.overrideWith((ref) async => 0),
           deckListProvider.overrideWith(
             (ref) async => [_deck('d1'), _deck('d2')],
           ),
@@ -94,12 +95,58 @@ void main() {
       expect(ctas.where((b) => b.onPressed != null), isNotEmpty);
     });
 
+    testWidgets('shows the due-now count with an enabled CTA when cards due', (
+      tester,
+    ) async {
+      await _pumpReview(
+        tester,
+        overrides: [
+          dueReviewCountProvider.overrideWith((ref) async => 12),
+          deckListProvider.overrideWith((ref) async => [_deck('d1')]),
+          lessonsProvider.overrideWith((ref) async => <Lesson>[]),
+        ],
+      );
+      await tester.pumpAndSettle();
+
+      final l10n = await AppLocalizations.delegate.load(const Locale('vi'));
+      expect(find.text(l10n.reviewDueTitle), findsOneWidget);
+      expect(find.text(l10n.reviewDueStat(12)), findsOneWidget);
+
+      final dueCta = tester.widget<PrimaryButton>(
+        find.widgetWithText(PrimaryButton, l10n.reviewDueCta),
+      );
+      expect(dueCta.onPressed, isNotNull);
+    });
+
+    testWidgets('shows the all-caught-up state with a disabled CTA', (
+      tester,
+    ) async {
+      await _pumpReview(
+        tester,
+        overrides: [
+          dueReviewCountProvider.overrideWith((ref) async => 0),
+          deckListProvider.overrideWith((ref) async => [_deck('d1')]),
+          lessonsProvider.overrideWith((ref) async => <Lesson>[]),
+        ],
+      );
+      await tester.pumpAndSettle();
+
+      final l10n = await AppLocalizations.delegate.load(const Locale('vi'));
+      expect(find.text(l10n.reviewDueEmpty), findsOneWidget);
+
+      final dueCta = tester.widget<PrimaryButton>(
+        find.widgetWithText(PrimaryButton, l10n.reviewDueCta),
+      );
+      expect(dueCta.onPressed, isNull);
+    });
+
     testWidgets('shows honest empty messages with disabled CTAs', (
       tester,
     ) async {
       await _pumpReview(
         tester,
         overrides: [
+          dueReviewCountProvider.overrideWith((ref) async => 0),
           deckListProvider.overrideWith((ref) async => <FlashcardDeck>[]),
           lessonsProvider.overrideWith((ref) async => <Lesson>[]),
         ],
@@ -125,6 +172,7 @@ void main() {
       await _pumpReview(
         tester,
         overrides: [
+          dueReviewCountProvider.overrideWith((ref) async => 0),
           deckListProvider.overrideWith((ref) async => throw Exception('boom')),
           lessonsProvider.overrideWith((ref) async => [_lesson('l1')]),
         ],

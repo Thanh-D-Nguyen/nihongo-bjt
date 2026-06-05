@@ -28,16 +28,17 @@ final class _ThemedPreview extends MultiPreview {
 
   @override
   List<Preview> get previews => const [
-        Preview(brightness: Brightness.light),
-        Preview(brightness: Brightness.dark),
-      ];
+    Preview(brightness: Brightness.light),
+    Preview(brightness: Brightness.dark),
+  ];
 
   @override
   List<Preview> transform() {
     return super.transform().map((preview) {
       final builder = preview.toBuilder()
         ..group = 'Learn'
-        ..name = '$name · ${preview.brightness == Brightness.dark ? 'dark' : 'light'}';
+        ..name =
+            '$name · ${preview.brightness == Brightness.dark ? 'dark' : 'light'}';
       return builder.build();
     }).toList();
   }
@@ -72,7 +73,8 @@ const _keigoLesson = Lesson(
   categoryId: 'workplace-comms',
   titleJa: '敬語の基本',
   titleReading: 'けいごのきほん',
-  summaryVi: 'Phân biệt tôn kính ngữ và khiêm nhường ngữ trong giao tiếp công sở.',
+  summaryVi:
+      'Phân biệt tôn kính ngữ và khiêm nhường ngữ trong giao tiếp công sở.',
   level: LessonLevel.foundational,
   estimatedMinutes: 6,
   questionCount: 3,
@@ -94,10 +96,10 @@ const _longLesson = Lesson(
 
 @_ThemedPreview(name: 'LessonCard')
 Widget lessonCardPreview() => _wrap(
-      const LessonCard(lesson: _keigoLesson, onTap: _noop),
-    );
+  const LessonCard(lesson: _keigoLesson, onTap: _noop),
+);
 
 @_ThemedPreview(name: 'LessonCard · long text')
 Widget lessonCardLongPreview() => _wrap(
-      const LessonCard(lesson: _longLesson, onTap: _noop),
-    );
+  const LessonCard(lesson: _longLesson, onTap: _noop),
+);

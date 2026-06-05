@@ -83,8 +83,7 @@ class AchievementDef {
   /// Number of tiers the learner has already earned.
   int get earnedCount => tiers.where((t) => t.isEarned).length;
 
-  bool get isFullyEarned =>
-      tiers.isNotEmpty && earnedCount == tiers.length;
+  bool get isFullyEarned => tiers.isNotEmpty && earnedCount == tiers.length;
 
   bool get isStarted => tiers.any((t) => t.currentProgress > 0 || t.isEarned);
 

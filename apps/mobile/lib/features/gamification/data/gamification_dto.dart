@@ -110,9 +110,9 @@ abstract final class GamificationDto {
     final map = asMap(json);
     return LeaderboardView(
       config: leaderboardConfig(asMap(map['leaderboard'])),
-      entries: asMapList(map['entries'])
-          .map(leaderboardEntry)
-          .toList(growable: false),
+      entries: asMapList(
+        map['entries'],
+      ).map(leaderboardEntry).toList(growable: false),
     );
   }
 

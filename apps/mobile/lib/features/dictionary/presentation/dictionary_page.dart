@@ -57,7 +57,9 @@ class _DictionaryPageState extends ConsumerState<DictionaryPage> {
               onChanged: (value) => setState(() => _query = value),
             ),
           ),
-          Expanded(child: _DictionaryResults(query: _query, onOpen: _openWord)),
+          Expanded(
+            child: _DictionaryResults(query: _query, onOpen: _openWord),
+          ),
         ],
       ),
     );

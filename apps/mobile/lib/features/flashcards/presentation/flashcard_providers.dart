@@ -10,6 +10,8 @@ import 'package:nihongo_bjt/features/flashcards/data/cached_flashcard_repository
 import 'package:nihongo_bjt/features/flashcards/data/flashcard_review_sync_service.dart';
 import 'package:nihongo_bjt/features/flashcards/data/mock_flashcard_repository.dart';
 import 'package:nihongo_bjt/features/flashcards/data/offline_review_queue.dart';
+import 'package:nihongo_bjt/features/flashcards/domain/add_mistakes_to_deck.dart';
+import 'package:nihongo_bjt/features/flashcards/domain/add_term_to_deck.dart';
 import 'package:nihongo_bjt/features/flashcards/domain/deck_card_input.dart';
 import 'package:nihongo_bjt/features/flashcards/domain/deck_detail.dart';
 import 'package:nihongo_bjt/features/flashcards/domain/deck_form_input.dart';
@@ -100,6 +102,25 @@ final flashcardRepositoryProvider = Provider<FlashcardRepository>((ref) {
 /// All decks shown on the deck-list screen.
 final deckListProvider = FutureProvider<List<FlashcardDeck>>((ref) {
   return ref.watch(flashcardRepositoryProvider).fetchDecks();
+});
+
+/// Number of cards due across every deck — the learner's global SRS queue
+/// (`/api/flashcards/reviews/due` with no `deckId`). Drives the "due now" entry
+/// on the Review hub. Returns 0 honestly when nothing is due.
+final dueReviewCountProvider = FutureProvider<int>((ref) async {
+  final cards = await ref.watch(flashcardRepositoryProvider).fetchCards('');
+  return cards.length;
+});
+
+/// Use-case that appends a looked-up term (from Reading Assist) to a deck.
+final addTermToDeckProvider = Provider<AddTermToDeck>((ref) {
+  return AddTermToDeck(ref.watch(flashcardRepositoryProvider));
+});
+
+/// Use-case that turns a learner's exam mistakes into a new private review
+/// deck. Drives the "save wrong answers" action on the exam review screen.
+final addMistakesToDeckProvider = Provider<AddMistakesToDeck>((ref) {
+  return AddMistakesToDeck(ref.watch(flashcardRepositoryProvider));
 });
 
 /// Full detail (metadata + ordered cards) for a single deck, keyed by deck id.

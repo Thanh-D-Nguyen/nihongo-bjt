@@ -217,9 +217,15 @@ class MockFlashcardRepository implements FlashcardRepository {
 
   @override
   Future<List<Flashcard>> fetchCards(String deckId) async {
-    final index = _decks.indexWhere((d) => d.id == deckId);
-    if (index < 0) return const [];
-    return _decks[index].cards
+    // An empty id mirrors the API's global due queue (`/reviews/due` with no
+    // `deckId`): aggregate every deck's cards. A concrete id scopes to that
+    // deck only.
+    final trimmed = deckId.trim();
+    final decks = trimmed.isEmpty
+        ? _decks
+        : _decks.where((d) => d.id == trimmed);
+    return decks
+        .expand((d) => d.cards)
         .map(
           (c) => Flashcard(
             id: c.cardId,

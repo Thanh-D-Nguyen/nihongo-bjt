@@ -57,6 +57,59 @@ void main() {
     expect(find.text('Ôn tập hằng ngày'), findsOneWidget);
   });
 
+  testWidgets('streak card shows the activity calendar when there is a '
+      'last-activity date', (tester) async {
+    await _pump(
+      tester,
+      overrides: [
+        streaksProvider.overrideWith(
+          (ref) async => [
+            StreakData(
+              id: 's1',
+              currentStreak: 5,
+              longestStreak: 14,
+              freezesUsed: 0,
+              freezesAllowed: 3,
+              name: 'Ôn tập hằng ngày',
+              activityType: 'review',
+              lastActivityDate: DateTime.now(),
+            ),
+          ],
+        ),
+      ],
+    );
+    await tester.pumpAndSettle();
+
+    final l10n = await AppLocalizations.delegate.load(const Locale('vi'));
+    expect(find.text(l10n.rewardsStreakCalendar), findsOneWidget);
+  });
+
+  testWidgets('streak card hides the activity calendar without a '
+      'last-activity date', (tester) async {
+    await _pump(
+      tester,
+      overrides: [
+        streaksProvider.overrideWith(
+          (ref) async => const [
+            StreakData(
+              id: 's1',
+              currentStreak: 0,
+              longestStreak: 14,
+              freezesUsed: 0,
+              freezesAllowed: 3,
+              name: 'Ôn tập hằng ngày',
+              activityType: 'review',
+            ),
+          ],
+        ),
+      ],
+    );
+    await tester.pumpAndSettle();
+
+    final l10n = await AppLocalizations.delegate.load(const Locale('vi'));
+    expect(find.text(l10n.rewardsStreakCalendar), findsNothing);
+  });
+
   testWidgets('RewardsPage shows the sign-in state when unauthorized', (
     tester,
   ) async {
@@ -109,6 +162,12 @@ void main() {
                 score: 980,
                 displayName: 'Akira',
               ),
+              LeaderboardEntry(
+                id: 'e2',
+                userId: 'zxc123xyz',
+                rank: 2,
+                score: 640,
+              ),
             ],
           ),
         ),
@@ -121,5 +180,50 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Akira'), findsOneWidget);
+    // The rank row shows an avatar initial derived from the display name.
+    expect(find.text('A'), findsOneWidget);
+    // An entry without a display name falls back to a short user id, mirroring
+    // the web leaderboard.
+    expect(
+      find.text(l10n.rewardsLeaderboardUserFallback('zxc123')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('achievement card shows the tier and category caption', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      overrides: [
+        streaksProvider.overrideWith((ref) async => const []),
+        achievementsProvider.overrideWith(
+          (ref) async => const [
+            AchievementDef(
+              id: 'a1',
+              slug: 'vocab-master',
+              name: 'Bậc thầy từ vựng',
+              description: 'Học 1000 từ',
+              category: 'learning',
+              tiers: [
+                AchievementTier(
+                  id: 't1',
+                  tier: 'gold',
+                  threshold: 1000,
+                  currentProgress: 400,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ],
+    );
+    await tester.pumpAndSettle();
+
+    final l10n = await AppLocalizations.delegate.load(const Locale('vi'));
+    await tester.tap(find.text(l10n.rewardsTabAchievements));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Vàng • Học tập'), findsOneWidget);
   });
 }

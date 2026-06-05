@@ -661,6 +661,15 @@ class _DailyLessonCard extends ConsumerWidget {
               color: palette.ink,
             ),
           ),
+          if (lesson.titleReading.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              lesson.titleReading,
+              style: AppTypography.japaneseReading.copyWith(
+                color: palette.inkSecondary,
+              ),
+            ),
+          ],
           const SizedBox(height: AppSpacing.xs),
           Text(
             lesson.summaryVi,
@@ -682,6 +691,15 @@ class _DailyLessonCard extends ConsumerWidget {
                   label: l10n.learnMinutes(lesson.estimatedMinutes),
                 ),
               ),
+              if (lesson.hasQuestions) ...[
+                const SizedBox(width: AppSpacing.s),
+                Flexible(
+                  child: _MetaChip(
+                    icon: Icons.quiz_outlined,
+                    label: l10n.learnQuestionCount(lesson.questionCount),
+                  ),
+                ),
+              ],
               const Spacer(),
               Icon(Icons.arrow_forward_rounded, color: palette.accent),
             ],
@@ -764,8 +782,9 @@ class _CategoryList extends StatelessWidget {
                       const SizedBox(height: AppSpacing.xs),
                       Text(
                         category.descriptionVi,
-                        style: text.bodySmall
-                            ?.copyWith(color: palette.inkSecondary),
+                        style: text.bodySmall?.copyWith(
+                          color: palette.inkSecondary,
+                        ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),

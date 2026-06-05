@@ -37,4 +37,13 @@ class ReadingAssistPolicy {
 
   /// Whether reading help may be rendered under this policy.
   bool get showsReading => userEnabled && mode == ReadingAssistMode.enabled;
+
+  /// Whether on-demand lookup (tap to reveal reading + meaning, add to
+  /// flashcards) is allowed.
+  ///
+  /// Unlike [showsReading], this ignores the per-user furigana toggle: turning
+  /// off automatic furigana should still let a learner look up a term in study
+  /// mode. Lookup is blocked only in exam/active-recall contexts to preserve
+  /// answer integrity.
+  bool get allowsLookup => mode == ReadingAssistMode.enabled;
 }

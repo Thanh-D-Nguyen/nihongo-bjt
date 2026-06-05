@@ -36,26 +36,63 @@ void main() {
       tester,
       const CareerArcsPage(),
       overrides: [
-        careerArcsProvider.overrideWith((ref) async => const [
-          MissionArc(
-            slug: 'onboarding',
-            titleJa: '入社編',
-            titleVi: 'Chương nhập công ty',
-            rankCodeEntry: 'shinjin',
-            synopsisVi: 'Bắt đầu hành trình.',
-            status: 'active',
-            locked: false,
-            totalChapters: 4,
-            completedChapters: 1,
-            displayOrder: 1,
-            artAccent: '#1B2A4A',
-          ),
-        ]),
+        careerArcsProvider.overrideWith(
+          (ref) async => const [
+            MissionArc(
+              slug: 'onboarding',
+              titleJa: '入社編',
+              titleVi: 'Chương nhập công ty',
+              rankCodeEntry: 'shinjin',
+              synopsisVi: 'Bắt đầu hành trình.',
+              status: 'active',
+              locked: false,
+              totalChapters: 4,
+              completedChapters: 1,
+              displayOrder: 1,
+              artAccent: '#1B2A4A',
+            ),
+          ],
+        ),
       ],
     );
     await tester.pump();
 
     expect(find.text('入社編'), findsOneWidget);
+  });
+
+  testWidgets('CareerArcsPage shows the required rank on each arc', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      const CareerArcsPage(),
+      overrides: [
+        careerArcsProvider.overrideWith(
+          (ref) async => const [
+            MissionArc(
+              slug: 'onboarding',
+              titleJa: '入社編',
+              titleVi: 'Chương nhập công ty',
+              rankCodeEntry: 'R2',
+              synopsisVi: 'Bắt đầu hành trình.',
+              status: 'active',
+              locked: false,
+              totalChapters: 4,
+              completedChapters: 1,
+              displayOrder: 1,
+              artAccent: '#1B2A4A',
+            ),
+          ],
+        ),
+      ],
+    );
+    await tester.pump();
+
+    final l10n = await AppLocalizations.delegate.load(const Locale('vi'));
+    expect(
+      find.text(l10n.careerArcRankRequired('R2').toUpperCase()),
+      findsOneWidget,
+    );
   });
 
   testWidgets('CareerArcsPage shows empty state', (tester) async {

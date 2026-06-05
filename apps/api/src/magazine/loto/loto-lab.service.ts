@@ -1,9 +1,19 @@
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { createPrismaClient, Prisma, type PrismaClient } from "@nihongo-bjt/database";
 
 import { parseLotoCsv } from "./loto-csv.js";
 import { generateLotoSets, summarizeLotoDraws } from "./loto-engine.js";
 import { LOTO_GAME_SPECS, LOTO_SCHEDULE, type LotoDrawInput, type LotoGame, type LotoGenerationInput } from "./loto-types.js";
+
+const DEFAULT_CSV_URLS: Record<LotoGame, string> = {
+  loto6: "https://loto6.thekyo.jp/data/loto6.csv",
+  loto7: "https://loto7.thekyo.jp/data/loto7.csv",
+};
+
+/** JST calendar date (UTC+9, no DST) as YYYY-MM-DD. */
+function jstDateKey(at: Date): string {
+  return new Date(at.getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
 
 function toDateOnly(value: string | Date): Date {
   const date = typeof value === "string" ? new Date(`${value.slice(0, 10)}T00:00:00.000Z`) : value;
@@ -74,6 +84,153 @@ function japaneseSentence(input: LotoGenerationInput) {
 @Injectable()
 export class LotoLabService {
   private readonly prisma: PrismaClient = createPrismaClient();
+  private readonly logger = new Logger(LotoLabService.name);
+
+  private csvUrl(game: LotoGame): string {
+    const envKey = game === "loto6" ? "LOTO6_CSV_URL" : "LOTO7_CSV_URL";
+    const fromEnv = process.env[envKey]?.trim();
+    return fromEnv && fromEnv.length > 0 ? fromEnv : DEFAULT_CSV_URLS[game];
+  }
+
+  /**
+   * Download the official thekyo CSV (Shift_JIS encoded), then upsert only the
+   * latest draws (new rows + the last few existing rows to absorb corrections).
+   * Returns import counts and the resolved source URL.
+   */
+  async fetchAndImportCsv(game: LotoGame) {
+    const url = this.csvUrl(game);
+    let response: Response;
+    try {
+      response = await fetch(url, { signal: AbortSignal.timeout(25_000) });
+    } catch (e) {
+      throw new BadRequestException(`Failed to download ${game} CSV from ${url}: ${e instanceof Error ? e.message : "network error"}`);
+    }
+    if (!response.ok) {
+      throw new BadRequestException(`Source returned ${response.status} for ${game} CSV (${url})`);
+    }
+    const buffer = Buffer.from(await response.arrayBuffer());
+    // thekyo serves Shift_JIS; decode accordingly so Japanese headers map correctly.
+    const csvText = new TextDecoder("shift-jis").decode(buffer);
+
+    let parsed: ReturnType<typeof parseLotoCsv>;
+    try {
+      parsed = parseLotoCsv(csvText, game);
+    } catch (e) {
+      throw new BadRequestException(e instanceof Error ? e.message : "Invalid CSV format");
+    }
+    if (parsed.length === 0) throw new BadRequestException("CSV contains no valid rows");
+
+    // Incremental: only touch new draws + the last 3 existing ones (corrections).
+    const maxExisting = await this.prisma.lotoDraw.aggregate({
+      where: { game },
+      _max: { drawNumber: true },
+    });
+    const cutoff = (maxExisting._max.drawNumber ?? 0) - 3;
+    const toUpsert = parsed.filter((draw) => draw.drawNumber > cutoff);
+
+    let created = 0;
+    let updated = 0;
+    for (const draw of toUpsert) {
+      const existing = await this.prisma.lotoDraw.findUnique({
+        where: { game_drawNumber: { game: draw.game, drawNumber: draw.drawNumber } },
+      });
+      await this.upsertDraw({ ...draw, sourceUrl: url, sourceProvider: "thekyo_csv" });
+      if (existing) updated += 1;
+      else created += 1;
+    }
+
+    return { game, url, created, updated, processed: toUpsert.length, total: parsed.length };
+  }
+
+  /** First scheduled draw date strictly after today (JST), as YYYY-MM-DD. */
+  private nextScheduledDrawDate(game: LotoGame): string {
+    const drawDays = LOTO_SCHEDULE[game].drawDays;
+    const cursor = new Date(`${jstDateKey(new Date())}T00:00:00.000Z`);
+    for (let i = 0; i < 14; i += 1) {
+      cursor.setUTCDate(cursor.getUTCDate() + 1);
+      if (drawDays.includes(cursor.getUTCDay())) return cursor.toISOString().slice(0, 10);
+    }
+    // Fallback (should never hit): one week out.
+    cursor.setUTCDate(cursor.getUTCDate() + 7);
+    return cursor.toISOString().slice(0, 10);
+  }
+
+  /** UTC instant for start-of-day (00:00 JST) of the given JST date key. */
+  private jstStartOfDayUtc(dateKey: string): Date {
+    return new Date(`${dateKey}T00:00:00+09:00`);
+  }
+
+  /**
+   * Autopilot tick. Designed to be called repeatedly inside a retry window
+   * (e.g. every 30 min after the draw). It only publishes once the official
+   * result for today's draw has actually appeared in the CSV; otherwise it
+   * reports `waiting_result` so the next tick can retry. Idempotent: a second
+   * tick after a successful publish reports `already_done`.
+   */
+  async runAutopilotIfResultReady(game: LotoGame): Promise<{
+    status: "skipped_not_draw_day" | "waiting_result" | "already_done" | "published";
+    game: LotoGame;
+    todayDrawDate: string;
+    targetDrawDate?: string;
+    imported?: Awaited<ReturnType<LotoLabService["fetchAndImportCsv"]>>;
+    runId?: string;
+    publishedSlug?: string;
+    publishedSet?: number[];
+  }> {
+    const todayKey = jstDateKey(new Date());
+    const todayDow = this.jstStartOfDayUtc(todayKey).getUTCDay();
+    if (!LOTO_SCHEDULE[game].drawDays.includes(todayDow)) {
+      return { status: "skipped_not_draw_day", game, todayDrawDate: todayKey };
+    }
+
+    const imported = await this.fetchAndImportCsv(game);
+
+    // Has today's official result landed in the CSV yet?
+    const todayDraw = await this.prisma.lotoDraw.findFirst({
+      where: { game, drawDate: this.jstStartOfDayUtc(todayKey) },
+    });
+    if (!todayDraw) {
+      return { status: "waiting_result", game, todayDrawDate: todayKey, imported };
+    }
+
+    const targetDrawDate = this.nextScheduledDrawDate(game);
+
+    // Already published a prediction for the next draw during this cycle?
+    const existingRun = await this.prisma.lotoGenerationRun.findFirst({
+      where: {
+        game,
+        targetDrawDate: this.jstStartOfDayUtc(targetDrawDate),
+        createdAt: { gte: this.jstStartOfDayUtc(todayKey) },
+      },
+    });
+    if (existingRun) {
+      return { status: "already_done", game, todayDrawDate: todayKey, targetDrawDate, imported, runId: existingRun.id };
+    }
+
+    const run = await this.generate({
+      game,
+      targetDrawDate,
+      setCount: 3,
+      seed: `autopilot-${game}-${targetDrawDate}-${Date.now()}`,
+    });
+    const topSet = run.sets[0];
+    if (!topSet) throw new BadRequestException("Generation produced no sets");
+
+    const published = await this.publishToMagazine(run.id, [topSet.id], null);
+    this.logger.log(
+      `[autopilot:${game}] result ready (draw ${todayDraw.drawNumber}); imported ${imported.created} new / ${imported.updated} updated; published ${published.slug} for ${targetDrawDate}`,
+    );
+    return {
+      status: "published",
+      game,
+      todayDrawDate: todayKey,
+      targetDrawDate,
+      imported,
+      runId: run.id,
+      publishedSlug: published.slug,
+      publishedSet: topSet.mainNumbers,
+    };
+  }
 
   async importCsv(csvText: string, fallbackGame?: string) {
     let draws: ReturnType<typeof parseLotoCsv>;
@@ -290,7 +447,7 @@ export class LotoLabService {
     };
   }
 
-  async publishToMagazine(runId: string, setIds: string[], adminId: string) {
+  async publishToMagazine(runId: string, setIds: string[], adminId: string | null) {
     const uniqueSetIds = [...new Set(setIds)];
     const run = await this.prisma.lotoGenerationRun.findUnique({
       where: { id: runId },

@@ -96,6 +96,15 @@ class _GrammarDetail extends StatelessWidget {
                 entry.meaningVi,
                 style: text.titleMedium?.copyWith(color: palette.inkSecondary),
               ),
+              if (entry.category != null && entry.category!.isNotEmpty) ...[
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  entry.category!,
+                  style: text.labelMedium?.copyWith(
+                    color: palette.inkTertiary,
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -137,8 +146,7 @@ class _DetailCard extends StatelessWidget {
               ),
             ),
           ],
-          if (detail.explanation != null &&
-              detail.explanation!.isNotEmpty) ...[
+          if (detail.explanation != null && detail.explanation!.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.m),
             _LabeledBlock(
               label: l10n.grammarExplanationLabel,

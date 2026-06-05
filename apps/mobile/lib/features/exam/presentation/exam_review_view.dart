@@ -1,17 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:nihongo_bjt/app/router.dart';
 import 'package:nihongo_bjt/core/theme/app_palette.dart';
 import 'package:nihongo_bjt/core/theme/app_radius.dart';
 import 'package:nihongo_bjt/core/theme/app_spacing.dart';
 import 'package:nihongo_bjt/core/theme/app_typography.dart';
 import 'package:nihongo_bjt/features/exam/domain/exam_models.dart';
 import 'package:nihongo_bjt/features/exam/presentation/exam_providers.dart';
+import 'package:nihongo_bjt/features/flashcards/domain/deck_card_input.dart';
+import 'package:nihongo_bjt/features/flashcards/domain/deck_form_input.dart';
+import 'package:nihongo_bjt/features/flashcards/presentation/flashcard_providers.dart';
 import 'package:nihongo_bjt/l10n/gen/app_localizations.dart';
 import 'package:nihongo_bjt/shared/widgets/app_card.dart';
 import 'package:nihongo_bjt/shared/widgets/app_scaffold.dart';
 import 'package:nihongo_bjt/shared/widgets/empty_state_view.dart';
 import 'package:nihongo_bjt/shared/widgets/error_state_view.dart';
 import 'package:nihongo_bjt/shared/widgets/loading_state_view.dart';
+import 'package:nihongo_bjt/shared/widgets/primary_button.dart';
 
 /// Which subset of the breakdown to show.
 enum _ReviewFilter { all, wrong, correct }
@@ -119,6 +125,7 @@ class _ReviewBody extends StatelessWidget {
       children: [
         _ScoreHeader(breakdown: breakdown),
         const SizedBox(height: AppSpacing.m),
+        _RemediationCard(breakdown: breakdown),
         _FilterRow(
           filter: filter,
           onFilter: onFilter,
@@ -158,8 +165,9 @@ class _ScoreHeader extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     final correct = breakdown.correctCount;
     final total = breakdown.total;
-    final percent =
-        total <= 0 ? 0 : ((correct / total) * 100).round().clamp(0, 100);
+    final percent = total <= 0
+        ? 0
+        : ((correct / total) * 100).round().clamp(0, 100);
     final strong = percent >= 70;
 
     return AppCard(
@@ -207,6 +215,198 @@ class _ScoreHeader extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// One-tap remediation: turns the learner's wrong answers (prompt +
+/// explanation) into a fresh private review deck. Hidden when there is nothing
+/// actionable to save. Holds its own save lifecycle (idle / saving / saved /
+/// error) so the rest of the review screen never rebuilds while it works.
+class _RemediationCard extends ConsumerStatefulWidget {
+  const _RemediationCard({required this.breakdown});
+
+  final ExamBreakdown breakdown;
+
+  @override
+  ConsumerState<_RemediationCard> createState() => _RemediationCardState();
+}
+
+enum _RemediationStatus { idle, saving, saved, error }
+
+class _RemediationCardState extends ConsumerState<_RemediationCard> {
+  _RemediationStatus _status = _RemediationStatus.idle;
+  ({String deckId, int count})? _saved;
+
+  /// Wrong answers that carry a non-empty explanation — the only ones that can
+  /// become a valid card (the card back is required server-side).
+  List<DeckCardInput> _buildCards() {
+    return <DeckCardInput>[
+      for (final item in widget.breakdown.items)
+        if (!item.isCorrect &&
+            item.explanationVi != null &&
+            item.explanationVi!.trim().isNotEmpty)
+          DeckCardInput.fromRaw(
+            frontText: _truncate(item.prompt, DeckCardLimits.frontMaxLength),
+            backText: _truncate(
+              item.explanationVi!,
+              DeckCardLimits.backMaxLength,
+            ),
+            reading: '',
+          ),
+    ];
+  }
+
+  String _deckTitle(AppLocalizations l10n) {
+    final raw = widget.breakdown.testTitleVi?.trim();
+    final base = (raw == null || raw.isEmpty)
+        ? l10n.examRemediationDeckTitleFallback
+        : l10n.examRemediationDeckTitle(raw);
+    return _truncate(base, DeckFormLimits.titleMaxLength);
+  }
+
+  static String _truncate(String value, int max) {
+    final trimmed = value.trim();
+    return trimmed.length <= max ? trimmed : trimmed.substring(0, max);
+  }
+
+  Future<void> _save() async {
+    final l10n = AppLocalizations.of(context);
+    final cards = _buildCards();
+    if (cards.isEmpty) return;
+    setState(() => _status = _RemediationStatus.saving);
+    try {
+      final deckId = await ref
+          .read(addMistakesToDeckProvider)
+          .call(deckTitle: _deckTitle(l10n), cards: cards);
+      if (!mounted) return;
+      setState(() {
+        _status = _RemediationStatus.saved;
+        _saved = (deckId: deckId, count: cards.length);
+      });
+    } on Object {
+      if (!mounted) return;
+      setState(() => _status = _RemediationStatus.error);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cards = _buildCards();
+    // Nothing actionable (e.g. a perfect score, or no explained mistakes).
+    if (cards.isEmpty) return const SizedBox.shrink();
+
+    final l10n = AppLocalizations.of(context);
+    final palette = context.palette;
+    final text = Theme.of(context).textTheme;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.m),
+      child: AppCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: palette.accentSoft,
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                  child: Icon(
+                    Icons.bookmark_add_outlined,
+                    color: palette.accent,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.m),
+                Expanded(
+                  child: Text(
+                    l10n.examRemediationTitle,
+                    style: text.titleMedium?.copyWith(
+                      color: palette.ink,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.s),
+            Text(
+              l10n.examRemediationBody(cards.length),
+              style: text.bodyMedium?.copyWith(color: palette.inkSecondary),
+            ),
+            const SizedBox(height: AppSpacing.m),
+            if (_status == _RemediationStatus.saved && _saved != null)
+              _RemediationSaved(
+                deckId: _saved!.deckId,
+                count: _saved!.count,
+              )
+            else ...[
+              if (_status == _RemediationStatus.error) ...[
+                Text(
+                  l10n.examRemediationError,
+                  style: text.bodySmall?.copyWith(color: palette.danger),
+                ),
+                const SizedBox(height: AppSpacing.s),
+              ],
+              PrimaryButton(
+                label: l10n.examRemediationCta,
+                icon: Icons.add_rounded,
+                isLoading: _status == _RemediationStatus.saving,
+                onPressed: _save,
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Success state: confirms the deck was created and offers a jump to it.
+class _RemediationSaved extends StatelessWidget {
+  const _RemediationSaved({required this.deckId, required this.count});
+
+  final String deckId;
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final palette = context.palette;
+    final text = Theme.of(context).textTheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.check_circle_rounded, size: 20, color: palette.success),
+            const SizedBox(width: AppSpacing.s),
+            Expanded(
+              child: Text(
+                l10n.examRemediationSuccess(count),
+                style: text.bodyMedium?.copyWith(
+                  color: palette.success,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.s),
+        SecondaryButton(
+          label: l10n.examRemediationOpenDeck,
+          icon: Icons.style_outlined,
+          onPressed: () => context.goNamed(
+            Routes.flashcardDeck,
+            pathParameters: {'deckId': deckId},
+          ),
+        ),
+      ],
     );
   }
 }
@@ -351,8 +551,7 @@ class _ReviewItemCard extends StatelessWidget {
               ],
             ),
           ],
-          if (item.explanationVi != null &&
-              item.explanationVi!.isNotEmpty) ...[
+          if (item.explanationVi != null && item.explanationVi!.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.m),
             _ExplanationBox(text: item.explanationVi!),
           ],
