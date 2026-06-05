@@ -58,13 +58,15 @@ class FlashcardReviewPage extends ConsumerWidget {
           padding: EdgeInsets.all(AppSpacing.m),
           child: _ReviewLoading(),
         ),
-        error: (_, _) => ErrorStateView(
-          title: l10n.reviewErrorTitle,
-          message: l10n.reviewError,
-          retryLabel: l10n.commonRetry,
-          icon: Icons.cloud_off_rounded,
-          onRetry: () => ref.invalidate(reviewSessionProvider(deckId)),
-        ),
+        error: (error, _) => isFlashcardSignInRequiredError(error)
+            ? const FlashcardSignInRequiredView()
+            : ErrorStateView(
+                title: l10n.reviewErrorTitle,
+                message: l10n.reviewError,
+                retryLabel: l10n.commonRetry,
+                icon: Icons.cloud_off_rounded,
+                onRetry: () => ref.invalidate(reviewSessionProvider(deckId)),
+              ),
         data: (state) {
           if (state.totalCount == 0) {
             return EmptyStateView(

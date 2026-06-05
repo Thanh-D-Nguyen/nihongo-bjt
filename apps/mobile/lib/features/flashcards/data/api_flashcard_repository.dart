@@ -15,13 +15,21 @@ import 'package:nihongo_bjt/features/flashcards/domain/srs_rating.dart';
 /// Failure surfaced by [ApiFlashcardRepository] with learner-facing, non-fake
 /// messaging. The underlying [cause] (an [ApiException]) is kept for logs.
 class FlashcardRepositoryException implements Exception {
-  const FlashcardRepositoryException(this.message, {this.cause});
+  const FlashcardRepositoryException(
+    this.message, {
+    this.cause,
+    this.isAuthRequired = false,
+  });
 
   /// Clear, user-displayable message (Vietnamese UI copy).
   final String message;
 
   /// Originating error for diagnostics. Never contains auth tokens.
   final Object? cause;
+
+  /// True when the server rejected the request because the learner must sign in
+  /// again (HTTP 401/403).
+  final bool isAuthRequired;
 
   @override
   String toString() => 'FlashcardRepositoryException: $message';
@@ -172,6 +180,7 @@ class ApiFlashcardRepository implements FlashcardRepository {
         throw FlashcardRepositoryException(
           'Bạn cần đăng nhập để đồng bộ thẻ học.',
           cause: error,
+          isAuthRequired: true,
         );
       }
       throw FlashcardRepositoryException(

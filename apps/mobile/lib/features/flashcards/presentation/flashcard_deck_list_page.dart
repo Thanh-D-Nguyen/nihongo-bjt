@@ -57,13 +57,15 @@ class _DeckListContent extends ConsumerWidget {
     return decks.when(
       skipLoadingOnRefresh: false,
       loading: () => const _DeckListSkeleton(),
-      error: (_, _) => ErrorStateView(
-        title: l10n.deckListErrorTitle,
-        message: l10n.deckListError,
-        retryLabel: l10n.commonRetry,
-        icon: Icons.cloud_off_rounded,
-        onRetry: () => ref.invalidate(deckListProvider),
-      ),
+      error: (error, _) => isFlashcardSignInRequiredError(error)
+          ? const FlashcardSignInRequiredView()
+          : ErrorStateView(
+              title: l10n.deckListErrorTitle,
+              message: l10n.deckListError,
+              retryLabel: l10n.commonRetry,
+              icon: Icons.cloud_off_rounded,
+              onRetry: () => ref.invalidate(deckListProvider),
+            ),
       data: (items) => _DeckListView(decks: items),
     );
   }

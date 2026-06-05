@@ -63,13 +63,15 @@ class FlashcardDeckDetailPage extends ConsumerWidget {
       body: detail.when(
         skipLoadingOnRefresh: false,
         loading: () => const _DeckDetailSkeleton(),
-        error: (_, _) => ErrorStateView(
-          title: l10n.deckDetailErrorTitle,
-          message: l10n.deckDetailError,
-          retryLabel: l10n.commonRetry,
-          icon: Icons.cloud_off_rounded,
-          onRetry: () => ref.invalidate(deckDetailProvider(deckId)),
-        ),
+        error: (error, _) => isFlashcardSignInRequiredError(error)
+            ? const FlashcardSignInRequiredView()
+            : ErrorStateView(
+                title: l10n.deckDetailErrorTitle,
+                message: l10n.deckDetailError,
+                retryLabel: l10n.commonRetry,
+                icon: Icons.cloud_off_rounded,
+                onRetry: () => ref.invalidate(deckDetailProvider(deckId)),
+              ),
         data: (deck) => _DeckDetailView(deck: deck),
       ),
     );

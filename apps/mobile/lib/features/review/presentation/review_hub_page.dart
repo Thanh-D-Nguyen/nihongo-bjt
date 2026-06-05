@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -60,15 +62,42 @@ class _DueNowCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final authGate = ref.watch(flashcardAuthGateProvider);
+    if (authGate != FlashcardAuthGate.ready) {
+      return authGate == FlashcardAuthGate.restoring
+          ? _SectionSkeleton(
+              timeoutChild: _SectionSignInCard(
+                icon: Icons.bolt_outlined,
+                title: l10n.reviewDueTitle,
+              ),
+            )
+          : _SectionSignInCard(
+              icon: Icons.bolt_outlined,
+              title: l10n.reviewDueTitle,
+            );
+    }
+
     final dueCount = ref.watch(dueReviewCountProvider);
 
     return dueCount.when(
-      loading: () => const _SectionSkeleton(),
-      error: (_, _) => _SectionErrorCard(
-        icon: Icons.bolt_outlined,
-        title: l10n.reviewDueTitle,
-        onRetry: () => ref.invalidate(dueReviewCountProvider),
+      skipLoadingOnRefresh: false,
+      loading: () => _SectionSkeleton(
+        timeoutChild: _SectionErrorCard(
+          icon: Icons.bolt_outlined,
+          title: l10n.reviewDueTitle,
+          onRetry: () => ref.invalidate(dueReviewCountProvider),
+        ),
       ),
+      error: (error, _) => isFlashcardSignInRequiredError(error)
+          ? _SectionSignInCard(
+              icon: Icons.bolt_outlined,
+              title: l10n.reviewDueTitle,
+            )
+          : _SectionErrorCard(
+              icon: Icons.bolt_outlined,
+              title: l10n.reviewDueTitle,
+              onRetry: () => ref.invalidate(dueReviewCountProvider),
+            ),
       data: (count) {
         final hasDue = count > 0;
         return _ReviewSectionCard(
@@ -90,15 +119,42 @@ class _FlashcardsReviewCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final authGate = ref.watch(flashcardAuthGateProvider);
+    if (authGate != FlashcardAuthGate.ready) {
+      return authGate == FlashcardAuthGate.restoring
+          ? _SectionSkeleton(
+              timeoutChild: _SectionSignInCard(
+                icon: Icons.style_outlined,
+                title: l10n.reviewFlashcardsTitle,
+              ),
+            )
+          : _SectionSignInCard(
+              icon: Icons.style_outlined,
+              title: l10n.reviewFlashcardsTitle,
+            );
+    }
+
     final decks = ref.watch(deckListProvider);
 
     return decks.when(
-      loading: () => const _SectionSkeleton(),
-      error: (_, _) => _SectionErrorCard(
-        icon: Icons.style_outlined,
-        title: l10n.reviewFlashcardsTitle,
-        onRetry: () => ref.invalidate(deckListProvider),
+      skipLoadingOnRefresh: false,
+      loading: () => _SectionSkeleton(
+        timeoutChild: _SectionErrorCard(
+          icon: Icons.style_outlined,
+          title: l10n.reviewFlashcardsTitle,
+          onRetry: () => ref.invalidate(deckListProvider),
+        ),
       ),
+      error: (error, _) => isFlashcardSignInRequiredError(error)
+          ? _SectionSignInCard(
+              icon: Icons.style_outlined,
+              title: l10n.reviewFlashcardsTitle,
+            )
+          : _SectionErrorCard(
+              icon: Icons.style_outlined,
+              title: l10n.reviewFlashcardsTitle,
+              onRetry: () => ref.invalidate(deckListProvider),
+            ),
       data: (list) {
         final cardCount = list.fold<int>(0, (sum, d) => sum + d.cardCount);
         final hasContent = list.isNotEmpty && cardCount > 0;
@@ -126,7 +182,14 @@ class _PracticeReviewCard extends ConsumerWidget {
     final lessons = ref.watch(lessonsProvider);
 
     return lessons.when(
-      loading: () => const _SectionSkeleton(),
+      skipLoadingOnRefresh: false,
+      loading: () => _SectionSkeleton(
+        timeoutChild: _SectionErrorCard(
+          icon: Icons.quiz_outlined,
+          title: l10n.reviewPracticeTitle,
+          onRetry: () => ref.invalidate(lessonsProvider),
+        ),
+      ),
       error: (_, _) => _SectionErrorCard(
         icon: Icons.quiz_outlined,
         title: l10n.reviewPracticeTitle,
@@ -220,6 +283,53 @@ class _ReviewSectionCard extends StatelessWidget {
   }
 }
 
+class _SectionSignInCard extends StatelessWidget {
+  const _SectionSignInCard({
+    required this.icon,
+    required this.title,
+  });
+
+  final IconData icon;
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final palette = context.palette;
+    final text = Theme.of(context).textTheme;
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: palette.inkSecondary, size: 24),
+              const SizedBox(width: AppSpacing.m),
+              Expanded(
+                child: Text(
+                  title,
+                  style: text.titleMedium?.copyWith(color: palette.ink),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.s),
+          Text(
+            l10n.commonSignInRequired,
+            style: text.bodySmall?.copyWith(color: palette.inkSecondary),
+          ),
+          const SizedBox(height: AppSpacing.m),
+          PrimaryButton(
+            label: l10n.loginSignInButton,
+            icon: Icons.login_rounded,
+            onPressed: () => context.goNamed(Routes.login),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _SectionErrorCard extends StatelessWidget {
   const _SectionErrorCard({
     required this.icon,
@@ -269,11 +379,54 @@ class _SectionErrorCard extends StatelessWidget {
   }
 }
 
-class _SectionSkeleton extends StatelessWidget {
-  const _SectionSkeleton();
+class _SectionSkeleton extends StatefulWidget {
+  const _SectionSkeleton({this.timeoutChild});
+
+  final Widget? timeoutChild;
+
+  @override
+  State<_SectionSkeleton> createState() => _SectionSkeletonState();
+}
+
+class _SectionSkeletonState extends State<_SectionSkeleton> {
+  Timer? _timer;
+  bool _timedOut = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _armTimeout();
+  }
+
+  @override
+  void didUpdateWidget(covariant _SectionSkeleton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.timeoutChild != widget.timeoutChild) {
+      _timer?.cancel();
+      _timedOut = false;
+      _armTimeout();
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _armTimeout() {
+    if (widget.timeoutChild == null) return;
+    _timer = Timer(const Duration(seconds: 18), () {
+      if (mounted) setState(() => _timedOut = true);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_timedOut && widget.timeoutChild != null) {
+      return widget.timeoutChild!;
+    }
+
     return const AppCard(
       child: LoadingStateView(
         children: [

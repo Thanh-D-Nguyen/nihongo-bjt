@@ -31,9 +31,11 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   );
 });
 
-/// Upper bound for silent token refresh. If the identity provider or network
-/// stalls, protected API screens should fall back to unauthenticated/error
-/// states instead of leaving loaders pending forever.
+/// Upper bound for session restore, secure token IO and silent token refresh.
+///
+/// If secure storage, the identity provider or network stalls, protected API
+/// screens should fall back to unauthenticated/error states instead of leaving
+/// loaders pending forever.
 final authRefreshTimeoutProvider = Provider<Duration>((ref) {
   return const Duration(seconds: 12);
 });
@@ -47,6 +49,7 @@ final authControllerProvider =
 class AuthController extends AsyncNotifier<AuthSession> {
   AuthTokenStore get _store => ref.read(authTokenStoreProvider);
   AuthRepository get _repository => ref.read(authRepositoryProvider);
+  Duration get _timeout => ref.read(authRefreshTimeoutProvider);
   Future<AuthTokens>? _refreshInFlight;
 
   @override
@@ -55,7 +58,14 @@ class AuthController extends AsyncNotifier<AuthSession> {
   /// Reads any stored tokens and decides the initial session: valid → keep;
   /// expired but refreshable → refresh; otherwise unauthenticated.
   Future<AuthSession> _restoreSession() async {
-    final stored = await _store.read();
+    final AuthTokens? stored;
+    try {
+      stored = await _store.read().timeout(_timeout);
+    } on Object {
+      await _clearStoreBestEffort();
+      return const AuthSession.unauthenticated();
+    }
+
     if (stored == null) return const AuthSession.unauthenticated();
 
     if (!stored.isAccessTokenExpired) {
@@ -65,12 +75,12 @@ class AuthController extends AsyncNotifier<AuthSession> {
     try {
       final refreshed = await _repository
           .refresh(stored.refreshToken)
-          .timeout(ref.read(authRefreshTimeoutProvider));
-      await _store.write(refreshed);
+          .timeout(_timeout);
+      await _store.write(refreshed).timeout(_timeout);
       return AuthSession.authenticated(refreshed);
     } on Object {
       // Refresh failed (expired/revoked): drop the stale session.
-      await _store.clear();
+      await _clearStoreBestEffort();
       return const AuthSession.unauthenticated();
     }
   }
@@ -84,7 +94,7 @@ class AuthController extends AsyncNotifier<AuthSession> {
     state = const AsyncLoading<AuthSession>();
     state = await AsyncValue.guard(() async {
       final tokens = await _repository.signIn(idpHint: idpHint, flow: flow);
-      await _store.write(tokens);
+      await _store.write(tokens).timeout(_timeout);
       return AuthSession.authenticated(tokens);
     });
   }
@@ -101,7 +111,7 @@ class AuthController extends AsyncNotifier<AuthSession> {
         username: username,
         password: password,
       );
-      await _store.write(tokens);
+      await _store.write(tokens).timeout(_timeout);
       return AuthSession.authenticated(tokens);
     });
   }
@@ -128,7 +138,7 @@ class AuthController extends AsyncNotifier<AuthSession> {
       } on Object {
         // Best-effort remote logout; always clear the local session.
       }
-      await _store.clear();
+      await _clearStoreBestEffort();
       return const AuthSession.unauthenticated();
     });
   }
@@ -143,23 +153,29 @@ class AuthController extends AsyncNotifier<AuthSession> {
       }
     }
 
-    final refresh = _repository
-        .refresh(refreshToken)
-        .timeout(ref.read(authRefreshTimeoutProvider));
+    final refresh = _repository.refresh(refreshToken).timeout(_timeout);
     _refreshInFlight = refresh;
     try {
       final refreshed = await refresh;
-      await _store.write(refreshed);
+      await _store.write(refreshed).timeout(_timeout);
       state = AsyncData(AuthSession.authenticated(refreshed));
       return refreshed;
     } on Object {
-      await _store.clear();
+      await _clearStoreBestEffort();
       state = const AsyncData(AuthSession.unauthenticated());
       return null;
     } finally {
       if (_refreshInFlight == refresh) {
         _refreshInFlight = null;
       }
+    }
+  }
+
+  Future<void> _clearStoreBestEffort() async {
+    try {
+      await _store.clear().timeout(_timeout);
+    } on Object {
+      // Never leave auth state loading because secure-storage cleanup stalled.
     }
   }
 }

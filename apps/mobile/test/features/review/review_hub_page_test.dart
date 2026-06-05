@@ -1,13 +1,20 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nihongo_bjt/core/config/app_environment.dart';
+import 'package:nihongo_bjt/features/auth/domain/auth_session.dart';
+import 'package:nihongo_bjt/features/auth/presentation/auth_controller.dart';
+import 'package:nihongo_bjt/features/flashcards/data/api_flashcard_repository.dart';
 import 'package:nihongo_bjt/features/flashcards/domain/flashcard_deck.dart';
 import 'package:nihongo_bjt/features/flashcards/presentation/flashcard_providers.dart';
 import 'package:nihongo_bjt/features/learn/domain/lesson.dart';
 import 'package:nihongo_bjt/features/learn/presentation/learn_providers.dart';
 import 'package:nihongo_bjt/features/review/presentation/review_hub_page.dart';
 import 'package:nihongo_bjt/l10n/gen/app_localizations.dart';
+import 'package:nihongo_bjt/shared/widgets/loading_state_view.dart';
 import 'package:nihongo_bjt/shared/widgets/primary_button.dart';
 
 FlashcardDeck _deck(String id, {int cardCount = 5}) => FlashcardDeck(
@@ -34,6 +41,28 @@ Lesson _lesson(String id, {int questionCount = 0}) => Lesson(
     ),
   ],
 );
+
+const _apiEnv = AppEnvironment(
+  apiBaseUrl: 'https://api.test',
+  keycloakIssuer: 'https://auth.test/realms/nihongo-bjt',
+  oauthClientId: 'nihongo-mobile',
+  oauthRedirectUri: 'com.nihongobjt.app://oauth2redirect',
+  flashcardDataSource: 'api',
+);
+
+class _StubAuthController extends AuthController {
+  _StubAuthController(this._session);
+
+  final AuthSession _session;
+
+  @override
+  Future<AuthSession> build() async => _session;
+}
+
+class _RestoringAuthController extends AuthController {
+  @override
+  Future<AuthSession> build() => Completer<AuthSession>().future;
+}
 
 Future<void> _pumpReview(
   WidgetTester tester, {
@@ -185,6 +214,152 @@ void main() {
         find.widgetWithText(PrimaryButton, l10n.commonRetry),
         findsOneWidget,
       );
+    });
+
+    testWidgets('retry shows loading before refetching a failed section', (
+      tester,
+    ) async {
+      var shouldFail = true;
+      var successfulFetches = 0;
+      await _pumpReview(
+        tester,
+        overrides: [
+          dueReviewCountProvider.overrideWith((ref) async => 0),
+          deckListProvider.overrideWith((ref) async {
+            if (shouldFail) throw Exception('offline');
+            await Future<void>.delayed(const Duration(milliseconds: 50));
+            successfulFetches++;
+            return [_deck('d1')];
+          }),
+          lessonsProvider.overrideWith((ref) async => [_lesson('l1')]),
+        ],
+      );
+      await tester.pumpAndSettle();
+
+      final l10n = await AppLocalizations.delegate.load(const Locale('vi'));
+      expect(find.text(l10n.reviewSectionError), findsOneWidget);
+
+      shouldFail = false;
+      await tester.tap(find.widgetWithText(PrimaryButton, l10n.commonRetry));
+      await tester.pump();
+
+      expect(find.byType(SkeletonBox), findsWidgets);
+      expect(find.text(l10n.reviewSectionError), findsNothing);
+
+      await tester.pumpAndSettle();
+      expect(successfulFetches, 1);
+      expect(find.text(l10n.reviewFlashcardsStat(1, 5)), findsOneWidget);
+    });
+
+    testWidgets('API flashcard sections ask for sign-in before loading', (
+      tester,
+    ) async {
+      await _pumpReview(
+        tester,
+        overrides: [
+          appEnvironmentProvider.overrideWithValue(_apiEnv),
+          authControllerProvider.overrideWith(
+            () => _StubAuthController(const AuthSession.unauthenticated()),
+          ),
+          dueReviewCountProvider.overrideWith((ref) async {
+            throw StateError('due count must not load while signed out');
+          }),
+          deckListProvider.overrideWith((ref) async {
+            throw StateError('deck list must not load while signed out');
+          }),
+          lessonsProvider.overrideWith((ref) async => <Lesson>[]),
+        ],
+      );
+      await tester.pumpAndSettle();
+
+      final l10n = await AppLocalizations.delegate.load(const Locale('vi'));
+      expect(find.text(l10n.commonSignInRequired), findsNWidgets(2));
+      expect(find.text(l10n.loginSignInButton), findsNWidgets(2));
+      expect(find.text(l10n.reviewSectionError), findsNothing);
+    });
+
+    testWidgets('API auth failures show sign-in instead of retry', (
+      tester,
+    ) async {
+      await _pumpReview(
+        tester,
+        overrides: [
+          dueReviewCountProvider.overrideWith(
+            (ref) async => throw const FlashcardRepositoryException(
+              'auth required',
+              isAuthRequired: true,
+            ),
+          ),
+          deckListProvider.overrideWith(
+            (ref) async => throw const FlashcardRepositoryException(
+              'auth required',
+              isAuthRequired: true,
+            ),
+          ),
+          lessonsProvider.overrideWith((ref) async => <Lesson>[]),
+        ],
+      );
+      await tester.pumpAndSettle();
+
+      final l10n = await AppLocalizations.delegate.load(const Locale('vi'));
+      expect(find.text(l10n.loginSignInButton), findsNWidgets(2));
+      expect(
+        find.widgetWithText(PrimaryButton, l10n.commonRetry),
+        findsNothing,
+      );
+    });
+
+    testWidgets('long flashcard loads time out to a retry state', (
+      tester,
+    ) async {
+      await _pumpReview(
+        tester,
+        overrides: [
+          dueReviewCountProvider.overrideWith((ref) async => 0),
+          deckListProvider.overrideWith(
+            (ref) => Completer<List<FlashcardDeck>>().future,
+          ),
+          lessonsProvider.overrideWith((ref) async => <Lesson>[]),
+        ],
+      );
+      await tester.pump();
+      expect(find.byType(SkeletonBox), findsWidgets);
+
+      await tester.pump(const Duration(seconds: 19));
+
+      final l10n = await AppLocalizations.delegate.load(const Locale('vi'));
+      expect(
+        find.widgetWithText(PrimaryButton, l10n.commonRetry),
+        findsOneWidget,
+      );
+      expect(find.text(l10n.reviewFlashcardsTitle), findsOneWidget);
+    });
+
+    testWidgets('long auth restore times out to sign-in cards', (
+      tester,
+    ) async {
+      await _pumpReview(
+        tester,
+        overrides: [
+          appEnvironmentProvider.overrideWithValue(_apiEnv),
+          authControllerProvider.overrideWith(_RestoringAuthController.new),
+          dueReviewCountProvider.overrideWith((ref) async {
+            throw StateError('due count must not load while auth restores');
+          }),
+          deckListProvider.overrideWith((ref) async {
+            throw StateError('deck list must not load while auth restores');
+          }),
+          lessonsProvider.overrideWith((ref) async => <Lesson>[]),
+        ],
+      );
+      await tester.pump();
+      expect(find.byType(SkeletonBox), findsWidgets);
+
+      await tester.pump(const Duration(seconds: 19));
+
+      final l10n = await AppLocalizations.delegate.load(const Locale('vi'));
+      expect(find.text(l10n.loginSignInButton), findsNWidgets(2));
+      expect(find.text(l10n.commonSignInRequired), findsNWidgets(2));
     });
   });
 }

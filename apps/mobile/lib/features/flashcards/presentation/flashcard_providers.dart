@@ -125,6 +125,10 @@ final flashcardAuthGateProvider = Provider<FlashcardAuthGate>((ref) {
       : FlashcardAuthGate.signInRequired;
 });
 
+bool isFlashcardSignInRequiredError(Object error) {
+  return error is FlashcardRepositoryException && error.isAuthRequired;
+}
+
 /// All decks shown on the deck-list screen.
 final deckListProvider = FutureProvider<List<FlashcardDeck>>((ref) {
   return ref.watch(flashcardRepositoryProvider).fetchDecks();

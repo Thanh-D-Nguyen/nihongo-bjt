@@ -24,6 +24,21 @@ class _FakeTokenStore implements AuthTokenStore {
   Future<void> clear() async => _tokens = null;
 }
 
+class _HangingReadTokenStore implements AuthTokenStore {
+  int clearCalls = 0;
+
+  @override
+  Future<AuthTokens?> read() => Completer<AuthTokens?>().future;
+
+  @override
+  Future<void> write(AuthTokens tokens) async {}
+
+  @override
+  Future<void> clear() async {
+    clearCalls += 1;
+  }
+}
+
 /// Scriptable [AuthRepository] for tests.
 class _FakeAuthRepository implements AuthRepository {
   _FakeAuthRepository({this.onSignIn, this.onPasswordSignIn, this.onRefresh});
@@ -164,6 +179,20 @@ void main() {
 
       expect(session.status, AuthStatus.unauthenticated);
       expect(await store.read(), isNull);
+    });
+
+    test('stuck token-store read -> unauthenticated', () async {
+      final store = _HangingReadTokenStore();
+      final container = _container(
+        store: store,
+        repository: _FakeAuthRepository(),
+        refreshTimeout: const Duration(milliseconds: 1),
+      );
+
+      final session = await container.read(authControllerProvider.future);
+
+      expect(session.status, AuthStatus.unauthenticated);
+      expect(store.clearCalls, 1);
     });
   });
 
