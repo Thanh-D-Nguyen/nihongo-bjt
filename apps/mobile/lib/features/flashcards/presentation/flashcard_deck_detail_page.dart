@@ -10,6 +10,7 @@ import 'package:nihongo_bjt/core/theme/app_spacing.dart';
 import 'package:nihongo_bjt/features/flashcards/domain/deck_detail.dart';
 import 'package:nihongo_bjt/features/flashcards/domain/flashcard_deck.dart';
 import 'package:nihongo_bjt/features/flashcards/presentation/flashcard_providers.dart';
+import 'package:nihongo_bjt/features/flashcards/presentation/flashcard_sign_in_required_view.dart';
 import 'package:nihongo_bjt/l10n/gen/app_localizations.dart';
 import 'package:nihongo_bjt/shared/widgets/app_card.dart';
 import 'package:nihongo_bjt/shared/widgets/app_scaffold.dart';
@@ -28,6 +29,16 @@ class FlashcardDeckDetailPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final authGate = ref.watch(flashcardAuthGateProvider);
+    if (authGate != FlashcardAuthGate.ready) {
+      return AppScaffold(
+        title: l10n.flashcardDeckDetailTitle,
+        body: authGate == FlashcardAuthGate.restoring
+            ? const _DeckDetailSkeleton()
+            : const FlashcardSignInRequiredView(),
+      );
+    }
+
     final detail = ref.watch(deckDetailProvider(deckId));
 
     return AppScaffold(
@@ -50,6 +61,7 @@ class FlashcardDeckDetailPage extends ConsumerWidget {
             ]
           : null,
       body: detail.when(
+        skipLoadingOnRefresh: false,
         loading: () => const _DeckDetailSkeleton(),
         error: (_, _) => ErrorStateView(
           title: l10n.deckDetailErrorTitle,
