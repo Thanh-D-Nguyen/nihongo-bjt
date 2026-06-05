@@ -181,6 +181,20 @@ class _RankRow extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
     final medal = _rankMedal[entry.rank];
+    final displayName = entry.displayName?.trim();
+    final hasName = displayName != null && displayName.isNotEmpty;
+    final shortId = entry.userId.length > 6
+        ? entry.userId.substring(0, 6)
+        : entry.userId;
+    final name = hasName
+        ? displayName
+        : (shortId.isNotEmpty
+              ? l10n.rewardsLeaderboardUserFallback(shortId)
+              : l10n.rewardsLeaderboardAnonymous);
+    final initialSource = hasName ? displayName : shortId;
+    final initial = initialSource.trim().isNotEmpty
+        ? initialSource.trim().characters.first.toUpperCase()
+        : '?';
 
     return AppCard(
       padding: const EdgeInsets.symmetric(
@@ -203,9 +217,26 @@ class _RankRow extends StatelessWidget {
                   ),
           ),
           const SizedBox(width: AppSpacing.s),
+          Container(
+            width: 32,
+            height: 32,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: palette.accentSoft,
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              initial,
+              style: text.labelLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: palette.accent,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.s),
           Expanded(
             child: Text(
-              entry.displayName ?? l10n.rewardsLeaderboardAnonymous,
+              name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: text.bodyLarge?.copyWith(

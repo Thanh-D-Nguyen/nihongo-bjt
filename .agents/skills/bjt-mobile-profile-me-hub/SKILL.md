@@ -1,3 +1,8 @@
+---
+name: bjt-mobile-profile-me-hub
+description: Implement, audit, or polish the Profile / Me hub of the Nihongo BJT Flutter mobile app — account identity, learning snapshot, quick actions, settings, subscription/billing entry, support/about, and safe logout. Use when building the mobile Me tab, account screens, settings groups, or auth/logout behavior.
+---
+
 # BJT Mobile Profile / Me Hub Skill
 
 Use this skill when implementing, auditing, or polishing the Profile / Me area of the Nihongo BJT mobile app.

@@ -1,11 +1,16 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:nihongo_bjt/app/router.dart';
 import 'package:nihongo_bjt/core/theme/app_palette.dart';
 import 'package:nihongo_bjt/core/theme/app_radius.dart';
 import 'package:nihongo_bjt/core/theme/app_spacing.dart';
 import 'package:nihongo_bjt/features/flashcards/domain/srs_rating.dart';
 import 'package:nihongo_bjt/features/flashcards/presentation/flashcard_review_page.dart'
     show ratingColor, ratingLabel;
+import 'package:nihongo_bjt/features/progress/domain/coaching_snapshot.dart';
 import 'package:nihongo_bjt/features/progress/domain/study_summary.dart';
 import 'package:nihongo_bjt/features/progress/presentation/progress_providers.dart';
 import 'package:nihongo_bjt/l10n/gen/app_localizations.dart';
@@ -14,6 +19,7 @@ import 'package:nihongo_bjt/shared/widgets/app_scaffold.dart';
 import 'package:nihongo_bjt/shared/widgets/empty_state_view.dart';
 import 'package:nihongo_bjt/shared/widgets/error_state_view.dart';
 import 'package:nihongo_bjt/shared/widgets/loading_state_view.dart';
+import 'package:nihongo_bjt/shared/widgets/primary_button.dart';
 import 'package:nihongo_bjt/shared/widgets/section_header.dart';
 
 /// Progress tab — honest, device-local study analytics.
@@ -63,6 +69,7 @@ class _ProgressView extends StatelessWidget {
       children: [
         SectionHeader(title: l10n.progressTitle, subtitle: l10n.progressIntro),
         const SizedBox(height: AppSpacing.m),
+        const _CoachingCard(),
         _StatGrid(summary: summary),
         const SizedBox(height: AppSpacing.l),
         _ActivityChart(summary: summary),
@@ -72,6 +79,160 @@ class _ProgressView extends StatelessWidget {
         ],
       ],
     );
+  }
+}
+
+/// Supplementary "next step" card mirroring the web analytics coaching block.
+///
+/// Watches [coachingSnapshotProvider] and renders a single recommended action
+/// plus an encouraging nudge, both derived from real server analytics. While
+/// loading, on error, or when there is no usable signal it renders nothing —
+/// the device-local metrics below remain the honest source of truth.
+class _CoachingCard extends ConsumerWidget {
+  const _CoachingCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final snapshot = ref.watch(coachingSnapshotProvider).value;
+    if (snapshot == null) return const SizedBox.shrink();
+
+    final palette = context.palette;
+    final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
+    final isFlashcards = snapshot.primaryAction == CoachingAction.flashcards;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.l),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AppCard(
+            padding: const EdgeInsets.all(AppSpacing.l),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.progressCoachingTitle,
+                  style: text.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: palette.ink,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  _hintLabel(l10n, snapshot),
+                  style: text.bodyMedium?.copyWith(
+                    color: palette.inkSecondary,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.m),
+                PrimaryButton(
+                  label: isFlashcards
+                      ? l10n.progressCoachingCtaFlashcards
+                      : l10n.progressCoachingCtaQuiz,
+                  icon: isFlashcards
+                      ? Icons.style_outlined
+                      : Icons.fact_check_outlined,
+                  onPressed: () => _open(context, snapshot.primaryAction),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.s),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(AppSpacing.m),
+            decoration: BoxDecoration(
+              color: palette.successSoft,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.progressCoachingNudgeTitle.toUpperCase(),
+                  style: text.labelSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.2,
+                    color: palette.success,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  _nudgeLabel(l10n, snapshot),
+                  style: text.bodyMedium?.copyWith(
+                    color: palette.ink,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (snapshot.insight.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.s),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(AppSpacing.m),
+              decoration: BoxDecoration(
+                color: palette.accentSoft,
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.progressCoachingInsightTitle.toUpperCase(),
+                    style: text.labelSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.2,
+                      color: palette.accent,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    snapshot.insight,
+                    style: text.bodyMedium?.copyWith(
+                      color: palette.ink,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  String _hintLabel(AppLocalizations l10n, CoachingSnapshot s) {
+    return switch (s.primaryHint) {
+      CoachingHint.flashcardsDue => l10n.progressCoachingHintFlashcardsDue(
+        s.dueFlashcards,
+      ),
+      CoachingHint.quizSkills => l10n.progressCoachingHintQuizSkills,
+      CoachingHint.quizAccuracy => l10n.progressCoachingHintQuizAccuracy,
+      CoachingHint.maintain => l10n.progressCoachingHintMaintain,
+    };
+  }
+
+  String _nudgeLabel(AppLocalizations l10n, CoachingSnapshot s) {
+    return switch (s.nudge) {
+      CoachingNudge.due => l10n.progressCoachingNudgeDue(s.dueFlashcards),
+      CoachingNudge.weak => l10n.progressCoachingNudgeWeak,
+      CoachingNudge.streak => l10n.progressCoachingNudgeStreak(s.streakDays),
+      CoachingNudge.calm => l10n.progressCoachingNudgeCalm,
+    };
+  }
+
+  void _open(BuildContext context, CoachingAction action) {
+    switch (action) {
+      case CoachingAction.flashcards:
+        unawaited(context.pushNamed(Routes.flashcardDueReview));
+      case CoachingAction.quiz:
+        context.goNamed(Routes.exam);
+    }
   }
 }
 

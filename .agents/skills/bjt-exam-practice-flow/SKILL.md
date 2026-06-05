@@ -1,3 +1,8 @@
+---
+name: bjt-exam-practice-flow
+description: Implement, audit, polish, or test BJT Exam Mode and Practice flows in the Nihongo BJT Flutter mobile app — practice/exam entry, question player, answer selection, submit/check, timer, progress, results, explanations, per-question review, and exam-integrity rules. Use when building focused, full-screen practice or scored timed exam sessions.
+---
+
 # BJT Exam Mode / Practice Flow Skill
 
 Use this skill when implementing, auditing, polishing, or testing Exam Mode and Practice flows for the Nihongo BJT mobile app.

@@ -576,6 +576,40 @@
   "@cardSaveSuccess": {
     "description": "Snackbar after a card is created or updated."
   },
+  "cardBulkAddRow": "Thêm hàng",
+  "@cardBulkAddRow": {
+    "description": "Button that appends another empty card row in bulk add."
+  },
+  "cardBulkShowReading": "Hiện cách đọc",
+  "@cardBulkShowReading": {
+    "description": "Toggle to show the optional reading field on every row."
+  },
+  "cardBulkRemoveRow": "Xóa hàng",
+  "@cardBulkRemoveRow": {
+    "description": "Tooltip/label for removing one card row in bulk add."
+  },
+  "cardBulkRowTitle": "Thẻ {number}",
+  "@cardBulkRowTitle": {
+    "description": "Header above each card row in bulk add.",
+    "placeholders": {
+      "number": { "type": "int" }
+    }
+  },
+  "cardBulkSaveAll": "Lưu tất cả",
+  "@cardBulkSaveAll": {
+    "description": "Primary button that saves every filled row at once."
+  },
+  "cardBulkEmptyWarning": "Hãy nhập ít nhất một thẻ.",
+  "@cardBulkEmptyWarning": {
+    "description": "Shown when the learner taps save without filling any row."
+  },
+  "cardBulkSaveSuccess": "Đã thêm {count} thẻ.",
+  "@cardBulkSaveSuccess": {
+    "description": "Snackbar after bulk-adding cards.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "cardDeleteSuccess": "Đã xóa thẻ.",
   "@cardDeleteSuccess": {
     "description": "Snackbar after a card is deleted."
@@ -631,6 +665,34 @@
   "reviewRevealHint": "Tự nhớ lại trước, rồi chạm để xem đáp án.",
   "@reviewRevealHint": {
     "description": "Hint above the reveal button encouraging active recall."
+  },
+  "reviewTypePrompt": "Nhập nghĩa hoặc cách đọc",
+  "@reviewTypePrompt": {
+    "description": "Prompt above the typing field in type-recall review mode."
+  },
+  "reviewTypePlaceholder": "Câu trả lời của bạn…",
+  "@reviewTypePlaceholder": {
+    "description": "Placeholder text inside the typing field in type-recall mode."
+  },
+  "reviewTypeSubmit": "Kiểm tra",
+  "@reviewTypeSubmit": {
+    "description": "Button that grades the typed answer in type-recall mode."
+  },
+  "reviewTypeContinue": "Tiếp tục",
+  "@reviewTypeContinue": {
+    "description": "Button that advances to the next card after a typed answer is graded."
+  },
+  "reviewTypeCorrect": "Chính xác",
+  "@reviewTypeCorrect": {
+    "description": "Feedback label when a typed answer is an exact match."
+  },
+  "reviewTypeAlmost": "Gần đúng",
+  "@reviewTypeAlmost": {
+    "description": "Feedback label when a typed answer is a near miss."
+  },
+  "reviewTypeWrong": "Chưa đúng",
+  "@reviewTypeWrong": {
+    "description": "Feedback label when a typed answer is incorrect."
   },
   "reviewComplete": "Hoàn thành!",
   "@reviewComplete": {
@@ -1000,6 +1062,18 @@
   "@lessonDetailContentTitle": {
     "description": "Section header above the lesson's readable sections."
   },
+  "lessonNavTitle": "Bài học khác",
+  "@lessonNavTitle": {
+    "description": "Header above the previous/next lesson navigation row."
+  },
+  "lessonNavPrevious": "Bài trước",
+  "@lessonNavPrevious": {
+    "description": "Label for the button that opens the previous lesson."
+  },
+  "lessonNavNext": "Bài tiếp",
+  "@lessonNavNext": {
+    "description": "Label for the button that opens the next lesson."
+  },
   "lessonPracticeCta": "{count,plural, =1{Luyện tập ({count} câu)} other{Luyện tập ({count} câu)}}",
   "@lessonPracticeCta": {
     "description": "CTA on the lesson detail screen to start practice.",
@@ -1155,6 +1229,26 @@
     "description": "Compact error message inside a Review hub section card."
   },
 
+  "reviewDueTitle": "Đến hạn hôm nay",
+  "@reviewDueTitle": {
+    "description": "Title of the due-now SRS entry on the Review hub."
+  },
+  "reviewDueStat": "{count} thẻ cần ôn ngay",
+  "@reviewDueStat": {
+    "description": "Number of flashcards due across all decks.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "reviewDueEmpty": "Bạn đã ôn xong các thẻ đến hạn.",
+  "@reviewDueEmpty": {
+    "description": "Shown when no flashcards are due for review."
+  },
+  "reviewDueCta": "Ôn ngay",
+  "@reviewDueCta": {
+    "description": "CTA to start the cross-deck due-review session."
+  },
+
   "progressTitle": "Tiến độ",
   "@progressTitle": {
     "description": "App bar title for the Progress tab."
@@ -1162,6 +1256,73 @@
   "progressIntro": "Hoạt động học tập của bạn trên thiết bị này.",
   "@progressIntro": {
     "description": "Short subtitle under the Progress header."
+  },
+  "progressCoachingTitle": "Bước gợi ý tiếp theo",
+  "@progressCoachingTitle": {
+    "description": "Title of the coaching next-step card on the Progress tab."
+  },
+  "progressCoachingCtaFlashcards": "Ôn thẻ đến hạn",
+  "@progressCoachingCtaFlashcards": {
+    "description": "Primary-action button label when reviewing flashcards is recommended."
+  },
+  "progressCoachingCtaQuiz": "Luyện BJT ngắn",
+  "@progressCoachingCtaQuiz": {
+    "description": "Primary-action button label when a short BJT set is recommended."
+  },
+  "progressCoachingHintFlashcardsDue": "{n} thẻ đang đến hạn — ưu tiên giữ nhịp SRS.",
+  "@progressCoachingHintFlashcardsDue": {
+    "description": "Hint under the action card when flashcards are due.",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "progressCoachingHintQuizSkills": "Có kỹ năng cần củng cố — luyện theo dạng đề giúp ổn định.",
+  "@progressCoachingHintQuizSkills": {
+    "description": "Hint when a BJT set is recommended to reinforce weak skills."
+  },
+  "progressCoachingHintQuizAccuracy": "Độ chính xác còn dư địa — thêm vài câu BJT sẽ rõ tiến bộ.",
+  "@progressCoachingHintQuizAccuracy": {
+    "description": "Hint when a BJT set is recommended to lift accuracy."
+  },
+  "progressCoachingHintMaintain": "Giữ đà nhẹ: vài phút ôn hoặc một set BJT ngắn.",
+  "@progressCoachingHintMaintain": {
+    "description": "Hint when the learner only needs to keep a light cadence."
+  },
+  "progressCoachingNudgeTitle": "Động viên nhẹ",
+  "@progressCoachingNudgeTitle": {
+    "description": "Eyebrow label above the encouraging nudge line."
+  },
+  "progressCoachingInsightTitle": "Gợi ý",
+  "@progressCoachingInsightTitle": {
+    "description": "Eyebrow label above the server-derived coaching insight line."
+  },
+  "progressCoachingNudgeDue": "{n} thẻ đang chờ — mỗi phiên ngắn đều có giá trị.",
+  "@progressCoachingNudgeDue": {
+    "description": "Nudge line when flashcards are due.",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "progressCoachingNudgeWeak": "Đã xác định vài kỹ năng cần chú ý — luyện đều sẽ dễ hơn.",
+  "@progressCoachingNudgeWeak": {
+    "description": "Nudge line when weak skills were detected."
+  },
+  "progressCoachingNudgeStreak": "Chuỗi {n} ngày đang chạy — đều đặn quan trọng hơn tốc độ.",
+  "@progressCoachingNudgeStreak": {
+    "description": "Nudge line celebrating an active study streak.",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "progressCoachingNudgeCalm": "Không cần vội — chọn một hoạt động ngắn phù hợp hôm nay.",
+  "@progressCoachingNudgeCalm": {
+    "description": "Calm nudge line when there is no urgent signal."
   },
   "progressEmptyTitle": "Chưa có hoạt động học tập",
   "@progressEmptyTitle": {
@@ -1325,6 +1486,13 @@
       "count": { "type": "int" }
     }
   },
+  "kanjiFrequencyLabel": "Tần suất #{rank}",
+  "@kanjiFrequencyLabel": {
+    "description": "Frequency-rank badge in kanji detail (lower is more common).",
+    "placeholders": {
+      "rank": { "type": "int" }
+    }
+  },
   "kanjiStrokeOrderTitle": "Thứ tự nét",
   "@kanjiStrokeOrderTitle": {
     "description": "Section header above the stroke-order diagram in kanji detail."
@@ -1416,6 +1584,13 @@
   "scenarioStepCount": "{count} bước",
   "@scenarioStepCount": {
     "description": "Number of steps in a scenario.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "scenarioAttemptCount": "{count} lượt chơi",
+  "@scenarioAttemptCount": {
+    "description": "Number of times a scenario has been played.",
     "placeholders": {
       "count": { "type": "int" }
     }
@@ -1627,6 +1802,53 @@
   "@examReviewErrorBody": {
     "description": "Error body when the review breakdown fails to load."
   },
+  "examRemediationTitle": "Lưu câu sai để ôn lại",
+  "@examRemediationTitle": {
+    "description": "Title of the save-mistakes-to-deck card on exam review."
+  },
+  "examRemediationBody": "{count} câu sai có giải thích. Tạo bộ thẻ flashcard để ôn lại.",
+  "@examRemediationBody": {
+    "description": "Body of the remediation card; count of explained mistakes.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "examRemediationCta": "Tạo bộ thẻ ôn tập",
+  "@examRemediationCta": {
+    "description": "Button that creates a review deck from exam mistakes."
+  },
+  "examRemediationSuccess": "Đã tạo bộ thẻ với {count} thẻ.",
+  "@examRemediationSuccess": {
+    "description": "Success message after the review deck is created.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "examRemediationOpenDeck": "Mở bộ thẻ",
+  "@examRemediationOpenDeck": {
+    "description": "Button to open the newly created remediation deck."
+  },
+  "examRemediationError": "Không tạo được bộ thẻ. Thử lại.",
+  "@examRemediationError": {
+    "description": "Error shown when creating the remediation deck fails."
+  },
+  "examRemediationDeckTitle": "Ôn lỗi: {test}",
+  "@examRemediationDeckTitle": {
+    "description": "Generated title for a remediation deck from a named test.",
+    "placeholders": {
+      "test": {
+        "type": "String"
+      }
+    }
+  },
+  "examRemediationDeckTitleFallback": "Ôn lỗi bài thi BJT",
+  "@examRemediationDeckTitleFallback": {
+    "description": "Generated remediation deck title when the test is unnamed."
+  },
   "newsTitle": "Tin tức NHK",
   "@newsTitle": {
     "description": "Title of the NHK news reading feature."
@@ -1830,6 +2052,13 @@
   "careerArcLocked": "Mở khoá ở cấp {rank}",
   "@careerArcLocked": {
     "description": "Locked arc hint showing the required rank code.",
+    "placeholders": {
+      "rank": { "type": "String" }
+    }
+  },
+  "careerArcRankRequired": "Yêu cầu rank {rank}",
+  "@careerArcRankRequired": {
+    "description": "Eyebrow label on an arc card showing the entry rank.",
     "placeholders": {
       "rank": { "type": "String" }
     }
@@ -2041,6 +2270,16 @@
   "@savedRemovedToast": {
     "description": "Snackbar confirming a saved item was removed."
   },
+  "savedSavedOn": "Đã lưu: {date}",
+  "@savedSavedOn": {
+    "description": "Secondary line on a saved item tile showing the bookmark date.",
+    "placeholders": {
+      "date": {
+        "type": "DateTime",
+        "format": "yMMMd"
+      }
+    }
+  },
   "savedTitle": "Đã lưu",
   "@savedTitle": {
     "description": "Title of the saved bookmarks library screen."
@@ -2163,6 +2402,24 @@
       "days": { "type": "int" }
     }
   },
+  "rewardsStreakCalendar": "Lịch học tập",
+  "@rewardsStreakCalendar": {
+    "description": "Label above the 12-week streak activity heatmap."
+  },
+  "rewardsAchievementTierLabel": "{tier, select, bronze{Đồng} silver{Bạc} gold{Vàng} platinum{Bạch Kim} other{{tier}}}",
+  "@rewardsAchievementTierLabel": {
+    "description": "Localized name of an achievement tier.",
+    "placeholders": {
+      "tier": { "type": "String" }
+    }
+  },
+  "rewardsAchievementCategoryLabel": "{category, select, learning{Học tập} social{Xã hội} streak{Chuỗi ngày} mastery{Thành thạo} battle{Đối kháng} other{{category}}}",
+  "@rewardsAchievementCategoryLabel": {
+    "description": "Localized name of an achievement category.",
+    "placeholders": {
+      "category": { "type": "String" }
+    }
+  },
   "rewardsAchievementsEmptyTitle": "Chưa có huy hiệu",
   "@rewardsAchievementsEmptyTitle": {
     "description": "Title for the empty achievements state."
@@ -2206,6 +2463,15 @@
   "rewardsLeaderboardAnonymous": "Người học ẩn danh",
   "@rewardsLeaderboardAnonymous": {
     "description": "Fallback name for a leaderboard entry without a display name."
+  },
+  "rewardsLeaderboardUserFallback": "Người dùng {id}",
+  "@rewardsLeaderboardUserFallback": {
+    "description": "Fallback leaderboard name using a short user id when no display name is set.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
   },
   "rewardsLeaderboardScore": "{score} đ",
   "@rewardsLeaderboardScore": {
@@ -2292,5 +2558,27 @@
   "subscriptionPlanPerMonth": "/tháng",
   "@subscriptionPlanPerMonth": { "description": "Per-month price suffix." },
   "subscriptionPlanRecommended": "Đề xuất",
-  "@subscriptionPlanRecommended": { "description": "Recommended plan badge." }
+  "@subscriptionPlanRecommended": { "description": "Recommended plan badge." },
+  "readingDetailReadingLabel": "Cách đọc",
+  "@readingDetailReadingLabel": { "description": "Label for the reading (kana) row in the reading-assist lookup sheet." },
+  "readingDetailMeaningLabel": "Nghĩa",
+  "@readingDetailMeaningLabel": { "description": "Label for the meaning row in the reading-assist lookup sheet." },
+  "readingDetailAddFlashcard": "Thêm vào thẻ ghi nhớ",
+  "@readingDetailAddFlashcard": { "description": "Button to add the term to flashcards from the lookup sheet." },
+  "readingDetailAdded": "Đã thêm vào thẻ ghi nhớ",
+  "@readingDetailAdded": { "description": "Confirmation shown after adding a term to flashcards." },
+  "readingDetailAddError": "Không thêm được. Vui lòng thử lại.",
+  "@readingDetailAddError": { "description": "Error shown when adding a term to flashcards fails." },
+  "addFlashcardTitle": "Thêm vào thẻ ghi nhớ",
+  "@addFlashcardTitle": { "description": "Title of the add-to-flashcard deck picker sheet." },
+  "addFlashcardChooseDeck": "Chọn bộ thẻ để lưu từ này",
+  "@addFlashcardChooseDeck": { "description": "Subtitle prompting the learner to pick a deck." },
+  "addFlashcardLoadError": "Không tải được bộ thẻ.",
+  "@addFlashcardLoadError": { "description": "Error shown when the deck list fails to load in the picker." },
+  "addFlashcardEmptyTitle": "Chưa có bộ thẻ nào",
+  "@addFlashcardEmptyTitle": { "description": "Empty state title when the learner has no decks." },
+  "addFlashcardEmptyBody": "Tạo một bộ thẻ để bắt đầu lưu từ vựng.",
+  "@addFlashcardEmptyBody": { "description": "Empty state body when the learner has no decks." },
+  "addFlashcardCreateDeck": "Tạo bộ thẻ",
+  "@addFlashcardCreateDeck": { "description": "Button to go create a deck from the empty picker." }
 }

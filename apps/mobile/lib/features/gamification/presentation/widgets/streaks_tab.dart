@@ -125,6 +125,13 @@ class _StreakCard extends StatelessWidget {
               ),
             ],
           ),
+          if (streak.lastActivityDate != null) ...[
+            const SizedBox(height: AppSpacing.m),
+            _StreakCalendar(
+              lastActivityDate: streak.lastActivityDate!,
+              currentStreak: streak.currentStreak,
+            ),
+          ],
         ],
       ),
     );
@@ -164,6 +171,111 @@ class _StreakStat extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// A 12-week activity heatmap mirroring the web streak calendar. Active days
+/// are the [currentStreak] consecutive days ending at [lastActivityDate];
+/// everything else renders as an inactive cell. No data is fabricated — the run
+/// is reconstructed from the same server-authoritative figures shown above.
+class _StreakCalendar extends StatelessWidget {
+  const _StreakCalendar({
+    required this.lastActivityDate,
+    required this.currentStreak,
+  });
+
+  final DateTime lastActivityDate;
+  final int currentStreak;
+
+  static String _key(DateTime date) {
+    final m = date.month.toString().padLeft(2, '0');
+    final d = date.day.toString().padLeft(2, '0');
+    return '${date.year}-$m-$d';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final lastDay = DateTime(
+      lastActivityDate.year,
+      lastActivityDate.month,
+      lastActivityDate.day,
+    );
+
+    final activeDates = <String>{};
+    for (var i = 0; i < currentStreak; i++) {
+      activeDates.add(_key(lastDay.subtract(Duration(days: i))));
+    }
+
+    // 84 days (12 weeks) ending today, oldest first, grouped into week columns.
+    const totalDays = 84;
+    final weeks = <List<bool>>[];
+    var column = <bool>[];
+    for (var i = totalDays - 1; i >= 0; i--) {
+      final day = today.subtract(Duration(days: i));
+      column.add(activeDates.contains(_key(day)));
+      if (column.length == 7) {
+        weeks.add(column);
+        column = <bool>[];
+      }
+    }
+    if (column.isNotEmpty) weeks.add(column);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.rewardsStreakCalendar,
+          style: text.bodySmall?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: palette.inkTertiary,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.s),
+        Container(
+          padding: const EdgeInsets.all(AppSpacing.s),
+          decoration: BoxDecoration(
+            color: palette.surfaceMuted,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (final week in weeks)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 3),
+                    child: Column(
+                      children: [
+                        for (final active in week)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 3),
+                            child: Container(
+                              width: 12,
+                              height: 12,
+                              decoration: BoxDecoration(
+                                color: active
+                                    ? palette.success
+                                    : palette.surfaceHover,
+                                borderRadius: BorderRadius.circular(3),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

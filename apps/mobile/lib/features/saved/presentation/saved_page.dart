@@ -313,6 +313,15 @@ class _SavedItemTileState extends ConsumerState<_SavedItemTile> {
                     ),
                   ),
                 ],
+                if (widget.item.createdAt != null) ...[
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    l10n.savedSavedOn(widget.item.createdAt!.toLocal()),
+                    style: text.labelSmall?.copyWith(
+                      color: palette.inkTertiary,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

@@ -65,8 +65,7 @@ class CareerArcsPage extends ConsumerWidget {
                 AppSpacing.xl,
               ),
               itemCount: items.length + 1,
-              separatorBuilder: (_, _) =>
-                  const SizedBox(height: AppSpacing.m),
+              separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.m),
               itemBuilder: (context, index) {
                 if (index == 0) {
                   return SectionHeader(
@@ -108,6 +107,15 @@ class _ArcCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text(
+            l10n.careerArcRankRequired(arc.rankCodeEntry).toUpperCase(),
+            style: text.labelSmall?.copyWith(
+              color: palette.inkTertiary,
+              letterSpacing: 0.8,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
           Row(
             children: [
               Expanded(

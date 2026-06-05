@@ -83,13 +83,12 @@ class _KanjiBrowserPageState extends ConsumerState<KanjiBrowserPage> {
                 }
                 return GridView.builder(
                   padding: const EdgeInsets.all(AppSpacing.m),
-                  gridDelegate:
-                      const SliverGridDelegateWithMaxCrossAxisExtent(
-                        maxCrossAxisExtent: 132,
-                        mainAxisSpacing: AppSpacing.s,
-                        crossAxisSpacing: AppSpacing.s,
-                        childAspectRatio: 0.82,
-                      ),
+                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 132,
+                    mainAxisSpacing: AppSpacing.s,
+                    crossAxisSpacing: AppSpacing.s,
+                    childAspectRatio: 0.82,
+                  ),
                   itemCount: items.length,
                   itemBuilder: (context, index) => _KanjiTile(
                     kanji: items[index],

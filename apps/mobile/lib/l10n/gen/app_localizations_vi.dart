@@ -634,6 +634,31 @@ class AppLocalizationsVi extends AppLocalizations {
   String get cardSaveSuccess => 'Đã lưu thẻ.';
 
   @override
+  String get cardBulkAddRow => 'Thêm hàng';
+
+  @override
+  String get cardBulkShowReading => 'Hiện cách đọc';
+
+  @override
+  String get cardBulkRemoveRow => 'Xóa hàng';
+
+  @override
+  String cardBulkRowTitle(int number) {
+    return 'Thẻ $number';
+  }
+
+  @override
+  String get cardBulkSaveAll => 'Lưu tất cả';
+
+  @override
+  String get cardBulkEmptyWarning => 'Hãy nhập ít nhất một thẻ.';
+
+  @override
+  String cardBulkSaveSuccess(int count) {
+    return 'Đã thêm $count thẻ.';
+  }
+
+  @override
   String get cardDeleteSuccess => 'Đã xóa thẻ.';
 
   @override
@@ -679,6 +704,27 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get reviewRevealHint => 'Tự nhớ lại trước, rồi chạm để xem đáp án.';
+
+  @override
+  String get reviewTypePrompt => 'Nhập nghĩa hoặc cách đọc';
+
+  @override
+  String get reviewTypePlaceholder => 'Câu trả lời của bạn…';
+
+  @override
+  String get reviewTypeSubmit => 'Kiểm tra';
+
+  @override
+  String get reviewTypeContinue => 'Tiếp tục';
+
+  @override
+  String get reviewTypeCorrect => 'Chính xác';
+
+  @override
+  String get reviewTypeAlmost => 'Gần đúng';
+
+  @override
+  String get reviewTypeWrong => 'Chưa đúng';
 
   @override
   String get reviewComplete => 'Hoàn thành!';
@@ -967,6 +1013,15 @@ class AppLocalizationsVi extends AppLocalizations {
   String get lessonDetailContentTitle => 'Nội dung';
 
   @override
+  String get lessonNavTitle => 'Bài học khác';
+
+  @override
+  String get lessonNavPrevious => 'Bài trước';
+
+  @override
+  String get lessonNavNext => 'Bài tiếp';
+
+  @override
   String lessonPracticeCta(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -1086,10 +1141,74 @@ class AppLocalizationsVi extends AppLocalizations {
   String get reviewSectionError => 'Không tải được nội dung. Vui lòng thử lại.';
 
   @override
+  String get reviewDueTitle => 'Đến hạn hôm nay';
+
+  @override
+  String reviewDueStat(int count) {
+    return '$count thẻ cần ôn ngay';
+  }
+
+  @override
+  String get reviewDueEmpty => 'Bạn đã ôn xong các thẻ đến hạn.';
+
+  @override
+  String get reviewDueCta => 'Ôn ngay';
+
+  @override
   String get progressTitle => 'Tiến độ';
 
   @override
   String get progressIntro => 'Hoạt động học tập của bạn trên thiết bị này.';
+
+  @override
+  String get progressCoachingTitle => 'Bước gợi ý tiếp theo';
+
+  @override
+  String get progressCoachingCtaFlashcards => 'Ôn thẻ đến hạn';
+
+  @override
+  String get progressCoachingCtaQuiz => 'Luyện BJT ngắn';
+
+  @override
+  String progressCoachingHintFlashcardsDue(int n) {
+    return '$n thẻ đang đến hạn — ưu tiên giữ nhịp SRS.';
+  }
+
+  @override
+  String get progressCoachingHintQuizSkills =>
+      'Có kỹ năng cần củng cố — luyện theo dạng đề giúp ổn định.';
+
+  @override
+  String get progressCoachingHintQuizAccuracy =>
+      'Độ chính xác còn dư địa — thêm vài câu BJT sẽ rõ tiến bộ.';
+
+  @override
+  String get progressCoachingHintMaintain =>
+      'Giữ đà nhẹ: vài phút ôn hoặc một set BJT ngắn.';
+
+  @override
+  String get progressCoachingNudgeTitle => 'Động viên nhẹ';
+
+  @override
+  String get progressCoachingInsightTitle => 'Gợi ý';
+
+  @override
+  String progressCoachingNudgeDue(int n) {
+    return '$n thẻ đang chờ — mỗi phiên ngắn đều có giá trị.';
+  }
+
+  @override
+  String get progressCoachingNudgeWeak =>
+      'Đã xác định vài kỹ năng cần chú ý — luyện đều sẽ dễ hơn.';
+
+  @override
+  String progressCoachingNudgeStreak(int n) {
+    return 'Chuỗi $n ngày đang chạy — đều đặn quan trọng hơn tốc độ.';
+  }
+
+  @override
+  String get progressCoachingNudgeCalm =>
+      'Không cần vội — chọn một hoạt động ngắn phù hợp hôm nay.';
 
   @override
   String get progressEmptyTitle => 'Chưa có hoạt động học tập';
@@ -1231,6 +1350,11 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
+  String kanjiFrequencyLabel(int rank) {
+    return 'Tần suất #$rank';
+  }
+
+  @override
   String get kanjiStrokeOrderTitle => 'Thứ tự nét';
 
   @override
@@ -1299,6 +1423,11 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String scenarioStepCount(int count) {
     return '$count bước';
+  }
+
+  @override
+  String scenarioAttemptCount(int count) {
+    return '$count lượt chơi';
   }
 
   @override
@@ -1452,6 +1581,36 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get examReviewErrorBody => 'Kiểm tra kết nối và thử lại.';
+
+  @override
+  String get examRemediationTitle => 'Lưu câu sai để ôn lại';
+
+  @override
+  String examRemediationBody(int count) {
+    return '$count câu sai có giải thích. Tạo bộ thẻ flashcard để ôn lại.';
+  }
+
+  @override
+  String get examRemediationCta => 'Tạo bộ thẻ ôn tập';
+
+  @override
+  String examRemediationSuccess(int count) {
+    return 'Đã tạo bộ thẻ với $count thẻ.';
+  }
+
+  @override
+  String get examRemediationOpenDeck => 'Mở bộ thẻ';
+
+  @override
+  String get examRemediationError => 'Không tạo được bộ thẻ. Thử lại.';
+
+  @override
+  String examRemediationDeckTitle(String test) {
+    return 'Ôn lỗi: $test';
+  }
+
+  @override
+  String get examRemediationDeckTitleFallback => 'Ôn lỗi bài thi BJT';
 
   @override
   String get newsTitle => 'Tin tức NHK';
@@ -1618,6 +1777,11 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
+  String careerArcRankRequired(String rank) {
+    return 'Yêu cầu rank $rank';
+  }
+
+  @override
   String careerArcProgress(int completed, int total) {
     return '$completed/$total chương';
   }
@@ -1776,6 +1940,14 @@ class AppLocalizationsVi extends AppLocalizations {
   String get savedRemovedToast => 'Đã xóa khỏi mục đã lưu';
 
   @override
+  String savedSavedOn(DateTime date) {
+    final intl.DateFormat dateDateFormat = intl.DateFormat.yMMMd(localeName);
+    final String dateString = dateDateFormat.format(date);
+
+    return 'Đã lưu: $dateString';
+  }
+
+  @override
   String get savedTitle => 'Đã lưu';
 
   @override
@@ -1870,6 +2042,40 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
+  String get rewardsStreakCalendar => 'Lịch học tập';
+
+  @override
+  String rewardsAchievementTierLabel(String tier) {
+    String _temp0 = intl.Intl.selectLogic(
+      tier,
+      {
+        'bronze': 'Đồng',
+        'silver': 'Bạc',
+        'gold': 'Vàng',
+        'platinum': 'Bạch Kim',
+        'other': '$tier',
+      },
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String rewardsAchievementCategoryLabel(String category) {
+    String _temp0 = intl.Intl.selectLogic(
+      category,
+      {
+        'learning': 'Học tập',
+        'social': 'Xã hội',
+        'streak': 'Chuỗi ngày',
+        'mastery': 'Thành thạo',
+        'battle': 'Đối kháng',
+        'other': '$category',
+      },
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get rewardsAchievementsEmptyTitle => 'Chưa có huy hiệu';
 
   @override
@@ -1902,6 +2108,11 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get rewardsLeaderboardAnonymous => 'Người học ẩn danh';
+
+  @override
+  String rewardsLeaderboardUserFallback(String id) {
+    return 'Người dùng $id';
+  }
 
   @override
   String rewardsLeaderboardScore(int score) {
@@ -2016,4 +2227,37 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get subscriptionPlanRecommended => 'Đề xuất';
+
+  @override
+  String get readingDetailReadingLabel => 'Cách đọc';
+
+  @override
+  String get readingDetailMeaningLabel => 'Nghĩa';
+
+  @override
+  String get readingDetailAddFlashcard => 'Thêm vào thẻ ghi nhớ';
+
+  @override
+  String get readingDetailAdded => 'Đã thêm vào thẻ ghi nhớ';
+
+  @override
+  String get readingDetailAddError => 'Không thêm được. Vui lòng thử lại.';
+
+  @override
+  String get addFlashcardTitle => 'Thêm vào thẻ ghi nhớ';
+
+  @override
+  String get addFlashcardChooseDeck => 'Chọn bộ thẻ để lưu từ này';
+
+  @override
+  String get addFlashcardLoadError => 'Không tải được bộ thẻ.';
+
+  @override
+  String get addFlashcardEmptyTitle => 'Chưa có bộ thẻ nào';
+
+  @override
+  String get addFlashcardEmptyBody => 'Tạo một bộ thẻ để bắt đầu lưu từ vựng.';
+
+  @override
+  String get addFlashcardCreateDeck => 'Tạo bộ thẻ';
 }

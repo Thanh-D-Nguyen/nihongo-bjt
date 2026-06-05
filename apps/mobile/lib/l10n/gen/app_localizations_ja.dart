@@ -615,6 +615,31 @@ class AppLocalizationsJa extends AppLocalizations {
   String get cardSaveSuccess => 'カードを保存しました。';
 
   @override
+  String get cardBulkAddRow => '行を追加';
+
+  @override
+  String get cardBulkShowReading => '読み方を表示';
+
+  @override
+  String get cardBulkRemoveRow => '行を削除';
+
+  @override
+  String cardBulkRowTitle(int number) {
+    return 'カード $number';
+  }
+
+  @override
+  String get cardBulkSaveAll => 'すべて保存';
+
+  @override
+  String get cardBulkEmptyWarning => 'カードを1枚以上入力してください。';
+
+  @override
+  String cardBulkSaveSuccess(int count) {
+    return '$count枚のカードを追加しました。';
+  }
+
+  @override
   String get cardDeleteSuccess => 'カードを削除しました。';
 
   @override
@@ -659,6 +684,27 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get reviewRevealHint => 'まず思い出してから、タップして答えを表示します。';
+
+  @override
+  String get reviewTypePrompt => '意味または読みを入力';
+
+  @override
+  String get reviewTypePlaceholder => 'あなたの答え…';
+
+  @override
+  String get reviewTypeSubmit => '確認';
+
+  @override
+  String get reviewTypeContinue => '次へ';
+
+  @override
+  String get reviewTypeCorrect => '正解';
+
+  @override
+  String get reviewTypeAlmost => '惜しい';
+
+  @override
+  String get reviewTypeWrong => '不正解';
 
   @override
   String get reviewComplete => '完了！';
@@ -942,6 +988,15 @@ class AppLocalizationsJa extends AppLocalizations {
   String get lessonDetailContentTitle => '内容';
 
   @override
+  String get lessonNavTitle => 'ほかのレッスン';
+
+  @override
+  String get lessonNavPrevious => '前のレッスン';
+
+  @override
+  String get lessonNavNext => '次のレッスン';
+
+  @override
   String lessonPracticeCta(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -1059,10 +1114,69 @@ class AppLocalizationsJa extends AppLocalizations {
   String get reviewSectionError => '読み込めませんでした。もう一度お試しください。';
 
   @override
+  String get reviewDueTitle => '今日の復習';
+
+  @override
+  String reviewDueStat(int count) {
+    return '$count枚を今すぐ復習';
+  }
+
+  @override
+  String get reviewDueEmpty => '本日の復習は完了しました。';
+
+  @override
+  String get reviewDueCta => '今すぐ復習';
+
+  @override
   String get progressTitle => '進捗';
 
   @override
   String get progressIntro => 'この端末での学習アクティビティ。';
+
+  @override
+  String get progressCoachingTitle => '次の一歩（提案）';
+
+  @override
+  String get progressCoachingCtaFlashcards => '期限カードを復習';
+
+  @override
+  String get progressCoachingCtaQuiz => '短いBJT演習';
+
+  @override
+  String progressCoachingHintFlashcardsDue(int n) {
+    return '期限は $n 枚 — まずは短いセッションで。';
+  }
+
+  @override
+  String get progressCoachingHintQuizSkills => '補強したいスキルがあります — 演習で形にしましょう。';
+
+  @override
+  String get progressCoachingHintQuizAccuracy => '正答率に伸びしろ — 数問でも形になります。';
+
+  @override
+  String get progressCoachingHintMaintain => '軽く続ける — 復習か短い演習で十分です。';
+
+  @override
+  String get progressCoachingNudgeTitle => 'やさしい後押し';
+
+  @override
+  String get progressCoachingInsightTitle => 'ヒント';
+
+  @override
+  String progressCoachingNudgeDue(int n) {
+    return '期限が $n 枚 — 短い時間でも前進になります。';
+  }
+
+  @override
+  String get progressCoachingNudgeWeak => '注意したいスキルが見えています — 少しずつで大丈夫です。';
+
+  @override
+  String progressCoachingNudgeStreak(int n) {
+    return '$n日連続です — ペースは自分のもので。';
+  }
+
+  @override
+  String get progressCoachingNudgeCalm => '焦らず、今日できる一歩を選びましょう。';
 
   @override
   String get progressEmptyTitle => 'まだ学習記録がありません';
@@ -1197,6 +1311,11 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String kanjiFrequencyLabel(int rank) {
+    return '頻度 #$rank';
+  }
+
+  @override
   String get kanjiStrokeOrderTitle => '書き順';
 
   @override
@@ -1263,6 +1382,11 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String scenarioStepCount(int count) {
     return '$countステップ';
+  }
+
+  @override
+  String scenarioAttemptCount(int count) {
+    return '$count回プレイ';
   }
 
   @override
@@ -1415,6 +1539,36 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get examReviewErrorBody => '通信状況を確認してもう一度お試しください。';
+
+  @override
+  String get examRemediationTitle => '間違えた問題を復習に保存';
+
+  @override
+  String examRemediationBody(int count) {
+    return '解説付きの誤答が$count問あります。フラッシュカードデッキを作成して復習しましょう。';
+  }
+
+  @override
+  String get examRemediationCta => '復習デッキを作成';
+
+  @override
+  String examRemediationSuccess(int count) {
+    return '$count枚のカードでデッキを作成しました。';
+  }
+
+  @override
+  String get examRemediationOpenDeck => 'デッキを開く';
+
+  @override
+  String get examRemediationError => 'デッキを作成できませんでした。もう一度お試しください。';
+
+  @override
+  String examRemediationDeckTitle(String test) {
+    return '復習：$test';
+  }
+
+  @override
+  String get examRemediationDeckTitleFallback => 'BJT模試の復習';
 
   @override
   String get newsTitle => 'NHKニュース';
@@ -1578,6 +1732,11 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String careerArcRankRequired(String rank) {
+    return '必要ランク $rank';
+  }
+
+  @override
   String careerArcProgress(int completed, int total) {
     return '$completed/$total章';
   }
@@ -1735,6 +1894,14 @@ class AppLocalizationsJa extends AppLocalizations {
   String get savedRemovedToast => '保存済みから削除しました';
 
   @override
+  String savedSavedOn(DateTime date) {
+    final intl.DateFormat dateDateFormat = intl.DateFormat.yMMMd(localeName);
+    final String dateString = dateDateFormat.format(date);
+
+    return '保存日: $dateString';
+  }
+
+  @override
   String get savedTitle => '保存済み';
 
   @override
@@ -1826,6 +1993,40 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String get rewardsStreakCalendar => '学習カレンダー';
+
+  @override
+  String rewardsAchievementTierLabel(String tier) {
+    String _temp0 = intl.Intl.selectLogic(
+      tier,
+      {
+        'bronze': 'ブロンズ',
+        'silver': 'シルバー',
+        'gold': 'ゴールド',
+        'platinum': 'プラチナ',
+        'other': '$tier',
+      },
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String rewardsAchievementCategoryLabel(String category) {
+    String _temp0 = intl.Intl.selectLogic(
+      category,
+      {
+        'learning': '学習',
+        'social': 'ソーシャル',
+        'streak': '連続',
+        'mastery': 'マスタリー',
+        'battle': 'バトル',
+        'other': '$category',
+      },
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get rewardsAchievementsEmptyTitle => 'バッジはまだありません';
 
   @override
@@ -1855,6 +2056,11 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get rewardsLeaderboardAnonymous => '匿名の学習者';
+
+  @override
+  String rewardsLeaderboardUserFallback(String id) {
+    return 'ユーザー $id';
+  }
 
   @override
   String rewardsLeaderboardScore(int score) {
@@ -1966,4 +2172,37 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get subscriptionPlanRecommended => 'おすすめ';
+
+  @override
+  String get readingDetailReadingLabel => '読み方';
+
+  @override
+  String get readingDetailMeaningLabel => '意味';
+
+  @override
+  String get readingDetailAddFlashcard => 'フラッシュカードに追加';
+
+  @override
+  String get readingDetailAdded => 'フラッシュカードに追加しました';
+
+  @override
+  String get readingDetailAddError => '追加できませんでした。もう一度お試しください。';
+
+  @override
+  String get addFlashcardTitle => 'フラッシュカードに追加';
+
+  @override
+  String get addFlashcardChooseDeck => 'この語を保存するデッキを選択';
+
+  @override
+  String get addFlashcardLoadError => 'デッキを読み込めませんでした。';
+
+  @override
+  String get addFlashcardEmptyTitle => 'デッキがありません';
+
+  @override
+  String get addFlashcardEmptyBody => '語彙を保存するにはデッキを作成してください。';
+
+  @override
+  String get addFlashcardCreateDeck => 'デッキを作成';
 }

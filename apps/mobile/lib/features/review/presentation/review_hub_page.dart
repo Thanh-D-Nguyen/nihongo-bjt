@@ -30,6 +30,8 @@ class ReviewHubPage extends ConsumerWidget {
         children: const [
           _ReviewIntro(),
           SizedBox(height: AppSpacing.l),
+          _DueNowCard(),
+          SizedBox(height: AppSpacing.m),
           _FlashcardsReviewCard(),
           SizedBox(height: AppSpacing.m),
           _PracticeReviewCard(),
@@ -48,6 +50,36 @@ class _ReviewIntro extends StatelessWidget {
     return SectionHeader(
       title: l10n.reviewHubTitle,
       subtitle: l10n.reviewHubIntro,
+    );
+  }
+}
+
+class _DueNowCard extends ConsumerWidget {
+  const _DueNowCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final dueCount = ref.watch(dueReviewCountProvider);
+
+    return dueCount.when(
+      loading: () => const _SectionSkeleton(),
+      error: (_, _) => _SectionErrorCard(
+        icon: Icons.bolt_outlined,
+        title: l10n.reviewDueTitle,
+        onRetry: () => ref.invalidate(dueReviewCountProvider),
+      ),
+      data: (count) {
+        final hasDue = count > 0;
+        return _ReviewSectionCard(
+          icon: Icons.bolt_rounded,
+          title: l10n.reviewDueTitle,
+          stat: hasDue ? l10n.reviewDueStat(count) : l10n.reviewDueEmpty,
+          ctaLabel: l10n.reviewDueCta,
+          enabled: hasDue,
+          onTap: () => context.goNamed(Routes.flashcardDueReview),
+        );
+      },
     );
   }
 }

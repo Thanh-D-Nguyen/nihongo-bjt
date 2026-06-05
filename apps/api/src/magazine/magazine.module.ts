@@ -10,6 +10,7 @@ import { JmaWeatherProvider } from "./providers/jma-weather.provider.js";
 import { LotoDataProvider } from "./providers/loto-data.provider.js";
 import { LotoLabAdminController } from "./loto/loto-lab-admin.controller.js";
 import { LotoLabService } from "./loto/loto-lab.service.js";
+import { LotoAutopilotCron } from "./loto/loto-autopilot.cron.js";
 import { LotoHubController } from "./loto/loto-hub.controller.js";
 import { LotoHubService } from "./loto/loto-hub.service.js";
 import { LotoHubAdminController } from "./loto/loto-hub-admin.controller.js";
@@ -26,6 +27,7 @@ import { LotoHubAdminService } from "./loto/loto-hub-admin.service.js";
     JmaWeatherProvider,
     LotoDataProvider,
     LotoLabService,
+    LotoAutopilotCron,
     LotoHubService,
     LotoHubAdminService,
   ],

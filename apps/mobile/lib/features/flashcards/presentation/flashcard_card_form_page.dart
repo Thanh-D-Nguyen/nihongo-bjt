@@ -114,12 +114,12 @@ class _CardFormState extends ConsumerState<_CardForm> {
   }
 
   DeckFormInput get _meta => DeckFormInput(
-        titleVi: widget.deck.titleVi,
-        titleJa: widget.deck.titleJa,
-        descriptionVi: widget.deck.descriptionVi,
-        descriptionJa: widget.deck.descriptionJa,
-        visibility: widget.deck.visibility,
-      );
+    titleVi: widget.deck.titleVi,
+    titleJa: widget.deck.titleJa,
+    descriptionVi: widget.deck.descriptionVi,
+    descriptionJa: widget.deck.descriptionJa,
+    visibility: widget.deck.visibility,
+  );
 
   List<DeckCardInput> get _existingInputs =>
       widget.deck.cards.map(DeckCardInput.fromDeckCard).toList();
@@ -225,26 +225,28 @@ class _CardFormState extends ConsumerState<_CardForm> {
   }
 
   String? _frontErrorText(AppLocalizations l10n) => switch (_errors.frontText) {
-        DeckFieldError.required => l10n.cardFrontRequired,
-        DeckFieldError.tooLong =>
-          l10n.cardFieldTooLong(DeckCardLimits.frontMaxLength),
-        null => null,
-      };
+    DeckFieldError.required => l10n.cardFrontRequired,
+    DeckFieldError.tooLong => l10n.cardFieldTooLong(
+      DeckCardLimits.frontMaxLength,
+    ),
+    null => null,
+  };
 
   String? _backErrorText(AppLocalizations l10n) => switch (_errors.backText) {
-        DeckFieldError.required => l10n.cardBackRequired,
-        DeckFieldError.tooLong =>
-          l10n.cardFieldTooLong(DeckCardLimits.backMaxLength),
-        null => null,
-      };
+    DeckFieldError.required => l10n.cardBackRequired,
+    DeckFieldError.tooLong => l10n.cardFieldTooLong(
+      DeckCardLimits.backMaxLength,
+    ),
+    null => null,
+  };
 
-  String? _readingErrorText(AppLocalizations l10n) =>
-      switch (_errors.reading) {
-        DeckFieldError.tooLong =>
-          l10n.cardFieldTooLong(DeckCardLimits.readingMaxLength),
-        DeckFieldError.required => null,
-        null => null,
-      };
+  String? _readingErrorText(AppLocalizations l10n) => switch (_errors.reading) {
+    DeckFieldError.tooLong => l10n.cardFieldTooLong(
+      DeckCardLimits.readingMaxLength,
+    ),
+    DeckFieldError.required => null,
+    null => null,
+  };
 
   @override
   Widget build(BuildContext context) {

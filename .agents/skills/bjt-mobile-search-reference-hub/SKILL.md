@@ -1,3 +1,8 @@
+---
+name: bjt-mobile-search-reference-hub
+description: Implement, audit, or polish the Search / Reference hub of the Nihongo BJT Flutter mobile app — global search plus dictionary, kanji, grammar, saved items, recent searches, and result navigation. Use when building the mobile Search tab, lookup tools, or reference content discovery with real API contracts.
+---
+
 # BJT Mobile Search / Reference Hub Skill
 
 Use this skill when implementing, auditing, or polishing the Search / Reference Hub for the Nihongo BJT mobile app.

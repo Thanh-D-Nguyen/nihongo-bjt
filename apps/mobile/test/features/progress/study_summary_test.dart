@@ -61,19 +61,21 @@ void main() {
       expect(summary.currentStreakDays, 3);
     });
 
-    test('streak survives when today has no activity yet but yesterday does',
-        () {
-      final summary = StudySummary.fromEvents(
-        events: [
-          event(DateTime(2026, 3, 14, 9), SrsRating.good),
-          event(DateTime(2026, 3, 13, 9), SrsRating.good),
-        ],
-        totalReviews: 2,
-        now: now,
-      );
-      expect(summary.currentStreakDays, 2);
-      expect(summary.reviewedToday, 0);
-    });
+    test(
+      'streak survives when today has no activity yet but yesterday does',
+      () {
+        final summary = StudySummary.fromEvents(
+          events: [
+            event(DateTime(2026, 3, 14, 9), SrsRating.good),
+            event(DateTime(2026, 3, 13, 9), SrsRating.good),
+          ],
+          totalReviews: 2,
+          now: now,
+        );
+        expect(summary.currentStreakDays, 2);
+        expect(summary.reviewedToday, 0);
+      },
+    );
 
     test('streak is zero when the most recent study day is too old', () {
       final summary = StudySummary.fromEvents(

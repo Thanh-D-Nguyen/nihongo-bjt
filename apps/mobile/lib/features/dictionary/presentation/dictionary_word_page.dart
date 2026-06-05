@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nihongo_bjt/core/content/domain/content_models.dart';
@@ -7,6 +9,7 @@ import 'package:nihongo_bjt/core/theme/app_spacing.dart';
 import 'package:nihongo_bjt/core/theme/app_typography.dart';
 import 'package:nihongo_bjt/features/content/presentation/widgets/content_tag.dart';
 import 'package:nihongo_bjt/features/content/presentation/widgets/example_sentence_view.dart';
+import 'package:nihongo_bjt/features/flashcards/presentation/add_term_to_flashcard_sheet.dart';
 import 'package:nihongo_bjt/features/saved/domain/saved_models.dart';
 import 'package:nihongo_bjt/features/saved/presentation/widgets/saved_bookmark_button.dart';
 import 'package:nihongo_bjt/l10n/gen/app_localizations.dart';
@@ -99,6 +102,17 @@ class _WordDetail extends StatelessWidget {
                     color: palette.inkSecondary,
                   ),
                 ),
+              if (lexeme.shortMeaningVi != null &&
+                  lexeme.shortMeaningVi!.isNotEmpty) ...[
+                const SizedBox(height: AppSpacing.s),
+                Text(
+                  lexeme.shortMeaningVi!,
+                  style: text.titleMedium?.copyWith(
+                    color: palette.ink,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
               if (lexeme.kanjiMeaningVi != null &&
                   lexeme.kanjiMeaningVi!.isNotEmpty) ...[
                 const SizedBox(height: AppSpacing.s),
@@ -107,6 +121,7 @@ class _WordDetail extends StatelessWidget {
                   style: text.bodyMedium?.copyWith(color: palette.inkTertiary),
                 ),
               ],
+              _AddWordToFlashcardButton(lexeme: lexeme),
             ],
           ),
         ),
@@ -120,6 +135,68 @@ class _WordDetail extends StatelessWidget {
           ],
         ],
       ],
+    );
+  }
+}
+
+/// Reusable "add this word to a flashcard deck" action for the headword card.
+///
+/// Hidden when the word has no Vietnamese meaning (a card needs a non-empty
+/// back). Opens the deck picker, which performs the server-authoritative add,
+/// then confirms with a snackbar. The headword + reading + short meaning come
+/// straight from the loaded [Lexeme].
+class _AddWordToFlashcardButton extends ConsumerWidget {
+  const _AddWordToFlashcardButton({required this.lexeme});
+
+  final Lexeme lexeme;
+
+  String? get _meaning {
+    final short = lexeme.shortMeaningVi?.trim();
+    if (short != null && short.isNotEmpty) {
+      return short;
+    }
+    for (final sense in lexeme.senses) {
+      final meaning = sense.meaningVi.trim();
+      if (meaning.isNotEmpty) {
+        return meaning;
+      }
+    }
+    return null;
+  }
+
+  Future<void> _add(BuildContext context, String meaning) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context);
+    final added = await showAddTermToFlashcardSheet(
+      context,
+      term: lexeme.headword,
+      reading: lexeme.reading,
+      meaning: meaning,
+    );
+    if (added) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.readingDetailAdded)),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final meaning = _meaning;
+    if (meaning == null) {
+      return const SizedBox.shrink();
+    }
+    final l10n = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.m),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: OutlinedButton.icon(
+          onPressed: () => unawaited(_add(context, meaning)),
+          icon: const Icon(Icons.add_rounded, size: 20),
+          label: Text(l10n.readingDetailAddFlashcard),
+        ),
+      ),
     );
   }
 }

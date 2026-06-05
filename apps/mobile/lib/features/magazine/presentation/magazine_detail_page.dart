@@ -2,7 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:nihongo_bjt/core/theme/app_palette.dart';import 'package:nihongo_bjt/core/theme/app_radius.dart';
+import 'package:nihongo_bjt/core/theme/app_palette.dart';
+import 'package:nihongo_bjt/core/theme/app_radius.dart';
 import 'package:nihongo_bjt/core/theme/app_spacing.dart';
 import 'package:nihongo_bjt/core/theme/app_typography.dart';
 import 'package:nihongo_bjt/features/content/presentation/widgets/content_tag.dart';
@@ -82,11 +83,13 @@ class _ArticleBodyState extends ConsumerState<_ArticleBody> {
       _reported = true;
       // Fire-and-forget; backend ignores anonymous learners.
       unawaited(
-        ref.read(magazineRepositoryProvider).markRead(
-          slug: widget.article.slug,
-          quizScore: _correct,
-          quizTotal: widget.article.quizzes.length,
-        ),
+        ref
+            .read(magazineRepositoryProvider)
+            .markRead(
+              slug: widget.article.slug,
+              quizScore: _correct,
+              quizTotal: widget.article.quizzes.length,
+            ),
       );
     }
   }
@@ -125,10 +128,20 @@ class _ArticleBodyState extends ConsumerState<_ArticleBody> {
           article.titleVi,
           style: text.titleMedium?.copyWith(color: palette.inkSecondary),
         ),
-        if (article.jlptLevel != null) ...[
+        if (article.publishDate != null || article.jlptLevel != null) ...[
           const SizedBox(height: AppSpacing.s),
           Wrap(
-            children: [ContentTag(label: article.jlptLevel!.toUpperCase())],
+            spacing: AppSpacing.xs,
+            runSpacing: AppSpacing.xs,
+            children: [
+              if (article.publishDate != null)
+                ContentTag(
+                  icon: Icons.schedule_outlined,
+                  label: _formatDate(article.publishDate!),
+                ),
+              if (article.jlptLevel != null)
+                ContentTag(label: article.jlptLevel!.toUpperCase()),
+            ],
           ),
         ],
         const SizedBox(height: AppSpacing.l),
@@ -174,6 +187,14 @@ class _ArticleBodyState extends ConsumerState<_ArticleBody> {
         ],
       ],
     );
+  }
+
+  String _formatDate(DateTime date) {
+    final local = date.toLocal();
+    final y = local.year.toString().padLeft(4, '0');
+    final m = local.month.toString().padLeft(2, '0');
+    final d = local.day.toString().padLeft(2, '0');
+    return '$y-$m-$d';
   }
 }
 

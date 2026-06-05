@@ -1,3 +1,8 @@
+---
+name: bjt-mobile-sensory-design
+description: Design, audit, implement, or polish the sensory layer of the Nihongo BJT Flutter mobile app — semantic color system, learning/answer state colors, dark mode, motion, haptics, sound policy, and Japanese-audio readiness. Use when establishing or refining mobile design tokens, feedback colors, motion, or haptic/sound behavior.
+---
+
 # BJT Mobile Sensory Design Skill
 
 Use this skill when designing, auditing, implementing, or polishing the sensory experience of the Nihongo BJT mobile app.

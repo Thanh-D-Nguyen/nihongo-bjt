@@ -98,8 +98,9 @@ void main() {
     });
 
     test('every lesson references an existing category', () async {
-      final categoryIds =
-          (await repo.fetchCategories()).map((c) => c.id).toSet();
+      final categoryIds = (await repo.fetchCategories())
+          .map((c) => c.id)
+          .toSet();
       final lessons = await repo.fetchLessons();
       for (final lesson in lessons) {
         expect(categoryIds, contains(lesson.categoryId));
@@ -145,6 +146,36 @@ void main() {
         scrollable: find.byType(Scrollable).first,
       );
       expect(find.text('Giao tiếp'), findsOneWidget);
+    });
+
+    testWidgets('daily lesson card shows the reading and question count', (
+      tester,
+    ) async {
+      const lesson = Lesson(
+        id: 'a',
+        categoryId: 'cat-1',
+        titleJa: '会議の表現',
+        titleReading: 'かいぎのひょうげん',
+        summaryVi: 'Mẫu câu họp hành',
+        level: LessonLevel.practical,
+        estimatedMinutes: 5,
+        questionCount: 4,
+        sections: [
+          LessonSection(
+            headingVi: 'Mở đầu',
+            bodyJa: 'よろしくお願いします。',
+            translationVi: 'Rất mong được giúp đỡ.',
+          ),
+        ],
+      );
+      await _pumpLearn(
+        tester,
+        repository: _FakeLessonRepository(lessons: [lesson]),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('かいぎのひょうげん'), findsOneWidget);
+      expect(find.text('4 câu hỏi'), findsOneWidget);
     });
 
     testWidgets('shows an empty state when there are no lessons', (

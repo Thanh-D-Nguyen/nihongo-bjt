@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nihongo_bjt/app/app.dart';
@@ -25,8 +26,18 @@ void main() {
     expect(find.text('ほうこく'), findsNothing);
     expect(find.text('báo cáo'), findsNothing);
 
-    // Reveal then grade every card.
+    // Grade every card. Odd-indexed cards use the typing mode; even-indexed
+    // cards use the flip (reveal then self-grade) mode.
+    const typedReadings = <int, String>{1: 'とりひきさき', 3: 'みつもり'};
     for (var i = 0; i < 4; i++) {
+      if (i.isOdd) {
+        await tester.enterText(find.byType(TextField), typedReadings[i]!);
+        await tester.tap(find.text('Kiểm tra'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Tiếp tục'));
+        await tester.pumpAndSettle();
+        continue;
+      }
       await tester.tap(find.text('Hiện đáp án'));
       await tester.pumpAndSettle();
       if (i == 0) {

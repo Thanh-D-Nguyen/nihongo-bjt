@@ -71,14 +71,15 @@ class LessonDetailPage extends ConsumerWidget {
   }
 }
 
-class _LessonBody extends StatelessWidget {
+class _LessonBody extends ConsumerWidget {
   const _LessonBody({required this.lesson});
 
   final Lesson lesson;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final neighbors = ref.watch(lessonNeighborsProvider(lesson.id));
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.m),
       children: [
@@ -99,17 +100,158 @@ class _LessonBody extends StatelessWidget {
         const SizedBox(height: AppSpacing.l),
         Text(
           l10n.lessonDetailContentTitle,
-          style: Theme.of(context)
-              .textTheme
-              .titleMedium
-              ?.copyWith(color: context.palette.ink),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(color: context.palette.ink),
         ),
         const SizedBox(height: AppSpacing.s),
         for (var i = 0; i < lesson.sections.length; i++) ...[
           _SectionCard(index: i + 1, section: lesson.sections[i]),
           const SizedBox(height: AppSpacing.s),
         ],
+        neighbors.maybeWhen(
+          data: (value) => _LessonNav(neighbors: value),
+          orElse: () => const SizedBox.shrink(),
+        ),
       ],
+    );
+  }
+}
+
+/// Sequential navigation between sibling lessons in the same category. Shows a
+/// previous and/or next button; renders nothing when the lesson has no
+/// siblings (first and only lesson in its category).
+class _LessonNav extends StatelessWidget {
+  const _LessonNav({required this.neighbors});
+
+  final LessonNeighbors neighbors;
+
+  void _open(BuildContext context, Lesson lesson) {
+    // Replace so repeated prev/next steps do not grow the back stack; the
+    // learner returns to the lesson list, not a chain of visited lessons.
+    context.pushReplacementNamed(
+      Routes.lesson,
+      pathParameters: {'id': lesson.id},
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final previous = neighbors.previous;
+    final next = neighbors.next;
+    if (previous == null && next == null) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.l),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.lessonNavTitle,
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(color: context.palette.ink),
+          ),
+          const SizedBox(height: AppSpacing.s),
+          Row(
+            children: [
+              if (previous != null)
+                Expanded(
+                  child: _LessonNavButton(
+                    alignEnd: false,
+                    caption: l10n.lessonNavPrevious,
+                    title: previous.titleJa,
+                    icon: Icons.chevron_left_rounded,
+                    onPressed: () => _open(context, previous),
+                  ),
+                ),
+              if (previous != null && next != null)
+                const SizedBox(width: AppSpacing.s),
+              if (next != null)
+                Expanded(
+                  child: _LessonNavButton(
+                    alignEnd: true,
+                    caption: l10n.lessonNavNext,
+                    title: next.titleJa,
+                    icon: Icons.chevron_right_rounded,
+                    onPressed: () => _open(context, next),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LessonNavButton extends StatelessWidget {
+  const _LessonNavButton({
+    required this.alignEnd,
+    required this.caption,
+    required this.title,
+    required this.icon,
+    required this.onPressed,
+  });
+
+  final bool alignEnd;
+  final String caption;
+  final String title;
+  final IconData icon;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    final text = Theme.of(context).textTheme;
+    final caption0 = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (!alignEnd) Icon(icon, size: 16, color: palette.inkSecondary),
+        if (!alignEnd) const SizedBox(width: AppSpacing.xs),
+        Flexible(
+          child: Text(
+            caption,
+            style: text.labelSmall?.copyWith(color: palette.inkSecondary),
+          ),
+        ),
+        if (alignEnd) const SizedBox(width: AppSpacing.xs),
+        if (alignEnd) Icon(icon, size: 16, color: palette.inkSecondary),
+      ],
+    );
+    return Material(
+      color: palette.surface,
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.s),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            border: Border.all(color: palette.border),
+          ),
+          child: Column(
+            crossAxisAlignment: alignEnd
+                ? CrossAxisAlignment.end
+                : CrossAxisAlignment.start,
+            children: [
+              caption0,
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: alignEnd ? TextAlign.end : TextAlign.start,
+                style: AppTypography.japaneseBody.copyWith(
+                  color: palette.ink,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

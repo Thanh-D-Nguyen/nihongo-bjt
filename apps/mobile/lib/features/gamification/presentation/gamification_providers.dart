@@ -21,11 +21,12 @@ final streaksProvider = FutureProvider.autoDispose<List<StreakData>>((ref) {
 });
 
 /// All achievements with the learner's per-tier progress.
-final achievementsProvider =
-    FutureProvider.autoDispose<List<AchievementDef>>((ref) {
-      ref.keepAlive();
-      return ref.watch(gamificationRepositoryProvider).achievements();
-    });
+final achievementsProvider = FutureProvider.autoDispose<List<AchievementDef>>((
+  ref,
+) {
+  ref.keepAlive();
+  return ref.watch(gamificationRepositoryProvider).achievements();
+});
 
 /// Every enabled leaderboard the learner can browse.
 final leaderboardsProvider =

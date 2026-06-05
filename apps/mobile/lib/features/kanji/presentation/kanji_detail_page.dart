@@ -109,6 +109,11 @@ class _KanjiDetail extends ConsumerWidget {
                       icon: Icons.signal_cellular_alt_rounded,
                       label: 'N${entry.level}',
                     ),
+                  if (entry.frequency != null)
+                    ContentTag(
+                      icon: Icons.trending_up_rounded,
+                      label: l10n.kanjiFrequencyLabel(entry.frequency!),
+                    ),
                 ],
               ),
             ],
@@ -329,6 +334,15 @@ class _ExampleWord extends StatelessWidget {
                 Text(
                   example.reading!,
                   style: AppTypography.japaneseReading.copyWith(
+                    color: palette.inkTertiary,
+                  ),
+                ),
+              ],
+              if (example.hanViet != null && example.hanViet!.isNotEmpty) ...[
+                const SizedBox(width: AppSpacing.s),
+                Text(
+                  example.hanViet!,
+                  style: text.bodySmall?.copyWith(
                     color: palette.inkTertiary,
                   ),
                 ),

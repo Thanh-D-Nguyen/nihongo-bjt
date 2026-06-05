@@ -1,3 +1,8 @@
+---
+name: bjt-mobile-home-dashboard
+description: Implement, audit, or polish the Nihongo BJT Flutter mobile Home dashboard with functional (not layout) parity to the web Home. Use when building the mobile Home hub — greeting, primary learning CTA, practice/exam/review entries, progress summary, reference shortcuts, and engagement sections — with real data and honest empty states.
+---
+
 # BJT Mobile Home Dashboard Skill
 
 Use this skill when implementing, auditing, or polishing the mobile Home dashboard for the Nihongo BJT app.

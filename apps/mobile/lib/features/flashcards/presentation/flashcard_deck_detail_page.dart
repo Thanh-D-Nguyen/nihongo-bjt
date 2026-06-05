@@ -142,8 +142,8 @@ class _DeckDetailViewState extends State<_DeckDetailView> {
     if (_sort == _CardSort.alphabetical) {
       filtered.sort(
         (a, b) => a.$2.frontText.toLowerCase().compareTo(
-              b.$2.frontText.toLowerCase(),
-            ),
+          b.$2.frontText.toLowerCase(),
+        ),
       );
     } else {
       filtered.sort((a, b) => a.$2.position.compareTo(b.$2.position));
@@ -198,9 +198,9 @@ class _DeckDetailViewState extends State<_DeckDetailView> {
           icon: Icons.play_arrow_rounded,
           onPressed: hasCards
               ? () => context.pushNamed(
-                    Routes.flashcardReview,
-                    pathParameters: {'deckId': deck.id},
-                  )
+                  Routes.flashcardReview,
+                  pathParameters: {'deckId': deck.id},
+                )
               : null,
         ),
         const SizedBox(height: AppSpacing.l),
@@ -209,10 +209,9 @@ class _DeckDetailViewState extends State<_DeckDetailView> {
             Expanded(
               child: Text(
                 l10n.deckDetailCardsHeader,
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(color: palette.ink),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(color: palette.ink),
               ),
             ),
             TextButton.icon(
@@ -265,10 +264,9 @@ class _DeckDetailViewState extends State<_DeckDetailView> {
             const SizedBox(height: AppSpacing.xs),
             Text(
               l10n.cardSearchResultCount(visible.length),
-              style: Theme.of(context)
-                  .textTheme
-                  .labelSmall
-                  ?.copyWith(color: palette.inkTertiary),
+              style: Theme.of(
+                context,
+              ).textTheme.labelSmall?.copyWith(color: palette.inkTertiary),
             ),
           ],
         ],
@@ -467,8 +465,9 @@ class _DeckCardTile extends StatelessWidget {
                 ),
                 child: Text(
                   '${card.position + 1}',
-                  style:
-                      text.labelMedium?.copyWith(color: palette.inkSecondary),
+                  style: text.labelMedium?.copyWith(
+                    color: palette.inkSecondary,
+                  ),
                 ),
               ),
               const SizedBox(width: AppSpacing.m),
@@ -594,13 +593,13 @@ class _DeckDetailSkeleton extends StatelessWidget {
     final palette = context.palette;
 
     Widget bar(double width, double height) => Container(
-          width: width,
-          height: height,
-          decoration: BoxDecoration(
-            color: palette.skeleton,
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-          ),
-        );
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: palette.skeleton,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
+    );
 
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.m),

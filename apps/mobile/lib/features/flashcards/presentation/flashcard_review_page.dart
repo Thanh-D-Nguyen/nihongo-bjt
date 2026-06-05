@@ -9,7 +9,9 @@ import 'package:nihongo_bjt/core/theme/app_radius.dart';
 import 'package:nihongo_bjt/core/theme/app_spacing.dart';
 import 'package:nihongo_bjt/core/theme/app_typography.dart';
 import 'package:nihongo_bjt/features/flashcards/domain/flashcard.dart';
+import 'package:nihongo_bjt/features/flashcards/domain/review_mode.dart';
 import 'package:nihongo_bjt/features/flashcards/domain/srs_rating.dart';
+import 'package:nihongo_bjt/features/flashcards/domain/typed_answer_grading.dart';
 import 'package:nihongo_bjt/features/flashcards/presentation/flashcard_providers.dart';
 import 'package:nihongo_bjt/features/reading_assist/domain/reading_assist_policy.dart';
 import 'package:nihongo_bjt/features/reading_assist/presentation/japanese_text.dart';
@@ -60,7 +62,11 @@ class FlashcardReviewPage extends ConsumerWidget {
             return _ReviewComplete(
               state: state,
               onRestart: controller.restart,
-              onExit: () => context.goNamed(Routes.flashcards),
+              // A cross-deck due session (empty id) returns to the Review tab;
+              // a single-deck session returns to the deck list.
+              onExit: () => context.goNamed(
+                deckId.trim().isEmpty ? Routes.review : Routes.flashcards,
+              ),
             );
           }
           return _ReviewActive(state: state, controller: controller);
@@ -79,6 +85,7 @@ class _ReviewActive extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final card = state.currentCard!;
+    final mode = reviewModeForIndex(state.currentIndex);
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.m),
       child: Column(
@@ -88,49 +95,63 @@ class _ReviewActive extends StatelessWidget {
             total: state.totalCount,
           ),
           const SizedBox(height: AppSpacing.l),
-          Expanded(
-            // The whole card is a reveal target so the action stays usable even
-            // when the dedicated button is crowded near the bottom edge.
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: state.answerRevealed
-                  ? null
-                  : () {
+          if (mode == ReviewCardMode.type)
+            Expanded(
+              child: _TypeModeCard(
+                // Keyed by card so the input + grade reset on every new card.
+                key: ValueKey('type-${card.id}'),
+                card: card,
+                onGraded: (rating) {
+                  AppHaptics.selection();
+                  controller.rate(rating);
+                },
+              ),
+            )
+          else ...[
+            Expanded(
+              // The whole card is a reveal target so the action stays usable
+              // even when the dedicated button is crowded near the bottom edge.
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: state.answerRevealed
+                    ? null
+                    : () {
+                        AppHaptics.selection();
+                        controller.revealAnswer();
+                      },
+                child: _CardFace(card: card, revealed: state.answerRevealed),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.l),
+            if (state.answerRevealed)
+              _RatingBar(
+                onRate: (rating) {
+                  AppHaptics.selection();
+                  controller.rate(rating);
+                },
+              )
+            else
+              Column(
+                children: [
+                  Text(
+                    AppLocalizations.of(context).reviewRevealHint,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: context.palette.inkTertiary,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.s),
+                  PrimaryButton(
+                    label: AppLocalizations.of(context).reviewReveal,
+                    icon: Icons.visibility_outlined,
+                    onPressed: () {
                       AppHaptics.selection();
                       controller.revealAnswer();
                     },
-              child: _CardFace(card: card, revealed: state.answerRevealed),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.l),
-          if (state.answerRevealed)
-            _RatingBar(
-              onRate: (rating) {
-                AppHaptics.selection();
-                controller.rate(rating);
-              },
-            )
-          else
-            Column(
-              children: [
-                Text(
-                  AppLocalizations.of(context).reviewRevealHint,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: context.palette.inkTertiary,
                   ),
-                ),
-                const SizedBox(height: AppSpacing.s),
-                PrimaryButton(
-                  label: AppLocalizations.of(context).reviewReveal,
-                  icon: Icons.visibility_outlined,
-                  onPressed: () {
-                    AppHaptics.selection();
-                    controller.revealAnswer();
-                  },
-                ),
-              ],
-            ),
+                ],
+              ),
+          ],
         ],
       ),
     );
@@ -242,6 +263,174 @@ class _CardFace extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _TypeModeCard extends ConsumerStatefulWidget {
+  const _TypeModeCard({required this.card, required this.onGraded, super.key});
+
+  final Flashcard card;
+  final void Function(SrsRating rating) onGraded;
+
+  @override
+  ConsumerState<_TypeModeCard> createState() => _TypeModeCardState();
+}
+
+class _TypeModeCardState extends ConsumerState<_TypeModeCard> {
+  final TextEditingController _controller = TextEditingController();
+  TypedGrade? _grade;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (_grade != null) return;
+    AppHaptics.selection();
+    setState(() {
+      _grade = gradeTypedAnswer(
+        input: _controller.text,
+        back: widget.card.back,
+        reading: widget.card.reading,
+      );
+    });
+  }
+
+  ({Color background, Color foreground, String label}) _feedback(
+    AppPalette palette,
+    AppLocalizations l10n,
+  ) {
+    switch (_grade!) {
+      case TypedGrade.correct:
+        return (
+          background: palette.successSoft,
+          foreground: palette.success,
+          label: l10n.reviewTypeCorrect,
+        );
+      case TypedGrade.almost:
+        return (
+          background: palette.accentSoft,
+          foreground: palette.accent,
+          label: l10n.reviewTypeAlmost,
+        );
+      case TypedGrade.wrong:
+        return (
+          background: palette.dangerSoft,
+          foreground: palette.danger,
+          label: l10n.reviewTypeWrong,
+        );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final palette = context.palette;
+    final text = Theme.of(context).textTheme;
+    final furiganaEnabled = ref.watch(furiganaEnabledProvider);
+    final graded = _grade != null;
+    return Column(
+      children: [
+        Expanded(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: palette.surface,
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              border: Border.all(color: palette.border),
+            ),
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.l),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Reading is suppressed until the answer is graded so the
+                    // learner recalls it from memory first (active recall).
+                    JapaneseText(
+                      widget.card.front,
+                      reading: widget.card.reading,
+                      policy: graded
+                          ? ReadingAssistPolicy(userEnabled: furiganaEnabled)
+                          : const ReadingAssistPolicy.exam(),
+                      style: AppTypography.japaneseDisplay,
+                    ),
+                    if (graded) ...[
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: AppSpacing.l),
+                        child: Divider(height: 1),
+                      ),
+                      Text(
+                        widget.card.back,
+                        textAlign: TextAlign.center,
+                        style: text.titleLarge?.copyWith(color: palette.ink),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.l),
+        if (!graded) ...[
+          Text(
+            l10n.reviewTypePrompt,
+            textAlign: TextAlign.center,
+            style: text.bodySmall?.copyWith(color: palette.inkTertiary),
+          ),
+          const SizedBox(height: AppSpacing.s),
+          TextField(
+            controller: _controller,
+            autofocus: true,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) => _submit(),
+            decoration: InputDecoration(
+              hintText: l10n.reviewTypePlaceholder,
+              border: const OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.s),
+          PrimaryButton(
+            label: l10n.reviewTypeSubmit,
+            icon: Icons.check_rounded,
+            onPressed: _submit,
+          ),
+        ] else ...[
+          Builder(
+            builder: (context) {
+              final feedback = _feedback(palette, l10n);
+              return Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  vertical: AppSpacing.s,
+                  horizontal: AppSpacing.m,
+                ),
+                decoration: BoxDecoration(
+                  color: feedback.background,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                child: Text(
+                  feedback.label,
+                  textAlign: TextAlign.center,
+                  style: text.titleSmall?.copyWith(
+                    color: feedback.foreground,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: AppSpacing.s),
+          PrimaryButton(
+            label: l10n.reviewTypeContinue,
+            icon: Icons.arrow_forward_rounded,
+            onPressed: () => widget.onGraded(typedGradeToRating(_grade!)),
+          ),
+        ],
+      ],
     );
   }
 }

@@ -96,8 +96,7 @@ class _ScenarioBrowserPageState extends ConsumerState<ScenarioBrowserPage> {
                   child: _CategoryFilterRow(
                     categories: categories,
                     selected: _category,
-                    onSelected: (value) =>
-                        setState(() => _category = value),
+                    onSelected: (value) => setState(() => _category = value),
                   ),
                 ),
               if (items.isEmpty)
@@ -299,6 +298,10 @@ class _ScenarioCard extends StatelessWidget {
                     ContentTag(
                       icon: Icons.list_alt_rounded,
                       label: l10n.scenarioStepCount(scenario.stepCount),
+                    ),
+                    ContentTag(
+                      icon: Icons.sports_esports_rounded,
+                      label: l10n.scenarioAttemptCount(scenario.attemptCount),
                     ),
                   ],
                 ),

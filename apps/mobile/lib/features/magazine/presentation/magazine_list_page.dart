@@ -81,8 +81,7 @@ class _MagazineListPageState extends ConsumerState<MagazineListPage> {
                   title: l10n.magazineErrorTitle,
                   message: l10n.magazineErrorBody,
                   retryLabel: l10n.commonRetry,
-                  onRetry: () =>
-                      ref.invalidate(magazineListProvider(_kind)),
+                  onRetry: () => ref.invalidate(magazineListProvider(_kind)),
                 ),
               ),
               data: (items) {
@@ -260,6 +259,11 @@ class _MagazineCard extends StatelessWidget {
                   spacing: AppSpacing.xs,
                   runSpacing: AppSpacing.xs,
                   children: [
+                    if (article.publishDate != null)
+                      ContentTag(
+                        icon: Icons.schedule_outlined,
+                        label: _formatDate(article.publishDate!),
+                      ),
                     if (article.jlptLevel != null)
                       ContentTag(label: article.jlptLevel!.toUpperCase()),
                     if (article.vocab.isNotEmpty)
@@ -280,5 +284,13 @@ class _MagazineCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _formatDate(DateTime date) {
+    final local = date.toLocal();
+    final y = local.year.toString().padLeft(4, '0');
+    final m = local.month.toString().padLeft(2, '0');
+    final d = local.day.toString().padLeft(2, '0');
+    return '$y-$m-$d';
   }
 }
