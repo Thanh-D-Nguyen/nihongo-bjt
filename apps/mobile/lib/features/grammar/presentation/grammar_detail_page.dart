@@ -188,8 +188,8 @@ class _LabeledBlock extends StatelessWidget {
           style: text.labelMedium?.copyWith(color: palette.inkTertiary),
         ),
         const SizedBox(height: AppSpacing.xs),
-        Text(
-          body,
+        _GrammarRichText(
+          html: body,
           style: text.bodyMedium?.copyWith(color: palette.ink),
         ),
       ],
@@ -233,12 +233,186 @@ class _NoteBlock extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.xs),
-          Text(
-            body,
+          _GrammarRichText(
+            html: body,
             style: text.bodyMedium?.copyWith(color: palette.ink),
           ),
         ],
       ),
     );
   }
+}
+
+class _GrammarRichText extends StatelessWidget {
+  const _GrammarRichText({required this.html, this.style});
+
+  final String html;
+  final TextStyle? style;
+
+  @override
+  Widget build(BuildContext context) {
+    final baseStyle = (style ?? Theme.of(context).textTheme.bodyMedium)
+        ?.copyWith(height: 1.7);
+    final spans = _GrammarHtmlParser(
+      baseStyle: baseStyle ?? const TextStyle(height: 1.7),
+      palette: context.palette,
+    ).parse(html);
+
+    return RichText(
+      text: TextSpan(style: baseStyle, children: spans),
+      textScaler: MediaQuery.textScalerOf(context),
+    );
+  }
+}
+
+class _GrammarHtmlParser {
+  _GrammarHtmlParser({required this.baseStyle, required this.palette});
+
+  final TextStyle baseStyle;
+  final AppPalette palette;
+  final List<String> _activeTags = <String>[];
+
+  List<InlineSpan> parse(String value) {
+    final spans = <InlineSpan>[];
+    final tokenPattern = RegExp('(<[^>]+>)');
+    var cursor = 0;
+
+    for (final match in tokenPattern.allMatches(value)) {
+      if (match.start > cursor) {
+        _appendText(spans, value.substring(cursor, match.start));
+      }
+      _handleTag(spans, match.group(0) ?? '');
+      cursor = match.end;
+    }
+
+    if (cursor < value.length) {
+      _appendText(spans, value.substring(cursor));
+    }
+
+    _trimTrailingBreaks(spans);
+    return spans;
+  }
+
+  void _handleTag(List<InlineSpan> spans, String rawTag) {
+    final tagMatch = RegExp(r'^<\s*/?\s*([a-zA-Z0-9]+)').firstMatch(rawTag);
+    final tag = tagMatch?.group(1)?.toLowerCase();
+    if (tag == null) return;
+
+    final isClosing = rawTag.startsWith(RegExp(r'<\s*/'));
+
+    if (tag == 'br') {
+      _appendBreak(spans);
+      return;
+    }
+
+    if (_isBlockTag(tag)) {
+      if (isClosing) {
+        _activeTags.remove(tag);
+        _appendBreak(spans);
+      } else {
+        _appendBreak(spans);
+        _activeTags.add(tag);
+        if (tag == 'li') {
+          spans.add(
+            TextSpan(
+              text: '• ',
+              style: baseStyle.copyWith(
+                color: palette.accent,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          );
+        }
+      }
+      return;
+    }
+
+    if (!_isInlineTag(tag)) return;
+
+    if (isClosing) {
+      _activeTags.remove(tag);
+    } else {
+      _activeTags.add(tag);
+    }
+  }
+
+  void _appendText(List<InlineSpan> spans, String rawText) {
+    final text = _decodeHtmlEntities(rawText).replaceAll(
+      RegExp(r'[ \t\r\f]+'),
+      ' ',
+    );
+    if (text.trim().isEmpty) return;
+
+    spans.add(TextSpan(text: text, style: _currentStyle()));
+  }
+
+  TextStyle _currentStyle() {
+    var current = baseStyle;
+    if (_activeTags.any((tag) => tag == 'strong' || tag == 'b')) {
+      current = current.copyWith(fontWeight: FontWeight.w700);
+    }
+    if (_activeTags.any((tag) => tag == 'em' || tag == 'i')) {
+      current = current.copyWith(fontStyle: FontStyle.italic);
+    }
+    if (_activeTags.contains('u')) {
+      current = current.copyWith(decoration: TextDecoration.underline);
+    }
+    if (_activeTags.contains('code')) {
+      current = current.copyWith(
+        backgroundColor: palette.ink.withValues(alpha: 0.08),
+        color: palette.ink,
+        fontFamily: 'monospace',
+      );
+    }
+    if (_activeTags.any((tag) => tag == 'h3' || tag == 'h4')) {
+      current = current.copyWith(
+        color: palette.ink,
+        fontWeight: FontWeight.w700,
+      );
+    }
+    return current;
+  }
+
+  void _appendBreak(List<InlineSpan> spans) {
+    if (spans.isEmpty) return;
+    final last = spans.last;
+    if (last is TextSpan && (last.text?.endsWith('\n') ?? false)) return;
+    spans.add(const TextSpan(text: '\n'));
+  }
+
+  void _trimTrailingBreaks(List<InlineSpan> spans) {
+    while (spans.isNotEmpty) {
+      final last = spans.last;
+      if (last is! TextSpan || !(last.text?.endsWith('\n') ?? false)) return;
+      spans.removeLast();
+    }
+  }
+
+  bool _isBlockTag(String tag) =>
+      tag == 'p' ||
+      tag == 'div' ||
+      tag == 'ul' ||
+      tag == 'ol' ||
+      tag == 'li' ||
+      tag == 'h3' ||
+      tag == 'h4';
+
+  bool _isInlineTag(String tag) =>
+      tag == 'strong' ||
+      tag == 'b' ||
+      tag == 'em' ||
+      tag == 'i' ||
+      tag == 'u' ||
+      tag == 'code' ||
+      tag == 'span';
+}
+
+String _decodeHtmlEntities(String value) {
+  return value
+      .replaceAll(RegExp('&nbsp;', caseSensitive: false), ' ')
+      .replaceAll(RegExp('&amp;', caseSensitive: false), '&')
+      .replaceAll(RegExp('&lt;', caseSensitive: false), '<')
+      .replaceAll(RegExp('&gt;', caseSensitive: false), '>')
+      .replaceAll(RegExp('&quot;', caseSensitive: false), '"')
+      .replaceAll(RegExp('&#39;|&apos;', caseSensitive: false), "'");
 }

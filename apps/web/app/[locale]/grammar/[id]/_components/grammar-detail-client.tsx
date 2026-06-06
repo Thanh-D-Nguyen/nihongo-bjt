@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import { learnerApiFetchOptional } from "../../../../../lib/learner-api";
 import { ContentActions, type ContentActionLabels } from "../../../_components/content-actions";
+import { GrammarRichText } from "../../_components/grammar-rich-text";
 
 interface GrammarPointDetailItem {
   id: string;
@@ -135,7 +136,7 @@ export function GrammarDetailClient({
               {d.explanation ? (
                 <div className="mt-2">
                   <p className="text-[10px] font-semibold uppercase text-[#9CA3AF]">{labels.explanation}</p>
-                  <p className="mt-0.5 text-sm text-[#4B5563]">{d.explanation}</p>
+                  <GrammarRichText className="mt-0.5 text-[#4B5563]" html={d.explanation} />
                 </div>
               ) : null}
               {d.note ? (

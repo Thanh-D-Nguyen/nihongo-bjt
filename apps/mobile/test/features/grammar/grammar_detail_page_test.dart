@@ -62,4 +62,38 @@ void main() {
 
     expect(find.text('Bổn phận'), findsNothing);
   });
+
+  testWidgets('renders html grammar explanations as formatted text', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      entry: const GrammarEntry(
+        id: 'g3',
+        pattern: '〜べき',
+        meaningVi: 'nên làm gì đó',
+        details: [
+          GrammarDetail(
+            id: 'd1',
+            position: 1,
+            explanation:
+                '<p><strong>Quan trọng</strong>: dùng để nêu lời khuyên.</p>'
+                ' '
+                '<ul><li>Không hiển thị tag HTML.</li></ul>',
+          ),
+        ],
+      ),
+    );
+
+    final richTextFinder = find.byWidgetPredicate((widget) {
+      if (widget is! RichText) return false;
+      final plain = widget.text.toPlainText();
+      return plain.contains('Quan trọng') &&
+          plain.contains('Không hiển thị tag HTML.') &&
+          !plain.contains('<strong>') &&
+          !plain.contains('<li>');
+    });
+
+    expect(richTextFinder, findsOneWidget);
+  });
 }

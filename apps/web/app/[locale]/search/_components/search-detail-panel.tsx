@@ -10,6 +10,7 @@ import { LexemeKanjiStrokeStrip } from "./lexeme-kanji-stroke-strip";
 import { SearchBookmarkToggle, SearchReadAloudButton } from "./search-detail-learner-actions";
 import { HighlightMatch } from "./search-highlight";
 import { hasRenderablePitch, PitchAccentDisplay } from "./pitch-accent-display";
+import { GrammarRichText } from "../../grammar/_components/grammar-rich-text";
 
 export interface SearchDetailLabels {
   addToFlashcard: string;
@@ -566,11 +567,13 @@ function GrammarDetailBody({ dto, labels }: { dto: GrammarDetailDto; labels: Sea
       {dto.details && dto.details.length > 0 ? (
         <section className="mb-4">
           <h3 className="text-xs font-bold uppercase tracking-wide text-muted">{labels.detailSense}</h3>
-          <ul className="mt-2 list-disc space-y-2 pl-4 text-sm text-ink/80">
+          <ol className="mt-2 space-y-3">
             {dto.details.map((d, i) => (
-              <li key={`${d.position ?? i}`}>{d.explanation}</li>
+              <li className="rounded-xl border border-ink/8 bg-paper/65 px-3 py-2.5" key={`${d.position ?? i}`}>
+                <GrammarRichText html={d.explanation} />
+              </li>
             ))}
-          </ul>
+          </ol>
         </section>
       ) : null}
       <BjtBlock headword={dto.pattern} labels={labels} phrases={[]} />

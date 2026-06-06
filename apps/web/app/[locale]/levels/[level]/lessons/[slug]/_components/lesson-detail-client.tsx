@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 
 import { learnerApiFetchOptional } from "../../../../../../../lib/learner-api";
+import { GrammarRichText, grammarTextPreview } from "../../../../../grammar/_components/grammar-rich-text";
 
 /* ── Types ─────────────────────────────────── */
 
@@ -303,7 +304,7 @@ export function LessonDetailClient({ slug, levelCode, labels, locale }: {
                           <span className="text-base font-semibold text-[#111827]" lang="ja">{g.pattern}</span>
                           <p className="mt-1 text-sm text-[#4B5563]">{g.meaningVi}</p>
                           {g.details?.[0]?.explanationVi ? (
-                            <p className="mt-1 text-xs text-[#9CA3AF] line-clamp-2">{g.details[0].explanationVi}</p>
+                            <p className="mt-1 text-xs text-[#9CA3AF] line-clamp-2">{grammarTextPreview(g.details[0].explanationVi)}</p>
                           ) : null}
                         </button>
                       </li>
@@ -522,7 +523,7 @@ function GrammarDetail({ g, labels, locale }: { g: GrammarItem; labels: Labels; 
           {g.details.map((d, i) => (
             d.explanationVi ? (
               <div className="rounded-xl bg-[#F9FAFB] p-3 text-sm leading-relaxed text-[#4B5563]" key={i}>
-                {d.explanationVi}
+                <GrammarRichText className="text-[#4B5563]" html={d.explanationVi} />
               </div>
             ) : null
           ))}
