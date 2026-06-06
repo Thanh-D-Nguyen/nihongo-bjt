@@ -99,6 +99,36 @@ final flashcardRepositoryProvider = Provider<FlashcardRepository>((ref) {
   return MockFlashcardRepository();
 });
 
+/// Auth readiness for flashcard screens.
+///
+/// Mock/dev flashcards stay reachable without auth. API-backed flashcards are
+/// learner-scoped, so screens must wait for session restore before reading the
+/// deck/review providers, and must show a sign-in state once no valid session
+/// exists. This avoids firing doomed API calls during token expiry.
+enum FlashcardAuthGate {
+  ready,
+  restoring,
+  signInRequired,
+}
+
+final flashcardAuthGateProvider = Provider<FlashcardAuthGate>((ref) {
+  if (!ref.watch(appEnvironmentProvider).useApiFlashcards) {
+    return FlashcardAuthGate.ready;
+  }
+
+  final session = ref.watch(authControllerProvider);
+  if (session.isLoading && !session.hasValue) {
+    return FlashcardAuthGate.restoring;
+  }
+  return session.value?.isAuthenticated == true
+      ? FlashcardAuthGate.ready
+      : FlashcardAuthGate.signInRequired;
+});
+
+bool isFlashcardSignInRequiredError(Object error) {
+  return error is FlashcardRepositoryException && error.isAuthRequired;
+}
+
 /// All decks shown on the deck-list screen.
 final deckListProvider = FutureProvider<List<FlashcardDeck>>((ref) {
   return ref.watch(flashcardRepositoryProvider).fetchDecks();

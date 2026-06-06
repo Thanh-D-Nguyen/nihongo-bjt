@@ -13,6 +13,7 @@ import 'package:nihongo_bjt/features/flashcards/domain/review_mode.dart';
 import 'package:nihongo_bjt/features/flashcards/domain/srs_rating.dart';
 import 'package:nihongo_bjt/features/flashcards/domain/typed_answer_grading.dart';
 import 'package:nihongo_bjt/features/flashcards/presentation/flashcard_providers.dart';
+import 'package:nihongo_bjt/features/flashcards/presentation/flashcard_sign_in_required_view.dart';
 import 'package:nihongo_bjt/features/reading_assist/domain/reading_assist_policy.dart';
 import 'package:nihongo_bjt/features/reading_assist/presentation/japanese_text.dart';
 import 'package:nihongo_bjt/features/settings/presentation/settings_controller.dart';
@@ -33,23 +34,39 @@ class FlashcardReviewPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final authGate = ref.watch(flashcardAuthGateProvider);
+    if (authGate != FlashcardAuthGate.ready) {
+      return AppScaffold(
+        title: l10n.reviewTitle,
+        body: authGate == FlashcardAuthGate.restoring
+            ? const Padding(
+                padding: EdgeInsets.all(AppSpacing.m),
+                child: _ReviewLoading(),
+              )
+            : const FlashcardSignInRequiredView(),
+      );
+    }
+
     final session = ref.watch(reviewSessionProvider(deckId));
     final controller = ref.read(reviewSessionProvider(deckId).notifier);
 
     return AppScaffold(
       title: l10n.reviewTitle,
       body: session.when(
+        skipLoadingOnRefresh: false,
         loading: () => const Padding(
           padding: EdgeInsets.all(AppSpacing.m),
           child: _ReviewLoading(),
         ),
-        error: (_, _) => ErrorStateView(
-          title: l10n.reviewErrorTitle,
-          message: l10n.reviewError,
-          retryLabel: l10n.commonRetry,
-          icon: Icons.cloud_off_rounded,
-          onRetry: () => ref.invalidate(reviewSessionProvider(deckId)),
-        ),
+        error: (error, _) => isFlashcardSignInRequiredError(error)
+            ? const FlashcardSignInRequiredView()
+            : ErrorStateView(
+                title: l10n.reviewErrorTitle,
+                message: l10n.reviewError,
+                retryLabel: l10n.commonRetry,
+                icon: Icons.cloud_off_rounded,
+                onRetry: () => ref.invalidate(reviewSessionProvider(deckId)),
+              ),
         data: (state) {
           if (state.totalCount == 0) {
             return EmptyStateView(

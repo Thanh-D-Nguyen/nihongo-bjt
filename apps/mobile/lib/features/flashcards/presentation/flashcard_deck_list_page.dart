@@ -8,6 +8,7 @@ import 'package:nihongo_bjt/core/theme/app_spacing.dart';
 import 'package:nihongo_bjt/features/flashcards/domain/flashcard_deck.dart';
 import 'package:nihongo_bjt/features/flashcards/presentation/debug_review_sync_action.dart';
 import 'package:nihongo_bjt/features/flashcards/presentation/flashcard_providers.dart';
+import 'package:nihongo_bjt/features/flashcards/presentation/flashcard_sign_in_required_view.dart';
 import 'package:nihongo_bjt/l10n/gen/app_localizations.dart';
 import 'package:nihongo_bjt/shared/widgets/app_card.dart';
 import 'package:nihongo_bjt/shared/widgets/app_scaffold.dart';
@@ -23,27 +24,49 @@ class FlashcardDeckListPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final decks = ref.watch(deckListProvider);
+    final authGate = ref.watch(flashcardAuthGateProvider);
+    final body = switch (authGate) {
+      FlashcardAuthGate.ready => const _DeckListContent(),
+      FlashcardAuthGate.restoring => const _DeckListSkeleton(),
+      FlashcardAuthGate.signInRequired => const FlashcardSignInRequiredView(),
+    };
 
     return AppScaffold(
       title: l10n.flashcardTitle,
       actions: const [DebugReviewSyncAction()],
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.pushNamed(Routes.flashcardCreate),
-        icon: const Icon(Icons.add_rounded),
-        label: Text(l10n.deckCreateCta),
-      ),
-      body: decks.when(
-        loading: () => const _DeckListSkeleton(),
-        error: (_, _) => ErrorStateView(
-          title: l10n.deckListErrorTitle,
-          message: l10n.deckListError,
-          retryLabel: l10n.commonRetry,
-          icon: Icons.cloud_off_rounded,
-          onRetry: () => ref.invalidate(deckListProvider),
-        ),
-        data: (items) => _DeckListView(decks: items),
-      ),
+      floatingActionButton: authGate == FlashcardAuthGate.ready
+          ? FloatingActionButton.extended(
+              onPressed: () => context.pushNamed(Routes.flashcardCreate),
+              icon: const Icon(Icons.add_rounded),
+              label: Text(l10n.deckCreateCta),
+            )
+          : null,
+      body: body,
+    );
+  }
+}
+
+class _DeckListContent extends ConsumerWidget {
+  const _DeckListContent();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final decks = ref.watch(deckListProvider);
+
+    return decks.when(
+      skipLoadingOnRefresh: false,
+      loading: () => const _DeckListSkeleton(),
+      error: (error, _) => isFlashcardSignInRequiredError(error)
+          ? const FlashcardSignInRequiredView()
+          : ErrorStateView(
+              title: l10n.deckListErrorTitle,
+              message: l10n.deckListError,
+              retryLabel: l10n.commonRetry,
+              icon: Icons.cloud_off_rounded,
+              onRetry: () => ref.invalidate(deckListProvider),
+            ),
+      data: (items) => _DeckListView(decks: items),
     );
   }
 }

@@ -87,11 +87,17 @@ void main() {
       await expectLater(
         repo.fetchDecks(),
         throwsA(
-          isA<FlashcardRepositoryException>().having(
-            (e) => e.message,
-            'message',
-            contains('đăng nhập'),
-          ),
+          isA<FlashcardRepositoryException>()
+              .having(
+                (e) => e.message,
+                'message',
+                contains('đăng nhập'),
+              )
+              .having(
+                (e) => e.isAuthRequired,
+                'isAuthRequired',
+                isTrue,
+              ),
         ),
       );
     });
@@ -210,11 +216,17 @@ void main() {
           rating: SrsRating.again,
         ),
         throwsA(
-          isA<FlashcardRepositoryException>().having(
-            (e) => e.message,
-            'message',
-            contains('đăng nhập'),
-          ),
+          isA<FlashcardRepositoryException>()
+              .having(
+                (e) => e.message,
+                'message',
+                contains('đăng nhập'),
+              )
+              .having(
+                (e) => e.isAuthRequired,
+                'isAuthRequired',
+                isTrue,
+              ),
         ),
       );
     });
