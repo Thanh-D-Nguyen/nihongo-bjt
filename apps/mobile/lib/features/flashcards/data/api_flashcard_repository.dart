@@ -95,6 +95,33 @@ class ApiFlashcardRepository implements FlashcardRepository {
   }
 
   @override
+  Future<String> createDeckWithCards(
+    DeckFormInput meta,
+    List<DeckCardInput> cards,
+  ) async {
+    // `POST /api/flashcards/decks` with the deck metadata plus the full `cards`
+    // array (one-step create). The backend `createDeckSchema` accepts an
+    // optional `cards` list (max 200), so the deck and its cards are created in
+    // a single request. Cards are brand-new (no cardId/deckCardId).
+    final json = await _guard(
+      () => _client.postJson(
+        _decksPath,
+        body: <String, Object?>{
+          ...meta.toRequestBody(),
+          'cards': cards.map((c) => c.toRequestBody()).toList(),
+        },
+      ),
+    );
+    final id = _asMap(json)['id'];
+    if (id is! String || id.isEmpty) {
+      throw const FlashcardRepositoryException(
+        'Máy chủ không trả về mã bộ thẻ vừa tạo.',
+      );
+    }
+    return id;
+  }
+
+  @override
   Future<void> updateDeckMeta(String deckId, DeckFormInput input) async {
     // `PATCH /api/flashcards/decks/{id}` with metadata only (no `cards`), so the
     // deck's existing card set is left untouched.

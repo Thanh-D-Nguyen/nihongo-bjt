@@ -446,6 +446,13 @@ class _ThrowingFlashcardRepository implements FlashcardRepository {
   Future<String> createDeck(DeckFormInput input) => throw UnimplementedError();
 
   @override
+  Future<String> createDeckWithCards(
+    DeckFormInput meta,
+    List<DeckCardInput> cards,
+  ) =>
+      throw UnimplementedError();
+
+  @override
   Future<void> updateDeckMeta(String deckId, DeckFormInput input) =>
       throw UnimplementedError();
 

@@ -640,6 +640,108 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String get cardSetCreateTitle => '新しいカードセットを作成';
+
+  @override
+  String get cardSetCardsHeader => 'カード';
+
+  @override
+  String cardSetCardCount(int count, int max) {
+    return '$count/$max';
+  }
+
+  @override
+  String get cardSetMoreDetails => '詳細を追加';
+
+  @override
+  String get cardSetAddCard => 'カードを追加';
+
+  @override
+  String get cardSetImport => 'テキストから取り込む';
+
+  @override
+  String get cardSetCreate => 'セットを作成';
+
+  @override
+  String cardSetCreateSuccess(int count) {
+    return '$count枚のカードでセットを作成しました。';
+  }
+
+  @override
+  String cardSetValidationSummary(int count) {
+    return '作成する前に $count 件のエラーを修正してください。';
+  }
+
+  @override
+  String get cardSetNeedCard => 'カードを1枚以上追加してください。';
+
+  @override
+  String get cardSetDiscardTitle => 'このセットを破棄しますか？';
+
+  @override
+  String get cardSetDiscardMessage => '保存していない変更は失われます。';
+
+  @override
+  String get cardSetDiscardConfirm => '破棄';
+
+  @override
+  String get cardSetKeepEditing => '編集を続ける';
+
+  @override
+  String get importSheetTitle => 'テキストからカードを取り込む';
+
+  @override
+  String get importSheetHint => '1行に1枚のカードを貼り付けます。表と裏はタブ、|、カンマ、または「 - 」で区切ります。';
+
+  @override
+  String get importSheetInputLabel => '内容を貼り付け';
+
+  @override
+  String get importSheetReadingColumn => '3列目を読みとして扱う';
+
+  @override
+  String get importSheetPreviewTitle => 'プレビュー';
+
+  @override
+  String importSheetValidCount(int count) {
+    return '$count枚の有効なカード';
+  }
+
+  @override
+  String importSheetErrorCount(int count) {
+    return '$count行にエラー';
+  }
+
+  @override
+  String importSheetTooMany(int max) {
+    return '最大 $max 枚です。超過した行は無視されます。';
+  }
+
+  @override
+  String get importSheetEmpty => 'プレビューする内容がありません。';
+
+  @override
+  String get importSheetReplace => '置き換え';
+
+  @override
+  String get importSheetAppend => '追加';
+
+  @override
+  String get importRowMissingFront => '表が未入力';
+
+  @override
+  String get importRowMissingBack => '裏が未入力';
+
+  @override
+  String get importRowFrontTooLong => '表が長すぎます';
+
+  @override
+  String get importRowBackTooLong => '裏が長すぎます';
+
+  @override
+  String get importRowReadingTooLong => '読みが長すぎます';
+
+  @override
   String get cardDeleteSuccess => 'カードを削除しました。';
 
   @override

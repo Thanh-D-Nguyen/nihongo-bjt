@@ -103,6 +103,10 @@ Body (Zod `createDeckSchema`, `userId` injected server-side):
 ```
 Returns the created deck (id + counts).
 
+> **One-step create (Quizlet flow):** mobile now sends the `cards[]` array on
+> create (`createDeckWithCards`), so a deck and its cards are persisted in a
+> single `POST`. Cards on create carry no `cardId`/`deckCardId` (all new).
+
 ### Update deck (metadata + cards)
 `PATCH /api/flashcards/decks/:deckId` (alias `PATCH /api/decks/:id`)
 

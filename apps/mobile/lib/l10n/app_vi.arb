@@ -610,6 +610,145 @@
       "count": { "type": "int" }
     }
   },
+  "cardSetCreateTitle": "Tạo bộ thẻ mới",
+  "@cardSetCreateTitle": {
+    "description": "App bar title for the one-step Create Set screen."
+  },
+  "cardSetCardsHeader": "Thẻ",
+  "@cardSetCardsHeader": {
+    "description": "Section header above the card editor rows on Create Set."
+  },
+  "cardSetCardCount": "{count}/{max}",
+  "@cardSetCardCount": {
+    "description": "Live count of cards versus the maximum on Create Set.",
+    "placeholders": {
+      "count": { "type": "int" },
+      "max": { "type": "int" }
+    }
+  },
+  "cardSetMoreDetails": "Thêm chi tiết",
+  "@cardSetMoreDetails": {
+    "description": "Disclosure that reveals the optional Japanese metadata fields."
+  },
+  "cardSetAddCard": "Thêm thẻ",
+  "@cardSetAddCard": {
+    "description": "Button that appends another empty card row on Create Set."
+  },
+  "cardSetImport": "Nhập từ văn bản",
+  "@cardSetImport": {
+    "description": "Action that opens the paste-to-import sheet."
+  },
+  "cardSetCreate": "Tạo bộ thẻ",
+  "@cardSetCreate": {
+    "description": "Primary button that creates the deck and its cards at once."
+  },
+  "cardSetCreateSuccess": "Đã tạo bộ thẻ với {count} thẻ.",
+  "@cardSetCreateSuccess": {
+    "description": "Snackbar after a one-step set is created.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "cardSetValidationSummary": "Còn {count} lỗi cần sửa trước khi tạo.",
+  "@cardSetValidationSummary": {
+    "description": "Helper line summarizing how many fields block submission.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "cardSetNeedCard": "Hãy thêm ít nhất một thẻ.",
+  "@cardSetNeedCard": {
+    "description": "Validation message when no card row has content."
+  },
+  "cardSetDiscardTitle": "Bỏ bộ thẻ này?",
+  "@cardSetDiscardTitle": {
+    "description": "Title of the unsaved-changes confirmation dialog."
+  },
+  "cardSetDiscardMessage": "Các thay đổi chưa lưu sẽ bị mất.",
+  "@cardSetDiscardMessage": {
+    "description": "Body of the unsaved-changes confirmation dialog."
+  },
+  "cardSetDiscardConfirm": "Bỏ",
+  "@cardSetDiscardConfirm": {
+    "description": "Confirm button that discards the unsaved set."
+  },
+  "cardSetKeepEditing": "Tiếp tục sửa",
+  "@cardSetKeepEditing": {
+    "description": "Cancel button that keeps editing the unsaved set."
+  },
+  "importSheetTitle": "Nhập thẻ từ văn bản",
+  "@importSheetTitle": {
+    "description": "Title of the bulk import bottom sheet."
+  },
+  "importSheetHint": "Dán mỗi thẻ trên một dòng. Ngăn cách mặt trước và mặt sau bằng Tab, dấu |, dấu phẩy hoặc \" - \".",
+  "@importSheetHint": {
+    "description": "Instructions explaining the accepted import format."
+  },
+  "importSheetInputLabel": "Dán nội dung",
+  "@importSheetInputLabel": {
+    "description": "Label for the import text area."
+  },
+  "importSheetReadingColumn": "Cột thứ ba là cách đọc",
+  "@importSheetReadingColumn": {
+    "description": "Toggle to treat the third column as the reading."
+  },
+  "importSheetPreviewTitle": "Xem trước",
+  "@importSheetPreviewTitle": {
+    "description": "Header above the parsed import preview."
+  },
+  "importSheetValidCount": "{count} thẻ hợp lệ",
+  "@importSheetValidCount": {
+    "description": "Count of valid parsed rows.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "importSheetErrorCount": "{count} dòng có lỗi",
+  "@importSheetErrorCount": {
+    "description": "Count of invalid parsed rows.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "importSheetTooMany": "Tối đa {max} thẻ. Các dòng vượt quá sẽ bị bỏ qua.",
+  "@importSheetTooMany": {
+    "description": "Shown when the pasted text exceeds the card cap.",
+    "placeholders": {
+      "max": { "type": "int" }
+    }
+  },
+  "importSheetEmpty": "Chưa có nội dung để xem trước.",
+  "@importSheetEmpty": {
+    "description": "Empty state of the import preview."
+  },
+  "importSheetReplace": "Thay thế",
+  "@importSheetReplace": {
+    "description": "Button that replaces existing rows with the import."
+  },
+  "importSheetAppend": "Thêm vào",
+  "@importSheetAppend": {
+    "description": "Button that appends the import to existing rows."
+  },
+  "importRowMissingFront": "Thiếu mặt trước",
+  "@importRowMissingFront": {
+    "description": "Row error when the front field is empty."
+  },
+  "importRowMissingBack": "Thiếu mặt sau",
+  "@importRowMissingBack": {
+    "description": "Row error when the back field is empty."
+  },
+  "importRowFrontTooLong": "Mặt trước quá dài",
+  "@importRowFrontTooLong": {
+    "description": "Row error when the front exceeds its maximum."
+  },
+  "importRowBackTooLong": "Mặt sau quá dài",
+  "@importRowBackTooLong": {
+    "description": "Row error when the back exceeds its maximum."
+  },
+  "importRowReadingTooLong": "Cách đọc quá dài",
+  "@importRowReadingTooLong": {
+    "description": "Row error when the reading exceeds its maximum."
+  },
   "cardDeleteSuccess": "Đã xóa thẻ.",
   "@cardDeleteSuccess": {
     "description": "Snackbar after a card is deleted."

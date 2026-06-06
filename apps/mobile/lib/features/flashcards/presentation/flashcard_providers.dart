@@ -195,6 +195,33 @@ class DeckMutationController extends AsyncNotifier<void> {
     );
   }
 
+  /// Creates a deck together with [cards] in one request (one-step Create Set).
+  /// On success invalidates the deck list and returns the new deck id; on
+  /// failure records the error in [state] and returns `null`.
+  Future<String?> createWithCards(
+    DeckFormInput meta,
+    List<DeckCardInput> cards,
+  ) async {
+    state = const AsyncValue<void>.loading();
+    final result = await AsyncValue.guard(
+      () => ref
+          .read(flashcardRepositoryProvider)
+          .createDeckWithCards(meta, cards),
+    );
+    return result.when(
+      data: (id) {
+        state = const AsyncValue<void>.data(null);
+        ref.invalidate(deckListProvider);
+        return id;
+      },
+      error: (error, stackTrace) {
+        state = AsyncValue<void>.error(error, stackTrace);
+        return null;
+      },
+      loading: () => null,
+    );
+  }
+
   /// Updates the metadata of [deckId]. On success invalidates the deck list and
   /// that deck's detail, returning `true`; records the error and returns
   /// `false` on failure.

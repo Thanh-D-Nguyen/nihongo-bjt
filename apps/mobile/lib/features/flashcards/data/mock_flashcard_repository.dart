@@ -149,6 +149,41 @@ class MockFlashcardRepository implements FlashcardRepository {
   }
 
   @override
+  Future<String> createDeckWithCards(
+    DeckFormInput meta,
+    List<DeckCardInput> cards,
+  ) async {
+    _generatedDeckCounter += 1;
+    final id = 'deck-local-$_generatedDeckCounter';
+    _generatedCardCounter += cards.length;
+    final rebuilt = <DeckCard>[
+      for (var i = 0; i < cards.length; i++)
+        DeckCard(
+          deckCardId: 'dc-local-${_generatedCardCounter - i}',
+          cardId: 'card-local-${_generatedCardCounter - i}',
+          position: i,
+          frontText: cards[i].frontText,
+          backText: cards[i].backText,
+          reading: cards[i].reading ?? '',
+          imageUrl: cards[i].imageUrl,
+        ),
+    ];
+    _decks = [
+      ..._decks,
+      DeckDetail(
+        id: id,
+        titleVi: meta.titleVi,
+        titleJa: meta.titleJa,
+        descriptionVi: meta.descriptionVi,
+        descriptionJa: meta.descriptionJa,
+        visibility: meta.visibility,
+        cards: rebuilt,
+      ),
+    ];
+    return id;
+  }
+
+  @override
   Future<void> updateDeckMeta(String deckId, DeckFormInput input) async {
     final index = _decks.indexWhere((d) => d.id == deckId);
     if (index < 0) {

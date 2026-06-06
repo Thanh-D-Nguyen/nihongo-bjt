@@ -6,7 +6,6 @@ import 'package:nihongo_bjt/features/flashcards/domain/deck_detail.dart';
 import 'package:nihongo_bjt/features/flashcards/presentation/flashcard_deck_form_page.dart';
 import 'package:nihongo_bjt/features/flashcards/presentation/flashcard_providers.dart';
 import 'package:nihongo_bjt/l10n/gen/app_localizations.dart';
-import 'package:nihongo_bjt/shared/widgets/primary_button.dart';
 
 const _deckId = 'business-basics';
 
@@ -43,46 +42,7 @@ DeckDetail _detail() => const DeckDetail(
 );
 
 void main() {
-  group('FlashcardDeckFormPage — create', () {
-    testWidgets('renders empty fields and the create CTA', (tester) async {
-      await _pump(tester, const FlashcardDeckFormPage());
-
-      expect(find.text('Tạo bộ thẻ'), findsWidgets);
-      expect(find.byType(TextField), findsNWidgets(4));
-      // No prefilled text in the required title field.
-      final titleField = tester.widget<TextField>(find.byType(TextField).first);
-      expect(titleField.controller?.text, isEmpty);
-    });
-
-    testWidgets('shows a required error when titleVi is empty on submit', (
-      tester,
-    ) async {
-      await _pump(tester, const FlashcardDeckFormPage());
-
-      await tester.tap(find.byType(PrimaryButton));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Vui lòng nhập tiêu đề.'), findsOneWidget);
-    });
-
-    testWidgets('clears the error once a valid title is entered and resubmit '
-        'is attempted', (tester) async {
-      await _pump(tester, const FlashcardDeckFormPage());
-
-      await tester.tap(find.byType(PrimaryButton));
-      await tester.pumpAndSettle();
-      expect(find.text('Vui lòng nhập tiêu đề.'), findsOneWidget);
-
-      await tester.enterText(find.byType(TextField).first, 'Bộ thẻ mới');
-      await tester.pumpAndSettle();
-      // The validator no longer flags the field after re-validation on submit
-      // is gated by network; we only assert the input is accepted here.
-      final titleField = tester.widget<TextField>(find.byType(TextField).first);
-      expect(titleField.controller?.text, 'Bộ thẻ mới');
-    });
-  });
-
-  group('FlashcardDeckFormPage — edit', () {
+  group('FlashcardDeckFormPage — edit only', () {
     testWidgets('prefills fields from the loaded deck and shows the update '
         'CTA', (tester) async {
       await _pump(

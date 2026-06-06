@@ -659,6 +659,109 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
+  String get cardSetCreateTitle => 'Tạo bộ thẻ mới';
+
+  @override
+  String get cardSetCardsHeader => 'Thẻ';
+
+  @override
+  String cardSetCardCount(int count, int max) {
+    return '$count/$max';
+  }
+
+  @override
+  String get cardSetMoreDetails => 'Thêm chi tiết';
+
+  @override
+  String get cardSetAddCard => 'Thêm thẻ';
+
+  @override
+  String get cardSetImport => 'Nhập từ văn bản';
+
+  @override
+  String get cardSetCreate => 'Tạo bộ thẻ';
+
+  @override
+  String cardSetCreateSuccess(int count) {
+    return 'Đã tạo bộ thẻ với $count thẻ.';
+  }
+
+  @override
+  String cardSetValidationSummary(int count) {
+    return 'Còn $count lỗi cần sửa trước khi tạo.';
+  }
+
+  @override
+  String get cardSetNeedCard => 'Hãy thêm ít nhất một thẻ.';
+
+  @override
+  String get cardSetDiscardTitle => 'Bỏ bộ thẻ này?';
+
+  @override
+  String get cardSetDiscardMessage => 'Các thay đổi chưa lưu sẽ bị mất.';
+
+  @override
+  String get cardSetDiscardConfirm => 'Bỏ';
+
+  @override
+  String get cardSetKeepEditing => 'Tiếp tục sửa';
+
+  @override
+  String get importSheetTitle => 'Nhập thẻ từ văn bản';
+
+  @override
+  String get importSheetHint =>
+      'Dán mỗi thẻ trên một dòng. Ngăn cách mặt trước và mặt sau bằng Tab, dấu |, dấu phẩy hoặc \" - \".';
+
+  @override
+  String get importSheetInputLabel => 'Dán nội dung';
+
+  @override
+  String get importSheetReadingColumn => 'Cột thứ ba là cách đọc';
+
+  @override
+  String get importSheetPreviewTitle => 'Xem trước';
+
+  @override
+  String importSheetValidCount(int count) {
+    return '$count thẻ hợp lệ';
+  }
+
+  @override
+  String importSheetErrorCount(int count) {
+    return '$count dòng có lỗi';
+  }
+
+  @override
+  String importSheetTooMany(int max) {
+    return 'Tối đa $max thẻ. Các dòng vượt quá sẽ bị bỏ qua.';
+  }
+
+  @override
+  String get importSheetEmpty => 'Chưa có nội dung để xem trước.';
+
+  @override
+  String get importSheetReplace => 'Thay thế';
+
+  @override
+  String get importSheetAppend => 'Thêm vào';
+
+  @override
+  String get importRowMissingFront => 'Thiếu mặt trước';
+
+  @override
+  String get importRowMissingBack => 'Thiếu mặt sau';
+
+  @override
+  String get importRowFrontTooLong => 'Mặt trước quá dài';
+
+  @override
+  String get importRowBackTooLong => 'Mặt sau quá dài';
+
+  @override
+  String get importRowReadingTooLong => 'Cách đọc quá dài';
+
+  @override
   String get cardDeleteSuccess => 'Đã xóa thẻ.';
 
   @override

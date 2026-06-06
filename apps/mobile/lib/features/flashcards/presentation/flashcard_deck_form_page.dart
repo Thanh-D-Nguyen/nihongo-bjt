@@ -1,9 +1,6 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:nihongo_bjt/app/router.dart';
 import 'package:nihongo_bjt/core/theme/app_palette.dart';
 import 'package:nihongo_bjt/core/theme/app_radius.dart';
 import 'package:nihongo_bjt/core/theme/app_spacing.dart';
@@ -18,32 +15,23 @@ import 'package:nihongo_bjt/shared/widgets/error_state_view.dart';
 import 'package:nihongo_bjt/shared/widgets/loading_state_view.dart';
 import 'package:nihongo_bjt/shared/widgets/primary_button.dart';
 
-/// Create or edit a deck's metadata.
+/// Edit a deck's metadata.
 ///
-/// When [deckId] is `null` the form creates a new deck; otherwise it loads the
-/// deck's current metadata from `GET /api/decks/:id` and updates it. Card
-/// content is managed separately (deck detail) — this form is metadata-only and
-/// mirrors the backend `createDeckSchema`/`updateDeckSchema` rules exactly.
+/// Loads the deck's current metadata from `GET /api/decks/:id` and updates it.
+/// Card content is managed separately (deck detail), and brand-new decks are
+/// created in the one-step Create Set page (FlashcardCreateSetPage) — this form
+/// is metadata-only and mirrors the backend `updateDeckSchema` rules exactly.
 class FlashcardDeckFormPage extends ConsumerWidget {
-  const FlashcardDeckFormPage({this.deckId, super.key});
+  const FlashcardDeckFormPage({required this.deckId, super.key});
 
-  /// Id of the deck being edited, or `null` to create a new one.
-  final String? deckId;
-
-  bool get _isEdit => deckId != null;
+  /// Id of the deck being edited.
+  final String deckId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
 
-    if (!_isEdit) {
-      return AppScaffold(
-        title: l10n.deckCreateTitle,
-        body: const _DeckForm(),
-      );
-    }
-
-    final detail = ref.watch(deckDetailProvider(deckId!));
+    final detail = ref.watch(deckDetailProvider(deckId));
     return AppScaffold(
       title: l10n.deckEditTitle,
       body: detail.when(
@@ -53,7 +41,7 @@ class FlashcardDeckFormPage extends ConsumerWidget {
           message: l10n.deckDetailError,
           retryLabel: l10n.commonRetry,
           icon: Icons.cloud_off_rounded,
-          onRetry: () => ref.invalidate(deckDetailProvider(deckId!)),
+          onRetry: () => ref.invalidate(deckDetailProvider(deckId)),
         ),
         data: (deck) => _DeckForm(
           deckId: deck.id,
@@ -70,7 +58,7 @@ class FlashcardDeckFormPage extends ConsumerWidget {
 
 class _DeckForm extends ConsumerStatefulWidget {
   const _DeckForm({
-    this.deckId,
+    required this.deckId,
     this.initialTitleVi = '',
     this.initialTitleJa = '',
     this.initialDescriptionVi = '',
@@ -78,14 +66,12 @@ class _DeckForm extends ConsumerStatefulWidget {
     this.initialVisibility = DeckVisibility.private,
   });
 
-  final String? deckId;
+  final String deckId;
   final String initialTitleVi;
   final String initialTitleJa;
   final String initialDescriptionVi;
   final String initialDescriptionJa;
   final DeckVisibility initialVisibility;
-
-  bool get isEdit => deckId != null;
 
   @override
   ConsumerState<_DeckForm> createState() => _DeckFormState();
@@ -143,24 +129,7 @@ class _DeckFormState extends ConsumerState<_DeckForm> {
 
     final controller = ref.read(deckMutationControllerProvider.notifier);
 
-    if (!widget.isEdit) {
-      final id = await controller.create(input);
-      if (!mounted) return;
-      if (id == null) {
-        _showError(messenger, l10n);
-        return;
-      }
-      messenger.showSnackBar(SnackBar(content: Text(l10n.deckSaveSuccess)));
-      unawaited(
-        router.pushReplacementNamed(
-          Routes.flashcardDeck,
-          pathParameters: {'deckId': id},
-        ),
-      );
-      return;
-    }
-
-    final ok = await controller.updateMeta(widget.deckId!, input);
+    final ok = await controller.updateMeta(widget.deckId, input);
     if (!mounted) return;
     if (!ok) {
       _showError(messenger, l10n);
@@ -258,9 +227,7 @@ class _DeckFormState extends ConsumerState<_DeckForm> {
         ),
         const SizedBox(height: AppSpacing.xl),
         PrimaryButton(
-          label: widget.isEdit
-              ? l10n.deckFormSaveUpdate
-              : l10n.deckFormSaveCreate,
+          label: l10n.deckFormSaveUpdate,
           icon: Icons.check_rounded,
           isLoading: isSaving,
           onPressed: isSaving ? null : _submit,

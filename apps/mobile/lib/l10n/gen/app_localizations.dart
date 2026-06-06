@@ -1274,6 +1274,186 @@ abstract class AppLocalizations {
   /// **'Đã thêm {count} thẻ.'**
   String cardBulkSaveSuccess(int count);
 
+  /// App bar title for the one-step Create Set screen.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tạo bộ thẻ mới'**
+  String get cardSetCreateTitle;
+
+  /// Section header above the card editor rows on Create Set.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thẻ'**
+  String get cardSetCardsHeader;
+
+  /// Live count of cards versus the maximum on Create Set.
+  ///
+  /// In vi, this message translates to:
+  /// **'{count}/{max}'**
+  String cardSetCardCount(int count, int max);
+
+  /// Disclosure that reveals the optional Japanese metadata fields.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thêm chi tiết'**
+  String get cardSetMoreDetails;
+
+  /// Button that appends another empty card row on Create Set.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thêm thẻ'**
+  String get cardSetAddCard;
+
+  /// Action that opens the paste-to-import sheet.
+  ///
+  /// In vi, this message translates to:
+  /// **'Nhập từ văn bản'**
+  String get cardSetImport;
+
+  /// Primary button that creates the deck and its cards at once.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tạo bộ thẻ'**
+  String get cardSetCreate;
+
+  /// Snackbar after a one-step set is created.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã tạo bộ thẻ với {count} thẻ.'**
+  String cardSetCreateSuccess(int count);
+
+  /// Helper line summarizing how many fields block submission.
+  ///
+  /// In vi, this message translates to:
+  /// **'Còn {count} lỗi cần sửa trước khi tạo.'**
+  String cardSetValidationSummary(int count);
+
+  /// Validation message when no card row has content.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hãy thêm ít nhất một thẻ.'**
+  String get cardSetNeedCard;
+
+  /// Title of the unsaved-changes confirmation dialog.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bỏ bộ thẻ này?'**
+  String get cardSetDiscardTitle;
+
+  /// Body of the unsaved-changes confirmation dialog.
+  ///
+  /// In vi, this message translates to:
+  /// **'Các thay đổi chưa lưu sẽ bị mất.'**
+  String get cardSetDiscardMessage;
+
+  /// Confirm button that discards the unsaved set.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bỏ'**
+  String get cardSetDiscardConfirm;
+
+  /// Cancel button that keeps editing the unsaved set.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tiếp tục sửa'**
+  String get cardSetKeepEditing;
+
+  /// Title of the bulk import bottom sheet.
+  ///
+  /// In vi, this message translates to:
+  /// **'Nhập thẻ từ văn bản'**
+  String get importSheetTitle;
+
+  /// Instructions explaining the accepted import format.
+  ///
+  /// In vi, this message translates to:
+  /// **'Dán mỗi thẻ trên một dòng. Ngăn cách mặt trước và mặt sau bằng Tab, dấu |, dấu phẩy hoặc \" - \".'**
+  String get importSheetHint;
+
+  /// Label for the import text area.
+  ///
+  /// In vi, this message translates to:
+  /// **'Dán nội dung'**
+  String get importSheetInputLabel;
+
+  /// Toggle to treat the third column as the reading.
+  ///
+  /// In vi, this message translates to:
+  /// **'Cột thứ ba là cách đọc'**
+  String get importSheetReadingColumn;
+
+  /// Header above the parsed import preview.
+  ///
+  /// In vi, this message translates to:
+  /// **'Xem trước'**
+  String get importSheetPreviewTitle;
+
+  /// Count of valid parsed rows.
+  ///
+  /// In vi, this message translates to:
+  /// **'{count} thẻ hợp lệ'**
+  String importSheetValidCount(int count);
+
+  /// Count of invalid parsed rows.
+  ///
+  /// In vi, this message translates to:
+  /// **'{count} dòng có lỗi'**
+  String importSheetErrorCount(int count);
+
+  /// Shown when the pasted text exceeds the card cap.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tối đa {max} thẻ. Các dòng vượt quá sẽ bị bỏ qua.'**
+  String importSheetTooMany(int max);
+
+  /// Empty state of the import preview.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa có nội dung để xem trước.'**
+  String get importSheetEmpty;
+
+  /// Button that replaces existing rows with the import.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thay thế'**
+  String get importSheetReplace;
+
+  /// Button that appends the import to existing rows.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thêm vào'**
+  String get importSheetAppend;
+
+  /// Row error when the front field is empty.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thiếu mặt trước'**
+  String get importRowMissingFront;
+
+  /// Row error when the back field is empty.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thiếu mặt sau'**
+  String get importRowMissingBack;
+
+  /// Row error when the front exceeds its maximum.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mặt trước quá dài'**
+  String get importRowFrontTooLong;
+
+  /// Row error when the back exceeds its maximum.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mặt sau quá dài'**
+  String get importRowBackTooLong;
+
+  /// Row error when the reading exceeds its maximum.
+  ///
+  /// In vi, this message translates to:
+  /// **'Cách đọc quá dài'**
+  String get importRowReadingTooLong;
+
   /// Snackbar after a card is deleted.
   ///
   /// In vi, this message translates to:

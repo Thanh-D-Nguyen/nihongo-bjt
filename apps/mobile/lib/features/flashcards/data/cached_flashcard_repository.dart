@@ -54,6 +54,17 @@ class CachedFlashcardRepository implements FlashcardRepository {
   }
 
   @override
+  Future<String> createDeckWithCards(
+    DeckFormInput meta,
+    List<DeckCardInput> cards,
+  ) {
+    // Write-through (one-step create): the deck-list and detail caches are
+    // refreshed when the presentation layer invalidates their providers after a
+    // successful create.
+    return _remote.createDeckWithCards(meta, cards);
+  }
+
+  @override
   Future<void> updateDeckMeta(String deckId, DeckFormInput input) {
     return _remote.updateDeckMeta(deckId, input);
   }

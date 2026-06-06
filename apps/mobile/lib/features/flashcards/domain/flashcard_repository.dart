@@ -23,6 +23,19 @@ abstract interface class FlashcardRepository {
   /// user id. Card content is not included — a new deck starts empty.
   Future<String> createDeck(DeckFormInput input);
 
+  /// Creates a new learner-owned deck from [meta] together with its [cards] in
+  /// a single request, returning the new deck's server id.
+  ///
+  /// Backs the one-step (Quizlet-like) Create Set flow: the backend
+  /// `POST /api/flashcards/decks` accepts an optional `cards` array, so the deck
+  /// and its cards are persisted at once. Cards are all new (no `cardId` /
+  /// `deckCardId`). The learner is resolved server-side; [meta] never carries a
+  /// user id.
+  Future<String> createDeckWithCards(
+    DeckFormInput meta,
+    List<DeckCardInput> cards,
+  );
+
   /// Updates the metadata of the learner-owned deck [deckId] from [input].
   ///
   /// Only metadata is sent (no `cards`), so the deck's card set is preserved.

@@ -107,3 +107,47 @@ SDK is present (none in CI env — analyze+test are the gates).
 - Do not regress `flashcard_review_page.dart` or the Review tab routing.
 - No `userId` in requests. No faked data. No swallowed errors.
 - Free-form card images omitted (no mobile upload endpoint) — documented.
+
+---
+
+## Upgrade Plan — Quizlet-like Create Set (current pass)
+
+Builds on the shipped management parity. The single structural change is moving
+create from two-step (metadata-only) to **one-step** (metadata + cards in one
+`POST`). All other surfaces are preserved.
+
+### Repository (additive)
+```dart
+// FlashcardRepository
+Future<String> createDeckWithCards(DeckFormInput meta, List<DeckCardInput> cards);
+```
+Implemented in `ApiFlashcardRepository` (`POST /api/flashcards/decks` with
+`cards[]`), `MockFlashcardRepository` (in-memory), and `CachedFlashcardRepository`
+(delegate + invalidate deck list cache). `DeckMutationController.createWithCards`
+adds the loading/error lifecycle + list invalidation.
+
+### New presentation
+- `flashcard_create_set_page.dart` — one-step Create Set: metadata section +
+  multi-card editor + import entry + sticky create CTA + unsaved guard.
+- `presentation/widgets/deck_card_editor_row.dart` — reusable row block.
+- `presentation/widgets/deck_card_import_sheet.dart` — paste → parse → preview.
+- `domain/deck_card_import.dart` — pure parser + row errors.
+
+### Route change
+`flashcardCreate` (`/review/flashcards/new`) re-points from
+`FlashcardDeckFormPage()` to `FlashcardCreateSetPage()`. `FlashcardDeckFormPage`
+becomes **edit-only**. No duplicate create flow remains.
+
+### Reuse
+`FlashcardCardBulkAddPage` (append-to-existing-deck) is refactored to reuse
+`DeckCardEditorRow` + the import sheet so create and add-cards share one editor.
+
+### Batches (this pass)
+1. Repository `createDeckWithCards` + controller + parser + fakes + l10n.
+2. Deck list/detail polish (mostly verify; no behavior change).
+3. **Create Set screen** (main target) + tests.
+4. Import sheet + parser + tests.
+5. Flashcard CRUD polish (reuse editor) + tests.
+6. Review/SRS verification (no regression).
+7. UI/UX polish + widget previews.
+8. Retest docs.

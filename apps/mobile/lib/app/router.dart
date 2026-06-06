@@ -19,6 +19,7 @@ import 'package:nihongo_bjt/features/exam/presentation/exam_browser_page.dart';
 import 'package:nihongo_bjt/features/exam/presentation/exam_player_page.dart';
 import 'package:nihongo_bjt/features/flashcards/presentation/flashcard_card_bulk_add_page.dart';
 import 'package:nihongo_bjt/features/flashcards/presentation/flashcard_card_form_page.dart';
+import 'package:nihongo_bjt/features/flashcards/presentation/flashcard_create_set_page.dart';
 import 'package:nihongo_bjt/features/flashcards/presentation/flashcard_deck_detail_page.dart';
 import 'package:nihongo_bjt/features/flashcards/presentation/flashcard_deck_form_page.dart';
 import 'package:nihongo_bjt/features/flashcards/presentation/flashcard_deck_list_page.dart';
@@ -299,7 +300,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                         path: 'new',
                         name: Routes.flashcardCreate,
                         builder: (context, state) =>
-                            const FlashcardDeckFormPage(),
+                            const FlashcardCreateSetPage(),
                       ),
                       GoRoute(
                         path: ':deckId',
@@ -312,7 +313,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                             path: 'edit',
                             name: Routes.flashcardEdit,
                             builder: (context, state) => FlashcardDeckFormPage(
-                              deckId: state.pathParameters['deckId'],
+                              deckId: state.pathParameters['deckId']!,
                             ),
                           ),
                           GoRoute(

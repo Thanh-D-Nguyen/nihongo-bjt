@@ -30,6 +30,13 @@ class _RecordingRepository implements FlashcardRepository {
       _delegate.createDeck(input);
 
   @override
+  Future<String> createDeckWithCards(
+    DeckFormInput meta,
+    List<DeckCardInput> cards,
+  ) =>
+      _delegate.createDeckWithCards(meta, cards);
+
+  @override
   Future<void> updateDeckMeta(String deckId, DeckFormInput input) =>
       _delegate.updateDeckMeta(deckId, input);
 

@@ -82,3 +82,26 @@ Implement #1–#14 and #17 (keep). The result is full **management** parity:
 browse, search/filter, view detail, create/edit/archive decks, and
 create/edit/delete free-form flashcards — all on real endpoints, with every
 loading/empty/error/offline state and VI/JA localization.
+
+---
+
+## Upgrade Addendum — Quizlet-like Create Set (current pass)
+
+The first pass (above) shipped management parity but left **create** as a
+two-step flow (metadata-only create → open detail → bulk-add cards). The web and
+backend support a **one-step** create (`POST /api/flashcards/decks` with a
+`cards[]` array). This pass closes the remaining create/import gaps.
+
+| # | Web feature | Mobile (before this pass) | Decision |
+|---|-------------|---------------------------|----------|
+| 7  | Create deck **with inline cards** (one request) | metadata-only create, cards added separately | **Implement now** — `createDeckWithCards`, new Create Set screen |
+| 19 | Bulk import (paste term/def rows, preview, replace/append) | ❌ none | **Implement now** — import sheet + pure parser |
+| 4b | Multi-card editor (add/remove rows, per-row validation) | exists only in append-to-deck bulk page | **Reuse** — extract shared `DeckCardEditorRow` |
+| — | Unsaved-changes protection on create | none | **Implement now** — `PopScope` confirm |
+
+Unchanged from the first pass (kept, not regressed): deck list, deck detail,
+edit metadata, single-card CRUD, archive, review/reveal, route ownership.
+
+Still deferred with reason (see `MOBILE_KNOWN_LIMITATIONS.md`): per-card image
+upload (no mobile presign), reading auto-fill (reading-assist API not wired on
+create), duplicate/share/export, quiz/match modes.
