@@ -1,22 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
 import { learnerApiFetchOptional } from "../../../../lib/learner-api";
-import { HeroSection } from "./hero-section";
-import { LoginBonusWidget } from "./login-bonus-widget";
-import { StudyGoalWidget } from "./study-goal-widget";
-import { QuickActionsStrip } from "./quick-actions-strip";
 import type { HomepageLabels, LearnerAnalytics, NhkArticle } from "./types";
 import { PushPromptBanner, type PushBannerLabels } from "./push-prompt-banner";
-import { CompanionPetWidget } from "./companion-pet-widget";
-import { SeasonalEventBanner } from "./seasonal-event-banner";
 import { AdBanner } from "./ad-banner";
 import { OnboardingFlow } from "./onboarding-flow";
 import { HomepageSectionsTabs } from "./homepage-sections-tabs";
-import { SidebarGuestCta } from "./sidebar-guest-cta";
-import { XpRankWidget } from "./xp-rank-widget";
+import { TodayPlanHub } from "./today-plan-hub";
 
 interface DailyHubPayload {
   dueReviews: number;
@@ -36,10 +29,11 @@ export function HomepageClient({
   const auth = useKeycloakAuth();
   const userId = auth.userId ?? "";
   const isLoggedIn = Boolean(userId);
-  const displayName = useMemo(() => auth.displayName?.trim() || null, [auth.displayName]);
 
   const [hub, setHub] = useState<DailyHubPayload | null>(null);
+  const [hubError, setHubError] = useState(false);
   const [hubReady, setHubReady] = useState(false);
+  const [isOffline, setIsOffline] = useState(false);
   const [nhkArticlesByType, setNhkArticlesByType] = useState<{
     easy: NhkArticle[];
     normal: NhkArticle[];
@@ -59,10 +53,18 @@ export function HomepageClient({
       `/api/daily/home?locale=${locale}${userId ? `&userId=${encodeURIComponent(userId)}` : ""}`
     )
       .then(async (r) => {
-        if (r?.ok) setHub(await r.json());
-        else setHub(null);
+        if (r?.ok) {
+          setHub(await r.json());
+          setHubError(false);
+        } else {
+          setHub(null);
+          setHubError(true);
+        }
       })
-      .catch(() => setHub(null))
+      .catch(() => {
+        setHub(null);
+        setHubError(true);
+      })
       .finally(() => setHubReady(true));
 
     void learnerApiFetchOptional(`/api/nhk-news?type=easy&limit=8&locale=${locale}`)
@@ -114,6 +116,20 @@ export function HomepageClient({
     loadData();
   }, [loadData]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    const apply = () => setIsOffline(!window.navigator.onLine);
+    apply();
+    window.addEventListener("online", apply);
+    window.addEventListener("offline", apply);
+    return () => {
+      window.removeEventListener("online", apply);
+      window.removeEventListener("offline", apply);
+    };
+  }, []);
+
   /** Lazy-load a specific news type on demand (e.g. when user switches tab) */
   const loadNewsType = useCallback(
     (type: "easy" | "normal") => {
@@ -131,10 +147,8 @@ export function HomepageClient({
     [locale, nhkArticlesByType]
   );
 
-  const dueCount = hub?.dueReviews ?? 0;
-
   return (
-    <main className="min-w-0 space-y-6 overflow-x-clip pb-12 pt-2 sm:space-y-8 sm:pt-6">
+    <main className="min-w-0 space-y-8 overflow-x-clip pb-12 pt-2 sm:space-y-10 sm:pt-6">
       {showOnboarding && (
         <OnboardingFlow
           onComplete={() => {
@@ -146,78 +160,37 @@ export function HomepageClient({
       <PushPromptBanner labels={pushBannerLabels} />
 
       <div className="hp-enter">
-        <HeroSection
-          displayName={displayName}
-          dueCount={dueCount}
+        <TodayPlanHub
+          analytics={analytics}
+          hub={hub}
+          hubError={hubError}
           hubReady={hubReady}
+          isOffline={isOffline}
           labels={labels}
           locale={locale}
+          onRetry={loadData}
         />
       </div>
 
-      <div className="grid min-w-0 gap-6 sm:gap-8 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
-        <div className="min-w-0 space-y-8">
-          <div className="hp-enter hp-enter-d1">
-            <QuickActionsStrip
-              dueCount={dueCount}
-              hubReady={hubReady}
-              labels={labels}
-              locale={locale}
-            />
-          </div>
+      <div className="hp-enter hp-enter-d2 mx-auto w-full max-w-[1280px]">
+        <HomepageSectionsTabs
+          analytics={analytics}
+          analyticsLoading={isLoggedIn && !analyticsReady}
+          isLoggedIn={isLoggedIn}
+          labels={labels}
+          locale={locale}
+          nhkArticlesByType={nhkArticlesByType}
+          nhkError={nhkError}
+          nhkReady={nhkReady}
+          onNhkRetry={loadData}
+          onNhkTabChange={loadNewsType}
+          onboardingJustCompleted={onboardingJustCompleted}
+          tabsLabels={labels.tabs}
+        />
+      </div>
 
-          <div className="hp-enter hp-enter-d1">
-            <SeasonalEventBanner />
-          </div>
-
-          <div className="hp-enter hp-enter-d2">
-            <HomepageSectionsTabs
-              analytics={analytics}
-              analyticsLoading={isLoggedIn && !analyticsReady}
-              isLoggedIn={isLoggedIn}
-              labels={labels}
-              locale={locale}
-              nhkArticlesByType={nhkArticlesByType}
-              nhkError={nhkError}
-              nhkReady={nhkReady}
-              onNhkRetry={loadData}
-              onNhkTabChange={loadNewsType}
-              onboardingJustCompleted={onboardingJustCompleted}
-              tabsLabels={labels.tabs}
-            />
-          </div>
-
-          <AdBanner locale={locale} />
-        </div>
-
-        {/* Sidebar: 4 widget cốt lõi — always-visible motivation stack */}
-        <div className="min-w-0 space-y-5 sm:space-y-6 lg:sticky lg:top-20">
-          {isLoggedIn ? (
-            <>
-              <div className="hp-enter hp-enter-d1">
-                <XpRankWidget locale={locale} />
-              </div>
-              <div className="hp-enter hp-enter-d1">
-                <CompanionPetWidget locale={locale} />
-              </div>
-              <div className="hp-enter hp-enter-d2">
-                <StudyGoalWidget locale={locale} />
-              </div>
-              <div className="hp-enter hp-enter-d2">
-                <LoginBonusWidget />
-              </div>
-            </>
-          ) : (
-            <div className="hp-enter hp-enter-d1">
-              <SidebarGuestCta
-                title={labels.sidebarSignIn}
-                subtitle={labels.sidebarSignInSub}
-                cta={labels.progressSignInCta}
-                locale={locale}
-              />
-            </div>
-          )}
-        </div>
+      <div className="mx-auto w-full max-w-[1280px]">
+        <AdBanner locale={locale} />
       </div>
     </main>
   );

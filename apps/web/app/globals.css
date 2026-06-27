@@ -19,10 +19,16 @@
   --color-accent-soft: #DBEAFE;
   --color-leaf: #059669;
   --color-leaf-soft: #ECFDF5;
+  --color-success: #059669;
+  --color-success-soft: #ECFDF5;
   --color-sakura: #DC2626;
   --color-sakura-soft: #FEF2F2;
+  --color-danger: #DC2626;
+  --color-danger-soft: #FEF2F2;
   --color-amber: #D97706;
   --color-amber-soft: #FFFBEB;
+  --color-warning: #D97706;
+  --color-warning-soft: #FFFBEB;
   --color-matcha: #22c55e;
   --color-matcha-soft: #F0FDF4;
   --color-focus-surface: #EFF6FF;
@@ -33,6 +39,8 @@
   --color-brand-sky: #EFF6FF;
   --color-brand-sakura: #F9A8D4;
   --color-brand-gold: #F59E0B;
+  --color-reward-sakura: #F9A8D4;
+  --color-reward-gold: #F59E0B;
 
   /* ── Borders ── */
   --color-border: #E2E8F0;
@@ -121,10 +129,16 @@
   /* Semantic colors (adjusted for dark bg) */
   --color-leaf: #34D399;
   --color-leaf-soft: #064E3B;
+  --color-success: #34D399;
+  --color-success-soft: #064E3B;
   --color-sakura: #F87171;
   --color-sakura-soft: #7F1D1D;
+  --color-danger: #F87171;
+  --color-danger-soft: #7F1D1D;
   --color-amber: #FBBF24;
   --color-amber-soft: #78350F;
+  --color-warning: #FBBF24;
+  --color-warning-soft: #78350F;
   --color-matcha: #4ADE80;
   --color-matcha-soft: #064E3B;
   --color-focus-surface: #1E293B;
@@ -135,6 +149,8 @@
   --color-brand-sky: #1E293B;
   --color-brand-sakura: #FDA4AF;
   --color-brand-gold: #FCD34D;
+  --color-reward-sakura: #FDA4AF;
+  --color-reward-gold: #FCD34D;
 
   /* SRS (brighter) */
   --color-srs-new: #A78BFA;
@@ -195,10 +211,16 @@
     --color-accent-soft: #1E3A5F;
     --color-leaf: #34D399;
     --color-leaf-soft: #064E3B;
+    --color-success: #34D399;
+    --color-success-soft: #064E3B;
     --color-sakura: #F87171;
     --color-sakura-soft: #7F1D1D;
+    --color-danger: #F87171;
+    --color-danger-soft: #7F1D1D;
     --color-amber: #FBBF24;
     --color-amber-soft: #78350F;
+    --color-warning: #FBBF24;
+    --color-warning-soft: #78350F;
     --color-matcha: #4ADE80;
     --color-matcha-soft: #064E3B;
     --color-focus-surface: #1E293B;
@@ -207,6 +229,8 @@
     --color-brand-sky: #1E293B;
     --color-brand-sakura: #FDA4AF;
     --color-brand-gold: #FCD34D;
+    --color-reward-sakura: #FDA4AF;
+    --color-reward-gold: #FCD34D;
     --color-srs-new: #A78BFA;
     --color-srs-learning: #FCD34D;
     --color-srs-review: #60A5FA;
@@ -1512,6 +1536,9 @@ button.primary:disabled {
     'Noto Sans JP', "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", ui-sans-serif,
     system-ui, sans-serif;
   line-height: 1.7;
+  line-break: strict;
+  overflow-wrap: break-word;
+  word-break: keep-all;
 }
 
 .jp-text-lg {
@@ -1525,21 +1552,31 @@ button.primary:disabled {
 }
 
 .annotated-ja__token {
-  background: none;
+  background: transparent;
   border: none;
+  border-radius: 4px;
   color: inherit;
   cursor: pointer;
   display: inline;
   font: inherit;
   font-family: inherit;
-  padding: 0;
+  padding: 0 0.08em;
   text-decoration: underline;
   text-decoration-color: #CBD5E1;
   text-underline-offset: 0.2em;
+  transition: background-color 150ms ease-out, color 150ms ease-out, text-decoration-color 150ms ease-out;
+}
+
+.annotated-ja__token:hover {
+  background-color: #DBEAFE;
+  color: #1B2A4A;
+  text-decoration-color: #3B82F6;
 }
 
 .annotated-ja__token:focus-visible {
-  border-radius: 2px;
+  background-color: #EFF6FF;
+  outline: 3px solid #3B82F6;
+  outline-offset: 2px;
 }
 
 .annotated-ja__token-wrap {
@@ -1582,10 +1619,24 @@ button.primary:disabled {
 
 .annotated-ja__sheet-panel {
   background: #FFFFFF;
+  border: 1px solid #E2E8F0;
   border-radius: 20px 20px 0 0;
+  box-shadow: 0 -18px 48px rgba(15, 23, 42, 0.18);
+  color: #111827;
+  line-height: 1.6;
   max-width: 520px;
-  padding: 20px 20px 28px;
+  padding: 8px 20px max(28px, env(safe-area-inset-bottom));
   width: 100%;
+}
+
+.annotated-ja__sheet-panel::before {
+  background: #CBD5E1;
+  border-radius: 9999px;
+  content: "";
+  display: block;
+  height: 4px;
+  margin: 0 auto 14px;
+  width: 44px;
 }
 
 .annotated-ja__sheet-header {

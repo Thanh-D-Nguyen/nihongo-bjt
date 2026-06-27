@@ -211,7 +211,7 @@ export function CompanionBot({ base, labels, locale }: { base: string; labels: C
   return (
     <aside
       aria-label={labels.ariaLabel}
-      className="pointer-events-none fixed inset-0 z-30"
+      className="pointer-events-none fixed inset-0 z-30 hidden md:block"
     >
       {/* Celebration overlay */}
       <CompanionCelebrationOverlay emoji={engine.celebrationEmoji} visible={engine.showCelebration} />
@@ -226,7 +226,7 @@ export function CompanionBot({ base, labels, locale }: { base: string; labels: C
         }}
       >
         {/* Chat panel */}
-        {open ? (
+        {open && !engine.isOnboarding ? (
           <CompanionChatPanel
             base={base}
             hint={hint}
@@ -247,7 +247,7 @@ export function CompanionBot({ base, labels, locale }: { base: string; labels: C
         ) : null}
 
         {/* Onboarding overlay */}
-        {!open && engine.isOnboarding ? (
+        {open && engine.isOnboarding ? (
           <CompanionOnboarding
             currentStep={engine.onboardingStep}
             labels={onboardingLabels}

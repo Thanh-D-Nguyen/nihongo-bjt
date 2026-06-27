@@ -8,14 +8,8 @@ export function AppShell({
   ...props
 }: HTMLAttributes<HTMLDivElement> & { children: ReactNode }) {
   return (
-    <div
-      className={cn(
-        "min-h-screen bg-[#F8FAFC]",
-        className
-      )}
-      {...props}
-    >
-      <div className="mx-auto flex min-h-screen max-w-7xl flex-col px-4 pb-28 pt-0 sm:px-6 lg:px-8 lg:pb-16">
+    <div className={cn("min-h-screen bg-[#F8FAFC]", className)} {...props}>
+      <div className="mx-auto flex min-h-screen max-w-7xl flex-col px-4 pb-16 pt-0 sm:px-6 lg:px-8">
         {children}
       </div>
     </div>
