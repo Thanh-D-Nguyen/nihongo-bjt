@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   completeMediaUploadSchema,
+  dailyHomeQuerySchema,
   mediaReadUrlQuerySchema,
   searchQuerySchema,
   updateMediaRightsMetadataSchema
@@ -18,6 +19,16 @@ describe("searchQuerySchema", () => {
       limit: 5,
       q: "会議"
     });
+  });
+});
+
+describe("dailyHomeQuerySchema", () => {
+  it("accepts IANA timezones and rejects invalid timezone input", () => {
+    expect(dailyHomeQuerySchema.parse({ locale: "vi", timeZone: "Asia/Ho_Chi_Minh" })).toEqual({
+      locale: "vi",
+      timeZone: "Asia/Ho_Chi_Minh"
+    });
+    expect(dailyHomeQuerySchema.safeParse({ locale: "vi", timeZone: "GMT+7" }).success).toBe(false);
   });
 });
 

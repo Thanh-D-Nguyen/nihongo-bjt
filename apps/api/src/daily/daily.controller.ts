@@ -53,6 +53,7 @@ export class DailyController {
     summary: "Daily hub home (anonymous or with Bearer JWT for personalization; Keycloak-issued access token)"
   })
   @ApiQuery({ name: "locale", required: true, description: "UI/content locale" })
+  @ApiQuery({ name: "timeZone", required: false, description: "Learner IANA timezone; defaults to Asia/Tokyo" })
   @ApiQuery({ name: "userId", required: false, description: "Dev override; normally from session" })
   home(
     @CurrentUser() user: KeycloakAuthenticatedUser | undefined,
@@ -64,7 +65,7 @@ export class DailyController {
     }
 
     const userId = resolveLearnerUserId(user, parsed.data.userId, { required: false });
-    return this.dailyRepository.home(parsed.data.locale, userId);
+    return this.dailyRepository.home(parsed.data.locale, userId, parsed.data.timeZone);
   }
 
   @Get("widgets")

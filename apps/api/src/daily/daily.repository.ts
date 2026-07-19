@@ -1,5 +1,5 @@
 import { createPrismaClient, type Prisma } from "@nihongo-bjt/database";
-import { type dailyLocaleSchema, greetingForHour, repairDailyContentFlashcardBackIfNeeded, todayDateKey } from "@nihongo-bjt/shared";
+import { dateKeyInTimeZone, type dailyLocaleSchema, greetingForHour, hourInTimeZone, repairDailyContentFlashcardBackIfNeeded } from "@nihongo-bjt/shared";
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import type { z } from "zod";
 
@@ -29,8 +29,10 @@ type DailyLearningSafeguard = {
 export class DailyRepository {
   private readonly prisma = createPrismaClient();
 
-  async home(locale: DailyLocale, userId?: string) {
-    const today = new Date(`${todayDateKey(new Date())}T00:00:00.000Z`);
+  async home(locale: DailyLocale, userId?: string, timeZone = "Asia/Tokyo") {
+    const now = new Date();
+    const todayKey = dateKeyInTimeZone(now, timeZone);
+    const today = new Date(`${todayKey}T00:00:00.000Z`);
     const [configs, contentItems, dueReviews] = await Promise.all([
       this.prisma.dailyWidgetConfig.findMany({
         orderBy: { displayOrder: "asc" },
@@ -58,8 +60,8 @@ export class DailyRepository {
     }
 
     return {
-      greeting: greetingForHour(new Date().getHours()),
-      today: todayDateKey(today),
+      greeting: greetingForHour(hourInTimeZone(now, timeZone)),
+      today: todayKey,
       dueReviews,
       widgets: configs.map((config) => ({
         config,

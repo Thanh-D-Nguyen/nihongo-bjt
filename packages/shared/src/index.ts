@@ -46,7 +46,9 @@ export {
   type CompanionTip
 } from "./companion-hint.js";
 export {
+  dateKeyInTimeZone,
   greetingForHour,
+  hourInTimeZone,
   todayDateKey,
   type DailyGreeting,
   type DailyWidgetKind
@@ -1485,8 +1487,26 @@ export const adminAnalyticsExecutiveQuerySchema = z.object({
 
 export const dailyLocaleSchema = z.enum(["vi", "ja", "en"]);
 
+const ianaTimeZoneSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(80)
+  .refine(
+    (timeZone) => {
+      try {
+        new Intl.DateTimeFormat("en-US", { timeZone }).format();
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    { message: "timeZone must be a valid IANA timezone" }
+  );
+
 export const dailyHomeQuerySchema = z.object({
   locale: dailyLocaleSchema.default("vi"),
+  timeZone: ianaTimeZoneSchema.default("Asia/Tokyo"),
   userId: z.uuid().optional()
 });
 

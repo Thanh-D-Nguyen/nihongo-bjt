@@ -3,7 +3,7 @@ import { srsRatingSchema } from "./srs.js";
 export { applyShufflePermutation, generateBalancedPositions, generateExamShuffleMap, generateSeededExamShuffleMap, reverseMapDisplayKey, shuffleArray, shuffleQuizOptions, shuffleStringOptions, validateAnswerDistribution } from "./quiz-shuffle.js";
 export { coachingInsight, percentage, toUtcDateKey } from "./analytics.js";
 export { COMPANION_HINT_ALGORITHM_VERSION, companionActionKindSchema, companionHintQuerySchema, companionHintReasonSchema, companionHintResponseSchema, companionReasonCodeSchema } from "./companion-hint.js";
-export { greetingForHour, todayDateKey } from "./daily.js";
+export { dateKeyInTimeZone, greetingForHour, hourInTimeZone, todayDateKey } from "./daily.js";
 export { buildDailySuggestedFlashcardBack, isLikelyVietnameseLegalDisclaimerOnlyBack, repairDailyContentFlashcardBackIfNeeded } from "./daily-flashcard-back.js";
 export * from "./learning-admin.js";
 export { BATTLE_BOT_PROFILES, DEFAULT_BATTLE_BOT_KEY, battleBotStateToRiveInput, decideBotOption, getBattleBotProfile, hashSeedToUint32, randomBetween, shuffleDeterministic } from "./battle.js";
@@ -1176,9 +1176,24 @@ export const adminAnalyticsExecutiveQuerySchema = z.object({
     plan: z.string().trim().min(1).max(64).optional(),
     segment: z.enum(["all", "new", "returning"]).default("all")
 });
-export const dailyLocaleSchema = z.enum(["vi", "ja"]);
+export const dailyLocaleSchema = z.enum(["vi", "ja", "en"]);
+const ianaTimeZoneSchema = z
+    .string()
+    .trim()
+    .min(1)
+    .max(80)
+    .refine((timeZone) => {
+    try {
+        new Intl.DateTimeFormat("en-US", { timeZone }).format();
+        return true;
+    }
+    catch {
+        return false;
+    }
+}, { message: "timeZone must be a valid IANA timezone" });
 export const dailyHomeQuerySchema = z.object({
     locale: dailyLocaleSchema.default("vi"),
+    timeZone: ianaTimeZoneSchema.default("Asia/Tokyo"),
     userId: z.uuid().optional()
 });
 export const dailyActionSchema = z.object({

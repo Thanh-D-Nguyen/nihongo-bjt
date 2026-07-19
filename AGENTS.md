@@ -94,3 +94,5 @@ Implement one phase at a time. Do not jump ahead except for lightweight scaffold
 ## Japanese Reading Assist Layer
 
 The app must support learners who cannot read every Japanese word. Implement reading support as a reusable product layer, not page-specific demo tooltips. Any Japanese text component should be able to opt into hover/tap reading, furigana, meanings, and add-to-flashcard actions. Basic reading support must remain available to free users. Do not reveal meanings during active timed BJT exam mode unless it is practice/help mode or after answering.
+
+@RTK.md

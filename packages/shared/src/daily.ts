@@ -10,17 +10,49 @@ export type DailyWidgetKind =
 
 export interface DailyGreeting {
   japanese: string;
-  reading: string;
+  reading: string | null;
 }
 
 export function greetingForHour(hour: number): DailyGreeting {
+  if (!Number.isInteger(hour) || hour < 0 || hour > 23) {
+    throw new RangeError("hour must be an integer between 0 and 23");
+  }
   if (hour < 11) {
-    return { japanese: "おはようございます", reading: "ohayou gozaimasu" };
+    return { japanese: "おはようございます", reading: null };
   }
   if (hour < 18) {
-    return { japanese: "お疲れさまです", reading: "otsukaresama desu" };
+    return { japanese: "お疲れさまです", reading: "おつかれさまです" };
   }
-  return { japanese: "こんばんは", reading: "konbanwa" };
+  return { japanese: "こんばんは", reading: null };
+}
+
+function timeZonePart(
+  date: Date,
+  timeZone: string,
+  part: "day" | "hour" | "month" | "year"
+): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    day: "2-digit",
+    hour: "2-digit",
+    hourCycle: "h23",
+    month: "2-digit",
+    timeZone,
+    year: "numeric"
+  }).formatToParts(date);
+  const value = parts.find((item) => item.type === part)?.value;
+  if (!value) throw new RangeError(`Unable to resolve ${part} for timezone ${timeZone}`);
+  return value;
+}
+
+export function hourInTimeZone(date: Date, timeZone: string): number {
+  return Number(timeZonePart(date, timeZone, "hour"));
+}
+
+export function dateKeyInTimeZone(date: Date, timeZone: string): string {
+  const year = timeZonePart(date, timeZone, "year");
+  const month = timeZonePart(date, timeZone, "month");
+  const day = timeZonePart(date, timeZone, "day");
+  return `${year}-${month}-${day}`;
 }
 
 export function todayDateKey(date: Date): string {

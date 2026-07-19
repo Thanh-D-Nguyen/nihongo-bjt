@@ -13,7 +13,7 @@ import { TodayPlanHub } from "./today-plan-hub";
 
 interface DailyHubPayload {
   dueReviews: number;
-  greeting: { japanese: string; reading: string };
+  greeting: { japanese: string; reading: string | null };
   today: string;
 }
 
@@ -46,12 +46,13 @@ export function HomepageClient({
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingJustCompleted, setOnboardingJustCompleted] = useState(false);
   const loadData = useCallback(() => {
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Tokyo";
     setHubReady(false);
     setNhkReady(false);
     setAnalyticsReady(false);
 
     void learnerApiFetchOptional(
-      `/api/daily/home?locale=${locale}${userId ? `&userId=${encodeURIComponent(userId)}` : ""}`
+      `/api/daily/home?locale=${locale}&timeZone=${encodeURIComponent(timeZone)}${userId ? `&userId=${encodeURIComponent(userId)}` : ""}`
     )
       .then(async (r) => {
         if (r?.ok) {

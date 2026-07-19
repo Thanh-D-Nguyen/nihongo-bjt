@@ -10,7 +10,7 @@ import type { HomepageLabels, LearnerAnalytics } from "./types";
 
 type DailyHubPayload = {
   dueReviews: number;
-  greeting: { japanese: string; reading: string };
+  greeting: { japanese: string; reading: string | null };
   today: string;
 };
 
@@ -342,12 +342,14 @@ export function TodayPlanHub({
 
           <SnapshotRow className="border-t border-border" label={copy.dailyPhraseLabel}>
             <p className="jp-text mt-3 text-[1.65rem] font-bold leading-[1.9] text-ink" lang="ja">
-              <ruby>
-                {hub.greeting.japanese}
-                {hub.greeting.reading ? (
+              {hub.greeting.reading ? (
+                <ruby>
+                  {hub.greeting.japanese}
                   <rt className="font-normal text-muted">{hub.greeting.reading}</rt>
-                ) : null}
-              </ruby>
+                </ruby>
+              ) : (
+                hub.greeting.japanese
+              )}
             </p>
             <p className="mt-2 text-xs leading-relaxed text-muted">{copy.dailyPhraseMeaning}</p>
           </SnapshotRow>

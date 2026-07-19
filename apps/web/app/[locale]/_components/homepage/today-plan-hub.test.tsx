@@ -7,7 +7,7 @@ import { TodayPlanHub } from "./today-plan-hub";
 
 const hub = {
   dueReviews: 0,
-  greeting: { japanese: "おはようございます", reading: "ohayou gozaimasu" },
+  greeting: { japanese: "おはようございます", reading: null },
   today: "2026-07-19"
 };
 
@@ -32,6 +32,21 @@ describe("TodayPlanHub", () => {
     expect(html).not.toContain("Ôn 0 thẻ đến hạn");
     expect(html).toContain("Chưa có bài hoàn tất");
     expect(html).toContain("Lời chào theo thời điểm");
+    expect(html).not.toContain("ohayou");
+    expect(html).not.toContain("<rt");
+  });
+
+  it("renders kana reading assistance without romaji when kanji is present", () => {
+    const html = renderToStaticMarkup(
+      <TodayPlanHub
+        {...baseProps}
+        hub={{ ...hub, greeting: { japanese: "お疲れさまです", reading: "おつかれさまです" } }}
+      />
+    );
+
+    expect(html).toContain("お疲れさまです");
+    expect(html).toContain("おつかれさまです");
+    expect(html).not.toMatch(/otsukare|desu/iu);
   });
 
   it("renders recent accuracy and streak from learner analytics", () => {
