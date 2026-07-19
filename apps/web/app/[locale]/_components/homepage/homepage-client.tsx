@@ -42,6 +42,7 @@ export function HomepageClient({
   const [nhkError, setNhkError] = useState(false);
   const [analytics, setAnalytics] = useState<LearnerAnalytics | null>(null);
   const [analyticsReady, setAnalyticsReady] = useState(false);
+  const [analyticsError, setAnalyticsError] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingJustCompleted, setOnboardingJustCompleted] = useState(false);
   const loadData = useCallback(() => {
@@ -84,17 +85,27 @@ export function HomepageClient({
 
     if (userId) {
       setAnalyticsReady(false);
+      setAnalyticsError(false);
       void learnerApiFetchOptional(
         `/api/analytics/learner?days=7&userId=${encodeURIComponent(userId)}&locale=${locale}`
       )
         .then(async (r) => {
-          if (r?.ok) setAnalytics(await r.json());
-          else setAnalytics(null);
+          if (r?.ok) {
+            setAnalytics(await r.json());
+            setAnalyticsError(false);
+          } else {
+            setAnalytics(null);
+            setAnalyticsError(true);
+          }
         })
-        .catch(() => setAnalytics(null))
+        .catch(() => {
+          setAnalytics(null);
+          setAnalyticsError(true);
+        })
         .finally(() => setAnalyticsReady(true));
     } else {
       setAnalytics(null);
+      setAnalyticsError(false);
       setAnalyticsReady(true);
     }
   }, [locale, userId]);
@@ -162,6 +173,8 @@ export function HomepageClient({
       <div className="hp-enter">
         <TodayPlanHub
           analytics={analytics}
+          analyticsError={analyticsError}
+          analyticsReady={analyticsReady}
           hub={hub}
           hubError={hubError}
           hubReady={hubReady}

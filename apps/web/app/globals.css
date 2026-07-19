@@ -36,6 +36,7 @@
   /* ── Brand extended ── */
   --color-brand-navy: #1B2A4A;
   --color-brand-navy-hover: #243560;
+  --color-brand-panel: #1B2A4A;
   --color-brand-sky: #EFF6FF;
   --color-brand-sakura: #F9A8D4;
   --color-brand-gold: #F59E0B;
@@ -146,6 +147,7 @@
   /* Brand extended (dark variants) */
   --color-brand-navy: #93C5FD;
   --color-brand-navy-hover: #BFDBFE;
+  --color-brand-panel: #1E3A5F;
   --color-brand-sky: #1E293B;
   --color-brand-sakura: #FDA4AF;
   --color-brand-gold: #FCD34D;
@@ -226,6 +228,7 @@
     --color-focus-surface: #1E293B;
     --color-brand-navy: #93C5FD;
     --color-brand-navy-hover: #BFDBFE;
+    --color-brand-panel: #1E3A5F;
     --color-brand-sky: #1E293B;
     --color-brand-sakura: #FDA4AF;
     --color-brand-gold: #FCD34D;
