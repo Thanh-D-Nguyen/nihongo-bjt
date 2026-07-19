@@ -30,6 +30,7 @@ export default defineConfig({
     : [
         {
           command: "pnpm --filter @nihongo-bjt/web run dev",
+          env: { FLASHCARD_VISUAL_TESTS: "1" },
           reuseExistingServer: !process.env.CI,
           timeout: 120_000,
           url: baseURL

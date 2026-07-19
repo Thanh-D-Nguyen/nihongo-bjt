@@ -1,6 +1,19 @@
 "use client";
 
-import { Badge, Card, CardContent, cn, EmptyState, ErrorState, LoadingSkeleton } from "@nihongo-bjt/ui";
+import {
+  DEFAULT_FLASHCARD_THEME,
+  flashcardThemeConfigSchema,
+  type FlashcardThemeConfig
+} from "@nihongo-bjt/shared";
+import {
+  Badge,
+  Card,
+  CardContent,
+  cn,
+  EmptyState,
+  ErrorState,
+  LoadingSkeleton
+} from "@nihongo-bjt/ui";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
@@ -80,16 +93,23 @@ export function DeckDetailClient({
   const [shareToken, setShareToken] = useState<string | null>(null);
   const [shareCopied, setShareCopied] = useState(false);
   const [editMode, setEditMode] = useState(false);
-  const [styleConfig, setStyleConfig] = useState<Record<string, string> | null>(null);
+  const [styleConfig, setStyleConfig] = useState<FlashcardThemeConfig>(
+    DEFAULT_FLASHCARD_THEME.config
+  );
+  const [styleReady, setStyleReady] = useState(false);
   const deleteTitleId = useId();
   const deleteBodyId = useId();
 
   // Fetch active flashcard style on mount
   useEffect(() => {
     learnerApiFetch("/api/flashcards/styles/active")
-      .then((r) => r.ok ? r.json() : null)
-      .then((data) => { if (data?.config) setStyleConfig(data.config); })
-      .catch(() => {});
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => {
+        const parsed = flashcardThemeConfigSchema.safeParse(data?.config);
+        if (parsed.success) setStyleConfig(parsed.data);
+      })
+      .catch(() => undefined)
+      .finally(() => setStyleReady(true));
   }, []);
 
   const load = useCallback(async () => {
@@ -97,7 +117,9 @@ export function DeckDetailClient({
     setLoading(true);
     setError(null);
     try {
-      const r = await learnerApiFetch(`/api/decks/${encodeURIComponent(deckId)}?userId=${encodeURIComponent(userId)}`);
+      const r = await learnerApiFetch(
+        `/api/decks/${encodeURIComponent(deckId)}?userId=${encodeURIComponent(userId)}`
+      );
       if (!r.ok) {
         setDeck(null);
         setError(r.status === 404 ? labels.deckDetailNotFound : labels.error);
@@ -187,7 +209,7 @@ export function DeckDetailClient({
   const backHref = `/${locale}/flashcards`;
   const reviewHref = `/${locale}/flashcards?tab=review&deckId=${encodeURIComponent(deckId)}`;
 
-  if (loading && !deck) {
+  if ((loading && !deck) || !styleReady) {
     return (
       <div className="mx-auto w-full max-w-6xl space-y-5 px-4 py-5 sm:px-6 lg:py-8">
         <LoadingSkeleton className="h-10 w-44 rounded-xl" />
@@ -215,7 +237,10 @@ export function DeckDetailClient({
         >
           ← {labels.deckDetailBack}
         </Link>
-        <ErrorState description={error ?? labels.deckDetailNotFound} title={labels.deckDetailPageTitle} />
+        <ErrorState
+          description={error ?? labels.deckDetailNotFound}
+          title={labels.deckDetailPageTitle}
+        />
       </div>
     );
   }
@@ -272,9 +297,17 @@ export function DeckDetailClient({
               <Badge>{visibilityLabel}</Badge>
               <Badge>{statusLabel}</Badge>
             </div>
-            <h1 className="mt-3 max-w-3xl text-2xl font-semibold leading-tight text-ink sm:text-3xl">{title}</h1>
-            {desc ? <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted sm:text-base">{desc}</p> : null}
-            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted">{labels.deckDetailStudyHint}</p>
+            <h1 className="mt-3 max-w-3xl text-2xl font-semibold leading-tight text-ink sm:text-3xl">
+              {title}
+            </h1>
+            {desc ? (
+              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted sm:text-base">
+                {desc}
+              </p>
+            ) : null}
+            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted">
+              {labels.deckDetailStudyHint}
+            </p>
           </div>
           <div className="flex shrink-0 flex-col gap-2 sm:min-w-[18rem] lg:items-end">
             <Link
@@ -285,7 +318,11 @@ export function DeckDetailClient({
               {labels.reviewDeck}
             </Link>
             {isOwner ? (
-              <div aria-label={labels.ariaToolbar} className="flex w-full flex-wrap items-center justify-start gap-2 lg:justify-end" role="toolbar">
+              <div
+                aria-label={labels.ariaToolbar}
+                className="flex w-full flex-wrap items-center justify-start gap-2 lg:justify-end"
+                role="toolbar"
+              >
                 <HeaderActionButton
                   icon={<EditIcon />}
                   label={editMode ? labels.cancel : labels.editDeck}
@@ -341,7 +378,12 @@ export function DeckDetailClient({
         </section>
       ) : null}
 
-      <div className={cn("grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start", editMode && "opacity-60")}>
+      <div
+        className={cn(
+          "grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start",
+          editMode && "opacity-60"
+        )}
+      >
         <div className="min-w-0">
           {sortedCards.length > 0 ? (
             <DeckStudySession
@@ -428,7 +470,9 @@ export function DeckDetailClient({
           <Card>
             <CardContent className="space-y-3 p-4">
               <div className="flex items-center gap-3">
-                <span className="text-3xl font-black tabular-nums text-ink">{sortedCards.length}</span>
+                <span className="text-3xl font-black tabular-nums text-ink">
+                  {sortedCards.length}
+                </span>
                 <span className="text-sm font-semibold text-muted">{labels.cards}</span>
               </div>
               <Link
@@ -504,7 +548,7 @@ function HeaderActionButton({
   disabled,
   icon,
   label,
-  onClick,
+  onClick
 }: {
   danger?: boolean;
   disabled?: boolean;
@@ -621,7 +665,7 @@ function CardListCollapsible({
   activeIndex,
   cards,
   labels,
-  onGoToCard,
+  onGoToCard
 }: {
   activeIndex: number;
   cards: DeckDetailCardRow[];
@@ -650,13 +694,20 @@ function CardListCollapsible({
             <h2 className="text-sm font-semibold text-ink" id="deck-cards-heading">
               {labels.deckDetailAllCardsToggleTpl.replace("{count}", String(cards.length))}
             </h2>
-            <span className={`text-xs font-bold text-muted transition-transform ${open ? "rotate-180" : ""}`}>▼</span>
+            <span
+              className={`text-xs font-bold text-muted transition-transform ${open ? "rotate-180" : ""}`}
+            >
+              ▼
+            </span>
           </button>
           {open ? (
             cards.length === 0 ? (
               <p className="px-4 py-8 text-center text-sm text-muted">{labels.empty}</p>
             ) : (
-              <ul ref={listRef} className="max-h-[32rem] divide-y divide-ink/6 overflow-y-auto overscroll-contain">
+              <ul
+                ref={listRef}
+                className="max-h-[32rem] divide-y divide-ink/6 overflow-y-auto overscroll-contain"
+              >
                 {cards.map((row, i) => (
                   <li
                     className={cn(
@@ -694,7 +745,9 @@ function CardListCollapsible({
                             {row.card.reading}
                           </p>
                         ) : null}
-                        <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted">{row.card.backText}</p>
+                        <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted">
+                          {row.card.backText}
+                        </p>
                       </div>
                     </div>
                   </li>

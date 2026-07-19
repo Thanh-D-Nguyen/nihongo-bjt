@@ -1,6 +1,12 @@
 "use client";
 
 import {
+  DEFAULT_FLASHCARD_THEME,
+  flashcardThemeConfigSchema,
+  validateFlashcardTheme,
+  type FlashcardThemeConfig
+} from "@nihongo-bjt/shared";
+import {
   AdminDataTable,
   AdminDataTableBody,
   AdminDataTableHead,
@@ -29,7 +35,7 @@ interface FlashcardStyle {
   nameKey: string;
   descriptionKey: string | null;
   thumbnailUrl: string | null;
-  config: Record<string, string>;
+  config: Record<string, unknown>;
   tier: string;
   sortOrder: number;
   status: string;
@@ -61,19 +67,7 @@ const EMPTY_FORM: FormData = {
   tier: "free",
   sortOrder: 0,
   status: "draft",
-  config: JSON.stringify(
-    {
-      cardBg: "#ffffff",
-      textColor: "#1a1a2e",
-      fontFamily: "'Noto Sans JP', sans-serif",
-      borderRadius: "16px",
-      flipAnimation: "rotateY",
-      accentColor: "#6366f1",
-      shadow: "0 4px 24px rgba(0,0,0,0.08)"
-    },
-    null,
-    2
-  )
+  config: JSON.stringify(DEFAULT_FLASHCARD_THEME.config, null, 2)
 };
 
 function tierBadge(tier: string) {
@@ -83,7 +77,12 @@ function tierBadge(tier: string) {
     exclusive: "bg-purple-100 text-purple-800"
   };
   return (
-    <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium", colors[tier] ?? "bg-gray-100 text-gray-800")}>
+    <span
+      className={cn(
+        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+        colors[tier] ?? "bg-gray-100 text-gray-800"
+      )}
+    >
       {tier}
     </span>
   );
@@ -95,19 +94,25 @@ function statusTone(status: string): "neutral" | "warning" | "danger" {
   return "danger";
 }
 
-function StylePreview({ config }: { config: Record<string, string> }) {
+function StylePreview({ config }: { config: Record<string, unknown> }) {
+  const parsed = flashcardThemeConfigSchema.safeParse(config);
+  if (!parsed.success) {
+    return <span className="text-xs font-bold text-red-600">Invalid</span>;
+  }
+  const theme = parsed.data;
   return (
     <div
-      className="w-16 h-10 rounded border flex items-center justify-center text-[8px] font-bold overflow-hidden"
+      className="flex h-10 w-16 items-center justify-center overflow-hidden rounded border p-1 text-[8px] font-bold"
       style={{
-        background: config.cardBg ?? "#fff",
-        color: config.textColor ?? "#000",
-        borderRadius: config.borderRadius ?? "8px",
-        boxShadow: config.shadow ?? "none",
-        fontFamily: config.fontFamily ?? "sans-serif"
+        background: theme.background,
+        borderColor: theme.border,
+        borderRadius: theme.borderRadius,
+        boxShadow: theme.shadow,
+        color: theme.foreground,
+        fontFamily: theme.fontFamily
       }}
     >
-      あ
+      <span style={{ background: theme.contentSurface, color: theme.foreground }}>あ</span>
     </div>
   );
 }
@@ -139,7 +144,11 @@ export function FlashcardStylesAdminClient({
   const [formError, setFormError] = useState<string | null>(null);
 
   // Confirm dialog
-  const [confirmAction, setConfirmAction] = useState<{ id: string; status: string; slug: string } | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{
+    id: string;
+    status: string;
+    slug: string;
+  } | null>(null);
 
   const toast = useAdminToast();
 
@@ -159,7 +168,7 @@ export function FlashcardStylesAdminClient({
       const res = await adminApiFetch(`/api/admin/flashcards/styles?${params}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      setList(Array.isArray(data) ? data : data.items ?? []);
+      setList(Array.isArray(data) ? data : (data.items ?? []));
     } catch (err) {
       setListError(err instanceof Error ? err.message : "Unknown error");
     } finally {
@@ -220,6 +229,12 @@ export function FlashcardStylesAdminClient({
         parsedConfig = JSON.parse(form.config);
       } catch {
         setFormError("Invalid JSON in config");
+        setSaving(false);
+        return;
+      }
+      const validation = validateFlashcardTheme(form.slug.trim() || "new-theme", parsedConfig);
+      if (!validation.success) {
+        setFormError(validation.errors.join("\n"));
         setSaving(false);
         return;
       }
@@ -346,7 +361,10 @@ export function FlashcardStylesAdminClient({
           <option value="exclusive">Exclusive</option>
         </select>
         <button
-          onClick={() => { fetchList(); fetchAdoption(); }}
+          onClick={() => {
+            fetchList();
+            fetchAdoption();
+          }}
           className="rounded-md border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
         >
           ↻ Refresh
@@ -404,7 +422,9 @@ export function FlashcardStylesAdminClient({
                   </AdminDataTableTd>
                   <AdminDataTableTd>{tierBadge(style.tier)}</AdminDataTableTd>
                   <AdminDataTableTd>
-                    <AdminStatusBadge tone={statusTone(style.status)}>{style.status}</AdminStatusBadge>
+                    <AdminStatusBadge tone={statusTone(style.status)}>
+                      {style.status}
+                    </AdminStatusBadge>
                   </AdminDataTableTd>
                   <AdminDataTableTd>{style.sortOrder}</AdminDataTableTd>
                   <AdminDataTableTd>
@@ -500,7 +520,7 @@ export function FlashcardStylesAdminClient({
             </h2>
 
             {formError && (
-              <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-300">
+              <div className="mb-4 whitespace-pre-wrap rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-300">
                 {formError}
               </div>
             )}
@@ -559,7 +579,9 @@ export function FlashcardStylesAdminClient({
                   type="number"
                   className="w-full rounded-md border px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-600"
                   value={form.sortOrder}
-                  onChange={(e) => setForm((f) => ({ ...f, sortOrder: parseInt(e.target.value) || 0 }))}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, sortOrder: parseInt(e.target.value) || 0 }))
+                  }
                 />
               </div>
               <div>
@@ -579,10 +601,11 @@ export function FlashcardStylesAdminClient({
             {/* Config JSON editor with live preview */}
             <div className="mt-4">
               <label className="block text-sm font-medium mb-1">
-                Config (JSON) — cardBg, textColor, fontFamily, borderRadius, flipAnimation, accentColor, shadow
+                Config (JSON) — background, contentSurface, foreground, mutedForeground, border,
+                accent, accentForeground, controlBackground, controlForeground, focusRing
               </label>
               <textarea
-                className="w-full h-40 rounded-md border px-3 py-2 text-sm font-mono dark:bg-gray-800 dark:border-gray-600"
+                className="h-64 w-full rounded-md border px-3 py-2 font-mono text-sm dark:border-gray-600 dark:bg-gray-800"
                 value={form.config}
                 onChange={(e) => setForm((f) => ({ ...f, config: e.target.value }))}
               />
@@ -621,33 +644,49 @@ export function FlashcardStylesAdminClient({
 
 /** Large style preview card with front/back simulation */
 function StylePreviewLarge({ config: configJson }: { config: string }) {
-  let parsed: Record<string, string>;
+  let raw: unknown;
   try {
-    parsed = JSON.parse(configJson);
+    raw = JSON.parse(configJson);
   } catch {
     return <div className="text-red-500 text-sm">Invalid JSON</div>;
   }
+  const parsed = flashcardThemeConfigSchema.safeParse(raw);
+  if (!parsed.success) {
+    return (
+      <div className="max-w-md whitespace-pre-wrap text-sm text-red-600">
+        {parsed.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`).join("\n")}
+      </div>
+    );
+  }
+  const theme: FlashcardThemeConfig = parsed.data;
 
   return (
     <div
-      className="w-64 h-40 flex flex-col items-center justify-center gap-2 transition-all"
+      className="flex h-48 w-72 flex-col items-center justify-center gap-2 border p-3 transition-all"
       style={{
-        background: parsed.cardBg ?? "#fff",
-        color: parsed.textColor ?? "#000",
-        borderRadius: parsed.borderRadius ?? "12px",
-        boxShadow: parsed.shadow ?? "0 4px 12px rgba(0,0,0,0.1)",
-        fontFamily: parsed.fontFamily ?? "sans-serif"
+        background: theme.background,
+        borderColor: theme.border,
+        borderRadius: theme.borderRadius,
+        boxShadow: theme.shadow,
+        color: theme.foreground,
+        fontFamily: theme.fontFamily
       }}
     >
-      <span className="text-3xl font-bold">勉強</span>
-      <span className="text-sm opacity-70">べんきょう</span>
-      <span className="text-xs opacity-50">study / học tập</span>
-      {parsed.accentColor && (
-        <div
-          className="w-8 h-1 rounded-full mt-1"
-          style={{ background: parsed.accentColor }}
-        />
-      )}
+      <div
+        className="flex w-full flex-col items-center gap-1 rounded-xl border p-4"
+        style={{ background: theme.contentSurface, borderColor: theme.border }}
+      >
+        <span className="text-3xl font-bold" style={{ color: theme.foreground }}>
+          勉強
+        </span>
+        <span className="text-sm" style={{ color: theme.mutedForeground }}>
+          べんきょう
+        </span>
+        <span className="text-xs" style={{ color: theme.mutedForeground }}>
+          study / học tập
+        </span>
+        <div className="mt-1 h-1 w-8 rounded-full" style={{ background: theme.accent }} />
+      </div>
     </div>
   );
 }

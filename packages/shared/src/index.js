@@ -4,6 +4,7 @@ export { applyShufflePermutation, generateBalancedPositions, generateExamShuffle
 export { coachingInsight, percentage, toUtcDateKey } from "./analytics.js";
 export { COMPANION_HINT_ALGORITHM_VERSION, companionActionKindSchema, companionHintQuerySchema, companionHintReasonSchema, companionHintResponseSchema, companionReasonCodeSchema } from "./companion-hint.js";
 export { dateKeyInTimeZone, greetingForHour, hourInTimeZone, todayDateKey } from "./daily.js";
+export { contrastRatio, DEFAULT_FLASHCARD_THEME, FLASHCARD_THEME_DEFINITIONS, flashcardThemeConfigSchema, parseFlashcardThemeConfig, relativeLuminance, resolveFlashcardThemeDefinition, safeFlashcardThemeConfig, validateFlashcardTheme } from "./flashcard-theme.js";
 export { buildDailySuggestedFlashcardBack, isLikelyVietnameseLegalDisclaimerOnlyBack, repairDailyContentFlashcardBackIfNeeded } from "./daily-flashcard-back.js";
 export * from "./learning-admin.js";
 export { BATTLE_BOT_PROFILES, DEFAULT_BATTLE_BOT_KEY, battleBotStateToRiveInput, decideBotOption, getBattleBotProfile, hashSeedToUint32, randomBetween, shuffleDeterministic } from "./battle.js";

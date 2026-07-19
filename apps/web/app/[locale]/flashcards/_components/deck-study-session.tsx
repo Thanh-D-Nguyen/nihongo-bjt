@@ -1,11 +1,12 @@
 "use client";
 
-import type { BattleBotAnimationState } from "@nihongo-bjt/shared";
+import type { BattleBotAnimationState, FlashcardThemeConfig } from "@nihongo-bjt/shared";
 import { cn } from "@nihongo-bjt/ui";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { BattleBotAvatar } from "../../../_components/battle-bot-avatar";
 import { recordStudyProgress } from "../../../_hooks/use-study-progress";
+import { flashcardThemeCss } from "./flashcard-theme-css";
 
 type StudyMode = "flip" | "shuffle" | "quiz";
 type Rating = "again" | "hard" | "good";
@@ -130,14 +131,14 @@ export function DeckStudySession({
   focusIndex,
   labels,
   onIndexChange,
-  styleConfig,
+  styleConfig
 }: {
   cards: DeckStudyCard[];
   deckId?: string;
   focusIndex?: number | null;
   labels: DeckStudySessionLabels;
   onIndexChange?: (index: number) => void;
-  styleConfig?: Record<string, string> | null;
+  styleConfig?: FlashcardThemeConfig | null;
 }) {
   const [mode, setMode] = useState<StudyMode>("flip");
   const [index, setIndex] = useState(0);
@@ -169,26 +170,42 @@ export function DeckStudySession({
     try {
       const raw = sessionStorage.getItem(progressKey);
       if (!raw) return;
-      const saved = JSON.parse(raw) as { mode?: StudyMode; index?: number; quizCorrectCount?: number; quizTotalCount?: number };
+      const saved = JSON.parse(raw) as {
+        mode?: StudyMode;
+        index?: number;
+        quizCorrectCount?: number;
+        quizTotalCount?: number;
+      };
       if (saved.mode) setMode(saved.mode);
       if (typeof saved.index === "number" && saved.index < cards.length) setIndex(saved.index);
       if (typeof saved.quizCorrectCount === "number") setQuizCorrectCount(saved.quizCorrectCount);
       if (typeof saved.quizTotalCount === "number") setQuizTotalCount(saved.quizTotalCount);
-    } catch { /* ignore corrupt */ }
+    } catch {
+      /* ignore corrupt */
+    }
   }, [progressKey, cards.length]);
 
   // Save progress on state changes
   useEffect(() => {
     if (!progressKey || completed) {
       if (progressKey && completed) {
-        try { sessionStorage.removeItem(progressKey); } catch { /* ok */ }
+        try {
+          sessionStorage.removeItem(progressKey);
+        } catch {
+          /* ok */
+        }
       }
       return;
     }
     const timer = setTimeout(() => {
       try {
-        sessionStorage.setItem(progressKey, JSON.stringify({ mode, index, quizCorrectCount, quizTotalCount }));
-      } catch { /* quota */ }
+        sessionStorage.setItem(
+          progressKey,
+          JSON.stringify({ mode, index, quizCorrectCount, quizTotalCount })
+        );
+      } catch {
+        /* quota */
+      }
     }, 500);
     return () => clearTimeout(timer);
   }, [progressKey, mode, index, quizCorrectCount, quizTotalCount, completed]);
@@ -214,18 +231,7 @@ export function DeckStudySession({
   );
 
   // ── Card style from user preference ──
-  const cardInlineStyle = useMemo(() => {
-    if (!styleConfig) return undefined;
-    const s: React.CSSProperties = {};
-    if (styleConfig.cardBg) s.background = styleConfig.cardBg;
-    if (styleConfig.textColor) s.color = styleConfig.textColor;
-    if (styleConfig.borderRadius) s.borderRadius = styleConfig.borderRadius;
-    if (styleConfig.shadow) s.boxShadow = styleConfig.shadow;
-    if (styleConfig.fontFamily) s.fontFamily = styleConfig.fontFamily;
-    return Object.keys(s).length > 0 ? s : undefined;
-  }, [styleConfig]);
-
-  const hasCustomBg = Boolean(styleConfig?.cardBg);
+  const cardThemeStyle = useMemo(() => flashcardThemeCss(styleConfig), [styleConfig]);
 
   const total = activeCards.length;
   const safeIndex = total === 0 ? 0 : Math.min(Math.max(0, index), total - 1);
@@ -242,19 +248,22 @@ export function DeckStudySession({
   }, [mode, current, cards]);
 
   // Switch mode handler
-  const switchMode = useCallback((m: StudyMode) => {
-    setMode(m);
-    setIndex(0);
-    setFlipped(false);
-    setCompleted(false);
-    setQuizSelected(null);
-    setQuizCorrectCount(0);
-    setQuizTotalCount(0);
-    setCardAnim("enter");
-    if (m === "shuffle" || m === "quiz") {
-      setShuffledCards(shuffleArr(cards));
-    }
-  }, [cards]);
+  const switchMode = useCallback(
+    (m: StudyMode) => {
+      setMode(m);
+      setIndex(0);
+      setFlipped(false);
+      setCompleted(false);
+      setQuizSelected(null);
+      setQuizCorrectCount(0);
+      setQuizTotalCount(0);
+      setCardAnim("enter");
+      if (m === "shuffle" || m === "quiz") {
+        setShuffledCards(shuffleArr(cards));
+      }
+    },
+    [cards]
+  );
 
   // ── Handle focusIndex from parent (card list click) ──
   useEffect(() => {
@@ -268,7 +277,7 @@ export function DeckStudySession({
       setCardAnim("enter");
       sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
-  }, [focusIndex]);
+  }, [cards.length, focusIndex, mode, switchMode]);
 
   useEffect(() => {
     if (index !== safeIndex) {
@@ -344,45 +353,56 @@ export function DeckStudySession({
   }, [current?.frontText]);
 
   // ── Self-rating handler (flip/shuffle mode) ──
-  const handleRate = useCallback((rating: Rating) => {
-    bumpStreak(rating);
+  const handleRate = useCallback(
+    (rating: Rating) => {
+      bumpStreak(rating);
 
-    // Show mentor bubble briefly
-    setMentorState({ exiting: false, rating });
-    if (mentorTimer.current) clearTimeout(mentorTimer.current);
-    mentorTimer.current = setTimeout(() => {
-      setMentorState((prev) => (prev ? { ...prev, exiting: true } : null));
-      setTimeout(() => setMentorState(null), 280);
-    }, 1600);
+      // Show mentor bubble briefly
+      setMentorState({ exiting: false, rating });
+      if (mentorTimer.current) clearTimeout(mentorTimer.current);
+      mentorTimer.current = setTimeout(() => {
+        setMentorState((prev) => (prev ? { ...prev, exiting: true } : null));
+        setTimeout(() => setMentorState(null), 280);
+      }, 1600);
 
-    // Exit animation then advance (or stay for "again")
-    if (rating === "again") {
-      // Stay on same card, just unflip
-      setFlipped(false);
-      return;
-    }
-    // "hard" or "good" → advance
-    goNext();
-  }, [bumpStreak, goNext]);
+      // Exit animation then advance (or stay for "again")
+      if (rating === "again") {
+        // Stay on same card, just unflip
+        setFlipped(false);
+        return;
+      }
+      // "hard" or "good" → advance
+      goNext();
+    },
+    [bumpStreak, goNext]
+  );
 
   // Quiz answer handler
-  const handleQuizAnswer = useCallback((opt: string) => {
-    if (quizSelected || !current) return;
-    setQuizSelected(opt);
-    const isCorrect = opt === current.backText;
-    setQuizTotalCount((c) => c + 1);
-    if (isCorrect) setQuizCorrectCount((c) => c + 1);
-    // Auto-advance after delay
-    setTimeout(() => {
-      goNext();
-    }, 1200);
-  }, [quizSelected, current, goNext]);
+  const handleQuizAnswer = useCallback(
+    (opt: string) => {
+      if (quizSelected || !current) return;
+      setQuizSelected(opt);
+      const isCorrect = opt === current.backText;
+      setQuizTotalCount((c) => c + 1);
+      if (isCorrect) setQuizCorrectCount((c) => c + 1);
+      // Auto-advance after delay
+      setTimeout(() => {
+        goNext();
+      }, 1200);
+    },
+    [quizSelected, current, goNext]
+  );
 
   useEffect(() => {
     if (total === 0 || completed) return;
     const onKey = (e: KeyboardEvent) => {
       const t = e.target;
-      if (t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement || t instanceof HTMLSelectElement) {
+      if (
+        t instanceof HTMLButtonElement ||
+        t instanceof HTMLInputElement ||
+        t instanceof HTMLTextAreaElement ||
+        t instanceof HTMLSelectElement
+      ) {
         return;
       }
       if (mode === "quiz") return; // Quiz uses click only
@@ -425,12 +445,15 @@ export function DeckStudySession({
 
   // Completion screen
   if (completed) {
-    const quizAccuracy = quizTotalCount > 0 ? Math.round((quizCorrectCount / quizTotalCount) * 100) : 0;
+    const quizAccuracy =
+      quizTotalCount > 0 ? Math.round((quizCorrectCount / quizTotalCount) * 100) : 0;
     return (
       <section className="mb-8 rounded-3xl border border-ink/10 bg-gradient-to-b from-surface via-surface to-paper/70 p-5 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.12)] ring-1 ring-ink/[0.04] sm:p-7">
         <div className="flex flex-col items-center gap-6 py-10 text-center">
           <div className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 shadow-md">
-            <span className="text-4xl" aria-hidden>🎉</span>
+            <span className="text-4xl" aria-hidden>
+              🎉
+            </span>
           </div>
           <div>
             <h3 className="text-2xl font-black text-ink">{labels.deckStudyComplete}</h3>
@@ -440,8 +463,12 @@ export function DeckStudySession({
           </div>
           {mode === "quiz" && quizTotalCount > 0 ? (
             <div className="flex items-center gap-3 rounded-xl border border-ink/8 bg-surface px-5 py-3">
-              <span className="text-sm font-semibold text-muted">{labels.deckStudyCompleteAccuracy}:</span>
-              <span className={`text-2xl font-black tabular-nums ${quizAccuracy >= 70 ? "text-emerald-600" : "text-amber-500"}`}>
+              <span className="text-sm font-semibold text-muted">
+                {labels.deckStudyCompleteAccuracy}:
+              </span>
+              <span
+                className={`text-2xl font-black tabular-nums ${quizAccuracy >= 70 ? "text-emerald-600" : "text-amber-500"}`}
+              >
                 {quizAccuracy}%
               </span>
             </div>
@@ -483,7 +510,8 @@ export function DeckStudySession({
   const normalizedFilter = exampleFilter.trim().toLowerCase();
   const filteredExamples = normalizedFilter
     ? examples.filter((example) => {
-        const haystack = `${example.japaneseText} ${example.reading ?? ""} ${example.translationVi ?? ""}`.toLowerCase();
+        const haystack =
+          `${example.japaneseText} ${example.reading ?? ""} ${example.translationVi ?? ""}`.toLowerCase();
         return haystack.includes(normalizedFilter);
       })
     : examples;
@@ -491,13 +519,13 @@ export function DeckStudySession({
   const flipAriaLabel = flipped
     ? `${labels.deckStudyFaceBack}. ${labels.deckStudyTapToFlip}`
     : `${labels.deckStudyFaceFront}. ${labels.deckStudyTapToFlip}`;
-  const frontTextClass = cardPromptTextClass(current.frontText);
-  const backTextClass = cardAnswerTextClass(current.backText);
+  const flipTransform =
+    styleConfig?.flipAnimation === "rotateX" ? "rotateX(180deg)" : "rotateY(180deg)";
 
   const modeButtons: { id: StudyMode; label: string; icon: string }[] = [
     { id: "flip", label: labels.deckStudyModeFlip, icon: "🔄" },
     { id: "shuffle", label: labels.deckStudyModeShuffle, icon: "🔀" },
-    { id: "quiz", label: labels.deckStudyModeQuiz, icon: "❓" },
+    { id: "quiz", label: labels.deckStudyModeQuiz, icon: "❓" }
   ];
 
   return (
@@ -509,7 +537,10 @@ export function DeckStudySession({
       {/* Header with mode selector + progress ring + streak */}
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
         <div className="min-w-0">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-accent" id="deck-study-eyebrow">
+          <p
+            className="text-[10px] font-black uppercase tracking-[0.2em] text-accent"
+            id="deck-study-eyebrow"
+          >
             {labels.deckStudyEyebrow}
           </p>
           {/* Mode selector pills */}
@@ -531,7 +562,11 @@ export function DeckStudySession({
               </button>
             ))}
           </div>
-          <div aria-label={labels.deckStudyToolsAria} className="mt-3 flex flex-wrap gap-1.5" role="toolbar">
+          <div
+            aria-label={labels.deckStudyToolsAria}
+            className="mt-3 flex flex-wrap gap-1.5"
+            role="toolbar"
+          >
             <ToolButton
               active={autoRead}
               ariaPressed
@@ -594,59 +629,66 @@ export function DeckStudySession({
           /* ── Quiz mode: show front + 4 options ── */
           <div
             className={cn(
-              "fc-card-shell rounded-[1.75rem] p-6 text-center sm:p-8",
+              "flashcard-theme-surface fc-card-shell rounded-[1.75rem] border p-2 text-center",
               cardAnim === "enter" && "fc-card-enter",
               cardAnim === "exit" && "fc-card-exit"
             )}
             key={current.id}
-            style={cardInlineStyle}
+            style={cardThemeStyle}
           >
-            <p className="text-[11px] font-bold uppercase tracking-widest text-muted/70">
-              {labels.deckStudyQuizPrompt}
-            </p>
-            <p
-              className={cn(
-                "jp-text mt-5 whitespace-pre-wrap break-words font-black leading-[1.25] text-ink [overflow-wrap:anywhere]",
-                frontTextClass
-              )}
-              lang="ja"
-            >
-              {current.frontText}
-            </p>
-            {current.reading && hasJapanese(current.frontText) ? (
-              <ReadingReveal
-                reading={current.reading}
-                revealLabel={labels.deckStudyTapToRevealReading}
-                visible={readingVisible}
-              />
-            ) : null}
-            <div className="mt-7 grid gap-3 sm:grid-cols-2">
-              {quizOptions.map((opt) => {
-                const correct = current.backText;
-                let cls = "border-ink/10 bg-white shadow-sm hover:bg-paper hover:border-ink/20 hover:shadow-md";
-                if (quizSelected) {
-                  if (opt === correct) cls = "border-emerald-400/60 bg-emerald-50 shadow-emerald-100/50 shadow-md ring-1 ring-emerald-400/30";
-                  else if (opt === quizSelected) cls = "border-red-400/60 bg-red-50 shadow-red-100/50 shadow-md ring-1 ring-red-400/30";
-                  else cls = "border-ink/6 bg-paper/40 opacity-40";
-                }
-                return (
-                  <button
-                    key={opt}
-                    className={`rounded-2xl border-2 px-5 py-4 text-base font-semibold text-ink transition-all duration-200 ${cls}`}
-                    onClick={() => handleQuizAnswer(opt)}
-                    disabled={quizSelected !== null}
-                    type="button"
-                  >
-                    {opt}
-                  </button>
-                );
-              })}
-            </div>
-            {quizSelected ? (
-              <p className={`mt-3 text-sm font-bold ${quizSelected === current.backText ? "text-emerald-600" : "text-red-500"}`}>
-                {quizSelected === current.backText ? labels.deckStudyQuizCorrect : `${labels.deckStudyQuizWrong} — ${labels.deckStudyQuizAnswer}: ${current.backText}`}
+            <div className="flashcard-theme-content rounded-[1.25rem] border p-5 sm:p-7">
+              <p className="flashcard-theme-muted text-[11px] font-bold uppercase tracking-widest">
+                {labels.deckStudyQuizPrompt}
               </p>
-            ) : null}
+              <p className="flashcard-theme-primary jp-text mt-5 font-black" lang="ja">
+                {current.frontText}
+              </p>
+              {current.reading && hasJapanese(current.frontText) ? (
+                <ReadingReveal
+                  reading={current.reading}
+                  revealLabel={labels.deckStudyTapToRevealReading}
+                  visible={readingVisible}
+                />
+              ) : null}
+              <div className="mt-7 grid gap-3 sm:grid-cols-2">
+                {quizOptions.map((opt) => {
+                  const correct = current.backText;
+                  let stateClass = "flashcard-theme-control hover:opacity-90";
+                  if (quizSelected) {
+                    if (opt === correct) stateClass = "border-success bg-success-soft text-success";
+                    else if (opt === quizSelected)
+                      stateClass = "border-danger bg-danger-soft text-danger";
+                    else stateClass = "flashcard-theme-control opacity-45";
+                  }
+                  const stateIcon =
+                    quizSelected && opt === correct
+                      ? "✓ "
+                      : quizSelected && opt === quizSelected
+                        ? "× "
+                        : "";
+                  return (
+                    <button
+                      key={opt}
+                      className={`flashcard-theme-focus min-h-11 rounded-2xl border-2 px-5 py-4 text-base font-semibold outline-none transition-opacity ${stateClass}`}
+                      onClick={() => handleQuizAnswer(opt)}
+                      disabled={quizSelected !== null}
+                      type="button"
+                    >
+                      <span aria-hidden>{stateIcon}</span>
+                      {opt}
+                    </button>
+                  );
+                })}
+              </div>
+              {quizSelected ? (
+                <p className="mt-3 text-sm font-bold text-[var(--flashcard-foreground)]">
+                  <span aria-hidden>{quizSelected === current.backText ? "✓ " : "× "}</span>
+                  {quizSelected === current.backText
+                    ? labels.deckStudyQuizCorrect
+                    : `${labels.deckStudyQuizWrong} — ${labels.deckStudyQuizAnswer}: ${current.backText}`}
+                </p>
+              ) : null}
+            </div>
           </div>
         ) : (
           /* ── Flip/Shuffle mode: 3D card with animations ── */
@@ -656,62 +698,50 @@ export function DeckStudySession({
               cardAnim === "exit" && "fc-card-exit"
             )}
           >
-            <div className={cn("relative [perspective:1400px]", flipped && "fc-card-reveal")}> 
+            <div className={cn("relative [perspective:1400px]", flipped && "fc-card-reveal")}>
               <div
-                role="button"
-                aria-label={flipAriaLabel}
-                tabIndex={0}
                 className={cn(
-                  "fc-card-shell relative h-[clamp(23rem,64vh,38rem)] w-full rounded-[1.75rem] p-1.5 text-left outline-none ring-offset-2 transition-[box-shadow,transform] duration-300 hover:shadow-[0_20px_60px_-12px_rgba(0,0,0,0.18)] active:scale-[0.985] motion-reduce:active:scale-100 focus-visible:ring-2 focus-visible:ring-accent sm:h-[clamp(25rem,66vh,40rem)] sm:p-2",
+                  "flashcard-theme-surface fc-card-shell relative h-[clamp(23rem,64vh,38rem)] w-full rounded-[1.75rem] border p-1.5 text-left sm:h-[clamp(25rem,66vh,40rem)] sm:p-2",
                   "[transform-style:preserve-3d]"
                 )}
-                onClick={toggleFlip}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    toggleFlip();
-                  }
-                }}
+                style={cardThemeStyle}
               >
                 <div
                   className={cn(
-                    "relative h-full w-full motion-reduce:transition-none motion-safe:transition-transform motion-safe:duration-600 motion-safe:[transition-timing-function:cubic-bezier(0.22,1,0.36,1)] [transform-style:preserve-3d]",
-                    flipped && "motion-safe:[transform:rotateY(180deg)]"
+                    "relative h-full w-full motion-reduce:transition-none motion-safe:transition-transform motion-safe:duration-600 motion-safe:[transition-timing-function:cubic-bezier(0.22,1,0.36,1)] [transform-style:preserve-3d]"
                   )}
+                  style={flipped ? { transform: flipTransform } : undefined}
                 >
                   {/* ── Front face ── */}
                   <div
-                    className={cn(
-                      "absolute inset-0 flex min-h-0 flex-col justify-between overflow-hidden rounded-[1.25rem] border border-ink/[0.06] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] backface-hidden sm:p-7",
-                      !hasCustomBg && "bg-gradient-to-br from-white via-paper to-blue-50/40"
-                    )}
-                    style={cardInlineStyle}
+                    aria-hidden={flipped}
+                    inert={flipped ? true : undefined}
+                    className="flashcard-theme-surface absolute inset-0 flex min-h-0 flex-col overflow-hidden rounded-[1.25rem] border p-4 pb-20 backface-hidden sm:p-6 sm:pb-20"
                   >
                     <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
                       <div className="flex items-center gap-2">
-                        <span className="inline-flex rounded-full border border-ink/10 bg-ink/[0.03] px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-muted">
+                        <span className="flashcard-theme-control inline-flex rounded-full border px-2 py-1 text-[9px] font-black uppercase tracking-wider">
                           {labels.deckStudyFaceFront}
                         </span>
                       </div>
                       <div
                         className={cn(
-                          "mt-4 grid gap-4",
+                          "flashcard-theme-content mt-4 grid gap-4 rounded-2xl border p-4 sm:p-5",
                           showCardImage
                             ? "sm:grid-cols-[minmax(0,1fr)_minmax(13rem,42%)] sm:items-center"
                             : "min-h-[18rem] place-items-center text-center sm:min-h-[20rem]"
                         )}
                       >
-                        <div className={cn("min-w-0", !showCardImage && "mx-auto max-w-[34rem]")}>
-                          <p className="text-[11px] font-bold uppercase tracking-widest text-muted/70">
+                        <div
+                          className={cn(
+                            "min-w-0 w-full",
+                            !showCardImage && "mx-auto max-w-[34rem]"
+                          )}
+                        >
+                          <p className="flashcard-theme-muted text-[11px] font-bold uppercase tracking-widest">
                             {labels.deckStudyFlipPrompt}
                           </p>
-                          <p
-                            className={cn(
-                              "jp-text mt-3 whitespace-pre-wrap break-words font-black leading-[1.18] text-ink [overflow-wrap:anywhere]",
-                              frontTextClass
-                            )}
-                            lang="ja"
-                          >
+                          <p className="flashcard-theme-primary jp-text mt-3 font-black" lang="ja">
                             {current.frontText}
                           </p>
                           {current.reading && hasJapanese(current.frontText) ? (
@@ -727,45 +757,40 @@ export function DeckStudySession({
                         ) : null}
                       </div>
                     </div>
-                    <div className="mt-4 flex shrink-0 items-center justify-center gap-2 border-t border-ink/[0.06] pt-3">
-                      <span className="text-xs text-muted/50">↻</span>
-                      <p className="text-[11px] font-semibold text-muted/60">
-                        {labels.deckStudyTapToFlip}
-                      </p>
-                    </div>
                   </div>
                   {/* ── Back face ── */}
                   <div
-                    className={cn(
-                      "absolute inset-0 flex min-h-0 flex-col justify-between overflow-hidden rounded-[1.25rem] border border-leaf/20 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] [transform:rotateY(180deg)] backface-hidden sm:p-7",
-                      !hasCustomBg && "bg-gradient-to-br from-emerald-50 via-leaf-soft/60 to-white"
-                    )}
-                    style={cardInlineStyle}
+                    aria-hidden={!flipped}
+                    inert={!flipped ? true : undefined}
+                    className="flashcard-theme-surface absolute inset-0 flex min-h-0 flex-col overflow-hidden rounded-[1.25rem] border p-4 pb-20 backface-hidden sm:p-6 sm:pb-20"
+                    style={{ transform: flipTransform }}
                   >
                     <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
-                      <span className="inline-flex rounded-full border border-ink/10 bg-ink/[0.03] px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-muted">
+                      <span className="flashcard-theme-control inline-flex rounded-full border px-2 py-1 text-[9px] font-black uppercase tracking-wider">
                         {labels.deckStudyFaceBack}
                       </span>
                       <div
                         className={cn(
-                          "mt-4 grid gap-4",
+                          "flashcard-theme-content mt-4 grid gap-4 rounded-2xl border p-4 sm:p-5",
                           showCardImage
                             ? "sm:grid-cols-[minmax(0,1fr)_minmax(13rem,40%)] sm:items-center"
                             : "min-h-[18rem] place-items-center text-center sm:min-h-[20rem]"
                         )}
                       >
                         {/* Answer with slide-in animation */}
-                        <div className={cn("min-w-0", flipped ? "fc-answer-enter" : "", !showCardImage && "mx-auto max-w-[34rem]")}>
-                          <p
-                            className={cn(
-                              "whitespace-pre-wrap break-words font-black leading-relaxed text-ink [overflow-wrap:anywhere]",
-                              backTextClass
-                            )}
-                          >
-                            {current.backText}
-                          </p>
-                          <div className="mt-5 rounded-2xl border border-leaf/15 bg-white/55 px-4 py-3 text-left">
-                            <p className="jp-text text-sm font-bold leading-relaxed text-ink" lang="ja">
+                        <div
+                          className={cn(
+                            "min-w-0 w-full",
+                            flipped ? "fc-answer-enter" : "",
+                            !showCardImage && "mx-auto max-w-[34rem]"
+                          )}
+                        >
+                          <p className="flashcard-theme-answer font-black">{current.backText}</p>
+                          <div className="flashcard-theme-divider mt-5 rounded-2xl border px-4 py-3 text-left">
+                            <p
+                              className="jp-text text-sm font-bold leading-[1.8] text-[var(--flashcard-foreground)]"
+                              lang="ja"
+                            >
                               {current.frontText}
                             </p>
                             {current.reading && hasJapanese(current.frontText) ? (
@@ -783,14 +808,18 @@ export function DeckStudySession({
                         ) : null}
                       </div>
                     </div>
-                    <div className="mt-4 flex shrink-0 items-center justify-center gap-2 border-t border-leaf/15 pt-3">
-                      <span className="text-xs text-muted/50">↻</span>
-                      <p className="text-[11px] font-semibold text-muted/60">
-                        {labels.deckStudyTapToFlip}
-                      </p>
-                    </div>
                   </div>
                 </div>
+                <button
+                  aria-label={flipAriaLabel}
+                  aria-pressed={flipped}
+                  className="flashcard-theme-control flashcard-theme-focus absolute bottom-5 left-1/2 z-10 inline-flex min-h-11 -translate-x-1/2 items-center justify-center gap-2 rounded-xl border px-5 text-sm font-bold outline-none transition-opacity hover:opacity-90"
+                  onClick={toggleFlip}
+                  type="button"
+                >
+                  <span aria-hidden>↻</span>
+                  {labels.deckStudyTapToFlip}
+                </button>
               </div>
             </div>
 
@@ -855,14 +884,20 @@ export function DeckStudySession({
                 onClick={goPrev}
                 type="button"
               >
-                <span aria-hidden className="text-xs">←</span> {labels.deckStudyPrev}
+                <span aria-hidden className="text-xs">
+                  ←
+                </span>{" "}
+                {labels.deckStudyPrev}
               </button>
               <button
                 className="inline-flex min-h-[3rem] min-w-[7.5rem] flex-1 items-center justify-center gap-1.5 rounded-2xl bg-ink px-5 text-sm font-black text-surface shadow-lg shadow-ink/20 outline-none ring-offset-2 transition-all hover:bg-ink/90 hover:shadow-xl hover:shadow-ink/25 active:scale-[0.98] motion-reduce:active:scale-100 focus-visible:ring-2 focus-visible:ring-accent disabled:pointer-events-none disabled:opacity-30 sm:flex-none"
                 onClick={goNext}
                 type="button"
               >
-                {labels.deckStudyNext} <span aria-hidden className="text-xs">→</span>
+                {labels.deckStudyNext}{" "}
+                <span aria-hidden className="text-xs">
+                  →
+                </span>
               </button>
             </div>
           </div>
@@ -922,7 +957,10 @@ export function DeckStudySession({
                         <span className="inline-flex rounded-full border border-accent/20 bg-accent-soft/40 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.16em] text-accent">
                           {sourceLabel(example.sourceKind, labels)}
                         </span>
-                        <p className="jp-text mt-2 text-base font-bold leading-relaxed text-ink" lang="ja">
+                        <p
+                          className="jp-text mt-2 text-base font-bold leading-relaxed text-ink"
+                          lang="ja"
+                        >
                           {example.japaneseText}
                         </p>
                         {example.reading ? (
@@ -947,10 +985,18 @@ export function DeckStudySession({
                           <VolumeIcon />
                         </button>
                         <button
-                          aria-label={copiedExampleId === example.id ? labels.exampleCopied : labels.exampleCopy}
+                          aria-label={
+                            copiedExampleId === example.id
+                              ? labels.exampleCopied
+                              : labels.exampleCopy
+                          }
                           className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-ink/12 bg-surface text-ink outline-none ring-offset-2 transition hover:bg-white focus-visible:ring-2 focus-visible:ring-accent"
                           onClick={() => void copyExample(example)}
-                          title={copiedExampleId === example.id ? labels.exampleCopied : labels.exampleCopy}
+                          title={
+                            copiedExampleId === example.id
+                              ? labels.exampleCopied
+                              : labels.exampleCopy
+                          }
                           type="button"
                         >
                           {copiedExampleId === example.id ? <CheckIcon /> : <CopyIcon />}
@@ -972,7 +1018,9 @@ export function DeckStudySession({
   );
 
   async function copyExample(example: DeckStudyExample) {
-    const text = [example.japaneseText, example.reading, example.translationVi].filter(Boolean).join("\n");
+    const text = [example.japaneseText, example.reading, example.translationVi]
+      .filter(Boolean)
+      .join("\n");
     try {
       await navigator.clipboard.writeText(text);
       setCopiedExampleId(example.id);
@@ -989,7 +1037,7 @@ function ToolButton({
   disabled,
   icon,
   label,
-  onClick,
+  onClick
 }: {
   active?: boolean;
   ariaPressed?: boolean;
@@ -1022,7 +1070,7 @@ function MediaStage({
   alt,
   compact,
   priority,
-  src,
+  src
 }: {
   alt: string;
   compact?: boolean;
@@ -1034,16 +1082,24 @@ function MediaStage({
   return (
     <div
       className={cn(
-        "flex w-full items-center justify-center overflow-hidden rounded-2xl border border-ink/10 bg-white/80 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]",
-        compact
-          ? "h-[clamp(8rem,24vh,13rem)]"
-          : "h-[clamp(10rem,30vh,16rem)]"
+        "flashcard-theme-divider flex w-full items-center justify-center overflow-hidden rounded-2xl border bg-[var(--flashcard-content-surface)] p-2",
+        compact ? "h-[clamp(8rem,24vh,13rem)]" : "h-[clamp(10rem,30vh,16rem)]"
       )}
     >
       {broken ? (
-        <div className="flex flex-col items-center gap-1 text-ink/30">
-          <svg className="h-8 w-8" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" />
+        <div className="flashcard-theme-muted flex flex-col items-center gap-1">
+          <svg
+            className="h-8 w-8"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={1.5}
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z"
+            />
           </svg>
           <span className="text-xs">Image unavailable</span>
         </div>
@@ -1058,24 +1114,6 @@ function MediaStage({
       )}
     </div>
   );
-}
-
-function cardPromptTextClass(text: string) {
-  const length = [...text.trim()].length;
-  if (length > 120) return "text-xl sm:text-2xl";
-  if (length > 72) return "text-2xl sm:text-3xl";
-  if (length > 32) return "text-3xl sm:text-4xl";
-  if (length > 8) return "text-5xl sm:text-6xl";
-  return "text-6xl sm:text-7xl";
-}
-
-function cardAnswerTextClass(text: string) {
-  const length = [...text.trim()].length;
-  if (length > 220) return "text-sm sm:text-base";
-  if (length > 120) return "text-base sm:text-lg";
-  if (length > 64) return "text-lg sm:text-xl";
-  if (length > 24) return "text-2xl sm:text-3xl";
-  return "text-3xl sm:text-4xl";
 }
 
 function IconBase({ children }: { children: React.ReactNode }) {
@@ -1152,7 +1190,7 @@ function ReadingReveal({
   compact,
   reading,
   revealLabel,
-  visible,
+  visible
 }: {
   compact?: boolean;
   reading: string;
@@ -1167,38 +1205,35 @@ function ReadingReveal({
   }, [visible, reading]);
 
   const isShown = visible || localRevealed;
+  const className = cn(
+    "jp-text mt-2 block w-full whitespace-pre-wrap break-words text-left font-semibold leading-[1.8] [overflow-wrap:anywhere]",
+    compact ? "text-xs" : "text-base sm:text-lg"
+  );
+
+  if (isShown) {
+    return (
+      <p className={cn(className, "flashcard-theme-muted")} lang="ja">
+        {reading}
+      </p>
+    );
+  }
 
   return (
-    <div
-      role="button"
-      aria-label={isShown ? reading : revealLabel}
+    <button
+      aria-label={revealLabel}
       className={cn(
-        "jp-text mt-2 block w-full whitespace-pre-wrap break-words text-left font-semibold leading-relaxed [overflow-wrap:anywhere] transition-all duration-300",
-        compact
-          ? "text-xs text-muted"
-          : "text-base text-muted/85 sm:text-lg",
-        !isShown && "cursor-pointer select-none rounded-lg bg-ink/[0.06] px-2 py-1 [filter:blur(6px)] hover:bg-ink/[0.1] active:scale-[0.98]",
-        isShown && "cursor-default"
+        className,
+        "flashcard-theme-control flashcard-theme-focus min-h-11 cursor-pointer select-none rounded-lg border px-2 py-1 outline-none [filter:blur(6px)] transition-opacity hover:opacity-90"
       )}
       lang="ja"
-      onClick={(e) => {
-        if (!isShown) {
-          e.stopPropagation();
-          setLocalRevealed(true);
-        }
+      onClick={() => {
+        setLocalRevealed(true);
       }}
-      onKeyDown={(event) => {
-        if (!isShown && (event.key === "Enter" || event.key === " ")) {
-          event.preventDefault();
-          event.stopPropagation();
-          setLocalRevealed(true);
-        }
-      }}
-      tabIndex={isShown ? -1 : 0}
-      title={isShown ? undefined : revealLabel}
+      title={revealLabel}
+      type="button"
     >
       {reading}
-    </div>
+    </button>
   );
 }
 
@@ -1297,7 +1332,7 @@ function ProgressRing({
   reviewed,
   total,
   size = 40,
-  strokeWidth = 3,
+  strokeWidth = 3
 }: {
   reviewed: number;
   size?: number;
@@ -1310,7 +1345,10 @@ function ProgressRing({
   const offset = circumference * (1 - progress);
 
   return (
-    <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
+    <div
+      className="relative inline-flex items-center justify-center"
+      style={{ width: size, height: size }}
+    >
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden>
         <circle
           className="fc-progress-ring-track"
@@ -1325,15 +1363,15 @@ function ProgressRing({
           cy={size / 2}
           r={radius}
           strokeWidth={strokeWidth}
-          style={{
-            "--fc-ring-circumference": circumference,
-            "--fc-ring-offset": offset,
-          } as React.CSSProperties}
+          style={
+            {
+              "--fc-ring-circumference": circumference,
+              "--fc-ring-offset": offset
+            } as React.CSSProperties
+          }
         />
       </svg>
-      <span className="absolute text-[9px] font-bold tabular-nums text-ink">
-        {reviewed}
-      </span>
+      <span className="absolute text-[9px] font-bold tabular-nums text-ink">{reviewed}</span>
     </div>
   );
 }
@@ -1356,13 +1394,13 @@ type ShibaCompanionLabels = Pick<
 const companionRive = {
   artboard: null,
   src: "/assets/battle/bots/18912-35694-lil-guy.riv",
-  stateMachine: null,
+  stateMachine: null
 };
 
 const ratingToRiveState: Record<Rating, BattleBotAnimationState> = {
   good: "correct",
   hard: "thinking",
-  again: "wrong",
+  again: "wrong"
 };
 
 /* ─── Shiba Companion (Rive-animated) ─── */
@@ -1371,7 +1409,7 @@ function ShibaCompanion({
   exiting,
   labels,
   milestone,
-  rating,
+  rating
 }: {
   exiting: boolean;
   labels: ShibaCompanionLabels;
@@ -1403,10 +1441,7 @@ function ShibaCompanion({
 
   return (
     <div
-      className={cn(
-        "mt-4 flex items-end gap-3",
-        exiting ? "fc-shiba-exit" : "fc-shiba-enter"
-      )}
+      className={cn("mt-4 flex items-end gap-3", exiting ? "fc-shiba-exit" : "fc-shiba-enter")}
       role="status"
       aria-live="polite"
     >
@@ -1421,7 +1456,12 @@ function ShibaCompanion({
         />
       </div>
       {/* Speech bubble */}
-      <div className={cn("fc-shiba-bubble relative min-w-0 flex-1 rounded-2xl px-4 py-3 shadow-md ring-1", bubbleBg)}>
+      <div
+        className={cn(
+          "fc-shiba-bubble relative min-w-0 flex-1 rounded-2xl px-4 py-3 shadow-md ring-1",
+          bubbleBg
+        )}
+      >
         <div className="absolute -left-1.5 bottom-3 h-3 w-3 rotate-45 bg-white" />
         <p className="relative text-sm font-semibold leading-relaxed text-ink">{text}</p>
         {milestoneText && milestone ? (

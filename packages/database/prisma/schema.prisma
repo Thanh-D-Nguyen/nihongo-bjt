@@ -3087,7 +3087,7 @@ model FlashcardStyle {
   descriptionKey String?  @map("description_key") @db.VarChar(128)
   /// Preview image URL (thumbnail in style picker)
   thumbnailUrl   String?  @map("thumbnail_url")
-  /// JSON config: { cardBg, textColor, fontFamily, borderRadius, flipAnimation, accentColor, backdropBlur, shadow }
+  /// Validated semantic theme config: background/contentSurface/foreground/mutedForeground/border/accent/control/focus tokens plus typography, radius and shadow.
   config         Json     @default("{}")
   /// free | premium | exclusive
   tier           String   @default("free") @db.VarChar(16)

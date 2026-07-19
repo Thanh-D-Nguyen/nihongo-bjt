@@ -1,20 +1,20 @@
 import { createPrismaClient, type PrismaClient } from "@nihongo-bjt/database";
-import { ForbiddenException, Injectable, Logger, NotFoundException } from "@nestjs/common";
+import {
+  flashcardThemeConfigSchema,
+  validateFlashcardTheme,
+  type FlashcardThemeConfig
+} from "@nihongo-bjt/shared";
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+  NotFoundException
+} from "@nestjs/common";
 import { Inject } from "@nestjs/common";
 
 import { EntitlementService } from "../monetization/entitlement.service.js";
 import { EntitlementKey } from "../monetization/monetization.constants.js";
-
-export interface FlashcardStyleConfig {
-  cardBg?: string;
-  textColor?: string;
-  fontFamily?: string;
-  borderRadius?: string;
-  flipAnimation?: string;
-  accentColor?: string;
-  backdropBlur?: string;
-  shadow?: string;
-}
 
 @Injectable()
 export class FlashcardStylesService {
@@ -49,16 +49,22 @@ export class FlashcardStylesService {
 
     return {
       activeSlug: profile?.flashcardStyleSlug ?? null,
-      styles: styles.map((s) => ({
-        id: s.id,
-        slug: s.slug,
-        nameKey: s.nameKey,
-        descriptionKey: s.descriptionKey,
-        thumbnailUrl: s.thumbnailUrl,
-        config: s.config as FlashcardStyleConfig,
-        tier: s.tier,
-        locked: s.tier !== "free" && !hasPremium
-      }))
+      styles: styles.flatMap((style) => {
+        const config = this.readStoredConfig(style.slug, style.config);
+        if (!config) return [];
+        return [
+          {
+            id: style.id,
+            slug: style.slug,
+            nameKey: style.nameKey,
+            descriptionKey: style.descriptionKey,
+            thumbnailUrl: style.thumbnailUrl,
+            config,
+            tier: style.tier,
+            locked: style.tier !== "free" && !hasPremium
+          }
+        ];
+      })
     };
   }
 
@@ -76,10 +82,13 @@ export class FlashcardStylesService {
     });
     if (!style) return null;
 
+    const config = this.readStoredConfig(style.slug, style.config);
+    if (!config) return null;
+
     return {
       slug: style.slug,
       nameKey: style.nameKey,
-      config: style.config as FlashcardStyleConfig,
+      config,
       tier: style.tier
     };
   }
@@ -127,7 +136,7 @@ export class FlashcardStylesService {
     return {
       slug: style.slug,
       nameKey: style.nameKey,
-      config: style.config as FlashcardStyleConfig,
+      config: this.requireValidConfig(style.slug, style.config),
       tier: style.tier
     };
   }
@@ -162,7 +171,7 @@ export class FlashcardStylesService {
     nameKey: string;
     descriptionKey?: string;
     thumbnailUrl?: string;
-    config: FlashcardStyleConfig;
+    config: FlashcardThemeConfig;
     tier: string;
     sortOrder?: number;
     status?: string;
@@ -173,7 +182,7 @@ export class FlashcardStylesService {
         nameKey: data.nameKey,
         descriptionKey: data.descriptionKey ?? null,
         thumbnailUrl: data.thumbnailUrl ?? null,
-        config: data.config as object,
+        config: this.requireValidConfig(data.slug, data.config) as object,
         tier: data.tier,
         sortOrder: data.sortOrder ?? 0,
         status: data.status ?? "draft"
@@ -188,7 +197,7 @@ export class FlashcardStylesService {
       nameKey: string;
       descriptionKey: string | null;
       thumbnailUrl: string | null;
-      config: FlashcardStyleConfig;
+      config: FlashcardThemeConfig;
       tier: string;
       sortOrder: number;
       status: string;
@@ -197,9 +206,16 @@ export class FlashcardStylesService {
     const existing = await this.prisma.flashcardStyle.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException("Style not found");
 
+    const dataToUpdate = data.config
+      ? {
+          ...data,
+          config: this.requireValidConfig(data.slug ?? existing.slug, data.config) as object
+        }
+      : data;
+
     return this.prisma.flashcardStyle.update({
       where: { id },
-      data: data as object
+      data: dataToUpdate as object
     });
   }
 
@@ -213,9 +229,11 @@ export class FlashcardStylesService {
       archived: ["draft"]
     };
     if (!valid[existing.status]?.includes(newStatus)) {
-      throw new ForbiddenException(
-        `Cannot transition from ${existing.status} to ${newStatus}`
-      );
+      throw new ForbiddenException(`Cannot transition from ${existing.status} to ${newStatus}`);
+    }
+
+    if (newStatus === "active") {
+      this.requireValidConfig(existing.slug, existing.config);
     }
 
     return this.prisma.flashcardStyle.update({
@@ -226,9 +244,7 @@ export class FlashcardStylesService {
 
   /** Style adoption stats for admin analytics */
   async adminStyleAdoption() {
-    const raw = await this.prisma.$queryRaw<
-      { slug: string; user_count: bigint }[]
-    >`
+    const raw = await this.prisma.$queryRaw<{ slug: string; user_count: bigint }[]>`
       SELECT p.flashcard_style_slug AS slug, COUNT(*)::bigint AS user_count
       FROM profile.user_profile p
       WHERE p.flashcard_style_slug IS NOT NULL
@@ -236,5 +252,26 @@ export class FlashcardStylesService {
       ORDER BY user_count DESC
     `;
     return raw.map((r) => ({ slug: r.slug, userCount: Number(r.user_count) }));
+  }
+
+  private readStoredConfig(slug: string, input: unknown): FlashcardThemeConfig | null {
+    const result = validateFlashcardTheme(slug, input);
+    if (!result.success) {
+      this.logger.warn(`Ignoring invalid flashcard theme ${slug}: ${result.errors.join("; ")}`);
+      return null;
+    }
+    return flashcardThemeConfigSchema.parse(input);
+  }
+
+  private requireValidConfig(slug: string, input: unknown): FlashcardThemeConfig {
+    const result = validateFlashcardTheme(slug, input);
+    if (!result.success) {
+      throw new BadRequestException({
+        code: "INVALID_FLASHCARD_THEME",
+        message: `Flashcard theme ${slug} does not meet the semantic token and contrast policy`,
+        errors: result.errors
+      });
+    }
+    return flashcardThemeConfigSchema.parse(input);
   }
 }

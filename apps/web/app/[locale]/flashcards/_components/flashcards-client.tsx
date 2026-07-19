@@ -140,15 +140,26 @@ export interface FlashcardLabels {
   mentorMilestone10: string;
   mentorMilestone25: string;
   streakLabel: string;
-  stylePickerTitle?: string;
-  stylePickerDescription?: string;
-  stylePickerActive?: string;
-  stylePickerSelect?: string;
-  stylePickerPremium?: string;
-  stylePickerExclusive?: string;
-  stylePickerLocked?: string;
-  stylePickerFree?: string;
-  stylePickerApplied?: string;
+  styleDescriptions: Record<string, string>;
+  styleNames: Record<string, string>;
+  stylePickerActive: string;
+  stylePickerApplied: string;
+  stylePickerApplyError: string;
+  stylePickerApplying: string;
+  stylePickerClose: string;
+  stylePickerDescription: string;
+  stylePickerEmpty: string;
+  stylePickerExclusive: string;
+  stylePickerFree: string;
+  stylePickerLoadError: string;
+  stylePickerLocked: string;
+  stylePickerPremium: string;
+  stylePickerPreviewLabel: string;
+  stylePickerRetry: string;
+  stylePickerScrollHint: string;
+  stylePickerSelectTheme: string;
+  stylePickerTitle: string;
+  stylePickerUnnamed: string;
 }
 
 function imageFlowLabel(step: ImageFlowState["step"], labels: FlashcardLabels): string | null {
@@ -634,7 +645,12 @@ export function FlashcardsClient({
       {error && !loading ? (
         <ErrorState
           action={
-            <Button size="sm" variant="secondary" type="button" onClick={() => void loadDueCards({ resetImageFlow: true })}>
+            <Button
+              size="sm"
+              variant="secondary"
+              type="button"
+              onClick={() => void loadDueCards({ resetImageFlow: true })}
+            >
               {labels.refreshDue}
             </Button>
           }
@@ -649,7 +665,10 @@ export function FlashcardsClient({
           <EmptyState
             action={
               <div className="flex flex-wrap justify-center gap-2">
-                <Link className={`${btnPrimary} min-h-10 px-5`} href={`/${locale}/flashcards?tab=review`}>
+                <Link
+                  className={`${btnPrimary} min-h-10 px-5`}
+                  href={`/${locale}/flashcards?tab=review`}
+                >
                   {labels.reviewScopeClearCta}
                 </Link>
                 <Link
@@ -670,7 +689,10 @@ export function FlashcardsClient({
                 <Link className={`${btnPrimary} min-h-10 px-5`} href={`/${locale}/search`}>
                   {labels.emptyCtaSearch}
                 </Link>
-                <Link className={`${btnSecondary} min-h-10 px-5`} href={`/${locale}#daily-japanese`}>
+                <Link
+                  className={`${btnSecondary} min-h-10 px-5`}
+                  href={`/${locale}#daily-japanese`}
+                >
                   {labels.emptyCtaDaily}
                 </Link>
               </div>
@@ -685,7 +707,9 @@ export function FlashcardsClient({
         <FlashcardInteractiveCard
           answerContent={
             <>
-              <h3 className="text-[11px] font-black uppercase tracking-wide text-muted">{labels.answerHeading}</h3>
+              <h3 className="text-[11px] font-black uppercase tracking-wide text-muted">
+                {labels.answerHeading}
+              </h3>
               <p className="mt-2 text-sm leading-relaxed text-ink">{currentCard.card.backText}</p>
             </>
           }
@@ -729,7 +753,9 @@ export function FlashcardsClient({
                     {labels.reviewImageOptionalSummary}
                   </summary>
                   <div className="border-t border-ink/10 px-3 pb-4 pt-2 sm:px-4">
-                    <p className="text-[11px] leading-snug text-muted sm:text-xs">{labels.imageHint}</p>
+                    <p className="text-[11px] leading-snug text-muted sm:text-xs">
+                      {labels.imageHint}
+                    </p>
                     <div className="mt-3">
                       <input
                         accept="image/jpeg,image/png,image/webp,image/gif"
@@ -744,12 +770,19 @@ export function FlashcardsClient({
                         }}
                         type="file"
                       />
-                      <label className={`${btnSecondary} min-h-9 cursor-pointer text-xs`} htmlFor={fileInputId}>
+                      <label
+                        className={`${btnSecondary} min-h-9 cursor-pointer text-xs`}
+                        htmlFor={fileInputId}
+                      >
                         {labels.imageUploadLabel}
                       </label>
                     </div>
                     {imageStatusText ? (
-                      <p aria-live="polite" className="mt-2 text-[11px] font-medium text-muted" role="status">
+                      <p
+                        aria-live="polite"
+                        className="mt-2 text-[11px] font-medium text-muted"
+                        role="status"
+                      >
                         {imageStatusText}
                       </p>
                     ) : null}
@@ -757,7 +790,9 @@ export function FlashcardsClient({
                 </details>
               ) : (
                 <div className="rounded-xl border border-dashed border-ink/15 bg-paper/40 p-3 sm:p-4">
-                  <h3 className="text-xs font-bold text-ink sm:text-sm">{labels.imageSectionTitle}</h3>
+                  <h3 className="text-xs font-bold text-ink sm:text-sm">
+                    {labels.imageSectionTitle}
+                  </h3>
                   <p className="mt-1 text-[11px] text-muted sm:text-xs">{labels.imageHint}</p>
                   <div className="mt-3">
                     <input
@@ -773,12 +808,19 @@ export function FlashcardsClient({
                       }}
                       type="file"
                     />
-                    <label className={`${btnSecondary} min-h-9 cursor-pointer text-xs`} htmlFor={fileInputId}>
+                    <label
+                      className={`${btnSecondary} min-h-9 cursor-pointer text-xs`}
+                      htmlFor={fileInputId}
+                    >
                       {labels.imageUploadLabel}
                     </label>
                   </div>
                   {imageStatusText ? (
-                    <p aria-live="polite" className="mt-2 text-[11px] font-medium text-muted" role="status">
+                    <p
+                      aria-live="polite"
+                      className="mt-2 text-[11px] font-medium text-muted"
+                      role="status"
+                    >
                       {imageStatusText}
                     </p>
                   ) : null}
@@ -797,7 +839,7 @@ export function FlashcardsClient({
             mentorMilestone10: labels.mentorMilestone10,
             mentorMilestone25: labels.mentorMilestone25,
             mentorName: labels.mentorName,
-            streakLabel: labels.streakLabel,
+            streakLabel: labels.streakLabel
           }}
           onRate={(rating) => void review(currentCard, rating)}
           onReveal={() => setRevealed(true)}

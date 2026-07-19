@@ -54,6 +54,22 @@ export {
   type DailyWidgetKind
 } from "./daily.js";
 export {
+  contrastRatio,
+  DEFAULT_FLASHCARD_THEME,
+  FLASHCARD_THEME_DEFINITIONS,
+  flashcardThemeConfigSchema,
+  parseFlashcardThemeConfig,
+  relativeLuminance,
+  resolveFlashcardThemeDefinition,
+  safeFlashcardThemeConfig,
+  validateFlashcardTheme,
+  type FlashcardThemeConfig,
+  type FlashcardThemeContrastResult,
+  type FlashcardThemeDefinition,
+  type FlashcardThemeTier,
+  type FlashcardThemeValidationResult
+} from "./flashcard-theme.js";
+export {
   buildDailySuggestedFlashcardBack,
   isLikelyVietnameseLegalDisclaimerOnlyBack,
   repairDailyContentFlashcardBackIfNeeded

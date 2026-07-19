@@ -1,6 +1,11 @@
 "use client";
 
 import {
+  DEFAULT_FLASHCARD_THEME,
+  flashcardThemeConfigSchema,
+  type FlashcardThemeConfig
+} from "@nihongo-bjt/shared";
+import {
   Button,
   Card,
   CardContent,
@@ -14,12 +19,18 @@ import {
 import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { IconBookmark, IconDeck, IconReview, IconSearch, IconSpark } from "../../../_components/app-icons";
+import {
+  IconBookmark,
+  IconDeck,
+  IconReview,
+  IconSearch,
+  IconSpark
+} from "../../../_components/app-icons";
 import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
 import { queueSizeForUser } from "../../../../lib/offline-review-queue";
 import { learnerApiFetch } from "../../../../lib/learner-api";
 import { DeckBrowser, type DeckLabels, type LibraryDeckFilter } from "./deck-browser";
-import { FlashcardStylePickerModal, type StylePickerLabels } from "./flashcard-style-picker";
+import { FlashcardStylePickerModal } from "./flashcard-style-picker";
 import type { FlashcardLabels } from "./flashcards-client";
 import { ReviewSession, type ReviewSessionLabels } from "./review-session";
 import { AutoGenDialog, type CardgenLabels } from "./auto-gen-dialog";
@@ -63,14 +74,21 @@ export function FlashcardsPageClient({
   const [sessionActive, setSessionActive] = useState(false);
   const [autoGenOpen, setAutoGenOpen] = useState(false);
   const [stylePickerOpen, setStylePickerOpen] = useState(false);
-  const [styleConfig, setStyleConfig] = useState<Record<string, string> | null>(null);
+  const [styleConfig, setStyleConfig] = useState<FlashcardThemeConfig>(
+    DEFAULT_FLASHCARD_THEME.config
+  );
+  const [styleReady, setStyleReady] = useState(false);
 
   // Fetch active flashcard style on mount
   useEffect(() => {
     learnerApiFetch("/api/flashcards/styles/active")
-      .then((r) => r.ok ? r.json() : null)
-      .then((data) => { if (data?.config) setStyleConfig(data.config); })
-      .catch(() => {});
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => {
+        const parsed = flashcardThemeConfigSchema.safeParse(data?.config);
+        if (parsed.success) setStyleConfig(parsed.data);
+      })
+      .catch(() => undefined)
+      .finally(() => setStyleReady(true));
   }, []);
 
   const refreshDueHero = useCallback(async () => {
@@ -200,13 +218,19 @@ export function FlashcardsPageClient({
         <div className="flex flex-wrap items-center gap-2">
           <button
             className="inline-flex min-h-11 items-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-500/15 transition-all hover:scale-[1.03] hover:shadow-emerald-500/30 active:scale-[0.98]"
-            onClick={() => { selectRail("review"); setSessionActive(true); }}
+            disabled={!styleReady}
+            onClick={() => {
+              selectRail("review");
+              setSessionActive(true);
+            }}
             type="button"
           >
             <IconReview aria-hidden size={16} />
             {flashcardLabels.libraryNavReview ?? flashcardLabels.reviewTab}
             {heroDue !== null && heroDue > 0 ? (
-              <span className="ml-0.5 rounded-full bg-white/20 px-2 py-0.5 text-xs font-black tabular-nums">{heroDue}</span>
+              <span className="ml-0.5 rounded-full bg-white/20 px-2 py-0.5 text-xs font-black tabular-nums">
+                {heroDue}
+              </span>
             ) : null}
           </button>
           <button
@@ -223,12 +247,18 @@ export function FlashcardsPageClient({
             type="button"
           >
             <span aria-hidden>🎨</span>
-            {flashcardLabels.stylePickerTitle ?? "Card Style"}
+            {flashcardLabels.stylePickerTitle}
           </button>
           <div className="flex items-center gap-3 rounded-xl border border-ink/8 bg-surface px-3 py-2 text-xs font-semibold text-muted">
-            <span className="tabular-nums">{flashcardLabels.statDueSession}: <span className="font-black text-ink">{heroDue ?? "—"}</span></span>
+            <span className="tabular-nums">
+              {flashcardLabels.statDueSession}:{" "}
+              <span className="font-black text-ink">{heroDue ?? "—"}</span>
+            </span>
             <span className="h-3 w-px bg-ink/10" aria-hidden />
-            <span className="tabular-nums">{flashcardLabels.statPendingSync}: <span className="font-black text-ink">{heroPending ?? "—"}</span></span>
+            <span className="tabular-nums">
+              {flashcardLabels.statPendingSync}:{" "}
+              <span className="font-black text-ink">{heroPending ?? "—"}</span>
+            </span>
           </div>
         </div>
       </div>
@@ -346,11 +376,24 @@ export function FlashcardsPageClient({
 
         <div className="min-w-0 space-y-4">
           <SectionHeader
-            title={main === "review" ? (flashcardLabels.libraryNavReview ?? flashcardLabels.reviewTab) : (flashcardLabels.libraryNavDecks ?? deckLabels.title)}
-            description={main === "review" ? flashcardLabels.libraryReviewDescription : flashcardLabels.libraryDecksDescription}
+            title={
+              main === "review"
+                ? (flashcardLabels.libraryNavReview ?? flashcardLabels.reviewTab)
+                : (flashcardLabels.libraryNavDecks ?? deckLabels.title)
+            }
+            description={
+              main === "review"
+                ? flashcardLabels.libraryReviewDescription
+                : flashcardLabels.libraryDecksDescription
+            }
             actions={
               main === "library" ? (
-                <Button size="sm" variant="secondary" type="button" onClick={() => selectRail("review")}>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  type="button"
+                  onClick={() => selectRail("review")}
+                >
                   <IconReview aria-hidden size={16} />
                   {flashcardLabels.libraryNavReview ?? flashcardLabels.reviewTab}
                 </Button>
@@ -365,15 +408,13 @@ export function FlashcardsPageClient({
           >
             {main === "review" ? (
               <div className="flex flex-col items-center gap-6 py-10 text-center">
-                <div
-                  className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 shadow-md"
-                >
-                  <span className="text-4xl" aria-hidden>🧠</span>
+                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 shadow-md">
+                  <span className="text-4xl" aria-hidden>
+                    🧠
+                  </span>
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-ink">
-                    {reviewSessionLabels.entryTitle}
-                  </h3>
+                  <h3 className="text-lg font-bold text-ink">{reviewSessionLabels.entryTitle}</h3>
                   <p className="mt-1 text-sm text-muted">
                     {heroDue !== null
                       ? reviewSessionLabels.entrySubtitle.replace("{n}", String(heroDue))
@@ -382,6 +423,7 @@ export function FlashcardsPageClient({
                 </div>
                 <button
                   className="rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 px-8 py-3.5 text-base font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:scale-105 hover:shadow-emerald-500/35 active:scale-[0.98]"
+                  disabled={!styleReady}
                   onClick={() => setSessionActive(true)}
                   type="button"
                 >
@@ -424,12 +466,17 @@ export function FlashcardsPageClient({
           }}
         />
       ) : null}
-      <AutoGenDialog open={autoGenOpen} onClose={() => setAutoGenOpen(false)} locale={locale} labels={cardgenLabels} />
+      <AutoGenDialog
+        open={autoGenOpen}
+        onClose={() => setAutoGenOpen(false)}
+        locale={locale}
+        labels={cardgenLabels}
+      />
       <FlashcardStylePickerModal
         open={stylePickerOpen}
         onClose={() => setStylePickerOpen(false)}
         onStyleApplied={(config) => setStyleConfig(config)}
-        labels={flashcardLabels as unknown as StylePickerLabels}
+        labels={flashcardLabels}
       />
     </main>
   );

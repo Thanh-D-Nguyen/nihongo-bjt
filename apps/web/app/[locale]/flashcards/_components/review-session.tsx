@@ -1,10 +1,12 @@
 "use client";
 
+import type { FlashcardThemeConfig } from "@nihongo-bjt/shared";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
 import { enqueueReview } from "../../../../lib/offline-review-queue";
 import { learnerApiFetch } from "../../../../lib/learner-api";
+import { flashcardThemeCss } from "./flashcard-theme-css";
 
 /* ═══════════════════════════════════════════════════════
    Types
@@ -232,7 +234,7 @@ function ensureKeyframes() {
 function ProgressRing({
   value,
   size = 52,
-  label,
+  label
 }: {
   value: number;
   size?: number;
@@ -242,7 +244,10 @@ function ProgressRing({
   const circ = 2 * Math.PI * r;
   const offset = circ - (Math.min(Math.max(value, 0), 100) / 100) * circ;
   return (
-    <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
+    <div
+      className="relative flex items-center justify-center"
+      style={{ width: size, height: size }}
+    >
       <svg className="drop-shadow-lg" height={size} width={size}>
         <circle
           className="text-white/10"
@@ -309,9 +314,9 @@ function Confetti() {
         color: ["#10B981", "#F59E0B", "#3B82F6", "#EC4899", "#8B5CF6"][
           Math.floor(Math.random() * 5)
         ],
-        dur: 1.5 + Math.random() * 1.5,
+        dur: 1.5 + Math.random() * 1.5
       })),
-    [],
+    []
   );
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -326,7 +331,7 @@ function Confetti() {
             height: p.size,
             backgroundColor: p.color,
             borderRadius: Math.random() > 0.5 ? "50%" : "2px",
-            animation: `rs-confetti ${p.dur}s ${p.delay}s ease-out forwards`,
+            animation: `rs-confetti ${p.dur}s ${p.delay}s ease-out forwards`
           }}
         />
       ))}
@@ -340,13 +345,8 @@ function Confetti() {
 
 function CardImage({ url, alt }: { url: string; alt: string }) {
   return (
-    <div className="mx-auto mb-4 max-h-48 w-full max-w-xs overflow-hidden rounded-2xl border border-white/10 bg-white/5">
-      <img
-        src={url}
-        alt={alt}
-        className="h-full max-h-48 w-full object-contain"
-        loading="lazy"
-      />
+    <div className="flashcard-theme-divider mx-auto mb-4 max-h-48 w-full max-w-xs overflow-hidden rounded-2xl border bg-[var(--flashcard-content-surface)]">
+      <img src={url} alt={alt} className="h-full max-h-48 w-full object-contain" loading="lazy" />
     </div>
   );
 }
@@ -358,7 +358,7 @@ function CardImage({ url, alt }: { url: string; alt: string }) {
 function AudioButton({
   audioUrl,
   ttsText,
-  label,
+  label
 }: {
   audioUrl: string | null;
   ttsText: string;
@@ -393,7 +393,7 @@ function AudioButton({
       window.speechSynthesis.cancel();
       window.speechSynthesis.speak(u);
     },
-    [audioUrl, ttsText, playing],
+    [audioUrl, ttsText, playing]
   );
 
   if (!ttsText && !audioUrl) return null;
@@ -403,8 +403,8 @@ function AudioButton({
       type="button"
       onClick={play}
       aria-label={label}
-      className={`inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white/80 transition hover:bg-white/20 ${
-        playing ? "ring-2 ring-emerald-400/60" : ""
+      className={`flashcard-theme-control flashcard-theme-focus inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border outline-none transition hover:opacity-90 ${
+        playing ? "ring-2 ring-[var(--flashcard-focus-ring)]" : ""
       }`}
     >
       <svg width={16} height={16} viewBox="0 0 16 16" fill="currentColor" aria-hidden>
@@ -422,16 +422,26 @@ function ExampleList({ examples, label }: { examples: CardExample[]; label: stri
   if (!examples || examples.length === 0) return null;
   return (
     <div
-      className="mt-4 w-full space-y-2 border-t border-white/10 pt-3 text-left"
+      className="flashcard-theme-divider mt-4 w-full space-y-2 border-t pt-3 text-left"
       style={{ animation: "rs-flip-in 0.35s ease-out" }}
     >
-      <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-400/70">{label}</p>
+      <p className="flashcard-theme-accent text-[11px] font-bold uppercase tracking-wider">
+        {label}
+      </p>
       <ul className="space-y-2">
         {examples.map((ex, i) => (
-          <li key={i} className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm">
-            <p className="font-semibold text-white">{ex.japaneseText}</p>
-            {ex.reading ? <p className="text-xs text-emerald-300/70">{ex.reading}</p> : null}
-            {ex.translationVi ? <p className="mt-1 text-xs text-white/60">{ex.translationVi}</p> : null}
+          <li key={i} className="flashcard-theme-divider rounded-xl border px-3 py-2 text-sm">
+            <p className="font-semibold text-[var(--flashcard-foreground)]" lang="ja">
+              {ex.japaneseText}
+            </p>
+            {ex.reading ? (
+              <p className="flashcard-theme-muted text-xs" lang="ja">
+                {ex.reading}
+              </p>
+            ) : null}
+            {ex.translationVi ? (
+              <p className="flashcard-theme-muted mt-1 text-xs">{ex.translationVi}</p>
+            ) : null}
           </li>
         ))}
       </ul>
@@ -445,32 +455,23 @@ function ExampleList({ examples, label }: { examples: CardExample[]; label: stri
 
 function ReviewCard({
   children,
-  onClick,
-  cardStyle,
+  cardStyle
 }: {
   children: React.ReactNode;
-  onClick?: () => void;
-  cardStyle?: Record<string, string> | null;
+  cardStyle?: FlashcardThemeConfig | null;
 }) {
-  const inlineStyle: React.CSSProperties = {
-    animation: "rs-card-enter 0.4s ease-out",
-    animationFillMode: "both",
-    ...(cardStyle?.cardBg ? { background: cardStyle.cardBg } : {}),
-    ...(cardStyle?.textColor ? { color: cardStyle.textColor } : {}),
-    ...(cardStyle?.borderRadius ? { borderRadius: cardStyle.borderRadius } : {}),
-    ...(cardStyle?.shadow ? { boxShadow: cardStyle.shadow } : {}),
-    ...(cardStyle?.fontFamily ? { fontFamily: cardStyle.fontFamily } : {}),
-  };
   return (
     <div
-      className={`relative mx-auto w-full max-w-lg cursor-pointer select-none overflow-hidden rounded-3xl border border-white/10 ${cardStyle?.cardBg ? "" : "bg-white/[0.06]"} p-8 shadow-2xl backdrop-blur-xl transition-transform hover:scale-[1.01] sm:p-10`}
-      style={inlineStyle}
-      onClick={onClick}
-      role={onClick ? "button" : undefined}
-      tabIndex={onClick ? 0 : undefined}
-      onKeyDown={onClick ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } } : undefined}
+      className="flashcard-theme-surface relative mx-auto w-full max-w-lg select-none overflow-hidden rounded-3xl border p-3 shadow-2xl sm:p-4"
+      style={{
+        ...flashcardThemeCss(cardStyle),
+        animation: "rs-card-enter 0.4s ease-out",
+        animationFillMode: "both"
+      }}
     >
-      {children}
+      <div className="flashcard-theme-content rounded-[calc(var(--radius-xl)-2px)] border p-5 sm:p-7">
+        {children}
+      </div>
     </div>
   );
 }
@@ -484,49 +485,55 @@ function FlipReview({
   labels,
   flipped,
   cardStyle,
-  onFlip,
+  onFlip
 }: {
   card: DueCard;
   labels: ReviewSessionLabels;
   flipped: boolean;
-  cardStyle?: Record<string, string> | null;
+  cardStyle?: FlashcardThemeConfig | null;
   onFlip: () => void;
 }) {
   const audioUrl = card.primaryAudio?.readUrl ?? null;
   const ttsText = card.card.reading ?? card.card.frontText;
   return (
-    <ReviewCard onClick={!flipped ? onFlip : undefined} cardStyle={cardStyle}>
+    <ReviewCard cardStyle={cardStyle}>
       <div className="min-h-[200px] flex flex-col items-center justify-center gap-3 text-center">
-        {card.primaryImage?.readUrl ? (
-          <CardImage url={card.primaryImage.readUrl} alt={card.card.frontText} />
-        ) : null}
-        {/* Front: Japanese */}
-        <p className="text-4xl font-black leading-tight text-white sm:text-5xl">
-          {card.card.frontText}
-        </p>
-        <div className="flex items-center gap-3">
-          {card.card.reading ? (
-            <p className="text-lg font-medium text-emerald-300/80">{card.card.reading}</p>
+        <button
+          aria-label={flipped ? labels.flipPrompt : labels.tapToReveal}
+          aria-pressed={flipped}
+          className="flashcard-theme-focus w-full rounded-2xl px-2 py-3 outline-none transition-opacity hover:opacity-90"
+          onClick={onFlip}
+          type="button"
+        >
+          {card.primaryImage?.readUrl ? (
+            <CardImage url={card.primaryImage.readUrl} alt={card.card.frontText} />
           ) : null}
-          <AudioButton audioUrl={audioUrl} ttsText={ttsText} label={labels.playAudio} />
-        </div>
+          <p className="flashcard-theme-primary font-black" lang="ja">
+            {card.card.frontText}
+          </p>
+          {card.card.reading ? (
+            <p className="flashcard-theme-muted mt-2 text-lg font-medium" lang="ja">
+              {card.card.reading}
+            </p>
+          ) : null}
 
-        {!flipped ? (
-          <p className="mt-4 text-sm text-white/40">{labels.tapToReveal}</p>
-        ) : (
-          <div
-            className="mt-6 w-full border-t border-white/10 pt-6"
-            style={{ animation: "rs-flip-in 0.35s ease-out" }}
-          >
-            <p className="text-sm font-semibold uppercase tracking-wider text-emerald-400/70">
-              {labels.correctAnswer}
-            </p>
-            <p className="mt-2 text-2xl font-bold text-white sm:text-3xl">
-              {card.card.backText}
-            </p>
-            <ExampleList examples={card.examples ?? []} label={labels.examplesLabel} />
-          </div>
-        )}
+          {!flipped ? (
+            <p className="flashcard-theme-muted mt-5 text-sm font-semibold">{labels.tapToReveal}</p>
+          ) : (
+            <div
+              aria-live="polite"
+              className="flashcard-theme-divider mt-6 w-full border-t pt-6"
+              style={{ animation: "rs-flip-in 0.35s ease-out" }}
+            >
+              <p className="flashcard-theme-accent text-sm font-semibold uppercase tracking-wider">
+                {labels.correctAnswer}
+              </p>
+              <p className="flashcard-theme-answer mt-2 font-bold">{card.card.backText}</p>
+              <ExampleList examples={card.examples ?? []} label={labels.examplesLabel} />
+            </div>
+          )}
+        </button>
+        <AudioButton audioUrl={audioUrl} ttsText={ttsText} label={labels.playAudio} />
       </div>
     </ReviewCard>
   );
@@ -541,12 +548,12 @@ function TypeReview({
   labels,
   revealed,
   cardStyle,
-  onReveal,
+  onReveal
 }: {
   card: DueCard;
   labels: ReviewSessionLabels;
   revealed: boolean;
-  cardStyle?: Record<string, string> | null;
+  cardStyle?: FlashcardThemeConfig | null;
   onReveal: (typed: string, grade: Grade) => void;
 }) {
   const [input, setInput] = useState("");
@@ -563,8 +570,7 @@ function TypeReview({
     onReveal(input.trim(), g);
   };
 
-  const gradeColor =
-    grade === "correct" ? "text-emerald-400" : grade === "almost" ? "text-amber-400" : "text-red-400";
+  const gradeIcon = grade === "correct" ? "✓" : grade === "almost" ? "≈" : "×";
   const gradeLabel =
     grade === "correct" ? labels.correct : grade === "almost" ? labels.almost : labels.incorrect;
   const audioUrl = card.primaryAudio?.readUrl ?? null;
@@ -576,13 +582,15 @@ function TypeReview({
         {card.primaryImage?.readUrl ? (
           <CardImage url={card.primaryImage.readUrl} alt={card.card.frontText} />
         ) : null}
-        <p className="text-4xl font-black leading-tight text-white sm:text-5xl">
+        <p className="flashcard-theme-primary font-black" lang="ja">
           {card.card.frontText}
         </p>
         {/* Reading + audio hidden until revealed — would leak the answer */}
         {revealed && card.card.reading ? (
           <div className="flex items-center gap-3">
-            <p className="text-lg font-medium text-emerald-300/80">{card.card.reading}</p>
+            <p className="flashcard-theme-muted text-lg font-medium" lang="ja">
+              {card.card.reading}
+            </p>
             <AudioButton audioUrl={audioUrl} ttsText={ttsText} label={labels.playAudio} />
           </div>
         ) : null}
@@ -595,7 +603,7 @@ function TypeReview({
             <input
               ref={inputRef}
               id="rs-type-input"
-              className="rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-center text-lg font-semibold text-white placeholder:text-white/30 outline-none focus:border-emerald-400/60 focus:ring-2 focus:ring-emerald-400/30"
+              className="flashcard-theme-control flashcard-theme-focus min-h-11 rounded-xl border px-4 py-3 text-center text-lg font-semibold outline-none placeholder:opacity-60"
               placeholder={labels.typePlaceholder}
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -607,7 +615,7 @@ function TypeReview({
               }}
             />
             <button
-              className="rounded-xl bg-emerald-500/20 px-6 py-2.5 text-sm font-bold text-emerald-300 transition-colors hover:bg-emerald-500/30"
+              className="flashcard-theme-control flashcard-theme-focus min-h-11 rounded-xl border px-6 py-2.5 text-sm font-bold outline-none transition-opacity hover:opacity-90"
               onClick={submit}
               type="button"
             >
@@ -616,24 +624,25 @@ function TypeReview({
           </div>
         ) : (
           <div
-            className="mt-6 w-full space-y-3 border-t border-white/10 pt-6"
+            className="flashcard-theme-divider mt-6 w-full space-y-3 border-t pt-6"
             style={{ animation: "rs-flip-in 0.35s ease-out" }}
           >
             {grade ? (
-              <p className={`text-base font-bold ${gradeColor}`}>{gradeLabel}</p>
-            ) : null}
-            {input ? (
-              <p className="text-base text-white/50">
-                <span className="text-white/30">{labels.yourAnswer}: </span>
-                <span className={`font-semibold ${grade === "correct" ? "text-emerald-300" : "text-white/70"}`}>
-                  {input}
-                </span>
+              <p className="text-base font-bold text-[var(--flashcard-foreground)]">
+                <span aria-hidden>{gradeIcon} </span>
+                {gradeLabel}
               </p>
             ) : null}
-            <p className="text-sm font-semibold uppercase tracking-wider text-emerald-400/70">
+            {input ? (
+              <p className="flashcard-theme-muted text-base">
+                <span>{labels.yourAnswer}: </span>
+                <span className="font-semibold text-[var(--flashcard-foreground)]">{input}</span>
+              </p>
+            ) : null}
+            <p className="flashcard-theme-accent text-sm font-semibold uppercase tracking-wider">
               {labels.correctAnswer}
             </p>
-            <p className="text-2xl font-bold text-white sm:text-3xl">{card.card.backText}</p>
+            <p className="flashcard-theme-answer font-bold">{card.card.backText}</p>
             <ExampleList examples={card.examples ?? []} label={labels.examplesLabel} />
           </div>
         )}
@@ -651,12 +660,12 @@ function MatchReview({
   options,
   labels,
   cardStyle,
-  onAnswer,
+  onAnswer
 }: {
   card: DueCard;
   options: string[];
   labels: ReviewSessionLabels;
-  cardStyle?: Record<string, string> | null;
+  cardStyle?: FlashcardThemeConfig | null;
   onAnswer: (correct: boolean, elapsedMs: number) => void;
 }) {
   const [selected, setSelected] = useState<string | null>(null);
@@ -679,36 +688,41 @@ function MatchReview({
         {card.primaryImage?.readUrl ? (
           <CardImage url={card.primaryImage.readUrl} alt={card.card.frontText} />
         ) : null}
-        <p className="text-sm font-semibold uppercase tracking-wider text-white/40">
+        <p className="flashcard-theme-muted text-sm font-semibold uppercase tracking-wider">
           {labels.matchPrompt}
         </p>
-        <p className="text-4xl font-black leading-tight text-white sm:text-5xl">
+        <p className="flashcard-theme-primary font-black" lang="ja">
           {card.card.frontText}
         </p>
         {/* Reading visible on front for match mode — recognition task, not recall */}
         <div className="flex items-center gap-3">
           {card.card.reading ? (
-            <p className="text-lg font-medium text-emerald-300/80">{card.card.reading}</p>
+            <p className="flashcard-theme-muted text-lg font-medium" lang="ja">
+              {card.card.reading}
+            </p>
           ) : null}
           <AudioButton audioUrl={audioUrl} ttsText={ttsText} label={labels.playAudio} />
         </div>
 
         <div className="mt-6 grid w-full max-w-sm grid-cols-1 gap-2.5 sm:grid-cols-2">
           {options.map((opt, i) => {
-            let bg = "bg-white/10 hover:bg-white/15 border-white/15";
+            let stateClass = "flashcard-theme-control hover:opacity-90";
             if (selected) {
-              if (opt === correct) bg = "bg-emerald-500/25 border-emerald-400/50";
-              else if (opt === selected) bg = "bg-red-500/25 border-red-400/50";
-              else bg = "bg-white/5 border-white/10 opacity-40";
+              if (opt === correct) stateClass = "border-success bg-success-soft text-success";
+              else if (opt === selected) stateClass = "border-danger bg-danger-soft text-danger";
+              else stateClass = "flashcard-theme-control opacity-45";
             }
+            const stateIcon =
+              selected && opt === correct ? "✓ " : selected && opt === selected ? "× " : "";
             return (
               <button
                 key={`${opt}-${i}`}
-                className={`rounded-xl border px-4 py-3 text-sm font-semibold text-white transition-all ${bg}`}
+                className={`flashcard-theme-focus min-h-11 rounded-xl border px-4 py-3 text-sm font-semibold outline-none transition-all ${stateClass}`}
                 onClick={() => handleSelect(opt)}
                 disabled={selected !== null || opt === "—"}
                 type="button"
               >
+                <span aria-hidden>{stateIcon}</span>
                 {opt}
               </button>
             );
@@ -718,9 +732,10 @@ function MatchReview({
         {selected ? (
           <>
             <p
-              className={`mt-3 text-sm font-bold ${isCorrect ? "text-emerald-400" : "text-red-400"}`}
+              className="mt-3 text-sm font-bold text-[var(--flashcard-foreground)]"
               style={{ animation: "rs-flip-in 0.25s ease-out" }}
             >
+              <span aria-hidden>{isCorrect ? "✓ " : "× "}</span>
               {isCorrect ? labels.correct : labels.incorrect}
             </p>
             <ExampleList examples={card.examples ?? []} label={labels.examplesLabel} />
@@ -738,7 +753,7 @@ function MatchReview({
 function RatingButtons({
   labels,
   onRate,
-  suggested,
+  suggested
 }: {
   labels: ReviewSessionLabels;
   onRate: (r: Rating) => void;
@@ -791,7 +806,7 @@ function EntryScreen({
   dueCount,
   labels,
   onStart,
-  onExit,
+  onExit
 }: {
   dueCount: number;
   labels: ReviewSessionLabels;
@@ -815,9 +830,7 @@ function EntryScreen({
           {hasCards ? labels.entryTitle : labels.noCards}
         </h2>
         <p className="mt-3 text-lg text-white/60">
-          {hasCards
-            ? labels.entrySubtitle.replace("{n}", String(dueCount))
-            : labels.noCardsDesc}
+          {hasCards ? labels.entrySubtitle.replace("{n}", String(dueCount)) : labels.noCardsDesc}
         </p>
       </div>
 
@@ -850,7 +863,7 @@ function SummaryScreen({
   stats,
   labels,
   onReviewMore,
-  onExit,
+  onExit
 }: {
   stats: Stats;
   labels: ReviewSessionLabels;
@@ -868,18 +881,20 @@ function SummaryScreen({
       {showConfetti ? <Confetti /> : null}
 
       <div>
-        <h2 className="text-3xl font-black text-white sm:text-4xl">
-          {labels.summaryTitle} 🎉
-        </h2>
+        <h2 className="text-3xl font-black text-white sm:text-4xl">{labels.summaryTitle} 🎉</h2>
         <p className="mt-2 text-lg text-white/60">{labels.summaryGreat}</p>
       </div>
 
       <div className="grid w-full max-w-md grid-cols-2 gap-4 sm:grid-cols-4">
         {[
           { value: String(stats.total), label: labels.summaryCards, color: "text-white" },
-          { value: `${accuracy}%`, label: labels.summaryAccuracy, color: accuracy >= 70 ? "text-emerald-400" : "text-amber-400" },
+          {
+            value: `${accuracy}%`,
+            label: labels.summaryAccuracy,
+            color: accuracy >= 70 ? "text-emerald-400" : "text-amber-400"
+          },
           { value: `x${stats.maxCombo}`, label: labels.summaryCombo, color: "text-amber-400" },
-          { value: formatTime(elapsed), label: labels.summaryTime, color: "text-white/80" },
+          { value: formatTime(elapsed), label: labels.summaryTime, color: "text-white/80" }
         ].map((s) => (
           <div
             key={s.label}
@@ -950,12 +965,12 @@ export function ReviewSession({
   locale: _locale,
   scopeDeckId,
   styleConfig,
-  onExit,
+  onExit
 }: {
   labels: ReviewSessionLabels;
   locale: string;
   scopeDeckId?: string | null;
-  styleConfig?: Record<string, string> | null;
+  styleConfig?: FlashcardThemeConfig | null;
   onExit: () => void;
 }) {
   const { userId } = useKeycloakAuth();
@@ -970,7 +985,10 @@ export function ReviewSession({
   const [typeRevealed, setTypeRevealed] = useState(false);
   const [typeGrade, setTypeGrade] = useState<Grade | null>(null);
   const [matchOptions, setMatchOptions] = useState<string[]>([]);
-  const [matchAnswered, setMatchAnswered] = useState<{ correct: boolean; elapsedMs: number } | null>(null);
+  const [matchAnswered, setMatchAnswered] = useState<{
+    correct: boolean;
+    elapsedMs: number;
+  } | null>(null);
   const [combo, setCombo] = useState(0);
   const [stats, setStats] = useState<Stats>({
     total: 0,
@@ -979,7 +997,7 @@ export function ReviewSession({
     again: 0,
     easy: 0,
     maxCombo: 0,
-    startTime: Date.now(),
+    startTime: Date.now()
   });
   // Track reviewed card ids so we don't re-rate
   const reviewedIds = useRef(new Set<string>());
@@ -1018,7 +1036,7 @@ export function ReviewSession({
         return [];
       }
     },
-    [userId],
+    [userId]
   );
 
   /* ── Setup a card slot: reset per-card state, fetch options if match mode ── */
@@ -1036,7 +1054,7 @@ export function ReviewSession({
         setMatchOptions(buildOptions(card.card.backText, distractors));
       }
     },
-    [fetchDistractors],
+    [fetchDistractors]
   );
 
   /* ── Initial load ── */
@@ -1057,7 +1075,9 @@ export function ReviewSession({
         if (!cancelled) setError(labels.errorLoading);
         setPhase("entry");
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [userId, fetchCards, labels.errorLoading]);
 
   /* ── Start session ── */
@@ -1105,7 +1125,7 @@ export function ReviewSession({
         const res = await learnerApiFetch(`/api/flashcards/reviews/${card.id}`, {
           body: JSON.stringify(payload),
           headers: { "Content-Type": "application/json" },
-          method: "POST",
+          method: "POST"
         });
         if (!res.ok) throw new Error("submit-fail");
       } catch {
@@ -1115,7 +1135,7 @@ export function ReviewSession({
             elapsedMs,
             rating,
             userId,
-            userFlashcardId: card.id,
+            userFlashcardId: card.id
           });
         } catch {
           /* best effort */
@@ -1146,13 +1166,18 @@ export function ReviewSession({
         await setupCard(next, m);
       }
     },
-    [cards, currentIdx, userId, combo, fetchCards, setupCard],
+    [cards, currentIdx, userId, combo, fetchCards, setupCard]
   );
 
   /* ── Keyboard shortcuts ── */
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (
+        e.target instanceof HTMLButtonElement ||
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      )
+        return;
 
       if (e.key === "Escape") {
         onExit();
@@ -1202,7 +1227,7 @@ export function ReviewSession({
       }
       touchStart.current = null;
     },
-    [flipped, mode, submitRating],
+    [flipped, mode, submitRating]
   );
 
   /* ── Review more (after summary) ── */
@@ -1286,12 +1311,7 @@ export function ReviewSession({
 
       {/* Entry */}
       {phase === "entry" && !error ? (
-        <EntryScreen
-          dueCount={totalDue}
-          labels={labels}
-          onStart={startSession}
-          onExit={onExit}
-        />
+        <EntryScreen dueCount={totalDue} labels={labels} onStart={startSession} onExit={onExit} />
       ) : null}
 
       {/* Review */}
@@ -1305,7 +1325,15 @@ export function ReviewSession({
               type="button"
               aria-label={labels.exitSession}
             >
-              <svg width={20} height={20} viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
+              <svg
+                width={20}
+                height={20}
+                viewBox="0 0 20 20"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                strokeLinecap="round"
+              >
                 <path d="M5 5l10 10M15 5L5 15" />
               </svg>
             </button>
@@ -1322,7 +1350,10 @@ export function ReviewSession({
           </header>
 
           {/* Card area */}
-          <div className="flex flex-1 flex-col items-center justify-center px-4 pb-4" key={`${currentCard.id}-${mode}`}>
+          <div
+            className="flex flex-1 flex-col items-center justify-center px-4 pb-4"
+            key={`${currentCard.id}-${mode}`}
+          >
             {mode === "flip" ? (
               <FlipReview
                 card={currentCard}

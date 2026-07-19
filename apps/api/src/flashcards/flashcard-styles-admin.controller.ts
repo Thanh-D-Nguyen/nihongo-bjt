@@ -9,6 +9,7 @@ import {
   Query,
   UseGuards
 } from "@nestjs/common";
+import type { FlashcardThemeConfig } from "@nihongo-bjt/shared";
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiTags } from "@nestjs/swagger";
 
 import { AdminRbacGuard } from "../admin/admin-rbac.guard.js";
@@ -81,7 +82,7 @@ export class FlashcardStylesAdminController {
       nameKey: string;
       descriptionKey?: string;
       thumbnailUrl?: string;
-      config: Record<string, unknown>;
+      config: FlashcardThemeConfig;
       tier: string;
       sortOrder?: number;
       status?: string;
@@ -110,7 +111,7 @@ export class FlashcardStylesAdminController {
       nameKey: string;
       descriptionKey: string | null;
       thumbnailUrl: string | null;
-      config: Record<string, unknown>;
+      config: FlashcardThemeConfig;
       tier: string;
       sortOrder: number;
       status: string;
