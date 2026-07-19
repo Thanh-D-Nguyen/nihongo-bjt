@@ -26,6 +26,7 @@ interface LotoLabels {
   vocab?: string;
   viewDetail?: string;
   confidence?: string;
+  confidenceHint?: string;
   loginRequired?: string;
   set?: string;
   bonus?: string;
@@ -34,8 +35,10 @@ interface LotoLabels {
   tabLoto6?: string;
   tabLoto7?: string;
   disclaimer?: string;
-  premiumCta?: string;
-  premiumBenefit?: string;
+  empty?: string;
+  error?: string;
+  retry?: string;
+  collapse?: string;
 }
 
 interface FeedItem {
@@ -51,7 +54,12 @@ interface FeedItem {
   result: { mainNumbers: number[]; bonusNumbers: number[] } | null;
   hitCount: number;
   bonusHit: boolean;
-  jpSentence: { textJp: string; reading: string; textVi: string; vocabItems: Array<{ wordJp: string; reading: string; meaningVi: string }> } | null;
+  jpSentence: {
+    textJp: string;
+    reading: string;
+    textVi: string;
+    vocabItems: Array<{ wordJp: string; reading: string; meaningVi: string }>;
+  } | null;
 }
 
 interface NextDrawData {
@@ -64,16 +72,18 @@ interface NextDrawData {
   scheduleVi?: string;
   game: LotoGame;
   sets: Array<{ mainNumbers: number[]; bonusNumbers: number[]; score: number }>;
-  jpSentence: { textJp: string; reading: string; textVi: string; vocabItems: Array<{ wordJp: string; reading: string; meaningVi: string }> } | null;
+  jpSentence: {
+    textJp: string;
+    reading: string;
+    textVi: string;
+    vocabItems: Array<{ wordJp: string; reading: string; meaningVi: string }>;
+  } | null;
   vocabItems: Array<{ wordJp: string; reading: string; meaningVi: string }>;
   confidence: number | null;
   daysUntil: number;
 }
 
 const API = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/$/u, "");
-
-/** Free users see limited history; premium users see all */
-const FREE_HISTORY_LIMIT = 3;
 
 export function LotoHubClient({ labels, locale }: { labels: LotoLabels; locale: string }) {
   return (
@@ -91,6 +101,9 @@ function LotoHubInner({ labels }: { labels: LotoLabels; locale: string }) {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [feedError, setFeedError] = useState(false);
+  const [nextDrawError, setNextDrawError] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
   const observerRef = useRef<HTMLDivElement | null>(null);
 
   const fetchHeaders = useCallback(() => {
@@ -103,11 +116,15 @@ function LotoHubInner({ labels }: { labels: LotoLabels; locale: string }) {
   useEffect(() => {
     if (!accessToken) return;
     setNextDraw(null);
+    setNextDrawError(false);
     fetch(`${API}/api/magazine/loto/next-draw?game=${game}`, { headers: fetchHeaders() })
-      .then((r) => (r.ok ? r.json() : null))
+      .then((r) => {
+        if (!r.ok) throw new Error(`Next draw request failed: ${r.status}`);
+        return r.json();
+      })
       .then((data) => setNextDraw(data))
-      .catch(() => {});
-  }, [game, accessToken, fetchHeaders]);
+      .catch(() => setNextDrawError(true));
+  }, [game, accessToken, fetchHeaders, retryKey]);
 
   // Fetch feed (reset on game change)
   useEffect(() => {
@@ -116,30 +133,46 @@ function LotoHubInner({ labels }: { labels: LotoLabels; locale: string }) {
     setPage(1);
     setHasMore(true);
     setLoading(true);
+    setFeedError(false);
     fetch(`${API}/api/magazine/loto/feed?game=${game}&page=1&limit=10`, { headers: fetchHeaders() })
-      .then((r) => (r.ok ? r.json() : { data: [], total: 0 }))
+      .then((r) => {
+        if (!r.ok) throw new Error(`Loto feed request failed: ${r.status}`);
+        return r.json();
+      })
       .then((res) => {
         setFeed(res.data ?? []);
         setHasMore((res.data?.length ?? 0) < (res.total ?? 0));
         setLoading(false);
       })
-      .catch(() => setLoading(false));
-  }, [game, accessToken, fetchHeaders]);
+      .catch(() => {
+        setFeedError(true);
+        setLoading(false);
+      });
+  }, [game, accessToken, fetchHeaders, retryKey]);
 
   // Load more
   const loadMore = useCallback(() => {
     if (!hasMore || loading || !accessToken) return;
     const nextPage = page + 1;
     setLoading(true);
-    fetch(`${API}/api/magazine/loto/feed?game=${game}&page=${nextPage}&limit=10`, { headers: fetchHeaders() })
-      .then((r) => (r.ok ? r.json() : { data: [], total: 0 }))
+    setFeedError(false);
+    fetch(`${API}/api/magazine/loto/feed?game=${game}&page=${nextPage}&limit=10`, {
+      headers: fetchHeaders()
+    })
+      .then((r) => {
+        if (!r.ok) throw new Error(`Loto feed request failed: ${r.status}`);
+        return r.json();
+      })
       .then((res) => {
         setFeed((prev) => [...prev, ...(res.data ?? [])]);
         setPage(nextPage);
         setHasMore(feed.length + (res.data?.length ?? 0) < (res.total ?? 0));
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => {
+        setFeedError(true);
+        setLoading(false);
+      });
   }, [hasMore, loading, accessToken, page, game, fetchHeaders, feed.length]);
 
   // Intersection observer for infinite scroll
@@ -150,7 +183,7 @@ function LotoHubInner({ labels }: { labels: LotoLabels; locale: string }) {
       ([entry]) => {
         if (entry.isIntersecting) loadMore();
       },
-      { rootMargin: "200px" },
+      { rootMargin: "200px" }
     );
     observer.observe(el);
     return () => observer.disconnect();
@@ -162,19 +195,28 @@ function LotoHubInner({ labels }: { labels: LotoLabels; locale: string }) {
         {/* Header */}
         <header className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex size-11 items-center justify-center rounded-2xl bg-emerald-500/10 text-2xl">
-              🎰
+            <div
+              aria-hidden="true"
+              className="flex size-11 items-center justify-center rounded-2xl bg-emerald-500/10 text-lg font-black text-emerald-700 dark:text-emerald-300"
+            >
+              %
             </div>
-            <h1 className="text-xl font-bold text-ink sm:text-2xl">
-              {labels.title ?? "Loto Lab"}
-            </h1>
+            <div>
+              <h1 className="text-xl font-bold text-ink sm:text-2xl">
+                {labels.title ?? "Loto & xác suất"}
+              </h1>
+              <p className="mt-0.5 text-sm text-muted">
+                {labels.subtitle ?? "Học xác suất và tiếng Nhật qua dữ liệu Loto"}
+              </p>
+            </div>
           </div>
         </header>
 
         {/* Disclaimer */}
         <div className="mb-6 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3">
           <p className="text-xs leading-relaxed text-amber-800 dark:text-amber-200/80">
-            {labels.disclaimer ?? "⚠️ この予測はエンターテインメント目的のみです。宝くじの購入を推奨するものではありません。学習目的でお楽しみください。"}
+            {labels.disclaimer ??
+              "Mọi tổ hợp hợp lệ đều có xác suất như nhau. Nội dung chỉ phục vụ học tập và không khuyến khích mua xổ số."}
           </p>
         </div>
 
@@ -188,59 +230,60 @@ function LotoHubInner({ labels }: { labels: LotoLabels; locale: string }) {
           />
         </div>
 
-        {/* Hero prediction */}
+        {/* Next draw analysis */}
         {nextDraw && (
           <section className="mb-8">
             <LotoHeroPrediction data={nextDraw} labels={labels} game={game} />
           </section>
         )}
 
+        {nextDrawError && !nextDraw && (
+          <div className="mb-8 flex items-center justify-between gap-3 rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3">
+            <p className="text-sm text-destructive">
+              {labels.error ?? "Tạm chưa tải được dữ liệu Loto."}
+            </p>
+            <button
+              type="button"
+              onClick={() => setRetryKey((value) => value + 1)}
+              className="min-h-10 shrink-0 rounded-xl bg-destructive/10 px-4 text-sm font-semibold text-destructive transition hover:bg-destructive/15"
+            >
+              {labels.retry ?? "Thử lại"}
+            </button>
+          </div>
+        )}
+
         {/* History section */}
         <section>
           <h2 className="mb-4 text-lg font-semibold text-ink/80">
-            {labels.history ?? "Lịch sử dự đoán"}
+            {labels.history ?? "Lịch sử tổ hợp & kết quả"}
           </h2>
 
-          {feed.length === 0 && !loading && (
+          {feed.length === 0 && !loading && !feedError && (
             <div className="rounded-2xl border border-border/40 bg-surface/60 p-8 text-center">
-              <p className="text-sm text-muted">Chưa có dữ liệu dự đoán</p>
+              <p className="text-sm text-muted">{labels.empty ?? "Chưa có tổ hợp tham khảo."}</p>
+            </div>
+          )}
+
+          {feedError && (
+            <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3">
+              <p className="text-sm text-destructive">
+                {labels.error ?? "Tạm chưa tải được dữ liệu Loto."}
+              </p>
+              <button
+                type="button"
+                onClick={() => setRetryKey((value) => value + 1)}
+                className="min-h-10 shrink-0 rounded-xl bg-destructive/10 px-4 text-sm font-semibold text-destructive transition hover:bg-destructive/15"
+              >
+                {labels.retry ?? "Thử lại"}
+              </button>
             </div>
           )}
 
           <div className="space-y-4">
-            {feed.slice(0, FREE_HISTORY_LIMIT).map((item) => (
+            {feed.map((item) => (
               <LotoHistoryCard key={item.id} item={item} labels={labels} game={game} />
             ))}
           </div>
-
-          {/* Premium gate — show after FREE_HISTORY_LIMIT items */}
-          {feed.length > FREE_HISTORY_LIMIT && (
-            <div className="relative mt-6">
-              {/* Blurred preview of next items */}
-              <div className="space-y-4 blur-[6px] pointer-events-none select-none" aria-hidden>
-                {feed.slice(FREE_HISTORY_LIMIT, FREE_HISTORY_LIMIT + 2).map((item) => (
-                  <LotoHistoryCard key={item.id} item={item} labels={labels} game={game} />
-                ))}
-              </div>
-              {/* Premium CTA overlay */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="flex flex-col items-center gap-3 rounded-2xl border border-primary/20 bg-background/95 p-6 shadow-xl backdrop-blur-sm">
-                  <div className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-2xl">
-                    ✨
-                  </div>
-                  <p className="text-center text-sm font-medium text-foreground">
-                    {labels.premiumCta ?? "Nâng cấp Premium để xem toàn bộ lịch sử"}
-                  </p>
-                  <p className="max-w-[240px] text-center text-xs text-muted-foreground">
-                    {labels.premiumBenefit ?? "Xem lịch sử đầy đủ, phân tích chi tiết & từ vựng exclusive"}
-                  </p>
-                  <button className="mt-1 flex min-h-11 items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:brightness-110 active:scale-95">
-                    <span>⭐</span> Nâng cấp
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Loading skeleton */}
           {loading && (

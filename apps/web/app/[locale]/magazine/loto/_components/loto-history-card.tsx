@@ -15,7 +15,12 @@ interface FeedItem {
   result: { mainNumbers: number[]; bonusNumbers: number[] } | null;
   hitCount: number;
   bonusHit: boolean;
-  jpSentence: { textJp: string; reading: string; textVi: string; vocabItems: Array<{ wordJp: string; reading: string; meaningVi: string }> } | null;
+  jpSentence: {
+    textJp: string;
+    reading: string;
+    textVi: string;
+    vocabItems: Array<{ wordJp: string; reading: string; meaningVi: string }>;
+  } | null;
 }
 
 interface Labels {
@@ -26,6 +31,7 @@ interface Labels {
   viewDetail?: string;
   vocab?: string;
   drawNumber?: string;
+  collapse?: string;
 }
 
 function HitDots({ predicted, actual }: { predicted: number[]; actual: number[] }) {
@@ -57,7 +63,15 @@ function hitColorClass(hitCount: number, total: number): string {
   return "text-muted bg-border/20";
 }
 
-export function LotoHistoryCard({ item, labels, game }: { item: FeedItem; labels: Labels; game: LotoGame }) {
+export function LotoHistoryCard({
+  item,
+  labels,
+  game
+}: {
+  item: FeedItem;
+  labels: Labels;
+  game: LotoGame;
+}) {
   const [expanded, setExpanded] = useState(false);
   const primarySet = item.sets[0];
   const totalNumbers = game === "loto6" ? 6 : 7;
@@ -71,15 +85,16 @@ export function LotoHistoryCard({ item, labels, game }: { item: FeedItem; labels
             {item.drawNumber ? `#${item.drawNumber}` : item.drawDate}
           </span>
           <span className="text-xs text-muted">
-            {item.drawDate}{item.drawDayJp ? `（${item.drawDayJp}）` : ""}
+            {item.drawDate}
+            {item.drawDayJp ? `（${item.drawDayJp}）` : ""}
           </span>
-          {item.drawTime && (
-            <span className="text-[10px] text-muted/70">{item.drawTime}</span>
-          )}
+          {item.drawTime && <span className="text-[10px] text-muted/70">{item.drawTime}</span>}
         </div>
         {item.result ? (
-          <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${hitColorClass(item.hitCount, totalNumbers)}`}>
-            {(labels.hitCount ?? "Trúng {hit}/{total}")
+          <span
+            className={`rounded-full px-2.5 py-1 text-xs font-semibold ${hitColorClass(item.hitCount, totalNumbers)}`}
+          >
+            {(labels.hitCount ?? "Khớp {hit}/{total} số")
               .replace("{hit}", String(item.hitCount))
               .replace("{total}", String(totalNumbers))}
           </span>
@@ -93,10 +108,12 @@ export function LotoHistoryCard({ item, labels, game }: { item: FeedItem; labels
 
       {/* Content */}
       <div className="space-y-3 p-4">
-        {/* Prediction row */}
+        {/* Reference combination */}
         {primarySet && (
           <div>
-            <span className="text-xs font-medium text-muted">{labels.prediction ?? "Dự đoán"}:</span>
+            <span className="text-xs font-medium text-muted">
+              {labels.prediction ?? "Tổ hợp tham khảo"}:
+            </span>
             <div className="mt-1 flex flex-wrap gap-1.5">
               {primarySet.mainNumbers.map((num, i) => {
                 const isHit = item.result ? new Set(item.result.mainNumbers).has(num) : false;
@@ -149,7 +166,9 @@ export function LotoHistoryCard({ item, labels, game }: { item: FeedItem; labels
 
         {/* JP sentence (collapsed for history) */}
         {item.jpSentence && (
-          <div className={`${expanded ? "" : "line-clamp-2"} rounded-xl bg-white/40 p-3 dark:bg-white/5`}>
+          <div
+            className={`${expanded ? "" : "line-clamp-2"} rounded-xl bg-white/40 p-3 dark:bg-white/5`}
+          >
             <p className="text-sm font-medium leading-[1.8] text-ink">
               「{item.jpSentence.textJp}」
             </p>
@@ -158,14 +177,15 @@ export function LotoHistoryCard({ item, labels, game }: { item: FeedItem; labels
                 <p className="mt-0.5 text-xs leading-[1.8] text-muted">
                   ({item.jpSentence.reading})
                 </p>
-                <p className="mt-0.5 text-xs text-ink/70">
-                  → {item.jpSentence.textVi}
-                </p>
+                <p className="mt-0.5 text-xs text-ink/70">→ {item.jpSentence.textVi}</p>
                 {item.jpSentence.vocabItems.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     <span className="text-xs text-muted">📚</span>
                     {item.jpSentence.vocabItems.map((v, i) => (
-                      <span key={i} className="rounded bg-primary/10 px-1.5 py-0.5 text-[11px] text-primary">
+                      <span
+                        key={i}
+                        className="rounded bg-primary/10 px-1.5 py-0.5 text-[11px] text-primary"
+                      >
                         {v.wordJp}({v.reading})
                       </span>
                     ))}
@@ -182,7 +202,9 @@ export function LotoHistoryCard({ item, labels, game }: { item: FeedItem; labels
             onClick={() => setExpanded(!expanded)}
             className="flex min-h-10 items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-primary transition-all duration-150 hover:bg-primary/10 active:scale-95"
           >
-            {expanded ? "Thu gọn ↑" : (labels.viewDetail ?? "Xem chi tiết") + " ↓"}
+            {expanded
+              ? `${labels.collapse ?? "Thu gọn"} ↑`
+              : `${labels.viewDetail ?? "Xem chi tiết"} ↓`}
           </button>
         )}
       </div>

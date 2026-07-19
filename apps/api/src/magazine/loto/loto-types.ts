@@ -9,22 +9,25 @@ export type LotoGameSpec = {
 
 export const LOTO_GAME_SPECS: Record<LotoGame, LotoGameSpec> = {
   loto6: { game: "loto6", mainCount: 6, maxNumber: 43, bonusCount: 1 },
-  loto7: { game: "loto7", mainCount: 7, maxNumber: 37, bonusCount: 2 },
+  loto7: { game: "loto7", mainCount: 7, maxNumber: 37, bonusCount: 2 }
 };
 
-export const LOTO_SCHEDULE: Record<LotoGame, { drawDays: number[]; drawTime: string; labelJp: string; labelVi: string }> = {
+export const LOTO_SCHEDULE: Record<
+  LotoGame,
+  { drawDays: number[]; drawTime: string; labelJp: string; labelVi: string }
+> = {
   loto6: {
     drawDays: [1, 4], // Monday=1, Thursday=4
     drawTime: "18:45 JST",
     labelJp: "毎週 月曜・木曜 18:45 抽選",
-    labelVi: "Thứ 2 & Thứ 5 hàng tuần, quay thưởng 18:45 (giờ Nhật)",
+    labelVi: "Thứ 2 & Thứ 5 hàng tuần, quay thưởng 18:45 (giờ Nhật)"
   },
   loto7: {
     drawDays: [5], // Friday=5
     drawTime: "18:45 JST",
     labelJp: "毎週 金曜 18:45 抽選",
-    labelVi: "Thứ 6 hàng tuần, quay thưởng 18:45 (giờ Nhật)",
-  },
+    labelVi: "Thứ 6 hàng tuần, quay thưởng 18:45 (giờ Nhật)"
+  }
 };
 
 export type LotoAlgorithmWeights = {
@@ -40,15 +43,15 @@ export type LotoAlgorithmWeights = {
 };
 
 export const DEFAULT_LOTO_WEIGHTS: LotoAlgorithmWeights = {
-  frequencyHot: 0.2,
-  frequencyCold: 0.08,
-  overdue: 0.16,
-  recentMomentum: 0.14,
-  pairAffinity: 0.12,
-  weatherBias: 0.08,
-  dreamTextBias: 0.08,
-  dateNumerology: 0.06,
-  randomEntropy: 0.08,
+  frequencyHot: 0.24,
+  frequencyCold: 0.12,
+  overdue: 0.2,
+  recentMomentum: 0.18,
+  pairAffinity: 0.16,
+  weatherBias: 0,
+  dreamTextBias: 0,
+  dateNumerology: 0,
+  randomEntropy: 0.1
 };
 
 export type LotoGenerationInput = {

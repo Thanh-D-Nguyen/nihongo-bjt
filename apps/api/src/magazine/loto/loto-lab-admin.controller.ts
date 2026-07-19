@@ -1,5 +1,23 @@
-import { BadRequestException, Body, Controller, Get, Inject, Post, Query, Req, UseGuards } from "@nestjs/common";
-import { ApiBearerAuth, ApiBody, ApiOkResponse, ApiOperation, ApiQuery, ApiSecurity, ApiTags } from "@nestjs/swagger";
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Inject,
+  Post,
+  Query,
+  Req,
+  UseGuards
+} from "@nestjs/common";
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOkResponse,
+  ApiOperation,
+  ApiQuery,
+  ApiSecurity,
+  ApiTags
+} from "@nestjs/swagger";
 import type { Request } from "express";
 
 import { AdminAuthService } from "../../admin/admin-auth.service.js";
@@ -26,7 +44,7 @@ function gameFromQuery(game?: string): LotoGame {
 export class LotoLabAdminController {
   constructor(
     @Inject(AdminAuthService) private readonly auth: AdminAuthService,
-    @Inject(LotoLabService) private readonly loto: LotoLabService,
+    @Inject(LotoLabService) private readonly loto: LotoLabService
   ) {}
 
   @Get("summary")
@@ -45,16 +63,18 @@ export class LotoLabAdminController {
   }
 
   @Post("import-csv")
-  @ApiOperation({ summary: "Import Loto6/Loto7 historical draws from CSV. Upserts by game + draw number." })
+  @ApiOperation({
+    summary: "Import Loto6/Loto7 historical draws from CSV. Upserts by game + draw number."
+  })
   @ApiBody({
     schema: {
       type: "object",
       properties: {
         game: { type: "string", enum: ["loto6", "loto7"] },
-        csvText: { type: "string" },
+        csvText: { type: "string" }
       },
-      required: ["csvText"],
-    },
+      required: ["csvText"]
+    }
   })
   @ApiOkResponse({ description: "Import counts." })
   async importCsv(@Req() req: Request, @Body() body: { game?: string; csvText?: string }) {
@@ -63,24 +83,62 @@ export class LotoLabAdminController {
     return this.loto.importCsv(body.csvText, body.game);
   }
 
+  @Post("sync")
+  @ApiOperation({ summary: "Download and import the latest allowlisted Loto CSV source." })
+  @ApiBody({
+    schema: {
+      type: "object",
+      properties: { game: { type: "string", enum: ["loto6", "loto7"] } },
+      required: ["game"]
+    }
+  })
+  async sync(@Req() req: Request, @Body() body: { game?: string }) {
+    await this.auth.requirePermission(req, "admin.content.write");
+    return this.loto.fetchAndImportCsv(gameFromQuery(body.game));
+  }
+
+  @Post("autopilot")
+  @ApiOperation({
+    summary: "Reconcile Loto data and publish the next probability-learning combination when ready."
+  })
+  @ApiBody({
+    schema: {
+      type: "object",
+      properties: { game: { type: "string", enum: ["loto6", "loto7"] } },
+      required: ["game"]
+    }
+  })
+  async autopilot(@Req() req: Request, @Body() body: { game?: string }) {
+    await this.auth.requirePermission(req, "admin.content.write");
+    return this.loto.runAutopilotIfResultReady(gameFromQuery(body.game));
+  }
+
   @Post("generate")
-  @ApiOperation({ summary: "Generate 1-5 Loto candidate sets with weighted algorithms and contextual text signals." })
+  @ApiOperation({
+    summary: "Generate 1-5 probability-learning combinations with weighted historical heuristics."
+  })
   async generate(@Req() req: Request, @Body() body: LotoGenerationInput) {
     const principal = await this.auth.requirePermission(req, "admin.content.write");
     return this.loto.generate(body, principal.actorId);
   }
 
   @Post("publish")
-  @ApiOperation({ summary: "Publish selected generated sets as a Magazine prediction article." })
+  @ApiOperation({
+    summary: "Publish selected generated sets as a Magazine probability-learning article."
+  })
   @ApiBody({
     schema: {
       type: "object",
       properties: {
         runId: { type: "string", description: "LotoGenerationRun UUID" },
-        setIds: { type: "array", items: { type: "string" }, description: "Selected LotoGeneratedSet UUIDs to publish" },
+        setIds: {
+          type: "array",
+          items: { type: "string" },
+          description: "Selected LotoGeneratedSet UUIDs to publish"
+        }
       },
-      required: ["runId", "setIds"],
-    },
+      required: ["runId", "setIds"]
+    }
   })
   async publish(@Req() req: Request, @Body() body: { runId?: string; setIds?: string[] }) {
     const principal = await this.auth.requirePermission(req, "admin.content.write");

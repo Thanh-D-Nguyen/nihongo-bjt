@@ -10,7 +10,12 @@ interface NextDrawData {
   scheduleJp?: string;
   scheduleVi?: string;
   sets: Array<{ mainNumbers: number[]; bonusNumbers: number[]; score: number }>;
-  jpSentence: { textJp: string; reading: string; textVi: string; vocabItems: Array<{ wordJp: string; reading: string; meaningVi: string }> } | null;
+  jpSentence: {
+    textJp: string;
+    reading: string;
+    textVi: string;
+    vocabItems: Array<{ wordJp: string; reading: string; meaningVi: string }>;
+  } | null;
   vocabItems: Array<{ wordJp: string; reading: string; meaningVi: string }>;
   confidence: number | null;
   daysUntil: number;
@@ -21,21 +26,33 @@ interface Labels {
   drawNumber?: string;
   countdown?: string;
   confidence?: string;
+  confidenceHint?: string;
   set?: string;
   bonus?: string;
   vocab?: string;
 }
 
-export function LotoHeroPrediction({ data, labels, game }: { data: NextDrawData; labels: Labels; game: LotoGame }) {
-  const gradientClass = game === "loto6"
-    ? "from-emerald-500/15 via-emerald-400/5 to-transparent"
-    : "from-cyan-500/15 via-cyan-400/5 to-transparent";
+export function LotoHeroPrediction({
+  data,
+  labels,
+  game
+}: {
+  data: NextDrawData;
+  labels: Labels;
+  game: LotoGame;
+}) {
+  const gradientClass =
+    game === "loto6"
+      ? "from-emerald-500/15 via-emerald-400/5 to-transparent"
+      : "from-cyan-500/15 via-cyan-400/5 to-transparent";
 
   const borderClass = game === "loto6" ? "ring-emerald-500/20" : "ring-cyan-500/20";
   const pillBg = game === "loto6" ? "bg-emerald-500" : "bg-cyan-500";
 
   return (
-    <div className={`relative overflow-hidden rounded-3xl bg-gradient-to-br ${gradientClass} p-5 ring-1 ${borderClass} sm:p-6`}>
+    <div
+      className={`relative overflow-hidden rounded-3xl bg-gradient-to-br ${gradientClass} p-5 ring-1 ${borderClass} sm:p-6`}
+    >
       {/* Decorative blur */}
       <div className="absolute -right-10 -top-10 size-40 rounded-full bg-gradient-to-br from-primary/10 to-transparent blur-3xl" />
 
@@ -45,7 +62,7 @@ export function LotoHeroPrediction({ data, labels, game }: { data: NextDrawData;
           <div className="flex items-center gap-2">
             <span className="text-lg">⚡</span>
             <span className="text-sm font-semibold text-ink/80">
-              {labels.nextDraw ?? "Dự đoán kỳ tiếp theo"}
+              {labels.nextDraw ?? "Tổ hợp tham khảo kỳ tiếp theo"}
               {data.drawNumber && ` #${data.drawNumber}`}
             </span>
           </div>
@@ -59,7 +76,8 @@ export function LotoHeroPrediction({ data, labels, game }: { data: NextDrawData;
         {/* Draw date + schedule */}
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <p className="text-sm font-medium text-ink/80">
-            📅 {data.drawDate}{data.drawDayJp ? `（${data.drawDayJp}）` : ""}
+            📅 {data.drawDate}
+            {data.drawDayJp ? `（${data.drawDayJp}）` : ""}
           </p>
           {data.drawTime && (
             <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
@@ -108,18 +126,21 @@ export function LotoHeroPrediction({ data, labels, game }: { data: NextDrawData;
           ))}
         </div>
 
-        {/* Confidence */}
+        {/* Heuristic model score — not a winning probability */}
         {data.confidence != null && (
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted">{labels.confidence ?? "Độ tin cậy"}:</span>
-            <div className="flex items-center gap-0.5">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <span key={star} className={`text-sm ${data.confidence! >= star * 0.2 ? "text-amber-400" : "text-border"}`}>
-                  ★
-                </span>
-              ))}
+          <div className="rounded-xl border border-border/30 bg-white/40 px-3 py-2.5 dark:bg-white/5">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-xs font-medium text-ink/70">
+                {labels.confidence ?? "Điểm xếp hạng mô hình"}
+              </span>
+              <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold tabular-nums text-primary">
+                {data.confidence.toFixed(2)}
+              </span>
             </div>
-            <span className="text-xs text-muted">({data.confidence.toFixed(2)})</span>
+            <p className="mt-1 text-[11px] leading-relaxed text-muted">
+              {labels.confidenceHint ??
+                "Chỉ dùng để xếp hạng heuristic, không phải xác suất trúng."}
+            </p>
           </div>
         )}
 
@@ -129,12 +150,8 @@ export function LotoHeroPrediction({ data, labels, game }: { data: NextDrawData;
             <p className="text-base font-medium leading-[1.8] text-ink">
               📝 {data.jpSentence.textJp}
             </p>
-            <p className="mt-1 text-sm leading-[1.8] text-muted">
-              ({data.jpSentence.reading})
-            </p>
-            <p className="mt-1 text-sm text-ink/70">
-              → {data.jpSentence.textVi}
-            </p>
+            <p className="mt-1 text-sm leading-[1.8] text-muted">({data.jpSentence.reading})</p>
+            <p className="mt-1 text-sm text-ink/70">→ {data.jpSentence.textVi}</p>
           </div>
         )}
 

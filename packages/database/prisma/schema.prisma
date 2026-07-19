@@ -205,20 +205,20 @@ model ExampleSentence {
 /// every request. One lexeme can have many variants (male/female, slow/normal,
 /// different providers). De-duplicated by (lexemeId, voiceName, speakingRate).
 model LexemeAudio {
-  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  lexemeId      String   @map("lexeme_id") @db.Uuid
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  lexemeId     String   @map("lexeme_id") @db.Uuid
   /// MediaAsset row that holds the actual audio file in object storage.
-  mediaAssetId  String   @map("media_asset_id") @db.Uuid
+  mediaAssetId String   @map("media_asset_id") @db.Uuid
   /// Provider key — "azure", "google", "elevenlabs", "browser", etc.
-  ttsProvider   String   @map("tts_provider") @db.VarChar(40)
+  ttsProvider  String   @map("tts_provider") @db.VarChar(40)
   /// Voice identifier within the provider (e.g. "ja-JP-NanamiNeural").
-  voiceName     String   @map("voice_name") @db.VarChar(80)
-  speakingRate  Float    @default(1.0) @map("speaking_rate")
-  durationMs    Int?     @map("duration_ms")
+  voiceName    String   @map("voice_name") @db.VarChar(80)
+  speakingRate Float    @default(1.0) @map("speaking_rate")
+  durationMs   Int?     @map("duration_ms")
   /// Optional human voice actor metadata when not machine-TTS.
-  voiceActor    String?  @map("voice_actor") @db.VarChar(120)
-  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  lexeme        Lexeme   @relation(fields: [lexemeId], references: [id], onDelete: Cascade)
+  voiceActor   String?  @map("voice_actor") @db.VarChar(120)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  lexeme       Lexeme   @relation(fields: [lexemeId], references: [id], onDelete: Cascade)
 
   @@unique([lexemeId, voiceName, speakingRate], map: "uq_lexeme_audio_voice")
   @@index([lexemeId], map: "idx_lexeme_audio_lexeme")
@@ -1126,69 +1126,69 @@ model AdminAuditEvent {
 }
 
 model UserProfile {
-  id                       String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  keycloakSubject          String?                   @unique @map("keycloak_subject")
-  email                    String?                   @unique
-  displayName              String                    @map("display_name")
-  avatarAssetId            String?                   @map("avatar_asset_id") @db.Uuid
-  coverAssetId             String?                   @map("cover_asset_id") @db.Uuid
-  uiLocale                 String                    @default("vi") @map("ui_locale") @db.VarChar(16)
-  explanationLocale        String                    @default("vi") @map("explanation_locale") @db.VarChar(16)
-  timezone                 String                    @default("Asia/Tokyo") @db.VarChar(80)
+  id                        String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  keycloakSubject           String?                   @unique @map("keycloak_subject")
+  email                     String?                   @unique
+  displayName               String                    @map("display_name")
+  avatarAssetId             String?                   @map("avatar_asset_id") @db.Uuid
+  coverAssetId              String?                   @map("cover_asset_id") @db.Uuid
+  uiLocale                  String                    @default("vi") @map("ui_locale") @db.VarChar(16)
+  explanationLocale         String                    @default("vi") @map("explanation_locale") @db.VarChar(16)
+  timezone                  String                    @default("Asia/Tokyo") @db.VarChar(80)
   /// learner | content_editor | support_staff | analytics_viewer | billing_manager | admin
-  accountType              String                    @default("learner") @map("account_type") @db.VarChar(32)
+  accountType               String                    @default("learner") @map("account_type") @db.VarChar(32)
   /// not_linked | linked | pending_invite | sync_error
-  authSyncStatus           String                    @default("not_linked") @map("auth_sync_status") @db.VarChar(32)
-  targetBjtBand            String?                   @map("target_bjt_band") @db.VarChar(16)
-  dailyGoalCards           Int                       @default(20) @map("daily_goal_cards")
-  dailyGoalExercises       Int                       @default(10) @map("daily_goal_exercises")
+  authSyncStatus            String                    @default("not_linked") @map("auth_sync_status") @db.VarChar(32)
+  targetBjtBand             String?                   @map("target_bjt_band") @db.VarChar(16)
+  dailyGoalCards            Int                       @default(20) @map("daily_goal_cards")
+  dailyGoalExercises        Int                       @default(10) @map("daily_goal_exercises")
   /// Study time target (optional; cards quota still uses dailyGoalCards in MVP).
-  dailyStudyMinutes        Int?                      @map("daily_study_minutes")
-  learningPurpose          String?                   @map("learning_purpose") @db.VarChar(200)
-  learningPersonality      String?                   @map("learning_personality") @db.VarChar(64)
-  lowPressureMode          Boolean                   @default(false) @map("low_pressure_mode")
+  dailyStudyMinutes         Int?                      @map("daily_study_minutes")
+  learningPurpose           String?                   @map("learning_purpose") @db.VarChar(200)
+  learningPersonality       String?                   @map("learning_personality") @db.VarChar(64)
+  lowPressureMode           Boolean                   @default(false) @map("low_pressure_mode")
   /// Appearance: light | dark | system
-  themeMode                String                    @default("system") @map("theme_mode") @db.VarChar(16)
+  themeMode                 String                    @default("system") @map("theme_mode") @db.VarChar(16)
   /// Appearance: small | default | large | xl
-  fontSizePreference       String                    @default("default") @map("font_size_preference") @db.VarChar(16)
+  fontSizePreference        String                    @default("default") @map("font_size_preference") @db.VarChar(16)
   /// Appearance: compact | comfortable
-  densityPreference        String                    @default("comfortable") @map("density_preference") @db.VarChar(16)
+  densityPreference         String                    @default("comfortable") @map("density_preference") @db.VarChar(16)
   /// Active flashcard style slug (null = default style)
-  flashcardStyleSlug       String?                   @map("flashcard_style_slug") @db.VarChar(64)
-  privacyLevel             String                    @default("standard") @map("privacy_level") @db.VarChar(32)
+  flashcardStyleSlug        String?                   @map("flashcard_style_slug") @db.VarChar(64)
+  privacyLevel              String                    @default("standard") @map("privacy_level") @db.VarChar(32)
   /// Opt-in for personalized ad relevance; never send raw learning history to ad providers.
-  adsPersonalizationOptIn  Boolean                   @default(false) @map("ads_personalization_opt_in")
+  adsPersonalizationOptIn   Boolean                   @default(false) @map("ads_personalization_opt_in")
   /// Explicit learner consent to create public postcards/share pages.
-  sharePostcardOptIn       Boolean                   @default(false) @map("share_postcard_opt_in")
-  status                   String                    @default("active") @db.VarChar(32)
-  createdAt                DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt                DateTime                  @updatedAt @map("updated_at") @db.Timestamptz(6)
-  avatar                   MediaAsset?               @relation("profileAvatars", fields: [avatarAssetId], references: [id], onDelete: SetNull)
-  cover                    MediaAsset?               @relation("profileCovers", fields: [coverAssetId], references: [id], onDelete: SetNull)
-  authLinkCodes            AuthLinkCode[]
-  identityProviderAccounts IdentityProviderAccount[]
-  referralCode             ReferralCode?
-  referralEventsAsReferrer ReferralEvent[]           @relation("ReferrerEvents")
-  referralEventsAsReferred ReferralEvent[]           @relation("ReferredEvents")
-  referralQuotaCredits     ReferralQuotaCredit[]
-  shareItems               ShareItem[]
-  usageCounters            UsageCounter[]
-  userSubscriptions        UserSubscription[]
-  readingAssistReports     ReadingAssistReport[]
-  readingUserPreference    ReadingUserPreference?
-  userInvitations          UserInvitation[]
-  quotaUserOverrides       QuotaUserOverride[]
-  userStreaks              UserStreak[]
-  userAchievements         UserAchievement[]
-  careerState              UserCareerState?
-  careerSkillStats         CareerSkillStat[]
-  rankProgressionEvents    RankProgressionEvent[]
-  chapterAttempts          ChapterAttempt[]
-  npcRelations             NpcRelation[]
-  ownedStudyGroups         StudyGroup[]               @relation("StudyGroupOwner")
-  studyGroupMemberships    StudyGroupMember[]
-  studyGroupChallenges      StudyGroupChallenge[]      @relation("StudyGroupChallengeCreator")
-  sentSocialConnections    UserSocialConnection[]     @relation("SocialConnectionRequester")
+  sharePostcardOptIn        Boolean                   @default(false) @map("share_postcard_opt_in")
+  status                    String                    @default("active") @db.VarChar(32)
+  createdAt                 DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                 DateTime                  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  avatar                    MediaAsset?               @relation("profileAvatars", fields: [avatarAssetId], references: [id], onDelete: SetNull)
+  cover                     MediaAsset?               @relation("profileCovers", fields: [coverAssetId], references: [id], onDelete: SetNull)
+  authLinkCodes             AuthLinkCode[]
+  identityProviderAccounts  IdentityProviderAccount[]
+  referralCode              ReferralCode?
+  referralEventsAsReferrer  ReferralEvent[]           @relation("ReferrerEvents")
+  referralEventsAsReferred  ReferralEvent[]           @relation("ReferredEvents")
+  referralQuotaCredits      ReferralQuotaCredit[]
+  shareItems                ShareItem[]
+  usageCounters             UsageCounter[]
+  userSubscriptions         UserSubscription[]
+  readingAssistReports      ReadingAssistReport[]
+  readingUserPreference     ReadingUserPreference?
+  userInvitations           UserInvitation[]
+  quotaUserOverrides        QuotaUserOverride[]
+  userStreaks               UserStreak[]
+  userAchievements          UserAchievement[]
+  careerState               UserCareerState?
+  careerSkillStats          CareerSkillStat[]
+  rankProgressionEvents     RankProgressionEvent[]
+  chapterAttempts           ChapterAttempt[]
+  npcRelations              NpcRelation[]
+  ownedStudyGroups          StudyGroup[]              @relation("StudyGroupOwner")
+  studyGroupMemberships     StudyGroupMember[]
+  studyGroupChallenges      StudyGroupChallenge[]     @relation("StudyGroupChallengeCreator")
+  sentSocialConnections     UserSocialConnection[]    @relation("SocialConnectionRequester")
   receivedSocialConnections UserSocialConnection[]    @relation("SocialConnectionAddressee")
 
   @@index([status, createdAt], map: "idx_user_profile_status_created_at")
@@ -1600,6 +1600,7 @@ model LotoGenerationRun {
   contextJson          Json               @default("{}") @map("context_json")
   japaneseSentenceJson Json?              @map("japanese_sentence_json")
   selectedSetId        String?            @map("selected_set_id") @db.Uuid
+  autopilotKey         String?            @unique(map: "uq_loto_generation_run_autopilot_key") @map("autopilot_key") @db.VarChar(64)
   createdByAdminId     String?            @map("created_by_admin_id") @db.Uuid
   createdAt            DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt            DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -1612,16 +1613,16 @@ model LotoGenerationRun {
 }
 
 model LotoGeneratedSet {
-  id                 String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  runId              String            @map("run_id") @db.Uuid
-  rank               Int
-  mainNumbers        Int[]             @map("main_numbers")
-  bonusNumbers       Int[]             @default([]) @map("bonus_numbers")
-  score              Float
-  explanationJson    Json              @default("{}") @map("explanation_json")
-  selectedForMagazine Boolean          @default(false) @map("selected_for_magazine")
-  createdAt          DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
-  run                LotoGenerationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  id                  String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  runId               String            @map("run_id") @db.Uuid
+  rank                Int
+  mainNumbers         Int[]             @map("main_numbers")
+  bonusNumbers        Int[]             @default([]) @map("bonus_numbers")
+  score               Float
+  explanationJson     Json              @default("{}") @map("explanation_json")
+  selectedForMagazine Boolean           @default(false) @map("selected_for_magazine")
+  createdAt           DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  run                 LotoGenerationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
 
   @@index([runId, rank], map: "idx_loto_generated_set_run_rank")
   @@map("loto_generated_set")
@@ -3401,27 +3402,27 @@ model UserScenarioAttempt {
 /// weekly XP goal and aggregate progress. Sits on top of the existing
 /// leaderboard infrastructure — a group is just a scoped audience.
 model StudyGroup {
-  id              String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id           String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   /// Display name (max 60 chars). Not required to be unique.
-  name            String              @db.VarChar(60)
-  description     String?
+  name         String                @db.VarChar(60)
+  description  String?
   /// Owner user — also has a row in StudyGroupMember with role="owner".
-  ownerUserId     String              @map("owner_user_id") @db.Uuid
+  ownerUserId  String                @map("owner_user_id") @db.Uuid
   /// open      — anyone with the link can join
   /// invite    — only invited users (future: via StudyGroupInvite)
   /// closed    — no new members
-  joinPolicy      String              @default("open") @map("join_policy") @db.VarChar(16)
+  joinPolicy   String                @default("open") @map("join_policy") @db.VarChar(16)
   /// Optional weekly XP goal for the whole group, used by progress widgets.
-  weeklyXpGoal    Int?                @map("weekly_xp_goal")
+  weeklyXpGoal Int?                  @map("weekly_xp_goal")
   /// Max members the group will accept (server-enforced).
-  memberLimit     Int                 @default(50) @map("member_limit")
-  coverAssetId    String?             @map("cover_asset_id") @db.Uuid
-  status          String              @default("active") @db.VarChar(16)
-  createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt       DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
-  owner           UserProfile         @relation("StudyGroupOwner", fields: [ownerUserId], references: [id], onDelete: Cascade)
-  members         StudyGroupMember[]
-  challenges      StudyGroupChallenge[]
+  memberLimit  Int                   @default(50) @map("member_limit")
+  coverAssetId String?               @map("cover_asset_id") @db.Uuid
+  status       String                @default("active") @db.VarChar(16)
+  createdAt    DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
+  owner        UserProfile           @relation("StudyGroupOwner", fields: [ownerUserId], references: [id], onDelete: Cascade)
+  members      StudyGroupMember[]
+  challenges   StudyGroupChallenge[]
 
   @@index([ownerUserId], map: "idx_study_group_owner")
   @@index([status, createdAt], map: "idx_study_group_status_created")
@@ -3432,16 +3433,16 @@ model StudyGroup {
 /// Junction between a StudyGroup and a UserProfile. Tracks role + status so
 /// admins can mute or ban without removing membership history.
 model StudyGroupMember {
-  id        String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  groupId   String     @map("group_id") @db.Uuid
-  userId    String     @map("user_id") @db.Uuid
+  id       String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  groupId  String      @map("group_id") @db.Uuid
+  userId   String      @map("user_id") @db.Uuid
   /// owner | admin | member
-  role      String     @default("member") @db.VarChar(16)
+  role     String      @default("member") @db.VarChar(16)
   /// active | pending | banned | left
-  status    String     @default("active") @db.VarChar(16)
-  joinedAt  DateTime   @default(now()) @map("joined_at") @db.Timestamptz(6)
-  group     StudyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  user      UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status   String      @default("active") @db.VarChar(16)
+  joinedAt DateTime    @default(now()) @map("joined_at") @db.Timestamptz(6)
+  group    StudyGroup  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user     UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([groupId, userId], map: "uq_study_group_member_group_user")
   @@index([userId, status], map: "idx_study_group_member_user_status")
@@ -3478,18 +3479,18 @@ model StudyGroupChallenge {
 /// Privacy-preserving learner social graph. A row represents one unordered
 /// learner pair via pairKey while preserving request direction for approvals.
 model UserSocialConnection {
-  id               String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  pairKey          String      @unique @map("pair_key") @db.VarChar(80)
-  requesterUserId  String      @map("requester_user_id") @db.Uuid
-  addresseeUserId  String      @map("addressee_user_id") @db.Uuid
+  id              String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  pairKey         String      @unique @map("pair_key") @db.VarChar(80)
+  requesterUserId String      @map("requester_user_id") @db.Uuid
+  addresseeUserId String      @map("addressee_user_id") @db.Uuid
   /// pending | accepted | declined | cancelled | blocked
-  status           String      @default("pending") @db.VarChar(16)
-  blockedByUserId  String?     @map("blocked_by_user_id") @db.Uuid
-  requestedAt      DateTime    @default(now()) @map("requested_at") @db.Timestamptz(6)
-  respondedAt      DateTime?   @map("responded_at") @db.Timestamptz(6)
-  updatedAt        DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
-  requester        UserProfile @relation("SocialConnectionRequester", fields: [requesterUserId], references: [id], onDelete: Cascade)
-  addressee        UserProfile @relation("SocialConnectionAddressee", fields: [addresseeUserId], references: [id], onDelete: Cascade)
+  status          String      @default("pending") @db.VarChar(16)
+  blockedByUserId String?     @map("blocked_by_user_id") @db.Uuid
+  requestedAt     DateTime    @default(now()) @map("requested_at") @db.Timestamptz(6)
+  respondedAt     DateTime?   @map("responded_at") @db.Timestamptz(6)
+  updatedAt       DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  requester       UserProfile @relation("SocialConnectionRequester", fields: [requesterUserId], references: [id], onDelete: Cascade)
+  addressee       UserProfile @relation("SocialConnectionAddressee", fields: [addresseeUserId], references: [id], onDelete: Cascade)
 
   @@index([requesterUserId, status], map: "idx_social_connection_requester_status")
   @@index([addresseeUserId, status], map: "idx_social_connection_addressee_status")
