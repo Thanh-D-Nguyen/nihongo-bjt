@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, ServiceUnavailableException } from "@nestjs/common";
 import { createPrismaClient, type PrismaClient } from "@nihongo-bjt/database";
 
 import { LotoLabService } from "../loto/loto-lab.service.js";
@@ -27,7 +27,12 @@ export class LotoDataProvider {
   }
 
   async fetchLotoData(game: LotoGame): Promise<LotoData> {
-    const count = await this.prisma.lotoDraw.count({ where: { game } });
+    let count = await this.prisma.lotoDraw.count({ where: { game } });
+    if (count < 10) {
+      this.logger.log(`Only ${count} ${game} draws in DB; synchronizing the configured CSV source`);
+      await this.lotoLab.fetchAndImportCsv(game);
+      count = await this.prisma.lotoDraw.count({ where: { game } });
+    }
     if (count >= 10) {
       const data = await this.lotoLab.latestData(game);
       return {
@@ -38,39 +43,12 @@ export class LotoDataProvider {
         coldNumbers: data.coldNumbers,
         overdueNumbers: data.overdueNumbers,
         generatedSets: data.generatedSets,
-        japaneseSentence: data.japaneseSentence,
+        japaneseSentence: data.japaneseSentence
       };
     }
 
-    this.logger.warn(`Only ${count} ${game} draws in DB, using statistical fallback`);
-    return this.generateStatisticalMock(game);
-  }
-
-  private generateStatisticalMock(game: LotoGame): LotoData {
-    const max = game === "loto7" ? 37 : 43;
-    const mainCount = game === "loto7" ? 7 : 6;
-    const frequencyMap: Record<number, number> = {};
-    for (let i = 1; i <= max; i++) {
-      frequencyMap[i] = Math.floor(Math.random() * 80) + 20;
-    }
-
-    const sorted = Object.entries(frequencyMap)
-      .map(([num, freq]) => ({ num: parseInt(num, 10), freq }))
-      .sort((a, b) => b.freq - a.freq);
-
-    const hotNumbers = sorted.slice(0, mainCount).map((e) => e.num);
-    const coldNumbers = sorted.slice(-mainCount).map((e) => e.num);
-
-    const recentResults: number[][] = [];
-    for (let i = 0; i < 5; i++) {
-      const draw: number[] = [];
-      while (draw.length < mainCount) {
-        const n = Math.floor(Math.random() * max) + 1;
-        if (!draw.includes(n)) draw.push(n);
-      }
-      recentResults.push(draw.sort((a, b) => a - b));
-    }
-
-    return { game, recentResults, frequencyMap, hotNumbers, coldNumbers, overdueNumbers: coldNumbers };
+    throw new ServiceUnavailableException(
+      `The ${game} source returned only ${count} historical draws; at least 10 are required`
+    );
   }
 }

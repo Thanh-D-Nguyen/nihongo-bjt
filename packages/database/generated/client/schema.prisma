@@ -1600,6 +1600,7 @@ model LotoGenerationRun {
   contextJson          Json               @default("{}") @map("context_json")
   japaneseSentenceJson Json?              @map("japanese_sentence_json")
   selectedSetId        String?            @map("selected_set_id") @db.Uuid
+  autopilotKey         String?            @unique(map: "uq_loto_generation_run_autopilot_key") @map("autopilot_key") @db.VarChar(64)
   createdByAdminId     String?            @map("created_by_admin_id") @db.Uuid
   createdAt            DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt            DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)

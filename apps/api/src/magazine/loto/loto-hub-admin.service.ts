@@ -27,7 +27,12 @@ interface LotoArticleContent {
 export class LotoHubAdminService {
   private readonly prisma: PrismaClient = createPrismaClient();
 
-  async listPredictions(game: LotoGame, approvalStatus: string | undefined, page: number, limit: number) {
+  async listPredictions(
+    game: LotoGame,
+    approvalStatus: string | undefined,
+    page: number,
+    limit: number
+  ) {
     const widgetKind = `magazine_${game}`;
     const where: Record<string, unknown> = { widgetKind };
     if (approvalStatus) where.approvalStatus = approvalStatus;
@@ -39,10 +44,10 @@ export class LotoHubAdminService {
         skip: (page - 1) * limit,
         take: limit,
         include: {
-          vocabItems: { orderBy: { displayOrder: "asc" } },
-        },
+          vocabItems: { orderBy: { displayOrder: "asc" } }
+        }
       }),
-      this.prisma.magazineArticle.count({ where }),
+      this.prisma.magazineArticle.count({ where })
     ]);
 
     return {
@@ -59,11 +64,11 @@ export class LotoHubAdminService {
         approvedAt: a.approvedAt?.toISOString() ?? null,
         contentJson: a.contentJson,
         vocabItems: a.vocabItems,
-        createdAt: a.createdAt.toISOString(),
+        createdAt: a.createdAt.toISOString()
       })),
       total,
       page,
-      limit,
+      limit
     };
   }
 
@@ -71,7 +76,7 @@ export class LotoHubAdminService {
     const article = await this.prisma.magazineArticle.findUnique({ where: { id: articleId } });
     if (!article) throw new NotFoundException("Prediction not found");
     if (!article.widgetKind.startsWith("magazine_loto")) {
-      throw new BadRequestException("Not a loto prediction article");
+      throw new BadRequestException("Not a Loto reference-combination article");
     }
 
     const updated = await this.prisma.magazineArticle.update({
@@ -81,8 +86,8 @@ export class LotoHubAdminService {
         approvedBy: adminId,
         approvedAt: new Date(),
         status: "published",
-        publishedAt: article.publishedAt ?? new Date(),
-      },
+        publishedAt: article.publishedAt ?? new Date()
+      }
     });
 
     return { id: updated.id, approvalStatus: updated.approvalStatus, status: updated.status };
@@ -92,21 +97,27 @@ export class LotoHubAdminService {
     const article = await this.prisma.magazineArticle.findUnique({ where: { id: articleId } });
     if (!article) throw new NotFoundException("Prediction not found");
     if (!article.widgetKind.startsWith("magazine_loto")) {
-      throw new BadRequestException("Not a loto prediction article");
+      throw new BadRequestException("Not a Loto reference-combination article");
     }
 
     const updated = await this.prisma.magazineArticle.update({
       where: { id: articleId },
       data: {
         approvalStatus: "rejected",
-        status: "draft",
-      },
+        status: "draft"
+      }
     });
 
     return { id: updated.id, approvalStatus: updated.approvalStatus, status: updated.status };
   }
 
-  async inputResult(body: { game: string; drawNumber: number; drawDate: string; mainNumbers: number[]; bonusNumbers: number[] }) {
+  async inputResult(body: {
+    game: string;
+    drawNumber: number;
+    drawDate: string;
+    mainNumbers: number[];
+    bonusNumbers: number[];
+  }) {
     const game = body.game as LotoGame;
     const spec = LOTO_GAME_SPECS[game];
     if (!spec) throw new BadRequestException("Invalid game");
@@ -127,14 +138,14 @@ export class LotoHubAdminService {
         drawDate,
         mainNumbers: body.mainNumbers,
         bonusNumbers: body.bonusNumbers,
-        sourceProvider: "admin_input",
+        sourceProvider: "admin_input"
       },
       update: {
         drawDate,
         mainNumbers: body.mainNumbers,
         bonusNumbers: body.bonusNumbers,
-        sourceProvider: "admin_input",
-      },
+        sourceProvider: "admin_input"
+      }
     });
 
     return {
@@ -143,7 +154,7 @@ export class LotoHubAdminService {
       drawNumber: result.drawNumber,
       drawDate: toDateKey(result.drawDate),
       mainNumbers: result.mainNumbers,
-      bonusNumbers: result.bonusNumbers,
+      bonusNumbers: result.bonusNumbers
     };
   }
 
@@ -153,7 +164,7 @@ export class LotoHubAdminService {
     const articles = await this.prisma.magazineArticle.findMany({
       where: { widgetKind, status: "published" },
       orderBy: { contentDate: "desc" },
-      take: 200,
+      take: 200
     });
 
     const dates = articles.map((a) => a.contentDate);
@@ -195,7 +206,7 @@ export class LotoHubAdminService {
     const articleIds = articles.map((a) => a.id);
     const totalViews = articleIds.length
       ? await this.prisma.magazineUserRead.count({
-          where: { articleId: { in: articleIds } },
+          where: { articleId: { in: articleIds } }
         })
       : 0;
 
@@ -207,7 +218,7 @@ export class LotoHubAdminService {
       bestHit,
       bestDrawNumber,
       hitDistribution,
-      totalViews,
+      totalViews
     };
   }
 }

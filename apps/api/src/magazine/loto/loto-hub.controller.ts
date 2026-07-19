@@ -17,27 +17,23 @@ export class LotoHubController {
   constructor(@Inject(LotoHubService) private readonly hub: LotoHubService) {}
 
   @Get("feed")
-  @ApiOperation({ summary: "Loto prediction feed with matched results" })
+  @ApiOperation({ summary: "Loto reference-combination feed with matched results" })
   @ApiQuery({ name: "game", required: false, enum: ["loto6", "loto7"] })
   @ApiQuery({ name: "page", required: false })
   @ApiQuery({ name: "limit", required: false })
-  feed(
-    @Query("game") game?: string,
-    @Query("page") page?: string,
-    @Query("limit") limit?: string,
-  ) {
+  feed(@Query("game") game?: string, @Query("page") page?: string, @Query("limit") limit?: string) {
     return this.hub.feed(gameParam(game), Number(page) || 1, Math.min(Number(limit) || 10, 50));
   }
 
   @Get("next-draw")
-  @ApiOperation({ summary: "Latest prediction for upcoming draw (hero section)" })
+  @ApiOperation({ summary: "Latest probability-learning combination for the upcoming draw" })
   @ApiQuery({ name: "game", required: false, enum: ["loto6", "loto7"] })
   nextDraw(@Query("game") game?: string) {
     return this.hub.nextDraw(gameParam(game));
   }
 
   @Get("stats")
-  @ApiOperation({ summary: "Hit rate summary and streak info" })
+  @ApiOperation({ summary: "Historical combination/result comparison summary" })
   @ApiQuery({ name: "game", required: false, enum: ["loto6", "loto7"] })
   stats(@Query("game") game?: string) {
     return this.hub.stats(gameParam(game));

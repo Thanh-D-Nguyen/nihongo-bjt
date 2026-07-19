@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { createPrismaClient, type PrismaClient } from "@nihongo-bjt/database";
+import { jstDateKey, toDatabaseDate } from "./loto-calendar.js";
 import { LOTO_SCHEDULE, type LotoGame } from "./loto-types.js";
 
 interface PredictionFeedItem {
@@ -15,7 +16,12 @@ interface PredictionFeedItem {
   result: { mainNumbers: number[]; bonusNumbers: number[] } | null;
   hitCount: number;
   bonusHit: boolean;
-  jpSentence: { textJp: string; reading: string; textVi: string; vocabItems: Array<{ wordJp: string; reading: string; meaningVi: string }> } | null;
+  jpSentence: {
+    textJp: string;
+    reading: string;
+    textVi: string;
+    vocabItems: Array<{ wordJp: string; reading: string; meaningVi: string }>;
+  } | null;
   approvalStatus: string;
   publishedAt: string | null;
 }
@@ -50,29 +56,29 @@ export class LotoHubService {
         where: {
           widgetKind,
           status: "published",
-          approvalStatus: { in: ["approved", "auto_approved"] },
+          approvalStatus: { in: ["approved", "auto_approved"] }
         },
         orderBy: { contentDate: "desc" },
         skip: (page - 1) * limit,
         take: limit,
         include: {
-          vocabItems: { orderBy: { displayOrder: "asc" } },
-        },
+          vocabItems: { orderBy: { displayOrder: "asc" } }
+        }
       }),
       this.prisma.magazineArticle.count({
         where: {
           widgetKind,
           status: "published",
-          approvalStatus: { in: ["approved", "auto_approved"] },
-        },
-      }),
+          approvalStatus: { in: ["approved", "auto_approved"] }
+        }
+      })
     ]);
 
     // Fetch matching draw results for the date range
     const dates = articles.map((a) => a.contentDate);
     const draws = dates.length
       ? await this.prisma.lotoDraw.findMany({
-          where: { game, drawDate: { in: dates } },
+          where: { game, drawDate: { in: dates } }
         })
       : [];
     const drawByDate = new Map(draws.map((d) => [toDateKey(d.drawDate), d]));
@@ -85,17 +91,19 @@ export class LotoHubService {
       const result = drawByDate.get(toDateKey(article.contentDate)) ?? null;
 
       const primarySet = sets[0];
-      const { hitCount } = primarySet && result
-        ? computeHits(primarySet.mainNumbers, result.mainNumbers)
-        : { hitCount: 0 };
+      const { hitCount } =
+        primarySet && result
+          ? computeHits(primarySet.mainNumbers, result.mainNumbers)
+          : { hitCount: 0 };
 
-      const bonusHit = primarySet && result
-        ? result.bonusNumbers.some((b) => primarySet.mainNumbers.includes(b))
-        : false;
+      const bonusHit =
+        primarySet && result
+          ? result.bonusNumbers.some((b) => primarySet.mainNumbers.includes(b))
+          : false;
 
       const schedule = LOTO_SCHEDULE[game];
       const dateObj = new Date(toDateKey(article.contentDate) + "T00:00:00.000Z");
-      const dow = dateObj.getDay();
+      const dow = dateObj.getUTCDay();
       const dayJp = ["日", "月", "火", "水", "木", "金", "土"][dow];
 
       return {
@@ -108,12 +116,14 @@ export class LotoHubService {
         scheduleVi: schedule.labelVi,
         game,
         sets,
-        result: result ? { mainNumbers: result.mainNumbers, bonusNumbers: result.bonusNumbers } : null,
+        result: result
+          ? { mainNumbers: result.mainNumbers, bonusNumbers: result.bonusNumbers }
+          : null,
         hitCount,
         bonusHit,
         jpSentence,
         approvalStatus: article.approvalStatus,
-        publishedAt: article.publishedAt?.toISOString() ?? null,
+        publishedAt: article.publishedAt?.toISOString() ?? null
       };
     });
 
@@ -122,21 +132,20 @@ export class LotoHubService {
 
   async nextDraw(game: LotoGame) {
     const widgetKind = `magazine_${game}`;
-    const today = new Date();
-    today.setUTCHours(0, 0, 0, 0);
+    const today = toDatabaseDate(jstDateKey(new Date()));
 
-    // Find prediction for today or future
+    // Find a reference combination for today or a future draw.
     const article = await this.prisma.magazineArticle.findFirst({
       where: {
         widgetKind,
         status: "published",
         approvalStatus: { in: ["approved", "auto_approved"] },
-        contentDate: { gte: today },
+        contentDate: { gte: today }
       },
       orderBy: { contentDate: "asc" },
       include: {
-        vocabItems: { orderBy: { displayOrder: "asc" } },
-      },
+        vocabItems: { orderBy: { displayOrder: "asc" } }
+      }
     });
 
     if (!article) return null;
@@ -148,12 +157,14 @@ export class LotoHubService {
 
     // Countdown in days
     const drawDateObj = new Date(drawDate + "T00:00:00.000Z");
-    const nowDate = new Date();
-    nowDate.setUTCHours(0, 0, 0, 0);
-    const daysUntil = Math.max(0, Math.round((drawDateObj.getTime() - nowDate.getTime()) / 86400000));
+    const nowDate = toDatabaseDate(jstDateKey(new Date()));
+    const daysUntil = Math.max(
+      0,
+      Math.round((drawDateObj.getTime() - nowDate.getTime()) / 86400000)
+    );
 
     const schedule = LOTO_SCHEDULE[game];
-    const dow = drawDateObj.getDay();
+    const dow = drawDateObj.getUTCDay();
     const dayJp = ["日", "月", "火", "水", "木", "金", "土"][dow];
 
     return {
@@ -170,32 +181,32 @@ export class LotoHubService {
       vocabItems: article.vocabItems.map((v) => ({
         wordJp: v.wordJp,
         reading: v.reading,
-        meaningVi: v.meaningVi,
+        meaningVi: v.meaningVi
       })),
       confidence: sets[0]?.score ?? null,
-      daysUntil,
+      daysUntil
     };
   }
 
   async stats(game: LotoGame) {
     const widgetKind = `magazine_${game}`;
 
-    // Get all published predictions
+    // Get all published reference combinations.
     const articles = await this.prisma.magazineArticle.findMany({
       where: {
         widgetKind,
         status: "published",
-        approvalStatus: { in: ["approved", "auto_approved"] },
+        approvalStatus: { in: ["approved", "auto_approved"] }
       },
       orderBy: { contentDate: "desc" },
-      take: 100,
+      take: 100
     });
 
     // Get all draws for matching
     const dates = articles.map((a) => a.contentDate);
     const draws = dates.length
       ? await this.prisma.lotoDraw.findMany({
-          where: { game, drawDate: { in: dates } },
+          where: { game, drawDate: { in: dates } }
         })
       : [];
     const drawByDate = new Map(draws.map((d) => [toDateKey(d.drawDate), d]));
@@ -247,7 +258,7 @@ export class LotoHubService {
       bestHitCount,
       bestDrawNumber,
       currentStreak,
-      maxStreak,
+      maxStreak
     };
   }
 }

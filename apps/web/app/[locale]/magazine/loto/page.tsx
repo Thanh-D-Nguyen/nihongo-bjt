@@ -9,20 +9,20 @@ const messages: Record<string, typeof vi> = { ja, vi, en };
 
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+export async function generateMetadata({
+  params
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
   const { locale } = await params;
   const t = messages[locale] ?? messages.vi;
   return {
-    title: `${t.lotoHub?.title ?? "Loto Lab"} — KotobaWorks`,
-    description: t.lotoHub?.subtitle ?? "Dự đoán Loto với tiếng Nhật",
+    title: `${t.lotoHub?.title ?? "Loto & xác suất"} — KotobaWorks`,
+    description: t.lotoHub?.subtitle ?? "Học xác suất và tiếng Nhật qua dữ liệu Loto"
   };
 }
 
-export default async function LotoHubPage({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}) {
+export default async function LotoHubPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const t = messages[locale] ?? messages.vi;
 

@@ -1137,6 +1137,7 @@ exports.Prisma.LotoGenerationRunScalarFieldEnum = {
   contextJson: 'contextJson',
   japaneseSentenceJson: 'japaneseSentenceJson',
   selectedSetId: 'selectedSetId',
+  autopilotKey: 'autopilotKey',
   createdByAdminId: 'createdByAdminId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

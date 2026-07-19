@@ -2,21 +2,68 @@ import { BadRequestException, Injectable, Logger, NotFoundException } from "@nes
 import { createPrismaClient, Prisma, type PrismaClient } from "@nihongo-bjt/database";
 
 import { parseLotoCsv } from "./loto-csv.js";
+import { jstDateKey, resolveAutopilotTarget, toDatabaseDate } from "./loto-calendar.js";
 import { generateLotoSets, summarizeLotoDraws } from "./loto-engine.js";
-import { LOTO_GAME_SPECS, LOTO_SCHEDULE, type LotoDrawInput, type LotoGame, type LotoGenerationInput } from "./loto-types.js";
+import {
+  LOTO_GAME_SPECS,
+  LOTO_SCHEDULE,
+  type LotoDrawInput,
+  type LotoGame,
+  type LotoGenerationInput
+} from "./loto-types.js";
 
 const DEFAULT_CSV_URLS: Record<LotoGame, string> = {
   loto6: "https://loto6.thekyo.jp/data/loto6.csv",
-  loto7: "https://loto7.thekyo.jp/data/loto7.csv",
+  loto7: "https://loto7.thekyo.jp/data/loto7.csv"
 };
 
-/** JST calendar date (UTC+9, no DST) as YYYY-MM-DD. */
-function jstDateKey(at: Date): string {
-  return new Date(at.getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
+const DEFAULT_CSV_HOSTS = new Set(["loto6.thekyo.jp", "loto7.thekyo.jp"]);
+const MAX_CSV_BYTES = 5 * 1024 * 1024;
+
+function assertAllowedCsvUrl(value: string): URL {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new BadRequestException("Loto CSV source URL is invalid");
+  }
+  const configuredHosts = (process.env.LOTO_CSV_ALLOWED_HOSTS ?? "")
+    .split(",")
+    .map((host) => host.trim().toLowerCase())
+    .filter(Boolean);
+  const allowedHosts = new Set([...DEFAULT_CSV_HOSTS, ...configuredHosts]);
+  if (
+    url.protocol !== "https:" ||
+    url.username ||
+    url.password ||
+    url.port ||
+    !allowedHosts.has(url.hostname.toLowerCase())
+  ) {
+    throw new BadRequestException(`Loto CSV source is not allowlisted: ${url.hostname}`);
+  }
+  return url;
+}
+
+async function readResponseWithLimit(response: Response, maxBytes: number): Promise<Buffer> {
+  if (!response.body) throw new BadRequestException("Loto CSV response has no body");
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let totalBytes = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    totalBytes += value.byteLength;
+    if (totalBytes > maxBytes) {
+      await reader.cancel();
+      throw new BadRequestException(`Loto CSV exceeds the ${maxBytes} byte limit`);
+    }
+    chunks.push(value);
+  }
+  return Buffer.concat(chunks, totalBytes);
 }
 
 function toDateOnly(value: string | Date): Date {
-  const date = typeof value === "string" ? new Date(`${value.slice(0, 10)}T00:00:00.000Z`) : value;
+  const date = typeof value === "string" ? toDatabaseDate(value.slice(0, 10)) : value;
   if (Number.isNaN(date.getTime())) throw new BadRequestException("Invalid date");
   date.setUTCHours(0, 0, 0, 0);
   return date;
@@ -58,7 +105,7 @@ function normalizeDraw(row: {
     carryoverAmount: sanitizeBigInt(row.carryoverAmount),
     salesAmount: sanitizeBigInt(row.salesAmount),
     sourceUrl: row.sourceUrl,
-    sourceProvider: row.sourceProvider,
+    sourceProvider: row.sourceProvider
   };
 }
 
@@ -76,8 +123,8 @@ function japaneseSentence(input: LotoGenerationInput) {
     vocabItems: [
       { wordJp: "過去", reading: "かこ", meaningVi: "quá khứ" },
       { wordJp: "数字", reading: "すうじ", meaningVi: "con số" },
-      { wordJp: "落ち着く", reading: "おちつく", meaningVi: "bình tĩnh" },
-    ],
+      { wordJp: "落ち着く", reading: "おちつく", meaningVi: "bình tĩnh" }
+    ]
   };
 }
 
@@ -93,22 +140,35 @@ export class LotoLabService {
   }
 
   /**
-   * Download the official thekyo CSV (Shift_JIS encoded), then upsert only the
+   * Download the allowlisted third-party thekyo CSV (Shift_JIS encoded), then upsert only the
    * latest draws (new rows + the last few existing rows to absorb corrections).
    * Returns import counts and the resolved source URL.
    */
   async fetchAndImportCsv(game: LotoGame) {
-    const url = this.csvUrl(game);
+    const sourceUrl = assertAllowedCsvUrl(this.csvUrl(game));
     let response: Response;
     try {
-      response = await fetch(url, { signal: AbortSignal.timeout(25_000) });
+      response = await fetch(sourceUrl, {
+        headers: { Accept: "text/csv,application/octet-stream;q=0.9" },
+        redirect: "error",
+        signal: AbortSignal.timeout(25_000)
+      });
     } catch (e) {
-      throw new BadRequestException(`Failed to download ${game} CSV from ${url}: ${e instanceof Error ? e.message : "network error"}`);
+      throw new BadRequestException(
+        `Failed to download ${game} CSV from ${sourceUrl.href}: ${e instanceof Error ? e.message : "network error"}`
+      );
     }
     if (!response.ok) {
-      throw new BadRequestException(`Source returned ${response.status} for ${game} CSV (${url})`);
+      throw new BadRequestException(
+        `Source returned ${response.status} for ${game} CSV (${sourceUrl.href})`
+      );
     }
-    const buffer = Buffer.from(await response.arrayBuffer());
+    const resolvedUrl = assertAllowedCsvUrl(response.url || sourceUrl.href);
+    const declaredLength = Number(response.headers.get("content-length") ?? 0);
+    if (declaredLength > MAX_CSV_BYTES) {
+      throw new BadRequestException(`${game} CSV exceeds the ${MAX_CSV_BYTES} byte limit`);
+    }
+    const buffer = await readResponseWithLimit(response, MAX_CSV_BYTES);
     // thekyo serves Shift_JIS; decode accordingly so Japanese headers map correctly.
     const csvText = new TextDecoder("shift-jis").decode(buffer);
 
@@ -123,7 +183,7 @@ export class LotoLabService {
     // Incremental: only touch new draws + the last 3 existing ones (corrections).
     const maxExisting = await this.prisma.lotoDraw.aggregate({
       where: { game },
-      _max: { drawNumber: true },
+      _max: { drawNumber: true }
     });
     const cutoff = (maxExisting._max.drawNumber ?? 0) - 3;
     const toUpsert = parsed.filter((draw) => draw.drawNumber > cutoff);
@@ -132,45 +192,41 @@ export class LotoLabService {
     let updated = 0;
     for (const draw of toUpsert) {
       const existing = await this.prisma.lotoDraw.findUnique({
-        where: { game_drawNumber: { game: draw.game, drawNumber: draw.drawNumber } },
+        where: { game_drawNumber: { game: draw.game, drawNumber: draw.drawNumber } }
       });
-      await this.upsertDraw({ ...draw, sourceUrl: url, sourceProvider: "thekyo_csv" });
+      await this.upsertDraw({
+        ...draw,
+        sourceUrl: resolvedUrl.href,
+        sourceProvider: "thekyo_csv_third_party"
+      });
       if (existing) updated += 1;
       else created += 1;
     }
 
-    return { game, url, created, updated, processed: toUpsert.length, total: parsed.length };
-  }
-
-  /** First scheduled draw date strictly after today (JST), as YYYY-MM-DD. */
-  private nextScheduledDrawDate(game: LotoGame): string {
-    const drawDays = LOTO_SCHEDULE[game].drawDays;
-    const cursor = new Date(`${jstDateKey(new Date())}T00:00:00.000Z`);
-    for (let i = 0; i < 14; i += 1) {
-      cursor.setUTCDate(cursor.getUTCDate() + 1);
-      if (drawDays.includes(cursor.getUTCDay())) return cursor.toISOString().slice(0, 10);
-    }
-    // Fallback (should never hit): one week out.
-    cursor.setUTCDate(cursor.getUTCDate() + 7);
-    return cursor.toISOString().slice(0, 10);
-  }
-
-  /** UTC instant for start-of-day (00:00 JST) of the given JST date key. */
-  private jstStartOfDayUtc(dateKey: string): Date {
-    return new Date(`${dateKey}T00:00:00+09:00`);
+    return {
+      game,
+      url: resolvedUrl.href,
+      sourceProvider: "thekyo_csv_third_party",
+      officialVerificationUrl: "https://www.mizuhobank.co.jp/takarakuji/check/loto/index.html",
+      created,
+      updated,
+      processed: toUpsert.length,
+      total: parsed.length
+    };
   }
 
   /**
    * Autopilot tick. Designed to be called repeatedly inside a retry window
-   * (e.g. every 30 min after the draw). It only publishes once the official
-   * result for today's draw has actually appeared in the CSV; otherwise it
+   * (e.g. every 30 min after the draw). It only publishes once the latest
+   * scheduled result has appeared in the CSV; otherwise it
    * reports `waiting_result` so the next tick can retry. Idempotent: a second
    * tick after a successful publish reports `already_done`.
    */
   async runAutopilotIfResultReady(game: LotoGame): Promise<{
-    status: "skipped_not_draw_day" | "waiting_result" | "already_done" | "published";
+    status: "waiting_result" | "already_done" | "published";
     game: LotoGame;
-    todayDrawDate: string;
+    todayDate: string;
+    latestOfficialDrawDate?: string;
     targetDrawDate?: string;
     imported?: Awaited<ReturnType<LotoLabService["fetchAndImportCsv"]>>;
     runId?: string;
@@ -178,57 +234,106 @@ export class LotoLabService {
     publishedSet?: number[];
   }> {
     const todayKey = jstDateKey(new Date());
-    const todayDow = this.jstStartOfDayUtc(todayKey).getUTCDay();
-    if (!LOTO_SCHEDULE[game].drawDays.includes(todayDow)) {
-      return { status: "skipped_not_draw_day", game, todayDrawDate: todayKey };
-    }
-
     const imported = await this.fetchAndImportCsv(game);
 
-    // Has today's official result landed in the CSV yet?
-    const todayDraw = await this.prisma.lotoDraw.findFirst({
-      where: { game, drawDate: this.jstStartOfDayUtc(todayKey) },
+    const latestOfficialDraw = await this.prisma.lotoDraw.findFirst({
+      where: { game },
+      orderBy: [{ drawDate: "desc" }, { drawNumber: "desc" }]
     });
-    if (!todayDraw) {
-      return { status: "waiting_result", game, todayDrawDate: todayKey, imported };
+    if (!latestOfficialDraw) {
+      return { status: "waiting_result", game, todayDate: todayKey, imported };
     }
 
-    const targetDrawDate = this.nextScheduledDrawDate(game);
-
-    // Already published a prediction for the next draw during this cycle?
-    const existingRun = await this.prisma.lotoGenerationRun.findFirst({
-      where: {
+    const latestOfficialDrawDate = toDateKey(latestOfficialDraw.drawDate);
+    const target = resolveAutopilotTarget(game, latestOfficialDrawDate, todayKey);
+    if (target.status === "waiting_result") {
+      return {
+        status: "waiting_result",
         game,
-        targetDrawDate: this.jstStartOfDayUtc(targetDrawDate),
-        createdAt: { gte: this.jstStartOfDayUtc(todayKey) },
-      },
+        todayDate: todayKey,
+        latestOfficialDrawDate,
+        targetDrawDate: target.targetDrawDate,
+        imported
+      };
+    }
+    const { targetDrawDate } = target;
+
+    // A target date identifies one automatic generation cycle regardless of retry time.
+    const autopilotKey = `${game}:${targetDrawDate}`;
+    const existingRun = await this.prisma.lotoGenerationRun.findUnique({
+      where: { autopilotKey },
+      include: { sets: { orderBy: { rank: "asc" }, take: 1 } }
     });
     if (existingRun) {
-      return { status: "already_done", game, todayDrawDate: todayKey, targetDrawDate, imported, runId: existingRun.id };
+      if (existingRun.status !== "published") {
+        const topSet = existingRun.sets[0];
+        if (!topSet) throw new BadRequestException("Autopilot run has no generated sets");
+        const published = await this.publishToMagazine(existingRun.id, [topSet.id], null);
+        return {
+          status: "published",
+          game,
+          todayDate: todayKey,
+          latestOfficialDrawDate,
+          targetDrawDate,
+          imported,
+          runId: existingRun.id,
+          publishedSlug: published.slug,
+          publishedSet: topSet.mainNumbers
+        };
+      }
+      return {
+        status: "already_done",
+        game,
+        todayDate: todayKey,
+        latestOfficialDrawDate,
+        targetDrawDate,
+        imported,
+        runId: existingRun.id
+      };
     }
 
-    const run = await this.generate({
-      game,
-      targetDrawDate,
-      setCount: 3,
-      seed: `autopilot-${game}-${targetDrawDate}-${Date.now()}`,
-    });
+    let run: Awaited<ReturnType<LotoLabService["generate"]>>;
+    try {
+      run = await this.generate(
+        {
+          game,
+          targetDrawDate,
+          setCount: 3,
+          seed: `autopilot-${game}-${targetDrawDate}`
+        },
+        undefined,
+        autopilotKey
+      );
+    } catch (error) {
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "code" in error &&
+        error.code === "P2002"
+      ) {
+        // Another replica won the unique autopilot key. Reconcile that run;
+        // this also resumes publication if the winner stopped after generation.
+        return this.runAutopilotIfResultReady(game);
+      }
+      throw error;
+    }
     const topSet = run.sets[0];
     if (!topSet) throw new BadRequestException("Generation produced no sets");
 
     const published = await this.publishToMagazine(run.id, [topSet.id], null);
     this.logger.log(
-      `[autopilot:${game}] result ready (draw ${todayDraw.drawNumber}); imported ${imported.created} new / ${imported.updated} updated; published ${published.slug} for ${targetDrawDate}`,
+      `[autopilot:${game}] result ready (draw ${latestOfficialDraw.drawNumber}); imported ${imported.created} new / ${imported.updated} updated; published ${published.slug} for ${targetDrawDate}`
     );
     return {
       status: "published",
       game,
-      todayDrawDate: todayKey,
+      todayDate: todayKey,
+      latestOfficialDrawDate,
       targetDrawDate,
       imported,
       runId: run.id,
       publishedSlug: published.slug,
-      publishedSet: topSet.mainNumbers,
+      publishedSet: topSet.mainNumbers
     };
   }
 
@@ -245,7 +350,7 @@ export class LotoLabService {
 
     for (const draw of draws) {
       const existing = await this.prisma.lotoDraw.findUnique({
-        where: { game_drawNumber: { game: draw.game, drawNumber: draw.drawNumber } },
+        where: { game_drawNumber: { game: draw.game, drawNumber: draw.drawNumber } }
       });
       await this.upsertDraw(draw);
       if (existing) updated += 1;
@@ -257,8 +362,13 @@ export class LotoLabService {
 
   async upsertDraw(draw: LotoDrawInput) {
     const spec = LOTO_GAME_SPECS[draw.game];
-    if (draw.mainNumbers.length !== spec.mainCount || draw.bonusNumbers.length !== spec.bonusCount) {
-      throw new BadRequestException(`${draw.game} requires ${spec.mainCount} numbers and ${spec.bonusCount} bonus numbers`);
+    if (
+      draw.mainNumbers.length !== spec.mainCount ||
+      draw.bonusNumbers.length !== spec.bonusCount
+    ) {
+      throw new BadRequestException(
+        `${draw.game} requires ${spec.mainCount} numbers and ${spec.bonusCount} bonus numbers`
+      );
     }
     const saved = await this.prisma.lotoDraw.upsert({
       where: { game_drawNumber: { game: draw.game, drawNumber: draw.drawNumber } },
@@ -271,7 +381,7 @@ export class LotoLabService {
         carryoverAmount: draw.carryoverAmount,
         salesAmount: draw.salesAmount,
         sourceUrl: draw.sourceUrl,
-        sourceProvider: draw.sourceProvider ?? "csv_import",
+        sourceProvider: draw.sourceProvider ?? "csv_import"
       },
       update: {
         drawDate: toDateOnly(draw.drawDate),
@@ -281,8 +391,8 @@ export class LotoLabService {
         salesAmount: draw.salesAmount,
         sourceUrl: draw.sourceUrl,
         sourceProvider: draw.sourceProvider ?? "csv_import",
-        importedAt: new Date(),
-      },
+        importedAt: new Date()
+      }
     });
     return normalizeDraw(saved);
   }
@@ -291,7 +401,7 @@ export class LotoLabService {
     const rows = await this.prisma.lotoDraw.findMany({
       where: { game },
       orderBy: [{ drawDate: "desc" }, { drawNumber: "desc" }],
-      take: Math.min(Math.max(limit, 1), 100),
+      take: Math.min(Math.max(limit, 1), 100)
     });
     return rows.map(normalizeDraw);
   }
@@ -299,34 +409,39 @@ export class LotoLabService {
   async summary(game: LotoGame) {
     const rows = await this.prisma.lotoDraw.findMany({
       where: { game },
-      orderBy: [{ drawDate: "desc" }, { drawNumber: "desc" }],
+      orderBy: [{ drawDate: "desc" }, { drawNumber: "desc" }]
     });
     const draws = rows.map((row) => ({
       game,
       drawNumber: row.drawNumber,
       drawDate: toDateKey(row.drawDate),
       mainNumbers: row.mainNumbers,
-      bonusNumbers: row.bonusNumbers,
+      bonusNumbers: row.bonusNumbers
     }));
     const stats = summarizeLotoDraws(game, draws);
     return {
       game,
       drawCount: rows.length,
       lastDraw: rows[0] ? normalizeDraw(rows[0]) : null,
-      ...stats,
+      lastImportedAt: rows[0]?.importedAt.toISOString() ?? null,
+      sourceProvider: rows[0]?.sourceProvider ?? null,
+      sourceUrl: rows[0]?.sourceUrl ?? null,
+      ...stats
     };
   }
 
-  async generate(input: LotoGenerationInput, actorId?: string) {
+  async generate(input: LotoGenerationInput, actorId?: string, autopilotKey?: string) {
     const game = validateGame(input.game);
     const setCount = Math.min(Math.max(Number(input.setCount) || 3, 1), 5);
     const targetDrawDate = toDateOnly(input.targetDrawDate);
     const rows = await this.prisma.lotoDraw.findMany({
       where: { game },
-      orderBy: [{ drawDate: "desc" }, { drawNumber: "desc" }],
+      orderBy: [{ drawDate: "desc" }, { drawNumber: "desc" }]
     });
     if (rows.length < 10) {
-      throw new BadRequestException("Need at least 10 historical draws before generating Loto sets");
+      throw new BadRequestException(
+        "Need at least 10 historical draws before generating Loto sets"
+      );
     }
 
     const drawInputs = rows.map((row) => ({
@@ -334,7 +449,7 @@ export class LotoLabService {
       drawNumber: row.drawNumber,
       drawDate: toDateKey(row.drawDate),
       mainNumbers: row.mainNumbers,
-      bonusNumbers: row.bonusNumbers,
+      bonusNumbers: row.bonusNumbers
     }));
     const generationInput = { ...input, game, setCount, targetDrawDate: toDateKey(targetDrawDate) };
     const sets = generateLotoSets(generationInput, drawInputs);
@@ -348,15 +463,16 @@ export class LotoLabService {
         requestedSetCount: setCount,
         inputConfigJson: {
           pinnedNumbers: input.pinnedNumbers ?? [],
-          excludedNumbers: input.excludedNumbers ?? [],
+          excludedNumbers: input.excludedNumbers ?? []
         } as Prisma.InputJsonValue,
         algorithmWeightsJson: (input.weights ?? {}) as Prisma.InputJsonValue,
         contextJson: {
           weatherText: input.weatherText,
           dreamText: input.dreamText,
-          luckyText: input.luckyText,
+          luckyText: input.luckyText
         } as Prisma.InputJsonValue,
         japaneseSentenceJson: sentence as Prisma.InputJsonValue,
+        autopilotKey,
         createdByAdminId: actorId,
         sets: {
           createMany: {
@@ -366,12 +482,12 @@ export class LotoLabService {
               bonusNumbers: set.bonusNumbers,
               score: set.score,
               explanationJson: set.explanation as Prisma.InputJsonValue,
-              selectedForMagazine: index === 0,
-            })),
-          },
-        },
+              selectedForMagazine: index === 0
+            }))
+          }
+        }
       },
-      include: { sets: { orderBy: { rank: "asc" } } },
+      include: { sets: { orderBy: { rank: "asc" } } }
     });
 
     return this.normalizeRun(run);
@@ -381,7 +497,7 @@ export class LotoLabService {
     const run = await this.prisma.lotoGenerationRun.findFirst({
       where: { game },
       orderBy: { createdAt: "desc" },
-      include: { sets: { orderBy: { rank: "asc" } } },
+      include: { sets: { orderBy: { rank: "asc" } } }
     });
     return run ? this.normalizeRun(run) : null;
   }
@@ -395,9 +511,9 @@ export class LotoLabService {
       generatedSets: run?.sets.map((set) => ({
         mainNumbers: set.mainNumbers,
         bonusNumbers: set.bonusNumbers,
-        score: set.score,
+        score: set.score
       })),
-      japaneseSentence: run?.japaneseSentence,
+      japaneseSentence: run?.japaneseSentence
     };
   }
 
@@ -442,8 +558,8 @@ export class LotoLabService {
         bonusNumbers: set.bonusNumbers,
         score: set.score,
         explanation: set.explanationJson,
-        selectedForMagazine: set.selectedForMagazine,
-      })),
+        selectedForMagazine: set.selectedForMagazine
+      }))
     };
   }
 
@@ -451,7 +567,7 @@ export class LotoLabService {
     const uniqueSetIds = [...new Set(setIds)];
     const run = await this.prisma.lotoGenerationRun.findUnique({
       where: { id: runId },
-      include: { sets: { where: { id: { in: uniqueSetIds } }, orderBy: { rank: "asc" } } },
+      include: { sets: { where: { id: { in: uniqueSetIds } }, orderBy: { rank: "asc" } } }
     });
     if (!run) throw new NotFoundException("Generation run not found");
     if (run.sets.length === 0) throw new BadRequestException("No matching sets found in this run");
@@ -465,7 +581,7 @@ export class LotoLabService {
     const widgetKind = `magazine_${game}`;
     const slug = `${game}-prediction-${dateKey}`;
     const schedule = LOTO_SCHEDULE[game];
-    const dow = targetDate.getDay();
+    const dow = targetDate.getUTCDay();
     const dayJp = ["日", "月", "火", "水", "木", "金", "土"][dow];
 
     // Build content JSON
@@ -483,26 +599,36 @@ export class LotoLabService {
         mainNumbers: s.mainNumbers,
         bonusNumbers: s.bonusNumbers,
         score: s.score,
-        explanation: s.explanationJson,
+        explanation: s.explanationJson
       })),
       japaneseSentence: run.japaneseSentenceJson,
       algorithmWeights: run.algorithmWeightsJson,
+      methodology: "historical_heuristic_equal_odds",
+      riskDisclaimer: {
+        vi: "Mọi tổ hợp hợp lệ đều có xác suất trúng như nhau. Nội dung chỉ dùng để học xác suất và tiếng Nhật, không phải lời khuyên mua xổ số.",
+        ja: "有効な数字の組み合わせの当せん確率はすべて同じです。本内容は確率と日本語の学習用であり、宝くじの購入を勧めるものではありません。",
+        en: "Every valid number combination has the same chance. This content is for probability and Japanese study, not a recommendation to buy lottery tickets."
+      },
+      source: {
+        provider: "historical_draw_database",
+        officialVerificationUrl: "https://www.mizuhobank.co.jp/takarakuji/check/loto/index.html"
+      }
     };
 
     const article = await this.prisma.$transaction(async (tx) => {
       await tx.lotoGeneratedSet.updateMany({
         where: { runId },
-        data: { selectedForMagazine: false },
+        data: { selectedForMagazine: false }
       });
 
       await tx.lotoGeneratedSet.updateMany({
         where: { id: { in: uniqueSetIds }, runId },
-        data: { selectedForMagazine: true },
+        data: { selectedForMagazine: true }
       });
 
       await tx.lotoGenerationRun.update({
         where: { id: runId },
-        data: { selectedSetId: run.sets[0].id },
+        data: { selectedSetId: run.sets[0].id, status: "published" }
       });
 
       // Upsert magazine article (unique on widgetKind + contentDate + locale)
@@ -511,37 +637,37 @@ export class LotoLabService {
           widgetKind_contentDate_locale: {
             widgetKind,
             contentDate: targetDate,
-            locale: "vi",
-          },
+            locale: "vi"
+          }
         },
         create: {
           slug,
           widgetKind,
           contentDate: targetDate,
           locale: "vi",
-          titleJp: `${game.toUpperCase()} 予想 — ${dateKey}（${dayJp}）${schedule.drawTime}`,
-          titleVi: `Dự đoán ${game.toUpperCase()} — ${dateKey} • Quay thưởng ${schedule.drawTime}`,
-          summaryJp: `${schedule.labelJp}｜AI分析による予想数字`,
-          summaryVi: `${schedule.labelVi} | Số dự đoán từ AI`,
+          titleJp: `${game.toUpperCase()} 確率学習セット — ${dateKey}（${dayJp}）${schedule.drawTime}`,
+          titleVi: `Tổ hợp học xác suất ${game.toUpperCase()} — ${dateKey} • ${schedule.drawTime}`,
+          summaryJp: `${schedule.labelJp}｜過去データを使った確率学習用の組み合わせ`,
+          summaryVi: `${schedule.labelVi} | Tổ hợp tham khảo để học xác suất từ dữ liệu quá khứ`,
           contentJson,
           status: "published",
-          approvalStatus: "approved",
+          approvalStatus: adminId ? "approved" : "auto_approved",
           approvedBy: adminId,
           approvedAt: new Date(),
-          publishedAt: new Date(),
+          publishedAt: new Date()
         },
         update: {
-          titleJp: `${game.toUpperCase()} 予想 — ${dateKey}（${dayJp}）${schedule.drawTime}`,
-          titleVi: `Dự đoán ${game.toUpperCase()} — ${dateKey} • Quay thưởng ${schedule.drawTime}`,
-          summaryJp: `${schedule.labelJp}｜AI分析による予想数字`,
-          summaryVi: `${schedule.labelVi} | Số dự đoán từ AI`,
+          titleJp: `${game.toUpperCase()} 確率学習セット — ${dateKey}（${dayJp}）${schedule.drawTime}`,
+          titleVi: `Tổ hợp học xác suất ${game.toUpperCase()} — ${dateKey} • ${schedule.drawTime}`,
+          summaryJp: `${schedule.labelJp}｜過去データを使った確率学習用の組み合わせ`,
+          summaryVi: `${schedule.labelVi} | Tổ hợp tham khảo để học xác suất từ dữ liệu quá khứ`,
           contentJson,
           status: "published",
-          approvalStatus: "approved",
+          approvalStatus: adminId ? "approved" : "auto_approved",
           approvedBy: adminId,
           approvedAt: new Date(),
-          publishedAt: new Date(),
-        },
+          publishedAt: new Date()
+        }
       });
     });
 
@@ -550,7 +676,7 @@ export class LotoLabService {
       slug: article.slug,
       status: article.status,
       publishedAt: article.publishedAt?.toISOString() ?? null,
-      selectedSets: run.sets.length,
+      selectedSets: run.sets.length
     };
   }
 }

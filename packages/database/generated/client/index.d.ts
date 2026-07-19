@@ -108698,6 +108698,7 @@ export namespace Prisma {
     seed: string | null
     requestedSetCount: number | null
     selectedSetId: string | null
+    autopilotKey: string | null
     createdByAdminId: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -108711,6 +108712,7 @@ export namespace Prisma {
     seed: string | null
     requestedSetCount: number | null
     selectedSetId: string | null
+    autopilotKey: string | null
     createdByAdminId: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -108728,6 +108730,7 @@ export namespace Prisma {
     contextJson: number
     japaneseSentenceJson: number
     selectedSetId: number
+    autopilotKey: number
     createdByAdminId: number
     createdAt: number
     updatedAt: number
@@ -108751,6 +108754,7 @@ export namespace Prisma {
     seed?: true
     requestedSetCount?: true
     selectedSetId?: true
+    autopilotKey?: true
     createdByAdminId?: true
     createdAt?: true
     updatedAt?: true
@@ -108764,6 +108768,7 @@ export namespace Prisma {
     seed?: true
     requestedSetCount?: true
     selectedSetId?: true
+    autopilotKey?: true
     createdByAdminId?: true
     createdAt?: true
     updatedAt?: true
@@ -108781,6 +108786,7 @@ export namespace Prisma {
     contextJson?: true
     japaneseSentenceJson?: true
     selectedSetId?: true
+    autopilotKey?: true
     createdByAdminId?: true
     createdAt?: true
     updatedAt?: true
@@ -108885,6 +108891,7 @@ export namespace Prisma {
     contextJson: JsonValue
     japaneseSentenceJson: JsonValue | null
     selectedSetId: string | null
+    autopilotKey: string | null
     createdByAdminId: string | null
     createdAt: Date
     updatedAt: Date
@@ -108921,6 +108928,7 @@ export namespace Prisma {
     contextJson?: boolean
     japaneseSentenceJson?: boolean
     selectedSetId?: boolean
+    autopilotKey?: boolean
     createdByAdminId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -108940,6 +108948,7 @@ export namespace Prisma {
     contextJson?: boolean
     japaneseSentenceJson?: boolean
     selectedSetId?: boolean
+    autopilotKey?: boolean
     createdByAdminId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -108957,6 +108966,7 @@ export namespace Prisma {
     contextJson?: boolean
     japaneseSentenceJson?: boolean
     selectedSetId?: boolean
+    autopilotKey?: boolean
     createdByAdminId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -108974,12 +108984,13 @@ export namespace Prisma {
     contextJson?: boolean
     japaneseSentenceJson?: boolean
     selectedSetId?: boolean
+    autopilotKey?: boolean
     createdByAdminId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type LotoGenerationRunOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "game" | "targetDrawDate" | "status" | "seed" | "requestedSetCount" | "inputConfigJson" | "algorithmWeightsJson" | "contextJson" | "japaneseSentenceJson" | "selectedSetId" | "createdByAdminId" | "createdAt" | "updatedAt", ExtArgs["result"]["lotoGenerationRun"]>
+  export type LotoGenerationRunOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "game" | "targetDrawDate" | "status" | "seed" | "requestedSetCount" | "inputConfigJson" | "algorithmWeightsJson" | "contextJson" | "japaneseSentenceJson" | "selectedSetId" | "autopilotKey" | "createdByAdminId" | "createdAt" | "updatedAt", ExtArgs["result"]["lotoGenerationRun"]>
   export type LotoGenerationRunInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     sets?: boolean | LotoGenerationRun$setsArgs<ExtArgs>
     _count?: boolean | LotoGenerationRunCountOutputTypeDefaultArgs<ExtArgs>
@@ -109004,6 +109015,7 @@ export namespace Prisma {
       contextJson: Prisma.JsonValue
       japaneseSentenceJson: Prisma.JsonValue | null
       selectedSetId: string | null
+      autopilotKey: string | null
       createdByAdminId: string | null
       createdAt: Date
       updatedAt: Date
@@ -109442,6 +109454,7 @@ export namespace Prisma {
     readonly contextJson: FieldRef<"LotoGenerationRun", 'Json'>
     readonly japaneseSentenceJson: FieldRef<"LotoGenerationRun", 'Json'>
     readonly selectedSetId: FieldRef<"LotoGenerationRun", 'String'>
+    readonly autopilotKey: FieldRef<"LotoGenerationRun", 'String'>
     readonly createdByAdminId: FieldRef<"LotoGenerationRun", 'String'>
     readonly createdAt: FieldRef<"LotoGenerationRun", 'DateTime'>
     readonly updatedAt: FieldRef<"LotoGenerationRun", 'DateTime'>
@@ -219513,6 +219526,7 @@ export namespace Prisma {
     contextJson: 'contextJson',
     japaneseSentenceJson: 'japaneseSentenceJson',
     selectedSetId: 'selectedSetId',
+    autopilotKey: 'autopilotKey',
     createdByAdminId: 'createdByAdminId',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
@@ -227612,6 +227626,7 @@ export namespace Prisma {
     contextJson?: JsonFilter<"LotoGenerationRun">
     japaneseSentenceJson?: JsonNullableFilter<"LotoGenerationRun">
     selectedSetId?: UuidNullableFilter<"LotoGenerationRun"> | string | null
+    autopilotKey?: StringNullableFilter<"LotoGenerationRun"> | string | null
     createdByAdminId?: UuidNullableFilter<"LotoGenerationRun"> | string | null
     createdAt?: DateTimeFilter<"LotoGenerationRun"> | Date | string
     updatedAt?: DateTimeFilter<"LotoGenerationRun"> | Date | string
@@ -227630,6 +227645,7 @@ export namespace Prisma {
     contextJson?: SortOrder
     japaneseSentenceJson?: SortOrderInput | SortOrder
     selectedSetId?: SortOrderInput | SortOrder
+    autopilotKey?: SortOrderInput | SortOrder
     createdByAdminId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -227638,6 +227654,7 @@ export namespace Prisma {
 
   export type LotoGenerationRunWhereUniqueInput = Prisma.AtLeast<{
     id?: string
+    autopilotKey?: string
     AND?: LotoGenerationRunWhereInput | LotoGenerationRunWhereInput[]
     OR?: LotoGenerationRunWhereInput[]
     NOT?: LotoGenerationRunWhereInput | LotoGenerationRunWhereInput[]
@@ -227655,7 +227672,7 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"LotoGenerationRun"> | Date | string
     updatedAt?: DateTimeFilter<"LotoGenerationRun"> | Date | string
     sets?: LotoGeneratedSetListRelationFilter
-  }, "id">
+  }, "id" | "autopilotKey">
 
   export type LotoGenerationRunOrderByWithAggregationInput = {
     id?: SortOrder
@@ -227669,6 +227686,7 @@ export namespace Prisma {
     contextJson?: SortOrder
     japaneseSentenceJson?: SortOrderInput | SortOrder
     selectedSetId?: SortOrderInput | SortOrder
+    autopilotKey?: SortOrderInput | SortOrder
     createdByAdminId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -227694,6 +227712,7 @@ export namespace Prisma {
     contextJson?: JsonWithAggregatesFilter<"LotoGenerationRun">
     japaneseSentenceJson?: JsonNullableWithAggregatesFilter<"LotoGenerationRun">
     selectedSetId?: UuidNullableWithAggregatesFilter<"LotoGenerationRun"> | string | null
+    autopilotKey?: StringNullableWithAggregatesFilter<"LotoGenerationRun"> | string | null
     createdByAdminId?: UuidNullableWithAggregatesFilter<"LotoGenerationRun"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"LotoGenerationRun"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"LotoGenerationRun"> | Date | string
@@ -242370,6 +242389,7 @@ export namespace Prisma {
     contextJson?: JsonNullValueInput | InputJsonValue
     japaneseSentenceJson?: NullableJsonNullValueInput | InputJsonValue
     selectedSetId?: string | null
+    autopilotKey?: string | null
     createdByAdminId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -242388,6 +242408,7 @@ export namespace Prisma {
     contextJson?: JsonNullValueInput | InputJsonValue
     japaneseSentenceJson?: NullableJsonNullValueInput | InputJsonValue
     selectedSetId?: string | null
+    autopilotKey?: string | null
     createdByAdminId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -242406,6 +242427,7 @@ export namespace Prisma {
     contextJson?: JsonNullValueInput | InputJsonValue
     japaneseSentenceJson?: NullableJsonNullValueInput | InputJsonValue
     selectedSetId?: NullableStringFieldUpdateOperationsInput | string | null
+    autopilotKey?: NullableStringFieldUpdateOperationsInput | string | null
     createdByAdminId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -242424,6 +242446,7 @@ export namespace Prisma {
     contextJson?: JsonNullValueInput | InputJsonValue
     japaneseSentenceJson?: NullableJsonNullValueInput | InputJsonValue
     selectedSetId?: NullableStringFieldUpdateOperationsInput | string | null
+    autopilotKey?: NullableStringFieldUpdateOperationsInput | string | null
     createdByAdminId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -242442,6 +242465,7 @@ export namespace Prisma {
     contextJson?: JsonNullValueInput | InputJsonValue
     japaneseSentenceJson?: NullableJsonNullValueInput | InputJsonValue
     selectedSetId?: string | null
+    autopilotKey?: string | null
     createdByAdminId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -242459,6 +242483,7 @@ export namespace Prisma {
     contextJson?: JsonNullValueInput | InputJsonValue
     japaneseSentenceJson?: NullableJsonNullValueInput | InputJsonValue
     selectedSetId?: NullableStringFieldUpdateOperationsInput | string | null
+    autopilotKey?: NullableStringFieldUpdateOperationsInput | string | null
     createdByAdminId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -242476,6 +242501,7 @@ export namespace Prisma {
     contextJson?: JsonNullValueInput | InputJsonValue
     japaneseSentenceJson?: NullableJsonNullValueInput | InputJsonValue
     selectedSetId?: NullableStringFieldUpdateOperationsInput | string | null
+    autopilotKey?: NullableStringFieldUpdateOperationsInput | string | null
     createdByAdminId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -255440,6 +255466,7 @@ export namespace Prisma {
     contextJson?: SortOrder
     japaneseSentenceJson?: SortOrder
     selectedSetId?: SortOrder
+    autopilotKey?: SortOrder
     createdByAdminId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -255457,6 +255484,7 @@ export namespace Prisma {
     seed?: SortOrder
     requestedSetCount?: SortOrder
     selectedSetId?: SortOrder
+    autopilotKey?: SortOrder
     createdByAdminId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -255470,6 +255498,7 @@ export namespace Prisma {
     seed?: SortOrder
     requestedSetCount?: SortOrder
     selectedSetId?: SortOrder
+    autopilotKey?: SortOrder
     createdByAdminId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -277957,6 +277986,7 @@ export namespace Prisma {
     contextJson?: JsonNullValueInput | InputJsonValue
     japaneseSentenceJson?: NullableJsonNullValueInput | InputJsonValue
     selectedSetId?: string | null
+    autopilotKey?: string | null
     createdByAdminId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -277974,6 +278004,7 @@ export namespace Prisma {
     contextJson?: JsonNullValueInput | InputJsonValue
     japaneseSentenceJson?: NullableJsonNullValueInput | InputJsonValue
     selectedSetId?: string | null
+    autopilotKey?: string | null
     createdByAdminId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -278007,6 +278038,7 @@ export namespace Prisma {
     contextJson?: JsonNullValueInput | InputJsonValue
     japaneseSentenceJson?: NullableJsonNullValueInput | InputJsonValue
     selectedSetId?: NullableStringFieldUpdateOperationsInput | string | null
+    autopilotKey?: NullableStringFieldUpdateOperationsInput | string | null
     createdByAdminId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -278024,6 +278056,7 @@ export namespace Prisma {
     contextJson?: JsonNullValueInput | InputJsonValue
     japaneseSentenceJson?: NullableJsonNullValueInput | InputJsonValue
     selectedSetId?: NullableStringFieldUpdateOperationsInput | string | null
+    autopilotKey?: NullableStringFieldUpdateOperationsInput | string | null
     createdByAdminId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string

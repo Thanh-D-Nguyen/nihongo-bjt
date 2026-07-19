@@ -4,7 +4,7 @@ import {
   type LotoAlgorithmWeights,
   type LotoDrawInput,
   type LotoGame,
-  type LotoGenerationInput,
+  type LotoGenerationInput
 } from "./loto-types.js";
 
 type CandidateSet = {
@@ -47,9 +47,7 @@ function textNumbers(text: string | undefined, maxNumber: number): number[] {
     .split(/[^\p{L}\p{N}]+/u)
     .filter(Boolean);
   const raw = tokens.length ? tokens : [text];
-  return Array.from(
-    new Set(raw.map((token) => (hashString(token) % maxNumber) + 1)),
-  ).slice(0, 12);
+  return Array.from(new Set(raw.map((token) => (hashString(token) % maxNumber) + 1))).slice(0, 12);
 }
 
 function dateNumbers(date: string, maxNumber: number): number[] {
@@ -57,7 +55,7 @@ function dateNumbers(date: string, maxNumber: number): number[] {
   const sums = [
     digits.reduce((sum, value) => sum + value, 0),
     Number(date.slice(-2)),
-    Number(date.slice(5, 7)),
+    Number(date.slice(5, 7))
   ].filter((value) => Number.isFinite(value) && value > 0);
   return Array.from(new Set(sums.map((value) => ((value - 1) % maxNumber) + 1)));
 }
@@ -85,7 +83,9 @@ function passesShape(numbers: number[], game: LotoGame, draws: LotoDrawInput[]):
 
   const sum = numbers.reduce((total, n) => total + n, 0);
   if (draws.length >= 10) {
-    const sums = draws.map((draw) => draw.mainNumbers.reduce((total, n) => total + n, 0)).sort((a, b) => a - b);
+    const sums = draws
+      .map((draw) => draw.mainNumbers.reduce((total, n) => total + n, 0))
+      .sort((a, b) => a - b);
     const lowBand = sums[Math.floor(sums.length * 0.1)] ?? 0;
     const highBand = sums[Math.floor(sums.length * 0.9)] ?? spec.maxNumber * spec.mainCount;
     if (sum < lowBand || sum > highBand) return false;
@@ -118,17 +118,20 @@ export function summarizeLotoDraws(game: LotoGame, draws: LotoDrawInput[]) {
     frequencyMap,
     hotNumbers: byFrequency.slice(0, spec.mainCount).map((item) => item.number),
     coldNumbers: byFrequency.slice(-spec.mainCount).map((item) => item.number),
-    overdueNumbers: byOverdue.slice(0, spec.mainCount).map((item) => item.number),
+    overdueNumbers: byOverdue.slice(0, spec.mainCount).map((item) => item.number)
   };
 }
 
-export function generateLotoSets(input: LotoGenerationInput, draws: LotoDrawInput[]): CandidateSet[] {
+export function generateLotoSets(
+  input: LotoGenerationInput,
+  draws: LotoDrawInput[]
+): CandidateSet[] {
   const spec = LOTO_GAME_SPECS[input.game];
   const sortedDraws = [...draws].sort((a, b) => b.drawDate.localeCompare(a.drawDate));
   const summary = summarizeLotoDraws(input.game, sortedDraws);
   const normalizedFrequency = normalizeMap(summary.frequencyMap, spec.maxNumber);
   const normalizedCold = Object.fromEntries(
-    Object.entries(normalizedFrequency).map(([number, score]) => [Number(number), 1 - score]),
+    Object.entries(normalizedFrequency).map(([number, score]) => [Number(number), 1 - score])
   );
   const lastSeen: Record<number, number> = {};
   for (let n = 1; n <= spec.maxNumber; n += 1) lastSeen[n] = sortedDraws.length + 1;
@@ -143,13 +146,16 @@ export function generateLotoSets(input: LotoGenerationInput, draws: LotoDrawInpu
       Array.from({ length: spec.maxNumber }, (_, index) => {
         const n = index + 1;
         return [n, sortedDraws.slice(0, 12).filter((draw) => draw.mainNumbers.includes(n)).length];
-      }),
+      })
     ),
-    spec.maxNumber,
+    spec.maxNumber
   );
   const pairMap = buildPairMap(sortedDraws);
   const weatherNumbers = textNumbers(input.weatherText, spec.maxNumber);
-  const dreamNumbers = textNumbers([input.dreamText, input.luckyText].filter(Boolean).join(" "), spec.maxNumber);
+  const dreamNumbers = textNumbers(
+    [input.dreamText, input.luckyText].filter(Boolean).join(" "),
+    spec.maxNumber
+  );
   const dateBiasNumbers = dateNumbers(input.targetDrawDate, spec.maxNumber);
   const weights: LotoAlgorithmWeights = { ...DEFAULT_LOTO_WEIGHTS, ...input.weights };
   const rng = seededRandom(`${input.seed ?? ""}:${input.game}:${input.targetDrawDate}`);
@@ -193,15 +199,19 @@ export function generateLotoSets(input: LotoGenerationInput, draws: LotoDrawInpu
     if (!passesShape(mainNumbers, input.game, sortedDraws)) continue;
     const key = mainNumbers.join("-");
     if (candidates.some((candidate) => candidate.mainNumbers.join("-") === key)) continue;
-    const score = mainNumbers.reduce((sum, n) => sum + scoreNumber(n, mainNumbers.filter((other) => other !== n)), 0);
-    const bonusNumbers = Array.from({ length: spec.maxNumber }, (_, index) => index + 1)
-      .filter((n) => !mainNumbers.includes(n))
-      .sort(() => rng() - 0.5)
-      .slice(0, spec.bonusCount)
-      .sort((a, b) => a - b);
+    const score = mainNumbers.reduce(
+      (sum, n) =>
+        sum +
+        scoreNumber(
+          n,
+          mainNumbers.filter((other) => other !== n)
+        ),
+      0
+    );
     candidates.push({
       mainNumbers,
-      bonusNumbers,
+      // Bonus numbers are drawn by the lottery operator; a learner does not select them.
+      bonusNumbers: [],
       score: Number(score.toFixed(4)),
       explanation: {
         weights,
@@ -211,14 +221,17 @@ export function generateLotoSets(input: LotoGenerationInput, draws: LotoDrawInpu
           overdueNumbers: summary.overdueNumbers,
           weatherNumbers,
           dreamNumbers,
-          dateBiasNumbers,
-        },
-      },
+          dateBiasNumbers
+        }
+      }
     });
   }
 
   return candidates
     .sort((a, b) => b.score - a.score)
     .slice(0, input.setCount)
-    .map((candidate, index) => ({ ...candidate, explanation: { ...candidate.explanation, rank: index + 1 } }));
+    .map((candidate, index) => ({
+      ...candidate,
+      explanation: { ...candidate.explanation, rank: index + 1 }
+    }));
 }
