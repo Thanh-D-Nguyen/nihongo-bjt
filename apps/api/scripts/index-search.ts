@@ -130,6 +130,27 @@ async function main() {
   );
   indexed += examples.length;
 
+  for (let skip = 0; ; skip += BATCH_SIZE) {
+    const lessons = await prisma.bjtLesson.findMany({
+      orderBy: { id: "asc" },
+      skip,
+      take: BATCH_SIZE,
+      where: { status: "active" }
+    });
+    if (lessons.length === 0) break;
+    await replaceDocuments(
+      lessons.map((lesson) => ({
+        description: lesson.descriptionVi,
+        id: lesson.id,
+        jlptLevel: lesson.levelCode,
+        kind: "lesson" as const,
+        reading: lesson.titleJa,
+        title: lesson.titleVi
+      }))
+    );
+    indexed += lessons.length;
+  }
+
   console.log(`Indexed ${indexed} content documents into Meilisearch.`);
 }
 

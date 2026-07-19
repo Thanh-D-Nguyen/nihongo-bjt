@@ -37,6 +37,8 @@
     "seed:exercises": "tsx database/scripts/seeds/learning/seed-exercises.ts",
     "seed:learning": "tsx database/scripts/seeds/learning/seed-learning-practice.ts",
     "seed:bjt": "tsx database/scripts/seeds/bjt/seed-bjt-production.ts",
+    "seed:bjt-lessons": "tsx database/scripts/seeds/bjt-lessons/seed-bjt-lessons.ts",
+    "validate:bjt-lessons": "tsx database/scripts/seeds/bjt-lessons/validate-bjt-lessons.ts",
     "seed:daily": "tsx database/scripts/seeds/content/seed-daily.ts",
     "seed:daily-radar": "tsx database/scripts/seeds/radar/seed-daily-radar.ts",
     "seed:radar-full": "node database/scripts/seeds/radar/seed-radar-all.mjs",

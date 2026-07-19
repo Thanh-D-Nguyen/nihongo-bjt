@@ -14,7 +14,7 @@ export {
   validateAnswerDistribution,
   type ExamShuffleMap,
   type QuizOption,
-  type ShuffledQuizOption,
+  type ShuffledQuizOption
 } from "./quiz-shuffle.js";
 
 export {
@@ -116,6 +116,8 @@ export interface ApiErrorBody {
 
 export const contentKindSchema = z.enum(["lexeme", "kanji", "grammar", "example"]);
 export type ContentKind = z.infer<typeof contentKindSchema>;
+export const searchContentKindSchema = z.union([contentKindSchema, z.literal("lesson")]);
+export type SearchContentKind = z.infer<typeof searchContentKindSchema>;
 
 export const paginationQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).default(20),
@@ -126,7 +128,7 @@ export const paginationQuerySchema = z.object({
 export const searchQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(20).default(10),
   q: z.string().trim().min(1).max(120),
-  scope: contentKindSchema.optional(),
+  scope: searchContentKindSchema.optional(),
   level: z.string().trim().max(10).optional()
 });
 
@@ -157,7 +159,7 @@ export const searchResultSchema = z.object({
   description: z.string().nullable(),
   id: z.string(),
   jlptLevel: z.string().nullable().optional(),
-  kind: contentKindSchema,
+  kind: searchContentKindSchema,
   reading: z.string().nullable(),
   title: z.string()
 });
@@ -230,7 +232,10 @@ const bulkDeckCardRowSchema = z.object({
   reading: z.string().trim().max(300).optional()
 });
 
-function refineDeckCardImages(data: { cards?: Array<{ imageUrl?: string; primaryImageAssetId?: string }> }, ctx: z.RefinementCtx) {
+function refineDeckCardImages(
+  data: { cards?: Array<{ imageUrl?: string; primaryImageAssetId?: string }> },
+  ctx: z.RefinementCtx
+) {
   data.cards?.forEach((row, i) => {
     if (row.primaryImageAssetId && row.imageUrl?.trim()) {
       ctx.addIssue({
@@ -262,7 +267,9 @@ function refineDeckCardImages(data: { cards?: Array<{ imageUrl?: string; primary
   });
 }
 
-function normalizeDeckCards<T extends { cards?: Array<{ imageUrl?: string; primaryImageAssetId?: string; reading?: string }> }>(d: T): T {
+function normalizeDeckCards<
+  T extends { cards?: Array<{ imageUrl?: string; primaryImageAssetId?: string; reading?: string }> }
+>(d: T): T {
   return {
     ...d,
     cards: d.cards?.map((c) => ({
@@ -275,14 +282,14 @@ function normalizeDeckCards<T extends { cards?: Array<{ imageUrl?: string; prima
 }
 
 const createDeckBaseSchema = z.object({
-    cards: z.array(bulkDeckCardRowSchema).max(200).optional(),
-    descriptionJa: z.string().trim().max(500).optional(),
-    descriptionVi: z.string().trim().max(500).optional(),
-    titleJa: z.string().trim().min(1).max(120).optional(),
-    titleVi: z.string().trim().min(1).max(120),
-    userId: z.uuid(),
-    visibility: z.enum(["private", "public"]).default("private")
-  });
+  cards: z.array(bulkDeckCardRowSchema).max(200).optional(),
+  descriptionJa: z.string().trim().max(500).optional(),
+  descriptionVi: z.string().trim().max(500).optional(),
+  titleJa: z.string().trim().min(1).max(120).optional(),
+  titleVi: z.string().trim().min(1).max(120),
+  userId: z.uuid(),
+  visibility: z.enum(["private", "public"]).default("private")
+});
 
 export const createDeckSchema = createDeckBaseSchema
   .superRefine(refineDeckCardImages)
@@ -301,7 +308,7 @@ export const updateDeckSchema = createDeckBaseSchema
   .transform(normalizeDeckCards);
 
 export const cloneDeckSchema = z.object({
-  userId: z.uuid(),
+  userId: z.uuid()
 });
 
 export const createCardFromContentSchema = z.object({
@@ -316,7 +323,11 @@ export const createCardFromContentSchema = z.object({
 
 export const generateDeckSchema = z.object({
   level: z.string().trim().min(1).max(8),
-  sourceTypes: z.array(z.enum(["lexeme", "kanji", "grammar"])).min(1).max(3).default(["lexeme"]),
+  sourceTypes: z
+    .array(z.enum(["lexeme", "kanji", "grammar"]))
+    .min(1)
+    .max(3)
+    .default(["lexeme"]),
   direction: z.enum(["jp_to_vn", "vn_to_jp", "both"]).default("jp_to_vn"),
   cardCount: z.number().int().min(5).max(50).default(20),
   topics: z.array(z.string().trim().min(1).max(64)).max(10).optional(),
@@ -326,7 +337,11 @@ export const generateDeckSchema = z.object({
 
 export const generateDeckAdminSchema = z.object({
   level: z.string().trim().min(1).max(8),
-  sourceTypes: z.array(z.enum(["lexeme", "kanji", "grammar"])).min(1).max(3).default(["lexeme"]),
+  sourceTypes: z
+    .array(z.enum(["lexeme", "kanji", "grammar"]))
+    .min(1)
+    .max(3)
+    .default(["lexeme"]),
   direction: z.enum(["jp_to_vn", "vn_to_jp", "both"]).default("jp_to_vn"),
   cardCount: z.number().int().min(5).max(200).default(30),
   topics: z.array(z.string().trim().min(1).max(64)).max(10).optional(),
@@ -336,14 +351,22 @@ export const generateDeckAdminSchema = z.object({
 
 export const previewGenCountSchema = z.object({
   level: z.string().trim().min(1).max(8),
-  sourceTypes: z.array(z.enum(["lexeme", "kanji", "grammar"])).min(1).max(3).default(["lexeme"]),
+  sourceTypes: z
+    .array(z.enum(["lexeme", "kanji", "grammar"]))
+    .min(1)
+    .max(3)
+    .default(["lexeme"]),
   topics: z.array(z.string().trim().min(1).max(64)).max(10).optional(),
   userId: z.uuid()
 });
 
 export const suggestCardsSchema = z.object({
   level: z.string().trim().min(1).max(8),
-  sourceTypes: z.array(z.enum(["lexeme", "kanji", "grammar"])).min(1).max(3).default(["lexeme"]),
+  sourceTypes: z
+    .array(z.enum(["lexeme", "kanji", "grammar"]))
+    .min(1)
+    .max(3)
+    .default(["lexeme"]),
   count: z.number().int().min(1).max(30).default(10),
   userId: z.uuid()
 });
@@ -648,14 +671,8 @@ export const adminSupportNotesListQuerySchema = z.object({
     .optional()
     .transform((s) => (s === "" ? undefined : s)),
   visibility: z.enum(["private", "team", "audit_only"]).optional(),
-  dateFrom: z
-    .string()
-    .datetime()
-    .optional(),
-  dateTo: z
-    .string()
-    .datetime()
-    .optional(),
+  dateFrom: z.string().datetime().optional(),
+  dateTo: z.string().datetime().optional(),
   limit: z.coerce.number().int().min(1).max(200).optional().default(50),
   offset: z.coerce.number().int().min(0).optional().default(0)
 });
@@ -865,11 +882,7 @@ export const GROWTH_CAMPAIGN_STATUSES = [
   "archived"
 ] as const;
 export const GROWTH_CAMPAIGN_CHANNELS = ["email", "push", "in_app"] as const;
-export const GROWTH_TEMPLATE_PRIVACY_CLASSES = [
-  "public",
-  "learner_private",
-  "anonymized"
-] as const;
+export const GROWTH_TEMPLATE_PRIVACY_CLASSES = ["public", "learner_private", "anonymized"] as const;
 export const GROWTH_POSTCARD_EVENT_KINDS = [
   "streak",
   "level_up",
@@ -1036,7 +1049,12 @@ export const adminGrowthPostcardPatchSchema = z.object({
 });
 
 export const adminGrowthPostcardListQuerySchema = z.object({
-  q: z.string().trim().max(200).optional().transform((s) => (s === "" ? undefined : s)),
+  q: z
+    .string()
+    .trim()
+    .max(200)
+    .optional()
+    .transform((s) => (s === "" ? undefined : s)),
   kind: z
     .enum([...GROWTH_POSTCARD_EVENT_KINDS, "all"] as [string, ...string[]])
     .optional()
@@ -1067,7 +1085,12 @@ export const adminGrowthSocialTemplatePatchSchema = z.object({
 });
 
 export const adminGrowthSocialTemplateListQuerySchema = z.object({
-  q: z.string().trim().max(200).optional().transform((s) => (s === "" ? undefined : s)),
+  q: z
+    .string()
+    .trim()
+    .max(200)
+    .optional()
+    .transform((s) => (s === "" ? undefined : s)),
   kind: z
     .enum([...GROWTH_SOCIAL_TEMPLATE_KINDS, "all"] as [string, ...string[]])
     .optional()
@@ -1082,7 +1105,12 @@ export const adminGrowthSocialTemplateListQuerySchema = z.object({
 
 /* Referral admin: list user-owned codes with abuse heuristics; revoke = delete + audit. */
 export const adminGrowthReferralListQuerySchema = z.object({
-  q: z.string().trim().max(200).optional().transform((s) => (s === "" ? undefined : s)),
+  q: z
+    .string()
+    .trim()
+    .max(200)
+    .optional()
+    .transform((s) => (s === "" ? undefined : s)),
   flagged: z.coerce.boolean().optional(),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(25)
@@ -1090,7 +1118,12 @@ export const adminGrowthReferralListQuerySchema = z.object({
 
 /* Share-event admin: read-only paginated log + moderation (hide via expiry). */
 export const adminGrowthShareEventListQuerySchema = z.object({
-  q: z.string().trim().max(200).optional().transform((s) => (s === "" ? undefined : s)),
+  q: z
+    .string()
+    .trim()
+    .max(200)
+    .optional()
+    .transform((s) => (s === "" ? undefined : s)),
   templateId: z.string().uuid().optional(),
   userId: z.string().uuid().optional(),
   hidden: z
@@ -1257,7 +1290,11 @@ export const adminBattleBotPatchSchema = z
     reason: z.string().trim().min(3).max(500)
   })
   .superRefine((value, ctx) => {
-    if (value.minDelayMs != null && value.maxDelayMs != null && value.maxDelayMs < value.minDelayMs) {
+    if (
+      value.minDelayMs != null &&
+      value.maxDelayMs != null &&
+      value.maxDelayMs < value.minDelayMs
+    ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "maxDelayMs must be >= minDelayMs",
@@ -1295,9 +1332,21 @@ export const adminBattleBotReasonOnlyBodySchema = z.object({
  * Resolution actions: `warning`, `temp_ban`, `perm_ban`, `dismissed`. Escalation marks a report for
  * higher review (e.g. legal). Both audit. RBAC requires `battle.manage` (no `battle.moderate` yet).
  */
-export const BATTLE_ABUSE_KINDS = ["cheating", "harassment", "inappropriate", "afk", "other"] as const;
+export const BATTLE_ABUSE_KINDS = [
+  "cheating",
+  "harassment",
+  "inappropriate",
+  "afk",
+  "other"
+] as const;
 export const BATTLE_ABUSE_SEVERITIES = ["low", "medium", "high", "critical"] as const;
-export const BATTLE_ABUSE_STATUSES = ["open", "triaged", "resolved", "dismissed", "escalated"] as const;
+export const BATTLE_ABUSE_STATUSES = [
+  "open",
+  "triaged",
+  "resolved",
+  "dismissed",
+  "escalated"
+] as const;
 export const BATTLE_ABUSE_ACTIONS = ["warning", "temp_ban", "perm_ban", "dismissed"] as const;
 
 export const adminBattleAbuseListQuerySchema = z.object({
@@ -1453,7 +1502,9 @@ export const adminUserInviteBodySchema = z
     }
     if (
       b.adminAccess === true &&
-      !["content_editor", "support_staff", "admin", "billing_manager", "analytics_viewer"].includes(b.accountType)
+      !["content_editor", "support_staff", "admin", "billing_manager", "analytics_viewer"].includes(
+        b.accountType
+      )
     ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -1734,9 +1785,7 @@ export const monetizationCheckoutSchema = z.object({
 
 export const adsLearningContextSchema = z.object({
   planSlug: z.string().max(64).optional(),
-  sessionKind: z
-    .enum(["default", "flashcard_review", "bjt_timed", "quiz_active"])
-    .optional()
+  sessionKind: z.enum(["default", "flashcard_review", "bjt_timed", "quiz_active"]).optional()
 });
 
 export const adsRuntimeClientContextSchema = z
@@ -1815,7 +1864,12 @@ const shareBattle = z.object({
   userId: z.uuid()
 });
 
-export const shareCreateSchema = z.discriminatedUnion("kind", [shareStreak, shareBjt, shareDaily, shareBattle]);
+export const shareCreateSchema = z.discriminatedUnion("kind", [
+  shareStreak,
+  shareBjt,
+  shareDaily,
+  shareBattle
+]);
 
 export const readingAssistDisplayModeSchema = z.enum([
   "off",
@@ -1942,11 +1996,7 @@ export const CONTENT_ENRICHMENT_TYPES = [
   "bjt_level"
 ] as const;
 
-export const CONTENT_VERSION_STATUSES = [
-  "draft",
-  "published",
-  "superseded"
-] as const;
+export const CONTENT_VERSION_STATUSES = ["draft", "published", "superseded"] as const;
 
 const optionalUuid = z
   .string()
@@ -2073,18 +2123,9 @@ export const ASSESSMENT_QUIZ_SESSION_STATUSES = [
   "abandoned",
   "timed_out"
 ] as const;
-export const ASSESSMENT_QUESTION_DIFFICULTIES = [
-  "easy",
-  "standard",
-  "hard",
-  "elite"
-] as const;
+export const ASSESSMENT_QUESTION_DIFFICULTIES = ["easy", "standard", "hard", "elite"] as const;
 
-export const ASSESSMENT_BJT_PARTS = [
-  "listening",
-  "listening_reading",
-  "reading"
-] as const;
+export const ASSESSMENT_BJT_PARTS = ["listening", "listening_reading", "reading"] as const;
 
 export const ASSESSMENT_BJT_SECTIONS = [
   "LC_SCENE",
@@ -2159,7 +2200,11 @@ const mockExamSectionSchema = z.object({
   titleJa: z.string().trim().max(200).optional().nullable(),
   type: z.string().trim().min(1).max(32),
   questionCount: z.number().int().min(1).max(200),
-  timeLimitSec: z.number().int().min(0).max(60 * 60 * 4),
+  timeLimitSec: z
+    .number()
+    .int()
+    .min(0)
+    .max(60 * 60 * 4),
   sourcePool: z.string().trim().max(120).optional().nullable()
 });
 
@@ -2199,12 +2244,20 @@ const mockExamBaseShape = {
   titleJa: z.string().trim().max(200).optional().nullable(),
   description: z.string().trim().max(2000).optional().nullable(),
   level: z.enum(ASSESSMENT_BJT_LEVELS),
-  timeLimitSeconds: z.number().int().min(60).max(60 * 60 * 4),
+  timeLimitSeconds: z
+    .number()
+    .int()
+    .min(60)
+    .max(60 * 60 * 4),
   blueprintMeta: mockExamBlueprintMetaSchema
 };
 
 export const adminMockExamCreateSchema = z
-  .object({ ...mockExamBaseShape, type: z.enum(ASSESSMENT_EXAM_TYPES).optional().default("mock"), reason: assessmentReasonField })
+  .object({
+    ...mockExamBaseShape,
+    type: z.enum(ASSESSMENT_EXAM_TYPES).optional().default("mock"),
+    reason: assessmentReasonField
+  })
   .superRefine((value, ctx) => {
     const declared = value.blueprintMeta.totalTimeMin * 60;
     if (Math.abs(declared - value.timeLimitSeconds) > 60) {
@@ -2229,7 +2282,12 @@ export const adminMockExamPatchSchema = z.object({
 });
 
 export const adminMockExamListQuerySchema = z.object({
-  q: z.string().trim().max(200).optional().transform((s) => (s === "" ? undefined : s)),
+  q: z
+    .string()
+    .trim()
+    .max(200)
+    .optional()
+    .transform((s) => (s === "" ? undefined : s)),
   status: z
     .enum([...ASSESSMENT_MOCK_EXAM_STATUSES, "all"] as [string, ...string[]])
     .optional()
@@ -2253,7 +2311,11 @@ export const adminMockExamReasonOnlyBodySchema = z.object({ reason: assessmentRe
 /** Quiz templates (BjtMockTest with type IN ASSESSMENT_QUIZ_TEMPLATE_TYPES). */
 const quizTemplateGenerationRulesSchema = z.object({
   questionCount: z.number().int().min(1).max(200),
-  timeLimitSec: z.number().int().min(60).max(60 * 60 * 4),
+  timeLimitSec: z
+    .number()
+    .int()
+    .min(60)
+    .max(60 * 60 * 4),
   difficultyMix: z
     .array(
       z.object({
@@ -2302,7 +2364,12 @@ export const adminQuizTemplatePatchSchema = z.object({
 });
 
 export const adminQuizTemplateListQuerySchema = z.object({
-  q: z.string().trim().max(200).optional().transform((s) => (s === "" ? undefined : s)),
+  q: z
+    .string()
+    .trim()
+    .max(200)
+    .optional()
+    .transform((s) => (s === "" ? undefined : s)),
   status: z
     .enum([...ASSESSMENT_MOCK_EXAM_STATUSES, "all"] as [string, ...string[]])
     .optional()
@@ -2399,7 +2466,12 @@ export const adminQuestionBankPatchSchema = z
   });
 
 export const adminQuestionBankListQuerySchema = z.object({
-  q: z.string().trim().max(200).optional().transform((s) => (s === "" ? undefined : s)),
+  q: z
+    .string()
+    .trim()
+    .max(200)
+    .optional()
+    .transform((s) => (s === "" ? undefined : s)),
   status: z
     .enum([...ASSESSMENT_QUESTION_STATUSES, "all"] as [string, ...string[]])
     .optional()
@@ -2450,7 +2522,12 @@ export const adminQuestionBankSuggestEditSchema = z.object({
 
 /** Quiz sessions (read + abort + extend). */
 export const adminQuizSessionListQuerySchema = z.object({
-  q: z.string().trim().max(200).optional().transform((s) => (s === "" ? undefined : s)),
+  q: z
+    .string()
+    .trim()
+    .max(200)
+    .optional()
+    .transform((s) => (s === "" ? undefined : s)),
   status: z
     .enum([...ASSESSMENT_QUIZ_SESSION_STATUSES, "all"] as [string, ...string[]])
     .optional()
@@ -2465,7 +2542,11 @@ export const adminQuizSessionListQuerySchema = z.object({
 
 export const adminQuizSessionAbortBodySchema = z.object({ reason: assessmentReasonField });
 export const adminQuizSessionExtendTimeBodySchema = z.object({
-  addSeconds: z.coerce.number().int().min(15).max(60 * 60),
+  addSeconds: z.coerce
+    .number()
+    .int()
+    .min(15)
+    .max(60 * 60),
   reason: assessmentReasonField
 });
 
@@ -2531,7 +2612,12 @@ export const adminRemediationRulePatchSchema = z
   });
 
 export const adminRemediationRuleListQuerySchema = z.object({
-  q: z.string().trim().max(200).optional().transform((s) => (s === "" ? undefined : s)),
+  q: z
+    .string()
+    .trim()
+    .max(200)
+    .optional()
+    .transform((s) => (s === "" ? undefined : s)),
   topicSkillTag: z
     .string()
     .trim()
@@ -2654,11 +2740,7 @@ export const exerciseTypeSchema = z.enum([
 ]);
 export type ExerciseType = z.infer<typeof exerciseTypeSchema>;
 
-export const exercisePlacementSchema = z.enum([
-  "practice_tab",
-  "post_review",
-  "daily_hub"
-]);
+export const exercisePlacementSchema = z.enum(["practice_tab", "post_review", "daily_hub"]);
 export type ExercisePlacement = z.infer<typeof exercisePlacementSchema>;
 
 export const exerciseSourceTypeSchema = z.enum(["lexeme", "grammar", "kanji"]);
@@ -2718,13 +2800,7 @@ export type AdminExerciseConfigInput = z.infer<typeof adminExerciseConfigSchema>
 // ── Gamification ─────────────────────────────────────────────────────────────
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export const streakActivityTypeSchema = z.enum([
-  "review",
-  "exercise",
-  "quiz",
-  "battle",
-  "any"
-]);
+export const streakActivityTypeSchema = z.enum(["review", "exercise", "quiz", "battle", "any"]);
 export type StreakActivityType = z.infer<typeof streakActivityTypeSchema>;
 
 export const achievementCategorySchema = z.enum([
@@ -2736,12 +2812,7 @@ export const achievementCategorySchema = z.enum([
 ]);
 export type AchievementCategory = z.infer<typeof achievementCategorySchema>;
 
-export const achievementTierSchema = z.enum([
-  "bronze",
-  "silver",
-  "gold",
-  "platinum"
-]);
+export const achievementTierSchema = z.enum(["bronze", "silver", "gold", "platinum"]);
 export type AchievementTierLevel = z.infer<typeof achievementTierSchema>;
 
 export const leaderboardMetricTypeSchema = z.enum([
@@ -2753,12 +2824,7 @@ export const leaderboardMetricTypeSchema = z.enum([
 ]);
 export type LeaderboardMetricType = z.infer<typeof leaderboardMetricTypeSchema>;
 
-export const leaderboardPeriodSchema = z.enum([
-  "daily",
-  "weekly",
-  "monthly",
-  "all_time"
-]);
+export const leaderboardPeriodSchema = z.enum(["daily", "weekly", "monthly", "all_time"]);
 export type LeaderboardPeriod = z.infer<typeof leaderboardPeriodSchema>;
 
 /** Admin streak config CRUD */
@@ -2773,7 +2839,12 @@ export type AdminStreakConfigInput = z.infer<typeof adminStreakConfigSchema>;
 
 /** Admin achievement definition CRUD */
 export const adminAchievementDefinitionSchema = z.object({
-  slug: z.string().trim().min(1).max(128).regex(/^[a-z0-9_-]+$/),
+  slug: z
+    .string()
+    .trim()
+    .min(1)
+    .max(128)
+    .regex(/^[a-z0-9_-]+$/),
   nameKey: z.string().trim().min(1).max(255),
   descriptionKey: z.string().trim().min(1).max(255),
   category: achievementCategorySchema,

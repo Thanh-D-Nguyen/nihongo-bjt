@@ -13,24 +13,50 @@ describe("SearchService rebuildProjectionIndex", () => {
     const addDocuments = vi.fn().mockResolvedValue({ taskUid: 1 });
 
     (service as any).prisma = {
+      bjtLesson: {
+        findMany: vi.fn().mockResolvedValue([
+          {
+            descriptionVi: "Xác nhận chỉ thị và deadline trong công việc.",
+            id: "lesson-1",
+            levelCode: "J5",
+            titleJa: "指示と期限を確認する",
+            titleVi: "Xác nhận chỉ thị và thời hạn"
+          }
+        ])
+      },
       exampleSentence: {
         findMany: vi.fn().mockResolvedValue([
-          { id: "ex-1", japaneseText: "会議を始めます。", reading: "かいぎをはじめます。", translationVi: "Bắt đầu cuộc họp." }
+          {
+            id: "ex-1",
+            japaneseText: "会議を始めます。",
+            reading: "かいぎをはじめます。",
+            translationVi: "Bắt đầu cuộc họp."
+          }
         ])
       },
       grammarPoint: {
-        findMany: vi.fn().mockResolvedValue([
-          { id: "gr-1", jlptLevel: "N3", meaningVi: "đã từng", pattern: "〜たことがある" }
-        ])
+        findMany: vi
+          .fn()
+          .mockResolvedValue([
+            { id: "gr-1", jlptLevel: "N3", meaningVi: "đã từng", pattern: "〜たことがある" }
+          ])
       },
       kanji: {
-        findMany: vi.fn().mockResolvedValue([
-          { character: "会", id: "kanji-1", kunyomi: "あ.う", meaningVi: "hội", onyomi: "カイ" }
-        ])
+        findMany: vi
+          .fn()
+          .mockResolvedValue([
+            { character: "会", id: "kanji-1", kunyomi: "あ.う", meaningVi: "hội", onyomi: "カイ" }
+          ])
       },
       lexeme: {
         findMany: vi.fn().mockResolvedValue([
-          { headword: "会議", id: "lex-1", reading: "かいぎ", senses: [{ meaningVi: "cuộc họp" }], shortMeaningVi: null }
+          {
+            headword: "会議",
+            id: "lex-1",
+            reading: "かいぎ",
+            senses: [{ meaningVi: "cuộc họp" }],
+            shortMeaningVi: null
+          }
         ])
       }
     };
@@ -81,11 +107,19 @@ describe("SearchService rebuildProjectionIndex", () => {
           kind: "example",
           reading: "かいぎをはじめます。",
           title: "会議を始めます。"
+        },
+        {
+          description: "Xác nhận chỉ thị và deadline trong công việc.",
+          id: "lesson-1",
+          jlptLevel: "J5",
+          kind: "lesson",
+          reading: "指示と期限を確認する",
+          title: "Xác nhận chỉ thị và thời hạn"
         }
       ],
       { primaryKey: "id" }
     );
-    expect(result.indexed).toBe(4);
+    expect(result.indexed).toBe(5);
     expect(result.sourceSystem).toBe("PostgreSQL");
     expect(typeof result.timestamp).toBe("string");
   });

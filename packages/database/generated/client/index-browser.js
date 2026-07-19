@@ -2107,14 +2107,27 @@ exports.Prisma.FlashcardGenJobScalarFieldEnum = {
 
 exports.Prisma.BjtLessonScalarFieldEnum = {
   id: 'id',
+  seedKey: 'seedKey',
   levelCode: 'levelCode',
+  weekNumber: 'weekNumber',
+  unitType: 'unitType',
+  unitOrder: 'unitOrder',
   sortOrder: 'sortOrder',
   slug: 'slug',
   titleVi: 'titleVi',
   titleJa: 'titleJa',
   descriptionVi: 'descriptionVi',
   descriptionJa: 'descriptionJa',
+  estimatedDurationMin: 'estimatedDurationMin',
+  difficulty: 'difficulty',
+  skillTags: 'skillTags',
+  businessTopics: 'businessTopics',
+  prerequisiteKeys: 'prerequisiteKeys',
+  lessonContent: 'lessonContent',
+  contentVersion: 'contentVersion',
+  contentHash: 'contentHash',
   status: 'status',
+  publishedAt: 'publishedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };

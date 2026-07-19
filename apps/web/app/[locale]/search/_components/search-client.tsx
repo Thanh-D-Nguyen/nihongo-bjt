@@ -18,7 +18,11 @@ import { VoiceSearchButton } from "../../../_components/search-advanced-inputs";
 import { IconSearch } from "../../../_components/nav-icons";
 import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
 import { useRecentSearches } from "../../../../lib/use-recent-searches";
-import { SearchDropdown, type DropdownKeyHandler, type SearchDropdownLabels } from "../../../_components/search-dropdown";
+import {
+  SearchDropdown,
+  type DropdownKeyHandler,
+  type SearchDropdownLabels
+} from "../../../_components/search-dropdown";
 import {
   type DetailPayload,
   normalizeKanjiDetailDto,
@@ -36,6 +40,7 @@ export interface SearchLabels extends SearchDetailLabels {
   inputLabel: string;
   kindAll: string;
   kindExample: string;
+  kindLesson: string;
   kindGrammar: string;
   kindKanji: string;
   kindLexeme: string;
@@ -79,7 +84,7 @@ export interface SearchLabels extends SearchDetailLabels {
 }
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
-const kinds = ["lexeme", "kanji", "grammar", "example"] as const;
+const kinds = ["lexeme", "kanji", "grammar", "example", "lesson"] as const;
 type KindFilter = "all" | (typeof kinds)[number];
 const levels = ["N1", "N2", "N3", "N4", "N5"] as const;
 
@@ -87,7 +92,8 @@ const kindConfig: Record<string, { border: string; icon: string; bg: string }> =
   lexeme: { border: "border-l-accent", icon: "文", bg: "bg-accent/8 text-accent" },
   kanji: { border: "border-l-sakura", icon: "漢", bg: "bg-sakura/8 text-sakura" },
   grammar: { border: "border-l-leaf", icon: "法", bg: "bg-leaf/8 text-leaf" },
-  example: { border: "border-l-amber-400", icon: "例", bg: "bg-amber-100 text-amber-700" }
+  example: { border: "border-l-amber-400", icon: "例", bg: "bg-amber-100 text-amber-700" },
+  lesson: { border: "border-l-sky-500", icon: "課", bg: "bg-sky-100 text-sky-700" }
 };
 
 function useIsMobileMd(): boolean {
@@ -390,7 +396,6 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
     // Keyed ONLY on `urlSearchBootstrapKey` (q/scope/level). `searchParams` is read via
     // `searchParamsRef` so patching `entry` into the URL on selection does NOT re-run this
     // effect — which previously caused a double fetch and reset the active selection.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlSearchBootstrapKey, runSearch]);
 
   const visibleResults = useMemo(
@@ -704,7 +709,9 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
                   }}
                   locale={locale}
                   labels={labels as unknown as SearchDropdownLabels}
-                  onKeyHandlerReady={(handler) => { dropdownKeyHandlerRef.current = handler; }}
+                  onKeyHandlerReady={(handler) => {
+                    dropdownKeyHandlerRef.current = handler;
+                  }}
                 />
               </div>
               <VoiceSearchButton
@@ -716,7 +723,7 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
                   permissionDenied: labels.voicePermissionDenied,
                   noSpeech: labels.voiceNoSpeech,
                   networkError: labels.voiceNetworkError,
-                  genericError: labels.voiceGenericError,
+                  genericError: labels.voiceGenericError
                 }}
                 onResult={(text) => {
                   setQuery(text);
@@ -866,8 +873,14 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
               {/* Hero card — spans 2 cols */}
               <div className="col-span-2 flex flex-col items-center justify-center gap-3 rounded-3xl border border-ink/6 bg-gradient-to-br from-accent/5 via-paper to-sakura/5 p-8 text-center shadow-sm sm:p-10">
                 <div className="relative">
-                  <span className="absolute inset-0 -z-10 mx-auto h-20 w-20 rounded-full bg-accent/10 blur-2xl" aria-hidden />
-                  <span aria-hidden className="jp-text select-none text-6xl font-bold text-ink/12 sm:text-7xl">
+                  <span
+                    className="absolute inset-0 -z-10 mx-auto h-20 w-20 rounded-full bg-accent/10 blur-2xl"
+                    aria-hidden
+                  />
+                  <span
+                    aria-hidden
+                    className="jp-text select-none text-6xl font-bold text-ink/12 sm:text-7xl"
+                  >
                     {labels.landingHeroGlyph}
                   </span>
                 </div>
@@ -888,10 +901,17 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
                       inputRef.current?.focus();
                     }}
                   >
-                    <span className={cn("inline-flex h-10 w-10 items-center justify-center rounded-xl text-base font-bold transition-transform duration-200 group-hover:scale-110", config.bg)}>
+                    <span
+                      className={cn(
+                        "inline-flex h-10 w-10 items-center justify-center rounded-xl text-base font-bold transition-transform duration-200 group-hover:scale-110",
+                        config.bg
+                      )}
+                    >
                       {config.icon}
                     </span>
-                    <span className="text-xs font-semibold text-ink/80">{kindLabel(kind, labels)}</span>
+                    <span className="text-xs font-semibold text-ink/80">
+                      {kindLabel(kind, labels)}
+                    </span>
                   </button>
                 );
               })}
@@ -899,7 +919,9 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
 
             {/* Example chips */}
             <div className="mt-6 flex flex-col items-center gap-3">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted/60">{labels.exampleChipsAriaLabel}</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted/60">
+                {labels.exampleChipsAriaLabel}
+              </p>
               <div
                 className="flex flex-wrap justify-center gap-2"
                 role="group"
@@ -947,8 +969,18 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
                         updateUrl(term, filter, levelFilter, null);
                       }}
                     >
-                      <svg className="h-3 w-3 text-muted/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      <svg
+                        className="h-3 w-3 text-muted/50"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
                       </svg>
                       <span className="jp-text">{term}</span>
                     </button>
@@ -996,7 +1028,9 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
                     result={result}
                     selected={selected?.id === result.id && selected.kind === result.kind}
                     onSelect={() => selectResult(result)}
-                    style={{ animation: `fadeSlideUp 0.25s ease-out ${Math.min(idx * 30, 300)}ms both` }}
+                    style={{
+                      animation: `fadeSlideUp 0.25s ease-out ${Math.min(idx * 30, 300)}ms both`
+                    }}
                   />
                 ))}
               </ul>
@@ -1028,7 +1062,13 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
           <div className="fixed inset-x-0 bottom-0 z-30 border-t border-ink/6 bg-paper/85 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-16px_40px_-8px_rgba(0,0,0,0.12)] backdrop-blur-2xl md:hidden">
             <div className="mx-auto flex max-w-6xl items-center gap-3 px-4">
               {/* Kind icon badge */}
-              <span className={cn("inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold", kindConfig[selected.kind]?.bg ?? "bg-accent/10 text-accent")} aria-hidden>
+              <span
+                className={cn(
+                  "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold",
+                  kindConfig[selected.kind]?.bg ?? "bg-accent/10 text-accent"
+                )}
+                aria-hidden
+              >
                 {kindConfig[selected.kind]?.icon ?? "文"}
               </span>
               <div className="min-w-0 flex-1">
@@ -1036,7 +1076,9 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
                 <p className="truncate text-xs text-muted">
                   {selected.reading && <span className="jp-text">{selected.reading}</span>}
                   {selected.reading && selected.description && <span className="mx-1">·</span>}
-                  {selected.description && <span className="line-clamp-1">{selected.description.slice(0, 40)}</span>}
+                  {selected.description && (
+                    <span className="line-clamp-1">{selected.description.slice(0, 40)}</span>
+                  )}
                 </p>
               </div>
               <button
@@ -1069,7 +1111,7 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
             aria-modal="true"
             className="absolute inset-x-0 bottom-0 max-h-[90vh] rounded-t-3xl border border-ink/8 bg-paper shadow-2xl"
             role="dialog"
-            style={{ animation: 'panelSlideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1) both' }}
+            style={{ animation: "panelSlideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1) both" }}
           >
             <h2 className="sr-only" id={sheetTitleId}>
               {labels.detailHeading}
@@ -1084,7 +1126,16 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
                   type="button"
                   onClick={() => setDetailSheetOpen(false)}
                 >
-                  <svg aria-hidden width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <svg
+                    aria-hidden
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                  >
                     <path d="M18 6L6 18M6 6l12 12" />
                   </svg>
                   {labels.closeSheet}
@@ -1222,12 +1273,16 @@ function ResultEntry({
               </span>
             ) : null}
             {result.jlptLevel ? (
-              <span className={cn(
-                "ml-auto shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-bold leading-none",
-                result.kind === "kanji" ? "bg-sakura/10 text-sakura" :
-                result.kind === "grammar" ? "bg-leaf/10 text-leaf" :
-                "bg-accent/10 text-accent"
-              )}>
+              <span
+                className={cn(
+                  "ml-auto shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-bold leading-none",
+                  result.kind === "kanji"
+                    ? "bg-sakura/10 text-sakura"
+                    : result.kind === "grammar"
+                      ? "bg-leaf/10 text-leaf"
+                      : "bg-accent/10 text-accent"
+                )}
+              >
                 {result.jlptLevel}
               </span>
             ) : null}
@@ -1238,10 +1293,12 @@ function ResultEntry({
             )}
           </div>
           {result.description ? (
-            <p className={cn(
-              "mt-1 line-clamp-2 text-sm leading-relaxed",
-              result.kind === "example" ? "text-ink/60" : "text-ink/70"
-            )}>
+            <p
+              className={cn(
+                "mt-1 line-clamp-2 text-sm leading-relaxed",
+                result.kind === "example" ? "text-ink/60" : "text-ink/70"
+              )}
+            >
               <HighlightMatch query={query} text={result.description} />
             </p>
           ) : null}
@@ -1276,7 +1333,9 @@ function FilterPill({
     <button
       className={cn(
         "search-filter-pill inline-flex min-h-9 items-center gap-1 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 active:scale-95",
-        active ? "bg-ink text-surface shadow-md shadow-ink/15" : "text-muted hover:bg-ink/5 hover:text-ink hover:shadow-sm"
+        active
+          ? "bg-ink text-surface shadow-md shadow-ink/15"
+          : "text-muted hover:bg-ink/5 hover:text-ink hover:shadow-sm"
       )}
       type="button"
       onClick={onClick}
@@ -1329,6 +1388,8 @@ function kindLabel(kind: SearchResult["kind"], labels: SearchLabels) {
       return labels.kindKanji;
     case "lexeme":
       return labels.kindLexeme;
+    case "lesson":
+      return labels.kindLesson;
   }
 }
 
@@ -1342,6 +1403,8 @@ function kindDotColor(kind: string): string {
       return "bg-leaf";
     case "example":
       return "bg-amber-400";
+    case "lesson":
+      return "bg-sky-500";
     default:
       return "bg-muted";
   }

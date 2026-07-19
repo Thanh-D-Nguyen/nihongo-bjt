@@ -25,7 +25,8 @@ const LEVELS: LevelDefinition[] = [
     scoreMin: 0,
     scoreMax: 199,
     jlptEquiv: "N5",
-    descriptionVi: "Giao tiếp cơ bản: chào hỏi, tự giới thiệu, đọc biển hiệu đơn giản tại nơi làm việc.",
+    descriptionVi:
+      "Giao tiếp cơ bản: chào hỏi, tự giới thiệu, đọc biển hiệu đơn giản tại nơi làm việc.",
     descriptionJa: "基本的な挨拶、自己紹介、職場の簡単な表示の読解。",
     color: "#22C55E"
   },
@@ -69,7 +70,8 @@ const LEVELS: LevelDefinition[] = [
     scoreMin: 530,
     scoreMax: 599,
     jlptEquiv: "N1",
-    descriptionVi: "Thương lượng, thuyết trình, viết báo cáo phức tạp, hiểu văn bản pháp lý cơ bản.",
+    descriptionVi:
+      "Thương lượng, thuyết trình, viết báo cáo phức tạp, hiểu văn bản pháp lý cơ bản.",
     descriptionJa: "交渉、プレゼンテーション、複雑な報告書作成、基本的な法律文書の理解。",
     color: "#EF4444"
   },
@@ -80,7 +82,8 @@ const LEVELS: LevelDefinition[] = [
     scoreMin: 600,
     scoreMax: 800,
     jlptEquiv: ">N1",
-    descriptionVi: "Lãnh đạo meeting, xử lý xung đột, viết tài liệu chính thức, hiểu sắc thái ngôn ngữ tinh tế.",
+    descriptionVi:
+      "Lãnh đạo meeting, xử lý xung đột, viết tài liệu chính thức, hiểu sắc thái ngôn ngữ tinh tế.",
     descriptionJa: "会議のリード、紛争処理、公式文書作成、微妙な言語ニュアンスの理解。",
     color: "#DC2626"
   }
@@ -89,23 +92,23 @@ const LEVELS: LevelDefinition[] = [
 /* Map BJT level code → JLPT filter values used in DB */
 function jlptFilter(code: string): string[] {
   const map: Record<string, string[]> = {
-    "J5": ["N5"],
-    "J4": ["N4"],
-    "J3": ["N3"],
-    "J2": ["N2"],
-    "J1": ["N1"],
-    "J1+": ["N1"]  // J1+ shares N1 content
+    J5: ["N5"],
+    J4: ["N4"],
+    J3: ["N3"],
+    J2: ["N2"],
+    J1: ["N1"],
+    "J1+": ["N1"] // J1+ shares N1 content
   };
   return map[code] ?? [];
 }
 
 function kanjiLevelFilter(code: string): number[] {
   const map: Record<string, number[]> = {
-    "J5": [5],
-    "J4": [4],
-    "J3": [3],
-    "J2": [2],
-    "J1": [1],
+    J5: [5],
+    J4: [4],
+    J3: [3],
+    J2: [2],
+    J1: [1],
     "J1+": [1]
   };
   return map[code] ?? [];
@@ -114,7 +117,7 @@ function kanjiLevelFilter(code: string): number[] {
 /* ── Service ───────────────────────────────────────────────── */
 
 @Injectable()
-class LevelsService {
+export class LevelsService {
   private readonly prisma = createPrismaClient();
 
   async list() {
@@ -170,11 +173,15 @@ class LevelsService {
       where: {
         status: "active",
         jlptLevel: { in: jlpt },
-        ...(q ? { OR: [
-          { headword: { contains: q, mode: "insensitive" as const } },
-          { reading: { contains: q, mode: "insensitive" as const } },
-          { shortMeaningVi: { contains: q, mode: "insensitive" as const } }
-        ] } : {})
+        ...(q
+          ? {
+              OR: [
+                { headword: { contains: q, mode: "insensitive" as const } },
+                { reading: { contains: q, mode: "insensitive" as const } },
+                { shortMeaningVi: { contains: q, mode: "insensitive" as const } }
+              ]
+            }
+          : {})
       }
     });
   }
@@ -193,12 +200,16 @@ class LevelsService {
       where: {
         status: "active",
         level: { in: levels },
-        ...(q ? { OR: [
-          { character: q },
-          { meaningVi: { contains: q, mode: "insensitive" as const } },
-          { onyomi: { contains: q, mode: "insensitive" as const } },
-          { kunyomi: { contains: q, mode: "insensitive" as const } }
-        ] } : {})
+        ...(q
+          ? {
+              OR: [
+                { character: q },
+                { meaningVi: { contains: q, mode: "insensitive" as const } },
+                { onyomi: { contains: q, mode: "insensitive" as const } },
+                { kunyomi: { contains: q, mode: "insensitive" as const } }
+              ]
+            }
+          : {})
       }
     });
   }
@@ -214,10 +225,14 @@ class LevelsService {
       where: {
         status: "active",
         jlptLevel: { in: jlpt },
-        ...(q ? { OR: [
-          { pattern: { contains: q, mode: "insensitive" as const } },
-          { meaningVi: { contains: q, mode: "insensitive" as const } }
-        ] } : {})
+        ...(q
+          ? {
+              OR: [
+                { pattern: { contains: q, mode: "insensitive" as const } },
+                { meaningVi: { contains: q, mode: "insensitive" as const } }
+              ]
+            }
+          : {})
       }
     });
   }
@@ -236,18 +251,32 @@ class LevelsService {
       }
     });
 
-    return lessons.map((l) => ({
-      id: l.id,
-      slug: l.slug,
-      sortOrder: l.sortOrder,
-      titleVi: l.titleVi,
-      titleJa: l.titleJa,
-      descriptionVi: l.descriptionVi,
-      descriptionJa: l.descriptionJa,
-      vocabCount: l.items.filter((i) => i.contentType === "vocabulary").length,
-      kanjiCount: l.items.filter((i) => i.contentType === "kanji").length,
-      grammarCount: l.items.filter((i) => i.contentType === "grammar").length,
-    }));
+    return lessons.map((l) => {
+      const lessonContent = l.lessonContent as { activities?: unknown[] };
+      return {
+        id: l.id,
+        slug: l.slug,
+        sortOrder: l.sortOrder,
+        titleVi: l.titleVi,
+        titleJa: l.titleJa,
+        descriptionVi: l.descriptionVi,
+        descriptionJa: l.descriptionJa,
+        weekNumber: l.weekNumber,
+        unitType: l.unitType,
+        unitOrder: l.unitOrder,
+        estimatedDurationMin: l.estimatedDurationMin,
+        difficulty: l.difficulty,
+        skillTags: l.skillTags,
+        businessTopics: l.businessTopics,
+        contentVersion: l.contentVersion,
+        activityCount: Array.isArray(lessonContent.activities)
+          ? lessonContent.activities.length
+          : 0,
+        vocabCount: l.items.filter((i) => i.contentType === "vocabulary").length,
+        kanjiCount: l.items.filter((i) => i.contentType === "kanji").length,
+        grammarCount: l.items.filter((i) => i.contentType === "grammar").length
+      };
+    });
   }
 
   async lessonDetail(slug: string) {
@@ -260,23 +289,36 @@ class LevelsService {
     if (!lesson) return null;
 
     // Batch-fetch content for each type
-    const vocabIds = lesson.items.filter((i) => i.contentType === "vocabulary").map((i) => i.contentId);
+    const vocabIds = lesson.items
+      .filter((i) => i.contentType === "vocabulary")
+      .map((i) => i.contentId);
     const kanjiIds = lesson.items.filter((i) => i.contentType === "kanji").map((i) => i.contentId);
-    const grammarIds = lesson.items.filter((i) => i.contentType === "grammar").map((i) => i.contentId);
+    const grammarIds = lesson.items
+      .filter((i) => i.contentType === "grammar")
+      .map((i) => i.contentId);
 
     const [vocabs, kanjis, grammars] = await this.prisma.$transaction([
-      vocabIds.length ? this.prisma.lexeme.findMany({
-        where: { id: { in: vocabIds }, status: "active" },
-        include: { senses: { orderBy: { position: "asc" }, take: 3 } }
-      }) : this.prisma.$queryRawUnsafe<never[]>("SELECT 1 WHERE false"),
-      kanjiIds.length ? this.prisma.kanji.findMany({
-        where: { id: { in: kanjiIds }, status: "active" },
-        include: { components: { orderBy: { position: "asc" }, take: 4 }, examples: { orderBy: { position: "asc" }, take: 4 } }
-      }) : this.prisma.$queryRawUnsafe<never[]>("SELECT 1 WHERE false"),
-      grammarIds.length ? this.prisma.grammarPoint.findMany({
-        where: { id: { in: grammarIds }, status: "active" },
-        include: { details: { orderBy: { position: "asc" }, take: 2 } }
-      }) : this.prisma.$queryRawUnsafe<never[]>("SELECT 1 WHERE false"),
+      vocabIds.length
+        ? this.prisma.lexeme.findMany({
+            where: { id: { in: vocabIds }, status: "active" },
+            include: { senses: { orderBy: { position: "asc" }, take: 3 } }
+          })
+        : this.prisma.$queryRawUnsafe<never[]>("SELECT 1 WHERE false"),
+      kanjiIds.length
+        ? this.prisma.kanji.findMany({
+            where: { id: { in: kanjiIds }, status: "active" },
+            include: {
+              components: { orderBy: { position: "asc" }, take: 4 },
+              examples: { orderBy: { position: "asc" }, take: 4 }
+            }
+          })
+        : this.prisma.$queryRawUnsafe<never[]>("SELECT 1 WHERE false"),
+      grammarIds.length
+        ? this.prisma.grammarPoint.findMany({
+            where: { id: { in: grammarIds }, status: "active" },
+            include: { details: { orderBy: { position: "asc" }, take: 2 } }
+          })
+        : this.prisma.$queryRawUnsafe<never[]>("SELECT 1 WHERE false")
     ]);
 
     // Build ordered content list
@@ -295,12 +337,20 @@ class LevelsService {
     // Find prev/next lessons for navigation
     const [prevLesson, nextLesson] = await Promise.all([
       this.prisma.bjtLesson.findFirst({
-        where: { levelCode: lesson.levelCode, status: "active", sortOrder: { lt: lesson.sortOrder } },
+        where: {
+          levelCode: lesson.levelCode,
+          status: "active",
+          sortOrder: { lt: lesson.sortOrder }
+        },
         orderBy: { sortOrder: "desc" },
         select: { slug: true, titleVi: true, titleJa: true, sortOrder: true }
       }),
       this.prisma.bjtLesson.findFirst({
-        where: { levelCode: lesson.levelCode, status: "active", sortOrder: { gt: lesson.sortOrder } },
+        where: {
+          levelCode: lesson.levelCode,
+          status: "active",
+          sortOrder: { gt: lesson.sortOrder }
+        },
         orderBy: { sortOrder: "asc" },
         select: { slug: true, titleVi: true, titleJa: true, sortOrder: true }
       })
@@ -315,9 +365,23 @@ class LevelsService {
       titleJa: lesson.titleJa,
       descriptionVi: lesson.descriptionVi,
       descriptionJa: lesson.descriptionJa,
+      weekNumber: lesson.weekNumber,
+      unitType: lesson.unitType,
+      unitOrder: lesson.unitOrder,
+      estimatedDurationMin: lesson.estimatedDurationMin,
+      difficulty: lesson.difficulty,
+      skillTags: lesson.skillTags,
+      businessTopics: lesson.businessTopics,
+      prerequisiteKeys: lesson.prerequisiteKeys,
+      lessonContent: lesson.lessonContent,
+      contentVersion: lesson.contentVersion,
       contents,
-      prevLesson: prevLesson ? { slug: prevLesson.slug, titleVi: prevLesson.titleVi, sortOrder: prevLesson.sortOrder } : null,
-      nextLesson: nextLesson ? { slug: nextLesson.slug, titleVi: nextLesson.titleVi, sortOrder: nextLesson.sortOrder } : null
+      prevLesson: prevLesson
+        ? { slug: prevLesson.slug, titleVi: prevLesson.titleVi, sortOrder: prevLesson.sortOrder }
+        : null,
+      nextLesson: nextLesson
+        ? { slug: nextLesson.slug, titleVi: nextLesson.titleVi, sortOrder: nextLesson.sortOrder }
+        : null
     };
   }
 }

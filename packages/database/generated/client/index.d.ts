@@ -199036,51 +199036,88 @@ export namespace Prisma {
   }
 
   export type BjtLessonAvgAggregateOutputType = {
+    weekNumber: number | null
+    unitOrder: number | null
     sortOrder: number | null
+    estimatedDurationMin: number | null
   }
 
   export type BjtLessonSumAggregateOutputType = {
+    weekNumber: number | null
+    unitOrder: number | null
     sortOrder: number | null
+    estimatedDurationMin: number | null
   }
 
   export type BjtLessonMinAggregateOutputType = {
     id: string | null
+    seedKey: string | null
     levelCode: string | null
+    weekNumber: number | null
+    unitType: string | null
+    unitOrder: number | null
     sortOrder: number | null
     slug: string | null
     titleVi: string | null
     titleJa: string | null
     descriptionVi: string | null
     descriptionJa: string | null
+    estimatedDurationMin: number | null
+    difficulty: string | null
+    contentVersion: string | null
+    contentHash: string | null
     status: string | null
+    publishedAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
   }
 
   export type BjtLessonMaxAggregateOutputType = {
     id: string | null
+    seedKey: string | null
     levelCode: string | null
+    weekNumber: number | null
+    unitType: string | null
+    unitOrder: number | null
     sortOrder: number | null
     slug: string | null
     titleVi: string | null
     titleJa: string | null
     descriptionVi: string | null
     descriptionJa: string | null
+    estimatedDurationMin: number | null
+    difficulty: string | null
+    contentVersion: string | null
+    contentHash: string | null
     status: string | null
+    publishedAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
   }
 
   export type BjtLessonCountAggregateOutputType = {
     id: number
+    seedKey: number
     levelCode: number
+    weekNumber: number
+    unitType: number
+    unitOrder: number
     sortOrder: number
     slug: number
     titleVi: number
     titleJa: number
     descriptionVi: number
     descriptionJa: number
+    estimatedDurationMin: number
+    difficulty: number
+    skillTags: number
+    businessTopics: number
+    prerequisiteKeys: number
+    lessonContent: number
+    contentVersion: number
+    contentHash: number
     status: number
+    publishedAt: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -199088,51 +199125,88 @@ export namespace Prisma {
 
 
   export type BjtLessonAvgAggregateInputType = {
+    weekNumber?: true
+    unitOrder?: true
     sortOrder?: true
+    estimatedDurationMin?: true
   }
 
   export type BjtLessonSumAggregateInputType = {
+    weekNumber?: true
+    unitOrder?: true
     sortOrder?: true
+    estimatedDurationMin?: true
   }
 
   export type BjtLessonMinAggregateInputType = {
     id?: true
+    seedKey?: true
     levelCode?: true
+    weekNumber?: true
+    unitType?: true
+    unitOrder?: true
     sortOrder?: true
     slug?: true
     titleVi?: true
     titleJa?: true
     descriptionVi?: true
     descriptionJa?: true
+    estimatedDurationMin?: true
+    difficulty?: true
+    contentVersion?: true
+    contentHash?: true
     status?: true
+    publishedAt?: true
     createdAt?: true
     updatedAt?: true
   }
 
   export type BjtLessonMaxAggregateInputType = {
     id?: true
+    seedKey?: true
     levelCode?: true
+    weekNumber?: true
+    unitType?: true
+    unitOrder?: true
     sortOrder?: true
     slug?: true
     titleVi?: true
     titleJa?: true
     descriptionVi?: true
     descriptionJa?: true
+    estimatedDurationMin?: true
+    difficulty?: true
+    contentVersion?: true
+    contentHash?: true
     status?: true
+    publishedAt?: true
     createdAt?: true
     updatedAt?: true
   }
 
   export type BjtLessonCountAggregateInputType = {
     id?: true
+    seedKey?: true
     levelCode?: true
+    weekNumber?: true
+    unitType?: true
+    unitOrder?: true
     sortOrder?: true
     slug?: true
     titleVi?: true
     titleJa?: true
     descriptionVi?: true
     descriptionJa?: true
+    estimatedDurationMin?: true
+    difficulty?: true
+    skillTags?: true
+    businessTopics?: true
+    prerequisiteKeys?: true
+    lessonContent?: true
+    contentVersion?: true
+    contentHash?: true
     status?: true
+    publishedAt?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -199226,14 +199300,27 @@ export namespace Prisma {
 
   export type BjtLessonGroupByOutputType = {
     id: string
+    seedKey: string | null
     levelCode: string
+    weekNumber: number
+    unitType: string
+    unitOrder: number
     sortOrder: number
     slug: string
     titleVi: string
     titleJa: string
     descriptionVi: string | null
     descriptionJa: string | null
+    estimatedDurationMin: number
+    difficulty: string
+    skillTags: string[]
+    businessTopics: string[]
+    prerequisiteKeys: string[]
+    lessonContent: JsonValue
+    contentVersion: string
+    contentHash: string | null
     status: string
+    publishedAt: Date | null
     createdAt: Date
     updatedAt: Date
     _count: BjtLessonCountAggregateOutputType | null
@@ -199259,14 +199346,27 @@ export namespace Prisma {
 
   export type BjtLessonSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
+    seedKey?: boolean
     levelCode?: boolean
+    weekNumber?: boolean
+    unitType?: boolean
+    unitOrder?: boolean
     sortOrder?: boolean
     slug?: boolean
     titleVi?: boolean
     titleJa?: boolean
     descriptionVi?: boolean
     descriptionJa?: boolean
+    estimatedDurationMin?: boolean
+    difficulty?: boolean
+    skillTags?: boolean
+    businessTopics?: boolean
+    prerequisiteKeys?: boolean
+    lessonContent?: boolean
+    contentVersion?: boolean
+    contentHash?: boolean
     status?: boolean
+    publishedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     items?: boolean | BjtLesson$itemsArgs<ExtArgs>
@@ -199275,47 +199375,86 @@ export namespace Prisma {
 
   export type BjtLessonSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
+    seedKey?: boolean
     levelCode?: boolean
+    weekNumber?: boolean
+    unitType?: boolean
+    unitOrder?: boolean
     sortOrder?: boolean
     slug?: boolean
     titleVi?: boolean
     titleJa?: boolean
     descriptionVi?: boolean
     descriptionJa?: boolean
+    estimatedDurationMin?: boolean
+    difficulty?: boolean
+    skillTags?: boolean
+    businessTopics?: boolean
+    prerequisiteKeys?: boolean
+    lessonContent?: boolean
+    contentVersion?: boolean
+    contentHash?: boolean
     status?: boolean
+    publishedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["bjtLesson"]>
 
   export type BjtLessonSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
+    seedKey?: boolean
     levelCode?: boolean
+    weekNumber?: boolean
+    unitType?: boolean
+    unitOrder?: boolean
     sortOrder?: boolean
     slug?: boolean
     titleVi?: boolean
     titleJa?: boolean
     descriptionVi?: boolean
     descriptionJa?: boolean
+    estimatedDurationMin?: boolean
+    difficulty?: boolean
+    skillTags?: boolean
+    businessTopics?: boolean
+    prerequisiteKeys?: boolean
+    lessonContent?: boolean
+    contentVersion?: boolean
+    contentHash?: boolean
     status?: boolean
+    publishedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["bjtLesson"]>
 
   export type BjtLessonSelectScalar = {
     id?: boolean
+    seedKey?: boolean
     levelCode?: boolean
+    weekNumber?: boolean
+    unitType?: boolean
+    unitOrder?: boolean
     sortOrder?: boolean
     slug?: boolean
     titleVi?: boolean
     titleJa?: boolean
     descriptionVi?: boolean
     descriptionJa?: boolean
+    estimatedDurationMin?: boolean
+    difficulty?: boolean
+    skillTags?: boolean
+    businessTopics?: boolean
+    prerequisiteKeys?: boolean
+    lessonContent?: boolean
+    contentVersion?: boolean
+    contentHash?: boolean
     status?: boolean
+    publishedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type BjtLessonOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "levelCode" | "sortOrder" | "slug" | "titleVi" | "titleJa" | "descriptionVi" | "descriptionJa" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["bjtLesson"]>
+  export type BjtLessonOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "seedKey" | "levelCode" | "weekNumber" | "unitType" | "unitOrder" | "sortOrder" | "slug" | "titleVi" | "titleJa" | "descriptionVi" | "descriptionJa" | "estimatedDurationMin" | "difficulty" | "skillTags" | "businessTopics" | "prerequisiteKeys" | "lessonContent" | "contentVersion" | "contentHash" | "status" | "publishedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["bjtLesson"]>
   export type BjtLessonInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     items?: boolean | BjtLesson$itemsArgs<ExtArgs>
     _count?: boolean | BjtLessonCountOutputTypeDefaultArgs<ExtArgs>
@@ -199330,14 +199469,27 @@ export namespace Prisma {
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
+      seedKey: string | null
       levelCode: string
+      weekNumber: number
+      unitType: string
+      unitOrder: number
       sortOrder: number
       slug: string
       titleVi: string
       titleJa: string
       descriptionVi: string | null
       descriptionJa: string | null
+      estimatedDurationMin: number
+      difficulty: string
+      skillTags: string[]
+      businessTopics: string[]
+      prerequisiteKeys: string[]
+      lessonContent: Prisma.JsonValue
+      contentVersion: string
+      contentHash: string | null
       status: string
+      publishedAt: Date | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["bjtLesson"]>
@@ -199765,14 +199917,27 @@ export namespace Prisma {
    */
   interface BjtLessonFieldRefs {
     readonly id: FieldRef<"BjtLesson", 'String'>
+    readonly seedKey: FieldRef<"BjtLesson", 'String'>
     readonly levelCode: FieldRef<"BjtLesson", 'String'>
+    readonly weekNumber: FieldRef<"BjtLesson", 'Int'>
+    readonly unitType: FieldRef<"BjtLesson", 'String'>
+    readonly unitOrder: FieldRef<"BjtLesson", 'Int'>
     readonly sortOrder: FieldRef<"BjtLesson", 'Int'>
     readonly slug: FieldRef<"BjtLesson", 'String'>
     readonly titleVi: FieldRef<"BjtLesson", 'String'>
     readonly titleJa: FieldRef<"BjtLesson", 'String'>
     readonly descriptionVi: FieldRef<"BjtLesson", 'String'>
     readonly descriptionJa: FieldRef<"BjtLesson", 'String'>
+    readonly estimatedDurationMin: FieldRef<"BjtLesson", 'Int'>
+    readonly difficulty: FieldRef<"BjtLesson", 'String'>
+    readonly skillTags: FieldRef<"BjtLesson", 'String[]'>
+    readonly businessTopics: FieldRef<"BjtLesson", 'String[]'>
+    readonly prerequisiteKeys: FieldRef<"BjtLesson", 'String[]'>
+    readonly lessonContent: FieldRef<"BjtLesson", 'Json'>
+    readonly contentVersion: FieldRef<"BjtLesson", 'String'>
+    readonly contentHash: FieldRef<"BjtLesson", 'String'>
     readonly status: FieldRef<"BjtLesson", 'String'>
+    readonly publishedAt: FieldRef<"BjtLesson", 'DateTime'>
     readonly createdAt: FieldRef<"BjtLesson", 'DateTime'>
     readonly updatedAt: FieldRef<"BjtLesson", 'DateTime'>
   }
@@ -220736,14 +220901,27 @@ export namespace Prisma {
 
   export const BjtLessonScalarFieldEnum: {
     id: 'id',
+    seedKey: 'seedKey',
     levelCode: 'levelCode',
+    weekNumber: 'weekNumber',
+    unitType: 'unitType',
+    unitOrder: 'unitOrder',
     sortOrder: 'sortOrder',
     slug: 'slug',
     titleVi: 'titleVi',
     titleJa: 'titleJa',
     descriptionVi: 'descriptionVi',
     descriptionJa: 'descriptionJa',
+    estimatedDurationMin: 'estimatedDurationMin',
+    difficulty: 'difficulty',
+    skillTags: 'skillTags',
+    businessTopics: 'businessTopics',
+    prerequisiteKeys: 'prerequisiteKeys',
+    lessonContent: 'lessonContent',
+    contentVersion: 'contentVersion',
+    contentHash: 'contentHash',
     status: 'status',
+    publishedAt: 'publishedAt',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -233813,14 +233991,27 @@ export namespace Prisma {
     OR?: BjtLessonWhereInput[]
     NOT?: BjtLessonWhereInput | BjtLessonWhereInput[]
     id?: UuidFilter<"BjtLesson"> | string
+    seedKey?: StringNullableFilter<"BjtLesson"> | string | null
     levelCode?: StringFilter<"BjtLesson"> | string
+    weekNumber?: IntFilter<"BjtLesson"> | number
+    unitType?: StringFilter<"BjtLesson"> | string
+    unitOrder?: IntFilter<"BjtLesson"> | number
     sortOrder?: IntFilter<"BjtLesson"> | number
     slug?: StringFilter<"BjtLesson"> | string
     titleVi?: StringFilter<"BjtLesson"> | string
     titleJa?: StringFilter<"BjtLesson"> | string
     descriptionVi?: StringNullableFilter<"BjtLesson"> | string | null
     descriptionJa?: StringNullableFilter<"BjtLesson"> | string | null
+    estimatedDurationMin?: IntFilter<"BjtLesson"> | number
+    difficulty?: StringFilter<"BjtLesson"> | string
+    skillTags?: StringNullableListFilter<"BjtLesson">
+    businessTopics?: StringNullableListFilter<"BjtLesson">
+    prerequisiteKeys?: StringNullableListFilter<"BjtLesson">
+    lessonContent?: JsonFilter<"BjtLesson">
+    contentVersion?: StringFilter<"BjtLesson"> | string
+    contentHash?: StringNullableFilter<"BjtLesson"> | string | null
     status?: StringFilter<"BjtLesson"> | string
+    publishedAt?: DateTimeNullableFilter<"BjtLesson"> | Date | string | null
     createdAt?: DateTimeFilter<"BjtLesson"> | Date | string
     updatedAt?: DateTimeFilter<"BjtLesson"> | Date | string
     items?: BjtLessonItemListRelationFilter
@@ -233828,14 +234019,27 @@ export namespace Prisma {
 
   export type BjtLessonOrderByWithRelationInput = {
     id?: SortOrder
+    seedKey?: SortOrderInput | SortOrder
     levelCode?: SortOrder
+    weekNumber?: SortOrder
+    unitType?: SortOrder
+    unitOrder?: SortOrder
     sortOrder?: SortOrder
     slug?: SortOrder
     titleVi?: SortOrder
     titleJa?: SortOrder
     descriptionVi?: SortOrderInput | SortOrder
     descriptionJa?: SortOrderInput | SortOrder
+    estimatedDurationMin?: SortOrder
+    difficulty?: SortOrder
+    skillTags?: SortOrder
+    businessTopics?: SortOrder
+    prerequisiteKeys?: SortOrder
+    lessonContent?: SortOrder
+    contentVersion?: SortOrder
+    contentHash?: SortOrderInput | SortOrder
     status?: SortOrder
+    publishedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     items?: BjtLessonItemOrderByRelationAggregateInput
@@ -233843,33 +234047,59 @@ export namespace Prisma {
 
   export type BjtLessonWhereUniqueInput = Prisma.AtLeast<{
     id?: string
+    seedKey?: string
     slug?: string
     levelCode_sortOrder?: BjtLessonLevelCodeSortOrderCompoundUniqueInput
     AND?: BjtLessonWhereInput | BjtLessonWhereInput[]
     OR?: BjtLessonWhereInput[]
     NOT?: BjtLessonWhereInput | BjtLessonWhereInput[]
     levelCode?: StringFilter<"BjtLesson"> | string
+    weekNumber?: IntFilter<"BjtLesson"> | number
+    unitType?: StringFilter<"BjtLesson"> | string
+    unitOrder?: IntFilter<"BjtLesson"> | number
     sortOrder?: IntFilter<"BjtLesson"> | number
     titleVi?: StringFilter<"BjtLesson"> | string
     titleJa?: StringFilter<"BjtLesson"> | string
     descriptionVi?: StringNullableFilter<"BjtLesson"> | string | null
     descriptionJa?: StringNullableFilter<"BjtLesson"> | string | null
+    estimatedDurationMin?: IntFilter<"BjtLesson"> | number
+    difficulty?: StringFilter<"BjtLesson"> | string
+    skillTags?: StringNullableListFilter<"BjtLesson">
+    businessTopics?: StringNullableListFilter<"BjtLesson">
+    prerequisiteKeys?: StringNullableListFilter<"BjtLesson">
+    lessonContent?: JsonFilter<"BjtLesson">
+    contentVersion?: StringFilter<"BjtLesson"> | string
+    contentHash?: StringNullableFilter<"BjtLesson"> | string | null
     status?: StringFilter<"BjtLesson"> | string
+    publishedAt?: DateTimeNullableFilter<"BjtLesson"> | Date | string | null
     createdAt?: DateTimeFilter<"BjtLesson"> | Date | string
     updatedAt?: DateTimeFilter<"BjtLesson"> | Date | string
     items?: BjtLessonItemListRelationFilter
-  }, "id" | "slug" | "levelCode_sortOrder">
+  }, "id" | "seedKey" | "slug" | "levelCode_sortOrder">
 
   export type BjtLessonOrderByWithAggregationInput = {
     id?: SortOrder
+    seedKey?: SortOrderInput | SortOrder
     levelCode?: SortOrder
+    weekNumber?: SortOrder
+    unitType?: SortOrder
+    unitOrder?: SortOrder
     sortOrder?: SortOrder
     slug?: SortOrder
     titleVi?: SortOrder
     titleJa?: SortOrder
     descriptionVi?: SortOrderInput | SortOrder
     descriptionJa?: SortOrderInput | SortOrder
+    estimatedDurationMin?: SortOrder
+    difficulty?: SortOrder
+    skillTags?: SortOrder
+    businessTopics?: SortOrder
+    prerequisiteKeys?: SortOrder
+    lessonContent?: SortOrder
+    contentVersion?: SortOrder
+    contentHash?: SortOrderInput | SortOrder
     status?: SortOrder
+    publishedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: BjtLessonCountOrderByAggregateInput
@@ -233884,14 +234114,27 @@ export namespace Prisma {
     OR?: BjtLessonScalarWhereWithAggregatesInput[]
     NOT?: BjtLessonScalarWhereWithAggregatesInput | BjtLessonScalarWhereWithAggregatesInput[]
     id?: UuidWithAggregatesFilter<"BjtLesson"> | string
+    seedKey?: StringNullableWithAggregatesFilter<"BjtLesson"> | string | null
     levelCode?: StringWithAggregatesFilter<"BjtLesson"> | string
+    weekNumber?: IntWithAggregatesFilter<"BjtLesson"> | number
+    unitType?: StringWithAggregatesFilter<"BjtLesson"> | string
+    unitOrder?: IntWithAggregatesFilter<"BjtLesson"> | number
     sortOrder?: IntWithAggregatesFilter<"BjtLesson"> | number
     slug?: StringWithAggregatesFilter<"BjtLesson"> | string
     titleVi?: StringWithAggregatesFilter<"BjtLesson"> | string
     titleJa?: StringWithAggregatesFilter<"BjtLesson"> | string
     descriptionVi?: StringNullableWithAggregatesFilter<"BjtLesson"> | string | null
     descriptionJa?: StringNullableWithAggregatesFilter<"BjtLesson"> | string | null
+    estimatedDurationMin?: IntWithAggregatesFilter<"BjtLesson"> | number
+    difficulty?: StringWithAggregatesFilter<"BjtLesson"> | string
+    skillTags?: StringNullableListFilter<"BjtLesson">
+    businessTopics?: StringNullableListFilter<"BjtLesson">
+    prerequisiteKeys?: StringNullableListFilter<"BjtLesson">
+    lessonContent?: JsonWithAggregatesFilter<"BjtLesson">
+    contentVersion?: StringWithAggregatesFilter<"BjtLesson"> | string
+    contentHash?: StringNullableWithAggregatesFilter<"BjtLesson"> | string | null
     status?: StringWithAggregatesFilter<"BjtLesson"> | string
+    publishedAt?: DateTimeNullableWithAggregatesFilter<"BjtLesson"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"BjtLesson"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"BjtLesson"> | Date | string
   }
@@ -249318,14 +249561,27 @@ export namespace Prisma {
 
   export type BjtLessonCreateInput = {
     id?: string
+    seedKey?: string | null
     levelCode: string
+    weekNumber?: number
+    unitType?: string
+    unitOrder?: number
     sortOrder: number
     slug: string
     titleVi: string
     titleJa: string
     descriptionVi?: string | null
     descriptionJa?: string | null
+    estimatedDurationMin?: number
+    difficulty?: string
+    skillTags?: BjtLessonCreateskillTagsInput | string[]
+    businessTopics?: BjtLessonCreatebusinessTopicsInput | string[]
+    prerequisiteKeys?: BjtLessonCreateprerequisiteKeysInput | string[]
+    lessonContent?: JsonNullValueInput | InputJsonValue
+    contentVersion?: string
+    contentHash?: string | null
     status?: string
+    publishedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     items?: BjtLessonItemCreateNestedManyWithoutLessonInput
@@ -249333,14 +249589,27 @@ export namespace Prisma {
 
   export type BjtLessonUncheckedCreateInput = {
     id?: string
+    seedKey?: string | null
     levelCode: string
+    weekNumber?: number
+    unitType?: string
+    unitOrder?: number
     sortOrder: number
     slug: string
     titleVi: string
     titleJa: string
     descriptionVi?: string | null
     descriptionJa?: string | null
+    estimatedDurationMin?: number
+    difficulty?: string
+    skillTags?: BjtLessonCreateskillTagsInput | string[]
+    businessTopics?: BjtLessonCreatebusinessTopicsInput | string[]
+    prerequisiteKeys?: BjtLessonCreateprerequisiteKeysInput | string[]
+    lessonContent?: JsonNullValueInput | InputJsonValue
+    contentVersion?: string
+    contentHash?: string | null
     status?: string
+    publishedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     items?: BjtLessonItemUncheckedCreateNestedManyWithoutLessonInput
@@ -249348,14 +249617,27 @@ export namespace Prisma {
 
   export type BjtLessonUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
+    seedKey?: NullableStringFieldUpdateOperationsInput | string | null
     levelCode?: StringFieldUpdateOperationsInput | string
+    weekNumber?: IntFieldUpdateOperationsInput | number
+    unitType?: StringFieldUpdateOperationsInput | string
+    unitOrder?: IntFieldUpdateOperationsInput | number
     sortOrder?: IntFieldUpdateOperationsInput | number
     slug?: StringFieldUpdateOperationsInput | string
     titleVi?: StringFieldUpdateOperationsInput | string
     titleJa?: StringFieldUpdateOperationsInput | string
     descriptionVi?: NullableStringFieldUpdateOperationsInput | string | null
     descriptionJa?: NullableStringFieldUpdateOperationsInput | string | null
+    estimatedDurationMin?: IntFieldUpdateOperationsInput | number
+    difficulty?: StringFieldUpdateOperationsInput | string
+    skillTags?: BjtLessonUpdateskillTagsInput | string[]
+    businessTopics?: BjtLessonUpdatebusinessTopicsInput | string[]
+    prerequisiteKeys?: BjtLessonUpdateprerequisiteKeysInput | string[]
+    lessonContent?: JsonNullValueInput | InputJsonValue
+    contentVersion?: StringFieldUpdateOperationsInput | string
+    contentHash?: NullableStringFieldUpdateOperationsInput | string | null
     status?: StringFieldUpdateOperationsInput | string
+    publishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     items?: BjtLessonItemUpdateManyWithoutLessonNestedInput
@@ -249363,14 +249645,27 @@ export namespace Prisma {
 
   export type BjtLessonUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
+    seedKey?: NullableStringFieldUpdateOperationsInput | string | null
     levelCode?: StringFieldUpdateOperationsInput | string
+    weekNumber?: IntFieldUpdateOperationsInput | number
+    unitType?: StringFieldUpdateOperationsInput | string
+    unitOrder?: IntFieldUpdateOperationsInput | number
     sortOrder?: IntFieldUpdateOperationsInput | number
     slug?: StringFieldUpdateOperationsInput | string
     titleVi?: StringFieldUpdateOperationsInput | string
     titleJa?: StringFieldUpdateOperationsInput | string
     descriptionVi?: NullableStringFieldUpdateOperationsInput | string | null
     descriptionJa?: NullableStringFieldUpdateOperationsInput | string | null
+    estimatedDurationMin?: IntFieldUpdateOperationsInput | number
+    difficulty?: StringFieldUpdateOperationsInput | string
+    skillTags?: BjtLessonUpdateskillTagsInput | string[]
+    businessTopics?: BjtLessonUpdatebusinessTopicsInput | string[]
+    prerequisiteKeys?: BjtLessonUpdateprerequisiteKeysInput | string[]
+    lessonContent?: JsonNullValueInput | InputJsonValue
+    contentVersion?: StringFieldUpdateOperationsInput | string
+    contentHash?: NullableStringFieldUpdateOperationsInput | string | null
     status?: StringFieldUpdateOperationsInput | string
+    publishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     items?: BjtLessonItemUncheckedUpdateManyWithoutLessonNestedInput
@@ -249378,42 +249673,81 @@ export namespace Prisma {
 
   export type BjtLessonCreateManyInput = {
     id?: string
+    seedKey?: string | null
     levelCode: string
+    weekNumber?: number
+    unitType?: string
+    unitOrder?: number
     sortOrder: number
     slug: string
     titleVi: string
     titleJa: string
     descriptionVi?: string | null
     descriptionJa?: string | null
+    estimatedDurationMin?: number
+    difficulty?: string
+    skillTags?: BjtLessonCreateskillTagsInput | string[]
+    businessTopics?: BjtLessonCreatebusinessTopicsInput | string[]
+    prerequisiteKeys?: BjtLessonCreateprerequisiteKeysInput | string[]
+    lessonContent?: JsonNullValueInput | InputJsonValue
+    contentVersion?: string
+    contentHash?: string | null
     status?: string
+    publishedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
 
   export type BjtLessonUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
+    seedKey?: NullableStringFieldUpdateOperationsInput | string | null
     levelCode?: StringFieldUpdateOperationsInput | string
+    weekNumber?: IntFieldUpdateOperationsInput | number
+    unitType?: StringFieldUpdateOperationsInput | string
+    unitOrder?: IntFieldUpdateOperationsInput | number
     sortOrder?: IntFieldUpdateOperationsInput | number
     slug?: StringFieldUpdateOperationsInput | string
     titleVi?: StringFieldUpdateOperationsInput | string
     titleJa?: StringFieldUpdateOperationsInput | string
     descriptionVi?: NullableStringFieldUpdateOperationsInput | string | null
     descriptionJa?: NullableStringFieldUpdateOperationsInput | string | null
+    estimatedDurationMin?: IntFieldUpdateOperationsInput | number
+    difficulty?: StringFieldUpdateOperationsInput | string
+    skillTags?: BjtLessonUpdateskillTagsInput | string[]
+    businessTopics?: BjtLessonUpdatebusinessTopicsInput | string[]
+    prerequisiteKeys?: BjtLessonUpdateprerequisiteKeysInput | string[]
+    lessonContent?: JsonNullValueInput | InputJsonValue
+    contentVersion?: StringFieldUpdateOperationsInput | string
+    contentHash?: NullableStringFieldUpdateOperationsInput | string | null
     status?: StringFieldUpdateOperationsInput | string
+    publishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type BjtLessonUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
+    seedKey?: NullableStringFieldUpdateOperationsInput | string | null
     levelCode?: StringFieldUpdateOperationsInput | string
+    weekNumber?: IntFieldUpdateOperationsInput | number
+    unitType?: StringFieldUpdateOperationsInput | string
+    unitOrder?: IntFieldUpdateOperationsInput | number
     sortOrder?: IntFieldUpdateOperationsInput | number
     slug?: StringFieldUpdateOperationsInput | string
     titleVi?: StringFieldUpdateOperationsInput | string
     titleJa?: StringFieldUpdateOperationsInput | string
     descriptionVi?: NullableStringFieldUpdateOperationsInput | string | null
     descriptionJa?: NullableStringFieldUpdateOperationsInput | string | null
+    estimatedDurationMin?: IntFieldUpdateOperationsInput | number
+    difficulty?: StringFieldUpdateOperationsInput | string
+    skillTags?: BjtLessonUpdateskillTagsInput | string[]
+    businessTopics?: BjtLessonUpdatebusinessTopicsInput | string[]
+    prerequisiteKeys?: BjtLessonUpdateprerequisiteKeysInput | string[]
+    lessonContent?: JsonNullValueInput | InputJsonValue
+    contentVersion?: StringFieldUpdateOperationsInput | string
+    contentHash?: NullableStringFieldUpdateOperationsInput | string | null
     status?: StringFieldUpdateOperationsInput | string
+    publishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -259245,52 +259579,89 @@ export namespace Prisma {
 
   export type BjtLessonCountOrderByAggregateInput = {
     id?: SortOrder
+    seedKey?: SortOrder
     levelCode?: SortOrder
+    weekNumber?: SortOrder
+    unitType?: SortOrder
+    unitOrder?: SortOrder
     sortOrder?: SortOrder
     slug?: SortOrder
     titleVi?: SortOrder
     titleJa?: SortOrder
     descriptionVi?: SortOrder
     descriptionJa?: SortOrder
+    estimatedDurationMin?: SortOrder
+    difficulty?: SortOrder
+    skillTags?: SortOrder
+    businessTopics?: SortOrder
+    prerequisiteKeys?: SortOrder
+    lessonContent?: SortOrder
+    contentVersion?: SortOrder
+    contentHash?: SortOrder
     status?: SortOrder
+    publishedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
 
   export type BjtLessonAvgOrderByAggregateInput = {
+    weekNumber?: SortOrder
+    unitOrder?: SortOrder
     sortOrder?: SortOrder
+    estimatedDurationMin?: SortOrder
   }
 
   export type BjtLessonMaxOrderByAggregateInput = {
     id?: SortOrder
+    seedKey?: SortOrder
     levelCode?: SortOrder
+    weekNumber?: SortOrder
+    unitType?: SortOrder
+    unitOrder?: SortOrder
     sortOrder?: SortOrder
     slug?: SortOrder
     titleVi?: SortOrder
     titleJa?: SortOrder
     descriptionVi?: SortOrder
     descriptionJa?: SortOrder
+    estimatedDurationMin?: SortOrder
+    difficulty?: SortOrder
+    contentVersion?: SortOrder
+    contentHash?: SortOrder
     status?: SortOrder
+    publishedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
 
   export type BjtLessonMinOrderByAggregateInput = {
     id?: SortOrder
+    seedKey?: SortOrder
     levelCode?: SortOrder
+    weekNumber?: SortOrder
+    unitType?: SortOrder
+    unitOrder?: SortOrder
     sortOrder?: SortOrder
     slug?: SortOrder
     titleVi?: SortOrder
     titleJa?: SortOrder
     descriptionVi?: SortOrder
     descriptionJa?: SortOrder
+    estimatedDurationMin?: SortOrder
+    difficulty?: SortOrder
+    contentVersion?: SortOrder
+    contentHash?: SortOrder
     status?: SortOrder
+    publishedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
 
   export type BjtLessonSumOrderByAggregateInput = {
+    weekNumber?: SortOrder
+    unitOrder?: SortOrder
     sortOrder?: SortOrder
+    estimatedDurationMin?: SortOrder
   }
 
   export type BjtLessonScalarRelationFilter = {
@@ -266089,6 +266460,18 @@ export namespace Prisma {
     update?: XOR<XOR<FlashcardGenRuleUpdateToOneWithWhereWithoutJobsInput, FlashcardGenRuleUpdateWithoutJobsInput>, FlashcardGenRuleUncheckedUpdateWithoutJobsInput>
   }
 
+  export type BjtLessonCreateskillTagsInput = {
+    set: string[]
+  }
+
+  export type BjtLessonCreatebusinessTopicsInput = {
+    set: string[]
+  }
+
+  export type BjtLessonCreateprerequisiteKeysInput = {
+    set: string[]
+  }
+
   export type BjtLessonItemCreateNestedManyWithoutLessonInput = {
     create?: XOR<BjtLessonItemCreateWithoutLessonInput, BjtLessonItemUncheckedCreateWithoutLessonInput> | BjtLessonItemCreateWithoutLessonInput[] | BjtLessonItemUncheckedCreateWithoutLessonInput[]
     connectOrCreate?: BjtLessonItemCreateOrConnectWithoutLessonInput | BjtLessonItemCreateOrConnectWithoutLessonInput[]
@@ -266101,6 +266484,21 @@ export namespace Prisma {
     connectOrCreate?: BjtLessonItemCreateOrConnectWithoutLessonInput | BjtLessonItemCreateOrConnectWithoutLessonInput[]
     createMany?: BjtLessonItemCreateManyLessonInputEnvelope
     connect?: BjtLessonItemWhereUniqueInput | BjtLessonItemWhereUniqueInput[]
+  }
+
+  export type BjtLessonUpdateskillTagsInput = {
+    set?: string[]
+    push?: string | string[]
+  }
+
+  export type BjtLessonUpdatebusinessTopicsInput = {
+    set?: string[]
+    push?: string | string[]
+  }
+
+  export type BjtLessonUpdateprerequisiteKeysInput = {
+    set?: string[]
+    push?: string | string[]
   }
 
   export type BjtLessonItemUpdateManyWithoutLessonNestedInput = {
@@ -284607,28 +285005,54 @@ export namespace Prisma {
 
   export type BjtLessonCreateWithoutItemsInput = {
     id?: string
+    seedKey?: string | null
     levelCode: string
+    weekNumber?: number
+    unitType?: string
+    unitOrder?: number
     sortOrder: number
     slug: string
     titleVi: string
     titleJa: string
     descriptionVi?: string | null
     descriptionJa?: string | null
+    estimatedDurationMin?: number
+    difficulty?: string
+    skillTags?: BjtLessonCreateskillTagsInput | string[]
+    businessTopics?: BjtLessonCreatebusinessTopicsInput | string[]
+    prerequisiteKeys?: BjtLessonCreateprerequisiteKeysInput | string[]
+    lessonContent?: JsonNullValueInput | InputJsonValue
+    contentVersion?: string
+    contentHash?: string | null
     status?: string
+    publishedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
 
   export type BjtLessonUncheckedCreateWithoutItemsInput = {
     id?: string
+    seedKey?: string | null
     levelCode: string
+    weekNumber?: number
+    unitType?: string
+    unitOrder?: number
     sortOrder: number
     slug: string
     titleVi: string
     titleJa: string
     descriptionVi?: string | null
     descriptionJa?: string | null
+    estimatedDurationMin?: number
+    difficulty?: string
+    skillTags?: BjtLessonCreateskillTagsInput | string[]
+    businessTopics?: BjtLessonCreatebusinessTopicsInput | string[]
+    prerequisiteKeys?: BjtLessonCreateprerequisiteKeysInput | string[]
+    lessonContent?: JsonNullValueInput | InputJsonValue
+    contentVersion?: string
+    contentHash?: string | null
     status?: string
+    publishedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -284651,28 +285075,54 @@ export namespace Prisma {
 
   export type BjtLessonUpdateWithoutItemsInput = {
     id?: StringFieldUpdateOperationsInput | string
+    seedKey?: NullableStringFieldUpdateOperationsInput | string | null
     levelCode?: StringFieldUpdateOperationsInput | string
+    weekNumber?: IntFieldUpdateOperationsInput | number
+    unitType?: StringFieldUpdateOperationsInput | string
+    unitOrder?: IntFieldUpdateOperationsInput | number
     sortOrder?: IntFieldUpdateOperationsInput | number
     slug?: StringFieldUpdateOperationsInput | string
     titleVi?: StringFieldUpdateOperationsInput | string
     titleJa?: StringFieldUpdateOperationsInput | string
     descriptionVi?: NullableStringFieldUpdateOperationsInput | string | null
     descriptionJa?: NullableStringFieldUpdateOperationsInput | string | null
+    estimatedDurationMin?: IntFieldUpdateOperationsInput | number
+    difficulty?: StringFieldUpdateOperationsInput | string
+    skillTags?: BjtLessonUpdateskillTagsInput | string[]
+    businessTopics?: BjtLessonUpdatebusinessTopicsInput | string[]
+    prerequisiteKeys?: BjtLessonUpdateprerequisiteKeysInput | string[]
+    lessonContent?: JsonNullValueInput | InputJsonValue
+    contentVersion?: StringFieldUpdateOperationsInput | string
+    contentHash?: NullableStringFieldUpdateOperationsInput | string | null
     status?: StringFieldUpdateOperationsInput | string
+    publishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type BjtLessonUncheckedUpdateWithoutItemsInput = {
     id?: StringFieldUpdateOperationsInput | string
+    seedKey?: NullableStringFieldUpdateOperationsInput | string | null
     levelCode?: StringFieldUpdateOperationsInput | string
+    weekNumber?: IntFieldUpdateOperationsInput | number
+    unitType?: StringFieldUpdateOperationsInput | string
+    unitOrder?: IntFieldUpdateOperationsInput | number
     sortOrder?: IntFieldUpdateOperationsInput | number
     slug?: StringFieldUpdateOperationsInput | string
     titleVi?: StringFieldUpdateOperationsInput | string
     titleJa?: StringFieldUpdateOperationsInput | string
     descriptionVi?: NullableStringFieldUpdateOperationsInput | string | null
     descriptionJa?: NullableStringFieldUpdateOperationsInput | string | null
+    estimatedDurationMin?: IntFieldUpdateOperationsInput | number
+    difficulty?: StringFieldUpdateOperationsInput | string
+    skillTags?: BjtLessonUpdateskillTagsInput | string[]
+    businessTopics?: BjtLessonUpdatebusinessTopicsInput | string[]
+    prerequisiteKeys?: BjtLessonUpdateprerequisiteKeysInput | string[]
+    lessonContent?: JsonNullValueInput | InputJsonValue
+    contentVersion?: StringFieldUpdateOperationsInput | string
+    contentHash?: NullableStringFieldUpdateOperationsInput | string | null
     status?: StringFieldUpdateOperationsInput | string
+    publishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

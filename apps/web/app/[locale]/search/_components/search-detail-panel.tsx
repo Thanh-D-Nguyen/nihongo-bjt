@@ -119,7 +119,7 @@ function extractKanjiFromHeadword(headword: string): string[] {
 }
 
 function bookmarkTargetForSearchResult(kind: SearchResult["kind"]): BookmarkTargetType | null {
-  if (kind === "example") return null;
+  if (kind === "example" || kind === "lesson") return null;
   return kind;
 }
 
@@ -167,7 +167,9 @@ export function SearchDetailPanel({
         )}
       >
         <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/6">
-          <span aria-hidden className="jp-text text-3xl text-accent/30">辞</span>
+          <span aria-hidden className="jp-text text-3xl text-accent/30">
+            辞
+          </span>
         </div>
         <p className="text-sm font-medium text-muted">{labels.detailEmpty}</p>
       </div>
@@ -175,7 +177,9 @@ export function SearchDetailPanel({
   }
 
   const bookmarkKind = bookmarkTargetForSearchResult(result.kind);
-  const showReadToolbar = Boolean(bookmarkKind || (result.kind === "example" && result.title.trim()));
+  const showReadToolbar = Boolean(
+    bookmarkKind || (result.kind === "example" && result.title.trim())
+  );
 
   return (
     <div
@@ -186,7 +190,9 @@ export function SearchDetailPanel({
       )}
     >
       <div className="shrink-0 border-b border-ink/6 bg-gradient-to-b from-paper/90 to-paper/60 px-5 py-4 backdrop-blur-sm">
-        <p className="text-[10px] font-bold uppercase tracking-wide text-muted">{labels.lovableProductTag}</p>
+        <p className="text-[10px] font-bold uppercase tracking-wide text-muted">
+          {labels.lovableProductTag}
+        </p>
         <div className="mt-1 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-baseline gap-2">
@@ -201,7 +207,9 @@ export function SearchDetailPanel({
             </div>
             <div className="mt-1 flex flex-wrap gap-2 text-[11px] font-semibold text-muted">
               {result.jlptLevel ? <span>{result.jlptLevel}</span> : null}
-              <span className="rounded-md bg-ink/5 px-1.5 py-0.5 text-ink/80">{labels.detailProductBadge}</span>
+              <span className="rounded-md bg-ink/5 px-1.5 py-0.5 text-ink/80">
+                {labels.detailProductBadge}
+              </span>
             </div>
           </div>
           {showReadToolbar ? (
@@ -210,31 +218,31 @@ export function SearchDetailPanel({
               className="flex shrink-0 items-center gap-1 self-start sm:pt-0.5"
               role="group"
             >
-                {bookmarkKind ? (
-                  <SearchBookmarkToggle
-                    labels={{
-                      add: labels.detailBookmarkAdd,
-                      busy: labels.detailBookmarkBusy,
-                      error: labels.detailBookmarkError,
-                      remove: labels.detailBookmarkRemove,
-                      retry: labels.detailBookmarkRetry,
-                      signIn: labels.detailBookmarkSignIn
-                    }}
-                    targetId={result.id}
-                    targetType={bookmarkKind}
-                    userId={userId}
-                  />
-                ) : null}
-                <SearchReadAloudButton
-                  className={cn(!bookmarkKind && "min-w-0")}
+              {bookmarkKind ? (
+                <SearchBookmarkToggle
                   labels={{
-                    read: labels.detailReadAloud,
-                    readSentence: labels.detailReadAloudSentence,
-                    stop: labels.detailReadAloudStop
+                    add: labels.detailBookmarkAdd,
+                    busy: labels.detailBookmarkBusy,
+                    error: labels.detailBookmarkError,
+                    remove: labels.detailBookmarkRemove,
+                    retry: labels.detailBookmarkRetry,
+                    signIn: labels.detailBookmarkSignIn
                   }}
-                  showTtsNotice={false}
-                  text={result.title}
+                  targetId={result.id}
+                  targetType={bookmarkKind}
+                  userId={userId}
                 />
+              ) : null}
+              <SearchReadAloudButton
+                className={cn(!bookmarkKind && "min-w-0")}
+                labels={{
+                  read: labels.detailReadAloud,
+                  readSentence: labels.detailReadAloudSentence,
+                  stop: labels.detailReadAloudStop
+                }}
+                showTtsNotice={false}
+                text={result.title}
+              />
             </div>
           ) : null}
         </div>
@@ -257,8 +265,13 @@ export function SearchDetailPanel({
           </div>
         ) : null}
         {detailError ? (
-          <div className="flex flex-col items-center gap-3 rounded-xl border border-sakura/20 bg-sakura/5 p-6 text-center" role="alert">
-            <span aria-hidden className="text-2xl">⚠</span>
+          <div
+            className="flex flex-col items-center gap-3 rounded-xl border border-sakura/20 bg-sakura/5 p-6 text-center"
+            role="alert"
+          >
+            <span aria-hidden className="text-2xl">
+              ⚠
+            </span>
             <p className="text-sm font-medium text-ink">{labels.detailError}</p>
           </div>
         ) : null}
@@ -285,9 +298,14 @@ export function SearchDetailPanel({
           <GrammarDetailBody dto={detail.data} labels={labels} />
         ) : null}
 
-        {!detailLoading && !detailError && result.description && (result.kind === "example" || !detail) ? (
+        {!detailLoading &&
+        !detailError &&
+        result.description &&
+        (result.kind === "example" || !detail) ? (
           <section className="mt-2">
-            <h3 className="text-xs font-bold uppercase tracking-wide text-muted">{labels.detailMeaningsLabel}</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wide text-muted">
+              {labels.detailMeaningsLabel}
+            </h3>
             <p className="mt-2 text-sm leading-relaxed text-ink/80">
               <HighlightMatch query={query} text={result.description} />
             </p>
@@ -321,7 +339,9 @@ function LexemeDetailBody({
     <>
       {(dto.shortMeaningVi || result.description) && (
         <section className="mb-5">
-          <h3 className="text-xs font-bold uppercase tracking-wide text-muted">{labels.detailMeaningsLabel}</h3>
+          <h3 className="text-xs font-bold uppercase tracking-wide text-muted">
+            {labels.detailMeaningsLabel}
+          </h3>
           <p className="mt-2 text-sm font-medium leading-relaxed text-ink">
             {dto.shortMeaningVi ?? result.description ?? ""}
           </p>
@@ -329,7 +349,9 @@ function LexemeDetailBody({
       )}
 
       <section className="mb-5 rounded-xl border border-ink/8 bg-paper/60 px-3 py-3">
-        <h3 className="text-xs font-bold uppercase tracking-wide text-muted">{labels.detailPitchReadingTitle}</h3>
+        <h3 className="text-xs font-bold uppercase tracking-wide text-muted">
+          {labels.detailPitchReadingTitle}
+        </h3>
         {hasPitchDiagram ? (
           <div className="mt-3">
             <PitchAccentDisplay
@@ -344,12 +366,21 @@ function LexemeDetailBody({
         {!hasPitchDiagram && dto.pronunciation != null ? (
           <p className="mt-2 font-mono text-[10px] leading-relaxed text-muted">
             <span className="font-semibold">{labels.detailPitchLabel}: </span>
-            {typeof dto.pronunciation === "string" ? dto.pronunciation : JSON.stringify(dto.pronunciation)}
+            {typeof dto.pronunciation === "string"
+              ? dto.pronunciation
+              : JSON.stringify(dto.pronunciation)}
           </p>
         ) : null}
 
-        <div className={cn("border-t border-ink/8 pt-3", hasPitchDiagram || dto.reading ? "mt-4" : "mt-3")}>
-          <p className="text-xs font-bold uppercase tracking-wide text-muted">{labels.detailAudioUnavailable}</p>
+        <div
+          className={cn(
+            "border-t border-ink/8 pt-3",
+            hasPitchDiagram || dto.reading ? "mt-4" : "mt-3"
+          )}
+        >
+          <p className="text-xs font-bold uppercase tracking-wide text-muted">
+            {labels.detailAudioUnavailable}
+          </p>
           <p className="mt-1 text-xs leading-relaxed text-muted">{labels.detailRomajiSoon}</p>
         </div>
       </section>
@@ -374,7 +405,9 @@ function LexemeDetailBody({
 
       {dto.senses.length > 0 ? (
         <section className="mb-5">
-          <h3 className="text-xs font-bold uppercase tracking-wide text-muted">{labels.detailSense}</h3>
+          <h3 className="text-xs font-bold uppercase tracking-wide text-muted">
+            {labels.detailSense}
+          </h3>
           <ol className="mt-2 list-decimal space-y-3 pl-4 text-sm">
             {dto.senses.map((sense) => (
               <li
@@ -425,7 +458,9 @@ function LexemeDetailBody({
 
       {phrases.length > 0 ? (
         <section className="mb-5">
-          <h3 className="text-xs font-bold uppercase tracking-wide text-muted">{labels.detailExamplesLabel}</h3>
+          <h3 className="text-xs font-bold uppercase tracking-wide text-muted">
+            {labels.detailExamplesLabel}
+          </h3>
           <ul className="mt-2 space-y-1.5">
             {phrases.map((p, i) => (
               <li className="jp-text text-sm text-ink/85" key={`${i}-${p}`}>
@@ -438,12 +473,14 @@ function LexemeDetailBody({
 
       {kanjiChars.length > 0 ? (
         <section className="mb-5">
-          <h3 className="text-xs font-bold uppercase tracking-wide text-muted">{labels.kanjiComponentsLabel}</h3>
+          <h3 className="text-xs font-bold uppercase tracking-wide text-muted">
+            {labels.kanjiComponentsLabel}
+          </h3>
           <ul className="mt-2 flex flex-wrap gap-2">
             {kanjiChars.map((ch, i) => (
               <li key={`${i}-${ch}`}>
                 <Link
-                    className="search-kanji-chip inline-flex min-h-9 min-w-9 items-center justify-center rounded-lg border border-ink/12 bg-paper px-2 text-lg font-bold text-ink shadow-sm transition-all duration-150 hover:border-accent/30 hover:bg-accent-soft/30 hover:shadow-md active:scale-95"
+                  className="search-kanji-chip inline-flex min-h-9 min-w-9 items-center justify-center rounded-lg border border-ink/12 bg-paper px-2 text-lg font-bold text-ink shadow-sm transition-all duration-150 hover:border-accent/30 hover:bg-accent-soft/30 hover:shadow-md active:scale-95"
                   href={`/${locale}/search?q=${encodeURIComponent(ch)}&scope=kanji`}
                 >
                   {ch}
@@ -472,12 +509,16 @@ function KanjiDetailBody({
     <>
       {dto.meaningVi ? (
         <section className="mb-4">
-          <h3 className="text-xs font-bold uppercase tracking-wide text-muted">{labels.detailMeaningsLabel}</h3>
+          <h3 className="text-xs font-bold uppercase tracking-wide text-muted">
+            {labels.detailMeaningsLabel}
+          </h3>
           <p className="mt-2 text-sm leading-relaxed text-ink">{dto.meaningVi}</p>
         </section>
       ) : null}
       <section className="mb-4 text-sm">
-        <h3 className="text-xs font-bold uppercase tracking-wide text-muted">{labels.detailKanjiReadings}</h3>
+        <h3 className="text-xs font-bold uppercase tracking-wide text-muted">
+          {labels.detailKanjiReadings}
+        </h3>
         {dto.onyomi ? (
           <p className="mt-2">
             <span className="text-muted">On: </span>
@@ -496,7 +537,9 @@ function KanjiDetailBody({
           </p>
         ) : null}
         {!dto.strokeSvgPath?.trim() ? (
-          <p className="mt-2 text-[10px] leading-relaxed text-muted">{labels.detailKanjiStrokeNoDiagram}</p>
+          <p className="mt-2 text-[10px] leading-relaxed text-muted">
+            {labels.detailKanjiStrokeNoDiagram}
+          </p>
         ) : null}
       </section>
       {dto.strokeSvgPath?.trim() ? (
@@ -521,7 +564,9 @@ function KanjiDetailBody({
       ) : null}
       {dto.components && dto.components.length > 0 ? (
         <section className="mb-4">
-          <h3 className="text-xs font-bold uppercase tracking-wide text-muted">{labels.kanjiComponentsLabel}</h3>
+          <h3 className="text-xs font-bold uppercase tracking-wide text-muted">
+            {labels.kanjiComponentsLabel}
+          </h3>
           <ul className="mt-2 flex flex-wrap gap-2">
             {dto.components.map((c) => {
               const ch = c.character?.trim();
@@ -547,7 +592,9 @@ function KanjiDetailBody({
         </section>
       ) : (
         <section className="mb-4">
-          <h3 className="text-xs font-bold uppercase tracking-wide text-muted">{labels.kanjiComponentsLabel}</h3>
+          <h3 className="text-xs font-bold uppercase tracking-wide text-muted">
+            {labels.kanjiComponentsLabel}
+          </h3>
           <p className="mt-2 text-xs leading-relaxed text-muted">{labels.kanjiComponentsNone}</p>
         </section>
       )}
@@ -560,16 +607,23 @@ function GrammarDetailBody({ dto, labels }: { dto: GrammarDetailDto; labels: Sea
   return (
     <>
       <section className="mb-4">
-        <h3 className="text-xs font-bold uppercase tracking-wide text-muted">{labels.detailGrammarPattern}</h3>
+        <h3 className="text-xs font-bold uppercase tracking-wide text-muted">
+          {labels.detailGrammarPattern}
+        </h3>
         <p className="jp-text mt-2 text-lg font-semibold text-ink">{dto.pattern}</p>
         <p className="mt-2 text-sm leading-relaxed text-ink/85">{dto.meaningVi}</p>
       </section>
       {dto.details && dto.details.length > 0 ? (
         <section className="mb-4">
-          <h3 className="text-xs font-bold uppercase tracking-wide text-muted">{labels.detailSense}</h3>
+          <h3 className="text-xs font-bold uppercase tracking-wide text-muted">
+            {labels.detailSense}
+          </h3>
           <ol className="mt-2 space-y-3">
             {dto.details.map((d, i) => (
-              <li className="rounded-xl border border-ink/8 bg-paper/65 px-3 py-2.5" key={`${d.position ?? i}`}>
+              <li
+                className="rounded-xl border border-ink/8 bg-paper/65 px-3 py-2.5"
+                key={`${d.position ?? i}`}
+              >
                 <GrammarRichText html={d.explanation} />
               </li>
             ))}
@@ -597,14 +651,18 @@ function BjtBlock({
 }) {
   return (
     <section className="rounded-xl border border-leaf/30 bg-leaf/10 p-4">
-      <h3 className="text-xs font-bold uppercase tracking-wide text-ink">{labels.bjtSectionTitle}</h3>
+      <h3 className="text-xs font-bold uppercase tracking-wide text-ink">
+        {labels.bjtSectionTitle}
+      </h3>
       <p className="mt-2 text-xs leading-relaxed text-ink/80">{labels.bjtSectionIntro}</p>
       <div className="mt-3 space-y-2 text-xs">
         <p className="font-semibold text-ink">{labels.bjtTopicsLabel}</p>
         <p className="leading-relaxed text-ink/80">{tplBody(labels.bjtTopicsBody, headword)}</p>
         <p className="font-semibold text-ink">{labels.bjtPhrasesLabel}</p>
         <p className="leading-relaxed text-ink/80">
-          {phrases.length > 0 ? phrases.slice(0, 5).join(" · ") : tplBody(labels.bjtPhrasesBody, headword)}
+          {phrases.length > 0
+            ? phrases.slice(0, 5).join(" · ")
+            : tplBody(labels.bjtPhrasesBody, headword)}
         </p>
       </div>
     </section>

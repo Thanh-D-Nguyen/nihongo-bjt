@@ -3166,22 +3166,37 @@ model FlashcardGenJob {
  */
 
 model BjtLesson {
-  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  levelCode     String   @map("level_code") @db.VarChar(4)
-  sortOrder     Int      @map("sort_order")
-  slug          String   @unique @db.VarChar(80)
-  titleVi       String   @map("title_vi") @db.VarChar(200)
-  titleJa       String   @map("title_ja") @db.VarChar(200)
-  descriptionVi String?  @map("description_vi")
-  descriptionJa String?  @map("description_ja")
-  status        String   @default("active") @db.VarChar(32)
-  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id                   String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  seedKey              String?   @unique @map("seed_key") @db.VarChar(120)
+  levelCode            String    @map("level_code") @db.VarChar(4)
+  weekNumber           Int       @default(1) @map("week_number")
+  unitType             String    @default("lesson") @map("unit_type") @db.VarChar(24)
+  unitOrder            Int       @default(1) @map("unit_order")
+  sortOrder            Int       @map("sort_order")
+  slug                 String    @unique @db.VarChar(80)
+  titleVi              String    @map("title_vi") @db.VarChar(200)
+  titleJa              String    @map("title_ja") @db.VarChar(200)
+  descriptionVi        String?   @map("description_vi")
+  descriptionJa        String?   @map("description_ja")
+  estimatedDurationMin Int       @default(20) @map("estimated_duration_min")
+  difficulty           String    @default("foundation") @db.VarChar(32)
+  skillTags            String[]  @default([]) @map("skill_tags")
+  businessTopics       String[]  @default([]) @map("business_topics")
+  prerequisiteKeys     String[]  @default([]) @map("prerequisite_keys")
+  lessonContent        Json      @default("{}") @map("lesson_content")
+  contentVersion       String    @default("legacy") @map("content_version") @db.VarChar(32)
+  contentHash          String?   @map("content_hash") @db.Char(64)
+  status               String    @default("active") @db.VarChar(32)
+  publishedAt          DateTime? @map("published_at") @db.Timestamptz(6)
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   items BjtLessonItem[]
 
   @@unique([levelCode, sortOrder], map: "uq_bjt_lesson_level_order")
   @@index([levelCode, status], map: "idx_bjt_lesson_level_status")
+  @@index([levelCode, weekNumber, unitOrder], map: "idx_bjt_lesson_curriculum_order")
+  @@index([unitType, status], map: "idx_bjt_lesson_type_status")
   @@map("bjt_lesson")
   @@schema("curriculum")
 }

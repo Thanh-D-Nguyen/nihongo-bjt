@@ -23,10 +23,12 @@ rm -rf apps/web/.next apps/admin/.next
 pnpm install --frozen-lockfile
 pnpm prisma:generate
 pnpm exec prisma migrate deploy --schema packages/database/prisma/schema.prisma
+pnpm seed:bjt-lessons
 ./deploy/gcp/apply-recommendation-schema.sh
 ./deploy/gcp/configure-keycloak-mobile-client.sh
 ./deploy/gcp/link-keycloak-admin.sh
 pnpm build
+pnpm search:index
 
 pm2 startOrReload deploy/gcp/ecosystem.config.cjs --update-env
 pm2 save

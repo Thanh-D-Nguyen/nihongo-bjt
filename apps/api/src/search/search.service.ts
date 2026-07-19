@@ -48,7 +48,12 @@ export class SearchService {
     return scored.map(({ score: _s, ...rest }) => rest).slice(0, limit);
   }
 
-  private async searchMeilisearch(q: string, limit: number, scope?: string, level?: string): Promise<SearchResult[]> {
+  private async searchMeilisearch(
+    q: string,
+    limit: number,
+    scope?: string,
+    level?: string
+  ): Promise<SearchResult[]> {
     try {
       const filters: string[] = [];
       if (scope) {
@@ -64,7 +69,9 @@ export class SearchService {
       if (filters.length > 0) {
         searchOptions.filter = filters.join(" AND ");
       }
-      const res = await this.meili.index<Record<string, unknown>>("content_search").search(q, searchOptions);
+      const res = await this.meili
+        .index<Record<string, unknown>>("content_search")
+        .search(q, searchOptions);
       if (!res.hits.length) {
         return [];
       }
@@ -94,9 +101,15 @@ export class SearchService {
     const perType = Math.max(limit, 20);
 
     // Fetch ranked rows per query variant from contentRepository (raw SQL with exact-match ORDER BY)
-    const lexemeRowsArr = await Promise.all(queries.map((v) => this.contentRepository.lexemes(v, perType)));
-    const kanjiRowsArr = await Promise.all(queries.map((v) => this.contentRepository.kanji(v, perType)));
-    const grammarRowsArr = await Promise.all(queries.map((v) => this.contentRepository.grammar(v, perType)));
+    const lexemeRowsArr = await Promise.all(
+      queries.map((v) => this.contentRepository.lexemes(v, perType))
+    );
+    const kanjiRowsArr = await Promise.all(
+      queries.map((v) => this.contentRepository.kanji(v, perType))
+    );
+    const grammarRowsArr = await Promise.all(
+      queries.map((v) => this.contentRepository.grammar(v, perType))
+    );
 
     const scored: Array<SearchSuggestion & { score: number }> = [];
     const seen = new Set<string>();
@@ -146,8 +159,12 @@ export class SearchService {
     return scored.slice(0, limit).map(({ score: _s, ...rest }) => rest);
   }
 
-  async rebuildProjectionIndex(): Promise<{ indexed: number; sourceSystem: "PostgreSQL"; timestamp: string }> {
-    const [lexemes, kanji, grammar, examples] = await Promise.all([
+  async rebuildProjectionIndex(): Promise<{
+    indexed: number;
+    sourceSystem: "PostgreSQL";
+    timestamp: string;
+  }> {
+    const [lexemes, kanji, grammar, examples, lessons] = await Promise.all([
       this.prisma.lexeme.findMany({
         include: { senses: { orderBy: { position: "asc" }, take: 1 } },
         take: 5000,
@@ -155,7 +172,8 @@ export class SearchService {
       }),
       this.prisma.kanji.findMany({ take: 5000, where: { status: "active" } }),
       this.prisma.grammarPoint.findMany({ take: 5000, where: { status: "active" } }),
-      this.prisma.exampleSentence.findMany({ take: 5000, where: { status: "active" } })
+      this.prisma.exampleSentence.findMany({ take: 5000, where: { status: "active" } }),
+      this.prisma.bjtLesson.findMany({ take: 5000, where: { status: "active" } })
     ]);
 
     const documents = [
@@ -190,6 +208,14 @@ export class SearchService {
         kind: "example" as const,
         reading: item.reading,
         title: item.japaneseText
+      })),
+      ...lessons.map((item) => ({
+        description: item.descriptionVi,
+        id: item.id,
+        jlptLevel: item.levelCode,
+        kind: "lesson" as const,
+        reading: item.titleJa,
+        title: item.titleVi
       }))
     ];
 
@@ -235,7 +261,12 @@ export class SearchService {
     return [...queries];
   }
 
-  private async searchPostgresRanked(q: string, limit: number, scope?: string, level?: string): Promise<ScoredResult[]> {
+  private async searchPostgresRanked(
+    q: string,
+    limit: number,
+    scope?: string,
+    level?: string
+  ): Promise<ScoredResult[]> {
     const queries = this.normalizeQuery(q);
     // Fetch a larger pool to ensure exact matches aren't pushed out
     const perType = Math.max(limit, 30);
@@ -252,6 +283,9 @@ export class SearchService {
     }
     if (!scope || scope === "example") {
       fetches.push(this.fetchAndScoreExamples(queries, perType));
+    }
+    if (!scope || scope === "lesson") {
+      fetches.push(this.fetchAndScoreLessons(queries, perType));
     }
 
     const pools = await Promise.all(fetches);
@@ -274,7 +308,12 @@ export class SearchService {
   }
 
   /** Score a result based on how well `title` and `reading` match the query */
-  private scoreResult(queries: string[], title: string, reading: string | null, description: string | null): number {
+  private scoreResult(
+    queries: string[],
+    title: string,
+    reading: string | null,
+    description: string | null
+  ): number {
     let bestScore = 0;
     for (const q of queries) {
       bestScore = Math.max(bestScore, this.scoreOnePair(q, title, reading, description));
@@ -282,7 +321,12 @@ export class SearchService {
     return bestScore;
   }
 
-  private scoreOnePair(q: string, title: string, reading: string | null, description: string | null): number {
+  private scoreOnePair(
+    q: string,
+    title: string,
+    reading: string | null,
+    description: string | null
+  ): number {
     const qLower = q.toLowerCase();
     const titleLower = title.toLowerCase();
 
@@ -330,7 +374,11 @@ export class SearchService {
     return [...all.values()];
   }
 
-  private async fetchAndScoreKanji(queries: string[], originalQ: string, limit: number): Promise<ScoredResult[]> {
+  private async fetchAndScoreKanji(
+    queries: string[],
+    originalQ: string,
+    limit: number
+  ): Promise<ScoredResult[]> {
     const all = new Map<string, ScoredResult>();
 
     // For multi-character input containing kanji, decompose into individual characters
@@ -346,9 +394,10 @@ export class SearchService {
         const reading = [item.onyomi, item.kunyomi].filter(Boolean).join(" / ") || null;
         const description = item.meaningVi;
         // For decomposed kanji, score based on whether the character is in the original query
-        const score = kanjiChars.length > 1 && kanjiChars.includes(title)
-          ? 95 // Individual kanji from the query word
-          : this.scoreResult(queries, title, reading, description);
+        const score =
+          kanjiChars.length > 1 && kanjiChars.includes(title)
+            ? 95 // Individual kanji from the query word
+            : this.scoreResult(queries, title, reading, description);
         all.set(item.id, {
           description,
           id: item.id,
@@ -409,4 +458,36 @@ export class SearchService {
     return [...all.values()];
   }
 
+  private async fetchAndScoreLessons(queries: string[], limit: number): Promise<ScoredResult[]> {
+    const all = new Map<string, ScoredResult>();
+    for (const q of queries) {
+      const rows = await this.prisma.bjtLesson.findMany({
+        orderBy: [{ levelCode: "asc" }, { sortOrder: "asc" }],
+        take: limit,
+        where: {
+          status: "active",
+          OR: [
+            { titleJa: { contains: q, mode: "insensitive" } },
+            { titleVi: { contains: q, mode: "insensitive" } },
+            { descriptionJa: { contains: q, mode: "insensitive" } },
+            { descriptionVi: { contains: q, mode: "insensitive" } }
+          ]
+        }
+      });
+      for (const item of rows) {
+        if (all.has(item.id)) continue;
+        const description = item.descriptionVi;
+        all.set(item.id, {
+          description,
+          id: item.id,
+          jlptLevel: item.levelCode,
+          kind: "lesson",
+          reading: item.titleJa,
+          score: this.scoreResult(queries, item.titleVi, item.titleJa, description),
+          title: item.titleVi
+        });
+      }
+    }
+    return [...all.values()];
+  }
 }
