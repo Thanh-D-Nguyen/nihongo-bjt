@@ -17,7 +17,7 @@ const defaultPlacements: Array<{
   {
     code: "home_feed_inline",
     config: {
-      allowedPlanSlugs: ["free", "basic", "standard", "premium"],
+      allowedPlanSlugs: ["free", "plus", "basic", "standard", "premium"],
       learningSafe: true,
       location: "inline",
       maxPerDay: 12,
@@ -29,7 +29,7 @@ const defaultPlacements: Array<{
   {
     code: "dictionary_result_inline",
     config: {
-      allowedPlanSlugs: ["free", "basic", "standard", "premium"],
+      allowedPlanSlugs: ["free", "plus", "basic", "standard", "premium"],
       learningSafe: true,
       location: "inline",
       maxPerDay: 20,
@@ -41,7 +41,7 @@ const defaultPlacements: Array<{
   {
     code: "dictionary_detail_bottom",
     config: {
-      allowedPlanSlugs: ["free", "basic", "standard", "premium"],
+      allowedPlanSlugs: ["free", "plus", "basic", "standard", "premium"],
       learningSafe: true,
       location: "bottom",
       maxPerDay: 20,
@@ -53,7 +53,7 @@ const defaultPlacements: Array<{
   {
     code: "daily_life_hub_inline",
     config: {
-      allowedPlanSlugs: ["free", "basic", "standard", "premium"],
+      allowedPlanSlugs: ["free", "plus", "basic", "standard", "premium"],
       learningSafe: true,
       location: "inline",
       maxPerDay: 12,
@@ -65,7 +65,7 @@ const defaultPlacements: Array<{
   {
     code: "quiz_result_bottom",
     config: {
-      allowedPlanSlugs: ["free", "basic", "standard", "premium"],
+      allowedPlanSlugs: ["free", "plus", "basic", "standard", "premium"],
       learningSafe: true,
       location: "bottom",
       maxPerDay: 8,
@@ -77,7 +77,7 @@ const defaultPlacements: Array<{
   {
     code: "flashcard_library_inline",
     config: {
-      allowedPlanSlugs: ["free", "basic", "standard", "premium"],
+      allowedPlanSlugs: ["free", "plus", "basic", "standard", "premium"],
       learningSafe: true,
       location: "inline",
       maxPerDay: 8,
@@ -89,7 +89,7 @@ const defaultPlacements: Array<{
   {
     code: "flashcard_session_end",
     config: {
-      allowedPlanSlugs: ["free", "basic", "standard", "premium"],
+      allowedPlanSlugs: ["free", "plus", "basic", "standard", "premium"],
       learningSafe: true,
       location: "end",
       maxPerDay: 4,
