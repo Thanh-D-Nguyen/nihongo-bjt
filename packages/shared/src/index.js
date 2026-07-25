@@ -8,7 +8,7 @@ export { contrastRatio, DEFAULT_FLASHCARD_THEME, FLASHCARD_THEME_DEFINITIONS, fl
 export { buildDailySuggestedFlashcardBack, isLikelyVietnameseLegalDisclaimerOnlyBack, repairDailyContentFlashcardBackIfNeeded } from "./daily-flashcard-back.js";
 export * from "./learning-admin.js";
 export { BATTLE_BOT_PROFILES, DEFAULT_BATTLE_BOT_KEY, battleBotStateToRiveInput, decideBotOption, getBattleBotProfile, hashSeedToUint32, randomBetween, shuffleDeterministic } from "./battle.js";
-export { scoreBjtPractice } from "./quiz.js";
+export { scoreBjtMockExam, scoreBjtPractice } from "./quiz.js";
 export { COMEBACK_MODE_INTERVAL_MULTIPLIER, LEECH_THRESHOLD_LAPSES, scheduleSrsReview, srsRatingSchema } from "./srs.js";
 export { allCanonicalAdminPermissions, CANONICAL_ADMIN_ROLE_PERMISSIONS, CANONICAL_ADMIN_ROLES } from "./admin-rbac.js";
 export const healthStatusSchema = z.object({
@@ -1897,6 +1897,7 @@ const questionBaseShape = {
     sourceId: optionalUuid,
     imageUrl: z.string().trim().url().max(2000).optional().nullable(),
     imageAlt: z.string().trim().max(500).optional().nullable(),
+    imagePrompt: z.string().trim().max(2000).optional().nullable(),
     audioUrl: z.string().trim().url().max(2000).optional().nullable(),
     audioScript: z.string().trim().max(8000).optional().nullable(),
     options: z.array(questionOptionSchema).min(2).max(8)
@@ -1938,6 +1939,7 @@ export const adminQuestionBankPatchSchema = z
     sourceId: questionBaseShape.sourceId,
     imageUrl: questionBaseShape.imageUrl,
     imageAlt: questionBaseShape.imageAlt,
+    imagePrompt: questionBaseShape.imagePrompt,
     audioUrl: questionBaseShape.audioUrl,
     audioScript: questionBaseShape.audioScript,
     options: z.array(questionOptionSchema).min(2).max(8).optional(),

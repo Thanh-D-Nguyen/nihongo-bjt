@@ -63,6 +63,7 @@ interface SessionPayload {
   remainingSeconds?: number | null;
   startedAt?: string;
   status: string;
+  testType?: string;
   timeLimitSeconds?: number | null;
   totalQuestions: number;
 }
@@ -93,6 +94,7 @@ interface QuestionPayload {
     id: string;
     imageUrl?: string | null;
     imageAlt?: string | null;
+    imagePrompt?: string | null;
     options: Array<{ optionKey: string; text: string }>;
     prompt: string;
     sectionCode?: string | null;
@@ -234,7 +236,13 @@ export interface QuizLabels {
     listenAudio: string;
     playCount: string;
     showScript: string;
+    transcriptAfterExam: string;
     ttsNotice: string;
+  };
+  image: {
+    descriptionLabel: string;
+    pendingLabel: string;
+    promptLabel: string;
   };
   breakdown: {
     addToFlashcardAction: string;
@@ -367,6 +375,7 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
   const [results, setResults] = useState<SessionPayload | null>(null);
   const [breakdown, setBreakdown] = useState<BreakdownResponse | null>(null);
   const [breakdownLoading, setBreakdownLoading] = useState(false);
+  const [breakdownError, setBreakdownError] = useState(false);
   const [showBreakdown, setShowBreakdown] = useState(false);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [templatesLoading, setTemplatesLoading] = useState(true);
@@ -623,6 +632,7 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
 
   async function loadBreakdown(sessionId: string, uid: string) {
     setBreakdownLoading(true);
+    setBreakdownError(false);
     try {
       const response = await learnerApiFetch(
         `/api/quiz/session/${sessionId}/results/breakdown?userId=${encodeURIComponent(uid)}`
@@ -630,7 +640,7 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
       if (!response.ok) throw new Error("Breakdown request failed");
       setBreakdown((await response.json()) as BreakdownResponse);
     } catch {
-      setError(true);
+      setBreakdownError(true);
     } finally {
       setBreakdownLoading(false);
     }
@@ -643,6 +653,7 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
     setError(false);
     setResults(null);
     setBreakdown(null);
+    setBreakdownError(false);
     setShowBreakdown(false);
     stopTimer();
     setSubmitting(true);
@@ -751,6 +762,7 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
     stopTimer();
     setResults(null);
     setBreakdown(null);
+    setBreakdownError(false);
     setQuestion(null);
     setShowBreakdown(false);
     setFlaggedQuestions(new Set());
@@ -1143,6 +1155,19 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
             </div>
           )}
 
+          {showBreakdown && breakdownError && !breakdownLoading && (
+            <div className="rounded-2xl border border-sakura/20 bg-sakura/5 p-4" role="status">
+              <p className="text-sm text-ink">{labels.breakdown.errorText}</p>
+              <button
+                className="mt-3 inline-flex min-h-11 items-center justify-center rounded-full border border-ink/15 bg-surface px-4 text-sm font-bold text-ink outline-none hover:bg-paper focus-visible:ring-2 focus-visible:ring-accent"
+                onClick={() => userId && void loadBreakdown(results.id, userId)}
+                type="button"
+              >
+                {labels.readingAssist.annotated.retryAction}
+              </button>
+            </div>
+          )}
+
           {showBreakdown && breakdown && (
             <QuizResultsBreakdown breakdown={breakdown} labels={labels.breakdown} userId={userId} />
           )}
@@ -1447,7 +1472,7 @@ function ExamCard({
               labels.start
             )}
           </button>
-          <Link
+          {template.type !== "official" && <Link
             className="inline-flex min-h-10 items-center justify-center rounded-xl border border-ink/10 bg-surface px-3 text-xs font-semibold text-muted outline-none ring-offset-2 transition hover:bg-paper hover:text-ink focus-visible:ring-2 focus-visible:ring-accent"
             href={`/${locale}/quiz/print/${template.id}`}
             target="_blank"
@@ -1467,7 +1492,7 @@ function ExamCard({
               <rect height={8} rx={1} width={12} x={6} y={14} />
             </svg>
             {labels.printExam}
-          </Link>
+          </Link>}
         </div>
       </div>
     </form>
@@ -1592,24 +1617,48 @@ export function QuizQuestionPanel({
             sectionCode={question.question.sectionCode}
             maxPlays={2}
             labels={labels.audio}
+            transcriptAvailable={question.session.testType !== "official"}
           />
         )}
 
         {/* Question image */}
         {question.question.imageUrl && (
-          <div className="mb-4 flex justify-center">
-            <img
-              src={question.question.imageUrl}
-              alt={question.question.imageAlt ?? ""}
-              className="max-h-64 max-w-full rounded-lg border border-ink/10 object-contain"
-              loading="eager"
-            />
+          <div className="mb-4 rounded-xl border border-ink/10 bg-paper/30 p-3">
+            <div className="flex justify-center">
+              <img
+                src={question.question.imageUrl}
+                alt={question.question.imageAlt ?? ""}
+                className="max-h-64 max-w-full rounded-lg object-contain"
+                loading="eager"
+              />
+            </div>
+            {question.question.imageAlt && (
+              <p className="mt-2 text-xs leading-5 text-muted">
+                <span className="font-bold text-ink">{labels.image.descriptionLabel}: </span>
+                {question.question.imageAlt}
+              </p>
+            )}
           </div>
+        )}
+
+        {!question.question.imageUrl && question.question.imagePrompt && (
+          <aside className="mb-4 rounded-xl border border-dashed border-accent/25 bg-accent/[0.03] p-4">
+            <p className="text-xs font-bold uppercase tracking-wider text-accent">
+              {labels.image.pendingLabel}
+            </p>
+            <p className="mt-2 text-sm leading-6 text-ink">
+              <span className="font-bold">{labels.image.promptLabel}: </span>
+              {question.question.imagePrompt}
+            </p>
+          </aside>
         )}
 
         {/* Prompt with reading assist */}
         <div className="mb-5">
-          {userId && readingAssistMode && readingAssistMode !== "off" ? (
+          {question.session.testType !== "official" &&
+          userId &&
+          readingAssistMode &&
+          readingAssistMode !== "off" ? (
             <AnnotatedJapaneseText
               analyzePath="/api/reading-assist/analyze"
               analyticsPath="/api/reading-assist/analytics"

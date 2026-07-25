@@ -36,9 +36,14 @@ The server never returns correctness mid-session and the mobile client never
 infers it. Feedback is calm and deferred to the result/review screen — matching
 the real BJT experience and the web behavior.
 
-## 5. Result + review (Batch 4)
+## 5. Result + review
 
-- The result screen keeps the calm percent + band summary.
+- The result leads with the **server-computed estimated 0–800 score**, band,
+  correct/total and a prominent "not official" caveat. Percentage accuracy is
+  no longer presented as if it were the BJT score.
+- Standard BJT simulation is explained as three parts: listening,
+  listening-reading and reading. Result section rows use the server-authored
+  `sectionPerformance`; they do not invent per-section 0–800 scores.
 - A new **Review answers** action loads `GET …/results/breakdown` and shows a
   per-question list: prompt, the chosen option key, a calm correct/incorrect
   verdict, the Vietnamese explanation, and skill/section chips.
@@ -56,16 +61,15 @@ the real BJT experience and the web behavior.
 - Practice allows reading assist (furigana toggle) because it is a learning aid,
   not a test.
 
-## 7. Audio / listening questions
+## 7. Audio and image media
 
-Decision pending capability check (Batch 5):
-- If the mobile app already ships a real audio capability, implement a play
-  button with loading / error / missing states and respect the ≤2-play listening
-  rule. No autoplay (web does not autoplay listening either).
-- If no real audio capability exists, the feature is documented as **not yet
-  available on mobile** in `MOBILE_KNOWN_LIMITATIONS.md`. We do **not** fake
-  audio or TTS. The question text/scenario still renders so the item is not
-  blank.
+- No audio package ships in mobile, so no fake play button is rendered.
+- When the API returns `audioScript`, practice shows the transcript. Official
+  simulation replaces it with an integrity notice.
+- `imageUrl` renders with semantic `imageAlt`. If the image is missing or fails
+  and `imagePrompt` exists, the prompt is shown as the localized, clearly
+  labelled fallback for future AI generation.
+- Media is never autoplayed and never blocks the prompt/options.
 
 ## 8. Sensory feedback (calm, not game-like)
 

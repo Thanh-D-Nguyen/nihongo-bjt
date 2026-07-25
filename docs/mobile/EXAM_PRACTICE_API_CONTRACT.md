@@ -30,7 +30,7 @@ GET /api/quiz/templates           (public)
 POST /api/quiz/start   body: { testId }
 → ExamSession  { id, status, currentQuestionNo, totalQuestions, correctCount,
                  remainingSeconds?, timeLimitSeconds?, estimatedScore?,
-                 estimatedBjtBand? }
+                 estimatedBjtBand?, testType? }
 403 → entitlement/quota denied (upgrade required)
 ```
 
@@ -40,10 +40,14 @@ POST /api/quiz/start   body: { testId }
 GET /api/quiz/session/:id/question
 → { question: ExamQuestion | null, session: ExamSession }
    ExamQuestion { id, prompt, scenario?, sectionCode?, skillTag?, difficulty?,
-                  audioUrl?, imageUrl?, imageAlt?, options: ExamOption[] }
+                  audioUrl?, audioScript?, imageUrl?, imageAlt?, imagePrompt?,
+                  options: ExamOption[] }
    ExamOption   { id, optionKey, text }
 question == null OR session.status == "completed" → session ended (timeout/done)
 ```
+
+`session.testType == "official"` activates exam-integrity policy on mobile:
+audio transcripts and reading help remain hidden during the live session.
 
 ### Submit answer
 
@@ -62,6 +66,11 @@ GET /api/quiz/session/:id/results
   if a session is reopened.
 ```
 
+`estimatedScore` is computed server-side by `scoreBjtMockExam`
+(`bjt-estimate-v2`) on the **0–800** scale using section balance and explicit
+difficulty weighting. It is an estimate, never an official BJT result. Mobile
+does not recalculate or replace this value.
+
 ### Per-question breakdown  (Batch 4 — NEW on mobile)
 
 ```
@@ -69,6 +78,10 @@ GET /api/quiz/session/:id/results/breakdown
 → {
     sessionId, testId, testTitleVi, testTitleJa,
     estimatedScore, estimatedBjtBand,
+    sectionPerformance: [
+      { key, accuracy, weightedAccuracy, answeredCount,
+        correctCount, totalQuestions }
+    ],
     breakdown: [
       { questionId, prompt, selectedOption, isCorrect,
         explanationVi, skillTag, sectionCode, remediationCardId? }
@@ -80,6 +93,10 @@ Notes:
 - Only available for a **completed** session (`404` otherwise).
 - Does **not** include correct-option key or option texts. UI shows: prompt,
   chosen key, verdict, explanation, skill/section chips, remediation link.
+- `sectionPerformance` is server-authored by the same scoring algorithm. Mobile
+  uses its real correct/total and weighted progress.
+- Does **not** include media fields or per-section 0–800 scores. Mobile does not
+  invent a 0–800 score for each section.
 
 ### Remediation flashcards  (Batch 4 optional)
 
@@ -105,7 +122,7 @@ GET /api/quiz/session/history?limit=20
    testLevel }
 ```
 
-### Official-simulation status  (Batch 3 optional, pre-start gating)
+### Official-simulation status (implemented pre-start gating)
 
 ```
 GET /api/quiz/official-simulation/status
@@ -113,14 +130,24 @@ GET /api/quiz/official-simulation/status
     enforcementEnabled, planSlug }
 ```
 
+Mobile resolves this endpoint before enabling an official template card. A
+disabled feature, missing entitlement, or unresolved status keeps the card
+non-tappable; `POST /start` remains the final server-authoritative guard.
+
 ## Audio (Batch 5)
 
 - Question payload may carry `audioUrl` (pre-recorded, MinIO/CDN) and
-  `audioScript` (TTS fallback text). Web enforces ≤2 plays for listening
-  sections (`isAudioSection(code)` → "LC"/"LR").
-- Mobile model exposes `audioUrl` only. `audioScript` is **not** currently
-  parsed. Real playback requires an audio capability in the mobile app — see
-  `EXAM_PRACTICE_UX_DECISION.md` §Audio for the feasibility decision.
+  `audioScript` (TTS fallback text). Mobile parses both.
+- No mobile audio engine exists. The UI shows an honest playback-unavailable
+  state and renders `audioScript` in practice. Official simulation hides the
+  script to preserve exam integrity.
+
+## Image media
+
+- `imageUrl` + `imageAlt` render the real question image with accessible text.
+- If `imageUrl` is missing (or fails) and `imagePrompt` exists, mobile displays
+  the localized generation prompt/description as an honest fallback.
+- The client never generates or stores an image and never fabricates a URL.
 
 ## Practice (local, no backend)
 

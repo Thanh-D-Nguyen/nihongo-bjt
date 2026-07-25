@@ -32,6 +32,23 @@ class ExamTemplate {
   bool get isOfficial => type == 'official';
 }
 
+@immutable
+class OfficialSimulationStatus {
+  const OfficialSimulationStatus({
+    required this.enabled,
+    required this.entitled,
+    required this.availableTemplates,
+    required this.enforcementEnabled,
+  });
+
+  final bool enabled;
+  final bool entitled;
+  final bool enforcementEnabled;
+  final int availableTemplates;
+
+  bool get canStart => enabled && entitled && availableTemplates > 0;
+}
+
 /// One selectable option for a question. Display key is positional (the server
 /// shuffles per session); correctness is never exposed mid-session.
 @immutable
@@ -59,8 +76,10 @@ class ExamQuestion {
     this.skillTag,
     this.difficulty,
     this.audioUrl,
+    this.audioScript,
     this.imageUrl,
     this.imageAlt,
+    this.imagePrompt,
   });
 
   final String id;
@@ -70,9 +89,13 @@ class ExamQuestion {
   final String? skillTag;
   final String? difficulty;
   final String? audioUrl;
+  final String? audioScript;
   final String? imageUrl;
   final String? imageAlt;
+  final String? imagePrompt;
   final List<ExamOption> options;
+
+  bool get hasListeningMedia => audioUrl != null || audioScript != null;
 }
 
 /// Live session state shared by the start, question and answer responses.
@@ -88,6 +111,7 @@ class ExamSession {
     this.timeLimitSeconds,
     this.estimatedScore,
     this.estimatedBjtBand,
+    this.testType,
   });
 
   final String id;
@@ -99,8 +123,10 @@ class ExamSession {
   final int? timeLimitSeconds;
   final int? estimatedScore;
   final String? estimatedBjtBand;
+  final String? testType;
 
   bool get isCompleted => status == 'completed';
+  bool get preservesExamIntegrity => testType == 'official';
 }
 
 /// The `{question, session}` payload from the current-question endpoint. When
@@ -160,6 +186,7 @@ class ExamBreakdown {
     this.testTitleJa,
     this.estimatedScore,
     this.estimatedBjtBand,
+    this.sectionPerformance = const [],
   });
 
   final String sessionId;
@@ -168,7 +195,69 @@ class ExamBreakdown {
   final int? estimatedScore;
   final String? estimatedBjtBand;
   final List<ExamBreakdownItem> items;
+  final List<ExamSectionPerformance> sectionPerformance;
 
   int get correctCount => items.where((i) => i.isCorrect).length;
   int get total => items.length;
+
+  /// Collapses server sub-sections (`LC_*`, `LR_*`, `RC_*`) into the three
+  /// standard BJT parts while retaining server-authored correct/total and
+  /// weighted performance. Unknown codes remain separate and visible.
+  List<ExamSectionPerformance> get partPerformance {
+    final byPart = <String, List<ExamSectionPerformance>>{};
+    for (final section in sectionPerformance) {
+      byPart.putIfAbsent(section.standardPartCode, () => []).add(section);
+    }
+    return [
+      for (final entry in byPart.entries)
+        ExamSectionPerformance.combined(entry.key, entry.value),
+    ];
+  }
+}
+
+/// Server-authored performance aggregate for one BJT section. This deliberately
+/// does not invent a client-side BJT section score; the API currently provides
+/// only the overall 0–800 score.
+@immutable
+class ExamSectionPerformance {
+  const ExamSectionPerformance({
+    required this.code,
+    required this.correct,
+    required this.total,
+    required this.accuracy,
+    required this.weightedAccuracy,
+  });
+
+  factory ExamSectionPerformance.combined(
+    String code,
+    List<ExamSectionPerformance> sections,
+  ) {
+    final correct = sections.fold(0, (sum, item) => sum + item.correct);
+    final total = sections.fold(0, (sum, item) => sum + item.total);
+    final weightedTotal = sections.fold<double>(
+      0,
+      (sum, item) => sum + item.weightedAccuracy * item.total,
+    );
+    return ExamSectionPerformance(
+      code: code,
+      correct: correct,
+      total: total,
+      accuracy: total <= 0 ? 0 : correct / total,
+      weightedAccuracy: total <= 0 ? 0 : weightedTotal / total,
+    );
+  }
+
+  final String code;
+  final int correct;
+  final int total;
+  final double accuracy;
+  final double weightedAccuracy;
+
+  String get standardPartCode {
+    final normalized = code.trim().toUpperCase();
+    if (normalized.startsWith('LR')) return 'LR';
+    if (normalized.startsWith('RC')) return 'RC';
+    if (normalized.startsWith('LC')) return 'LC';
+    return code;
+  }
 }

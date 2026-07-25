@@ -40,6 +40,12 @@ abstract final class ExamDto {
     return null;
   }
 
+  static double _double(Object? v, [double fallback = 0]) {
+    if (v is num) return v.toDouble();
+    if (v is String) return double.tryParse(v) ?? fallback;
+    return fallback;
+  }
+
   static List<Map<String, dynamic>> _childList(Object? v) {
     if (v is List) return v.whereType<Map<String, dynamic>>().toList();
     return const [];
@@ -64,6 +70,15 @@ abstract final class ExamDto {
     );
   }
 
+  static OfficialSimulationStatus officialSimulationStatus(
+    Map<String, dynamic> json,
+  ) => OfficialSimulationStatus(
+    enabled: json['enabled'] == true,
+    entitled: json['entitled'] == true,
+    enforcementEnabled: json['enforcementEnabled'] == true,
+    availableTemplates: _int(json['availableTemplates']),
+  );
+
   static ExamOption option(Map<String, dynamic> json) => ExamOption(
     id: _str(json['id']),
     optionKey: _str(json['optionKey']),
@@ -78,8 +93,10 @@ abstract final class ExamDto {
     skillTag: _strOrNull(json['skillTag']),
     difficulty: _strOrNull(json['difficulty']),
     audioUrl: _strOrNull(json['audioUrl']),
+    audioScript: _strOrNull(json['audioScript']),
     imageUrl: _strOrNull(json['imageUrl']),
     imageAlt: _strOrNull(json['imageAlt']),
+    imagePrompt: _strOrNull(json['imagePrompt']),
     options: _childList(json['options']).map(option).toList(),
   );
 
@@ -93,6 +110,7 @@ abstract final class ExamDto {
     timeLimitSeconds: _intOrNull(json['timeLimitSeconds']),
     estimatedScore: _intOrNull(json['estimatedScore']),
     estimatedBjtBand: _strOrNull(json['estimatedBjtBand']),
+    testType: _strOrNull(json['testType']),
   );
 
   static ExamCurrentQuestion currentQuestion(Map<String, dynamic> json) {
@@ -121,6 +139,19 @@ abstract final class ExamDto {
     testTitleJa: _strOrNull(json['testTitleJa']),
     estimatedScore: _intOrNull(json['estimatedScore']),
     estimatedBjtBand: _strOrNull(json['estimatedBjtBand']),
+    sectionPerformance: _childList(
+      json['sectionPerformance'],
+    ).map(sectionPerformance).toList(),
     items: _childList(json['breakdown']).map(breakdownItem).toList(),
+  );
+
+  static ExamSectionPerformance sectionPerformance(
+    Map<String, dynamic> json,
+  ) => ExamSectionPerformance(
+    code: _str(json['key']),
+    correct: _int(json['correctCount']),
+    total: _int(json['totalQuestions']),
+    accuracy: _double(json['accuracy']),
+    weightedAccuracy: _double(json['weightedAccuracy']),
   );
 }

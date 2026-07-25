@@ -1532,6 +1532,38 @@ class AppLocalizationsJa extends AppLocalizations {
   String get examSubtitle => '時間制限とスコア付きの模擬試験に挑戦しましょう。';
 
   @override
+  String get examFormatTitle => 'BJT総合模擬試験';
+
+  @override
+  String get examFormatDescription => '総合結果を0〜800点で推定し、聴解・聴読解・読解の標準3部門で構成します。';
+
+  @override
+  String get examEstimatedScaleLabel => '推定スコア 0〜800';
+
+  @override
+  String get examThreePartFormatLabel => 'BJT標準3部門';
+
+  @override
+  String get examTemplateTypeOfficial => '総合模擬';
+
+  @override
+  String get examOfficialAccessChecking => '確認中';
+
+  @override
+  String get examOfficialUnavailable => '現在利用できません';
+
+  @override
+  String get examOfficialUpgradeRequired => 'アップグレードが必要';
+
+  @override
+  String get examTemplateTypePractice => '目標別練習';
+
+  @override
+  String examSectionCountLabel(int count) {
+    return '$count部門';
+  }
+
+  @override
   String get examEmptyTitle => '試験がありません';
 
   @override
@@ -1560,8 +1592,39 @@ class AppLocalizationsJa extends AppLocalizations {
   String get examSubmitCta => '回答';
 
   @override
+  String get examAudioTitle => '聴解内容';
+
+  @override
   String get examAudioUnavailable =>
-      '聴解問題です。モバイルではまだ音声を再生できません。下の内容を読んで回答してください。';
+      '現在のモバイル版では音声ファイルを再生できません。練習モードで許可される場合は、下にスクリプトを表示します。';
+
+  @override
+  String get examAudioTranscriptLabel => '音声スクリプト';
+
+  @override
+  String get examAudioTranscriptHidden => '試験の公平性を保つため、模擬試験中はスクリプトを表示しません。';
+
+  @override
+  String get examImageTitle => '問題の参考画像';
+
+  @override
+  String get examImageSemanticLabel => 'BJT問題の参考画像';
+
+  @override
+  String examImageDescription(String description) {
+    return '画像の説明：$description';
+  }
+
+  @override
+  String get examImagePendingLabel => '画像生成待ち';
+
+  @override
+  String examImagePrompt(String prompt) {
+    return '画像生成用の説明：$prompt';
+  }
+
+  @override
+  String get examImageUnavailable => 'この問題には画像も画像説明もありません。';
 
   @override
   String get examNextCta => '次の問題';
@@ -1583,6 +1646,41 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String examResultBand(String band) {
     return '推定BJTレベル：$band';
+  }
+
+  @override
+  String get examEstimatedScoreLabel => '推定BJTスコア';
+
+  @override
+  String examEstimatedScoreValue(int score) {
+    return '$score/800';
+  }
+
+  @override
+  String get examEstimatedScoreUnavailable => 'スコア未算出';
+
+  @override
+  String get examEstimatedScoreCaveat => '学習方針のための模擬結果であり、BJTの公式スコアではありません。';
+
+  @override
+  String get examSectionBreakdownTitle => '部門別結果';
+
+  @override
+  String get examSectionBreakdownUnavailable =>
+      '部門別の詳細を取得できませんでした。上の総合スコアはサーバーが算出した結果です。';
+
+  @override
+  String get examSectionListening => '聴解';
+
+  @override
+  String get examSectionListeningReading => '聴読解';
+
+  @override
+  String get examSectionReading => '読解';
+
+  @override
+  String examSectionCorrectCount(int correct, int total) {
+    return '$correct/$total問正解';
   }
 
   @override

@@ -24,6 +24,12 @@ final examTemplatesProvider = FutureProvider.autoDispose<List<ExamTemplate>>((
   return ref.watch(examRepositoryProvider).listTemplates();
 });
 
+final officialSimulationStatusProvider =
+    FutureProvider.autoDispose<OfficialSimulationStatus>((ref) {
+      ref.keepAlive();
+      return ref.watch(examRepositoryProvider).officialSimulationStatus();
+    });
+
 /// Per-question review for a completed session (`sessionId`). Auto-disposed so
 /// the breakdown is fetched fresh each time review opens.
 final examBreakdownProvider = FutureProvider.autoDispose

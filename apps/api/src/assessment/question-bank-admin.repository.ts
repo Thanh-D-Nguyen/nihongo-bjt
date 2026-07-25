@@ -112,6 +112,7 @@ export class QuestionBankAdminRepository {
           sourceId: data.sourceId ?? null,
           imageUrl: data.imageUrl ?? null,
           imageAlt: data.imageAlt ?? null,
+          imagePrompt: data.imagePrompt ?? null,
           audioUrl: data.audioUrl ?? null,
           audioScript: data.audioScript ?? null,
           status: "draft",
@@ -157,6 +158,7 @@ export class QuestionBankAdminRepository {
       if (data.sourceId !== undefined) update.sourceId = data.sourceId ?? null;
       if (data.imageUrl !== undefined) update.imageUrl = data.imageUrl ?? null;
       if (data.imageAlt !== undefined) update.imageAlt = data.imageAlt ?? null;
+      if (data.imagePrompt !== undefined) update.imagePrompt = data.imagePrompt ?? null;
       if (data.audioUrl !== undefined) update.audioUrl = data.audioUrl ?? null;
       if (data.audioScript !== undefined) update.audioScript = data.audioScript ?? null;
       await tx.bjtQuestion.update({ data: update, where: { id } });

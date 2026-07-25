@@ -1789,6 +1789,40 @@
   "@examSubtitle": {
     "description": "Subtitle/description for the exam browser."
   },
+  "examFormatTitle": "Mô phỏng đề BJT toàn phần",
+  "@examFormatTitle": {
+    "description": "Title of the real-format BJT simulation guide."
+  },
+  "examFormatDescription": "Kết quả được ước tính theo thang 0–800 trên toàn bài, gồm 3 phần chuẩn: Nghe hiểu, Nghe đọc hiểu và Đọc hiểu.",
+  "@examFormatDescription": {
+    "description": "Explains the whole-test score scale and standard BJT sections."
+  },
+  "examEstimatedScaleLabel": "Điểm ước tính 0–800",
+  "@examEstimatedScaleLabel": {
+    "description": "Chip describing the BJT simulation score scale."
+  },
+  "examThreePartFormatLabel": "3 phần chuẩn BJT",
+  "@examThreePartFormatLabel": {
+    "description": "Chip describing the standard three-part BJT format."
+  },
+  "examTemplateTypeOfficial": "Mô phỏng toàn phần",
+  "@examTemplateTypeOfficial": {
+    "description": "Template type label for an official-style full simulation."
+  },
+  "examOfficialAccessChecking": "Đang kiểm tra",
+  "examOfficialUnavailable": "Tạm thời chưa mở",
+  "examOfficialUpgradeRequired": "Cần nâng cấp",
+  "examTemplateTypePractice": "Luyện theo mục tiêu",
+  "@examTemplateTypePractice": {
+    "description": "Template type label for target-focused practice."
+  },
+  "examSectionCountLabel": "{count} phần",
+  "@examSectionCountLabel": {
+    "description": "Number of sections in an exam template.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "examEmptyTitle": "Chưa có đề thi",
   "@examEmptyTitle": {
     "description": "Empty-state title when no exam templates are available."
@@ -1828,9 +1862,51 @@
   "@examSubmitCta": {
     "description": "CTA to submit the selected answer."
   },
-  "examAudioUnavailable": "Câu hỏi nghe — phần phát âm thanh chưa có trên di động. Hãy đọc nội dung bên dưới để trả lời.",
+  "examAudioTitle": "Nội dung nghe",
+  "@examAudioTitle": {
+    "description": "Heading for listening media in an exam question."
+  },
+  "examAudioUnavailable": "Phiên bản di động hiện chưa phát được tệp âm thanh. Bản đọc sẽ hiện bên dưới khi chế độ làm bài cho phép.",
   "@examAudioUnavailable": {
     "description": "Calm note shown for listening questions when audio playback is not yet available on mobile."
+  },
+  "examAudioTranscriptLabel": "Bản đọc audio",
+  "@examAudioTranscriptLabel": {
+    "description": "Label above an audio transcript in practice mode."
+  },
+  "examAudioTranscriptHidden": "Bản đọc được ẩn trong bài mô phỏng để bảo toàn tính trung thực của bài thi.",
+  "@examAudioTranscriptHidden": {
+    "description": "Integrity notice replacing the transcript in an official simulation."
+  },
+  "examImageTitle": "Hình minh họa câu hỏi",
+  "@examImageTitle": {
+    "description": "Heading above a question image or image prompt."
+  },
+  "examImageSemanticLabel": "Hình minh họa cho câu hỏi BJT",
+  "@examImageSemanticLabel": {
+    "description": "Fallback accessibility label for a question image."
+  },
+  "examImageDescription": "Mô tả ảnh: {description}",
+  "@examImageDescription": {
+    "description": "Accessible description shown below a question image.",
+    "placeholders": {
+      "description": { "type": "String" }
+    }
+  },
+  "examImagePendingLabel": "Ảnh đang chờ tạo",
+  "@examImagePendingLabel": {
+    "description": "Label shown when a question has an AI image prompt but no image yet."
+  },
+  "examImagePrompt": "Mô tả để tạo ảnh: {prompt}",
+  "@examImagePrompt": {
+    "description": "AI image-generation prompt shown as the honest media fallback.",
+    "placeholders": {
+      "prompt": { "type": "String" }
+    }
+  },
+  "examImageUnavailable": "Chưa có ảnh hoặc mô tả ảnh cho câu hỏi này.",
+  "@examImageUnavailable": {
+    "description": "Fallback when neither an image nor image prompt is available."
   },
   "examNextCta": "Câu tiếp theo",
   "@examNextCta": {
@@ -1861,6 +1937,53 @@
     "description": "Estimated BJT band on the exam result screen.",
     "placeholders": {
       "band": { "type": "String" }
+    }
+  },
+  "examEstimatedScoreLabel": "Điểm BJT ước tính",
+  "@examEstimatedScoreLabel": {
+    "description": "Label above the server-computed estimated BJT score."
+  },
+  "examEstimatedScoreValue": "{score}/800",
+  "@examEstimatedScoreValue": {
+    "description": "Server-computed estimated score on the 0–800 scale.",
+    "placeholders": {
+      "score": { "type": "int" }
+    }
+  },
+  "examEstimatedScoreUnavailable": "Chưa có điểm",
+  "@examEstimatedScoreUnavailable": {
+    "description": "Honest fallback when the API did not return an estimated score."
+  },
+  "examEstimatedScoreCaveat": "Đây là kết quả mô phỏng để định hướng ôn tập, không phải điểm BJT chính thức.",
+  "@examEstimatedScoreCaveat": {
+    "description": "Caveat that simulation scores are estimates, not official BJT results."
+  },
+  "examSectionBreakdownTitle": "Kết quả theo từng phần",
+  "@examSectionBreakdownTitle": {
+    "description": "Heading above real correct/total performance grouped by section."
+  },
+  "examSectionBreakdownUnavailable": "Chưa tải được chi tiết theo phần. Điểm tổng ở trên vẫn là kết quả do máy chủ chấm.",
+  "@examSectionBreakdownUnavailable": {
+    "description": "Partial-data fallback when section breakdown is unavailable."
+  },
+  "examSectionListening": "Nghe hiểu",
+  "@examSectionListening": {
+    "description": "Standard BJT listening section name."
+  },
+  "examSectionListeningReading": "Nghe đọc hiểu",
+  "@examSectionListeningReading": {
+    "description": "Standard BJT listening-reading section name."
+  },
+  "examSectionReading": "Đọc hiểu",
+  "@examSectionReading": {
+    "description": "Standard BJT reading section name."
+  },
+  "examSectionCorrectCount": "{correct}/{total} câu đúng",
+  "@examSectionCorrectCount": {
+    "description": "Real correct/total outcome for one exam section.",
+    "placeholders": {
+      "correct": { "type": "int" },
+      "total": { "type": "int" }
     }
   },
   "examResultDone": "Xong",

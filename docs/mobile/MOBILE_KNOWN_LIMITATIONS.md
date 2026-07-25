@@ -208,10 +208,17 @@ Companion docs: `MOBILE_AI_QA_REPORT.md`, `MOBILE_BATCH_LOG.md`,
 - **The review never renders a "correct answer" string.** The breakdown contract
   intentionally omits the correct-option text post-session, so the UI shows only
   the honest verdict + explanation — it does **not** fabricate the right answer.
-- **Listening (audio) questions show a calm "audio unavailable on mobile" note**
-  and direct the learner to the readable prompt/scenario. There is no audio/TTS
-  dependency in the app, so a player would be fake; none was added. When a
-  question carries `audioUrl` the note appears above the prompt.
+- **Listening playback remains unavailable, but transcript fallback is wired.**
+  There is no audio/TTS dependency, so no fake player was added. Practice shows
+  real `audioScript`; official simulation hides it for integrity.
+- **Question image fallback is wired.** `imageUrl`/`imageAlt` render when
+  present. Missing/failed images show the localized server `imagePrompt`.
+- **Overall 0–800 score and section performance are server-authoritative.**
+  Mobile shows the API's estimated total and `sectionPerformance`
+  correct/total + weighted progress. The contract has no per-section 0–800
+  scores, so none are fabricated.
+- **Review media is unavailable in the current contract.** Completed breakdown
+  items do not carry `audioScript`, `imageUrl`, or `imagePrompt`.
 - **Save-to-flashcards from review is DEFERRED — no backing endpoint.** There is
   no `POST /api/flashcards/add-from-remediation` (only `cards/from-content`,
   `cards/suggest`, review/deck routes exist), so a save button would be fake. The

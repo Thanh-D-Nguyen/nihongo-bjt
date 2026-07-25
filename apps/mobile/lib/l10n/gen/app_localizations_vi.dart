@@ -1574,6 +1574,39 @@ class AppLocalizationsVi extends AppLocalizations {
   String get examSubtitle => 'Làm bài thi thử có tính giờ và chấm điểm.';
 
   @override
+  String get examFormatTitle => 'Mô phỏng đề BJT toàn phần';
+
+  @override
+  String get examFormatDescription =>
+      'Kết quả được ước tính theo thang 0–800 trên toàn bài, gồm 3 phần chuẩn: Nghe hiểu, Nghe đọc hiểu và Đọc hiểu.';
+
+  @override
+  String get examEstimatedScaleLabel => 'Điểm ước tính 0–800';
+
+  @override
+  String get examThreePartFormatLabel => '3 phần chuẩn BJT';
+
+  @override
+  String get examTemplateTypeOfficial => 'Mô phỏng toàn phần';
+
+  @override
+  String get examOfficialAccessChecking => 'Đang kiểm tra';
+
+  @override
+  String get examOfficialUnavailable => 'Tạm thời chưa mở';
+
+  @override
+  String get examOfficialUpgradeRequired => 'Cần nâng cấp';
+
+  @override
+  String get examTemplateTypePractice => 'Luyện theo mục tiêu';
+
+  @override
+  String examSectionCountLabel(int count) {
+    return '$count phần';
+  }
+
+  @override
   String get examEmptyTitle => 'Chưa có đề thi';
 
   @override
@@ -1602,8 +1635,41 @@ class AppLocalizationsVi extends AppLocalizations {
   String get examSubmitCta => 'Trả lời';
 
   @override
+  String get examAudioTitle => 'Nội dung nghe';
+
+  @override
   String get examAudioUnavailable =>
-      'Câu hỏi nghe — phần phát âm thanh chưa có trên di động. Hãy đọc nội dung bên dưới để trả lời.';
+      'Phiên bản di động hiện chưa phát được tệp âm thanh. Bản đọc sẽ hiện bên dưới khi chế độ làm bài cho phép.';
+
+  @override
+  String get examAudioTranscriptLabel => 'Bản đọc audio';
+
+  @override
+  String get examAudioTranscriptHidden =>
+      'Bản đọc được ẩn trong bài mô phỏng để bảo toàn tính trung thực của bài thi.';
+
+  @override
+  String get examImageTitle => 'Hình minh họa câu hỏi';
+
+  @override
+  String get examImageSemanticLabel => 'Hình minh họa cho câu hỏi BJT';
+
+  @override
+  String examImageDescription(String description) {
+    return 'Mô tả ảnh: $description';
+  }
+
+  @override
+  String get examImagePendingLabel => 'Ảnh đang chờ tạo';
+
+  @override
+  String examImagePrompt(String prompt) {
+    return 'Mô tả để tạo ảnh: $prompt';
+  }
+
+  @override
+  String get examImageUnavailable =>
+      'Chưa có ảnh hoặc mô tả ảnh cho câu hỏi này.';
 
   @override
   String get examNextCta => 'Câu tiếp theo';
@@ -1625,6 +1691,42 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String examResultBand(String band) {
     return 'Mức BJT ước tính: $band';
+  }
+
+  @override
+  String get examEstimatedScoreLabel => 'Điểm BJT ước tính';
+
+  @override
+  String examEstimatedScoreValue(int score) {
+    return '$score/800';
+  }
+
+  @override
+  String get examEstimatedScoreUnavailable => 'Chưa có điểm';
+
+  @override
+  String get examEstimatedScoreCaveat =>
+      'Đây là kết quả mô phỏng để định hướng ôn tập, không phải điểm BJT chính thức.';
+
+  @override
+  String get examSectionBreakdownTitle => 'Kết quả theo từng phần';
+
+  @override
+  String get examSectionBreakdownUnavailable =>
+      'Chưa tải được chi tiết theo phần. Điểm tổng ở trên vẫn là kết quả do máy chủ chấm.';
+
+  @override
+  String get examSectionListening => 'Nghe hiểu';
+
+  @override
+  String get examSectionListeningReading => 'Nghe đọc hiểu';
+
+  @override
+  String get examSectionReading => 'Đọc hiểu';
+
+  @override
+  String examSectionCorrectCount(int correct, int total) {
+    return '$correct/$total câu đúng';
   }
 
   @override

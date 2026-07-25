@@ -1,6 +1,6 @@
 import { createPrismaClient, type Prisma } from "@nihongo-bjt/database";
 import { readingAssistDisplayModeSchema } from "@nihongo-bjt/shared";
-import { Inject, Injectable } from "@nestjs/common";
+import { Inject, Injectable, Logger, type OnModuleInit } from "@nestjs/common";
 import type { z } from "zod";
 
 import { AnalyticsRepository } from "../analytics/analytics.repository.js";
@@ -36,7 +36,8 @@ type DisplayMode = z.infer<typeof readingAssistDisplayModeSchema>;
  * control whether glosses are returned — see `shouldHideVocabularyMeanings` / `analyze` + `applyExamStrip`.
  */
 @Injectable()
-export class ReadingAssistService {
+export class ReadingAssistService implements OnModuleInit {
+  private readonly logger = new Logger(ReadingAssistService.name);
   private readonly prisma = createPrismaClient();
 
   constructor(
@@ -44,6 +45,20 @@ export class ReadingAssistService {
     @Inject(DictionaryLookupService) private readonly dictionary: DictionaryLookupService,
     @Inject(FlashcardsRepository) private readonly flashcards: FlashcardsRepository
   ) {}
+
+  async onModuleInit() {
+    // Move Kuromoji's dictionary build to application startup instead of the
+    // learner's first BJT question request.
+    try {
+      await tokenizeJapanese("日本語");
+    } catch (error) {
+      this.logger.warn(
+        `Reading tokenizer warm-up failed; the first request will retry: ${
+          error instanceof Error ? error.message : "unknown error"
+        }`
+      );
+    }
+  }
 
   async getPreference(userId: string) {
     const row = await this.prisma.readingUserPreference.findUnique({ where: { userId } });
@@ -96,8 +111,10 @@ export class ReadingAssistService {
       return { cached: false, normalized: "", textHash: sha256Hex(""), tokens: [] };
     }
     const textHash = sha256Hex(normalized);
-    const cacheRow = await this.prisma.readingTextAnalysis.findUnique({ where: { textHash } });
-    const hide = await this.resolveHideMeanings(input);
+    const [cacheRow, hide] = await Promise.all([
+      this.prisma.readingTextAnalysis.findUnique({ where: { textHash } }),
+      this.resolveHideMeanings(input)
+    ]);
 
     if (cacheRow) {
       const body = this.applyExamStrip(cacheRow.resultJson as AnalyzedResultPayload, hide);
@@ -110,12 +127,20 @@ export class ReadingAssistService {
       };
     }
 
-    const tokens: AnalyzedToken[] = [];
-    for (let i = 0; i < spans.length; i++) {
-      const { end, start, token } = spans[i];
-      const t = await this.buildToken(i, { end, start, token });
-      tokens.push(t);
-    }
+    const dictionaryRows = await this.dictionary.lookupForTokens(
+      spans.map(({ token }) => token)
+    );
+    const tokens: AnalyzedToken[] = spans.map(({ end, start, token }, index) => ({
+      basicForm: token.basic_form,
+      end,
+      index,
+      lexemeId: dictionaryRows[index]?.lexemeId ?? null,
+      partOfSpeech: token.pos,
+      reading: katakanaToHiragana(token.reading) || token.surface_form,
+      shortMeaningVi: dictionaryRows[index]?.shortMeaningVi ?? null,
+      start,
+      surface: token.surface_form
+    }));
 
     const payload: AnalyzedResultPayload = { tokens, version: 1 };
     const resultJson = payload as unknown as Prisma.InputJsonValue;
@@ -179,25 +204,6 @@ export class ReadingAssistService {
         meaningHidden: true,
         shortMeaningVi: null
       }))
-    };
-  }
-
-  private async buildToken(
-    index: number,
-    span: { end: number; start: number; token: KuromojiToken }
-  ): Promise<AnalyzedToken> {
-    const { end, start, token } = span;
-    const { lexemeId, shortMeaningVi } = await this.dictionary.lookupForToken(token);
-    return {
-      basicForm: token.basic_form,
-      end,
-      index,
-      lexemeId,
-      partOfSpeech: token.pos,
-      reading: katakanaToHiragana(token.reading) || token.surface_form,
-      shortMeaningVi,
-      start,
-      surface: token.surface_form
     };
   }
 

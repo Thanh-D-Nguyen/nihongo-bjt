@@ -1404,7 +1404,13 @@
       "listenAudio": "Nghe audio",
       "playCount": "Number of views {current}/{max}",
       "showScript": "Show audio script",
+      "transcriptAfterExam": "The transcript is hidden during the official simulation to protect exam integrity.",
       "ttsNotice": "🔊 Uses synthetic voice. During the actual exam, specialized audio will be played."
+    },
+    "image": {
+      "descriptionLabel": "Image description",
+      "pendingLabel": "Image pending generation",
+      "promptLabel": "Image-generation prompt"
     }
   },
   "onboarding": {

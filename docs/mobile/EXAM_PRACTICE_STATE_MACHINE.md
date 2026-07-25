@@ -30,7 +30,7 @@ stateDiagram-v2
 | starting | back | submit | — | `POST /quiz/start` → `GET …/question` | skeleton |
 | playing | select option, back | submit until option chosen | `Nộp bài` (Submit) | none | question + timer + options |
 | submitting | — (locked) | options, submit | `Nộp bài` (loading) | `POST …/answer` | spinner on CTA |
-| completed | Review, Done | — | `Xem lại` / `Xong` | none | score + band |
+| completed | Review, retry section detail, Done | — | `Xem lại` / `Xong` | background `GET …/results/breakdown` | estimated 0–800 score + band + section detail |
 | reviewLoading | back | review | — | `GET …/results/breakdown` | skeleton |
 | reviewShown | filter, save card, back | — | `Xong` | optional `POST add-from-remediation` | per-question list |
 | error | Retry / Upgrade→back | — | `Thử lại` | re-run start/breakdown | error state |
@@ -38,6 +38,25 @@ stateDiagram-v2
 Tests required: start success, start 403→upgrade, question load, select enables
 submit, submit→next, submit→completed, timeout→completed, breakdown success,
 breakdown error, repeated submit tap does not double-submit (`_phase` guard).
+
+### Result partial-data sub-state
+
+The completed result is usable immediately from `ExamSession`. The breakdown
+loads independently:
+
+- loading → three section-shaped skeleton rows;
+- success → server-authored `sectionPerformance` (real correct/total + weighted
+  progress);
+- failure → inline degraded state + Retry, while the overall server score
+  remains visible;
+- no section codes → honest unavailable message, never fake `0/0` rows.
+
+### Media policy within `playing`
+
+- practice template (`testType != official`) + `audioScript` → transcript shown;
+- official simulation → transcript hidden with an integrity notice;
+- `imageUrl` present → render image + `imageAlt`;
+- image missing/failed + `imagePrompt` → render localized prompt description.
 
 ### Timer sub-states
 - `remainingSeconds == null` → no timer shown (untimed template).

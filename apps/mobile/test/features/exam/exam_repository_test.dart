@@ -84,6 +84,37 @@ void main() {
     });
   });
 
+  group('officialSimulationStatus', () {
+    test(
+      'maps the server-authoritative feature and entitlement gate',
+      () async {
+        final repo = repositoryReturning(
+          (request) {
+            expect(request.method, 'GET');
+            expect(
+              request.url.path,
+              '/api/quiz/official-simulation/status',
+            );
+            return jsonOk({
+              'enabled': true,
+              'entitled': false,
+              'enforcementEnabled': true,
+              'availableTemplates': 3,
+            });
+          },
+          token: 'access-token',
+        );
+
+        final status = await repo.officialSimulationStatus();
+
+        expect(status.enabled, isTrue);
+        expect(status.entitled, isFalse);
+        expect(status.availableTemplates, 3);
+        expect(status.canStart, isFalse);
+      },
+    );
+  });
+
   group('startSession', () {
     test('posts testId and maps the session', () async {
       String? sentBody;
@@ -139,6 +170,9 @@ void main() {
               'prompt': '正しい敬語はどれですか。',
               'scenario': '会議の場面',
               'sectionCode': 'I-1',
+              'audioUrl': 'https://media.test/question.mp3',
+              'audioScript': '会議は九時から始まります。',
+              'imagePrompt': 'A quiet Japanese business meeting room.',
               'options': [
                 {'id': 'o1', 'optionKey': 'A', 'text': 'いたします'},
                 {'id': 'o2', 'optionKey': 'B', 'text': 'します'},
@@ -151,6 +185,7 @@ void main() {
               'totalQuestions': 10,
               'correctCount': 0,
               'remainingSeconds': 1799,
+              'testType': 'official',
             },
           });
         },
@@ -161,6 +196,12 @@ void main() {
       expect(current.question, isNotNull);
       expect(current.question!.prompt, '正しい敬語はどれですか。');
       expect(current.question!.options, hasLength(2));
+      expect(current.question!.audioScript, '会議は九時から始まります。');
+      expect(
+        current.question!.imagePrompt,
+        'A quiet Japanese business meeting room.',
+      );
+      expect(current.session.preservesExamIntegrity, isTrue);
       expect(current.session.isCompleted, isFalse);
     });
 
@@ -175,7 +216,7 @@ void main() {
             'totalQuestions': 10,
             'correctCount': 7,
             'estimatedScore': 78,
-            'estimatedBjtBand': 'N2',
+            'estimatedBjtBand': 'J2',
           },
         }),
       );
@@ -184,7 +225,7 @@ void main() {
 
       expect(current.question, isNull);
       expect(current.session.isCompleted, isTrue);
-      expect(current.session.estimatedBjtBand, 'N2');
+      expect(current.session.estimatedBjtBand, 'J2');
     });
 
     test('throws invalidResponse on a fundamentally wrong shape', () async {
@@ -269,7 +310,25 @@ void main() {
             'testTitleVi': 'Đề thi thử BJT',
             'testTitleJa': 'BJT 模擬',
             'estimatedScore': 78,
-            'estimatedBjtBand': 'N2',
+            'estimatedBjtBand': 'J2',
+            'sectionPerformance': [
+              {
+                'key': 'I-1',
+                'accuracy': 1,
+                'weightedAccuracy': 1,
+                'answeredCount': 1,
+                'correctCount': 1,
+                'totalQuestions': 1,
+              },
+              {
+                'key': 'II-2',
+                'accuracy': 0,
+                'weightedAccuracy': 0,
+                'answeredCount': 1,
+                'correctCount': 0,
+                'totalQuestions': 1,
+              },
+            ],
             'breakdown': [
               {
                 'questionId': 'q1',
@@ -298,9 +357,12 @@ void main() {
       final breakdown = await repo.breakdown('s1');
 
       expect(breakdown.sessionId, 's1');
-      expect(breakdown.estimatedBjtBand, 'N2');
+      expect(breakdown.estimatedBjtBand, 'J2');
       expect(breakdown.total, 2);
       expect(breakdown.correctCount, 1);
+      expect(breakdown.sectionPerformance, hasLength(2));
+      expect(breakdown.sectionPerformance.first.correct, 1);
+      expect(breakdown.sectionPerformance.last.weightedAccuracy, 0);
       // Japanese + Vietnamese survive UTF-8 round-trip.
       expect(breakdown.items.first.prompt, '正しい敬語はどれですか。');
       expect(breakdown.items.first.isCorrect, isTrue);

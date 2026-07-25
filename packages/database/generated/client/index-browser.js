@@ -638,6 +638,7 @@ exports.Prisma.BjtQuestionScalarFieldEnum = {
   audioUrl: 'audioUrl',
   imageUrl: 'imageUrl',
   imageAlt: 'imageAlt',
+  imagePrompt: 'imagePrompt',
   explanationVi: 'explanationVi',
   skillTag: 'skillTag',
   difficulty: 'difficulty',

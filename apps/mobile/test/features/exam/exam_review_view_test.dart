@@ -95,8 +95,8 @@ void main() {
   ) async {
     await pumpReview(tester, repoReturning((_) => jsonOk(breakdownPayload())));
 
-    // 1 of 2 correct -> 50%.
-    expect(find.text('50%'), findsOneWidget);
+    // The overall estimate is displayed on the honest 0–800 BJT scale.
+    expect(find.text('50/800'), findsOneWidget);
     expect(find.text('正しい敬語はどれですか。'), findsOneWidget);
     expect(find.text('次の語を選びなさい。'), findsOneWidget);
     // Explanations (Vietnamese) are shown.

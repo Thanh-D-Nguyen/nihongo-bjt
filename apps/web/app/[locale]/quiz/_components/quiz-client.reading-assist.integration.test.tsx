@@ -98,7 +98,13 @@ const labels = {
     listenAudio: "Listen",
     playCount: "{current}/{max}",
     showScript: "Show script",
+    transcriptAfterExam: "Transcript after exam",
     ttsNotice: "TTS"
+  },
+  image: {
+    descriptionLabel: "Image description",
+    pendingLabel: "Image pending",
+    promptLabel: "Image prompt"
   }
 } satisfies QuizLabels;
 
@@ -175,5 +181,52 @@ describe("QuizQuestionPanel reading assist wiring", () => {
 
     expect(capturedProps).toBeNull();
     expect(html).toContain("念のため確認させてください。");
+  });
+
+  it("keeps reading assist disabled during an official simulation", () => {
+    capturedProps = null;
+    const officialQuestion = {
+      ...questionPayload,
+      session: { ...questionPayload.session, testType: "official" }
+    };
+
+    const html = renderToStaticMarkup(
+      <QuizQuestionPanel
+        flagged={false}
+        labels={labels}
+        onAnswer={() => undefined}
+        onToggleFlag={() => undefined}
+        question={officialQuestion}
+        readingAssistMode="hover"
+        userId="11111111-1111-4111-8111-111111111111"
+      />
+    );
+
+    expect(capturedProps).toBeNull();
+    expect(html).toContain("念のため確認させてください。");
+  });
+
+  it("shows the generation prompt when a required question image is pending", () => {
+    const imageQuestion = {
+      ...questionPayload,
+      question: {
+        ...questionPayload.question,
+        imagePrompt: "A quiet Japanese meeting room with a wall schedule"
+      }
+    };
+
+    const html = renderToStaticMarkup(
+      <QuizQuestionPanel
+        flagged={false}
+        labels={labels}
+        onAnswer={() => undefined}
+        onToggleFlag={() => undefined}
+        question={imageQuestion}
+        userId={null}
+      />
+    );
+
+    expect(html).toContain("Image pending");
+    expect(html).toContain("A quiet Japanese meeting room with a wall schedule");
   });
 });

@@ -29,7 +29,7 @@
 - Add/extend widget tests: disabled-before-answer, enabled-after, Q1 Next, mid
   Next, last Finish→summary, repeated Next no double-advance, summary reachable.
 
-## Batch 3 — Exam Mode
+## Batch 3 — Exam Mode (complete for current scope)
 
 - Entry (`ExamBrowserPage`) + player already real. Confirm timer, navigation,
   timeout, result transition.
@@ -38,7 +38,7 @@
 - Add widget tests for the pure `ExamPlayerView` (select enables submit, submit
   loading locks options) and `_Phase` transitions via a fake repository.
 
-## Batch 4 — Result / Explanation / Review  (primary new work)
+## Batch 4 — Result / Explanation / Review (complete)
 
 - **Domain**: `ExamBreakdown`, `ExamBreakdownItem` in `exam_models.dart`.
 - **DTO**: `ExamDto.breakdown(...)` + `breakdownItem(...)` (defensive).
@@ -55,13 +55,13 @@
 - Tests: breakdown DTO parse, repository success/error, review view rendering +
   filter, save-card action (fake repo).
 
-## Batch 5 — Audio / listening
+## Batch 5 — Audio / image media (complete without fake playback)
 
 - Capability check result: **no audio/TTS package** in `apps/mobile/pubspec.yaml`
   (verified). Therefore: do **not** implement fake audio.
-- Action: when a question carries `audioUrl`, show a calm, non-blocking
-  "audio not available on mobile yet" note so the item is honest, and render the
-  text/scenario normally. Document in `MOBILE_KNOWN_LIMITATIONS.md`.
+- Parse `audioScript`, `imageUrl`, `imageAlt`, `imagePrompt`, and `testType`.
+- Practice shows transcript; official simulation hides it.
+- Real image renders; missing/failed image shows localized generation prompt.
 
 ## Batch 6 — Sensory & UI/UX polish
 
@@ -85,6 +85,15 @@
   update `MOBILE_KNOWN_LIMITATIONS.md`, `MOBILE_MANUAL_QA_CHECKLIST.md`.
 - Final: `flutter analyze`, `flutter test`, `git diff --check`,
   `flutter build apk --debug` (if toolchain available).
+
+## 2026-07 production-score batch
+
+- Browser explains full BJT simulation versus target practice and the standard
+  three-part format.
+- Result uses server `estimatedScore` (0–800) with an explicit estimated /
+  non-official caveat.
+- Completed breakdown is loaded as partial data for real section correct/total.
+- No backend/schema/web changes are part of this mobile batch.
 
 ## File map (new / touched)
 

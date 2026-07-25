@@ -3,7 +3,7 @@ import 'package:nihongo_bjt/core/api/repository_result.dart';
 import 'package:nihongo_bjt/features/exam/data/exam_dto.dart';
 import 'package:nihongo_bjt/features/exam/domain/exam_models.dart';
 
-/// Access to the BJT quiz/exam API (`/api/quiz`). Templates are public; session
+/// Access to the BJT quiz/exam API (`/api/quiz`). Template metadata is public; session
 /// endpoints require an authenticated learner (the shared auth-aware
 /// [ApiClient] attaches the bearer token and the server resolves the learner id
 /// from it). All failures normalize to [RepositoryException]. Answer
@@ -19,6 +19,15 @@ class ExamRepository {
       () => _client.getJson('/api/quiz/templates'),
     );
     return ExamDto.asMapList(json).map(ExamDto.template).toList();
+  }
+
+  /// Resolves the server-authoritative feature and entitlement gate used by
+  /// official simulations before a learner can tap a paid form.
+  Future<OfficialSimulationStatus> officialSimulationStatus() async {
+    final json = await guardApiCall(
+      () => _client.getJson('/api/quiz/official-simulation/status'),
+    );
+    return ExamDto.officialSimulationStatus(ExamDto.asMap(json));
   }
 
   /// Starts a scored session for [testId] (quota- and entitlement-gated).

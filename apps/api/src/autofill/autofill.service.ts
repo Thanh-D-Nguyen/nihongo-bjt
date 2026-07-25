@@ -227,7 +227,8 @@ const TEMPLATES: Record<AutofillFormType, TemplateGenerator[]> = {
         difficulty: pick(["easy", "standard", "hard"]),
         tags: [topic, "BJT", pick(["敬語", "メール", "会議", "電話"])].join(", "),
         imageUrl: "",
-        imageAlt: "",
+        imageAlt: `Bối cảnh công sở Nhật Bản: ${scenario}`,
+        imagePrompt: `Production educational illustration for a BJT business-Japanese question. Show this workplace situation in contemporary Japan: ${scenario}. Realistic professional setting, culturally accurate office behavior, neutral lighting, clear composition, no readable text, no logos, no trademarks, no watermarks, no identifiable real people.`,
         audioUrl: "",
         audioScript: "",
         options: ["A", "B", "C", "D"].map((key, i) => ({

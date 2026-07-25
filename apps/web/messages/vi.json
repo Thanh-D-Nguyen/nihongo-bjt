@@ -1404,7 +1404,13 @@
       "listenAudio": "Nghe audio",
       "playCount": "Đã nghe {current}/{max} lần",
       "showScript": "Xem kịch bản audio",
+      "transcriptAfterExam": "Bản đọc được ẩn trong bài mô phỏng để bảo toàn tính trung thực của bài thi.",
       "ttsNotice": "🔊 Sử dụng giọng đọc tổng hợp. Trong đề thi thật, phần này được phát bằng audio chuyên nghiệp."
+    },
+    "image": {
+      "descriptionLabel": "Mô tả ảnh",
+      "pendingLabel": "Ảnh đang chờ tạo",
+      "promptLabel": "Prompt tạo ảnh"
     }
   },
   "onboarding": {

@@ -1404,7 +1404,13 @@
       "listenAudio": "音声を聞く",
       "playCount": "再生回数 {current}/{max}",
       "showScript": "音声スクリプトを表示",
+      "transcriptAfterExam": "試験の公平性を保つため、模擬試験中はスクリプトを表示しません。",
       "ttsNotice": "🔊 合成音声を使用しています。本番の試験では、専門の音声が再生されます。"
+    },
+    "image": {
+      "descriptionLabel": "画像説明",
+      "pendingLabel": "画像生成待ち",
+      "promptLabel": "画像生成プロンプト"
     }
   },
   "onboarding": {

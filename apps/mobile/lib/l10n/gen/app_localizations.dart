@@ -2846,6 +2846,66 @@ abstract class AppLocalizations {
   /// **'Làm bài thi thử có tính giờ và chấm điểm.'**
   String get examSubtitle;
 
+  /// Title of the real-format BJT simulation guide.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mô phỏng đề BJT toàn phần'**
+  String get examFormatTitle;
+
+  /// Explains the whole-test score scale and standard BJT sections.
+  ///
+  /// In vi, this message translates to:
+  /// **'Kết quả được ước tính theo thang 0–800 trên toàn bài, gồm 3 phần chuẩn: Nghe hiểu, Nghe đọc hiểu và Đọc hiểu.'**
+  String get examFormatDescription;
+
+  /// Chip describing the BJT simulation score scale.
+  ///
+  /// In vi, this message translates to:
+  /// **'Điểm ước tính 0–800'**
+  String get examEstimatedScaleLabel;
+
+  /// Chip describing the standard three-part BJT format.
+  ///
+  /// In vi, this message translates to:
+  /// **'3 phần chuẩn BJT'**
+  String get examThreePartFormatLabel;
+
+  /// Template type label for an official-style full simulation.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mô phỏng toàn phần'**
+  String get examTemplateTypeOfficial;
+
+  /// No description provided for @examOfficialAccessChecking.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đang kiểm tra'**
+  String get examOfficialAccessChecking;
+
+  /// No description provided for @examOfficialUnavailable.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tạm thời chưa mở'**
+  String get examOfficialUnavailable;
+
+  /// No description provided for @examOfficialUpgradeRequired.
+  ///
+  /// In vi, this message translates to:
+  /// **'Cần nâng cấp'**
+  String get examOfficialUpgradeRequired;
+
+  /// Template type label for target-focused practice.
+  ///
+  /// In vi, this message translates to:
+  /// **'Luyện theo mục tiêu'**
+  String get examTemplateTypePractice;
+
+  /// Number of sections in an exam template.
+  ///
+  /// In vi, this message translates to:
+  /// **'{count} phần'**
+  String examSectionCountLabel(int count);
+
   /// Empty-state title when no exam templates are available.
   ///
   /// In vi, this message translates to:
@@ -2894,11 +2954,65 @@ abstract class AppLocalizations {
   /// **'Trả lời'**
   String get examSubmitCta;
 
+  /// Heading for listening media in an exam question.
+  ///
+  /// In vi, this message translates to:
+  /// **'Nội dung nghe'**
+  String get examAudioTitle;
+
   /// Calm note shown for listening questions when audio playback is not yet available on mobile.
   ///
   /// In vi, this message translates to:
-  /// **'Câu hỏi nghe — phần phát âm thanh chưa có trên di động. Hãy đọc nội dung bên dưới để trả lời.'**
+  /// **'Phiên bản di động hiện chưa phát được tệp âm thanh. Bản đọc sẽ hiện bên dưới khi chế độ làm bài cho phép.'**
   String get examAudioUnavailable;
+
+  /// Label above an audio transcript in practice mode.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bản đọc audio'**
+  String get examAudioTranscriptLabel;
+
+  /// Integrity notice replacing the transcript in an official simulation.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bản đọc được ẩn trong bài mô phỏng để bảo toàn tính trung thực của bài thi.'**
+  String get examAudioTranscriptHidden;
+
+  /// Heading above a question image or image prompt.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hình minh họa câu hỏi'**
+  String get examImageTitle;
+
+  /// Fallback accessibility label for a question image.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hình minh họa cho câu hỏi BJT'**
+  String get examImageSemanticLabel;
+
+  /// Accessible description shown below a question image.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mô tả ảnh: {description}'**
+  String examImageDescription(String description);
+
+  /// Label shown when a question has an AI image prompt but no image yet.
+  ///
+  /// In vi, this message translates to:
+  /// **'Ảnh đang chờ tạo'**
+  String get examImagePendingLabel;
+
+  /// AI image-generation prompt shown as the honest media fallback.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mô tả để tạo ảnh: {prompt}'**
+  String examImagePrompt(String prompt);
+
+  /// Fallback when neither an image nor image prompt is available.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa có ảnh hoặc mô tả ảnh cho câu hỏi này.'**
+  String get examImageUnavailable;
 
   /// CTA to advance to the next exam question.
   ///
@@ -2935,6 +3049,66 @@ abstract class AppLocalizations {
   /// In vi, this message translates to:
   /// **'Mức BJT ước tính: {band}'**
   String examResultBand(String band);
+
+  /// Label above the server-computed estimated BJT score.
+  ///
+  /// In vi, this message translates to:
+  /// **'Điểm BJT ước tính'**
+  String get examEstimatedScoreLabel;
+
+  /// Server-computed estimated score on the 0–800 scale.
+  ///
+  /// In vi, this message translates to:
+  /// **'{score}/800'**
+  String examEstimatedScoreValue(int score);
+
+  /// Honest fallback when the API did not return an estimated score.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa có điểm'**
+  String get examEstimatedScoreUnavailable;
+
+  /// Caveat that simulation scores are estimates, not official BJT results.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đây là kết quả mô phỏng để định hướng ôn tập, không phải điểm BJT chính thức.'**
+  String get examEstimatedScoreCaveat;
+
+  /// Heading above real correct/total performance grouped by section.
+  ///
+  /// In vi, this message translates to:
+  /// **'Kết quả theo từng phần'**
+  String get examSectionBreakdownTitle;
+
+  /// Partial-data fallback when section breakdown is unavailable.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa tải được chi tiết theo phần. Điểm tổng ở trên vẫn là kết quả do máy chủ chấm.'**
+  String get examSectionBreakdownUnavailable;
+
+  /// Standard BJT listening section name.
+  ///
+  /// In vi, this message translates to:
+  /// **'Nghe hiểu'**
+  String get examSectionListening;
+
+  /// Standard BJT listening-reading section name.
+  ///
+  /// In vi, this message translates to:
+  /// **'Nghe đọc hiểu'**
+  String get examSectionListeningReading;
+
+  /// Standard BJT reading section name.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đọc hiểu'**
+  String get examSectionReading;
+
+  /// Real correct/total outcome for one exam section.
+  ///
+  /// In vi, this message translates to:
+  /// **'{correct}/{total} câu đúng'**
+  String examSectionCorrectCount(int correct, int total);
 
   /// CTA to leave the exam result screen.
   ///

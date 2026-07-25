@@ -64272,6 +64272,7 @@ export namespace Prisma {
     audioUrl: string | null
     imageUrl: string | null
     imageAlt: string | null
+    imagePrompt: string | null
     explanationVi: string | null
     skillTag: string | null
     difficulty: string | null
@@ -64292,6 +64293,7 @@ export namespace Prisma {
     audioUrl: string | null
     imageUrl: string | null
     imageAlt: string | null
+    imagePrompt: string | null
     explanationVi: string | null
     skillTag: string | null
     difficulty: string | null
@@ -64312,6 +64314,7 @@ export namespace Prisma {
     audioUrl: number
     imageUrl: number
     imageAlt: number
+    imagePrompt: number
     explanationVi: number
     skillTag: number
     difficulty: number
@@ -64336,6 +64339,7 @@ export namespace Prisma {
     audioUrl?: true
     imageUrl?: true
     imageAlt?: true
+    imagePrompt?: true
     explanationVi?: true
     skillTag?: true
     difficulty?: true
@@ -64356,6 +64360,7 @@ export namespace Prisma {
     audioUrl?: true
     imageUrl?: true
     imageAlt?: true
+    imagePrompt?: true
     explanationVi?: true
     skillTag?: true
     difficulty?: true
@@ -64376,6 +64381,7 @@ export namespace Prisma {
     audioUrl?: true
     imageUrl?: true
     imageAlt?: true
+    imagePrompt?: true
     explanationVi?: true
     skillTag?: true
     difficulty?: true
@@ -64471,6 +64477,7 @@ export namespace Prisma {
     audioUrl: string | null
     imageUrl: string | null
     imageAlt: string | null
+    imagePrompt: string | null
     explanationVi: string
     skillTag: string
     difficulty: string
@@ -64510,6 +64517,7 @@ export namespace Prisma {
     audioUrl?: boolean
     imageUrl?: boolean
     imageAlt?: boolean
+    imagePrompt?: boolean
     explanationVi?: boolean
     skillTag?: boolean
     difficulty?: boolean
@@ -64538,6 +64546,7 @@ export namespace Prisma {
     audioUrl?: boolean
     imageUrl?: boolean
     imageAlt?: boolean
+    imagePrompt?: boolean
     explanationVi?: boolean
     skillTag?: boolean
     difficulty?: boolean
@@ -64562,6 +64571,7 @@ export namespace Prisma {
     audioUrl?: boolean
     imageUrl?: boolean
     imageAlt?: boolean
+    imagePrompt?: boolean
     explanationVi?: boolean
     skillTag?: boolean
     difficulty?: boolean
@@ -64586,6 +64596,7 @@ export namespace Prisma {
     audioUrl?: boolean
     imageUrl?: boolean
     imageAlt?: boolean
+    imagePrompt?: boolean
     explanationVi?: boolean
     skillTag?: boolean
     difficulty?: boolean
@@ -64599,7 +64610,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type BjtQuestionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "sectionId" | "prompt" | "scenario" | "audioScript" | "audioUrl" | "imageUrl" | "imageAlt" | "explanationVi" | "skillTag" | "difficulty" | "sourceType" | "sourceId" | "remediationCardId" | "qualityFlags" | "status" | "tags" | "createdAt" | "updatedAt", ExtArgs["result"]["bjtQuestion"]>
+  export type BjtQuestionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "sectionId" | "prompt" | "scenario" | "audioScript" | "audioUrl" | "imageUrl" | "imageAlt" | "imagePrompt" | "explanationVi" | "skillTag" | "difficulty" | "sourceType" | "sourceId" | "remediationCardId" | "qualityFlags" | "status" | "tags" | "createdAt" | "updatedAt", ExtArgs["result"]["bjtQuestion"]>
   export type BjtQuestionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     section?: boolean | BjtTestSectionDefaultArgs<ExtArgs>
     remediationCard?: boolean | BjtQuestion$remediationCardArgs<ExtArgs>
@@ -64635,6 +64646,7 @@ export namespace Prisma {
       audioUrl: string | null
       imageUrl: string | null
       imageAlt: string | null
+      imagePrompt: string | null
       explanationVi: string
       skillTag: string
       difficulty: string
@@ -65082,6 +65094,7 @@ export namespace Prisma {
     readonly audioUrl: FieldRef<"BjtQuestion", 'String'>
     readonly imageUrl: FieldRef<"BjtQuestion", 'String'>
     readonly imageAlt: FieldRef<"BjtQuestion", 'String'>
+    readonly imagePrompt: FieldRef<"BjtQuestion", 'String'>
     readonly explanationVi: FieldRef<"BjtQuestion", 'String'>
     readonly skillTag: FieldRef<"BjtQuestion", 'String'>
     readonly difficulty: FieldRef<"BjtQuestion", 'String'>
@@ -195743,7 +195756,7 @@ export namespace Prisma {
        */
       thumbnailUrl: string | null
       /**
-       * JSON config: { cardBg, textColor, fontFamily, borderRadius, flipAnimation, accentColor, backdropBlur, shadow }
+       * Validated semantic theme config: background/contentSurface/foreground/mutedForeground/border/accent/control/focus tokens plus typography, radius and shadow.
        */
       config: Prisma.JsonValue
       /**
@@ -219078,6 +219091,7 @@ export namespace Prisma {
     audioUrl: 'audioUrl',
     imageUrl: 'imageUrl',
     imageAlt: 'imageAlt',
+    imagePrompt: 'imagePrompt',
     explanationVi: 'explanationVi',
     skillTag: 'skillTag',
     difficulty: 'difficulty',
@@ -224581,6 +224595,7 @@ export namespace Prisma {
     audioUrl?: StringNullableFilter<"BjtQuestion"> | string | null
     imageUrl?: StringNullableFilter<"BjtQuestion"> | string | null
     imageAlt?: StringNullableFilter<"BjtQuestion"> | string | null
+    imagePrompt?: StringNullableFilter<"BjtQuestion"> | string | null
     explanationVi?: StringFilter<"BjtQuestion"> | string
     skillTag?: StringFilter<"BjtQuestion"> | string
     difficulty?: StringFilter<"BjtQuestion"> | string
@@ -224608,6 +224623,7 @@ export namespace Prisma {
     audioUrl?: SortOrderInput | SortOrder
     imageUrl?: SortOrderInput | SortOrder
     imageAlt?: SortOrderInput | SortOrder
+    imagePrompt?: SortOrderInput | SortOrder
     explanationVi?: SortOrder
     skillTag?: SortOrder
     difficulty?: SortOrder
@@ -224638,6 +224654,7 @@ export namespace Prisma {
     audioUrl?: StringNullableFilter<"BjtQuestion"> | string | null
     imageUrl?: StringNullableFilter<"BjtQuestion"> | string | null
     imageAlt?: StringNullableFilter<"BjtQuestion"> | string | null
+    imagePrompt?: StringNullableFilter<"BjtQuestion"> | string | null
     explanationVi?: StringFilter<"BjtQuestion"> | string
     skillTag?: StringFilter<"BjtQuestion"> | string
     difficulty?: StringFilter<"BjtQuestion"> | string
@@ -224665,6 +224682,7 @@ export namespace Prisma {
     audioUrl?: SortOrderInput | SortOrder
     imageUrl?: SortOrderInput | SortOrder
     imageAlt?: SortOrderInput | SortOrder
+    imagePrompt?: SortOrderInput | SortOrder
     explanationVi?: SortOrder
     skillTag?: SortOrder
     difficulty?: SortOrder
@@ -224693,6 +224711,7 @@ export namespace Prisma {
     audioUrl?: StringNullableWithAggregatesFilter<"BjtQuestion"> | string | null
     imageUrl?: StringNullableWithAggregatesFilter<"BjtQuestion"> | string | null
     imageAlt?: StringNullableWithAggregatesFilter<"BjtQuestion"> | string | null
+    imagePrompt?: StringNullableWithAggregatesFilter<"BjtQuestion"> | string | null
     explanationVi?: StringWithAggregatesFilter<"BjtQuestion"> | string
     skillTag?: StringWithAggregatesFilter<"BjtQuestion"> | string
     difficulty?: StringWithAggregatesFilter<"BjtQuestion"> | string
@@ -239004,6 +239023,7 @@ export namespace Prisma {
     audioUrl?: string | null
     imageUrl?: string | null
     imageAlt?: string | null
+    imagePrompt?: string | null
     explanationVi: string
     skillTag: string
     difficulty?: string
@@ -239030,6 +239050,7 @@ export namespace Prisma {
     audioUrl?: string | null
     imageUrl?: string | null
     imageAlt?: string | null
+    imagePrompt?: string | null
     explanationVi: string
     skillTag: string
     difficulty?: string
@@ -239054,6 +239075,7 @@ export namespace Prisma {
     audioUrl?: NullableStringFieldUpdateOperationsInput | string | null
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     imageAlt?: NullableStringFieldUpdateOperationsInput | string | null
+    imagePrompt?: NullableStringFieldUpdateOperationsInput | string | null
     explanationVi?: StringFieldUpdateOperationsInput | string
     skillTag?: StringFieldUpdateOperationsInput | string
     difficulty?: StringFieldUpdateOperationsInput | string
@@ -239080,6 +239102,7 @@ export namespace Prisma {
     audioUrl?: NullableStringFieldUpdateOperationsInput | string | null
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     imageAlt?: NullableStringFieldUpdateOperationsInput | string | null
+    imagePrompt?: NullableStringFieldUpdateOperationsInput | string | null
     explanationVi?: StringFieldUpdateOperationsInput | string
     skillTag?: StringFieldUpdateOperationsInput | string
     difficulty?: StringFieldUpdateOperationsInput | string
@@ -239105,6 +239128,7 @@ export namespace Prisma {
     audioUrl?: string | null
     imageUrl?: string | null
     imageAlt?: string | null
+    imagePrompt?: string | null
     explanationVi: string
     skillTag: string
     difficulty?: string
@@ -239126,6 +239150,7 @@ export namespace Prisma {
     audioUrl?: NullableStringFieldUpdateOperationsInput | string | null
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     imageAlt?: NullableStringFieldUpdateOperationsInput | string | null
+    imagePrompt?: NullableStringFieldUpdateOperationsInput | string | null
     explanationVi?: StringFieldUpdateOperationsInput | string
     skillTag?: StringFieldUpdateOperationsInput | string
     difficulty?: StringFieldUpdateOperationsInput | string
@@ -239147,6 +239172,7 @@ export namespace Prisma {
     audioUrl?: NullableStringFieldUpdateOperationsInput | string | null
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     imageAlt?: NullableStringFieldUpdateOperationsInput | string | null
+    imagePrompt?: NullableStringFieldUpdateOperationsInput | string | null
     explanationVi?: StringFieldUpdateOperationsInput | string
     skillTag?: StringFieldUpdateOperationsInput | string
     difficulty?: StringFieldUpdateOperationsInput | string
@@ -253668,6 +253694,7 @@ export namespace Prisma {
     audioUrl?: SortOrder
     imageUrl?: SortOrder
     imageAlt?: SortOrder
+    imagePrompt?: SortOrder
     explanationVi?: SortOrder
     skillTag?: SortOrder
     difficulty?: SortOrder
@@ -253690,6 +253717,7 @@ export namespace Prisma {
     audioUrl?: SortOrder
     imageUrl?: SortOrder
     imageAlt?: SortOrder
+    imagePrompt?: SortOrder
     explanationVi?: SortOrder
     skillTag?: SortOrder
     difficulty?: SortOrder
@@ -253710,6 +253738,7 @@ export namespace Prisma {
     audioUrl?: SortOrder
     imageUrl?: SortOrder
     imageAlt?: SortOrder
+    imagePrompt?: SortOrder
     explanationVi?: SortOrder
     skillTag?: SortOrder
     difficulty?: SortOrder
@@ -270157,6 +270186,7 @@ export namespace Prisma {
     audioUrl?: string | null
     imageUrl?: string | null
     imageAlt?: string | null
+    imagePrompt?: string | null
     explanationVi: string
     skillTag: string
     difficulty?: string
@@ -270182,6 +270212,7 @@ export namespace Prisma {
     audioUrl?: string | null
     imageUrl?: string | null
     imageAlt?: string | null
+    imagePrompt?: string | null
     explanationVi: string
     skillTag: string
     difficulty?: string
@@ -270309,6 +270340,7 @@ export namespace Prisma {
     audioUrl?: StringNullableFilter<"BjtQuestion"> | string | null
     imageUrl?: StringNullableFilter<"BjtQuestion"> | string | null
     imageAlt?: StringNullableFilter<"BjtQuestion"> | string | null
+    imagePrompt?: StringNullableFilter<"BjtQuestion"> | string | null
     explanationVi?: StringFilter<"BjtQuestion"> | string
     skillTag?: StringFilter<"BjtQuestion"> | string
     difficulty?: StringFilter<"BjtQuestion"> | string
@@ -271188,6 +271220,7 @@ export namespace Prisma {
     audioUrl?: string | null
     imageUrl?: string | null
     imageAlt?: string | null
+    imagePrompt?: string | null
     explanationVi: string
     skillTag: string
     difficulty?: string
@@ -271213,6 +271246,7 @@ export namespace Prisma {
     audioUrl?: string | null
     imageUrl?: string | null
     imageAlt?: string | null
+    imagePrompt?: string | null
     explanationVi: string
     skillTag: string
     difficulty?: string
@@ -271301,6 +271335,7 @@ export namespace Prisma {
     audioUrl?: NullableStringFieldUpdateOperationsInput | string | null
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     imageAlt?: NullableStringFieldUpdateOperationsInput | string | null
+    imagePrompt?: NullableStringFieldUpdateOperationsInput | string | null
     explanationVi?: StringFieldUpdateOperationsInput | string
     skillTag?: StringFieldUpdateOperationsInput | string
     difficulty?: StringFieldUpdateOperationsInput | string
@@ -271326,6 +271361,7 @@ export namespace Prisma {
     audioUrl?: NullableStringFieldUpdateOperationsInput | string | null
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     imageAlt?: NullableStringFieldUpdateOperationsInput | string | null
+    imagePrompt?: NullableStringFieldUpdateOperationsInput | string | null
     explanationVi?: StringFieldUpdateOperationsInput | string
     skillTag?: StringFieldUpdateOperationsInput | string
     difficulty?: StringFieldUpdateOperationsInput | string
@@ -271755,6 +271791,7 @@ export namespace Prisma {
     audioUrl?: string | null
     imageUrl?: string | null
     imageAlt?: string | null
+    imagePrompt?: string | null
     explanationVi: string
     skillTag: string
     difficulty?: string
@@ -271779,6 +271816,7 @@ export namespace Prisma {
     audioUrl?: string | null
     imageUrl?: string | null
     imageAlt?: string | null
+    imagePrompt?: string | null
     explanationVi: string
     skillTag: string
     difficulty?: string
@@ -272170,6 +272208,7 @@ export namespace Prisma {
     audioUrl?: string | null
     imageUrl?: string | null
     imageAlt?: string | null
+    imagePrompt?: string | null
     explanationVi: string
     skillTag: string
     difficulty?: string
@@ -272195,6 +272234,7 @@ export namespace Prisma {
     audioUrl?: string | null
     imageUrl?: string | null
     imageAlt?: string | null
+    imagePrompt?: string | null
     explanationVi: string
     skillTag: string
     difficulty?: string
@@ -272234,6 +272274,7 @@ export namespace Prisma {
     audioUrl?: NullableStringFieldUpdateOperationsInput | string | null
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     imageAlt?: NullableStringFieldUpdateOperationsInput | string | null
+    imagePrompt?: NullableStringFieldUpdateOperationsInput | string | null
     explanationVi?: StringFieldUpdateOperationsInput | string
     skillTag?: StringFieldUpdateOperationsInput | string
     difficulty?: StringFieldUpdateOperationsInput | string
@@ -272259,6 +272300,7 @@ export namespace Prisma {
     audioUrl?: NullableStringFieldUpdateOperationsInput | string | null
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     imageAlt?: NullableStringFieldUpdateOperationsInput | string | null
+    imagePrompt?: NullableStringFieldUpdateOperationsInput | string | null
     explanationVi?: StringFieldUpdateOperationsInput | string
     skillTag?: StringFieldUpdateOperationsInput | string
     difficulty?: StringFieldUpdateOperationsInput | string
@@ -272439,6 +272481,7 @@ export namespace Prisma {
     audioUrl?: string | null
     imageUrl?: string | null
     imageAlt?: string | null
+    imagePrompt?: string | null
     explanationVi: string
     skillTag: string
     difficulty?: string
@@ -272464,6 +272507,7 @@ export namespace Prisma {
     audioUrl?: string | null
     imageUrl?: string | null
     imageAlt?: string | null
+    imagePrompt?: string | null
     explanationVi: string
     skillTag: string
     difficulty?: string
@@ -272544,6 +272588,7 @@ export namespace Prisma {
     audioUrl?: NullableStringFieldUpdateOperationsInput | string | null
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     imageAlt?: NullableStringFieldUpdateOperationsInput | string | null
+    imagePrompt?: NullableStringFieldUpdateOperationsInput | string | null
     explanationVi?: StringFieldUpdateOperationsInput | string
     skillTag?: StringFieldUpdateOperationsInput | string
     difficulty?: StringFieldUpdateOperationsInput | string
@@ -272569,6 +272614,7 @@ export namespace Prisma {
     audioUrl?: NullableStringFieldUpdateOperationsInput | string | null
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     imageAlt?: NullableStringFieldUpdateOperationsInput | string | null
+    imagePrompt?: NullableStringFieldUpdateOperationsInput | string | null
     explanationVi?: StringFieldUpdateOperationsInput | string
     skillTag?: StringFieldUpdateOperationsInput | string
     difficulty?: StringFieldUpdateOperationsInput | string
@@ -288326,6 +288372,7 @@ export namespace Prisma {
     audioUrl?: string | null
     imageUrl?: string | null
     imageAlt?: string | null
+    imagePrompt?: string | null
     explanationVi: string
     skillTag: string
     difficulty?: string
@@ -288403,6 +288450,7 @@ export namespace Prisma {
     audioUrl?: NullableStringFieldUpdateOperationsInput | string | null
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     imageAlt?: NullableStringFieldUpdateOperationsInput | string | null
+    imagePrompt?: NullableStringFieldUpdateOperationsInput | string | null
     explanationVi?: StringFieldUpdateOperationsInput | string
     skillTag?: StringFieldUpdateOperationsInput | string
     difficulty?: StringFieldUpdateOperationsInput | string
@@ -288428,6 +288476,7 @@ export namespace Prisma {
     audioUrl?: NullableStringFieldUpdateOperationsInput | string | null
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     imageAlt?: NullableStringFieldUpdateOperationsInput | string | null
+    imagePrompt?: NullableStringFieldUpdateOperationsInput | string | null
     explanationVi?: StringFieldUpdateOperationsInput | string
     skillTag?: StringFieldUpdateOperationsInput | string
     difficulty?: StringFieldUpdateOperationsInput | string
@@ -288452,6 +288501,7 @@ export namespace Prisma {
     audioUrl?: NullableStringFieldUpdateOperationsInput | string | null
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     imageAlt?: NullableStringFieldUpdateOperationsInput | string | null
+    imagePrompt?: NullableStringFieldUpdateOperationsInput | string | null
     explanationVi?: StringFieldUpdateOperationsInput | string
     skillTag?: StringFieldUpdateOperationsInput | string
     difficulty?: StringFieldUpdateOperationsInput | string
@@ -288767,6 +288817,7 @@ export namespace Prisma {
     audioUrl?: string | null
     imageUrl?: string | null
     imageAlt?: string | null
+    imagePrompt?: string | null
     explanationVi: string
     skillTag: string
     difficulty?: string
@@ -288788,6 +288839,7 @@ export namespace Prisma {
     audioUrl?: NullableStringFieldUpdateOperationsInput | string | null
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     imageAlt?: NullableStringFieldUpdateOperationsInput | string | null
+    imagePrompt?: NullableStringFieldUpdateOperationsInput | string | null
     explanationVi?: StringFieldUpdateOperationsInput | string
     skillTag?: StringFieldUpdateOperationsInput | string
     difficulty?: StringFieldUpdateOperationsInput | string
@@ -288812,6 +288864,7 @@ export namespace Prisma {
     audioUrl?: NullableStringFieldUpdateOperationsInput | string | null
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     imageAlt?: NullableStringFieldUpdateOperationsInput | string | null
+    imagePrompt?: NullableStringFieldUpdateOperationsInput | string | null
     explanationVi?: StringFieldUpdateOperationsInput | string
     skillTag?: StringFieldUpdateOperationsInput | string
     difficulty?: StringFieldUpdateOperationsInput | string
@@ -288836,6 +288889,7 @@ export namespace Prisma {
     audioUrl?: NullableStringFieldUpdateOperationsInput | string | null
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     imageAlt?: NullableStringFieldUpdateOperationsInput | string | null
+    imagePrompt?: NullableStringFieldUpdateOperationsInput | string | null
     explanationVi?: StringFieldUpdateOperationsInput | string
     skillTag?: StringFieldUpdateOperationsInput | string
     difficulty?: StringFieldUpdateOperationsInput | string

@@ -64,6 +64,7 @@ type Detail = Summary & {
   explanationVi: string | null;
   imageUrl: string | null;
   imageAlt: string | null;
+  imagePrompt: string | null;
   audioUrl: string | null;
   audioScript: string | null;
   qualityFlags: Record<string, unknown> | null;
@@ -84,6 +85,7 @@ type QuestionForm = {
   tags: string;
   imageUrl: string;
   imageAlt: string;
+  imagePrompt: string;
   audioUrl: string;
   audioScript: string;
   options: OptionInput[];
@@ -99,6 +101,7 @@ const DEFAULT_QUESTION_FORM: QuestionForm = {
   tags: "",
   imageUrl: "",
   imageAlt: "",
+  imagePrompt: "",
   audioUrl: "",
   audioScript: "",
   options: DEFAULT_OPTION_KEYS.map((k, i) => ({ optionKey: k, text: "", isCorrect: i === 0 }))
@@ -246,6 +249,7 @@ export function QuestionBankAdminClient({ common, labels, locale }: { common: Co
       tags: detail.tags.join(", "),
       imageUrl: detail.imageUrl ?? "",
       imageAlt: detail.imageAlt ?? "",
+      imagePrompt: detail.imagePrompt ?? "",
       audioUrl: detail.audioUrl ?? "",
       audioScript: detail.audioScript ?? "",
       options: detail.options.map((o) => ({ optionKey: o.optionKey, text: o.text, isCorrect: o.isCorrect }))
@@ -279,6 +283,7 @@ export function QuestionBankAdminClient({ common, labels, locale }: { common: Co
         tags: qForm.tags.split(",").map((s) => s.trim()).filter((s) => s.length > 0),
         imageUrl: qForm.imageUrl.trim() || null,
         imageAlt: qForm.imageAlt.trim() || null,
+        imagePrompt: qForm.imagePrompt.trim() || null,
         audioUrl: qForm.audioUrl.trim() || null,
         audioScript: qForm.audioScript.trim() || null,
         options: qForm.options.map((o) => ({ optionKey: o.optionKey, text: o.text.trim(), isCorrect: o.isCorrect })),
@@ -533,6 +538,12 @@ export function QuestionBankAdminClient({ common, labels, locale }: { common: Co
                     {detail.imageAlt ? <p className="mt-1 text-xs text-slate-500">{detail.imageAlt}</p> : null}
                   </div>
                 ) : null}
+                {!detail.imageUrl && detail.imagePrompt ? (
+                  <div className="mt-2 rounded border border-blue-200 bg-blue-50 p-3">
+                    <h4 className="mb-1 text-xs font-semibold text-blue-800">{t("imagePromptHeading")}</h4>
+                    <p className="whitespace-pre-wrap text-xs text-blue-700">{detail.imagePrompt}</p>
+                  </div>
+                ) : null}
                 {detail.audioUrl ? (
                   <div className="mt-2 rounded border border-slate-200 p-3">
                     <h4 className="mb-1 text-xs font-semibold text-slate-600">{t("audioHeading")}</h4>
@@ -652,6 +663,7 @@ export function QuestionBankAdminClient({ common, labels, locale }: { common: Co
                     ...(f.tags !== undefined && { tags: String(f.tags) }),
                     ...(f.imageUrl !== undefined && { imageUrl: String(f.imageUrl) }),
                     ...(f.imageAlt !== undefined && { imageAlt: String(f.imageAlt) }),
+                    ...(f.imagePrompt !== undefined && { imagePrompt: String(f.imagePrompt) }),
                     ...(f.audioUrl !== undefined && { audioUrl: String(f.audioUrl) }),
                     ...(f.audioScript !== undefined && { audioScript: String(f.audioScript) }),
                     ...(f.options !== undefined && Array.isArray(f.options) && { options: f.options }),
@@ -707,6 +719,10 @@ export function QuestionBankAdminClient({ common, labels, locale }: { common: Co
               <label className="col-span-2 flex flex-col gap-1">
                 <span className="text-xs font-medium text-slate-600">{t("formImageAlt")} ({t("optional")})</span>
                 <input className="rounded border border-slate-300 px-3 py-2" placeholder="Mô tả ảnh..." value={qForm.imageAlt} onChange={(e) => setQForm({ ...qForm, imageAlt: e.target.value })} />
+              </label>
+              <label className="col-span-2 flex flex-col gap-1">
+                <span className="text-xs font-medium text-slate-600">{t("formImagePrompt")} ({t("optional")})</span>
+                <textarea className="rounded border border-slate-300 px-3 py-2" rows={3} placeholder={t("formImagePromptPlaceholder")} value={qForm.imagePrompt} onChange={(e) => setQForm({ ...qForm, imagePrompt: e.target.value })} />
               </label>
               {qForm.imageUrl.trim() ? (
                 <div className="col-span-2">

@@ -1,12 +1,14 @@
 import { createPrismaClient, type Prisma } from "@nihongo-bjt/database";
 import {
+  type BjtScoredItem,
   type ExamShuffleMap,
   generateExamShuffleMap,
   generateSeededExamShuffleMap,
   reverseMapDisplayKey,
-  scoreBjtPractice,
+  scoreBjtMockExam,
+  scoreBjtPractice
 } from "@nihongo-bjt/shared";
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 
 @Injectable()
 export class QuizRepository {
@@ -38,14 +40,14 @@ export class QuizRepository {
                 id: true,
                 options: {
                   select: { optionKey: true, isCorrect: true },
-                  orderBy: { optionKey: "asc" },
-                },
+                  orderBy: { optionKey: "asc" }
+                }
               },
-              orderBy: { createdAt: "asc" },
-            },
+              orderBy: { createdAt: "asc" }
+            }
           },
-          orderBy: { displayOrder: "asc" },
-        },
+          orderBy: { displayOrder: "asc" }
+        }
       },
       where: { id, status: "published" }
     });
@@ -83,7 +85,23 @@ export class QuizRepository {
     return { items, total };
   }
 
-  template(id: string) {
+  async template(id: string) {
+    const access = await this.templateAccessMeta(id);
+    if (!access) {
+      return null;
+    }
+    if (access.type === "official") {
+      return this.prisma.bjtMockTest.findFirst({
+        include: {
+          sections: {
+            include: { _count: { select: { questions: true } } },
+            orderBy: { displayOrder: "asc" }
+          }
+        },
+        where: { id, status: "published" }
+      });
+    }
+
     return this.prisma.bjtMockTest.findFirst({
       include: {
         sections: {
@@ -97,6 +115,7 @@ export class QuizRepository {
                 id: true,
                 imageUrl: true,
                 imageAlt: true,
+                imagePrompt: true,
                 options: {
                   orderBy: { optionKey: "asc" },
                   select: {
@@ -124,6 +143,16 @@ export class QuizRepository {
   }
 
   async printableTemplate(id: string) {
+    const access = await this.templateAccessMeta(id);
+    if (!access) {
+      throw new NotFoundException("Quiz template not found");
+    }
+    if (access.type === "official") {
+      throw new ForbiddenException(
+        "Official simulation questions and answer keys are only available inside an active session"
+      );
+    }
+
     const test = await this.prisma.bjtMockTest.findFirst({
       include: {
         sections: {
@@ -163,7 +192,7 @@ export class QuizRepository {
       s.questions.map((q) => ({
         questionId: q.id,
         optionKeys: q.options.map((o) => o.optionKey),
-        correctKey: q.options.find((o) => o.isCorrect)?.optionKey ?? "A",
+        correctKey: q.options.find((o) => o.isCorrect)?.optionKey ?? "A"
       }))
     );
     const shuffleMap = generateSeededExamShuffleMap(allQuestions, test.id);
@@ -184,10 +213,10 @@ export class QuizRepository {
             })
           : q.options.map((o) => ({ key: o.optionKey, text: o.text }));
         const correctKey = permutation
-          ? String.fromCharCode(65 + permutation.indexOf(
-              q.options.find((o) => o.isCorrect)?.optionKey ?? "A"
-            ))
-          : q.options.find((o) => o.isCorrect)?.optionKey ?? null;
+          ? String.fromCharCode(
+              65 + permutation.indexOf(q.options.find((o) => o.isCorrect)?.optionKey ?? "A")
+            )
+          : (q.options.find((o) => o.isCorrect)?.optionKey ?? null);
         return {
           number: questionNumber,
           prompt: q.prompt,
@@ -236,7 +265,7 @@ export class QuizRepository {
       s.questions.map((q) => ({
         questionId: q.id,
         optionKeys: q.options.map((o) => o.optionKey),
-        correctKey: q.options.find((o) => o.isCorrect)?.optionKey ?? "A",
+        correctKey: q.options.find((o) => o.isCorrect)?.optionKey ?? "A"
       }))
     );
     const shuffleMap = generateExamShuffleMap(allQuestions);
@@ -327,18 +356,43 @@ export class QuizRepository {
 
   private async autoExpireSession(sessionId: string, userId: string) {
     const session = await this.prisma.quizSession.findFirst({
+      include: { test: { select: { type: true } } },
       where: { id: sessionId, status: "in_progress" }
     });
     if (!session) return;
 
-    const answeredCount = await this.prisma.quizAnswer.count({
-      where: { sessionId }
+    const questions = await this.prisma.bjtQuestion.findMany({
+      select: {
+        answers: {
+          select: { isCorrect: true },
+          take: 1,
+          where: { sessionId }
+        },
+        difficulty: true,
+        section: { select: { code: true } },
+        skillTag: true
+      },
+      where: { section: { testId: session.testId } }
     });
-
-    const score = scoreBjtPractice({
-      correctCount: session.correctCount,
-      totalQuestions: session.totalQuestions
-    });
+    const detailedScore =
+      session.test?.type === "official" && questions.length > 0
+        ? scoreBjtMockExam({
+            items: questions.map((question) => ({
+              answered: question.answers.length > 0,
+              difficulty: question.difficulty,
+              isCorrect: question.answers[0]?.isCorrect ?? false,
+              sectionCode: question.section.code,
+              skillTag: question.skillTag
+            }))
+          })
+        : null;
+    const score =
+      detailedScore ??
+      scoreBjtPractice({
+        correctCount: session.correctCount,
+        totalQuestions: session.totalQuestions
+      });
+    const answeredCount = detailedScore?.answeredCount ?? session.currentQuestionNo;
 
     await this.prisma.$transaction(async (tx) => {
       await tx.quizSession.update({
@@ -355,7 +409,12 @@ export class QuizRepository {
       await tx.analyticsEvent.create({
         data: {
           eventName: "quiz_session_expired",
-          payload: { answeredCount, sessionId, totalQuestions: session.totalQuestions },
+          payload: {
+            answeredCount,
+            scoringAlgorithm: detailedScore?.algorithmVersion ?? "bjt-practice-v1",
+            sessionId,
+            totalQuestions: session.totalQuestions
+          },
           source: "api",
           userId
         }
@@ -365,46 +424,22 @@ export class QuizRepository {
 
   async currentQuestion(sessionId: string, userId: string) {
     const session = await this.prisma.quizSession.findFirst({
-      include: {
-        answers: { select: { questionId: true } },
+      select: {
+        correctCount: true,
+        currentQuestionNo: true,
+        id: true,
+        shuffleMap: true,
+        startedAt: true,
+        status: true,
         test: {
           select: {
-            sections: {
-              include: {
-                questions: {
-                  select: {
-                    audioScript: true,
-                    audioUrl: true,
-                    createdAt: true,
-                    difficulty: true,
-                    id: true,
-                    imageUrl: true,
-                    imageAlt: true,
-                    options: {
-                      orderBy: { optionKey: "asc" },
-                      select: {
-                        createdAt: true,
-                        id: true,
-                        optionKey: true,
-                        questionId: true,
-                        text: true
-                      }
-                    },
-                    prompt: true,
-                    scenario: true,
-                    skillTag: true,
-                    sourceId: true,
-                    sourceType: true,
-                    updatedAt: true
-                  },
-                  orderBy: { createdAt: "asc" }
-                }
-              },
-              orderBy: { displayOrder: "asc" }
-            },
+            id: true,
+            type: true,
             timeLimitSeconds: true
           }
-        }
+        },
+        totalQuestions: true,
+        userId: true
       },
       where: { id: sessionId, userId }
     });
@@ -430,30 +465,60 @@ export class QuizRepository {
           remainingSeconds: 0,
           startedAt: session.startedAt.toISOString(),
           status: "completed",
+          testType: session.test.type,
           timeLimitSeconds: session.test.timeLimitSeconds,
           totalQuestions: session.totalQuestions
         }
       };
     }
 
-    const answeredIds = new Set(session.answers.map((answer) => answer.questionId));
-    let matchedSectionCode: string | null = null;
-    let question: (typeof session.test.sections)[number]["questions"][number] | undefined;
-    for (const section of session.test.sections) {
-      const found = section.questions.find((item) => !answeredIds.has(item.id));
-      if (found) {
-        question = found;
-        matchedSectionCode = section.code;
-        break;
+    const question = await this.prisma.bjtQuestion.findFirst({
+      orderBy: [{ section: { displayOrder: "asc" } }, { createdAt: "asc" }],
+      select: {
+        audioScript: true,
+        audioUrl: true,
+        createdAt: true,
+        difficulty: true,
+        id: true,
+        imageAlt: true,
+        imagePrompt: true,
+        imageUrl: true,
+        options: {
+          orderBy: { optionKey: "asc" },
+          select: {
+            createdAt: true,
+            id: true,
+            optionKey: true,
+            questionId: true,
+            text: true
+          }
+        },
+        prompt: true,
+        scenario: true,
+        section: { select: { code: true } },
+        skillTag: true,
+        sourceId: true,
+        sourceType: true,
+        updatedAt: true
+      },
+      where: {
+        answers: { none: { sessionId } },
+        section: { testId: session.test.id }
       }
-    }
+    });
 
     const sanitizedQuestion = question
       ? (() => {
           // Apply session-level shuffle map for balanced distribution
           const shuffleMap = session.shuffleMap as ExamShuffleMap | null;
           const permutation = shuffleMap?.[question.id];
-          let options: Array<{ createdAt: Date; id: string; optionKey: string; questionId: string; text: string }>;
+          let options: Array<{
+            createdAt: Date;
+            id: string;
+            optionKey: string;
+            questionId: string;
+            text: string;
+          }>;
 
           if (permutation && permutation.length === question.options.length) {
             // Apply exam-level shuffle: reorder by permutation, assign positional keys
@@ -465,7 +530,7 @@ export class QuizRepository {
                 id: opt.id,
                 optionKey: String.fromCharCode(65 + i), // positional display key
                 questionId: opt.questionId,
-                text: opt.text,
+                text: opt.text
               };
             });
           } else {
@@ -487,10 +552,11 @@ export class QuizRepository {
             id: question.id,
             imageUrl: question.imageUrl,
             imageAlt: question.imageAlt,
+            imagePrompt: question.imagePrompt,
             options,
             prompt: question.prompt,
             scenario: question.scenario,
-            sectionCode: matchedSectionCode,
+            sectionCode: question.section.code,
             skillTag: question.skillTag,
             sourceId: question.sourceId,
             sourceType: question.sourceType,
@@ -519,6 +585,7 @@ export class QuizRepository {
         remainingSeconds,
         startedAt: session.startedAt.toISOString(),
         status: session.status,
+        testType: session.test.type,
         timeLimitSeconds: session.test.timeLimitSeconds,
         totalQuestions: session.totalQuestions
       }
@@ -532,7 +599,7 @@ export class QuizRepository {
     userId: string;
   }) {
     const session = await this.prisma.quizSession.findFirst({
-      include: { test: { select: { timeLimitSeconds: true } } },
+      include: { test: { select: { timeLimitSeconds: true, type: true } } },
       where: { id: input.sessionId, status: "in_progress", userId: input.userId }
     });
     if (!session) {
@@ -570,13 +637,20 @@ export class QuizRepository {
       include: {
         question: {
           select: {
-            remediationCardId: true
+            difficulty: true,
+            remediationCardId: true,
+            section: { select: { code: true } },
+            skillTag: true
           }
         }
       },
       where: {
         optionKey: resolvedKey,
-        questionId: input.questionId
+        questionId: input.questionId,
+        question: {
+          answers: { none: { sessionId: input.sessionId } },
+          section: { testId: session.testId }
+        }
       }
     });
     if (!option) {
@@ -589,9 +663,6 @@ export class QuizRepository {
     const correctCount = session.correctCount + (option.isCorrect ? 1 : 0);
     const answeredCount = existingAnswers + 1;
     const completed = answeredCount >= session.totalQuestions;
-    const score = completed
-      ? scoreBjtPractice({ correctCount, totalQuestions: session.totalQuestions })
-      : undefined;
 
     return this.prisma.$transaction(async (tx) => {
       const answer = await tx.quizAnswer.create({
@@ -603,6 +674,37 @@ export class QuizRepository {
         }
       });
 
+      const mockScore =
+        completed && session.test.type === "official"
+          ? scoreBjtMockExam({
+              items: (
+                await tx.quizAnswer.findMany({
+                  select: {
+                    isCorrect: true,
+                    question: {
+                      select: {
+                        difficulty: true,
+                        section: { select: { code: true } },
+                        skillTag: true
+                      }
+                    }
+                  },
+                  where: { sessionId: input.sessionId }
+                })
+              ).map(
+                (savedAnswer): BjtScoredItem => ({
+                  difficulty: savedAnswer.question.difficulty,
+                  isCorrect: savedAnswer.isCorrect,
+                  sectionCode: savedAnswer.question.section.code,
+                  skillTag: savedAnswer.question.skillTag
+                })
+              )
+            })
+          : undefined;
+      const score =
+        completed && session.test.type !== "official"
+          ? scoreBjtPractice({ correctCount, totalQuestions: session.totalQuestions })
+          : mockScore;
       const updated = await tx.quizSession.update({
         data: {
           completedAt: completed ? new Date() : undefined,
@@ -622,6 +724,7 @@ export class QuizRepository {
             answeredCount,
             isCorrect: option.isCorrect,
             questionId: input.questionId,
+            ...(mockScore ? { scoringAlgorithm: mockScore.algorithmVersion } : {}),
             sessionId: input.sessionId
           },
           source: "api",
@@ -806,9 +909,12 @@ export class QuizRepository {
     const session = await this.prisma.quizSession.findFirst({
       include: {
         answers: {
-          include: {
+          select: {
+            isCorrect: true,
+            selectedOption: true,
             question: {
               select: {
+                difficulty: true,
                 id: true,
                 prompt: true,
                 explanationVi: true,
@@ -816,10 +922,6 @@ export class QuizRepository {
                 skillTag: true,
                 section: {
                   select: { code: true }
-                },
-                options: {
-                  orderBy: { optionKey: "asc" },
-                  select: { optionKey: true, isCorrect: true }
                 }
               }
             }
@@ -829,6 +931,19 @@ export class QuizRepository {
         test: {
           select: {
             id: true,
+            sections: {
+              orderBy: { displayOrder: "asc" },
+              select: {
+                code: true,
+                questions: {
+                  select: {
+                    difficulty: true,
+                    id: true,
+                    skillTag: true
+                  }
+                }
+              }
+            },
             titleVi: true,
             titleJa: true
           }
@@ -842,19 +957,34 @@ export class QuizRepository {
     }
 
     const breakdown = session.answers.map((answer) => {
-      const selectedCorrect =
-        answer.question.options.find((opt) => opt.optionKey === answer.selectedOption)?.isCorrect ??
-        false;
       return {
+        difficulty: answer.question.difficulty,
         questionId: answer.question.id,
         prompt: answer.question.prompt,
         selectedOption: answer.selectedOption,
-        isCorrect: selectedCorrect,
+        isCorrect: answer.isCorrect,
         explanationVi: answer.question.explanationVi,
         skillTag: answer.question.skillTag,
         sectionCode: answer.question.section.code,
-        remediationCardId: selectedCorrect ? undefined : answer.question.remediationCardId
+        remediationCardId: answer.isCorrect ? undefined : answer.question.remediationCardId
       };
+    });
+    const answeredByQuestionId = new Map(
+      breakdown.map((answer) => [answer.questionId, answer] as const)
+    );
+    const performance = scoreBjtMockExam({
+      items: session.test.sections.flatMap((section) =>
+        section.questions.map((question) => {
+          const answer = answeredByQuestionId.get(question.id);
+          return {
+            answered: Boolean(answer),
+            difficulty: question.difficulty,
+            isCorrect: answer?.isCorrect ?? false,
+            sectionCode: section.code,
+            skillTag: question.skillTag
+          };
+        })
+      )
     });
 
     return {
@@ -864,6 +994,8 @@ export class QuizRepository {
       testTitleJa: session.test.titleJa,
       estimatedScore: session.estimatedScore,
       estimatedBjtBand: session.estimatedBjtBand,
+      sectionPerformance: performance.sectionPerformance,
+      skillPerformance: performance.skillPerformance,
       breakdown
     };
   }

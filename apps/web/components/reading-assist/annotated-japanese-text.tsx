@@ -357,7 +357,8 @@ export function AnnotatedJapaneseText({
   if (loading && tokens.length === 0) {
     return (
       <div className="annotated-ja--loading" role="status" aria-live="polite" aria-busy="true">
-        <p className="text-sm text-muted">{labels.loadingText}</p>
+        <p className="jp-text text-sm leading-relaxed whitespace-pre-wrap" lang="ja">{text}</p>
+        <p className="mt-2 text-xs text-muted">{labels.loadingText}</p>
       </div>
     );
   }

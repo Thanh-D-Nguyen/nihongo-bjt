@@ -482,8 +482,37 @@ export class QuizBreakdownQuestionOpenApiDto {
   @ApiProperty({ type: String, example: "請求書 is a noun meaning invoice." })
   explanationVi!: string;
 
+  @ApiProperty({ type: String, example: "standard" })
+  difficulty!: string;
+
+  @ApiProperty({ type: String, example: "detail-comprehension" })
+  skillTag!: string;
+
+  @ApiProperty({ type: String, example: "listening-reading" })
+  sectionCode!: string;
+
   @ApiPropertyOptional({ type: String, example: "00000000-0000-4000-8000-000000000901", nullable: true })
   remediationCardId?: string | null;
+}
+
+export class QuizPerformanceAggregateOpenApiDto {
+  @ApiProperty({ type: String, example: "listening-reading" })
+  key!: string;
+
+  @ApiProperty({ type: Number, example: 20 })
+  totalQuestions!: number;
+
+  @ApiProperty({ type: Number, example: 20 })
+  answeredCount!: number;
+
+  @ApiProperty({ type: Number, example: 14 })
+  correctCount!: number;
+
+  @ApiProperty({ type: Number, example: 0.7 })
+  accuracy!: number;
+
+  @ApiProperty({ type: Number, example: 0.72 })
+  weightedAccuracy!: number;
 }
 
 export class QuizSessionBreakdownOpenApiDto {
@@ -499,11 +528,17 @@ export class QuizSessionBreakdownOpenApiDto {
   @ApiPropertyOptional({ type: String, example: "BJT N2 模擬試験 2026-04", nullable: true })
   testTitleJa?: string | null;
 
-  @ApiPropertyOptional({ type: Number, example: 78, nullable: true })
+  @ApiPropertyOptional({ type: Number, example: 520, nullable: true })
   estimatedScore?: number | null;
 
-  @ApiPropertyOptional({ type: String, example: "N2", nullable: true })
+  @ApiPropertyOptional({ type: String, example: "J2", nullable: true })
   estimatedBjtBand?: string | null;
+
+  @ApiProperty({ type: [QuizPerformanceAggregateOpenApiDto] })
+  sectionPerformance!: QuizPerformanceAggregateOpenApiDto[];
+
+  @ApiProperty({ type: [QuizPerformanceAggregateOpenApiDto] })
+  skillPerformance!: QuizPerformanceAggregateOpenApiDto[];
 
   @ApiProperty({ type: [QuizBreakdownQuestionOpenApiDto] })
   breakdown!: QuizBreakdownQuestionOpenApiDto[];

@@ -80,6 +80,18 @@ SDK); it remains validated only on the Mac.
 
 ## 6. Answer selection
 - [ ] Correct answer → clear, non-punishing positive feedback.
+
+### BJT full simulation media/result addendum (2026-07)
+
+- [ ] Exam browser distinguishes full simulation from target practice.
+- [ ] Full simulation guide states 0–800 estimated scoring and 3 BJT parts.
+- [ ] Practice audio transcript is visible; official simulation transcript is
+      hidden during the live session.
+- [ ] Question image renders, or localized `imagePrompt` appears when missing.
+- [ ] Result shows server estimated `x/800` + non-official caveat.
+- [ ] Listening / Listening-Reading / Reading show real correct/total when the
+      breakdown provides those section codes.
+- [ ] Section-detail failure degrades inline without hiding the overall result.
 - [ ] Incorrect answer → gentle feedback, correct answer shown.
 - [ ] Cannot change a graded answer in a way that fakes the result.
 

@@ -25,10 +25,13 @@ describe("Quiz session breakdown endpoint", () => {
       testId: "test-1",
       testTitleVi: "N2 Mock",
       testTitleJa: "N2 模擬試験",
-      estimatedScore: 78,
-      estimatedBjtBand: "N2",
+      estimatedScore: 420,
+      estimatedBjtBand: "J2",
+      sectionPerformance: [],
+      skillPerformance: [],
       breakdown: [
         {
+          difficulty: "standard",
           questionId: "q1",
           prompt: "What is 請求書?",
           selectedOption: "A",

@@ -54,12 +54,13 @@ Source: `apps/mobile/lib/features/exam/**`, `features/practice/**`,
 | Current question + timer | ✅ `ExamPlayerPage` + `_TimerPill` | server `remainingSeconds` |
 | Submit answer | ✅ `ExamRepository.submitAnswer` | no correctness leak |
 | Server timer auto-expire | ✅ `_onTimeout` re-fetches | matches web |
-| Results summary (score, band) | ✅ `ExamResultView` | percent + band pill |
-| **Per-question breakdown** | ❌ **missing** | endpoint exists; no UI |
-| **Remediation / add-to-flashcard** | ❌ missing | endpoint exists |
+| Results summary (score, band) | ✅ `ExamResultView` | server estimated 0–800 score + band + honest caveat |
+| Per-question breakdown | ✅ `ExamReviewView` | endpoint-backed review + filters |
+| Remediation / add-to-flashcard | ✅ private deck from explained mistakes | real flashcard repository path |
 | **Session resume (active)** | ❌ not wired | endpoint exists |
 | **Session history** | ❌ not wired | endpoint exists |
-| **Audio / listening questions** | ⚠️ model has `audioUrl`, no player | needs audio capability check |
+| Audio / listening questions | ✅ honest fallback + transcript policy | parses `audioUrl` + `audioScript`; practice shows transcript, official simulation hides it |
+| Question image / AI prompt fallback | ✅ | `imageUrl` renders; missing image shows localized `imagePrompt` |
 | Official-simulation gating | ⚠️ partial — 403 → upgrade error state | no pre-start status check |
 | Revenge mode | ❌ not in scope (separate feature) | out of this mission |
 | Lesson Practice (local) | ✅ `PracticePage` | preview-only, no backend |
@@ -67,18 +68,17 @@ Source: `apps/mobile/lib/features/exam/**`, `features/practice/**`,
 | Reading assist suppressed in exam | ✅ `ReadingAssistPolicy.exam()` | furigana hidden |
 | Dark mode / long text | ✅ existing QA tests | `test/qa/long_text_overflow_test.dart` |
 
-## 4. Parity gaps to close in this mission
+## 4. Remaining parity gaps after the 2026-07 mobile pass
 
-Ranked by value and API-backing (only real, repo-proven endpoints):
-
-1. **Exam per-question breakdown / review** (Batch 4) — real endpoint
-   `GET /api/quiz/session/:id/results/breakdown`. Highest-value gap.
-2. **Remediation surface after exam** (Batch 4, optional) — real endpoint; add
-   "save to flashcards" via `POST /api/flashcards/add-from-remediation`.
-3. **Audio / listening questions** (Batch 5) — only if a real audio capability
-   exists in the mobile app; otherwise documented as not available (no fake).
-4. **Session resume** (Batch 3, optional) — `GET /api/quiz/session/active`.
-5. **Tests** across session start/answer/result/error (Batches 1–7).
+1. **Real audio playback** — no audio package exists in mobile, so the UI
+   renders the server transcript where policy allows and never shows a fake
+   play control.
+2. **Session resume/history** — endpoints exist but are not yet wired on mobile.
+3. **Post-session media in review** — the breakdown contract does not include
+   `audioScript`, `imageUrl`, or `imagePrompt`.
+4. **Per-section 0–800 score** — the server returns overall `estimatedScore`
+   plus authoritative `sectionPerformance`, but no equated 0–800 score per
+   section. Mobile shows server correct/total + weighted progress.
 
 ## 5. Explicitly out of scope / not a gap
 
@@ -100,7 +100,16 @@ Ranked by value and API-backing (only real, repo-proven endpoints):
   "testTitleVi": "…",
   "testTitleJa": "…",
   "estimatedScore": 78,
-  "estimatedBjtBand": "N2",
+  "estimatedBjtBand": "J2",
+  "sectionPerformance": [
+    {
+      "key": "RC",
+      "accuracy": 0.75,
+      "weightedAccuracy": 0.72,
+      "correctCount": 15,
+      "totalQuestions": 20
+    }
+  ],
   "breakdown": [
     {
       "questionId": "…",
@@ -120,3 +129,14 @@ Important: the breakdown does **not** include the correct option key or option
 texts. So the mobile review UI can honestly show: prompt, the chosen option key,
 a correct/incorrect verdict, the explanation, and skill/section context. It must
 **not** fabricate a "correct answer" string that the API does not provide.
+
+## 7. Production simulation UX decision
+
+- The browser distinguishes **full simulation** (`type: official`) from
+  **target practice** (`type: practice`) and explains the standard BJT
+  three-part format (listening, listening-reading, reading).
+- Result uses the API's `estimatedScore` on the 0–800 scale and explicitly says
+  it is not an official BJT score.
+- The result fetches completed `sectionPerformance` as partial data and renders
+  server-authored correct/total + weighted progress. Breakdown failure never
+  replaces the authoritative overall result.

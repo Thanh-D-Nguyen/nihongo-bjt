@@ -9,10 +9,14 @@ function buildService() {
 
   const analytics = { ingest: vi.fn().mockResolvedValue(undefined) };
   const dictionary = {
-    lookupForToken: vi.fn().mockResolvedValue({
-      lexemeId: "lexeme-1",
-      shortMeaningVi: "xac nhan"
-    })
+    lookupForTokens: vi.fn().mockImplementation((tokens: KuromojiToken[]) =>
+      Promise.resolve(
+        tokens.map(() => ({
+          lexemeId: "lexeme-1",
+          shortMeaningVi: "xac nhan"
+        }))
+      )
+    )
   };
   const flashcards = { createCardFromReadingAssist: vi.fn() };
   const service = new ReadingAssistService(analytics as any, dictionary as any, flashcards as any);
@@ -67,7 +71,7 @@ describe("ReadingAssistService integration", () => {
   });
 
   it("shows meanings after authoritative quiz session is completed", async () => {
-    const { prisma, service } = buildService();
+    const { dictionary, prisma, service } = buildService();
     vi.spyOn(morphology, "tokenizeJapanese").mockResolvedValueOnce(tokenized("確認"));
 
     prisma.quizSession.findFirst.mockResolvedValueOnce({ status: "completed" });
@@ -83,6 +87,7 @@ describe("ReadingAssistService integration", () => {
       shortMeaningVi: "xac nhan"
     });
     expect(result.tokens[0].meaningHidden).toBeUndefined();
+    expect(dictionary.lookupForTokens).toHaveBeenCalledTimes(1);
   });
 
   it("prevents warm-cache leakage while active quiz exists", async () => {

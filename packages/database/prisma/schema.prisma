@@ -112,6 +112,7 @@ model Lexeme {
   audios         LexemeAudio[]
 
   @@index([headword], map: "idx_lexeme_headword")
+  @@index([reading], map: "idx_lexeme_reading")
   @@index([status], map: "idx_lexeme_status")
   @@map("lexeme")
   @@schema("content")
@@ -828,6 +829,7 @@ model BjtQuestion {
   audioUrl          String?             @map("audio_url")
   imageUrl          String?             @map("image_url")
   imageAlt          String?             @map("image_alt")
+  imagePrompt       String?             @map("image_prompt")
   explanationVi     String              @map("explanation_vi")
   skillTag          String              @map("skill_tag") @db.VarChar(64)
   difficulty        String              @default("standard") @db.VarChar(32)

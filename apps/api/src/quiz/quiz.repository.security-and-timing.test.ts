@@ -1,9 +1,13 @@
-import { NotFoundException } from "@nestjs/common";
+import { ForbiddenException, NotFoundException } from "@nestjs/common";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const prismaMock = {
   bjtMockTest: {
     findFirst: vi.fn()
+  },
+  bjtQuestion: {
+    findFirst: vi.fn(),
+    findMany: vi.fn()
   },
   bjtQuestionOption: {
     findFirst: vi.fn()
@@ -27,6 +31,8 @@ import { QuizRepository } from "./quiz.repository.js";
 describe("QuizRepository security and timed exam integrity", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    prismaMock.bjtQuestion.findFirst.mockResolvedValue(null);
+    prismaMock.bjtQuestion.findMany.mockResolvedValue([]);
   });
 
   it("does not expose isCorrect in currentQuestion options", async () => {
@@ -41,45 +47,45 @@ describe("QuizRepository security and timed exam integrity", () => {
       startedAt: new Date("2026-04-29T00:00:00.000Z"),
       status: "in_progress",
       test: {
-        timeLimitSeconds: 60,
-        sections: [
-          {
-            questions: [
-              {
-                createdAt: new Date("2026-04-29T00:00:00.000Z"),
-                difficulty: "standard",
-                explanationVi: "secret explanation",
-                id: "question-1",
-                options: [
-                  {
-                    createdAt: new Date("2026-04-29T00:00:00.000Z"),
-                    id: "option-1",
-                    isCorrect: true,
-                    optionKey: "A",
-                    questionId: "question-1",
-                    text: "Correct option"
-                  },
-                  {
-                    createdAt: new Date("2026-04-29T00:00:00.000Z"),
-                    id: "option-2",
-                    isCorrect: false,
-                    optionKey: "B",
-                    questionId: "question-1",
-                    text: "Wrong option"
-                  }
-                ],
-                prompt: "Q1",
-                scenario: null,
-                skillTag: "reading",
-                sourceId: null,
-                sourceType: null,
-                updatedAt: new Date("2026-04-29T00:00:00.000Z")
-              }
-            ]
-          }
-        ]
+        id: "test-1",
+        type: "official",
+        timeLimitSeconds: 60
       },
-      totalQuestions: 1
+      totalQuestions: 1,
+      userId: "22222222-2222-4222-8222-222222222222"
+    });
+    prismaMock.bjtQuestion.findFirst.mockResolvedValueOnce({
+      audioScript: null,
+      audioUrl: null,
+      createdAt: new Date("2026-04-29T00:00:00.000Z"),
+      difficulty: "standard",
+      id: "question-1",
+      imageAlt: null,
+      imagePrompt: null,
+      imageUrl: null,
+      options: [
+        {
+          createdAt: new Date("2026-04-29T00:00:00.000Z"),
+          id: "option-1",
+          optionKey: "A",
+          questionId: "question-1",
+          text: "Correct option"
+        },
+        {
+          createdAt: new Date("2026-04-29T00:00:00.000Z"),
+          id: "option-2",
+          optionKey: "B",
+          questionId: "question-1",
+          text: "Wrong option"
+        }
+      ],
+      prompt: "Q1",
+      scenario: null,
+      section: { code: "reading" },
+      skillTag: "reading",
+      sourceId: null,
+      sourceType: null,
+      updatedAt: new Date("2026-04-29T00:00:00.000Z")
     });
 
     const result = await repo.currentQuestion(
@@ -99,20 +105,39 @@ describe("QuizRepository security and timed exam integrity", () => {
       remainingSeconds: expect.any(Number),
       startedAt: "2026-04-29T00:00:00.000Z",
       status: "in_progress",
+      testType: "official",
       timeLimitSeconds: 60,
       totalQuestions: 1
     });
+    expect(prismaMock.quizSession.findFirst).toHaveBeenCalledTimes(1);
+    expect(prismaMock.bjtQuestion.findFirst).toHaveBeenCalledTimes(1);
+    expect(prismaMock.bjtQuestion.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        orderBy: [{ section: { displayOrder: "asc" } }, { createdAt: "asc" }],
+        where: {
+          answers: {
+            none: {
+              sessionId: "11111111-1111-4111-8111-111111111111"
+            }
+          },
+          section: { testId: "test-1" }
+        }
+      })
+    );
     nowSpy.mockRestore();
   });
 
   it("sanitizes template option query to avoid isCorrect exposure", async () => {
     const repo = new QuizRepository();
 
-    prismaMock.bjtMockTest.findFirst.mockResolvedValueOnce(null);
+    prismaMock.bjtMockTest.findFirst
+      .mockResolvedValueOnce({ id: "test-1", type: "practice" })
+      .mockResolvedValueOnce(null);
 
     await repo.template("11111111-1111-4111-8111-111111111111");
 
-    expect(prismaMock.bjtMockTest.findFirst).toHaveBeenCalledWith(
+    expect(prismaMock.bjtMockTest.findFirst).toHaveBeenNthCalledWith(
+      2,
       expect.objectContaining({
         include: expect.objectContaining({
           sections: expect.objectContaining({
@@ -144,6 +169,42 @@ describe("QuizRepository security and timed exam integrity", () => {
         })
       })
     );
+  });
+
+  it("redacts all official questions from the public template detail", async () => {
+    const repo = new QuizRepository();
+    prismaMock.bjtMockTest.findFirst
+      .mockResolvedValueOnce({ id: "test-1", type: "official" })
+      .mockResolvedValueOnce({
+        id: "test-1",
+        type: "official",
+        sections: [{ code: "LC_SCENE", _count: { questions: 1 } }]
+      });
+
+    const result = await repo.template("test-1");
+
+    expect(result?.sections).toEqual([{ code: "LC_SCENE", _count: { questions: 1 } }]);
+    expect(prismaMock.bjtMockTest.findFirst).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        include: {
+          sections: {
+            include: { _count: { select: { questions: true } } },
+            orderBy: { displayOrder: "asc" }
+          }
+        }
+      })
+    );
+    const officialQuery = prismaMock.bjtMockTest.findFirst.mock.calls[1]?.[0];
+    expect(JSON.stringify(officialQuery)).not.toContain('"questions":{"select"');
+  });
+
+  it("denies printable answer-key access for official simulations", async () => {
+    const repo = new QuizRepository();
+    prismaMock.bjtMockTest.findFirst.mockResolvedValueOnce({ id: "test-1", type: "official" });
+
+    await expect(repo.printableTemplate("test-1")).rejects.toBeInstanceOf(ForbiddenException);
+    expect(prismaMock.bjtMockTest.findFirst).toHaveBeenCalledTimes(1);
   });
 
   it("auto-expires currentQuestion at exact expiry boundary without returning a question", async () => {
@@ -286,7 +347,8 @@ describe("QuizRepository security and timed exam integrity", () => {
       correctCount: 0,
       id: "session-1",
       startedAt: new Date(answeredAt.getTime() - 1_000),
-      test: { timeLimitSeconds: 60 },
+      test: { timeLimitSeconds: 60, type: "practice" },
+      testId: "test-1",
       totalQuestions: 3
     });
     prismaMock.bjtQuestionOption.findFirst.mockResolvedValueOnce({
@@ -338,6 +400,16 @@ describe("QuizRepository security and timed exam integrity", () => {
     expect(result.answer).not.toHaveProperty("isCorrect");
     expect(result).not.toHaveProperty("explanationVi");
     expect(result.session.status).toBe("in_progress");
+    expect(prismaMock.bjtQuestionOption.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          question: {
+            answers: { none: { sessionId: "session-1" } },
+            section: { testId: "test-1" }
+          }
+        })
+      })
+    );
     nowSpy.mockRestore();
   });
 
@@ -347,10 +419,7 @@ describe("QuizRepository security and timed exam integrity", () => {
     prismaMock.quizSession.findFirst.mockResolvedValueOnce(null);
 
     await expect(
-      repo.results(
-        "11111111-1111-4111-8111-111111111111",
-        "22222222-2222-4222-8222-222222222222"
-      )
+      repo.results("11111111-1111-4111-8111-111111111111", "22222222-2222-4222-8222-222222222222")
     ).rejects.toBeInstanceOf(NotFoundException);
 
     expect(prismaMock.quizSession.findFirst).toHaveBeenCalledWith(
@@ -376,10 +445,7 @@ describe("QuizRepository security and timed exam integrity", () => {
     prismaMock.quizSession.findFirst.mockResolvedValueOnce(completedSession);
 
     await expect(
-      repo.results(
-        "11111111-1111-4111-8111-111111111111",
-        "22222222-2222-4222-8222-222222222222"
-      )
+      repo.results("11111111-1111-4111-8111-111111111111", "22222222-2222-4222-8222-222222222222")
     ).resolves.toEqual(completedSession);
   });
 });

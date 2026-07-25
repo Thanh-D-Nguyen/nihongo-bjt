@@ -30,15 +30,19 @@ Do this, capturing a screenshot at each lettered step:
 3. **Exam start (B).** Start an exam template. Verify timer counts down, ≤60s
    turns red, Submit disabled until an option is chosen, options lock while
    submitting, correctness never shown mid-session.
-4. **Exam result (B).** Reach the scored result. Confirm score + BJT band come
-   from the server.
+4. **Exam result (B).** Reach the scored result. Confirm the server score is
+   shown as an estimated `x/800`, the non-official caveat is visible, and the
+   three standard sections show real correct/total when available. Force a
+   breakdown error and verify the overall result remains usable.
 5. **Review breakdown (C).** Tap Review. Verify score header matches; All/Wrong/
    Correct filter works; each item shows prompt + "Bạn chọn" + verdict +
    explanation; **no fabricated correct answer**; skill/section chips wrap; Back
    returns to result. Force a load failure if possible → recoverable error.
-6. **Audio question (D).** Find/seed a listening question (`audioUrl`). Confirm
-   the calm "audio not available on mobile" note shows and the text content is
-   still answerable. No fake play button.
+6. **Media question (D).** Find/seed a question with `audioUrl`,
+   `audioScript`, `imageUrl`, `imageAlt`, and another with only `imagePrompt`.
+   Confirm practice shows the transcript, official simulation hides it, real
+   image renders, missing image shows the localized prompt, and no fake audio
+   play button appears.
 7. **Long text + dark mode.** Repeat one Practice and one Exam question with long
    JA prompt + long VI explanation, in dark mode and in `ja` locale. Confirm no
    overflow and AA-readable contrast.

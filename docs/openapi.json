@@ -58014,7 +58014,7 @@
             "bearer": []
           }
         ],
-        "summary": "Single template with sections/questions metadata.",
+        "summary": "Single template; official simulations expose section/count metadata only, never question content.",
         "tags": [
           "BJT Questions",
           "Study"
@@ -58023,7 +58023,7 @@
     },
     "/api/quiz/templates/{id}/printable": {
       "get": {
-        "description": "Returns complete exam with all sections, questions, options, section metadata (part, timing), and answer key. Intended for browser print / PDF export.",
+        "description": "Returns practice content with sections, questions, options and answer key. Paid official simulations are only delivered one question at a time inside a gated session.",
         "operationId": "printableTemplate",
         "parameters": [
           {
@@ -58123,7 +58123,7 @@
             "bearer": []
           }
         ],
-        "summary": "Full exam data formatted for printing in official BJT layout.",
+        "summary": "Printable practice exam data; official simulations are denied.",
         "tags": [
           "BJT Questions",
           "Study"
@@ -79221,6 +79221,43 @@
           "card"
         ]
       },
+      "QuizPerformanceAggregateOpenApiDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "example": "listening-reading"
+          },
+          "totalQuestions": {
+            "type": "number",
+            "example": 20
+          },
+          "answeredCount": {
+            "type": "number",
+            "example": 20
+          },
+          "correctCount": {
+            "type": "number",
+            "example": 14
+          },
+          "accuracy": {
+            "type": "number",
+            "example": 0.7
+          },
+          "weightedAccuracy": {
+            "type": "number",
+            "example": 0.72
+          }
+        },
+        "required": [
+          "key",
+          "totalQuestions",
+          "answeredCount",
+          "correctCount",
+          "accuracy",
+          "weightedAccuracy"
+        ]
+      },
       "QuizBreakdownQuestionOpenApiDto": {
         "type": "object",
         "properties": {
@@ -79250,6 +79287,18 @@
             "type": "string",
             "example": "請求書 is a noun meaning invoice."
           },
+          "difficulty": {
+            "type": "string",
+            "example": "standard"
+          },
+          "skillTag": {
+            "type": "string",
+            "example": "detail-comprehension"
+          },
+          "sectionCode": {
+            "type": "string",
+            "example": "listening-reading"
+          },
           "remediationCardId": {
             "type": "string",
             "example": "00000000-0000-4000-8000-000000000901",
@@ -79261,7 +79310,10 @@
           "prompt",
           "selectedOption",
           "isCorrect",
-          "explanationVi"
+          "explanationVi",
+          "difficulty",
+          "skillTag",
+          "sectionCode"
         ]
       },
       "QuizSessionBreakdownOpenApiDto": {
@@ -79286,13 +79338,25 @@
           },
           "estimatedScore": {
             "type": "number",
-            "example": 78,
+            "example": 520,
             "nullable": true
           },
           "estimatedBjtBand": {
             "type": "string",
-            "example": "N2",
+            "example": "J2",
             "nullable": true
+          },
+          "sectionPerformance": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuizPerformanceAggregateOpenApiDto"
+            }
+          },
+          "skillPerformance": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuizPerformanceAggregateOpenApiDto"
+            }
           },
           "breakdown": {
             "type": "array",
@@ -79305,6 +79369,8 @@
           "sessionId",
           "testId",
           "testTitleVi",
+          "sectionPerformance",
+          "skillPerformance",
           "breakdown"
         ]
       },

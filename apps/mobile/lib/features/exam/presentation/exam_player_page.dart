@@ -201,10 +201,16 @@ class _ExamPlayerPageState extends ConsumerState<ExamPlayerPage> {
         );
       case _Phase.completed:
         final session = _session!;
+        final breakdown = ref.watch(examBreakdownProvider(session.id));
         return AppScaffold(
           title: l10n.examResultTitle,
           body: ExamResultView(
             session: session,
+            breakdown: breakdown.value,
+            breakdownLoading: breakdown.isLoading,
+            breakdownFailed: breakdown.hasError,
+            onRetryBreakdown: () =>
+                ref.invalidate(examBreakdownProvider(session.id)),
             onDone: () => context.pop(),
             onReview: session.isCompleted
                 ? () => setState(() => _phase = _Phase.reviewShown)

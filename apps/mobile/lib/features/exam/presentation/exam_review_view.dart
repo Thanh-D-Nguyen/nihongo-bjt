@@ -165,13 +165,10 @@ class _ScoreHeader extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     final correct = breakdown.correctCount;
     final total = breakdown.total;
-    final percent = total <= 0
-        ? 0
-        : ((correct / total) * 100).round().clamp(0, 100);
-    final strong = percent >= 70;
 
     return AppCard(
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             width: 64,
@@ -179,14 +176,12 @@ class _ScoreHeader extends StatelessWidget {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: strong ? palette.successSoft : palette.accentSoft,
+              color: palette.accentSoft,
             ),
-            child: Text(
-              '$percent%',
-              style: text.titleMedium?.copyWith(
-                color: strong ? palette.success : palette.accent,
-                fontWeight: FontWeight.w800,
-              ),
+            child: Icon(
+              Icons.insights_outlined,
+              color: palette.accent,
+              size: 30,
             ),
           ),
           const SizedBox(width: AppSpacing.m),
@@ -195,10 +190,23 @@ class _ScoreHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  l10n.examReviewScore(correct, total),
-                  style: text.titleMedium?.copyWith(
+                  breakdown.estimatedScore == null
+                      ? l10n.examEstimatedScoreUnavailable
+                      : l10n.examEstimatedScoreValue(
+                          breakdown.estimatedScore!,
+                        ),
+                  style: text.titleLarge?.copyWith(
                     color: palette.ink,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w800,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  l10n.examReviewScore(correct, total),
+                  style: text.bodyMedium?.copyWith(
+                    color: palette.inkSecondary,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 if (breakdown.estimatedBjtBand != null) ...[
@@ -210,6 +218,14 @@ class _ScoreHeader extends StatelessWidget {
                     ),
                   ),
                 ],
+                const SizedBox(height: AppSpacing.s),
+                Text(
+                  l10n.examEstimatedScoreCaveat,
+                  style: text.bodySmall?.copyWith(
+                    color: palette.inkSecondary,
+                    height: 1.5,
+                  ),
+                ),
               ],
             ),
           ),

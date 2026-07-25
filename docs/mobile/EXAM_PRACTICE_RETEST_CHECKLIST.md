@@ -36,6 +36,11 @@ Companion docs: `MOBILE_KNOWN_LIMITATIONS.md` (§6e), `EXAM_PRACTICE_WEB_PARITY_
 - [ ] Correctness is **never** revealed mid-session.
 - [ ] Timeout auto-advances/ends the session via server (no client guess).
 - [ ] Final scored result shows score + BJT band from the server.
+- [ ] Result labels the server score as **estimated**, renders it as `x/800`,
+      and states it is not an official BJT score.
+- [ ] Result shows real correct/total for Listening, Listening-Reading and
+      Reading when the completed breakdown contains those sections.
+- [ ] If section detail fails, the overall result stays visible and Retry works.
 - [ ] Premium/quota gate (403) shows the upgrade screen, not a crash.
 
 ## C. Result → Review breakdown (the new parity surface)
@@ -50,11 +55,13 @@ Companion docs: `MOBILE_KNOWN_LIMITATIONS.md` (§6e), `EXAM_PRACTICE_WEB_PARITY_
 - [ ] Breakdown load failure → recoverable error with Retry.
 - [ ] Back returns to the result screen.
 
-## D. Audio (listening) questions
-- [ ] A question carrying `audioUrl` shows the calm "audio not available on
-      mobile yet" note above the prompt (vi + ja).
+## D. Audio and image questions
+- [ ] A practice question carrying `audioScript` shows the transcript.
+- [ ] The same script is hidden in official simulation with an integrity notice.
 - [ ] The readable prompt/scenario + options still render and are answerable.
 - [ ] No broken/fake play button appears.
+- [ ] `imageUrl` renders with its description; a missing/failed image with
+      `imagePrompt` shows the localized generation description.
 
 ## E. Sensory
 - [ ] Selecting an exam option gives a light haptic tick (device only).

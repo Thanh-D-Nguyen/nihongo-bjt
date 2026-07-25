@@ -5,26 +5,28 @@ import 'package:nihongo_bjt/features/exam/presentation/exam_player_view.dart';
 import 'package:nihongo_bjt/l10n/gen/app_localizations.dart';
 
 ExamQuestion _question() => const ExamQuestion(
-      id: 'q1',
-      prompt: '会議は何時から始まりますか。',
-      options: [
-        ExamOption(id: 'o1', optionKey: 'A', text: '九時'),
-        ExamOption(id: 'o2', optionKey: 'B', text: '十時'),
-      ],
-    );
+  id: 'q1',
+  prompt: '会議は何時から始まりますか。',
+  options: [
+    ExamOption(id: 'o1', optionKey: 'A', text: '九時'),
+    ExamOption(id: 'o2', optionKey: 'B', text: '十時'),
+  ],
+);
 
 ExamSession _session() => const ExamSession(
-      id: 's1',
-      status: 'in_progress',
-      currentQuestionNo: 0,
-      totalQuestions: 5,
-      correctCount: 0,
-      remainingSeconds: 300,
-    );
+  id: 's1',
+  status: 'in_progress',
+  currentQuestionNo: 0,
+  totalQuestions: 5,
+  correctCount: 0,
+  remainingSeconds: 300,
+);
 
 Widget _host({
   required String? selectedKey,
   required bool submitting,
+  ExamQuestion? question,
+  ExamSession? session,
   ValueChanged<String>? onSelect,
   VoidCallback? onSubmit,
 }) {
@@ -33,8 +35,8 @@ Widget _host({
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     home: ExamPlayerView(
-      question: _question(),
-      session: _session(),
+      question: question ?? _question(),
+      session: session ?? _session(),
       remainingSeconds: 300,
       selectedKey: selectedKey,
       submitting: submitting,
@@ -59,8 +61,9 @@ void main() {
     expect(submit.onPressed, isNull);
   });
 
-  testWidgets('selecting an option enables submit and fires the callback',
-      (tester) async {
+  testWidgets('selecting an option enables submit and fires the callback', (
+    tester,
+  ) async {
     String? picked;
     await tester.pumpWidget(
       _host(
@@ -104,36 +107,22 @@ void main() {
     expect(selectCount, 0);
   });
 
-  testWidgets('listening question shows a calm audio-unavailable note',
-      (tester) async {
+  testWidgets('practice listening question shows the server transcript', (
+    tester,
+  ) async {
     await tester.pumpWidget(
-      const MaterialApp(
-        locale: Locale('vi'),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: ExamPlayerView(
-          question: ExamQuestion(
-            id: 'q1',
-            prompt: 'もう一度聞いてください。',
-            audioUrl: 'https://media.test/clip.mp3',
-            options: [
-              ExamOption(id: 'o1', optionKey: 'A', text: '九時'),
-              ExamOption(id: 'o2', optionKey: 'B', text: '十時'),
-            ],
-          ),
-          session: ExamSession(
-            id: 's1',
-            status: 'in_progress',
-            currentQuestionNo: 0,
-            totalQuestions: 5,
-            correctCount: 0,
-            remainingSeconds: 300,
-          ),
-          remainingSeconds: 300,
-          selectedKey: null,
-          submitting: false,
-          onSelect: _noop,
-          onSubmit: _noopVoid,
+      _host(
+        selectedKey: null,
+        submitting: false,
+        question: const ExamQuestion(
+          id: 'q1',
+          prompt: 'もう一度聞いてください。',
+          audioUrl: 'https://media.test/clip.mp3',
+          audioScript: '会議は十時から始まります。',
+          options: [
+            ExamOption(id: 'o1', optionKey: 'A', text: '九時'),
+            ExamOption(id: 'o2', optionKey: 'B', text: '十時'),
+          ],
         ),
       ),
     );
@@ -141,8 +130,67 @@ void main() {
 
     final l10n = await AppLocalizations.delegate.load(const Locale('vi'));
     expect(find.text(l10n.examAudioUnavailable), findsOneWidget);
+    expect(find.text('会議は十時から始まります。'), findsOneWidget);
+  });
+
+  testWidgets('official simulation hides the audio transcript', (tester) async {
+    await tester.pumpWidget(
+      _host(
+        selectedKey: null,
+        submitting: false,
+        question: const ExamQuestion(
+          id: 'q1',
+          prompt: 'もう一度聞いてください。',
+          audioUrl: 'https://media.test/clip.mp3',
+          audioScript: '会議は十時から始まります。',
+          options: [
+            ExamOption(id: 'o1', optionKey: 'A', text: '九時'),
+            ExamOption(id: 'o2', optionKey: 'B', text: '十時'),
+          ],
+        ),
+        session: const ExamSession(
+          id: 's1',
+          status: 'in_progress',
+          currentQuestionNo: 0,
+          totalQuestions: 5,
+          correctCount: 0,
+          remainingSeconds: 300,
+          timeLimitSeconds: 300,
+          testType: 'official',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final l10n = await AppLocalizations.delegate.load(const Locale('vi'));
+    expect(find.text(l10n.examAudioTranscriptHidden), findsOneWidget);
+    expect(find.text('会議は十時から始まります。'), findsNothing);
+  });
+
+  testWidgets('missing image shows the localized generation prompt', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _host(
+        selectedKey: null,
+        submitting: false,
+        question: const ExamQuestion(
+          id: 'q1',
+          prompt: '図を見て答えてください。',
+          imagePrompt: 'A quarterly sales chart in a Japanese meeting room.',
+          options: [
+            ExamOption(id: 'o1', optionKey: 'A', text: '上がった'),
+            ExamOption(id: 'o2', optionKey: 'B', text: '下がった'),
+          ],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('exam-image-prompt')), findsOneWidget);
+    expect(
+      find.textContaining('A quarterly sales chart'),
+      findsOneWidget,
+    );
   });
 }
-
-void _noop(String _) {}
-void _noopVoid() {}

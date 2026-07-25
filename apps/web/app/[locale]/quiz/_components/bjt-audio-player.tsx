@@ -21,6 +21,8 @@ interface BjtAudioPlayerProps {
   sectionCode?: string | null;
   /** Max number of plays allowed (default: 2, like real BJT) */
   maxPlays?: number;
+  /** Transcript is visible in practice, but withheld during a live official simulation. */
+  transcriptAvailable?: boolean;
   /** Labels for i18n */
   labels: {
     listenAudio: string;
@@ -29,6 +31,7 @@ interface BjtAudioPlayerProps {
     showScript: string;
     hideScript: string;
     audioSection: string;
+    transcriptAfterExam: string;
   };
 }
 
@@ -80,11 +83,12 @@ export function BjtAudioPlayer({
   audioScript,
   sectionCode,
   maxPlays = 2,
+  transcriptAvailable = true,
   labels,
 }: BjtAudioPlayerProps) {
   const [playCount, setPlayCount] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [showScript, setShowScript] = useState(false);
+  const [showScript, setShowScript] = useState(transcriptAvailable);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const canPlay = playCount < maxPlays;
@@ -95,9 +99,9 @@ export function BjtAudioPlayer({
   useEffect(() => {
     setPlayCount(0);
     setIsPlaying(false);
-    setShowScript(false);
+    setShowScript(transcriptAvailable);
     cancelJapaneseSpeechSynthesis();
-  }, [audioScript, audioUrl]);
+  }, [audioScript, audioUrl, transcriptAvailable]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -235,7 +239,7 @@ export function BjtAudioPlayer({
       )}
 
       {/* Script toggle (for study/review — hidden during timed exam if desired) */}
-      {hasScript && (
+      {hasScript && transcriptAvailable && (
         <div className="mt-2.5 border-t border-accent/10 pt-2">
           <button
             onClick={() => setShowScript(!showScript)}
@@ -250,6 +254,11 @@ export function BjtAudioPlayer({
             </pre>
           )}
         </div>
+      )}
+      {hasScript && !transcriptAvailable && (
+        <p className="mt-2.5 border-t border-accent/10 pt-2 text-xs text-muted">
+          {labels.transcriptAfterExam}
+        </p>
       )}
     </div>
   );

@@ -52,7 +52,10 @@ export class QuizController {
 
   @Get("templates/:id")
   @PublicRoute()
-  @ApiOperation({ summary: "Single template with sections/questions metadata." })
+  @ApiOperation({
+    summary:
+      "Single template; official simulations expose section/count metadata only, never question content."
+  })
   @ApiParam({ name: "id" })
   template(@Param("id") id: string) {
     return this.quizRepository.template(id);
@@ -61,9 +64,9 @@ export class QuizController {
   @Get("templates/:id/printable")
   @PublicRoute()
   @ApiOperation({
-    summary: "Full exam data formatted for printing in official BJT layout.",
+    summary: "Printable practice exam data; official simulations are denied.",
     description:
-      "Returns complete exam with all sections, questions, options, section metadata (part, timing), and answer key. Intended for browser print / PDF export."
+      "Returns practice content with sections, questions, options and answer key. Paid official simulations are only delivered one question at a time inside a gated session."
   })
   @ApiParam({ name: "id" })
   async printableTemplate(@Param("id") id: string) {
@@ -163,9 +166,11 @@ export class QuizController {
 
     // Fire-and-forget: update seasonal event progress on quiz completion
     if (result.session.status === "completed") {
-      this.seasonalEventService.updateProgress(userId, "quizzes", 1).catch((e) =>
-        this.logger.warn("Seasonal progress update failed", e instanceof Error ? e.message : e),
-      );
+      this.seasonalEventService
+        .updateProgress(userId, "quizzes", 1)
+        .catch((e) =>
+          this.logger.warn("Seasonal progress update failed", e instanceof Error ? e.message : e)
+        );
     }
 
     return result;

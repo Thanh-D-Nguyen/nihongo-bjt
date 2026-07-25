@@ -87,7 +87,15 @@ export {
   type BattleBotAnimationState,
   type BattleBotProfile
 } from "./battle.js";
-export { scoreBjtPractice, type QuizScoreInput, type QuizScoreResult } from "./quiz.js";
+export {
+  scoreBjtMockExam,
+  scoreBjtPractice,
+  type BjtMockScoreResult,
+  type BjtPerformanceAggregate,
+  type BjtScoredItem,
+  type QuizScoreInput,
+  type QuizScoreResult
+} from "./quiz.js";
 export {
   COMEBACK_MODE_INTERVAL_MULTIPLIER,
   LEECH_THRESHOLD_LAPSES,
@@ -2425,6 +2433,7 @@ const questionBaseShape = {
   sourceId: optionalUuid,
   imageUrl: z.string().trim().url().max(2000).optional().nullable(),
   imageAlt: z.string().trim().max(500).optional().nullable(),
+  imagePrompt: z.string().trim().max(2000).optional().nullable(),
   audioUrl: z.string().trim().url().max(2000).optional().nullable(),
   audioScript: z.string().trim().max(8000).optional().nullable(),
   options: z.array(questionOptionSchema).min(2).max(8)
@@ -2472,6 +2481,7 @@ export const adminQuestionBankPatchSchema = z
     sourceId: questionBaseShape.sourceId,
     imageUrl: questionBaseShape.imageUrl,
     imageAlt: questionBaseShape.imageAlt,
+    imagePrompt: questionBaseShape.imagePrompt,
     audioUrl: questionBaseShape.audioUrl,
     audioScript: questionBaseShape.audioScript,
     options: z.array(questionOptionSchema).min(2).max(8).optional(),
