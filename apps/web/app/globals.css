@@ -2788,31 +2788,6 @@ button.primary:disabled {
   animation: fc-confetti-4 700ms ease-out 75ms both;
 }
 
-/* Progress ring animation */
-@keyframes fc-ring-fill {
-  from {
-    stroke-dashoffset: var(--fc-ring-circumference, 251);
-  }
-  to {
-    stroke-dashoffset: var(--fc-ring-offset, 0);
-  }
-}
-.fc-progress-ring-track {
-  fill: none;
-  stroke: var(--color-ink, #111827);
-  opacity: 0.08;
-}
-.fc-progress-ring-fill {
-  fill: none;
-  stroke: var(--color-leaf, #22c55e);
-  stroke-linecap: round;
-  stroke-dasharray: var(--fc-ring-circumference, 251);
-  stroke-dashoffset: var(--fc-ring-offset, 0);
-  animation: fc-ring-fill 600ms var(--ease-spring) both;
-  transform: rotate(-90deg);
-  transform-origin: center;
-}
-
 /* Mentor avatar pulse */
 @keyframes fc-avatar-pulse {
   0%,

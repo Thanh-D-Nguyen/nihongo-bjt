@@ -56,12 +56,27 @@ describe("DeckStudySession semantic theme rendering", () => {
     const themedRoot = host.querySelector<HTMLElement>(".fc-card-shell.flashcard-theme-surface");
     expect(themedRoot?.style.getPropertyValue("--flashcard-foreground")).toBe(theme.foreground);
 
+    const studyHeader = host.querySelector<HTMLElement>('[data-testid="deck-study-header"]');
+    const modeButtons = studyHeader?.querySelectorAll<HTMLButtonElement>(
+      '[role="group"] button[aria-pressed]'
+    );
+    expect(modeButtons).toHaveLength(3);
+    expect(modeButtons?.[0].getAttribute("aria-pressed")).toBe("true");
+    expect(modeButtons?.[1].getAttribute("aria-pressed")).toBe("false");
+
+    const contentSurface = host.querySelector<HTMLElement>(
+      '[data-testid="deck-study-card-content"]'
+    );
+    expect(contentSurface?.className).toContain("flex-1");
+
     const front = host.querySelector<HTMLElement>(".flashcard-theme-primary");
     const back = host.querySelector<HTMLElement>(".flashcard-theme-answer");
+    const reading = front?.parentElement?.querySelector<HTMLElement>('[lang="ja"]:last-child');
     expect(front?.textContent).toContain(longJapanese);
     expect(back?.textContent).toContain(longVietnamese);
     expect(front?.className).not.toMatch(/truncate|line-clamp|ellipsis/);
     expect(back?.className).not.toMatch(/truncate|line-clamp|ellipsis/);
+    expect(reading?.className).toContain("text-center");
 
     const flipButton = host.querySelector<HTMLButtonElement>(
       ".fc-card-shell > button[aria-pressed]"

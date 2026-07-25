@@ -61,7 +61,8 @@ test.describe("flashcard theme visual matrix", () => {
 
           const flipButton = card.locator(".flashcard-theme-control[aria-pressed]");
           await flipButton.focus();
-          await page.keyboard.press("Enter");
+          await expect(flipButton).toBeFocused();
+          await flipButton.press("Enter");
           await expect(flipButton).toHaveAttribute("aria-pressed", "true");
           await expect(flipButton).toBeFocused();
           await capture(
@@ -128,6 +129,26 @@ test.describe("flashcard theme visual matrix", () => {
     );
     expect(transitionSeconds).toBeLessThanOrEqual(0.001);
   });
+
+  for (const viewport of [viewports[0], viewports[2]]) {
+    test(`compact short-content hierarchy · ${viewport.name}`, async ({ page }) => {
+      await page.setViewportSize(viewport);
+      await setColorMode(page, "light");
+      await page.goto("/visual-tests/flashcards?theme=ocean-calm&content=short");
+      await settle(page);
+
+      const workspace = page.getByTestId("deck-study-workspace");
+      await expect(workspace).toBeVisible();
+      expect(
+        await workspace.evaluate((element) => element.scrollWidth <= element.clientWidth + 1)
+      ).toBe(true);
+      await capture(
+        workspace,
+        `layout-short-content-${viewport.name}.png`,
+        `artifacts/flashcards-layout/after/layout-short-content-${viewport.name}.png`
+      );
+    });
+  }
 });
 
 test.describe("legacy contrast audit evidence", () => {

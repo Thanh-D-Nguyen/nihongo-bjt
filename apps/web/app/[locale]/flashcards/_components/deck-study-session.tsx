@@ -398,10 +398,8 @@ export function DeckStudySession({
     const onKey = (e: KeyboardEvent) => {
       const t = e.target;
       if (
-        t instanceof HTMLButtonElement ||
-        t instanceof HTMLInputElement ||
-        t instanceof HTMLTextAreaElement ||
-        t instanceof HTMLSelectElement
+        t instanceof Element &&
+        t.closest("button, input, textarea, select, a, [contenteditable='true']")
       ) {
         return;
       }
@@ -523,108 +521,127 @@ export function DeckStudySession({
     styleConfig?.flipAnimation === "rotateX" ? "rotateX(180deg)" : "rotateY(180deg)";
 
   const modeButtons: { id: StudyMode; label: string; icon: string }[] = [
-    { id: "flip", label: labels.deckStudyModeFlip, icon: "🔄" },
-    { id: "shuffle", label: labels.deckStudyModeShuffle, icon: "🔀" },
-    { id: "quiz", label: labels.deckStudyModeQuiz, icon: "❓" }
+    { id: "flip", label: labels.deckStudyModeFlip, icon: "↻" },
+    { id: "shuffle", label: labels.deckStudyModeShuffle, icon: "⇄" },
+    { id: "quiz", label: labels.deckStudyModeQuiz, icon: "?" }
   ];
 
   return (
     <section
       ref={sectionRef}
       aria-labelledby="deck-study-eyebrow"
-      className="mb-8 rounded-3xl border border-ink/10 bg-gradient-to-b from-surface via-surface to-paper/70 p-5 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.12)] ring-1 ring-ink/[0.04] sm:p-7"
+      className="mb-8 rounded-3xl border border-ink/10 bg-gradient-to-b from-surface via-surface to-paper/70 p-4 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.12)] ring-1 ring-ink/[0.04] sm:p-6"
     >
-      {/* Header with mode selector + progress ring + streak */}
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
-        <div className="min-w-0">
-          <p
-            className="text-[10px] font-black uppercase tracking-[0.2em] text-accent"
-            id="deck-study-eyebrow"
-          >
-            {labels.deckStudyEyebrow}
-          </p>
-          {/* Mode selector pills */}
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {modeButtons.map((m) => (
-              <button
-                key={m.id}
-                className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold transition",
-                  mode === m.id
-                    ? "bg-ink text-surface shadow-sm"
-                    : "border border-ink/10 bg-paper text-muted hover:bg-white hover:text-ink"
-                )}
-                onClick={() => switchMode(m.id)}
-                type="button"
-              >
-                <span aria-hidden>{m.icon}</span>
-                {m.label}
-              </button>
-            ))}
-          </div>
-          <div
-            aria-label={labels.deckStudyToolsAria}
-            className="mt-3 flex flex-wrap gap-1.5"
-            role="toolbar"
-          >
-            <ToolButton
-              active={autoRead}
-              ariaPressed
-              icon={<VolumeIcon />}
-              label={labels.deckStudyAutoRead}
-              onClick={() => setAutoRead((value) => !value)}
-            />
-            <ToolButton
-              disabled={!currentCanSpeak}
-              icon={<VolumeIcon />}
-              label={labels.deckStudyReadCard}
-              onClick={readCurrentCard}
-            />
-            <ToolButton
-              active={!readingVisible}
-              ariaPressed
-              icon={<ReadingToggleIcon hidden={!readingVisible} />}
-              label={readingVisible ? labels.deckStudyHideReading : labels.deckStudyShowReading}
-              onClick={() => setReadingVisible((value) => !value)}
-            />
-            <ToolButton
-              active={imagesVisible}
-              ariaPressed
-              disabled={!deckHasImages}
-              icon={imagesVisible ? <ImageIcon /> : <ImageOffIcon />}
-              label={imagesVisible ? labels.deckStudyHideImages : labels.deckStudyShowImages}
-              onClick={() => setImagesVisible((value) => !value)}
-            />
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          {mode !== "quiz" && streak >= 2 ? (
-            <StreakBadge label={labels.streakLabel} streak={streak} />
-          ) : null}
-          <ProgressRing reviewed={displayIndex} total={total} />
-          <p
-            className="shrink-0 rounded-full border border-ink/10 bg-paper/90 px-3 py-1.5 text-xs font-black tabular-nums tracking-tight text-ink shadow-sm sm:text-sm"
-            role="status"
-          >
-            {progressLabel}
-          </p>
-        </div>
-      </div>
-
-      <div
-        aria-valuemax={total}
-        aria-valuemin={1}
-        aria-valuenow={displayIndex}
-        className="mb-6 h-2 overflow-hidden rounded-full bg-ink/[0.08] ring-1 ring-inset ring-ink/[0.06]"
-        role="progressbar"
-      >
+      <div className="mx-auto max-w-3xl" data-testid="deck-study-workspace">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-accent via-accent to-leaf motion-reduce:transition-none motion-safe:transition-[width] motion-safe:duration-500 motion-safe:ease-out"
-          style={{ width: `${progressPct}%` }}
-        />
-      </div>
+          className="mb-5 overflow-hidden rounded-2xl border border-ink/10 bg-paper/65 shadow-[0_8px_28px_-18px_rgba(15,23,42,0.45)]"
+          data-testid="deck-study-header"
+        >
+          <div className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-5 sm:p-4">
+            <div className="min-w-0">
+              <p
+                className="text-[10px] font-black uppercase tracking-[0.2em] text-accent"
+                id="deck-study-eyebrow"
+              >
+                {labels.deckStudyEyebrow}
+              </p>
+              <div
+                aria-label={labels.deckStudyEyebrow}
+                className="-mx-1 mt-2 flex snap-x gap-2 overflow-x-auto px-1 pb-1"
+                role="group"
+              >
+                {modeButtons.map((m) => (
+                  <button
+                    key={m.id}
+                    aria-pressed={mode === m.id}
+                    className={cn(
+                      "inline-flex min-h-11 shrink-0 snap-start items-center gap-2 rounded-full border px-3.5 py-2 text-sm font-bold outline-none transition-[background-color,border-color,color,box-shadow,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper motion-safe:active:scale-[0.98]",
+                      mode === m.id
+                        ? "border-ink bg-ink text-surface shadow-sm"
+                        : "border-ink/10 bg-surface/80 text-muted hover:border-ink/20 hover:text-ink"
+                    )}
+                    onClick={() => switchMode(m.id)}
+                    type="button"
+                  >
+                    <span
+                      aria-hidden
+                      className={cn(
+                        "grid h-5 w-5 place-items-center rounded-full text-sm leading-none",
+                        mode === m.id ? "bg-surface/15" : "bg-ink/[0.06]"
+                      )}
+                    >
+                      {m.icon}
+                    </span>
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex shrink-0 items-center justify-between gap-2 sm:justify-end">
+              {mode !== "quiz" && streak >= 2 ? (
+                <StreakBadge label={labels.streakLabel} streak={streak} />
+              ) : null}
+              <p
+                className="inline-flex min-h-10 items-center rounded-full border border-ink/10 bg-surface px-3.5 py-2 text-sm font-black tabular-nums tracking-tight text-ink shadow-sm"
+                role="status"
+              >
+                {progressLabel}
+              </p>
+            </div>
+          </div>
 
-      <div className="mx-auto max-w-2xl">
+          <div className="flex items-center justify-between gap-3 border-t border-ink/[0.08] px-3 py-2.5 sm:px-4">
+            <div
+              aria-label={labels.deckStudyToolsAria}
+              className="flex min-w-0 gap-2 overflow-x-auto py-0.5"
+              role="toolbar"
+            >
+              <ToolButton
+                active={autoRead}
+                ariaPressed
+                icon={<VolumeIcon />}
+                label={labels.deckStudyAutoRead}
+                onClick={() => setAutoRead((value) => !value)}
+              />
+              <ToolButton
+                disabled={!currentCanSpeak}
+                icon={<VolumeIcon />}
+                label={labels.deckStudyReadCard}
+                onClick={readCurrentCard}
+              />
+              <ToolButton
+                active={!readingVisible}
+                ariaPressed
+                icon={<ReadingToggleIcon hidden={!readingVisible} />}
+                label={readingVisible ? labels.deckStudyHideReading : labels.deckStudyShowReading}
+                onClick={() => setReadingVisible((value) => !value)}
+              />
+              <ToolButton
+                active={imagesVisible}
+                ariaPressed
+                disabled={!deckHasImages}
+                icon={imagesVisible ? <ImageIcon /> : <ImageOffIcon />}
+                label={imagesVisible ? labels.deckStudyHideImages : labels.deckStudyShowImages}
+                onClick={() => setImagesVisible((value) => !value)}
+              />
+            </div>
+          </div>
+
+          <div
+            aria-label={progressLabel}
+            aria-valuemax={total}
+            aria-valuemin={1}
+            aria-valuenow={displayIndex}
+            className="h-1.5 overflow-hidden bg-ink/[0.08]"
+            role="progressbar"
+          >
+            <div
+              className="h-full rounded-r-full bg-gradient-to-r from-accent via-accent to-leaf motion-reduce:transition-none motion-safe:transition-[width] motion-safe:duration-500 motion-safe:ease-[cubic-bezier(0.22,1,0.36,1)]"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+        </div>
+
         {mode === "quiz" ? (
           /* ── Quiz mode: show front + 4 options ── */
           <div
@@ -701,7 +718,7 @@ export function DeckStudySession({
             <div className={cn("relative [perspective:1400px]", flipped && "fc-card-reveal")}>
               <div
                 className={cn(
-                  "flashcard-theme-surface fc-card-shell relative h-[clamp(23rem,64vh,38rem)] w-full rounded-[1.75rem] border p-1.5 text-left sm:h-[clamp(25rem,66vh,40rem)] sm:p-2",
+                  "flashcard-theme-surface fc-card-shell relative h-[clamp(24rem,56vh,34rem)] w-full rounded-[1.75rem] border p-1.5 text-left sm:h-[clamp(26rem,58vh,36rem)] sm:p-2",
                   "[transform-style:preserve-3d]"
                 )}
                 style={cardThemeStyle}
@@ -716,9 +733,9 @@ export function DeckStudySession({
                   <div
                     aria-hidden={flipped}
                     inert={flipped ? true : undefined}
-                    className="flashcard-theme-surface absolute inset-0 flex min-h-0 flex-col overflow-hidden rounded-[1.25rem] border p-4 pb-20 backface-hidden sm:p-6 sm:pb-20"
+                    className="flashcard-theme-surface absolute inset-0 flex min-h-0 flex-col overflow-hidden rounded-[1.25rem] border p-3 pb-[4.75rem] backface-hidden sm:p-5 sm:pb-[4.75rem]"
                   >
-                    <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
+                    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain pr-1">
                       <div className="flex items-center gap-2">
                         <span className="flashcard-theme-control inline-flex rounded-full border px-2 py-1 text-[9px] font-black uppercase tracking-wider">
                           {labels.deckStudyFaceFront}
@@ -726,11 +743,12 @@ export function DeckStudySession({
                       </div>
                       <div
                         className={cn(
-                          "flashcard-theme-content mt-4 grid gap-4 rounded-2xl border p-4 sm:p-5",
+                          "flashcard-theme-content mt-3 grid min-h-[16rem] flex-1 gap-4 rounded-2xl border p-5 sm:min-h-[18rem] sm:p-7",
                           showCardImage
                             ? "sm:grid-cols-[minmax(0,1fr)_minmax(13rem,42%)] sm:items-center"
-                            : "min-h-[18rem] place-items-center text-center sm:min-h-[20rem]"
+                            : "place-items-center text-center"
                         )}
+                        data-testid="deck-study-card-content"
                       >
                         <div
                           className={cn(
@@ -762,19 +780,19 @@ export function DeckStudySession({
                   <div
                     aria-hidden={!flipped}
                     inert={!flipped ? true : undefined}
-                    className="flashcard-theme-surface absolute inset-0 flex min-h-0 flex-col overflow-hidden rounded-[1.25rem] border p-4 pb-20 backface-hidden sm:p-6 sm:pb-20"
+                    className="flashcard-theme-surface absolute inset-0 flex min-h-0 flex-col overflow-hidden rounded-[1.25rem] border p-3 pb-[4.75rem] backface-hidden sm:p-5 sm:pb-[4.75rem]"
                     style={{ transform: flipTransform }}
                   >
-                    <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
-                      <span className="flashcard-theme-control inline-flex rounded-full border px-2 py-1 text-[9px] font-black uppercase tracking-wider">
+                    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain pr-1">
+                      <span className="flashcard-theme-control inline-flex self-start rounded-full border px-2 py-1 text-[9px] font-black uppercase tracking-wider">
                         {labels.deckStudyFaceBack}
                       </span>
                       <div
                         className={cn(
-                          "flashcard-theme-content mt-4 grid gap-4 rounded-2xl border p-4 sm:p-5",
+                          "flashcard-theme-content mt-3 grid min-h-[16rem] flex-1 gap-4 rounded-2xl border p-5 sm:min-h-[18rem] sm:p-7",
                           showCardImage
                             ? "sm:grid-cols-[minmax(0,1fr)_minmax(13rem,40%)] sm:items-center"
-                            : "min-h-[18rem] place-items-center text-center sm:min-h-[20rem]"
+                            : "place-items-center text-center"
                         )}
                       >
                         {/* Answer with slide-in animation */}
@@ -813,7 +831,7 @@ export function DeckStudySession({
                 <button
                   aria-label={flipAriaLabel}
                   aria-pressed={flipped}
-                  className="flashcard-theme-control flashcard-theme-focus absolute bottom-5 left-1/2 z-10 inline-flex min-h-11 -translate-x-1/2 items-center justify-center gap-2 rounded-xl border px-5 text-sm font-bold outline-none transition-opacity hover:opacity-90"
+                  className="flashcard-theme-control flashcard-theme-focus absolute bottom-4 left-1/2 z-10 inline-flex min-h-11 w-[calc(100%_-_2rem)] max-w-md -translate-x-1/2 items-center justify-center gap-2 rounded-full border px-4 text-xs font-bold outline-none transition-[opacity,transform,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:opacity-90 motion-safe:active:scale-[0.98] sm:px-5 sm:text-sm"
                   onClick={toggleFlip}
                   type="button"
                 >
@@ -1051,7 +1069,7 @@ function ToolButton({
       aria-label={label}
       aria-pressed={ariaPressed ? Boolean(active) : undefined}
       className={cn(
-        "inline-flex h-10 w-10 items-center justify-center rounded-xl border text-ink outline-none ring-offset-2 transition focus-visible:ring-2 focus-visible:ring-accent disabled:pointer-events-none disabled:opacity-35",
+        "inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border text-ink outline-none ring-offset-2 transition-[background-color,border-color,color,box-shadow,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:ring-2 focus-visible:ring-accent disabled:pointer-events-none disabled:opacity-35 motion-safe:active:scale-[0.96]",
         active
           ? "border-accent/35 bg-accent-soft/70 shadow-sm"
           : "border-ink/10 bg-paper hover:bg-white"
@@ -1206,8 +1224,8 @@ function ReadingReveal({
 
   const isShown = visible || localRevealed;
   const className = cn(
-    "jp-text mt-2 block w-full whitespace-pre-wrap break-words text-left font-semibold leading-[1.8] [overflow-wrap:anywhere]",
-    compact ? "text-xs" : "text-base sm:text-lg"
+    "jp-text mt-2 block w-full whitespace-pre-wrap break-words font-semibold leading-[1.8] [overflow-wrap:anywhere]",
+    compact ? "text-left text-xs" : "text-center text-base sm:text-lg"
   );
 
   if (isShown) {
@@ -1323,56 +1341,6 @@ function StreakBadge({ label, streak }: { label: string; streak: number }) {
       <span aria-hidden>{streak >= 10 ? "🔥" : streak >= 5 ? "⚡" : "✦"}</span>
       {label}: {streak}
     </span>
-  );
-}
-
-/* ─── Progress Ring ─── */
-
-function ProgressRing({
-  reviewed,
-  total,
-  size = 40,
-  strokeWidth = 3
-}: {
-  reviewed: number;
-  size?: number;
-  strokeWidth?: number;
-  total: number;
-}) {
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const progress = total > 0 ? Math.min(reviewed / total, 1) : 0;
-  const offset = circumference * (1 - progress);
-
-  return (
-    <div
-      className="relative inline-flex items-center justify-center"
-      style={{ width: size, height: size }}
-    >
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden>
-        <circle
-          className="fc-progress-ring-track"
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          strokeWidth={strokeWidth}
-        />
-        <circle
-          className="fc-progress-ring-fill"
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          strokeWidth={strokeWidth}
-          style={
-            {
-              "--fc-ring-circumference": circumference,
-              "--fc-ring-offset": offset
-            } as React.CSSProperties
-          }
-        />
-      </svg>
-      <span className="absolute text-[9px] font-bold tabular-nums text-ink">{reviewed}</span>
-    </div>
   );
 }
 

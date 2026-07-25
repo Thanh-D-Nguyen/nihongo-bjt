@@ -14,9 +14,39 @@ import {
   type StylePickerLabels
 } from "../../[locale]/flashcards/_components/flashcard-style-picker";
 
+const visualLabels: Partial<DeckStudySessionLabels> = {
+  deckStudyAutoRead: "Tự động đọc",
+  deckStudyEyebrow: "Học xem trong bộ",
+  deckStudyFaceBack: "Mặt sau",
+  deckStudyFaceFront: "Mặt trước",
+  deckStudyFlipPrompt: "Câu hỏi / từ gợi nhớ",
+  deckStudyHideImages: "Ẩn hình ảnh",
+  deckStudyHideReading: "Ẩn cách đọc",
+  deckStudyKeyboardHint: "Dùng phím ← → để chuyển thẻ",
+  deckStudyModeFlip: "Lật thẻ",
+  deckStudyModeQuiz: "Trắc nghiệm",
+  deckStudyModeShuffle: "Trộn",
+  deckStudyNext: "Tiếp theo",
+  deckStudyPrev: "Quay lại",
+  deckStudyProgressTpl: "Thẻ {current} / {total}",
+  deckStudyRateAgain: "Học lại",
+  deckStudyRateGood: "Đã nhớ",
+  deckStudyRateHard: "Hơi khó",
+  deckStudyRateHint: "Đánh giá để cá nhân hóa lần ôn tiếp theo",
+  deckStudyReadCard: "Đọc thẻ",
+  deckStudyShowImages: "Hiện hình ảnh",
+  deckStudyShowReading: "Hiện cách đọc",
+  deckStudyTapToFlip: "Chạm thẻ hoặc Space / Enter để lật",
+  deckStudyTapToRevealReading: "Chạm để hiện cách đọc",
+  deckStudyToolsAria: "Công cụ học"
+};
+
 const labels = new Proxy<Record<string, string>>(
   {},
-  { get: (_target, property) => String(property) }
+  {
+    get: (_target, property) =>
+      visualLabels[property as keyof DeckStudySessionLabels] ?? String(property)
+  }
 ) as DeckStudySessionLabels;
 
 const pickerLabels: StylePickerLabels = {
@@ -95,6 +125,7 @@ export function FlashcardThemeVisualHarness() {
   const searchParams = useSearchParams();
   const theme = resolveFlashcardThemeDefinition(searchParams.get("theme"));
   const view = searchParams.get("view") ?? "card";
+  const shortContent = searchParams.get("content") === "short";
 
   return (
     <main
@@ -144,10 +175,12 @@ export function FlashcardThemeVisualHarness() {
             <DeckStudySession
               cards={[
                 {
-                  backText: longVietnamese,
-                  frontText: longJapanese,
+                  backText: shortContent ? "An toàn và vệ sinh lao động" : longVietnamese,
+                  frontText: shortContent ? "安全衛生" : longJapanese,
                   id: "visual-card",
-                  reading: "かいぎのもくてきとかだいをきょうゆうする"
+                  reading: shortContent
+                    ? "あんぜんえいせい"
+                    : "かいぎのもくてきとかだいをきょうゆうする"
                 }
               ]}
               deckId={`visual-${theme.slug}`}
