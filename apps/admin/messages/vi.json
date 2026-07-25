@@ -1582,7 +1582,7 @@
         "policy": "Policy",
         "createTitle": "Tạo campaign",
         "editTitle": "Sửa campaign",
-        "mediaNote": "Upload creative qua hệ thống media khi sẵn sàng; hiện dùng creativeType/URL placeholder."
+        "mediaNote": "Cấu hình loại creative, URL đích, lịch chạy, targeting và giới hạn hiển thị cho từng campaign."
       },
       "providers": {
         "key": "Provider key",

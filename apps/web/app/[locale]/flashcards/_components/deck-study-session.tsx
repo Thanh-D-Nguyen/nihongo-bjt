@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { BattleBotAvatar } from "../../../_components/battle-bot-avatar";
 import { recordStudyProgress } from "../../../_hooks/use-study-progress";
+import { cancelJapaneseSpeech, speakJapanese } from "../../../../lib/japanese-speech";
 import { flashcardThemeCss } from "./flashcard-theme-css";
 
 type StudyMode = "flip" | "shuffle" | "quiz";
@@ -431,9 +432,7 @@ export function DeckStudySession({
 
   useEffect(() => {
     return () => {
-      if (typeof window !== "undefined" && "speechSynthesis" in window) {
-        window.speechSynthesis.cancel();
-      }
+      cancelJapaneseSpeech();
     };
   }, []);
 
@@ -1285,12 +1284,7 @@ function CheckIcon() {
 }
 
 function readJapanese(text: string) {
-  if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = "ja-JP";
-  utterance.rate = 0.9;
-  window.speechSynthesis.speak(utterance);
+  speakJapanese(text);
 }
 
 function sourceLabel(kind: DeckStudyExample["sourceKind"], labels: DeckStudySessionLabels) {

@@ -1453,7 +1453,7 @@
         "policy": "Policy",
         "createTitle": "Create Title",
         "editTitle": "Edit Title",
-        "mediaNote": "Media Note"
+        "mediaNote": "Configure creative type, destination URL, schedule, targeting, and impression limits for each campaign."
       },
       "providers": {
         "key": "Provider key",

@@ -75,6 +75,18 @@ const defaultPlacements: Array<{
     labelKey: "ads.placement.quiz_result_bottom"
   },
   {
+    code: "flashcard_library_inline",
+    config: {
+      allowedPlanSlugs: ["free", "basic", "standard", "premium"],
+      learningSafe: true,
+      location: "inline",
+      maxPerDay: 8,
+      providerKey: "local",
+      surface: "flashcards_library"
+    },
+    labelKey: "ads.placement.flashcard_library_inline"
+  },
+  {
     code: "flashcard_session_end",
     config: {
       allowedPlanSlugs: ["free", "basic", "standard", "premium"],
@@ -142,7 +154,32 @@ async function main() {
       data: { active: true, code: p.code, config: p.config, labelKey: p.labelKey }
     });
   }
-  console.log("Seeded ad provider, safety rules, and default placements (missing only).");
+
+  const storefrontCampaignName = "Leetuyt Storefront";
+  const storefrontCampaign = await prisma.adCampaign.findFirst({
+    where: { name: storefrontCampaignName, providerKey: "local" }
+  });
+  if (!storefrontCampaign) {
+    await prisma.adCampaign.create({
+      data: {
+        creativeType: "storefront",
+        destinationUrl: "https://collshp.com/leetuyt710331?view=storefront",
+        name: storefrontCampaignName,
+        placementCodes: [
+          "home_feed_inline",
+          "flashcard_library_inline",
+          "dictionary_result_inline"
+        ],
+        policyStatus: "ok",
+        priority: 100,
+        providerKey: "local",
+        status: "active"
+      }
+    });
+  }
+  console.log(
+    "Seeded ad provider, safety rules, placements, and storefront campaign (missing only)."
+  );
 }
 
 main()

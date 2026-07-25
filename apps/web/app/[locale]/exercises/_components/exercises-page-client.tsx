@@ -7,6 +7,10 @@ import {
 } from "@nihongo-bjt/ui";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import {
+  cancelJapaneseSpeech,
+  speakJapanese
+} from "../../../../lib/japanese-speech";
 import { learnerApiFetch } from "../../../../lib/learner-api";
 
 /* ── Types ─────────────────────────────────────────────────────────────── */
@@ -918,8 +922,6 @@ function TtsPlayer({ audioUrl }: { audioUrl: string }) {
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   const speak = useCallback(() => {
-    if (typeof window === "undefined" || !window.speechSynthesis) return;
-
     // Parse tts:// URL: tts://speak?text=...&lang=ja-JP&rate=0.85
     let text: string;
     let lang = "ja-JP";
@@ -937,19 +939,19 @@ function TtsPlayer({ audioUrl }: { audioUrl: string }) {
 
     if (!text) return;
 
-    window.speechSynthesis.cancel();
-    const utt = new SpeechSynthesisUtterance(text);
-    utt.lang = lang;
-    utt.rate = rate;
-    utt.onstart = () => setSpeaking(true);
-    utt.onend = () => setSpeaking(false);
-    utt.onerror = () => setSpeaking(false);
+    const utt = speakJapanese(text, {
+      lang,
+      onEnd: () => setSpeaking(false),
+      onError: () => setSpeaking(false),
+      onStart: () => setSpeaking(true),
+      rate
+    });
+    if (!utt) return;
     utteranceRef.current = utt;
-    window.speechSynthesis.speak(utt);
   }, [audioUrl]);
 
   const stop = useCallback(() => {
-    window.speechSynthesis?.cancel();
+    cancelJapaneseSpeech();
     setSpeaking(false);
   }, []);
 

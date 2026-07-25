@@ -157,43 +157,13 @@ export class LocalAdProvider implements AdProvider {
     providerKey: string;
     providerType: string;
   }): AdDecision {
-    const locale = input.input.locale;
-    const title =
-      locale === "ja"
-        ? "広告スペース"
-        : locale === "en"
-          ? "Ad space"
-          : "Quảng cáo ở đây";
-    const description =
-      locale === "ja"
-        ? "広告プロバイダーを設定すると、ここに配信内容が表示されます。"
-        : locale === "en"
-          ? "Configured ad content will appear here when a provider is connected."
-          : "Khi cài đặt ad provider, nội dung quảng cáo sẽ hiển thị tại vị trí này.";
-
     return {
       decisionKey: input.decisionKey,
-      eligible: true,
-      payload: {
-        campaign: {
-          creativeType: "placeholder",
-          destinationUrl: null,
-          id: `placeholder:${input.placement.code}`,
-          name: title
-        },
-        config: input.placement.config,
-        description,
-        labelKey: input.placement.labelKey,
-        providerKey: input.providerKey,
-        providerType: input.providerType
-      }
+      eligible: false
     };
   }
 
-  private isPlanAllowed(
-    planSlug: string,
-    placementCfg: Record<string, unknown>
-  ): boolean {
+  private isPlanAllowed(planSlug: string, placementCfg: Record<string, unknown>): boolean {
     const allowed = placementCfg.allowedPlanSlugs ?? placementCfg.allowedPlans;
     if (!Array.isArray(allowed) || allowed.length === 0) {
       return true;

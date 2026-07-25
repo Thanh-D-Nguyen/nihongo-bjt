@@ -4,9 +4,9 @@ import { useCallback, useEffect, useState } from "react";
 
 import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
 import { learnerApiFetchOptional } from "../../../../lib/learner-api";
+import { AdSlot, type AdSlotLabels } from "../ads/ad-slot";
 import type { HomepageLabels, LearnerAnalytics, NhkArticle } from "./types";
 import { PushPromptBanner, type PushBannerLabels } from "./push-prompt-banner";
-import { AdBanner } from "./ad-banner";
 import { OnboardingFlow } from "./onboarding-flow";
 import { HomepageSectionsTabs } from "./homepage-sections-tabs";
 import { TodayPlanHub } from "./today-plan-hub";
@@ -18,10 +18,12 @@ interface DailyHubPayload {
 }
 
 export function HomepageClient({
+  adLabels,
   labels,
   locale,
   pushBannerLabels
 }: {
+  adLabels: AdSlotLabels;
   labels: HomepageLabels;
   locale: string;
   pushBannerLabels: PushBannerLabels;
@@ -186,6 +188,13 @@ export function HomepageClient({
         />
       </div>
 
+      <AdSlot
+        className="hp-enter hp-enter-d2 mx-auto w-full max-w-[1280px]"
+        labels={adLabels}
+        locale={locale}
+        placementCode="home_feed_inline"
+      />
+
       <div className="hp-enter hp-enter-d2 mx-auto w-full max-w-[1280px]">
         <HomepageSectionsTabs
           analytics={analytics}
@@ -201,10 +210,6 @@ export function HomepageClient({
           onboardingJustCompleted={onboardingJustCompleted}
           tabsLabels={labels.tabs}
         />
-      </div>
-
-      <div className="mx-auto w-full max-w-[1280px]">
-        <AdBanner locale={locale} />
       </div>
     </main>
   );

@@ -7,7 +7,7 @@ import { HomepageClient } from "./_components/homepage";
 const messages = { ja, vi, en };
 
 export async function generateMetadata({
-  params,
+  params
 }: {
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
@@ -26,6 +26,7 @@ export default async function LearnerHome({
 
   return (
     <HomepageClient
+      adLabels={t.adSurface}
       labels={t.homepage}
       locale={locale}
       pushBannerLabels={t.pushBanner}

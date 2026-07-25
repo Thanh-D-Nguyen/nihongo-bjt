@@ -1421,7 +1421,7 @@
         "policy": "Policy",
         "createTitle": "campaign 作成",
         "editTitle": "campaign 編集",
-        "mediaNote": "クリエイティブアップロードは media 基盤準備後。現状は creativeType / URL プレースホルダ。"
+        "mediaNote": "キャンペーンごとにクリエイティブ種別、遷移先 URL、配信期間、ターゲティング、表示上限を設定します。"
       },
       "providers": {
         "key": "Provider key",

@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
 import { enqueueReview } from "../../../../lib/offline-review-queue";
 import { learnerApiFetch } from "../../../../lib/learner-api";
+import { speakJapanese } from "../../../../lib/japanese-speech";
 import { flashcardThemeCss } from "./flashcard-theme-css";
 
 /* ═══════════════════════════════════════════════════════
@@ -383,15 +384,11 @@ function AudioButton({
         return;
       }
       // Fallback: browser TTS
-      if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
-      const u = new SpeechSynthesisUtterance(ttsText);
-      u.lang = "ja-JP";
-      u.rate = 0.95;
-      u.onend = () => setPlaying(false);
-      u.onerror = () => setPlaying(false);
       setPlaying(true);
-      window.speechSynthesis.cancel();
-      window.speechSynthesis.speak(u);
+      speakJapanese(ttsText, {
+        onEnd: () => setPlaying(false),
+        onError: () => setPlaying(false)
+      });
     },
     [audioUrl, ttsText, playing]
   );

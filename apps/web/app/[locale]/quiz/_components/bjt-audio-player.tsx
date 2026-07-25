@@ -1,6 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  cancelJapaneseSpeech,
+  speakJapanese
+} from "../../../../lib/japanese-speech";
 
 /* ------------------------------------------------------------------ */
 /*  BJT Audio Player                                                   */
@@ -38,8 +42,7 @@ export function stripDirections(text: string): string {
 }
 
 export function cancelJapaneseSpeechSynthesis(): void {
-  if (typeof window === "undefined") return;
-  window.speechSynthesis?.cancel();
+  cancelJapaneseSpeech();
 }
 
 /**
@@ -50,28 +53,12 @@ export function speakJapaneseWithBrowserTts(
   text: string,
   handlers: { onStart?: () => void; onEnd?: () => void; onError?: () => void }
 ): void {
-  if (typeof window === "undefined" || !window.speechSynthesis) {
-    handlers.onError?.();
-    return;
-  }
-  window.speechSynthesis.cancel();
   const cleanText = stripDirections(text);
   if (!cleanText) {
     handlers.onError?.();
     return;
   }
-  const utterance = new SpeechSynthesisUtterance(cleanText);
-  utterance.lang = "ja-JP";
-  utterance.rate = 0.9;
-  const voices = window.speechSynthesis.getVoices();
-  const jaVoice = voices.find((v) => v.lang.startsWith("ja"));
-  if (jaVoice) {
-    utterance.voice = jaVoice;
-  }
-  utterance.onstart = () => handlers.onStart?.();
-  utterance.onend = () => handlers.onEnd?.();
-  utterance.onerror = () => handlers.onError?.();
-  window.speechSynthesis.speak(utterance);
+  speakJapanese(cleanText, handlers);
 }
 
 /** Check if a section code is an audio section (LC or LR) */
@@ -119,6 +106,18 @@ export function BjtAudioPlayer({
     };
   }, []);
 
+  const playTTS = useCallback(() => {
+    if (!audioScript || !canPlay) return;
+    speakJapaneseWithBrowserTts(audioScript, {
+      onEnd: () => {
+        setIsPlaying(false);
+        setPlayCount((c) => c + 1);
+      },
+      onError: () => setIsPlaying(false),
+      onStart: () => setIsPlaying(true)
+    });
+  }, [audioScript, canPlay]);
+
   const playAudioFile = useCallback(() => {
     if (!audioUrl || !canPlay) return;
     const audio = new Audio(audioUrl);
@@ -136,19 +135,7 @@ export function BjtAudioPlayer({
       }
     };
     void audio.play();
-  }, [audioUrl, audioScript, canPlay]);
-
-  const playTTS = useCallback(() => {
-    if (!audioScript || !canPlay) return;
-    speakJapaneseWithBrowserTts(audioScript, {
-      onEnd: () => {
-        setIsPlaying(false);
-        setPlayCount((c) => c + 1);
-      },
-      onError: () => setIsPlaying(false),
-      onStart: () => setIsPlaying(true)
-    });
-  }, [audioScript, canPlay]);
+  }, [audioUrl, audioScript, canPlay, playTTS]);
 
   const handlePlay = useCallback(() => {
     if (!canPlay || isPlaying) return;

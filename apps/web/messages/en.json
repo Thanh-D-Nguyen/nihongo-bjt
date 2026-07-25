@@ -195,6 +195,12 @@
     "subtitle": "Keep BJT prep and everyday Japanese going—with real data and room to grow.",
     "title": "Japanese you can keep showing up for"
   },
+  "adSurface": {
+    "advertisement": "Advertisement",
+    "opensInNewTab": "Opens the advertisement link in a new tab",
+    "supportMessage": "This advertisement links to a partner storefront; visits help keep the learning platform free.",
+    "visitStore": "Visit storefront"
+  },
   "homepage": {
     "heroGreeting": "{timeOfDay}!",
     "heroGreetingNamed": "{name}, {timeOfDay}!",

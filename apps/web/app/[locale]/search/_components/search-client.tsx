@@ -23,6 +23,7 @@ import {
   type DropdownKeyHandler,
   type SearchDropdownLabels
 } from "../../../_components/search-dropdown";
+import { AdSlot, type AdSlotLabels } from "../../_components/ads/ad-slot";
 import {
   type DetailPayload,
   normalizeKanjiDetailDto,
@@ -143,7 +144,15 @@ function detailPathForKind(kind: SearchResult["kind"], id: string): string | nul
   }
 }
 
-export function SearchClient({ labels, locale }: { labels: SearchLabels; locale: string }) {
+export function SearchClient({
+  adLabels,
+  labels,
+  locale
+}: {
+  adLabels: AdSlotLabels;
+  labels: SearchLabels;
+  locale: string;
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -1057,6 +1066,15 @@ export function SearchClient({ labels, locale }: { labels: SearchLabels; locale:
             </section>
           </div>
         )}
+
+        {!loading && !error && hasSearched && visibleResults.length > 0 ? (
+          <AdSlot
+            className="mx-4 mt-6 sm:mx-0"
+            labels={adLabels}
+            locale={locale}
+            placementCode="dictionary_result_inline"
+          />
+        ) : null}
 
         {showMobileDetailBar ? (
           <div className="fixed inset-x-0 bottom-0 z-30 border-t border-ink/6 bg-paper/85 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-16px_40px_-8px_rgba(0,0,0,0.12)] backdrop-blur-2xl md:hidden">

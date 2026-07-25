@@ -195,6 +195,12 @@
     "subtitle": "BJTと日常日本語を、実データと拡張しやすい基盤で少しずつ続けられる学習体験にします。",
     "title": "毎日続ける日本語学習"
   },
+  "adSurface": {
+    "advertisement": "広告",
+    "opensInNewTab": "広告リンクを新しいタブで開きます",
+    "supportMessage": "パートナーのストアへ移動する広告リンクです。アクセスが無料学習サービスの運営を支えます。",
+    "visitStore": "ストアを見る"
+  },
   "homepage": {
     "heroGreeting": "{timeOfDay}！",
     "heroGreetingNamed": "{name}さん、{timeOfDay}！",

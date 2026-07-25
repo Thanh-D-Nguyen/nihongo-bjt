@@ -112,6 +112,14 @@ function pct(n: number) {
   return `${(n * 100).toFixed(2)}%`;
 }
 
+function toLocalDateTime(value: unknown): string {
+  if (typeof value !== "string" || !value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const offsetMs = date.getTimezoneOffset() * 60_000;
+  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
+}
+
 export function AdsConsoleClient({ common, labels }: { common: Common; labels: AdsConsoleLabels }) {
   const [tab, setTab] = useState<TabId>("overview");
   const [perms, setPerms] = useState<Set<string> | null>(null);
@@ -507,10 +515,10 @@ export function AdsConsoleClient({ common, labels }: { common: Common; labels: A
                         kind: "campaign",
                         mode: "create",
                         row: {
-                          creativeType: "placeholder",
+                          creativeType: "storefront",
                           destinationUrl: "",
                           name: "",
-                          placementCodes: "home_feed_inline",
+                          placementCodes: "home_feed_inline,flashcard_library_inline,dictionary_result_inline",
                           policyStatus: "pending",
                           priority: 0,
                           providerKey: "local",
@@ -550,13 +558,19 @@ export function AdsConsoleClient({ common, labels }: { common: Common; labels: A
                     <AdminDataTableBody>
                       {campaigns.map((c) => {
                         const r = c as {
+                          creativeType: string;
+                          destinationUrl: string | null;
+                          endAt: string | null;
                           id: string;
+                          maxImpressions: number | null;
                           name: string;
+                          priority: number;
                           status: string;
                           providerKey: string;
                           placementCodes: string[];
                           startAt: string | null;
-                          endAt: string | null;
+                          targetLocale: string | null;
+                          targetPlanSlug: string | null;
                           policyStatus: string;
                           updatedAt: string;
                         };
@@ -1012,6 +1026,16 @@ function AdsDrawer({
   const [cProvider, setCProvider] = useState(() => (d.row.providerKey as string) ?? "local");
   const [cPlacements, setCPlacements] = useState(() => String(d.row.placementCodes ?? ""));
   const [cPolicy, setCPolicy] = useState(() => (d.row.policyStatus as string) ?? "pending");
+  const [cCreative, setCCreative] = useState(() => (d.row.creativeType as string) ?? "storefront");
+  const [cDestination, setCDestination] = useState(() => (d.row.destinationUrl as string) ?? "");
+  const [cPriority, setCPriority] = useState(() => String(d.row.priority ?? 0));
+  const [cTargetLocale, setCTargetLocale] = useState(() => (d.row.targetLocale as string) ?? "");
+  const [cTargetPlan, setCTargetPlan] = useState(() => (d.row.targetPlanSlug as string) ?? "");
+  const [cStartAt, setCStartAt] = useState(() => toLocalDateTime(d.row.startAt));
+  const [cEndAt, setCEndAt] = useState(() => toLocalDateTime(d.row.endAt));
+  const [cMaxImpressions, setCMaxImpressions] = useState(() =>
+    d.row.maxImpressions == null ? "" : String(d.row.maxImpressions)
+  );
   const [pEnabled, setPEnabled] = useState(() => Boolean(d.row.enabled));
   const [pConfigText, setPConfigText] = useState(() => JSON.stringify(d.row.config ?? {}, null, 2));
   const [rConfigText, setRConfigText] = useState(() => JSON.stringify(d.row.config ?? {}, null, 2));
@@ -1062,17 +1086,25 @@ function AdsDrawer({
           .split(",")
           .map((x) => x.trim())
           .filter(Boolean);
+        const campaignBody = {
+          creativeType: cCreative.trim() || "storefront",
+          destinationUrl: cDestination.trim() || null,
+          endAt: cEndAt ? new Date(cEndAt).toISOString() : null,
+          maxImpressions: cMaxImpressions === "" ? null : Number(cMaxImpressions),
+          name: cName,
+          placementCodes: codes,
+          policyStatus: cPolicy,
+          priority: Number(cPriority) || 0,
+          providerKey: cProvider,
+          reason: reason.trim(),
+          startAt: cStartAt ? new Date(cStartAt).toISOString() : null,
+          status: cStatus,
+          targetLocale: cTargetLocale.trim() || null,
+          targetPlanSlug: cTargetPlan.trim() || null
+        };
         if (d.mode === "create") {
           const res = await adminApiFetch("/api/admin/ads/campaigns", {
-            body: JSON.stringify({
-              creativeType: "placeholder",
-              name: cName,
-              placementCodes: codes,
-              policyStatus: cPolicy,
-              providerKey: cProvider,
-              reason: reason.trim(),
-              status: cStatus
-            }),
+            body: JSON.stringify(campaignBody),
             headers: { "content-type": "application/json" },
             method: "POST"
           });
@@ -1083,14 +1115,7 @@ function AdsDrawer({
           }
         } else {
           const res = await adminApiFetch(`/api/admin/ads/campaigns/${d.row.id as string}`, {
-            body: JSON.stringify({
-              name: cName,
-              placementCodes: codes,
-              policyStatus: cPolicy,
-              providerKey: cProvider,
-              reason: reason.trim(),
-              status: cStatus
-            }),
+            body: JSON.stringify(campaignBody),
             headers: { "content-type": "application/json" },
             method: "PATCH"
           });
@@ -1259,6 +1284,87 @@ function AdsDrawer({
                 ))}
               </select>
             </label>
+            <label className="block text-slate-600">
+              {labels.campaigns.creative}
+              <input
+                className="mt-1 w-full rounded border border-slate-200 px-2 py-1 font-mono"
+                onChange={(e) => setCCreative(e.target.value)}
+                value={cCreative}
+              />
+            </label>
+            <label className="block text-slate-600">
+              {labels.campaigns.destination}
+              <input
+                className="mt-1 w-full rounded border border-slate-200 px-2 py-1"
+                inputMode="url"
+                onChange={(e) => setCDestination(e.target.value)}
+                placeholder="https://example.com/store"
+                type="url"
+                value={cDestination}
+              />
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <label className="block text-slate-600">
+                {labels.campaigns.priority}
+                <input
+                  className="mt-1 w-full rounded border border-slate-200 px-2 py-1"
+                  min={0}
+                  onChange={(e) => setCPriority(e.target.value)}
+                  type="number"
+                  value={cPriority}
+                />
+              </label>
+              <label className="block text-slate-600">
+                {labels.campaigns.maxImpr}
+                <input
+                  className="mt-1 w-full rounded border border-slate-200 px-2 py-1"
+                  min={0}
+                  onChange={(e) => setCMaxImpressions(e.target.value)}
+                  type="number"
+                  value={cMaxImpressions}
+                />
+              </label>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <label className="block text-slate-600">
+                {labels.campaigns.locale}
+                <input
+                  className="mt-1 w-full rounded border border-slate-200 px-2 py-1"
+                  onChange={(e) => setCTargetLocale(e.target.value)}
+                  placeholder="vi"
+                  value={cTargetLocale}
+                />
+              </label>
+              <label className="block text-slate-600">
+                {labels.campaigns.plan}
+                <input
+                  className="mt-1 w-full rounded border border-slate-200 px-2 py-1"
+                  onChange={(e) => setCTargetPlan(e.target.value)}
+                  placeholder="free"
+                  value={cTargetPlan}
+                />
+              </label>
+            </div>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <label className="block text-slate-600">
+                {labels.campaigns.start}
+                <input
+                  className="mt-1 w-full rounded border border-slate-200 px-2 py-1"
+                  onChange={(e) => setCStartAt(e.target.value)}
+                  type="datetime-local"
+                  value={cStartAt}
+                />
+              </label>
+              <label className="block text-slate-600">
+                {labels.campaigns.end}
+                <input
+                  className="mt-1 w-full rounded border border-slate-200 px-2 py-1"
+                  onChange={(e) => setCEndAt(e.target.value)}
+                  type="datetime-local"
+                  value={cEndAt}
+                />
+              </label>
+            </div>
           </div>
         ) : null}
         {d.kind === "provider" && canProviders ? (

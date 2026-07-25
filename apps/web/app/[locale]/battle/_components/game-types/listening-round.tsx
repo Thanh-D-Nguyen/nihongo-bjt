@@ -1,6 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  cancelJapaneseSpeech,
+  speakJapanese
+} from "../../../../../lib/japanese-speech";
 import type { GameTypeRoundProps } from "./shared-props";
 
 const MAX_REPLAYS = 2;
@@ -49,21 +53,19 @@ export function ListeningRound({
   const hasPlayableAudio = Boolean(fileAudioSrc || speechText);
 
   const playSpeech = useCallback((countPlay: boolean) => {
-    if (!speechText || typeof window === "undefined" || !window.speechSynthesis) return false;
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(speechText);
-    utterance.lang = speechLang;
-    utterance.rate = speechRate;
-    const voice = window.speechSynthesis.getVoices().find((item) => item.lang.startsWith("ja"));
-    if (voice) utterance.voice = voice;
-    utterance.onstart = () => {
-      setPlaying(true);
-      if (countPlay) setPlayCount((count) => count + 1);
-    };
-    utterance.onend = () => setPlaying(false);
-    utterance.onerror = () => setPlaying(false);
+    if (!speechText) return false;
+    const utterance = speakJapanese(speechText, {
+      lang: speechLang,
+      onEnd: () => setPlaying(false),
+      onError: () => setPlaying(false),
+      onStart: () => {
+        setPlaying(true);
+        if (countPlay) setPlayCount((count) => count + 1);
+      },
+      rate: speechRate
+    });
+    if (!utterance) return false;
     utteranceRef.current = utterance;
-    window.speechSynthesis.speak(utterance);
     return true;
   }, [speechLang, speechRate, speechText]);
 
@@ -87,14 +89,14 @@ export function ListeningRound({
     setPlayCount(0);
     setShowHint(false);
     if (typeof window !== "undefined") {
-      window.speechSynthesis?.cancel();
+      cancelJapaneseSpeech();
     }
     if (hasPlayableAudio) {
       playAudio(true);
     }
     return () => {
       if (typeof window !== "undefined") {
-        window.speechSynthesis?.cancel();
+        cancelJapaneseSpeech();
       }
       utteranceRef.current = null;
     };

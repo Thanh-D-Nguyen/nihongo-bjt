@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { speakJapanese } from "../../../lib/japanese-speech";
 
 /* ─── Types ─── */
 
@@ -26,20 +27,6 @@ type Labels = {
   tapToExpand: string;
   usageNote: string;
 };
-
-/* ─── TTS helper ─── */
-
-function speakJapanese(text: string) {
-  if (typeof window === "undefined" || !window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = "ja-JP";
-  utterance.rate = 0.85;
-  const voices = window.speechSynthesis.getVoices();
-  const jaVoice = voices.find((v) => v.lang.startsWith("ja"));
-  if (jaVoice) utterance.voice = jaVoice;
-  window.speechSynthesis.speak(utterance);
-}
 
 /* ─── Single expression card ─── */
 

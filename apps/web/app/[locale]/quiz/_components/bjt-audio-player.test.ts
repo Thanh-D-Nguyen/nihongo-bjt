@@ -47,7 +47,8 @@ describe("browser Japanese TTS", () => {
     const utterance = speak.mock.calls[0]?.[0];
     expect(utterance).toMatchObject({
       lang: "ja-JP",
-      rate: 0.9,
+      pitch: 1.08,
+      rate: 0.86,
       text: "確認してください。",
       voice
     });

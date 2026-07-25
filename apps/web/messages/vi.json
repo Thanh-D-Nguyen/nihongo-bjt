@@ -195,6 +195,12 @@
     "subtitle": "Một nền tảng học BJT và tiếng Nhật đời sống theo nhịp nhẹ nhàng, có dữ liệu thật và sẵn sàng mở rộng.",
     "title": "Học tiếng Nhật vững vàng mỗi ngày"
   },
+  "adSurface": {
+    "advertisement": "Quảng cáo",
+    "opensInNewTab": "Mở liên kết quảng cáo trong tab mới",
+    "supportMessage": "Liên kết quảng cáo tới gian hàng đối tác; lượt truy cập giúp duy trì nền tảng học miễn phí.",
+    "visitStore": "Xem gian hàng"
+  },
   "homepage": {
     "heroGreeting": "Chào buổi {timeOfDay}!",
     "heroGreetingNamed": "Chào buổi {timeOfDay}, {name}!",

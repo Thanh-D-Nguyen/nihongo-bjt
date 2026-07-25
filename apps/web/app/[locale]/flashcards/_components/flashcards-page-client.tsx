@@ -26,6 +26,7 @@ import {
   IconSearch,
   IconSpark
 } from "../../../_components/app-icons";
+import { AdSlot, type AdSlotLabels } from "../../_components/ads/ad-slot";
 import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
 import { queueSizeForUser } from "../../../../lib/offline-review-queue";
 import { learnerApiFetch } from "../../../../lib/learner-api";
@@ -44,6 +45,7 @@ function isDeckScopeId(raw: string | null): raw is string {
 }
 
 export function FlashcardsPageClient({
+  adLabels,
   cardgenLabels,
   deckLabels,
   flashcardLabels,
@@ -51,6 +53,7 @@ export function FlashcardsPageClient({
   locale,
   reviewSessionLabels
 }: {
+  adLabels: AdSlotLabels;
   cardgenLabels: CardgenLabels;
   deckLabels: DeckLabels;
   flashcardLabels: FlashcardLabels;
@@ -253,6 +256,9 @@ export function FlashcardsPageClient({
               {flashcardLabels.stylePickerTitle}
             </button>
           </div>
+          {main === "library" && !createOpen ? (
+            <AdSlot labels={adLabels} locale={locale} placementCode="flashcard_library_inline" />
+          ) : null}
         </div>
         <div className="grid grid-cols-2 border-t border-ink/[0.08] bg-paper/55 sm:flex sm:justify-end">
           <div className="flex min-h-12 items-center justify-center px-4 text-xs font-semibold text-muted sm:justify-start">
