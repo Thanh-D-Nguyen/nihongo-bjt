@@ -7,6 +7,14 @@ import type { AdDecideInput, AdDecision, AdProvider } from "./ad-provider.js";
 
 const IMPRESSION_KIND = "impression";
 
+export function isPersonalizedAdConfig(
+  placementConfig: Record<string, unknown>,
+  providerConfig: unknown
+): boolean {
+  const provider = (providerConfig ?? {}) as Record<string, unknown>;
+  return placementConfig.personalized === true || provider.personalized === true;
+}
+
 @Injectable()
 export class LocalAdProvider implements AdProvider {
   private readonly prisma: PrismaClient = createPrismaClient();
@@ -54,21 +62,6 @@ export class LocalAdProvider implements AdProvider {
       return { decisionKey: "placement:plan_not_allowed", eligible: false };
     }
 
-    const profile = await this.prisma.userProfile.findUnique({
-      select: { adsPersonalizationOptIn: true },
-      where: { id: input.userId }
-    });
-    const personalizationOptIn = profile?.adsPersonalizationOptIn ?? false;
-    const requireOptIn = await this.isPersonalizedOptInRequired();
-    if (requireOptIn && !personalizationOptIn) {
-      await this.recordBlocked({
-        decisionKey: "privacy:personalization_opt_in_required",
-        placementId: placement.id,
-        userId: input.userId
-      });
-      return { decisionKey: "privacy:personalization_opt_in_required", eligible: false };
-    }
-
     const maxPerDay = typeof placementCfg.maxPerDay === "number" ? placementCfg.maxPerDay : null;
     if (maxPerDay != null && maxPerDay >= 0) {
       const over = await this.overDailyImpressionCap(input.userId, placement.id, maxPerDay);
@@ -109,6 +102,24 @@ export class LocalAdProvider implements AdProvider {
         providerKey,
         providerType: provider.type
       });
+    }
+
+    if (
+      isPersonalizedAdConfig(placementCfg, provider.config) &&
+      (await this.isPersonalizedOptInRequired())
+    ) {
+      const profile = await this.prisma.userProfile.findUnique({
+        select: { adsPersonalizationOptIn: true },
+        where: { id: input.userId }
+      });
+      if (!(profile?.adsPersonalizationOptIn ?? false)) {
+        await this.recordBlocked({
+          decisionKey: "privacy:personalization_opt_in_required",
+          placementId: placement.id,
+          userId: input.userId
+        });
+        return { decisionKey: "privacy:personalization_opt_in_required", eligible: false };
+      }
     }
 
     if (campaign.maxImpressions != null) {
