@@ -76,7 +76,17 @@ describe("DeckStudySession semantic theme rendering", () => {
     expect(back?.textContent).toContain(longVietnamese);
     expect(front?.className).not.toMatch(/truncate|line-clamp|ellipsis/);
     expect(back?.className).not.toMatch(/truncate|line-clamp|ellipsis/);
+    expect(front?.className).toContain("flashcard-study-term");
+    expect(back?.className).toContain("flashcard-study-answer");
+    expect(reading?.className).toContain("flashcard-study-reading");
     expect(reading?.className).toContain("text-center");
+
+    const toolButtons = studyHeader?.querySelectorAll<HTMLButtonElement>('[role="toolbar"] button');
+    expect(toolButtons).toHaveLength(4);
+    toolButtons?.forEach((button) => {
+      expect(button.getAttribute("aria-label")).toBeTruthy();
+      expect(button.textContent?.trim()).toBeTruthy();
+    });
 
     const flipButton = host.querySelector<HTMLButtonElement>(
       ".fc-card-shell > button[aria-pressed]"

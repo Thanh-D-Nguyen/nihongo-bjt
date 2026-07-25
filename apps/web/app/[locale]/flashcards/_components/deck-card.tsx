@@ -6,19 +6,16 @@ import Link from "next/link";
 import type { DeckApiRow } from "./deck-types";
 import { toIntlLocale } from "@/lib/locale-utils";
 
-/* ── Color accent: deterministic gradient from deck title hash ── */
-const DECK_GRADIENTS = [
-  "from-emerald-400/80 to-teal-500/80",
-  "from-blue-400/80 to-indigo-500/80",
-  "from-violet-400/80 to-purple-500/80",
-  "from-rose-400/80 to-pink-500/80",
-  "from-amber-400/80 to-orange-500/80",
-  "from-cyan-400/80 to-sky-500/80",
-  "from-lime-400/80 to-emerald-500/80",
-  "from-fuchsia-400/80 to-pink-500/80",
+const DECK_ACCENTS = [
+  "bg-emerald-500",
+  "bg-blue-500",
+  "bg-violet-500",
+  "bg-rose-500",
+  "bg-amber-500",
+  "bg-cyan-500",
+  "bg-lime-600",
+  "bg-fuchsia-500"
 ] as const;
-
-const DECK_EMOJIS = ["📚", "🎯", "✨", "🌸", "🔥", "💎", "🎌", "📝"] as const;
 
 function hashStr(s: string): number {
   let h = 0;
@@ -28,12 +25,8 @@ function hashStr(s: string): number {
   return Math.abs(h);
 }
 
-function deckGradient(title: string) {
-  return DECK_GRADIENTS[hashStr(title) % DECK_GRADIENTS.length];
-}
-
-function deckEmoji(title: string) {
-  return DECK_EMOJIS[hashStr(title) % DECK_EMOJIS.length];
+function deckAccent(title: string) {
+  return DECK_ACCENTS[hashStr(title) % DECK_ACCENTS.length];
 }
 
 export interface DeckCardLabels {
@@ -76,10 +69,10 @@ function formatShortDate(iso: string | undefined, locale: string) {
 }
 
 const tileChrome =
-  "rounded-xl border border-ink/10 bg-surface shadow-sm outline-none ring-offset-2 transition-all duration-200 hover:border-leaf/40 focus-within:ring-2 focus-within:ring-accent";
+  "rounded-2xl border border-ink/10 bg-surface outline-none ring-offset-2 transition-[border-color,background-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-ink/20 hover:shadow-[0_14px_30px_-24px_rgba(15,23,42,0.6)] focus-within:ring-2 focus-within:ring-accent motion-reduce:hover:translate-y-0";
 
 const metaRowClass =
-  "flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-semibold text-muted";
+  "flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs font-medium text-muted";
 
 function MetaLine({
   children,
@@ -123,8 +116,7 @@ export function DeckCard({
   const desc = deckDisplayDesc(deck, locale);
   const n = deckCardCount(deck);
   const visLabel = deck.visibility === "public" ? labels.public : labels.private;
-  const statusLabel =
-    deck.status === "active" ? labels.statusActive : labels.statusArchived;
+  const statusLabel = deck.status === "active" ? labels.statusActive : labels.statusArchived;
   const dateIso = deck.updatedAt ?? deck.createdAt;
   const dateLabel = deck.updatedAt ? labels.updatedLabel : labels.createdLabel;
   const dateStr = formatShortDate(dateIso, locale);
@@ -179,11 +171,11 @@ export function DeckCard({
             href={href}
           >
             <div className="flex flex-wrap items-start justify-between gap-2">
-              <h3 className="text-sm font-bold leading-snug text-ink">{title}</h3>
+              <h3 className="text-base font-bold leading-snug text-ink">{title}</h3>
               {badge}
             </div>
             {desc ? (
-              <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted">{desc}</p>
+              <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-muted">{desc}</p>
             ) : null}
           </Link>
           {metaFooterRow}
@@ -192,18 +184,14 @@ export function DeckCard({
     }
 
     return (
-      <Link
-        aria-label={aria}
-        className={`flex gap-3 px-3 py-3 sm:px-4 ${tileChrome}`}
-        href={href}
-      >
+      <Link aria-label={aria} className={`flex gap-3 px-3 py-3 sm:px-4 ${tileChrome}`} href={href}>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-start justify-between gap-2">
-            <h3 className="text-sm font-bold leading-snug text-ink">{title}</h3>
+            <h3 className="text-base font-bold leading-snug text-ink">{title}</h3>
             {badge}
           </div>
           {desc ? (
-            <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted">{desc}</p>
+            <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-muted">{desc}</p>
           ) : null}
           <div className="mt-2">
             <MetaLine asLink={false} href={href}>
@@ -216,27 +204,26 @@ export function DeckCard({
   }
 
   /* grid */
-  const grad = deckGradient(deck.titleVi);
-  const emoji = deckEmoji(deck.titleVi);
+  const accent = deckAccent(deck.titleVi);
 
   if (insideFooter) {
     return (
-      <div className={`flex h-full min-h-[8.5rem] flex-col overflow-hidden ${tileChrome}`}>
-        <div className={`h-1.5 w-full bg-gradient-to-r ${grad}`} />
+      <div className={`flex h-full min-h-[10rem] flex-col overflow-hidden ${tileChrome}`}>
+        <div className={`h-1 w-full ${accent}`} />
         <Link
           aria-label={aria}
           className="flex min-h-0 flex-1 flex-col p-4 pb-3 outline-none"
           href={href}
         >
           <div className="flex items-start justify-between gap-2">
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-              <span className="text-lg" aria-hidden>{emoji}</span>
-              <h3 className="min-w-0 flex-1 text-sm font-bold leading-snug text-ink">{title}</h3>
+            <div className="flex min-w-0 flex-1 items-center gap-2.5">
+              <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${accent}`} aria-hidden />
+              <h3 className="min-w-0 flex-1 text-base font-bold leading-snug text-ink">{title}</h3>
             </div>
             {badge}
           </div>
           {desc ? (
-            <p className="mt-2 line-clamp-2 min-h-[2.25rem] flex-1 text-xs leading-relaxed text-muted">
+            <p className="mt-2 line-clamp-2 min-h-[2.75rem] flex-1 text-sm leading-relaxed text-muted">
               {desc}
             </p>
           ) : (
@@ -251,20 +238,22 @@ export function DeckCard({
   return (
     <Link
       aria-label={aria}
-      className={`flex h-full min-h-[8.5rem] flex-col overflow-hidden ${tileChrome}`}
+      className={`flex h-full min-h-[10rem] flex-col overflow-hidden ${tileChrome}`}
       href={href}
     >
-      <div className={`h-1.5 w-full bg-gradient-to-r ${grad}`} />
+      <div className={`h-1 w-full ${accent}`} />
       <div className="flex flex-1 flex-col p-4">
         <div className="flex items-start justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0 flex-1">
-            <span className="text-lg" aria-hidden>{emoji}</span>
-            <h3 className="min-w-0 flex-1 text-sm font-bold leading-snug text-ink">{title}</h3>
+          <div className="flex min-w-0 flex-1 items-center gap-2.5">
+            <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${accent}`} aria-hidden />
+            <h3 className="min-w-0 flex-1 text-base font-bold leading-snug text-ink">{title}</h3>
           </div>
           {badge}
         </div>
         {desc ? (
-          <p className="mt-2 line-clamp-2 min-h-[2.5rem] flex-1 text-xs leading-relaxed text-muted">{desc}</p>
+          <p className="mt-2 line-clamp-2 min-h-[2.75rem] flex-1 text-sm leading-relaxed text-muted">
+            {desc}
+          </p>
         ) : (
           <div className="min-h-[2.5rem] flex-1" />
         )}

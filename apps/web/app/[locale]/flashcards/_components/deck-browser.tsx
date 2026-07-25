@@ -170,7 +170,9 @@ export function DeckBrowser({
   const [pendingDeleteDeck, setPendingDeleteDeck] = useState<DeckApiRow | null>(null);
   const [deleteSubmitting, setDeleteSubmitting] = useState(false);
   const [cloning, setCloning] = useState(false);
-  const [cloneResult, setCloneResult] = useState<{ newDeckId: string; cardCount: number } | null>(null);
+  const [cloneResult, setCloneResult] = useState<{ newDeckId: string; cardCount: number } | null>(
+    null
+  );
   const [cloneError, setCloneError] = useState<string | null>(null);
 
   const loadDecks = useCallback(async () => {
@@ -200,11 +202,11 @@ export function DeckBrowser({
     setCloning(true);
     setCloneError(null);
     learnerApiFetch(`/api/flashcards/decks/clone/${encodeURIComponent(cloneToken)}`, {
-      method: "POST",
+      method: "POST"
     })
       .then(async (r) => {
         if (!r.ok) {
-          const body = await r.json().catch(() => ({})) as Record<string, unknown>;
+          const body = (await r.json().catch(() => ({}))) as Record<string, unknown>;
           throw new Error(body?.code === "QUOTA_EXCEEDED" ? "quota" : "clone_failed");
         }
         const data = (await r.json()) as { newDeckId: string; cardCount: number };
@@ -300,196 +302,203 @@ export function DeckBrowser({
   return renderDeckLibrary();
 
   function renderDeckLibrary() {
-
-  const sectionTitle =
-    filter === "my"
-      ? labels.myDecks
-      : filter === "public"
-        ? labels.publicDecks
-        : labels.recentSectionTitle;
-
-  const emptyTitle =
-    searchQuery.trim().length > 0
-      ? labels.emptySearch
-      : filter === "my"
-        ? labels.emptyMy
+    const sectionTitle =
+      filter === "my"
+        ? labels.myDecks
         : filter === "public"
-          ? labels.emptyPublic
-          : filter === "recent"
-            ? labels.emptyRecent
-            : labels.empty;
+          ? labels.publicDecks
+          : labels.recentSectionTitle;
 
-  const emptyDescription =
-    searchQuery.trim().length > 0
-      ? labels.emptySearchHint
-      : filter === "my"
-        ? labels.emptyMyHint
-        : "";
+    const emptyTitle =
+      searchQuery.trim().length > 0
+        ? labels.emptySearch
+        : filter === "my"
+          ? labels.emptyMy
+          : filter === "public"
+            ? labels.emptyPublic
+            : filter === "recent"
+              ? labels.emptyRecent
+              : labels.empty;
 
-  return (
-    <section aria-label={labels.title} className="space-y-4">
-      {cloning && (
-        <div className="rounded-xl border border-accent/20 bg-accent/5 p-4 text-center text-sm font-medium text-accent">
-          Đang clone bộ thẻ…
-        </div>
-      )}
-      {cloneResult && (
-        <div className="rounded-xl border border-[var(--color-matcha)]/20 bg-[var(--color-matcha)]/5 p-4 text-center text-sm font-medium text-[var(--color-matcha)]">
-          Clone thành công! Đã thêm {cloneResult.cardCount} thẻ vào thư viện.
-        </div>
-      )}
-      {cloneError && (
-        <div className="rounded-xl border border-[var(--color-sakura)]/20 bg-[var(--color-sakura)]/5 p-4 text-center text-sm font-medium text-[var(--color-sakura)]">
-          {cloneError}
-        </div>
-      )}
-      <div
-        aria-label={labels.ariaToolbar}
-        className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-      >
-        <div>
-          <h2 className="text-lg font-bold text-ink">{sectionTitle}</h2>
-          <p className="text-xs font-semibold text-muted">{labels.subtitle}</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <TabsList role="group">
-            <TabButton
-              aria-label={labels.viewGrid}
-              aria-pressed={viewMode === "grid"}
-              active={viewMode === "grid"}
-              onClick={() => setViewMode("grid")}
-            >
-              {labels.viewGrid}
-            </TabButton>
-            <TabButton
-              aria-label={labels.viewList}
-              aria-pressed={viewMode === "list"}
-              active={viewMode === "list"}
-              onClick={() => setViewMode("list")}
-            >
-              {labels.viewList}
-            </TabButton>
-          </TabsList>
-          <Button
-            size="sm"
-            variant="secondary"
-            disabled={loading}
-            onClick={() => void loadDecks()}
-            type="button"
-          >
-            {labels.reloadDecks}
-          </Button>
-          <Button size="sm" onClick={() => onCreateModeChange(true)} type="button">
-            {labels.createDeck}
-          </Button>
-        </div>
-      </div>
+    const emptyDescription =
+      searchQuery.trim().length > 0
+        ? labels.emptySearchHint
+        : filter === "my"
+          ? labels.emptyMyHint
+          : "";
 
-      {error ? <ErrorState className="py-5" title={error} /> : null}
-
-      {loading && decks.length === 0 ? (
-        <div aria-busy className="grid gap-3 sm:grid-cols-2">
-          {[1, 2, 3, 4].map((i) => (
-            <LoadingSkeleton className="h-28" key={i} />
-          ))}
-        </div>
-      ) : null}
-
-      {!loading && !error && filteredByScope.length === 0 ? (
-        <EmptyState
-          action={
-            filter === "my" || filter === "recent" ? (
-              <Button onClick={() => onCreateModeChange(true)} type="button">
-                {labels.createDeck}
-              </Button>
-            ) : undefined
-          }
-          description={emptyDescription || undefined}
-          title={emptyTitle}
-        />
-      ) : null}
-
-      {filteredByScope.length > 0 ? (
-        <DeckGrid mode={viewMode}>
-          {filteredByScope.map((d) => {
-            const isOwner = Boolean(userId && d.ownerUserId === userId);
-            return (
-              <DeckCard
-                key={d.id}
-                deck={d}
-                href={`/${locale}/flashcards/decks/${d.id}`}
-                insideFooter={
-                  isOwner ? (
-                    <button
-                      aria-label={labels.deleteOwnedDeckAria}
-                      className="inline-flex min-h-9 shrink-0 items-center justify-center rounded-lg border border-ink/15 bg-surface px-2.5 text-[11px] font-bold uppercase tracking-wide text-muted shadow-sm outline-none ring-offset-2 hover:border-sakura/35 hover:text-sakura focus-visible:ring-2 focus-visible:ring-accent"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setPendingDeleteDeck(d);
-                      }}
-                      type="button"
-                    >
-                      {labels.deleteOwnedDeck}
-                    </button>
-                  ) : undefined
-                }
-                labels={deckCardLabels}
-                locale={locale}
-                mode={viewMode}
-              />
-            );
-          })}
-        </DeckGrid>
-      ) : null}
-
-      {pendingDeleteDeck ? (
+    return (
+      <section aria-label={labels.title} className="space-y-4">
+        {cloning && (
+          <div className="rounded-xl border border-accent/20 bg-accent/5 p-4 text-center text-sm font-medium text-accent">
+            Đang clone bộ thẻ…
+          </div>
+        )}
+        {cloneResult && (
+          <div className="rounded-xl border border-[var(--color-matcha)]/20 bg-[var(--color-matcha)]/5 p-4 text-center text-sm font-medium text-[var(--color-matcha)]">
+            Clone thành công! Đã thêm {cloneResult.cardCount} thẻ vào thư viện.
+          </div>
+        )}
+        {cloneError && (
+          <div className="rounded-xl border border-[var(--color-sakura)]/20 bg-[var(--color-sakura)]/5 p-4 text-center text-sm font-medium text-[var(--color-sakura)]">
+            {cloneError}
+          </div>
+        )}
         <div
-          className="fixed inset-0 z-[100] flex items-end justify-center bg-ink/45 p-4 sm:items-center"
-          onClick={() => {
-            if (!deleteSubmitting) setPendingDeleteDeck(null);
-          }}
-          role="presentation"
+          aria-label={labels.ariaToolbar}
+          className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
         >
-          <div
-            aria-describedby={deleteBodyId}
-            aria-labelledby={deleteTitleId}
-            aria-modal="true"
-            className="w-full max-w-md rounded-2xl border border-ink/10 bg-surface p-5 shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => {
-              if (e.key === "Escape" && !deleteSubmitting) setPendingDeleteDeck(null);
-            }}
-            role="alertdialog"
-          >
-            <h3 className="text-base font-bold text-ink" id={deleteTitleId}>
-              {labels.deleteOwnedDeckConfirmTitle}
-            </h3>
-            <p className="mt-3 text-sm leading-relaxed text-ink/85" id={deleteBodyId}>
-              {labels.deleteOwnedDeckConfirmBody}
-            </p>
-            <div className="mt-5 flex flex-wrap justify-end gap-2">
-              <button
-                className="inline-flex min-h-10 items-center justify-center rounded-xl border border-ink/12 bg-paper px-4 text-sm font-bold text-ink outline-none ring-offset-2 hover:bg-white focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50"
-                disabled={deleteSubmitting}
-                onClick={() => setPendingDeleteDeck(null)}
-                type="button"
+          <div>
+            <h2 className="text-lg font-bold text-ink">{sectionTitle}</h2>
+            <p className="text-xs font-semibold text-muted">{labels.subtitle}</p>
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
+            <TabsList className="col-span-2" role="group">
+              <TabButton
+                aria-label={labels.viewGrid}
+                aria-pressed={viewMode === "grid"}
+                active={viewMode === "grid"}
+                onClick={() => setViewMode("grid")}
               >
-                {labels.deleteOwnedDeckCancel}
-              </button>
-              <button
-                className="inline-flex min-h-10 items-center justify-center rounded-xl bg-[var(--color-sakura)] px-4 text-sm font-bold text-white outline-none ring-offset-2 hover:opacity-95 focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50"
-                disabled={deleteSubmitting}
-                onClick={() => void confirmArchiveOwnedDeck()}
-                type="button"
+                {labels.viewGrid}
+              </TabButton>
+              <TabButton
+                aria-label={labels.viewList}
+                aria-pressed={viewMode === "list"}
+                active={viewMode === "list"}
+                onClick={() => setViewMode("list")}
               >
-                {deleteSubmitting ? labels.deleteOwnedDeckDeleting : labels.deleteOwnedDeckConfirm}
-              </button>
-            </div>
+                {labels.viewList}
+              </TabButton>
+            </TabsList>
+            <Button
+              className="min-h-11"
+              size="sm"
+              variant="secondary"
+              disabled={loading}
+              onClick={() => void loadDecks()}
+              type="button"
+            >
+              {labels.reloadDecks}
+            </Button>
+            <Button
+              className="min-h-11"
+              size="sm"
+              onClick={() => onCreateModeChange(true)}
+              type="button"
+            >
+              {labels.createDeck}
+            </Button>
           </div>
         </div>
-      ) : null}
-    </section>
-  );
+
+        {error ? <ErrorState className="py-5" title={error} /> : null}
+
+        {loading && decks.length === 0 ? (
+          <div aria-busy className="grid gap-3 sm:grid-cols-2">
+            {[1, 2, 3, 4].map((i) => (
+              <LoadingSkeleton className="h-28" key={i} />
+            ))}
+          </div>
+        ) : null}
+
+        {!loading && !error && filteredByScope.length === 0 ? (
+          <EmptyState
+            action={
+              filter === "my" || filter === "recent" ? (
+                <Button onClick={() => onCreateModeChange(true)} type="button">
+                  {labels.createDeck}
+                </Button>
+              ) : undefined
+            }
+            description={emptyDescription || undefined}
+            title={emptyTitle}
+          />
+        ) : null}
+
+        {filteredByScope.length > 0 ? (
+          <DeckGrid mode={viewMode}>
+            {filteredByScope.map((d) => {
+              const isOwner = Boolean(userId && d.ownerUserId === userId);
+              return (
+                <DeckCard
+                  key={d.id}
+                  deck={d}
+                  href={`/${locale}/flashcards/decks/${d.id}`}
+                  insideFooter={
+                    isOwner ? (
+                      <button
+                        aria-label={labels.deleteOwnedDeckAria}
+                        className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg border border-ink/15 bg-surface px-3 text-xs font-bold text-muted outline-none ring-offset-2 hover:border-sakura/35 hover:text-sakura focus-visible:ring-2 focus-visible:ring-accent"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setPendingDeleteDeck(d);
+                        }}
+                        type="button"
+                      >
+                        {labels.deleteOwnedDeck}
+                      </button>
+                    ) : undefined
+                  }
+                  labels={deckCardLabels}
+                  locale={locale}
+                  mode={viewMode}
+                />
+              );
+            })}
+          </DeckGrid>
+        ) : null}
+
+        {pendingDeleteDeck ? (
+          <div
+            className="fixed inset-0 z-[100] flex items-end justify-center bg-ink/45 p-4 sm:items-center"
+            onClick={() => {
+              if (!deleteSubmitting) setPendingDeleteDeck(null);
+            }}
+            role="presentation"
+          >
+            <div
+              aria-describedby={deleteBodyId}
+              aria-labelledby={deleteTitleId}
+              aria-modal="true"
+              className="w-full max-w-md rounded-2xl border border-ink/10 bg-surface p-5 shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => {
+                if (e.key === "Escape" && !deleteSubmitting) setPendingDeleteDeck(null);
+              }}
+              role="alertdialog"
+            >
+              <h3 className="text-base font-bold text-ink" id={deleteTitleId}>
+                {labels.deleteOwnedDeckConfirmTitle}
+              </h3>
+              <p className="mt-3 text-sm leading-relaxed text-ink/85" id={deleteBodyId}>
+                {labels.deleteOwnedDeckConfirmBody}
+              </p>
+              <div className="mt-5 flex flex-wrap justify-end gap-2">
+                <button
+                  className="inline-flex min-h-11 items-center justify-center rounded-xl border border-ink/12 bg-paper px-4 text-sm font-bold text-ink outline-none ring-offset-2 hover:bg-white focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50"
+                  disabled={deleteSubmitting}
+                  onClick={() => setPendingDeleteDeck(null)}
+                  type="button"
+                >
+                  {labels.deleteOwnedDeckCancel}
+                </button>
+                <button
+                  className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[var(--color-sakura)] px-4 text-sm font-bold text-white outline-none ring-offset-2 hover:opacity-95 focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50"
+                  disabled={deleteSubmitting}
+                  onClick={() => void confirmArchiveOwnedDeck()}
+                  type="button"
+                >
+                  {deleteSubmitting
+                    ? labels.deleteOwnedDeckDeleting
+                    : labels.deleteOwnedDeckConfirm}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </section>
+    );
   } // end renderDeckLibrary
 }

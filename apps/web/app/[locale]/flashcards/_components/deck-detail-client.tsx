@@ -232,7 +232,7 @@ export function DeckDetailClient({
     return (
       <div className="mx-auto w-full max-w-4xl space-y-4 px-4 py-6 sm:px-6">
         <Link
-          className="inline-flex min-h-10 items-center rounded-xl border border-ink/12 bg-paper px-4 text-sm font-bold text-ink hover:bg-white"
+          className="inline-flex min-h-11 items-center rounded-xl border border-ink/12 bg-paper px-4 text-sm font-bold text-ink outline-none ring-offset-2 hover:bg-white focus-visible:ring-2 focus-visible:ring-accent"
           href={backHref}
         >
           ← {labels.deckDetailBack}
@@ -282,7 +282,7 @@ export function DeckDetailClient({
     <div className="mx-auto w-full max-w-6xl space-y-5 px-4 py-5 sm:px-6 lg:py-8">
       <nav className="flex flex-wrap items-center gap-2 text-sm text-muted">
         <Link
-          className="inline-flex min-h-9 items-center rounded-lg px-2 font-semibold transition hover:bg-ink/5 hover:text-ink"
+          className="inline-flex min-h-11 items-center rounded-xl px-3 font-semibold outline-none ring-offset-2 transition hover:bg-ink/5 hover:text-ink focus-visible:ring-2 focus-visible:ring-accent"
           href={backHref}
         >
           ← {labels.deckDetailBack}
@@ -380,7 +380,7 @@ export function DeckDetailClient({
 
       <div
         className={cn(
-          "grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start",
+          "grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem] xl:items-start",
           editMode && "opacity-60"
         )}
       >
@@ -466,7 +466,7 @@ export function DeckDetailClient({
           )}
         </div>
 
-        <aside className="space-y-4 lg:sticky lg:top-20">
+        <aside className="space-y-4 xl:sticky xl:top-20">
           <Card>
             <CardContent className="space-y-3 p-4">
               <div className="flex items-center gap-3">
@@ -476,7 +476,7 @@ export function DeckDetailClient({
                 <span className="text-sm font-semibold text-muted">{labels.cards}</span>
               </div>
               <Link
-                className="inline-flex min-h-10 w-full items-center justify-center rounded-xl bg-ink px-4 text-sm font-bold text-surface shadow-sm transition hover:bg-ink/90"
+                className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-ink px-4 text-sm font-bold text-surface outline-none ring-offset-2 transition hover:bg-ink/90 focus-visible:ring-2 focus-visible:ring-accent"
                 href={reviewHref}
               >
                 {labels.reviewDeck}
@@ -520,7 +520,7 @@ export function DeckDetailClient({
             </p>
             <div className="mt-5 flex flex-wrap justify-end gap-2">
               <button
-                className="inline-flex min-h-10 items-center justify-center rounded-xl border border-ink/12 bg-paper px-4 text-sm font-bold text-ink outline-none ring-offset-2 hover:bg-white focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50"
+                className="inline-flex min-h-11 items-center justify-center rounded-xl border border-ink/12 bg-paper px-4 text-sm font-bold text-ink outline-none ring-offset-2 hover:bg-white focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50"
                 disabled={deleteSubmitting}
                 onClick={() => setPendingDelete(false)}
                 type="button"
@@ -528,7 +528,7 @@ export function DeckDetailClient({
                 {labels.deleteOwnedDeckCancel}
               </button>
               <button
-                className="inline-flex min-h-10 items-center justify-center rounded-xl bg-[var(--color-sakura)] px-4 text-sm font-bold text-white outline-none ring-offset-2 hover:opacity-95 focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50"
+                className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[var(--color-sakura)] px-4 text-sm font-bold text-white outline-none ring-offset-2 hover:opacity-95 focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50"
                 disabled={deleteSubmitting}
                 onClick={() => void confirmArchive()}
                 type="button"
@@ -560,7 +560,7 @@ function HeaderActionButton({
     <button
       aria-label={label}
       className={cn(
-        "inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border px-3 text-xs font-bold outline-none ring-offset-2 transition focus-visible:ring-2 focus-visible:ring-accent disabled:pointer-events-none disabled:opacity-45",
+        "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border px-3 text-xs font-bold outline-none ring-offset-2 transition focus-visible:ring-2 focus-visible:ring-accent disabled:pointer-events-none disabled:opacity-45",
         danger
           ? "border-sakura/25 bg-sakura/5 text-sakura hover:border-sakura/40 hover:bg-sakura/10"
           : "border-ink/12 bg-paper/80 text-ink hover:border-ink/20 hover:bg-white"
@@ -687,7 +687,8 @@ function CardListCollapsible({
       <Card>
         <CardContent className="p-0">
           <button
-            className="flex w-full items-center justify-between border-b border-ink/8 px-4 py-3 text-left transition hover:bg-paper/60"
+            aria-expanded={open}
+            className="flex min-h-11 w-full items-center justify-between border-b border-ink/8 px-4 py-3 text-left outline-none ring-offset-2 transition hover:bg-paper/60 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
             onClick={() => setOpen((v) => !v)}
             type="button"
           >
@@ -709,47 +710,42 @@ function CardListCollapsible({
                 className="max-h-[32rem] divide-y divide-ink/6 overflow-y-auto overscroll-contain"
               >
                 {cards.map((row, i) => (
-                  <li
-                    className={cn(
-                      "cursor-pointer px-4 py-3 transition hover:bg-paper/60",
-                      i === activeIndex && "bg-accent-soft/30 ring-1 ring-inset ring-accent/20"
-                    )}
-                    key={row.id}
-                    onClick={() => onGoToCard(i)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        onGoToCard(i);
-                      }
-                    }}
-                  >
-                    <div className="flex items-start gap-3">
-                      <span
-                        className={cn(
-                          "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-xs font-semibold tabular-nums",
-                          i === activeIndex
-                            ? "bg-accent text-white shadow-sm"
-                            : "bg-paper text-muted"
-                        )}
-                      >
-                        {i + 1}
-                      </span>
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold leading-snug text-ink" lang="ja">
-                          {row.card.frontText}
-                        </p>
-                        {row.card.reading ? (
-                          <p className="mt-0.5 text-xs text-muted" lang="ja">
-                            {row.card.reading}
+                  <li key={row.id}>
+                    <button
+                      aria-current={i === activeIndex ? "true" : undefined}
+                      className={cn(
+                        "w-full cursor-pointer px-4 py-3 text-left outline-none ring-offset-2 transition hover:bg-paper/60 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent",
+                        i === activeIndex && "bg-accent-soft/30 ring-1 ring-inset ring-accent/20"
+                      )}
+                      onClick={() => onGoToCard(i)}
+                      type="button"
+                    >
+                      <div className="flex items-start gap-3">
+                        <span
+                          className={cn(
+                            "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-xs font-semibold tabular-nums",
+                            i === activeIndex
+                              ? "bg-accent text-white shadow-sm"
+                              : "bg-paper text-muted"
+                          )}
+                        >
+                          {i + 1}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold leading-snug text-ink" lang="ja">
+                            {row.card.frontText}
                           </p>
-                        ) : null}
-                        <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted">
-                          {row.card.backText}
-                        </p>
+                          {row.card.reading ? (
+                            <p className="mt-0.5 text-xs text-muted" lang="ja">
+                              {row.card.reading}
+                            </p>
+                          ) : null}
+                          <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted">
+                            {row.card.backText}
+                          </p>
+                        </div>
                       </div>
-                    </div>
+                    </button>
                   </li>
                 ))}
               </ul>

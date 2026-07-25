@@ -8,6 +8,9 @@ import {
   DeckStudySession,
   type DeckStudySessionLabels
 } from "../../[locale]/flashcards/_components/deck-study-session";
+import { DeckCard, type DeckCardLabels } from "../../[locale]/flashcards/_components/deck-card";
+import { DeckGrid } from "../../[locale]/flashcards/_components/deck-grid";
+import type { DeckApiRow } from "../../[locale]/flashcards/_components/deck-types";
 import {
   FlashcardStyleGrid,
   type FlashcardStyleOption,
@@ -91,6 +94,102 @@ const longJapanese =
 const longVietnamese =
   "Sau khi chia sẻ mục tiêu của cuộc họp và các vấn đề hiện tại với tất cả bên liên quan, hãy đề xuất các phương án cải thiện khả thi kèm theo thứ tự ưu tiên rõ ràng.";
 
+const libraryDeckLabels: DeckCardLabels = {
+  cards: "thẻ",
+  createdLabel: "Tạo",
+  gridAriaLabel: "Dạng lưới",
+  listAriaLabel: "Dạng danh sách",
+  openDeckAria: "Mở bộ thẻ",
+  private: "Riêng tư",
+  public: "Công khai",
+  statusActive: "Đang học",
+  statusArchived: "Đã lưu trữ",
+  updatedLabel: "Cập nhật"
+};
+
+const libraryDecks: DeckApiRow[] = [
+  {
+    _count: { cards: 32 },
+    createdAt: "2026-06-12T08:00:00.000Z",
+    descriptionJa: null,
+    descriptionVi: "Từ vựng và mẫu câu dùng trong môi trường công sở Nhật Bản.",
+    id: "visual-deck-1",
+    ownerUserId: "visual-user",
+    status: "active",
+    titleJa: "ビジネス日本語",
+    titleVi: "Tiếng Nhật thương mại",
+    updatedAt: "2026-07-24T08:00:00.000Z",
+    visibility: "private"
+  },
+  {
+    _count: { cards: 18 },
+    createdAt: "2026-05-10T08:00:00.000Z",
+    descriptionJa: null,
+    descriptionVi: "Ôn nhanh kanji, cách đọc và ví dụ theo chủ đề an toàn lao động.",
+    id: "visual-deck-2",
+    ownerUserId: null,
+    status: "active",
+    titleJa: "安全衛生",
+    titleVi: "An toàn và vệ sinh",
+    updatedAt: "2026-07-22T08:00:00.000Z",
+    visibility: "public"
+  },
+  {
+    _count: { cards: 24 },
+    createdAt: "2026-04-08T08:00:00.000Z",
+    descriptionJa: null,
+    descriptionVi: "Các cụm từ cần nhớ trước bài thi BJT.",
+    id: "visual-deck-3",
+    ownerUserId: "visual-user",
+    status: "active",
+    titleJa: "試験対策",
+    titleVi: "BJT trọng điểm",
+    updatedAt: "2026-07-20T08:00:00.000Z",
+    visibility: "private"
+  }
+];
+
+function LibraryVisualFixture() {
+  return (
+    <section
+      className="rounded-[1.75rem] border border-ink/10 bg-surface p-4 sm:p-6"
+      data-testid="flashcard-library-fixture"
+    >
+      <div className="flex flex-col gap-4 border-b border-ink/10 pb-5 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-accent">
+            Thư viện học
+          </p>
+          <h2 className="mt-1 text-2xl font-black tracking-tight text-ink">Bộ thẻ của bạn</h2>
+          <p className="mt-1 text-sm leading-relaxed text-muted">
+            Chọn một bộ để tiếp tục học hoặc ôn theo lịch.
+          </p>
+        </div>
+        <button
+          className="inline-flex min-h-11 items-center justify-center rounded-xl bg-ink px-5 text-sm font-bold text-surface outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-accent"
+          type="button"
+        >
+          Tạo bộ thẻ
+        </button>
+      </div>
+      <div className="mt-5">
+        <DeckGrid mode="grid">
+          {libraryDecks.map((deck) => (
+            <DeckCard
+              deck={deck}
+              href="#"
+              key={deck.id}
+              labels={libraryDeckLabels}
+              locale="vi"
+              mode="grid"
+            />
+          ))}
+        </DeckGrid>
+      </div>
+    </section>
+  );
+}
+
 function LegacyThemeCard({ themeSlug }: { themeSlug: string }) {
   const theme = resolveFlashcardThemeDefinition(themeSlug);
   return (
@@ -140,7 +239,9 @@ export function FlashcardThemeVisualHarness() {
           <h1 className="mt-1 text-xl font-black">Flashcards · {theme.slug}</h1>
         </header>
 
-        {view === "picker" ? (
+        {view === "library" ? (
+          <LibraryVisualFixture />
+        ) : view === "picker" ? (
           <section
             className="rounded-3xl border border-ink/10 bg-surface p-4 shadow-lg sm:p-6"
             data-testid="theme-picker-matrix"

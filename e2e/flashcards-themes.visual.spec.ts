@@ -11,12 +11,27 @@ const viewports = [
 const colorModes = ["light", "dark"] as const;
 
 async function setColorMode(page: Page, mode: (typeof colorModes)[number]) {
-  await page.addInitScript((selectedMode) => {
-    window.localStorage.setItem(
-      "nihongo-appearance",
-      JSON.stringify({ density: "comfortable", fontSize: "default", theme: selectedMode })
-    );
-  }, mode);
+  await setAppearance(page, mode, "default");
+}
+
+async function setAppearance(
+  page: Page,
+  mode: (typeof colorModes)[number],
+  fontSize: "small" | "default" | "large" | "xl"
+) {
+  await page.addInitScript(
+    (selectedMode) => {
+      window.localStorage.setItem(
+        "nihongo-appearance",
+        JSON.stringify({
+          density: "comfortable",
+          fontSize: selectedMode.fontSize,
+          theme: selectedMode.mode
+        })
+      );
+    },
+    { fontSize, mode }
+  );
 }
 
 async function settle(page: Page) {
@@ -146,6 +161,55 @@ test.describe("flashcard theme visual matrix", () => {
         workspace,
         `layout-short-content-${viewport.name}.png`,
         `artifacts/flashcards-layout/after/layout-short-content-${viewport.name}.png`
+      );
+    });
+  }
+
+  for (const preference of [
+    { fontSize: "small", minimumPx: 33 },
+    { fontSize: "default", minimumPx: 39 },
+    { fontSize: "large", minimumPx: 43 },
+    { fontSize: "xl", minimumPx: 47 }
+  ] as const) {
+    test(`study typography preserves hierarchy with global ${preference.fontSize} setting`, async ({
+      page
+    }) => {
+      await page.setViewportSize(viewports[0]);
+      await setAppearance(page, "light", preference.fontSize);
+      await page.goto("/visual-tests/flashcards?theme=ocean-calm&content=short");
+      await settle(page);
+
+      const term = page.locator(".flashcard-study-term").first();
+      const reading = page.locator(".flashcard-study-reading").first();
+      const termPx = await term.evaluate((element) =>
+        Number.parseFloat(getComputedStyle(element).fontSize)
+      );
+      const readingPx = await reading.evaluate((element) =>
+        Number.parseFloat(getComputedStyle(element).fontSize)
+      );
+
+      expect(termPx).toBeGreaterThanOrEqual(preference.minimumPx);
+      expect(readingPx).toBeGreaterThanOrEqual(17);
+      expect(termPx).toBeGreaterThan(readingPx * 1.65);
+    });
+  }
+
+  for (const viewport of [viewports[0], viewports[2]]) {
+    test(`deck library hierarchy · ${viewport.name}`, async ({ page }) => {
+      await page.setViewportSize(viewport);
+      await setColorMode(page, "light");
+      await page.goto("/visual-tests/flashcards?view=library");
+      await settle(page);
+
+      const library = page.getByTestId("flashcard-library-fixture");
+      await expect(library).toBeVisible();
+      expect(
+        await library.evaluate((element) => element.scrollWidth <= element.clientWidth + 1)
+      ).toBe(true);
+      await capture(
+        library,
+        `library-${viewport.name}.png`,
+        `artifacts/flashcards-layout/after/library-${viewport.name}.png`
       );
     });
   }

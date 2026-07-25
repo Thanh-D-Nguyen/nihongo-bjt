@@ -530,14 +530,17 @@ export function DeckStudySession({
     <section
       ref={sectionRef}
       aria-labelledby="deck-study-eyebrow"
-      className="mb-8 rounded-3xl border border-ink/10 bg-gradient-to-b from-surface via-surface to-paper/70 p-4 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.12)] ring-1 ring-ink/[0.04] sm:p-6"
+      className="mb-8 rounded-[1.75rem] border border-ink/10 bg-surface p-3 shadow-[0_18px_55px_-36px_rgba(15,23,42,0.45)] sm:p-5"
     >
-      <div className="mx-auto max-w-3xl" data-testid="deck-study-workspace">
+      <div
+        className="flashcard-study-workspace mx-auto max-w-4xl"
+        data-testid="deck-study-workspace"
+      >
         <div
-          className="mb-5 overflow-hidden rounded-2xl border border-ink/10 bg-paper/65 shadow-[0_8px_28px_-18px_rgba(15,23,42,0.45)]"
+          className="mb-4 overflow-hidden rounded-2xl border border-ink/10 bg-paper/70"
           data-testid="deck-study-header"
         >
-          <div className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-5 sm:p-4">
+          <div className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-5 sm:px-4 sm:py-3.5">
             <div className="min-w-0">
               <p
                 className="text-[10px] font-black uppercase tracking-[0.2em] text-accent"
@@ -547,7 +550,7 @@ export function DeckStudySession({
               </p>
               <div
                 aria-label={labels.deckStudyEyebrow}
-                className="-mx-1 mt-2 flex snap-x gap-2 overflow-x-auto px-1 pb-1"
+                className="mt-2 flex max-w-full snap-x gap-1.5 overflow-x-auto pb-1"
                 role="group"
               >
                 {modeButtons.map((m) => (
@@ -555,7 +558,7 @@ export function DeckStudySession({
                     key={m.id}
                     aria-pressed={mode === m.id}
                     className={cn(
-                      "inline-flex min-h-11 shrink-0 snap-start items-center gap-2 rounded-full border px-3.5 py-2 text-sm font-bold outline-none transition-[background-color,border-color,color,box-shadow,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper motion-safe:active:scale-[0.98]",
+                      "inline-flex min-h-11 shrink-0 snap-start items-center gap-2 rounded-xl border px-3.5 py-2 text-sm font-bold outline-none transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper motion-safe:active:scale-[0.98]",
                       mode === m.id
                         ? "border-ink bg-ink text-surface shadow-sm"
                         : "border-ink/10 bg-surface/80 text-muted hover:border-ink/20 hover:text-ink"
@@ -593,7 +596,7 @@ export function DeckStudySession({
           <div className="flex items-center justify-between gap-3 border-t border-ink/[0.08] px-3 py-2.5 sm:px-4">
             <div
               aria-label={labels.deckStudyToolsAria}
-              className="flex min-w-0 gap-2 overflow-x-auto py-0.5"
+              className="flex min-w-0 w-full gap-2 overflow-x-auto py-0.5"
               role="toolbar"
             >
               <ToolButton
@@ -657,7 +660,10 @@ export function DeckStudySession({
               <p className="flashcard-theme-muted text-[11px] font-bold uppercase tracking-widest">
                 {labels.deckStudyQuizPrompt}
               </p>
-              <p className="flashcard-theme-primary jp-text mt-5 font-black" lang="ja">
+              <p
+                className="flashcard-theme-primary flashcard-study-term jp-text mt-5 font-black"
+                lang="ja"
+              >
                 {current.frontText}
               </p>
               {current.reading && hasJapanese(current.frontText) ? (
@@ -718,7 +724,7 @@ export function DeckStudySession({
             <div className={cn("relative [perspective:1400px]", flipped && "fc-card-reveal")}>
               <div
                 className={cn(
-                  "flashcard-theme-surface fc-card-shell relative h-[clamp(24rem,56vh,34rem)] w-full rounded-[1.75rem] border p-1.5 text-left sm:h-[clamp(26rem,58vh,36rem)] sm:p-2",
+                  "flashcard-theme-surface fc-card-shell relative h-[clamp(22rem,52svh,30rem)] w-full rounded-[1.75rem] border p-1.5 text-left sm:h-[clamp(24rem,54svh,32rem)] sm:p-2",
                   "[transform-style:preserve-3d]"
                 )}
                 style={cardThemeStyle}
@@ -733,7 +739,7 @@ export function DeckStudySession({
                   <div
                     aria-hidden={flipped}
                     inert={flipped ? true : undefined}
-                    className="flashcard-theme-surface absolute inset-0 flex min-h-0 flex-col overflow-hidden rounded-[1.25rem] border p-3 pb-[4.75rem] backface-hidden sm:p-5 sm:pb-[4.75rem]"
+                    className="flashcard-theme-surface absolute inset-0 flex min-h-0 flex-col overflow-hidden rounded-[1.25rem] border p-3 pb-[4.5rem] backface-hidden sm:p-4 sm:pb-[4.75rem]"
                   >
                     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain pr-1">
                       <div className="flex items-center gap-2">
@@ -743,7 +749,7 @@ export function DeckStudySession({
                       </div>
                       <div
                         className={cn(
-                          "flashcard-theme-content mt-3 grid min-h-[16rem] flex-1 gap-4 rounded-2xl border p-5 sm:min-h-[18rem] sm:p-7",
+                          "flashcard-theme-content mt-3 grid min-h-[14rem] flex-1 gap-4 rounded-2xl border p-5 sm:min-h-[16rem] sm:p-7",
                           showCardImage
                             ? "sm:grid-cols-[minmax(0,1fr)_minmax(13rem,42%)] sm:items-center"
                             : "place-items-center text-center"
@@ -759,7 +765,10 @@ export function DeckStudySession({
                           <p className="flashcard-theme-muted text-[11px] font-bold uppercase tracking-widest">
                             {labels.deckStudyFlipPrompt}
                           </p>
-                          <p className="flashcard-theme-primary jp-text mt-3 font-black" lang="ja">
+                          <p
+                            className="flashcard-theme-primary flashcard-study-term jp-text mt-3 font-black"
+                            lang="ja"
+                          >
                             {current.frontText}
                           </p>
                           {current.reading && hasJapanese(current.frontText) ? (
@@ -780,7 +789,7 @@ export function DeckStudySession({
                   <div
                     aria-hidden={!flipped}
                     inert={!flipped ? true : undefined}
-                    className="flashcard-theme-surface absolute inset-0 flex min-h-0 flex-col overflow-hidden rounded-[1.25rem] border p-3 pb-[4.75rem] backface-hidden sm:p-5 sm:pb-[4.75rem]"
+                    className="flashcard-theme-surface absolute inset-0 flex min-h-0 flex-col overflow-hidden rounded-[1.25rem] border p-3 pb-[4.5rem] backface-hidden sm:p-4 sm:pb-[4.75rem]"
                     style={{ transform: flipTransform }}
                   >
                     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain pr-1">
@@ -789,7 +798,7 @@ export function DeckStudySession({
                       </span>
                       <div
                         className={cn(
-                          "flashcard-theme-content mt-3 grid min-h-[16rem] flex-1 gap-4 rounded-2xl border p-5 sm:min-h-[18rem] sm:p-7",
+                          "flashcard-theme-content mt-3 grid min-h-[14rem] flex-1 gap-4 rounded-2xl border p-5 sm:min-h-[16rem] sm:p-7",
                           showCardImage
                             ? "sm:grid-cols-[minmax(0,1fr)_minmax(13rem,40%)] sm:items-center"
                             : "place-items-center text-center"
@@ -803,10 +812,12 @@ export function DeckStudySession({
                             !showCardImage && "mx-auto max-w-[34rem]"
                           )}
                         >
-                          <p className="flashcard-theme-answer font-black">{current.backText}</p>
+                          <p className="flashcard-theme-answer flashcard-study-answer font-black">
+                            {current.backText}
+                          </p>
                           <div className="flashcard-theme-divider mt-5 rounded-2xl border px-4 py-3 text-left">
                             <p
-                              className="jp-text text-sm font-bold leading-[1.8] text-[var(--flashcard-foreground)]"
+                              className="flashcard-study-reference jp-text font-bold text-[var(--flashcard-foreground)]"
                               lang="ja"
                             >
                               {current.frontText}
@@ -865,23 +876,23 @@ export function DeckStudySession({
             ) : null}
 
             {flipped ? (
-              <div className="fc-btn-stagger mt-5 flex flex-wrap items-center justify-center gap-3">
+              <div className="fc-btn-stagger mt-4 grid grid-cols-3 gap-2 sm:gap-3">
                 <button
-                  className="fc-btn-press inline-flex min-h-[3.25rem] items-center justify-center gap-2 rounded-2xl border-2 border-sakura/25 bg-gradient-to-b from-sakura/10 to-sakura/5 px-5 text-sm font-bold text-sakura shadow-sm outline-none ring-offset-2 transition-all hover:border-sakura/40 hover:from-sakura/15 hover:shadow-md focus-visible:ring-2 focus-visible:ring-sakura/50"
+                  className="fc-btn-press inline-flex min-h-[3.25rem] min-w-0 items-center justify-center gap-1.5 rounded-xl border-2 border-sakura/25 bg-sakura/10 px-2 text-xs font-bold text-sakura outline-none ring-offset-2 transition-colors hover:border-sakura/40 hover:bg-sakura/15 focus-visible:ring-2 focus-visible:ring-sakura/50 sm:text-sm"
                   onClick={() => handleRate("again")}
                   type="button"
                 >
                   <span className="text-base">🌱</span> {labels.deckStudyRateAgain}
                 </button>
                 <button
-                  className="fc-btn-press inline-flex min-h-[3.25rem] items-center justify-center gap-2 rounded-2xl border-2 border-sun/25 bg-gradient-to-b from-sun/10 to-sun/5 px-5 text-sm font-bold text-amber-700 shadow-sm outline-none ring-offset-2 transition-all hover:border-sun/40 hover:from-sun/15 hover:shadow-md focus-visible:ring-2 focus-visible:ring-sun/50"
+                  className="fc-btn-press inline-flex min-h-[3.25rem] min-w-0 items-center justify-center gap-1.5 rounded-xl border-2 border-sun/30 bg-sun/10 px-2 text-xs font-bold text-amber-700 outline-none ring-offset-2 transition-colors hover:border-sun/45 hover:bg-sun/15 focus-visible:ring-2 focus-visible:ring-sun/50 sm:text-sm"
                   onClick={() => handleRate("hard")}
                   type="button"
                 >
                   <span className="text-base">💪</span> {labels.deckStudyRateHard}
                 </button>
                 <button
-                  className="fc-btn-press inline-flex min-h-[3.25rem] items-center justify-center gap-2 rounded-2xl border-2 border-leaf/30 bg-gradient-to-b from-leaf to-emerald-600 px-6 text-sm font-bold text-white shadow-md shadow-leaf/20 outline-none ring-offset-2 transition-all hover:from-leaf/90 hover:shadow-lg hover:shadow-leaf/25 focus-visible:ring-2 focus-visible:ring-leaf/50"
+                  className="fc-btn-press inline-flex min-h-[3.25rem] min-w-0 items-center justify-center gap-1.5 rounded-xl border-2 border-leaf bg-leaf px-2 text-xs font-bold text-white outline-none ring-offset-2 transition-colors hover:bg-emerald-700 focus-visible:ring-2 focus-visible:ring-leaf/50 sm:text-sm"
                   onClick={() => handleRate("good")}
                   type="button"
                 >
@@ -895,9 +906,9 @@ export function DeckStudySession({
               </p>
             ) : null}
 
-            <div className="mt-5 flex flex-wrap items-stretch justify-between gap-3 sm:gap-4">
+            <div className="sticky bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-20 mt-4 flex items-stretch justify-between gap-2 rounded-2xl border border-ink/10 bg-paper/95 p-2 shadow-[0_12px_32px_-18px_rgba(15,23,42,0.55)] backdrop-blur sm:static sm:mt-5 sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none">
               <button
-                className="inline-flex min-h-[3rem] min-w-[7.5rem] flex-1 items-center justify-center gap-1.5 rounded-2xl border-2 border-ink/10 bg-white px-5 text-sm font-black text-ink shadow-sm outline-none ring-offset-2 transition-all hover:border-ink/20 hover:bg-paper hover:shadow-md focus-visible:ring-2 focus-visible:ring-accent disabled:pointer-events-none disabled:opacity-30 sm:flex-none"
+                className="inline-flex min-h-[3rem] min-w-0 flex-1 items-center justify-center gap-1.5 rounded-xl border border-ink/15 bg-surface px-3 text-sm font-bold text-ink outline-none ring-offset-2 transition-colors hover:border-ink/25 hover:bg-white focus-visible:ring-2 focus-visible:ring-accent disabled:pointer-events-none disabled:opacity-35 sm:min-w-[8rem] sm:flex-none"
                 disabled={atStart}
                 onClick={goPrev}
                 type="button"
@@ -908,7 +919,7 @@ export function DeckStudySession({
                 {labels.deckStudyPrev}
               </button>
               <button
-                className="inline-flex min-h-[3rem] min-w-[7.5rem] flex-1 items-center justify-center gap-1.5 rounded-2xl bg-ink px-5 text-sm font-black text-surface shadow-lg shadow-ink/20 outline-none ring-offset-2 transition-all hover:bg-ink/90 hover:shadow-xl hover:shadow-ink/25 active:scale-[0.98] motion-reduce:active:scale-100 focus-visible:ring-2 focus-visible:ring-accent disabled:pointer-events-none disabled:opacity-30 sm:flex-none"
+                className="inline-flex min-h-[3rem] min-w-0 flex-1 items-center justify-center gap-1.5 rounded-xl bg-ink px-3 text-sm font-bold text-surface outline-none ring-offset-2 transition-colors hover:bg-ink/90 active:scale-[0.98] motion-reduce:active:scale-100 focus-visible:ring-2 focus-visible:ring-accent disabled:pointer-events-none disabled:opacity-35 sm:min-w-[8rem] sm:flex-none"
                 onClick={goNext}
                 type="button"
               >
@@ -921,7 +932,7 @@ export function DeckStudySession({
           </div>
         )}
 
-        <p className="mt-4 text-center text-[10px] font-semibold uppercase tracking-wide text-muted/90">
+        <p className="mt-3 text-center text-xs font-medium text-muted">
           {labels.deckStudyKeyboardHint}
         </p>
       </div>
@@ -1069,7 +1080,7 @@ function ToolButton({
       aria-label={label}
       aria-pressed={ariaPressed ? Boolean(active) : undefined}
       className={cn(
-        "inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border text-ink outline-none ring-offset-2 transition-[background-color,border-color,color,box-shadow,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:ring-2 focus-visible:ring-accent disabled:pointer-events-none disabled:opacity-35 motion-safe:active:scale-[0.96]",
+        "inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border px-3 text-sm font-semibold text-ink outline-none ring-offset-2 transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out focus-visible:ring-2 focus-visible:ring-accent disabled:pointer-events-none disabled:opacity-35 motion-safe:active:scale-[0.96]",
         active
           ? "border-accent/35 bg-accent-soft/70 shadow-sm"
           : "border-ink/10 bg-paper hover:bg-white"
@@ -1080,6 +1091,7 @@ function ToolButton({
       type="button"
     >
       {icon}
+      <span className="hidden whitespace-nowrap sm:inline">{label}</span>
     </button>
   );
 }
@@ -1224,8 +1236,8 @@ function ReadingReveal({
 
   const isShown = visible || localRevealed;
   const className = cn(
-    "jp-text mt-2 block w-full whitespace-pre-wrap break-words font-semibold leading-[1.8] [overflow-wrap:anywhere]",
-    compact ? "text-left text-xs" : "text-center text-base sm:text-lg"
+    "flashcard-study-reading jp-text mt-2 block w-full whitespace-pre-wrap break-words font-semibold [overflow-wrap:anywhere]",
+    compact ? "flashcard-study-reference text-left" : "text-center"
   );
 
   if (isShown) {
