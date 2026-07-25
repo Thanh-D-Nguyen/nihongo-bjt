@@ -29,7 +29,7 @@ const namespaces = [
 ];
 
 const featureFlags = [
-  ["ads.enabled", "Enable ad serving for learner app.", false],
+  ["ads.enabled", "Enable managed ad serving for learner app.", true],
   ["billing.stripe.enabled", "Enable Stripe checkout and subscription management.", false],
   ["learning_path_engine", "Enable learner/admin learning path contracts and UI.", false],
   ["monetization.enforcement", "When enabled, quota limits and billing are enforced. Disable for free-for-all mode.", false],

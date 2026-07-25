@@ -33,7 +33,7 @@ describe("EntitlementService", () => {
     });
   });
 
-  it("treats every entitlement as available when monetization enforcement is off", async () => {
+  it("unlocks learning features without suppressing ads when monetization enforcement is off", async () => {
     featureGate.status.mockResolvedValue({
       configured: true,
       enabled: false,
@@ -52,6 +52,9 @@ describe("EntitlementService", () => {
     await expect(
       service.has("22222222-2222-4222-8222-222222222222", EntitlementKey.flashcard_suggest_cards)
     ).resolves.toBe(true);
+    await expect(
+      service.has("22222222-2222-4222-8222-222222222222", EntitlementKey.ads_reduced)
+    ).resolves.toBe(false);
     expect(featureGate.status).toHaveBeenCalledWith(FeatureFlagKey.monetization_enforcement, {
       missingBehavior: "allow"
     });

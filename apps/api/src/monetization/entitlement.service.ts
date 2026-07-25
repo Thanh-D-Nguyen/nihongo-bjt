@@ -5,6 +5,10 @@ import { RuntimeFeatureGateService } from "../operations/runtime-feature-gate.se
 import { EntitlementKey, FeatureFlagKey } from "./monetization.constants.js";
 import { MonetizationRepository } from "./monetization.repository.js";
 
+const FREE_ACCESS_ENTITLEMENTS = Object.values(EntitlementKey).filter(
+  (key) => key !== EntitlementKey.ads_reduced
+);
+
 /**
  * Exposes **entitlement keys** derived from the resolved plan. Use `has()` in guards or services — not
  * ad-hoc plan slug checks — so product can add plans without scattering string comparisons.
@@ -28,7 +32,9 @@ export class EntitlementService {
     const planEntitlements = resolved.plan.entitlements.map((row) => row.entitlement.key);
 
     return {
-      entitlements: enforcement.enabled ? planEntitlements : Object.values(EntitlementKey),
+      // Free-access mode unlocks learning features, but must not silently grant
+      // ad-suppression benefits. Ads remain controlled independently by ads.enabled.
+      entitlements: enforcement.enabled ? planEntitlements : FREE_ACCESS_ENTITLEMENTS,
       planSlug: resolved.plan.slug
     };
   }

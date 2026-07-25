@@ -83,7 +83,16 @@ interface NextDrawData {
   daysUntil: number;
 }
 
+interface FeedResponse {
+  data?: FeedItem[];
+  total?: number;
+}
+
 const API = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/$/u, "");
+
+function isAbortError(error: unknown) {
+  return error instanceof DOMException && error.name === "AbortError";
+}
 
 export function LotoHubClient({ labels, locale }: { labels: LotoLabels; locale: string }) {
   return (
@@ -105,6 +114,9 @@ function LotoHubInner({ labels }: { labels: LotoLabels; locale: string }) {
   const [nextDrawError, setNextDrawError] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
   const observerRef = useRef<HTMLDivElement | null>(null);
+  const feedCountRef = useRef(0);
+  const loadMoreAbortRef = useRef<AbortController | null>(null);
+  const loadMoreInFlightRef = useRef(false);
 
   const fetchHeaders = useCallback(() => {
     const h: Record<string, string> = { "Content-Type": "application/json" };
@@ -115,70 +127,105 @@ function LotoHubInner({ labels }: { labels: LotoLabels; locale: string }) {
   // Fetch next draw hero
   useEffect(() => {
     if (!accessToken) return;
+    const controller = new AbortController();
     setNextDraw(null);
     setNextDrawError(false);
-    fetch(`${API}/api/magazine/loto/next-draw?game=${game}`, { headers: fetchHeaders() })
+    fetch(`${API}/api/magazine/loto/next-draw?game=${game}`, {
+      headers: fetchHeaders(),
+      signal: controller.signal
+    })
       .then((r) => {
         if (!r.ok) throw new Error(`Next draw request failed: ${r.status}`);
         return r.json();
       })
       .then((data) => setNextDraw(data))
-      .catch(() => setNextDrawError(true));
+      .catch((error: unknown) => {
+        if (!isAbortError(error)) setNextDrawError(true);
+      });
+    return () => controller.abort();
   }, [game, accessToken, fetchHeaders, retryKey]);
 
   // Fetch feed (reset on game change)
   useEffect(() => {
     if (!accessToken) return;
+    const controller = new AbortController();
+    loadMoreAbortRef.current?.abort();
+    loadMoreAbortRef.current = null;
+    loadMoreInFlightRef.current = false;
+    feedCountRef.current = 0;
     setFeed([]);
     setPage(1);
     setHasMore(true);
     setLoading(true);
     setFeedError(false);
-    fetch(`${API}/api/magazine/loto/feed?game=${game}&page=1&limit=10`, { headers: fetchHeaders() })
-      .then((r) => {
-        if (!r.ok) throw new Error(`Loto feed request failed: ${r.status}`);
-        return r.json();
-      })
-      .then((res) => {
-        setFeed(res.data ?? []);
-        setHasMore((res.data?.length ?? 0) < (res.total ?? 0));
-        setLoading(false);
-      })
-      .catch(() => {
-        setFeedError(true);
-        setLoading(false);
-      });
-  }, [game, accessToken, fetchHeaders, retryKey]);
-
-  // Load more
-  const loadMore = useCallback(() => {
-    if (!hasMore || loading || !accessToken) return;
-    const nextPage = page + 1;
-    setLoading(true);
-    setFeedError(false);
-    fetch(`${API}/api/magazine/loto/feed?game=${game}&page=${nextPage}&limit=10`, {
-      headers: fetchHeaders()
+    fetch(`${API}/api/magazine/loto/feed?game=${game}&page=1&limit=10`, {
+      headers: fetchHeaders(),
+      signal: controller.signal
     })
       .then((r) => {
         if (!r.ok) throw new Error(`Loto feed request failed: ${r.status}`);
         return r.json();
       })
-      .then((res) => {
-        setFeed((prev) => [...prev, ...(res.data ?? [])]);
-        setPage(nextPage);
-        setHasMore(feed.length + (res.data?.length ?? 0) < (res.total ?? 0));
-        setLoading(false);
+      .then((res: FeedResponse) => {
+        const items = Array.isArray(res.data) ? res.data : [];
+        const total = typeof res.total === "number" ? res.total : items.length;
+        feedCountRef.current = items.length;
+        setFeed(items);
+        setHasMore(items.length < total);
       })
-      .catch(() => {
-        setFeedError(true);
-        setLoading(false);
+      .catch((error: unknown) => {
+        if (!isAbortError(error)) setFeedError(true);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
       });
-  }, [hasMore, loading, accessToken, page, game, fetchHeaders, feed.length]);
+    return () => controller.abort();
+  }, [game, accessToken, fetchHeaders, retryKey]);
+
+  // Load more
+  const loadMore = useCallback(() => {
+    if (!hasMore || loading || feedError || !accessToken || loadMoreInFlightRef.current) {
+      return;
+    }
+    const nextPage = page + 1;
+    const controller = new AbortController();
+    loadMoreAbortRef.current = controller;
+    loadMoreInFlightRef.current = true;
+    setLoading(true);
+    setFeedError(false);
+    fetch(`${API}/api/magazine/loto/feed?game=${game}&page=${nextPage}&limit=10`, {
+      headers: fetchHeaders(),
+      signal: controller.signal
+    })
+      .then((r) => {
+        if (!r.ok) throw new Error(`Loto feed request failed: ${r.status}`);
+        return r.json();
+      })
+      .then((res: FeedResponse) => {
+        const items = Array.isArray(res.data) ? res.data : [];
+        const total =
+          typeof res.total === "number" ? res.total : feedCountRef.current + items.length;
+        const nextCount = feedCountRef.current + items.length;
+        feedCountRef.current = nextCount;
+        setFeed((prev) => [...prev, ...items]);
+        setPage(nextPage);
+        setHasMore(nextCount < total);
+      })
+      .catch((error: unknown) => {
+        if (!isAbortError(error)) setFeedError(true);
+      })
+      .finally(() => {
+        if (loadMoreAbortRef.current !== controller) return;
+        loadMoreAbortRef.current = null;
+        loadMoreInFlightRef.current = false;
+        if (!controller.signal.aborted) setLoading(false);
+      });
+  }, [hasMore, loading, feedError, accessToken, page, game, fetchHeaders]);
 
   // Intersection observer for infinite scroll
   useEffect(() => {
     const el = observerRef.current;
-    if (!el) return;
+    if (!el || feedError || loading || !hasMore) return;
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) loadMore();
@@ -187,7 +234,14 @@ function LotoHubInner({ labels }: { labels: LotoLabels; locale: string }) {
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [loadMore]);
+  }, [feedError, hasMore, loadMore, loading]);
+
+  useEffect(
+    () => () => {
+      loadMoreAbortRef.current?.abort();
+    },
+    []
+  );
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-background via-background to-accent/5 px-4 pb-28 pt-6 sm:px-6 lg:px-8">
@@ -295,11 +349,12 @@ function LotoHubInner({ labels }: { labels: LotoLabels; locale: string }) {
           )}
 
           {/* Infinite scroll sentinel */}
-          {hasMore && <div ref={observerRef} className="h-10" />}
+          {hasMore && !feedError && <div ref={observerRef} className="h-10" />}
 
           {/* Load more button fallback */}
-          {hasMore && !loading && (
+          {hasMore && !loading && !feedError && (
             <button
+              type="button"
               onClick={loadMore}
               className="mx-auto mt-4 flex min-h-12 items-center gap-2 rounded-xl bg-primary/10 px-6 py-3 text-sm font-medium text-primary transition-all duration-150 hover:bg-primary/20 active:scale-95"
             >
