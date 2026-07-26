@@ -1,7 +1,9 @@
 # Đồng bộ media câu hỏi BJT từ Local lên Production
 
-Hướng dẫn sync ảnh và audio câu hỏi BJT từ local lên production. Schema hiện có
-`imageUrl` và `audioUrl`; chưa có cột `videoUrl`.
+Hướng dẫn sync ảnh và audio câu hỏi BJT từ local lên production. Metadata ảnh
+được tách rõ: `imageAlt` là mô tả ngắn hỗ trợ người học/screen reader,
+`imagePrompt` là brief chi tiết dành riêng cho bộ sinh ảnh AI. Không dùng
+`imageAlt` thay cho `imagePrompt`. Schema chưa có cột `videoUrl`.
 
 ## 1. Vì sao prod bị mất ảnh?
 
@@ -18,7 +20,7 @@ Vì vậy dù copy DB sang prod, ảnh vẫn hỏng vì host `localhost` vô ngh
 → Sync phải làm **3 việc**:
 
 1. Copy **file object** từ MinIO local → MinIO prod.
-2. Ghi `imageUrl` + `imageAlt` + `audioUrl` vào **prod DB**.
+2. Ghi `imageUrl` + `imageAlt` + `imagePrompt` + `audioUrl` vào **prod DB**.
 3. **Đổi host** `localhost:19000` → domain public của prod.
 
 ---
@@ -75,6 +77,8 @@ DOTENV_CONFIG_PATH=.env.sync npx tsx scripts/sync-bjt-images-to-prod.ts --dry-ru
 > `$env:DOTENV_CONFIG_PATH=".env.sync"; npx tsx scripts/sync-bjt-images-to-prod.ts --dry-run`
 
 Kiểm tra danh sách object sẽ upload và `imageUrl` mới. Nếu đúng → chạy thật.
+Dry-run không ghi bucket/database và sẽ báo rõ hai trường metadata ảnh được giữ
+nguyên.
 
 ### Bước 3 — Chạy thật
 
@@ -112,26 +116,27 @@ mc alias set prodminio  https://minio.your-prod.com <PROD_KEY>  <PROD_SECRET>
 mc mirror --overwrite localminio/nihongo-bjt-media prodminio/nihongo-bjt-media
 ```
 
-### 3.2 — Sync `imageUrl` + `imageAlt` vào prod DB (đổi host luôn)
+### 3.2 — Sync `imageUrl` + `imageAlt` + `imagePrompt` vào prod DB (đổi host luôn)
 
 ```bash
 # Dump từ local
 PGPASSWORD=postgres psql -h 127.0.0.1 -p 15432 -U postgres -d nihongo_bjt -At -F$'\t' -c \
-"SELECT id, \"imageUrl\", COALESCE(\"imageAlt\",'') FROM \"BjtQuestion\" WHERE \"imageUrl\" IS NOT NULL;" \
+"SELECT id, \"imageUrl\", COALESCE(\"imageAlt\",''), COALESCE(\"imagePrompt\",'') FROM \"BjtQuestion\" WHERE \"imageUrl\" IS NOT NULL;" \
 > /tmp/bjt_images.tsv
 ```
 
 Trên prod:
 
 ```sql
-CREATE TEMP TABLE bjt_img(id text, image_url text, image_alt text);
+CREATE TEMP TABLE bjt_img(id text, image_url text, image_alt text, image_prompt text);
 \COPY bjt_img FROM '/tmp/bjt_images.tsv' WITH (FORMAT text, DELIMITER E'\t');
 
 UPDATE "BjtQuestion" q
 SET "imageUrl" = replace(b.image_url,
                          'http://localhost:19000',
                          'https://media.your-prod.com'),
-    "imageAlt" = NULLIF(b.image_alt, '')
+    "imageAlt" = NULLIF(b.image_alt, ''),
+    "imagePrompt" = NULLIF(b.image_prompt, '')
 FROM bjt_img b
 WHERE q.id = b.id;
 ```
@@ -139,6 +144,24 @@ WHERE q.id = b.id;
 ---
 
 ## 4. Sửa gốc (để lần sau không lặp lại)
+
+Trước khi sinh ảnh thật, luôn chạy validation/dry-run:
+
+```bash
+DATABASE_URL=postgresql://... npx tsx data/generated/generate-ai-images.ts --dry-run
+```
+
+Lệnh này không cần `OPENAI_API_KEY`, không gọi/ghi MinIO, dùng `imagePrompt` để
+preview prompt thật và trả exit code khác 0 nếu câu cần sinh ảnh thiếu
+`imageAlt` hoặc `imagePrompt`.
+
+Generator đọc trực tiếp `MINIO_ENDPOINT`, `MINIO_PORT`, `MINIO_BUCKET`,
+`MINIO_PUBLIC_*`, access key và secret từ environment; không có bucket/port
+hard-code riêng. Mỗi ảnh sinh thật đồng thời upsert một `media.asset` chứa
+checksum, object key, model/provider, prompt hash, thời điểm tạo, license,
+accessibility alt và `rightsStatus=cleared`. Script sync giữ metadata này trên
+production và cập nhật `qualityFlags.imageGeneration.mediaAssetId` theo asset id
+của production.
 
 Nguyên nhân thật sự: **lưu full URL có host cứng vào DB**. Khuyến nghị:
 

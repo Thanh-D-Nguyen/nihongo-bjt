@@ -40,14 +40,18 @@ async function main() {
 
   const test = await prisma.bjtMockTest.upsert({
     create: {
-      description: "Seeded from canonical content for local BJT practice.",
+      description: "Development-only canonical-content fixture; never publish to learners.",
       slug: "local-bjt-practice-01",
-      status: "published",
+      status: "draft",
       titleJa: "ローカルBJT練習",
-      titleVi: "BJT Practice từ dữ liệu local",
+      titleVi: "Bài luyện nội dung nền tảng (development)",
       type: "practice"
     },
-    update: { status: "published" },
+    update: {
+      description: "Development-only canonical-content fixture; never publish to learners.",
+      status: "draft",
+      titleVi: "Bài luyện nội dung nền tảng (development)"
+    },
     where: { slug: "local-bjt-practice-01" }
   });
 
@@ -121,7 +125,7 @@ async function main() {
     });
   }
 
-  console.log(`Seeded ${questions.length} BJT practice questions.`);
+  console.log(`Seeded ${questions.length} draft BJT development questions.`);
 }
 
 main()

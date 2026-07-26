@@ -18,6 +18,8 @@ export const serverEnvSchema = z.object({
   WEB_PUBLIC_URL: z.string().url().default("http://localhost:3000"),
   ADMIN_PUBLIC_URL: z.string().url().default("http://localhost:3001"),
   CORS_ORIGINS: csv,
+  /** Express proxy preset used to resolve the real client IP without blanket trust. */
+  TRUST_PROXY: z.enum(["loopback", "linklocal", "uniquelocal"]).default("loopback"),
   REDIS_URL: z.string().url().default("redis://localhost:6379"),
   MEILI_HOST: z.string().url().default("http://localhost:7700"),
   MEILI_MASTER_KEY: z.string().min(1).default("local_dev_meili_master_key"),
@@ -58,6 +60,8 @@ export const serverEnvSchema = z.object({
     .optional()
     .transform((value) => (value == null ? undefined : value === "true")),
   OAUTH_STATE_SECRET: z.string().min(32).optional(),
+  /** HMAC secret for short-lived managed-ad decision tokens. Required when ads are enabled in production. */
+  ADS_DECISION_SIGNING_SECRET: z.string().min(32).optional(),
   GOOGLE_OAUTH_CLIENT_ID: z.string().optional(),
   GOOGLE_OAUTH_CLIENT_SECRET: z.string().optional(),
   GOOGLE_OAUTH_REDIRECT_URI: z.string().url().optional(),

@@ -30,6 +30,24 @@ const labels = {
   error: "error",
   estimatedScoreCaveat: "estimated caveat",
   eyebrow: "eyebrow",
+  modeDescription: "Choose one path",
+  modeHeading: "Choose mode",
+  officialAvailabilityErrorDescription: "Try target practice while we reconnect",
+  officialAvailabilityErrorTitle: "Could not check availability",
+  officialAvailabilityLoading: "Checking availability",
+  officialAvailabilityRetry: "Try again",
+  officialModeCardDescription: "Full simulation",
+  officialModeCardTitle: "Exam simulation",
+  officialModeClosedDescription: "Try practice for now",
+  officialModeClosedTitle: "Temporarily unavailable",
+  officialModeLockedDescription: "Upgrade to use simulations",
+  officialModeLockedTitle: "Unlock simulation",
+  officialModeNoTemplatesDescription: "Check back later",
+  officialModeNoTemplatesTitle: "New simulation in preparation",
+  officialModeUpgradeCta: "View plans",
+  officialTemplatesDescription: "Three-part simulation",
+  officialTemplatesHeading: "Choose a simulation",
+  practiceTargetHeading: "Choose a target",
   formatGuideBullet1: "b1",
   formatGuideBullet2: "b2",
   formatGuideBullet3: "b3",
@@ -176,7 +194,14 @@ describe("QuizQuestionPanel reading assist wiring", () => {
     capturedProps = null;
 
     const html = renderToStaticMarkup(
-      <QuizQuestionPanel flagged={false} labels={labels} onAnswer={() => undefined} onToggleFlag={() => undefined} question={questionPayload} userId={null} />
+      <QuizQuestionPanel
+        flagged={false}
+        labels={labels}
+        onAnswer={() => undefined}
+        onToggleFlag={() => undefined}
+        question={questionPayload}
+        userId={null}
+      />
     );
 
     expect(capturedProps).toBeNull();

@@ -1398,22 +1398,24 @@ export const adsRuntimeDecisionBodySchema = z.object({
     learningContext: adsLearningContextSchema.optional(),
     locale: z.string().max(16).optional(),
     placementCode: z.string().min(1).max(64),
-    userId: z.uuid()
+    userId: z.uuid().optional()
 });
 export const adsRuntimeImpressionBodySchema = z.object({
     campaignId: z.uuid().optional(),
     clientContext: adsRuntimeClientContextSchema.optional(),
     decisionKey: z.string().max(120).optional(),
-    kind: z.enum(["impression", "blocked"]),
+    decisionToken: z.string().min(64).max(1024),
+    kind: z.literal("impression"),
     placementCode: z.string().min(1).max(64),
-    userId: z.uuid()
+    userId: z.uuid().optional()
 });
 export const adsRuntimeClickBodySchema = z.object({
     campaignId: z.uuid().optional(),
     clientContext: adsRuntimeClientContextSchema.optional(),
     decisionKey: z.string().max(120).optional(),
+    decisionToken: z.string().min(64).max(1024),
     placementCode: z.string().min(1).max(64),
-    userId: z.uuid()
+    userId: z.uuid().optional()
 });
 export const monetizationAdDecideQuerySchema = z.object({
     learningContext: z.string().max(4000).optional(),

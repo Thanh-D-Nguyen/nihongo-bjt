@@ -27,7 +27,10 @@ import { QuizResultsBreakdown } from "./quiz-results-breakdown";
 function useAnimatedNumber(target: number, duration = 1200) {
   const [value, setValue] = useState(0);
   useEffect(() => {
-    if (target === 0) { setValue(0); return; }
+    if (target === 0) {
+      setValue(0);
+      return;
+    }
     const start = performance.now();
     let raf: number;
     const step = (now: number) => {
@@ -112,6 +115,13 @@ interface OfficialSimulationStatus {
   planSlug: string;
 }
 
+type OfficialAvailability =
+  | { phase: "loading" }
+  | { phase: "error" }
+  | { phase: "ready"; status: OfficialSimulationStatus };
+
+type QuizMode = "official" | "practice";
+
 export interface QuizLabels {
   anotherRound: string;
   bandLabel: string;
@@ -135,21 +145,26 @@ export interface QuizLabels {
   filterType?: string;
   filterTypeMock?: string;
   filterTypeOfficial?: string;
-  officialModeCardDescription?: string;
-  officialModeCardTitle?: string;
-  officialModeClosedDescription?: string;
-  officialModeClosedTitle?: string;
-  officialModeInviteCta?: string;
-  officialModeInviteDescription?: string;
-  officialModeInviteUnavailable?: string;
-  officialModeLockedDescription?: string;
-  officialModeLockedTitle?: string;
-  officialModeManageHint?: string;
-  officialModeNoTemplatesDescription?: string;
-  officialModeNoTemplatesTitle?: string;
-  officialModeUpgradeCta?: string;
+  modeDescription: string;
+  modeHeading: string;
+  officialAvailabilityErrorDescription: string;
+  officialAvailabilityErrorTitle: string;
+  officialAvailabilityLoading: string;
+  officialAvailabilityRetry: string;
+  officialModeCardDescription: string;
+  officialModeCardTitle: string;
+  officialModeClosedDescription: string;
+  officialModeClosedTitle: string;
+  officialModeLockedDescription: string;
+  officialModeLockedTitle: string;
+  officialModeNoTemplatesDescription: string;
+  officialModeNoTemplatesTitle: string;
+  officialModeUpgradeCta: string;
+  officialTemplatesDescription: string;
+  officialTemplatesHeading: string;
   practiceModeCardDescription?: string;
   practiceModeCardTitle?: string;
+  practiceTargetHeading: string;
   formatGuideBullet1: string;
   formatGuideBullet2: string;
   formatGuideBullet3: string;
@@ -304,15 +319,6 @@ function coachForBand(
   }
 }
 
-function filterPublishedTemplates(rows: Template[]): Template[] {
-  return rows.filter(
-    (t) =>
-      !t.titleVi.startsWith("[Seed]") &&
-      !t.titleVi.includes("dữ liệu local") &&
-      !t.titleVi.includes("シード")
-  );
-}
-
 const BAND_COLORS: Record<string, string> = {
   "J1+": "text-amber-600",
   J1: "text-amber-600",
@@ -333,7 +339,8 @@ const SHARE_LABELS = {
   download: "Download",
   cancel: "Cancel",
   consentTitle: "Share your progress?",
-  consentMessage: "This creates a public page with your learning result. No private data is exposed.",
+  consentMessage:
+    "This creates a public page with your learning result. No private data is exposed.",
   consentAccept: "Accept & Share",
   consentDecline: "Not now",
   loading: "Loading...",
@@ -341,7 +348,7 @@ const SHARE_LABELS = {
   shareSuccess: "Shared!",
   copied: "Link copied!",
   error: "Something went wrong",
-  retry: "Retry",
+  retry: "Retry"
 };
 
 function escapeRegExp(value: string): string {
@@ -379,10 +386,12 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
   const [showBreakdown, setShowBreakdown] = useState(false);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [templatesLoading, setTemplatesLoading] = useState(true);
+  const [templatesError, setTemplatesError] = useState(false);
   const [levelFilter, setLevelFilter] = useState<string>("all");
-  const [typeFilter, setTypeFilter] = useState<string>("practice");
-  const [officialStatus, setOfficialStatus] = useState<OfficialSimulationStatus | null>(null);
-  const [referralLink, setReferralLink] = useState<string | null>(null);
+  const [typeFilter, setTypeFilter] = useState<QuizMode>("practice");
+  const [officialAvailability, setOfficialAvailability] = useState<OfficialAvailability>({
+    phase: "loading"
+  });
   const [submitting, setSubmitting] = useState(false);
   const [resuming, setResuming] = useState(false);
   const [timerSeconds, setTimerSeconds] = useState<number | null>(null);
@@ -533,15 +542,15 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
   /* ---- Data loading ---- */
 
   const loadTemplates = useCallback(async () => {
-    setError(false);
+    setTemplatesError(false);
     setTemplatesLoading(true);
     try {
       const response = await learnerApiFetch("/api/quiz/templates");
       if (!response.ok) throw new Error("Template request failed");
       const all = (await response.json()) as Template[];
-      setTemplates(filterPublishedTemplates(all));
+      setTemplates(all);
     } catch {
-      setError(true);
+      setTemplatesError(true);
       setTemplates([]);
     } finally {
       setTemplatesLoading(false);
@@ -549,27 +558,18 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
   }, []);
 
   const loadOfficialStatus = useCallback(async (uid: string) => {
+    setOfficialAvailability({ phase: "loading" });
     try {
       const response = await learnerApiFetch(
         `/api/quiz/official-simulation/status?userId=${encodeURIComponent(uid)}`
       );
-      if (!response.ok) return;
-      setOfficialStatus((await response.json()) as OfficialSimulationStatus);
+      if (!response.ok) throw new Error("Official simulation status request failed");
+      setOfficialAvailability({
+        phase: "ready",
+        status: (await response.json()) as OfficialSimulationStatus
+      });
     } catch {
-      setOfficialStatus(null);
-    }
-  }, []);
-
-  const loadReferralLink = useCallback(async (uid: string) => {
-    try {
-      const response = await learnerApiFetch(
-        `/api/learner/referral?userId=${encodeURIComponent(uid)}`
-      );
-      if (!response.ok) return;
-      const data = (await response.json()) as { link?: string };
-      setReferralLink(data.link ?? null);
-    } catch {
-      setReferralLink(null);
+      setOfficialAvailability({ phase: "error" });
     }
   }, []);
 
@@ -594,14 +594,13 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
     if (!userId) return;
     void (async () => {
       await loadOfficialStatus(userId);
-      await loadReferralLink(userId);
       void loadSessionHistory(userId);
       const active = await checkActiveSession(userId);
       if (active) {
         await resumeSession(active.id, userId, active.remainingSeconds);
       }
     })();
-  }, [userId, checkActiveSession, loadOfficialStatus, loadReferralLink, loadSessionHistory, resumeSession]);
+  }, [userId, checkActiveSession, loadOfficialStatus, loadSessionHistory, resumeSession]);
 
   useEffect(() => {
     if (!userId) {
@@ -628,7 +627,7 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
       void loadBreakdown(results.id, userId);
       void loadSessionHistory(userId);
     }
-  }, [results, userId, breakdown]);
+  }, [results, userId, breakdown, loadSessionHistory]);
 
   async function loadBreakdown(sessionId: string, uid: string) {
     setBreakdownLoading(true);
@@ -783,16 +782,18 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
   const filteredTemplates = useMemo(() => {
     return templates.filter((t) => {
       if (typeFilter === "official") return t.type === "official";
-      if (typeFilter === "practice" && t.type !== "practice") return false;
+      if (t.type !== "practice") return false;
       if (levelFilter !== "all" && normalizeLevel(t.level) !== levelFilter) return false;
-      if (typeFilter !== "all" && t.type !== typeFilter) return false;
       return true;
     });
   }, [templates, levelFilter, typeFilter]);
 
   const uniqueLevels = useMemo(() => {
     const levels = new Set(
-      templates.map((t) => normalizeLevel(t.level)).filter(Boolean) as string[]
+      templates
+        .filter((template) => template.type === "practice")
+        .map((template) => normalizeLevel(template.level))
+        .filter(Boolean) as string[]
     );
     return LEVEL_ORDER.filter((l) => levels.has(l));
   }, [templates]);
@@ -836,12 +837,12 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
     : 0;
   const progressTotal = question?.session?.totalQuestions ?? 0;
   const progressPercent = progressTotal > 0 ? (progressCurrent / progressTotal) * 100 : 0;
-  const officialGateVisible =
-    typeFilter === "official" &&
-    officialStatus !== null &&
-    (!officialStatus.enabled ||
-      !officialStatus.entitled ||
-      officialStatus.availableTemplates === 0);
+  const officialReady =
+    officialAvailability.phase === "ready" &&
+    officialAvailability.status.enabled &&
+    officialAvailability.status.entitled &&
+    officialAvailability.status.availableTemplates > 0;
+  const canRenderTemplates = typeFilter === "practice" || officialReady;
 
   /* ---- Render ---- */
 
@@ -898,165 +899,123 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
             <SessionHistoryTimeline history={sessionHistory} labels={labels} />
           )}
 
-          {!templatesLoading && templates.length > 0 && (
-            <section className="grid gap-3 md:grid-cols-2" aria-label={labels.filterType}>
-              <button
-                className={`rounded-2xl border p-4 text-left shadow-sm transition hover:bg-paper ${
-                  typeFilter === "official"
-                    ? "border-amber-300 bg-amber-50"
-                    : "border-ink/10 bg-surface"
-                }`}
-                onClick={() => {
-                  setTypeFilter("official");
-                  setLevelFilter("all");
-                }}
-                type="button"
-              >
-                <p className="text-xs font-black uppercase text-amber-700">
-                  {labels.filterTypeOfficial ?? "Chính thức"}
-                </p>
-                <h2 className="mt-1 text-lg font-black text-ink">
-                  {labels.officialModeCardTitle ??
-                    labels.templateTypeOfficial ??
-                    "Official simulation"}
-                </h2>
-                <p className="mt-2 text-sm font-semibold leading-6 text-muted">
-                  {labels.officialModeCardDescription ?? labels.formatGuideBullet1}
-                </p>
-              </button>
-              <button
-                className={`rounded-2xl border p-4 text-left shadow-sm transition hover:bg-paper ${
-                  typeFilter !== "official"
-                    ? "border-accent/30 bg-accent/5"
-                    : "border-ink/10 bg-surface"
-                }`}
-                onClick={() => setTypeFilter("practice")}
-                type="button"
-              >
-                <p className="text-xs font-black uppercase text-accent">
-                  {labels.filterTypeMock ?? "Luyện tập"}
-                </p>
-                <h2 className="mt-1 text-lg font-black text-ink">
-                  {labels.practiceModeCardTitle ??
-                    labels.templateTypeMock ??
-                    "Target-rank practice"}
-                </h2>
-                <p className="mt-2 text-sm font-semibold leading-6 text-muted">
-                  {labels.practiceModeCardDescription ?? labels.formatGuideBullet5}
-                </p>
-              </button>
-            </section>
-          )}
+          <QuizModeSelector
+            labels={labels}
+            mode={typeFilter}
+            onChange={(mode) => {
+              setTypeFilter(mode);
+              if (mode === "official") setLevelFilter("all");
+            }}
+          />
 
-          {/* Filters */}
-          {!templatesLoading && templates.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2">
-              {/* Level filter pills */}
-              <div
-                className={`flex flex-wrap gap-1.5 ${typeFilter === "official" ? "opacity-45" : ""}`}
-                aria-disabled={typeFilter === "official"}
-              >
+          {typeFilter === "practice" && !templatesLoading && templates.length > 0 ? (
+            <section aria-labelledby="practice-target-heading">
+              <h2 className="mb-3 text-sm font-bold text-ink" id="practice-target-heading">
+                {labels.practiceTargetHeading}
+              </h2>
+              <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
                 <FilterPill
                   active={levelFilter === "all"}
-                  disabled={typeFilter === "official"}
-                  label={labels.filterLevelAll ?? labels.filterAll ?? "Tất cả"}
+                  label={labels.filterLevelAll ?? labels.filterAll ?? ""}
                   onClick={() => setLevelFilter("all")}
                 />
-                {uniqueLevels.map((lv) => (
+                {uniqueLevels.map((level) => (
                   <FilterPill
-                    active={levelFilter === lv}
-                    disabled={typeFilter === "official"}
-                    key={lv}
-                    label={lv.replace("BJT-", "")}
-                    onClick={() => setLevelFilter(lv)}
+                    active={levelFilter === level}
+                    key={level}
+                    label={level}
+                    onClick={() => setLevelFilter(level)}
                   />
                 ))}
               </div>
+            </section>
+          ) : null}
 
-              <div className="mx-1 hidden h-5 w-px bg-ink/10 sm:block" />
-
-              {/* Type filter */}
-              <div className="flex gap-1.5">
-                <FilterPill
-                  active={typeFilter === "official"}
-                  label={labels.filterTypeOfficial ?? "Chính thức"}
-                  onClick={() => {
-                    setTypeFilter("official");
-                    setLevelFilter("all");
-                  }}
-                />
-                <FilterPill
-                  active={typeFilter === "practice"}
-                  label={labels.filterTypeMock ?? "Luyện tập"}
-                  onClick={() => setTypeFilter("practice")}
-                />
-                <FilterPill
-                  active={typeFilter === "all"}
-                  label={labels.filterAll ?? "Tất cả"}
-                  onClick={() => setTypeFilter("all")}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Templates loading */}
-          {templatesLoading && (
-            <div className="space-y-3" aria-busy>
-              {[1, 2, 3, 4].map((i) => (
-                <LoadingSkeleton className="h-28" key={i} />
-              ))}
-              <p className="sr-only">{labels.hubTemplatesLoading}</p>
-            </div>
-          )}
-
-          {officialGateVisible && officialStatus ? (
-            <OfficialSimulationGate
+          {typeFilter === "official" ? (
+            <OfficialAvailabilityPanel
+              availability={officialAvailability}
               labels={labels}
+              onRetry={() => userId && void loadOfficialStatus(userId)}
               onUpgrade={startOfficialUpgrade}
-              referralLink={referralLink}
-              status={officialStatus}
             />
           ) : null}
 
-          {/* Empty state */}
-          {!templatesLoading &&
-            filteredTemplates.length === 0 &&
-            !error &&
-            !officialGateVisible && (
-              <EmptyState
-                action={
+          {canRenderTemplates && templatesLoading ? (
+            <TemplateGridSkeleton label={labels.hubTemplatesLoading} />
+          ) : null}
+
+          {canRenderTemplates && templatesError && !templatesLoading ? (
+            <ErrorState
+              action={
+                <button
+                  className="inline-flex min-h-12 items-center justify-center rounded-full bg-ink px-5 text-sm font-bold text-surface outline-none ring-offset-2 transition-[transform,background-color] duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-ink/90 focus-visible:ring-2 focus-visible:ring-accent active:scale-[0.98]"
+                  onClick={() => void loadTemplates()}
+                  type="button"
+                >
+                  {labels.officialAvailabilityRetry}
+                </button>
+              }
+              description={labels.officialAvailabilityErrorDescription}
+              title={labels.error}
+            />
+          ) : null}
+
+          {canRenderTemplates &&
+          !templatesLoading &&
+          !templatesError &&
+          filteredTemplates.length === 0 ? (
+            <EmptyState
+              action={
+                typeFilter === "practice" ? (
                   <div className="flex flex-wrap justify-center gap-2">
                     <Link
-                      className="inline-flex min-h-11 items-center justify-center rounded-full bg-accent px-5 text-sm font-bold text-white outline-none ring-offset-2 hover:bg-accent/90 focus-visible:ring-2 focus-visible:ring-accent"
+                      className="inline-flex min-h-12 items-center justify-center rounded-full bg-accent px-5 text-sm font-bold text-white outline-none ring-offset-2 transition-[transform,background-color] duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-accent/90 focus-visible:ring-2 focus-visible:ring-accent active:scale-[0.98]"
                       href={`/${locale}`}
                     >
                       {labels.emptyCtaHome}
                     </Link>
                     <Link
-                      className="inline-flex min-h-11 items-center justify-center rounded-full border border-ink/15 bg-surface px-5 text-sm font-bold text-ink outline-none ring-offset-2 hover:bg-paper focus-visible:ring-2 focus-visible:ring-accent"
+                      className="inline-flex min-h-12 items-center justify-center rounded-full border border-ink/15 bg-surface px-5 text-sm font-bold text-ink outline-none ring-offset-2 transition-[transform,background-color] duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-paper focus-visible:ring-2 focus-visible:ring-accent active:scale-[0.98]"
                       href={`/${locale}/help`}
                     >
                       {labels.emptyCtaHelp}
                     </Link>
                   </div>
-                }
-                description={labels.emptyPublicDescription}
-                title={labels.emptyPublicTitle}
-              />
-            )}
+                ) : undefined
+              }
+              description={
+                typeFilter === "official"
+                  ? labels.officialModeNoTemplatesDescription
+                  : labels.emptyPublicDescription
+              }
+              title={
+                typeFilter === "official"
+                  ? labels.officialModeNoTemplatesTitle
+                  : labels.emptyPublicTitle
+              }
+            />
+          ) : null}
 
-          {/* Template grid */}
-          {!templatesLoading && filteredTemplates.length > 0 && !officialGateVisible && (
+          {canRenderTemplates &&
+          !templatesLoading &&
+          !templatesError &&
+          filteredTemplates.length > 0 ? (
             <section aria-labelledby="quiz-templates-heading">
-              <div className="mb-4 flex items-baseline justify-between">
-                <h2 className="text-lg font-bold text-ink" id="quiz-templates-heading">
-                  {labels.hubTemplatesHeading}
-                </h2>
+              <div className="mb-4 grid gap-1 sm:grid-cols-[1fr_auto] sm:items-end">
+                <div>
+                  <h2 className="text-lg font-bold text-ink" id="quiz-templates-heading">
+                    {typeFilter === "official"
+                      ? labels.officialTemplatesHeading
+                      : labels.hubTemplatesHeading}
+                  </h2>
+                  <p className="mt-1 max-w-2xl text-sm leading-6 text-muted">
+                    {typeFilter === "official"
+                      ? labels.officialTemplatesDescription
+                      : labels.hubTemplatesDescription}
+                  </p>
+                </div>
                 <span className="text-xs font-semibold tabular-nums text-muted">
-                  {(labels.hubExamCount ?? "{n} đề").replace(
-                    "{n}",
-                    String(filteredTemplates.length)
-                  )}
+                  {(labels.hubExamCount ?? "{n}").replace("{n}", String(filteredTemplates.length))}
                 </span>
               </div>
 
@@ -1066,7 +1025,7 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
                     key={template.id}
                     labels={labels}
                     locale={locale}
-                    onStart={(e) => void start(e, template.id)}
+                    onStart={(event) => void start(event, template.id)}
                     submitting={submitting}
                     template={template}
                     userId={userId}
@@ -1074,7 +1033,7 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
                 ))}
               </div>
             </section>
-          )}
+          ) : null}
         </>
       )}
 
@@ -1090,8 +1049,13 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
               </span>
               {flaggedQuestions.size > 0 && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-bold text-amber-700">
-                  <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 24 24"><path d="M4 2v20l1-1 5 3 4-3 4 3 1-3V2H4zm12 13-4-2.5L8 15V4h8v11z"/></svg>
-                  {(labels.flaggedCount ?? "{n} đánh dấu").replace("{n}", String(flaggedQuestions.size))}
+                  <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M4 2v20l1-1 5 3 4-3 4 3 1-3V2H4zm12 13-4-2.5L8 15V4h8v11z" />
+                  </svg>
+                  {(labels.flaggedCount ?? "{n} đánh dấu").replace(
+                    "{n}",
+                    String(flaggedQuestions.size)
+                  )}
                 </span>
               )}
             </div>
@@ -1144,9 +1108,7 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
           />
 
           {/* Skill breakdown + section scores (show when breakdown loaded) */}
-          {breakdown && (
-            <SkillSectionBreakdown breakdown={breakdown} labels={labels} />
-          )}
+          {breakdown && <SkillSectionBreakdown breakdown={breakdown} labels={labels} />}
 
           {showBreakdown && breakdownLoading && (
             <div className="flex items-center justify-center py-8">
@@ -1174,11 +1136,7 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
 
           {/* Recommended next */}
           {breakdown && (
-            <RecommendedNext
-              breakdown={breakdown}
-              labels={labels}
-              onRetry={resetToHub}
-            />
+            <RecommendedNext breakdown={breakdown} labels={labels} onRetry={resetToHub} />
           )}
         </div>
       )}
@@ -1194,32 +1152,115 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
 }
 
 /* ------------------------------------------------------------------ */
-/*  Filter Pill                                                        */
+/*  Hub mode and availability                                          */
 /* ------------------------------------------------------------------ */
+
+export function QuizModeSelector({
+  labels,
+  mode,
+  onChange
+}: {
+  labels: QuizLabels;
+  mode: QuizMode;
+  onChange: (mode: QuizMode) => void;
+}) {
+  const options: Array<{
+    description: string;
+    eyebrow: string;
+    mode: QuizMode;
+    title: string;
+  }> = [
+    {
+      description: labels.practiceModeCardDescription ?? labels.formatGuideBullet5,
+      eyebrow: labels.filterTypeMock ?? labels.templateTypeMock ?? "",
+      mode: "practice",
+      title: labels.practiceModeCardTitle ?? labels.templateTypeMock ?? ""
+    },
+    {
+      description: labels.officialModeCardDescription ?? labels.formatGuideBullet1,
+      eyebrow: labels.filterTypeOfficial ?? labels.templateTypeOfficial ?? "",
+      mode: "official",
+      title: labels.officialModeCardTitle ?? labels.templateTypeOfficial ?? ""
+    }
+  ];
+
+  return (
+    <section aria-labelledby="quiz-mode-heading">
+      <div className="mb-4 max-w-2xl">
+        <h2 className="text-lg font-bold text-ink" id="quiz-mode-heading">
+          {labels.modeHeading}
+        </h2>
+        <p className="mt-1 text-sm leading-6 text-muted">{labels.modeDescription}</p>
+      </div>
+      <div className="grid gap-3 md:grid-cols-2" role="group" aria-label={labels.modeHeading}>
+        {options.map((option, index) => {
+          const active = option.mode === mode;
+          return (
+            <div
+              className={`rounded-[1.4rem] p-1 transition-colors duration-200 ${
+                active ? "bg-accent/12 ring-1 ring-accent/20" : "bg-ink/[0.035]"
+              }`}
+              key={option.mode}
+            >
+              <button
+                aria-pressed={active}
+                className={`group flex min-h-40 w-full flex-col rounded-[1.15rem] px-5 py-5 text-left outline-none transition-[transform,background-color] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 active:scale-[0.99] ${
+                  active ? "bg-surface text-ink shadow-sm" : "bg-paper/70 text-ink hover:bg-surface"
+                }`}
+                onClick={() => onChange(option.mode)}
+                type="button"
+              >
+                <span className="flex w-full items-center justify-between gap-3">
+                  <span
+                    className={`text-[11px] font-bold uppercase tracking-[0.16em] ${
+                      active ? "text-accent" : "text-muted"
+                    }`}
+                  >
+                    {option.eyebrow}
+                  </span>
+                  <span
+                    aria-hidden
+                    className={`grid size-8 place-items-center rounded-full text-xs font-bold tabular-nums transition-[transform,background-color] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 ${
+                      active ? "bg-accent text-white" : "bg-ink/5 text-muted"
+                    }`}
+                  >
+                    0{index + 1}
+                  </span>
+                </span>
+                <span className="mt-5 text-lg font-bold leading-snug">{option.title}</span>
+                <span className="mt-2 text-sm font-medium leading-6 text-muted">
+                  {option.description}
+                </span>
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
 
 function FilterPill({
   active,
-  disabled = false,
   label,
   onClick
 }: {
   active: boolean;
-  disabled?: boolean;
   label: string;
   onClick: () => void;
 }) {
   return (
     <button
       className={`
-        inline-flex min-h-8 items-center rounded-full px-3 text-xs font-semibold outline-none
-        ring-offset-2 transition focus-visible:ring-2 focus-visible:ring-accent
+        inline-flex min-h-12 shrink-0 items-center rounded-full px-4 text-sm font-semibold outline-none
+        ring-offset-2 transition-[transform,background-color,color] duration-200 ease-[cubic-bezier(0.32,0.72,0,1)]
+        focus-visible:ring-2 focus-visible:ring-accent active:scale-[0.98]
         ${
           active
             ? "bg-ink text-surface shadow-sm"
             : "border border-ink/12 bg-surface text-muted hover:border-ink/25 hover:text-ink"
         }
       `}
-      disabled={disabled}
       onClick={onClick}
       type="button"
     >
@@ -1228,19 +1269,82 @@ function FilterPill({
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*  Official Simulation Gate                                           */
-/* ------------------------------------------------------------------ */
+function TemplateGridSkeleton({ label }: { label: string }) {
+  return (
+    <section aria-busy="true" aria-label={label} className="space-y-4">
+      <div className="space-y-2">
+        <LoadingSkeleton className="h-5 w-48" />
+        <LoadingSkeleton className="h-4 max-w-xl" />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {[1, 2, 3, 4].map((item) => (
+          <LoadingSkeleton className="h-40 rounded-2xl" key={item} />
+        ))}
+      </div>
+      <p className="sr-only">{label}</p>
+    </section>
+  );
+}
+
+export function OfficialAvailabilityPanel({
+  availability,
+  labels,
+  onRetry,
+  onUpgrade
+}: {
+  availability: OfficialAvailability;
+  labels: QuizLabels;
+  onRetry: () => void;
+  onUpgrade: () => void;
+}) {
+  if (availability.phase === "loading") {
+    return (
+      <section
+        aria-busy="true"
+        aria-label={labels.officialAvailabilityLoading}
+        className="rounded-[1.4rem] bg-ink/[0.035] p-1"
+      >
+        <div className="space-y-3 rounded-[1.15rem] bg-surface p-5 sm:p-6">
+          <LoadingSkeleton className="h-4 w-36" />
+          <LoadingSkeleton className="h-6 w-64 max-w-full" />
+          <LoadingSkeleton className="h-4 max-w-xl" />
+          <p className="sr-only">{labels.officialAvailabilityLoading}</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (availability.phase === "error") {
+    return (
+      <ErrorState
+        action={
+          <button
+            className="inline-flex min-h-12 items-center justify-center rounded-full bg-ink px-5 text-sm font-bold text-surface outline-none ring-offset-2 transition-[transform,background-color] duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-ink/90 focus-visible:ring-2 focus-visible:ring-accent active:scale-[0.98]"
+            onClick={onRetry}
+            type="button"
+          >
+            {labels.officialAvailabilityRetry}
+          </button>
+        }
+        description={labels.officialAvailabilityErrorDescription}
+        title={labels.officialAvailabilityErrorTitle}
+      />
+    );
+  }
+
+  const { status } = availability;
+  if (status.enabled && status.entitled && status.availableTemplates > 0) return null;
+
+  return <OfficialSimulationGate labels={labels} onUpgrade={onUpgrade} status={status} />;
+}
 
 function OfficialSimulationGate({
   labels,
   onUpgrade,
-  referralLink,
   status
 }: {
   labels: QuizLabels;
   onUpgrade: () => void;
-  referralLink: string | null;
   status: OfficialSimulationStatus;
 }) {
   const mode = !status.enabled ? "closed" : !status.entitled ? "locked" : "noTemplates";
@@ -1252,75 +1356,31 @@ function OfficialSimulationGate({
         : (labels.officialModeNoTemplatesTitle ?? "Chưa có đề mô phỏng chính thức");
   const description =
     mode === "closed"
-      ? (labels.officialModeClosedDescription ??
-        "Admin có thể mở lại bằng feature flag khi nội dung và billing đã sẵn sàng.")
+      ? (labels.officialModeClosedDescription ?? labels.officialModeCardDescription ?? "")
       : mode === "locked"
-        ? (labels.officialModeLockedDescription ??
-          "Nâng cấp gói hoặc mời bạn học qua referral để có thêm quyền truy cập khi chiến dịch mở.")
-        : (labels.officialModeNoTemplatesDescription ??
-          "Feature đã mở và tài khoản có quyền, nhưng chưa có template official published.");
+        ? (labels.officialModeLockedDescription ?? labels.officialModeCardDescription ?? "")
+        : (labels.officialModeNoTemplatesDescription ?? labels.officialModeCardDescription ?? "");
 
   return (
-    <section className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4 shadow-sm">
-      <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-center">
+    <section className="rounded-[1.4rem] bg-ink/[0.035] p-1" role="status">
+      <div className="grid gap-5 rounded-[1.15rem] bg-surface p-5 sm:p-6 md:grid-cols-[1fr_auto] md:items-center">
         <div>
-          <p className="text-xs font-black uppercase text-amber-700">
-            {labels.filterTypeOfficial ?? "Mô phỏng chính thức"}
+          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-accent">
+            {labels.filterTypeOfficial ?? labels.templateTypeOfficial}
           </p>
-          <h2 className="mt-1 text-lg font-black text-ink">{title}</h2>
-          <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-muted">{description}</p>
-          <p className="mt-2 text-xs font-semibold text-muted">
-            {(
-              labels.officialModeManageHint ??
-              "Trạng thái được kiểm soát từ server: {flag} · quyền: {entitlement} · gói hiện tại: {plan}"
-            )
-              .replace("{flag}", status.featureFlag)
-              .replace("{entitlement}", status.entitlementKey)
-              .replace("{plan}", status.planSlug)}
-          </p>
+          <h2 className="mt-2 text-xl font-bold text-ink">{title}</h2>
+          <p className="mt-2 max-w-2xl text-sm font-medium leading-6 text-muted">{description}</p>
         </div>
-        <div className="flex flex-wrap gap-2 md:justify-end">
-          {mode === "locked" ? (
-            <button
-              className="inline-flex min-h-11 items-center justify-center rounded-full bg-ink px-5 text-sm font-bold text-white outline-none ring-offset-2 hover:bg-ink/90 focus-visible:ring-2 focus-visible:ring-accent"
-              onClick={onUpgrade}
-              type="button"
-            >
-              {labels.officialModeUpgradeCta ?? "Nâng cấp"}
-            </button>
-          ) : null}
-          {referralLink ? (
-            <button
-              className="inline-flex min-h-11 items-center justify-center rounded-full border border-amber-300 bg-white px-5 text-sm font-bold text-ink outline-none ring-offset-2 hover:bg-amber-100 focus-visible:ring-2 focus-visible:ring-accent"
-              onClick={() => void navigator.clipboard?.writeText(referralLink)}
-              type="button"
-            >
-              {labels.officialModeInviteCta ?? "Mời bạn học"}
-            </button>
-          ) : (
-            <button
-              className="inline-flex min-h-11 cursor-not-allowed items-center justify-center rounded-full border border-ink/10 bg-white/60 px-5 text-sm font-bold text-muted"
-              disabled
-              type="button"
-            >
-              {labels.officialModeInviteCta ?? "Mời bạn học"}
-            </button>
-          )}
-        </div>
+        {mode === "locked" ? (
+          <button
+            className="inline-flex min-h-12 items-center justify-center rounded-full bg-ink px-5 text-sm font-bold text-surface outline-none ring-offset-2 transition-[transform,background-color] duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-ink/90 focus-visible:ring-2 focus-visible:ring-accent active:scale-[0.98]"
+            onClick={onUpgrade}
+            type="button"
+          >
+            {labels.officialModeUpgradeCta}
+          </button>
+        ) : null}
       </div>
-      {referralLink ? (
-        <p className="mt-3 rounded-xl border border-amber-200 bg-white px-3 py-2 text-xs font-semibold text-muted">
-          {(
-            labels.officialModeInviteDescription ??
-            "Referral link: {link}. Phần thưởng referral được cộng qua quota/entitlement server-side khi chiến dịch cho phép."
-          ).replace("{link}", referralLink)}
-        </p>
-      ) : (
-        <p className="mt-3 rounded-xl border border-ink/10 bg-white/70 px-3 py-2 text-xs font-semibold text-muted">
-          {labels.officialModeInviteUnavailable ??
-            "Referral link sẽ xuất hiện khi social growth được mở bằng feature flag."}
-        </p>
-      )}
     </section>
   );
 }
@@ -1525,7 +1585,17 @@ export function QuizQuestionPanel({
 
   // Options are pre-shuffled by backend with exam-level balanced distribution
   // optionKey is already the positional display key (A/B/C/D) after backend shuffle
-  const options = question.question?.options ?? [];
+  const options = useMemo(() => question.question?.options ?? [], [question.question?.options]);
+  const handleAnswer = useCallback(
+    (key: string) => {
+      if (selected) return;
+      setSelected(key);
+      setTimeout(() => {
+        void onAnswer(key, confidence ?? undefined);
+      }, 250);
+    },
+    [confidence, onAnswer, selected]
+  );
 
   // Reset selected + confidence when question changes
   useEffect(() => {
@@ -1541,7 +1611,16 @@ export function QuizQuestionPanel({
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
 
-      const keyMap: Record<string, number> = { a: 0, b: 1, c: 2, d: 3, "1": 0, "2": 1, "3": 2, "4": 3 };
+      const keyMap: Record<string, number> = {
+        a: 0,
+        b: 1,
+        c: 2,
+        d: 3,
+        "1": 0,
+        "2": 1,
+        "3": 2,
+        "4": 3
+      };
       const posIndex = keyMap[e.key.toLowerCase()];
       if (posIndex !== undefined && options[posIndex]) {
         e.preventDefault();
@@ -1555,17 +1634,9 @@ export function QuizQuestionPanel({
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [question.question?.id, selected, options]);
+  }, [handleAnswer, onToggleFlag, options, question.question, selected]);
 
   if (!question.question) return null;
-
-  const handleAnswer = (key: string) => {
-    if (selected) return;
-    setSelected(key);
-    setTimeout(() => {
-      void onAnswer(key, confidence ?? undefined);
-    }, 250);
-  };
 
   return (
     <article className="overflow-hidden rounded-2xl border border-ink/8 bg-surface shadow-sm">
@@ -1588,11 +1659,25 @@ export function QuizQuestionPanel({
             <button
               className={`rounded-full p-1.5 transition ${flagged ? "bg-amber-100 text-amber-600" : "text-muted hover:bg-paper hover:text-ink"}`}
               onClick={onToggleFlag}
-              title={flagged ? (labels.unflagQuestion ?? "Bỏ đánh dấu") : (labels.flagQuestion ?? "Đánh dấu xem lại")}
+              title={
+                flagged
+                  ? (labels.unflagQuestion ?? "Bỏ đánh dấu")
+                  : (labels.flagQuestion ?? "Đánh dấu xem lại")
+              }
               type="button"
             >
-              <svg className="h-4 w-4" fill={flagged ? "currentColor" : "none"} stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" strokeLinecap="round" strokeLinejoin="round" />
+              <svg
+                className="h-4 w-4"
+                fill={flagged ? "currentColor" : "none"}
+                stroke="currentColor"
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
                 <line x1="4" x2="4" y1="22" y2="15" />
               </svg>
             </button>
@@ -1732,7 +1817,15 @@ export function QuizQuestionPanel({
               onClick={() => setConfidence((c) => (c === "sure" ? null : "sure"))}
               type="button"
             >
-              <svg className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              <svg
+                className="h-3 w-3"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+              >
+                <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
               {labels.confidenceSure ?? "Chắc chắn"}
             </button>
             <button
@@ -1744,7 +1837,21 @@ export function QuizQuestionPanel({
               onClick={() => setConfidence((c) => (c === "guessing" ? null : "guessing"))}
               type="button"
             >
-              <svg className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><circle cx={12} cy={12} r={10} /><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" strokeLinecap="round" strokeLinejoin="round" /><line x1="12" x2="12.01" y1="17" y2="17" /></svg>
+              <svg
+                className="h-3 w-3"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+              >
+                <circle cx={12} cy={12} r={10} />
+                <path
+                  d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <line x1="12" x2="12.01" y1="17" y2="17" />
+              </svg>
               {labels.confidenceGuessing ?? "Đoán"}
             </button>
           </div>
@@ -1866,7 +1973,9 @@ function ResultsSummary({
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted">
                   {labels.bandLabel}
                 </p>
-                <p className={`mt-1 text-3xl font-extrabold transition-all duration-500 ${bandVisible ? bandColor : "text-transparent"}`}>
+                <p
+                  className={`mt-1 text-3xl font-extrabold transition-all duration-500 ${bandVisible ? bandColor : "text-transparent"}`}
+                >
                   {bandVisible ? band : "—"}
                 </p>
               </div>
@@ -1885,13 +1994,30 @@ function ResultsSummary({
             <div className="mx-auto mt-3 flex max-w-lg items-center justify-center gap-4">
               {flaggedCount > 0 && (
                 <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600">
-                  <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15" /></svg>
+                  <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+                    <line x1="4" x2="4" y1="22" y2="15" />
+                  </svg>
                   {(labels.flaggedCount ?? "{n} đánh dấu").replace("{n}", String(flaggedCount))}
                 </span>
               )}
               {guessedCount > 0 && (
                 <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-500">
-                  <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><circle cx={12} cy={12} r={10} /><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" strokeLinecap="round" strokeLinejoin="round" /><line x1="12" x2="12.01" y1="17" y2="17" /></svg>
+                  <svg
+                    className="h-3.5 w-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    viewBox="0 0 24 24"
+                  >
+                    <circle cx={12} cy={12} r={10} />
+                    <path
+                      d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <line x1="12" x2="12.01" y1="17" y2="17" />
+                  </svg>
                   {guessedCount} đoán
                 </span>
               )}
@@ -1925,7 +2051,19 @@ function ResultsSummary({
             onClick={() => setShareOpen(true)}
             type="button"
           >
-            <svg className="mr-1.5 h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            <svg
+              className="mr-1.5 h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
             {labels.shareResult ?? "Chia sẻ kết quả"}
           </button>
           <ShareDrawer
@@ -1970,11 +2108,23 @@ function AchievementBadges({
   score: number;
 }) {
   const badges: Array<{ emoji: string; label: string; earned: boolean }> = [
-    { emoji: "🎯", label: labels.achievementPerfect ?? "100% chính xác!", earned: accuracy === 100 },
-    { emoji: "🏅", label: labels.achievementFirst ?? "Bài đầu tiên hoàn thành!", earned: historyCount <= 1 },
-    { emoji: "🔥", label: labels.achievementStreak ?? "Đã làm 10+ bài!", earned: historyCount >= 10 },
+    {
+      emoji: "🎯",
+      label: labels.achievementPerfect ?? "100% chính xác!",
+      earned: accuracy === 100
+    },
+    {
+      emoji: "🏅",
+      label: labels.achievementFirst ?? "Bài đầu tiên hoàn thành!",
+      earned: historyCount <= 1
+    },
+    {
+      emoji: "🔥",
+      label: labels.achievementStreak ?? "Đã làm 10+ bài!",
+      earned: historyCount >= 10
+    },
     { emoji: "⭐", label: labels.achievementScore600 ?? "Đạt 600+ điểm", earned: score >= 600 },
-    { emoji: "💎", label: labels.achievementScore700 ?? "Đạt 700+ điểm", earned: score >= 700 },
+    { emoji: "💎", label: labels.achievementScore700 ?? "Đạt 700+ điểm", earned: score >= 700 }
   ];
 
   const earned = badges.filter((b) => b.earned);
@@ -2018,7 +2168,10 @@ function RecommendedNext({
       if (q.isCorrect) map[code].correct++;
     }
     return Object.entries(map)
-      .map(([area, s]) => ({ area, pct: s.total > 0 ? Math.round((s.correct / s.total) * 100) : 100 }))
+      .map(([area, s]) => ({
+        area,
+        pct: s.total > 0 ? Math.round((s.correct / s.total) * 100) : 100
+      }))
       .filter((a) => a.pct < 80)
       .sort((a, b) => a.pct - b.pct)
       .slice(0, 3);
@@ -2038,7 +2191,10 @@ function RecommendedNext({
       </div>
       <div className="flex flex-wrap gap-2 px-4 py-3">
         {weakAreas.map((a) => (
-          <span key={a.area} className="inline-flex items-center gap-1.5 rounded-full bg-sakura/8 px-3 py-1.5 text-xs font-semibold text-sakura">
+          <span
+            key={a.area}
+            className="inline-flex items-center gap-1.5 rounded-full bg-sakura/8 px-3 py-1.5 text-xs font-semibold text-sakura"
+          >
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-sakura" />
             {SECTION_NAMES[a.area] ?? a.area} — {a.pct}%
           </span>
@@ -2097,7 +2253,9 @@ function SessionHistoryTimeline({
               </div>
               {/* Score + band */}
               <div className="flex items-center gap-2 flex-shrink-0">
-                <span className="text-xs font-bold tabular-nums text-ink">{s.estimatedScore ?? "—"}</span>
+                <span className="text-xs font-bold tabular-nums text-ink">
+                  {s.estimatedScore ?? "—"}
+                </span>
                 {s.estimatedBjtBand && (
                   <span className={`text-xs font-bold ${bandColor}`}>{s.estimatedBjtBand}</span>
                 )}
@@ -2107,7 +2265,9 @@ function SessionHistoryTimeline({
         })}
       </div>
       {history.length === 0 && (
-        <p className="px-4 py-6 text-center text-xs text-muted">{labels.historyEmpty ?? "Chưa có bài thi nào."}</p>
+        <p className="px-4 py-6 text-center text-xs text-muted">
+          {labels.historyEmpty ?? "Chưa có bài thi nào."}
+        </p>
       )}
     </section>
   );
@@ -2137,9 +2297,7 @@ const SECTION_NAMES: Record<string, string> = {
 function formatSkillTag(tag: string, labels: QuizLabels): string {
   if (labels.skillTagLabels?.[tag]) return labels.skillTagLabels[tag];
   // Fallback: convert snake_case to readable
-  return tag
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+  return tag.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 function SkillSectionBreakdown({
@@ -2232,7 +2390,10 @@ function SkillSectionBreakdown({
           <div className="space-y-2.5 p-4">
             {skillStats.map((s) => (
               <div key={s.tag} className="flex items-center gap-2">
-                <span className="w-28 truncate text-[11px] font-medium text-muted" title={formatSkillTag(s.tag, labels)}>
+                <span
+                  className="w-28 truncate text-[11px] font-medium text-muted"
+                  title={formatSkillTag(s.tag, labels)}
+                >
                   {formatSkillTag(s.tag, labels)}
                 </span>
                 <div className="h-2 flex-1 overflow-hidden rounded-full bg-ink/5">

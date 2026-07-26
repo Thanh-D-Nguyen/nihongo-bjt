@@ -26593,16 +26593,44 @@
     },
     "/api/ads/decision": {
       "post": {
-        "description": "Resolves a placement for the authenticated user. Pass `learningContext.sessionKind` to enforce learning-safety (no ads during flashcard/BJT/quiz as configured).",
+        "description": "Optional Bearer authentication. Anonymous viewers are evaluated as the free audience; authenticated plans and ad-suppression entitlements are resolved server-side. Pass `learningContext.sessionKind` to enforce learning safety.",
         "operationId": "decision",
         "parameters": [],
         "requestBody": {
           "required": true,
-          "description": "See `adsRuntimeDecisionBodySchema` in @nihongo-bjt/shared",
+          "description": "Anonymous clients must omit `userId`; authenticated identity is derived from the Bearer token.",
           "content": {
             "application/json": {
               "schema": {
-                "type": "string"
+                "type": "object",
+                "required": [
+                  "placementCode"
+                ],
+                "properties": {
+                  "learningContext": {
+                    "type": "object",
+                    "properties": {
+                      "sessionKind": {
+                        "type": "string",
+                        "enum": [
+                          "default",
+                          "flashcard_review",
+                          "bjt_timed",
+                          "quiz_active"
+                        ]
+                      }
+                    }
+                  },
+                  "locale": {
+                    "type": "string",
+                    "maxLength": 16
+                  },
+                  "placementCode": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  }
+                }
               }
             }
           }
@@ -26693,11 +26721,12 @@
           }
         },
         "security": [
+          {},
           {
             "bearer": []
           }
         ],
-        "summary": "Ad decision (auth)",
+        "summary": "Ad decision (optional auth)",
         "tags": [
           "Ads",
           "Monetization"
@@ -26706,16 +26735,64 @@
     },
     "/api/ads/impression": {
       "post": {
-        "description": "Record a served impression or a client-side safety block. No free-form text; `clientContext` is schema-limited.",
+        "description": "Record a served impression or client-side safety block with optional Bearer authentication. Anonymous events are persisted with a null user id.",
         "operationId": "impression",
         "parameters": [],
         "requestBody": {
           "required": true,
-          "description": "See `adsRuntimeImpressionBodySchema`",
+          "description": "Anonymous clients must omit `userId`; authenticated identity is derived from the Bearer token.",
           "content": {
             "application/json": {
               "schema": {
-                "type": "string"
+                "type": "object",
+                "required": [
+                  "decisionToken",
+                  "kind",
+                  "placementCode"
+                ],
+                "properties": {
+                  "campaignId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "clientContext": {
+                    "type": "object",
+                    "properties": {
+                      "device": {
+                        "type": "string",
+                        "enum": [
+                          "mobile",
+                          "desktop",
+                          "unknown"
+                        ]
+                      },
+                      "locale": {
+                        "type": "string",
+                        "maxLength": 16
+                      }
+                    }
+                  },
+                  "decisionKey": {
+                    "type": "string",
+                    "maxLength": 120
+                  },
+                  "decisionToken": {
+                    "type": "string",
+                    "minLength": 64,
+                    "maxLength": 1024
+                  },
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "impression"
+                    ]
+                  },
+                  "placementCode": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  }
+                }
               }
             }
           }
@@ -26806,11 +26883,12 @@
           }
         },
         "security": [
+          {},
           {
             "bearer": []
           }
         ],
-        "summary": "Ad impression (auth)",
+        "summary": "Ad impression (optional auth)",
         "tags": [
           "Ads",
           "Monetization"
@@ -26819,15 +26897,57 @@
     },
     "/api/ads/click": {
       "post": {
+        "description": "Record a click with optional Bearer authentication. Anonymous events are persisted with a null user id.",
         "operationId": "click",
         "parameters": [],
         "requestBody": {
           "required": true,
-          "description": "See `adsRuntimeClickBodySchema`",
+          "description": "Anonymous clients must omit `userId`; authenticated identity is derived from the Bearer token.",
           "content": {
             "application/json": {
               "schema": {
-                "type": "string"
+                "type": "object",
+                "required": [
+                  "decisionToken",
+                  "placementCode"
+                ],
+                "properties": {
+                  "campaignId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "clientContext": {
+                    "type": "object",
+                    "properties": {
+                      "device": {
+                        "type": "string",
+                        "enum": [
+                          "mobile",
+                          "desktop",
+                          "unknown"
+                        ]
+                      },
+                      "locale": {
+                        "type": "string",
+                        "maxLength": 16
+                      }
+                    }
+                  },
+                  "decisionKey": {
+                    "type": "string",
+                    "maxLength": 120
+                  },
+                  "decisionToken": {
+                    "type": "string",
+                    "minLength": 64,
+                    "maxLength": 1024
+                  },
+                  "placementCode": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  }
+                }
               }
             }
           }
@@ -26918,11 +27038,12 @@
           }
         },
         "security": [
+          {},
           {
             "bearer": []
           }
         ],
-        "summary": "Ad click (auth)",
+        "summary": "Ad click (optional auth)",
         "tags": [
           "Ads",
           "Monetization"
@@ -64156,6 +64277,13 @@
             "schema": {}
           },
           {
+            "name": "timeZone",
+            "required": false,
+            "in": "query",
+            "description": "Learner IANA timezone; defaults to Asia/Tokyo",
+            "schema": {}
+          },
+          {
             "name": "locale",
             "required": true,
             "in": "query",
@@ -68532,6 +68660,270 @@
         ]
       }
     },
+    "/api/admin/magazine/loto/sync": {
+      "post": {
+        "operationId": "sync",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "game": {
+                    "type": "string",
+                    "enum": [
+                      "loto6",
+                      "loto7"
+                    ]
+                  }
+                },
+                "required": [
+                  "game"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          },
+          "400": {
+            "description": "Validation (Zod/Nest) or bad input.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer / session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "RBAC / scope denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (e.g. duplicate, unique).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiConflictBodyDto"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable (if a dedicated pipe is used; otherwise 400 is common in this API).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit (when enforced at gateway or Nest).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error / DB.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "admin-actor": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Download and import the latest allowlisted Loto CSV source.",
+        "tags": [
+          "Admin – Magazine Loto Lab"
+        ],
+        "x-admin-audit": true,
+        "x-admin-group": "content",
+        "x-admin-requires": [
+          "admin.content.read",
+          "admin.content.write",
+          "viewer.audit"
+        ]
+      }
+    },
+    "/api/admin/magazine/loto/autopilot": {
+      "post": {
+        "operationId": "autopilot",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "game": {
+                    "type": "string",
+                    "enum": [
+                      "loto6",
+                      "loto7"
+                    ]
+                  }
+                },
+                "required": [
+                  "game"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          },
+          "400": {
+            "description": "Validation (Zod/Nest) or bad input.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer / session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "RBAC / scope denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (e.g. duplicate, unique).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiConflictBodyDto"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable (if a dedicated pipe is used; otherwise 400 is common in this API).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit (when enforced at gateway or Nest).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error / DB.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "admin-actor": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reconcile Loto data and publish the next probability-learning combination when ready.",
+        "tags": [
+          "Admin – Magazine Loto Lab"
+        ],
+        "x-admin-audit": true,
+        "x-admin-group": "content",
+        "x-admin-requires": [
+          "admin.content.read",
+          "admin.content.write",
+          "viewer.audit"
+        ]
+      }
+    },
     "/api/admin/magazine/loto/generate": {
       "post": {
         "operationId": "generate",
@@ -68629,7 +69021,7 @@
             "bearer": []
           }
         ],
-        "summary": "Generate 1-5 Loto candidate sets with weighted algorithms and contextual text signals.",
+        "summary": "Generate 1-5 probability-learning combinations with weighted historical heuristics.",
         "tags": [
           "Admin – Magazine Loto Lab"
         ],
@@ -68766,7 +69158,7 @@
             "bearer": []
           }
         ],
-        "summary": "Publish selected generated sets as a Magazine prediction article.",
+        "summary": "Publish selected generated sets as a Magazine probability-learning article.",
         "tags": [
           "Admin – Magazine Loto Lab"
         ],
@@ -68818,7 +69210,7 @@
             "bearer": []
           }
         ],
-        "summary": "Loto prediction feed with matched results",
+        "summary": "Loto reference-combination feed with matched results",
         "tags": [
           "Magazine – Loto Hub"
         ]
@@ -68851,7 +69243,7 @@
             "bearer": []
           }
         ],
-        "summary": "Latest prediction for upcoming draw (hero section)",
+        "summary": "Latest probability-learning combination for the upcoming draw",
         "tags": [
           "Magazine – Loto Hub"
         ]
@@ -68884,7 +69276,7 @@
             "bearer": []
           }
         ],
-        "summary": "Hit rate summary and streak info",
+        "summary": "Historical combination/result comparison summary",
         "tags": [
           "Magazine – Loto Hub"
         ]
@@ -68946,7 +69338,7 @@
             "bearer": []
           }
         ],
-        "summary": "List loto predictions with approval status filter",
+        "summary": "List Loto reference combinations with approval status filter",
         "tags": [
           "Admin – Loto Predictions"
         ],
@@ -68984,7 +69376,7 @@
             "bearer": []
           }
         ],
-        "summary": "Approve a loto prediction for publication",
+        "summary": "Approve a Loto reference combination for publication",
         "tags": [
           "Admin – Loto Predictions"
         ],
@@ -69022,7 +69414,7 @@
             "bearer": []
           }
         ],
-        "summary": "Reject a loto prediction",
+        "summary": "Reject a Loto reference combination",
         "tags": [
           "Admin – Loto Predictions"
         ],
@@ -69140,7 +69532,7 @@
             "bearer": []
           }
         ],
-        "summary": "Loto prediction analytics (hit rates, engagement)",
+        "summary": "Loto combination/result comparison analytics and engagement",
         "tags": [
           "Admin – Loto Predictions"
         ],

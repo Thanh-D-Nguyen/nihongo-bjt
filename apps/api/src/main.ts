@@ -11,6 +11,7 @@ import "reflect-metadata";
 
 import { AppModule } from "./app.module.js";
 import { GlobalExceptionFilter } from "./global-exception.filter.js";
+import { configureTrustedProxy } from "./http/trusted-proxy.js";
 import { setupSwagger } from "./openapi/setup-swagger.js";
 
 loadEnv({ path: resolve(dirname(fileURLToPath(import.meta.url)), "../../../.env") });
@@ -32,6 +33,7 @@ async function bootstrap() {
     bufferLogs: true,
     rawBody: true
   });
+  configureTrustedProxy(app, env.TRUST_PROXY);
   app.useBodyParser("json", { limit: "5mb" });
   app.useBodyParser("urlencoded", { extended: true, limit: "5mb" });
   app.useWebSocketAdapter(new IoAdapter(app));

@@ -5,8 +5,12 @@ import { RuntimeFeatureGateService } from "../operations/runtime-feature-gate.se
 import { EntitlementKey, FeatureFlagKey } from "./monetization.constants.js";
 import { MonetizationRepository } from "./monetization.repository.js";
 
+const AD_SUPPRESSION_ENTITLEMENTS = new Set<string>([
+  EntitlementKey.ads_remove,
+  EntitlementKey.ads_reduced
+]);
 const FREE_ACCESS_ENTITLEMENTS = Object.values(EntitlementKey).filter(
-  (key) => key !== EntitlementKey.ads_reduced
+  (key) => !AD_SUPPRESSION_ENTITLEMENTS.has(key)
 );
 
 /**

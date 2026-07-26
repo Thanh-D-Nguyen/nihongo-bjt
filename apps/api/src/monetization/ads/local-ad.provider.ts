@@ -6,6 +6,7 @@ import { EntitlementService } from "../entitlement.service.js";
 import type { AdDecideInput, AdDecision, AdProvider } from "./ad-provider.js";
 
 const IMPRESSION_KIND = "impression";
+const ANONYMOUS_PLAN_SLUG = "free";
 
 export function isPersonalizedAdConfig(
   placementConfig: Record<string, unknown>,
@@ -29,18 +30,26 @@ export class LocalAdProvider implements AdProvider {
       throw new NotFoundException("Ad placement not found");
     }
 
-    const reduced = await this.entitlements.has(input.userId, EntitlementKey.ads_reduced);
-    if (reduced) {
+    const resolved = input.userId
+      ? await this.entitlements.listEntitlementKeysForUser(input.userId)
+      : null;
+    const suppressionKey = resolved?.entitlements.includes(EntitlementKey.ads_remove)
+      ? "local:ads_remove"
+      : resolved?.entitlements.includes(EntitlementKey.ads_reduced)
+        ? "local:ads_reduced"
+        : null;
+    if (suppressionKey) {
       await this.recordBlocked({
-        decisionKey: "local:ads_reduced",
+        decisionKey: suppressionKey,
         placementId: placement.id,
         userId: input.userId
       });
-      return { decisionKey: "local:ads_reduced", eligible: false };
+      return { decisionKey: suppressionKey, eligible: false };
     }
 
-    const resolved = await this.entitlements.listEntitlementKeysForUser(input.userId);
-    const effectivePlan = input.planSlug ?? input.learningContext?.planSlug ?? resolved.planSlug;
+    // Client plan hints are intentionally ignored. Authenticated plans come from
+    // centralized entitlements; anonymous viewers always use the free audience.
+    const effectivePlan = resolved?.planSlug ?? ANONYMOUS_PLAN_SLUG;
 
     const blockReason = await this.evaluateSafetyBlocks(input);
     if (blockReason) {
@@ -63,7 +72,7 @@ export class LocalAdProvider implements AdProvider {
     }
 
     const maxPerDay = typeof placementCfg.maxPerDay === "number" ? placementCfg.maxPerDay : null;
-    if (maxPerDay != null && maxPerDay >= 0) {
+    if (input.userId && maxPerDay != null && maxPerDay >= 0) {
       const over = await this.overDailyImpressionCap(input.userId, placement.id, maxPerDay);
       if (over) {
         await this.recordBlocked({
@@ -104,14 +113,13 @@ export class LocalAdProvider implements AdProvider {
       });
     }
 
-    if (
-      isPersonalizedAdConfig(placementCfg, provider.config) &&
-      (await this.isPersonalizedOptInRequired())
-    ) {
-      const profile = await this.prisma.userProfile.findUnique({
-        select: { adsPersonalizationOptIn: true },
-        where: { id: input.userId }
-      });
+    if (isPersonalizedAdConfig(placementCfg, provider.config)) {
+      const profile = input.userId
+        ? await this.prisma.userProfile.findUnique({
+            select: { adsPersonalizationOptIn: true },
+            where: { id: input.userId }
+          })
+        : null;
       if (!(profile?.adsPersonalizationOptIn ?? false)) {
         await this.recordBlocked({
           decisionKey: "privacy:personalization_opt_in_required",
@@ -204,16 +212,6 @@ export class LocalAdProvider implements AdProvider {
     return null;
   }
 
-  private async isPersonalizedOptInRequired(): Promise<boolean> {
-    const r = await this.prisma.adSafetyRule.findFirst({
-      where: { enabled: true, ruleKey: "require_personalized_ads_opt_in" }
-    });
-    if (!r) {
-      return false;
-    }
-    return (r.config as { required?: boolean } | null)?.required === true;
-  }
-
   private async overDailyImpressionCap(userId: string, placementId: string, max: number) {
     const start = new Date();
     start.setUTCHours(0, 0, 0, 0);
@@ -232,7 +230,7 @@ export class LocalAdProvider implements AdProvider {
     const now = new Date();
     const rows = await this.prisma.adCampaign.findMany({
       orderBy: [{ priority: "desc" }, { updatedAt: "desc" }],
-      where: { status: "active" }
+      where: { policyStatus: "ok", status: "active" }
     });
     for (const c of rows) {
       const codes = c.placementCodes as string[];
@@ -256,7 +254,11 @@ export class LocalAdProvider implements AdProvider {
     return null;
   }
 
-  private async recordBlocked(input: { decisionKey: string; placementId: string; userId: string }) {
+  private async recordBlocked(input: {
+    decisionKey: string;
+    placementId: string;
+    userId: string | null;
+  }) {
     await this.prisma.adImpression.create({
       data: {
         decisionKey: input.decisionKey,

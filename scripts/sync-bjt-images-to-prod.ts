@@ -9,14 +9,15 @@
  *    1. The image/audio FILE           → object inside a MinIO bucket
  *    2. The `imageUrl`/`audioUrl` link → columns on `BjtQuestion` (PostgreSQL)
  *
- *  The image-generation script stores a FULL URL with a hardcoded host
+ *  The image-generation script stores a FULL URL with its environment host
  *  (e.g. http://localhost:19000/<bucket>/<key>). That URL is meaningless on
  *  production, so the images "disappear" even after a DB copy.
  *
  *  This script fixes all three problems in one pass:
  *    • copies each media OBJECT from local MinIO → prod MinIO (same object key)
  *    • rewrites the host  localhost:19000  →  the prod public base URL
- *    • writes imageUrl + imageAlt + audioUrl into the PROD database
+ *    • writes imageUrl + imageAlt + imagePrompt + audioUrl into the PROD database
+ *    • upserts AI image provenance/rights into MediaAsset and keeps its id in qualityFlags
  *
  *  It is IDEMPOTENT and safe to re-run. Existing prod objects are skipped
  *  unless --force is passed.
@@ -59,7 +60,8 @@
 import "dotenv/config";
 import * as Minio from "minio";
 
-import { createPrismaClient } from "../packages/database/src/index.js";
+import { createPrismaClient, Prisma } from "../packages/database/src/index.js";
+import { imageMetadataForProductionSync } from "./lib/bjt-question-image-metadata.js";
 
 // ── Flags ────────────────────────────────────────────────────────────────────
 
@@ -237,7 +239,14 @@ async function main() {
     where: {
       OR: [{ imageUrl: { not: null } }, { audioUrl: { not: null } }]
     },
-    select: { id: true, imageUrl: true, imageAlt: true, audioUrl: true }
+    select: {
+      id: true,
+      imageUrl: true,
+      imageAlt: true,
+      imagePrompt: true,
+      audioUrl: true,
+      qualityFlags: true
+    }
   });
 
   const stats: Stats = {
@@ -253,7 +262,13 @@ async function main() {
   console.log(`  Found ${rows.length} question(s) with media URLs.\n`);
 
   for (const row of rows) {
-    const updates: { imageUrl?: string; imageAlt?: string | null; audioUrl?: string } = {};
+    const updates: {
+      imageUrl?: string;
+      imageAlt?: string | null;
+      imagePrompt?: string | null;
+      audioUrl?: string;
+      qualityFlags?: Prisma.InputJsonValue;
+    } = {};
     const media = [
       { field: "imageUrl" as const, url: row.imageUrl },
       { field: "audioUrl" as const, url: row.audioUrl }
@@ -289,7 +304,57 @@ async function main() {
           console.log(`  ↑  ${row.id}  uploaded object (${buffer.length} bytes): ${key}`);
         }
         updates[item.field] = newUrl;
-        if (item.field === "imageUrl") updates.imageAlt = row.imageAlt ?? null;
+        if (item.field === "imageUrl") {
+          Object.assign(updates, imageMetadataForProductionSync(row));
+          const localAsset = await localDb.mediaAsset.findUnique({ where: { objectKey: key } });
+          if (localAsset) {
+            if (DRY_RUN) {
+              console.log(`     WOULD preserve MediaAsset provenance/rights for ${key}`);
+            } else {
+              const prodAsset = await prodDb.mediaAsset.upsert({
+                create: {
+                  accessibility: localAsset.accessibility ?? Prisma.JsonNull,
+                  byteSize: localAsset.byteSize,
+                  checksumSha256: localAsset.checksumSha256,
+                  license: localAsset.license,
+                  mimeType: localAsset.mimeType,
+                  objectKey: key,
+                  provider: localAsset.provider,
+                  provenance: localAsset.provenance ?? Prisma.JsonNull,
+                  rightsStatus: localAsset.rightsStatus,
+                  sourceUrl: newUrl,
+                  status: localAsset.status
+                },
+                update: {
+                  accessibility: localAsset.accessibility ?? Prisma.JsonNull,
+                  byteSize: localAsset.byteSize,
+                  checksumSha256: localAsset.checksumSha256,
+                  license: localAsset.license,
+                  mimeType: localAsset.mimeType,
+                  provider: localAsset.provider,
+                  provenance: localAsset.provenance ?? Prisma.JsonNull,
+                  rightsStatus: localAsset.rightsStatus,
+                  sourceUrl: newUrl,
+                  status: localAsset.status
+                },
+                where: { objectKey: key }
+              });
+              const qualityFlags = (row.qualityFlags ?? {}) as Record<string, unknown>;
+              const imageGeneration = (qualityFlags.imageGeneration ?? {}) as Record<
+                string,
+                unknown
+              >;
+              updates.qualityFlags = {
+                ...qualityFlags,
+                imageGeneration: {
+                  ...imageGeneration,
+                  mediaAssetId: prodAsset.id,
+                  objectKey: key
+                }
+              } as Prisma.InputJsonObject;
+            }
+          }
+        }
       } catch (err) {
         stats.errors++;
         const msg = err instanceof Error ? err.message : String(err);
@@ -300,7 +365,14 @@ async function main() {
     if (Object.keys(updates).length === 0) continue;
     if (DRY_RUN) {
       for (const [field, value] of Object.entries(updates)) {
-        if (field !== "imageAlt") console.log(`     WOULD set ${field} → ${value}`);
+        if (field === "imageAlt" || field === "imagePrompt") {
+          const length = typeof value === "string" ? value.length : 0;
+          console.log(`     WOULD preserve ${field} (${length} chars)`);
+        } else if (field === "qualityFlags") {
+          console.log("     WOULD preserve qualityFlags image provenance");
+        } else {
+          console.log(`     WOULD set ${field} → ${value}`);
+        }
       }
     } else {
       await prodDb.bjtQuestion.update({ where: { id: row.id }, data: updates });

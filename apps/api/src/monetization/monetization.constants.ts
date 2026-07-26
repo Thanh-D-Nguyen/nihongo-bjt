@@ -12,6 +12,7 @@ export type QuotaKey = (typeof Quota)[keyof typeof Quota];
 
 export const EntitlementKey = {
   learner_basic: "learner.basic",
+  ads_remove: "ads.remove",
   ads_reduced: "ads.reduced",
   flashcard_adaptive_gen: "flashcard.adaptive_gen",
   flashcard_suggest_cards: "flashcard.suggest_cards",

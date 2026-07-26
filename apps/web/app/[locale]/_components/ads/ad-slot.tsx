@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
-import { learnerApiFetch, learnerApiFetchOptional } from "../../../../lib/learner-api";
+import { learnerApiFetchOptional } from "../../../../lib/learner-api";
 
 export interface AdSlotLabels {
   advertisement: string;
@@ -15,6 +15,7 @@ export interface AdSlotLabels {
 interface AdDecision {
   campaignId?: string;
   decisionKey: string;
+  decisionToken?: string;
   eligible: boolean;
   payload?: {
     campaign?: {
@@ -31,6 +32,7 @@ export function isRenderableAdDecision(ad: AdDecision | null): ad is AdDecision 
   const campaign = ad?.payload?.campaign;
   return Boolean(
     ad?.eligible &&
+    ad.decisionToken &&
     campaign &&
     campaign.creativeType !== "placeholder" &&
     !campaign.id.startsWith("placeholder:")
@@ -45,15 +47,20 @@ function clientDevice(): "mobile" | "desktop" | "unknown" {
 export function AdSlot({
   className = "",
   labels,
+  learningContext,
   locale,
   placementCode
 }: {
   className?: string;
   labels: AdSlotLabels;
+  learningContext?: {
+    sessionKind?: "default" | "flashcard_review" | "bjt_timed" | "quiz_active";
+  };
   locale: string;
   placementCode: string;
 }) {
-  const { userId = "" } = useKeycloakAuth();
+  const { userId = null } = useKeycloakAuth();
+  const sessionKind = learningContext?.sessionKind;
   const [ad, setAd] = useState<AdDecision | null>(null);
   const slotRef = useRef<HTMLDivElement>(null);
   const impressionSent = useRef(false);
@@ -61,11 +68,16 @@ export function AdSlot({
   useEffect(() => {
     setAd(null);
     impressionSent.current = false;
-    if (!userId) return;
-    const params = new URLSearchParams({ locale, placementCode, userId });
     const controller = new AbortController();
 
-    void learnerApiFetchOptional(`/api/learner/monetization/ad?${params.toString()}`, {
+    void learnerApiFetchOptional("/api/ads/decision", {
+      body: JSON.stringify({
+        ...(sessionKind ? { learningContext: { sessionKind } } : {}),
+        locale,
+        placementCode
+      }),
+      headers: { "content-type": "application/json" },
+      method: "POST",
       signal: controller.signal
     })
       .then(async (response) => {
@@ -74,23 +86,23 @@ export function AdSlot({
       .catch(() => undefined);
 
     return () => controller.abort();
-  }, [locale, placementCode, userId]);
+  }, [locale, placementCode, sessionKind, userId]);
 
   useEffect(() => {
-    if (!userId || !isRenderableAdDecision(ad) || !slotRef.current) return;
+    if (!isRenderableAdDecision(ad) || !slotRef.current) return;
     const slot = slotRef.current;
 
     const sendImpression = () => {
       if (impressionSent.current) return;
       impressionSent.current = true;
-      void learnerApiFetch("/api/ads/impression", {
+      void learnerApiFetchOptional("/api/ads/impression", {
         body: JSON.stringify({
           campaignId: ad.campaignId,
           clientContext: { device: clientDevice(), locale },
           decisionKey: ad.decisionKey,
+          decisionToken: ad.decisionToken,
           kind: "impression",
-          placementCode,
-          userId
+          placementCode
         }),
         headers: { "content-type": "application/json" },
         method: "POST",
@@ -162,13 +174,13 @@ export function AdSlot({
   );
 
   const onClick = () => {
-    void learnerApiFetch("/api/ads/click", {
+    void learnerApiFetchOptional("/api/ads/click", {
       body: JSON.stringify({
         campaignId: ad.campaignId,
         clientContext: { device: clientDevice(), locale },
         decisionKey: ad.decisionKey,
-        placementCode,
-        userId
+        decisionToken: ad.decisionToken,
+        placementCode
       }),
       headers: { "content-type": "application/json" },
       method: "POST",

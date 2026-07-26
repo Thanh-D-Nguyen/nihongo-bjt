@@ -32,9 +32,13 @@ const featureFlags = [
   ["ads.enabled", "Enable managed ad serving for learner app.", true],
   ["billing.stripe.enabled", "Enable Stripe checkout and subscription management.", false],
   ["learning_path_engine", "Enable learner/admin learning path contracts and UI.", false],
-  ["monetization.enforcement", "When enabled, quota limits and billing are enforced. Disable for free-for-all mode.", false],
+  [
+    "monetization.enforcement",
+    "When enabled, quota limits and billing are enforced. Disable for free-for-all mode.",
+    false
+  ],
   ["reading_assist", "Enable reusable Japanese reading assist APIs and UI affordances.", true],
-  ["quiz.official_simulation.enabled", "Enable paid official-format BJT simulation.", true],
+  ["quiz.official_simulation.enabled", "Enable official-format BJT simulation.", true],
   ["social_growth", "Enable social login, referrals, share pages, and postcards.", false],
   ["legal_consent", "Enable policy/consent recording and privacy workflows.", false],
   ["notification_delivery", "Enable email/in-app notification delivery workers.", false],

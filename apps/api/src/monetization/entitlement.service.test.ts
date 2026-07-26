@@ -25,9 +25,7 @@ describe("EntitlementService", () => {
     vi.clearAllMocks();
     repository.resolvePlanForUser.mockResolvedValue({
       plan: {
-        entitlements: [
-          { entitlement: { key: EntitlementKey.learner_basic } }
-        ],
+        entitlements: [{ entitlement: { key: EntitlementKey.learner_basic } }],
         slug: "free"
       }
     });
@@ -54,6 +52,9 @@ describe("EntitlementService", () => {
     ).resolves.toBe(true);
     await expect(
       service.has("22222222-2222-4222-8222-222222222222", EntitlementKey.ads_reduced)
+    ).resolves.toBe(false);
+    await expect(
+      service.has("22222222-2222-4222-8222-222222222222", EntitlementKey.ads_remove)
     ).resolves.toBe(false);
     expect(featureGate.status).toHaveBeenCalledWith(FeatureFlagKey.monetization_enforcement, {
       missingBehavior: "allow"
