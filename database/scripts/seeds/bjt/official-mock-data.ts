@@ -204,9 +204,19 @@ function difficultyFor(globalQuestionIndex: number): Difficulty {
   return (["easy", "standard", "standard", "hard"] as const)[globalQuestionIndex % 4]!;
 }
 
+const EXACT_VISUAL_DATA_PATTERN =
+  /画面|表示|書かれ|札|カード|ボタン|温度|警告|標識|看板|ホワイトボード/u;
+
+function visualStimulusKind(sectionCode: SectionCode, scenario: string, fallback: string): string {
+  if (sectionCode === "LC_INTEGRATED" || sectionCode === "LR_SITUATION") return "diagram";
+  if (sectionCode === "LC_SCENE" && EXACT_VISUAL_DATA_PATTERN.test(scenario)) return "diagram";
+  return fallback;
+}
+
 function visualFields(
   sectionCode: SectionCode,
   scenario: string,
+  stimulusKind: string,
   formIndex: number,
   questionNo: number
 ): Pick<OfficialMockQuestion, "imageAlt" | "imagePrompt"> {
@@ -221,15 +231,19 @@ function visualFields(
     return { imageAlt: null, imagePrompt: null };
   }
 
-  const isDocument = sectionCode === "LR_DOCUMENT" || sectionCode === "LR_INTEGRATED";
-  const style = isDocument
-    ? "clean Japanese business document or chart, flat front-facing layout"
-    : "restrained realistic Japanese corporate training illustration";
+  const resolvedKind = visualStimulusKind(sectionCode, scenario, stimulusKind);
+  const medium =
+    resolvedKind === "photo"
+      ? "photorealistic contemporary Japanese workplace scene"
+      : resolvedKind === "diagram"
+        ? "clean front-facing business diagram that preserves every stated relationship"
+        : "clean front-facing Japanese business document or chart";
   return {
     imageAlt: `模擬試験${FORM_LABELS[formIndex]}・問${questionNo}：${scenario}`,
     imagePrompt:
-      `${style}. ${scenario}. No visible answer cues, no logos, no watermark, ` +
-      "16:9 composition, culturally accurate contemporary Japanese workplace, accessible contrast."
+      `Primary required content: ${scenario}. Medium: ${medium}. ` +
+      "Do not invent, omit, or alter stated people, objects, values, spatial relationships, or sequence. " +
+      "No visible answer cues, logos, or watermark. 16:9 composition, culturally accurate contemporary Japanese workplace, accessible contrast."
   };
 }
 
@@ -244,6 +258,7 @@ function finalizeQuestion(
   const visuals = visualFields(
     sectionCode,
     draft.scenario ?? draft.prompt,
+    draft.stimulusKind,
     formIndex,
     sectionQuestionIndex + 1
   );
@@ -259,7 +274,11 @@ function finalizeQuestion(
     skillTag: draft.skillTag,
     difficulty: difficultyFor(globalQuestionIndex),
     businessSituation: draft.businessSituation,
-    stimulusKind: draft.stimulusKind,
+    stimulusKind: visualStimulusKind(
+      sectionCode,
+      draft.scenario ?? draft.prompt,
+      draft.stimulusKind
+    ),
     tags: [
       "bjt",
       "full-mock",

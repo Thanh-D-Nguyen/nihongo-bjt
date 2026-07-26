@@ -40,12 +40,22 @@ async function seedQuestion(
       sectionId,
       OR: [{ sourceId }, { sourceId: null, prompt: question.prompt }]
     },
-    select: { id: true }
+    select: { id: true, qualityFlags: true }
   });
   if (matches.length > 1) {
     throw new Error(`Seed identity collision in ${sectionCode}: ${question.prompt.slice(0, 100)}`);
   }
 
+  const existingQualityFlags = matches[0]?.qualityFlags;
+  const existingImageGeneration =
+    existingQualityFlags &&
+    typeof existingQualityFlags === "object" &&
+    !Array.isArray(existingQualityFlags) &&
+    existingQualityFlags.imageGeneration &&
+    typeof existingQualityFlags.imageGeneration === "object" &&
+    !Array.isArray(existingQualityFlags.imageGeneration)
+      ? existingQualityFlags.imageGeneration
+      : null;
   const qualityFlags = {
     bjtPart: part,
     bjtSection: sectionCode,
@@ -58,7 +68,8 @@ async function seedQuestion(
     contentReviewStatus: "automated_validation_passed",
     scoreUse: "estimated_only",
     provenance: OFFICIAL_MOCK_PROVENANCE,
-    license: OFFICIAL_MOCK_LICENSE
+    license: OFFICIAL_MOCK_LICENSE,
+    ...(existingImageGeneration ? { imageGeneration: existingImageGeneration } : {})
   } satisfies Prisma.InputJsonObject;
 
   const data = {

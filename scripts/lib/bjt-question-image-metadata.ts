@@ -4,7 +4,9 @@ export interface BjtQuestionImageMetadata {
   imagePrompt: string | null;
 }
 
-export const BJT_AI_IMAGE_LICENSE = "OpenAI generated content - first-party commissioned";
+export function buildBjtAiImageLicense(provider: string, model: string): string {
+  return `AI-generated first-party commissioned content via ${provider} (${model})`;
+}
 
 export function buildMinioPublicBaseUrl(input: {
   endPoint: string;
@@ -19,19 +21,25 @@ export function buildMinioPublicBaseUrl(input: {
 
 export function buildBjtAiImageMetadata(input: {
   generatedAt: string;
+  license: string;
   mediaAssetId: string;
   model: string;
   objectKey: string;
+  promptTranslationModel?: string;
   promptHashSha256: string;
+  provider: string;
 }) {
   return {
     generatedAt: input.generatedAt,
-    license: BJT_AI_IMAGE_LICENSE,
+    license: input.license,
     mediaAssetId: input.mediaAssetId,
     model: input.model,
     objectKey: input.objectKey,
+    ...(input.promptTranslationModel
+      ? { promptTranslationModel: input.promptTranslationModel }
+      : {}),
     promptHashSha256: input.promptHashSha256,
-    provider: "openai",
+    provider: input.provider,
     rightsStatus: "cleared"
   } as const;
 }
@@ -55,7 +63,7 @@ export function resolveBjtImageMediaHint(qualityFlags: Record<string, unknown> |
   const stimulusKind = qualityFlags?.stimulusKind;
   if (
     typeof stimulusKind === "string" &&
-    ["photo", "illustration", "chart", "document"].includes(stimulusKind)
+    ["photo", "illustration", "chart", "diagram", "document"].includes(stimulusKind)
   ) {
     return stimulusKind;
   }
@@ -83,32 +91,38 @@ export function buildBjtImageGenerationPrompt(
   switch (mediaHint) {
     case "photo":
       return [
+        `Authoritative scene brief — this content must dominate the image: ${prompt}`,
         "Create a professional business photograph for a Japanese BJT question.",
-        `Authoritative scene brief: ${prompt}`,
-        `Production constraints: photorealistic, natural observer angle, contemporary Japanese workplace. ${baseStyle}`
+        `Production constraints: photorealistic, natural observer angle, contemporary Japanese workplace, no visible or legible writing, letters, numbers, signage, screens, charts, or documents. ${baseStyle}`
       ].join("\n");
     case "illustration":
       return [
+        `Authoritative scene brief — this content must dominate the image: ${prompt}`,
         "Create a clean modern illustration for a Japanese BJT question.",
-        `Authoritative scene brief: ${prompt}`,
         `Production constraints: restrained professional palette, clear visual hierarchy, culturally accurate Japanese workplace. ${baseStyle}`
       ].join("\n");
     case "chart":
       return [
+        `Authoritative chart brief — preserve every stated value and relationship: ${prompt}`,
         "Create a professional business chart or graph for a Japanese BJT question.",
-        `Authoritative chart brief: ${prompt}`,
         `Production constraints: readable data relationships, accessible contrast, authentic Japanese business-report styling. ${baseStyle}`
+      ].join("\n");
+    case "diagram":
+      return [
+        `Authoritative diagram brief — preserve every stated item, position, sequence, and relationship: ${prompt}`,
+        "Create a clean front-facing business diagram for a Japanese BJT question.",
+        `Production constraints: precise spatial hierarchy, minimal decoration, accessible contrast, authentic Japanese workplace styling. ${baseStyle}`
       ].join("\n");
     case "document":
       return [
+        `Authoritative document brief — preserve every stated field and relationship: ${prompt}`,
         "Create a Japanese business document stimulus for a BJT question.",
-        `Authoritative document brief: ${prompt}`,
         `Production constraints: clean front-facing layout, readable hierarchy, authentic contemporary formatting. ${baseStyle}`
       ].join("\n");
     default:
       return [
+        `Authoritative image brief — this content must dominate the image: ${prompt}`,
         "Create a professional image for a Japanese BJT question.",
-        `Authoritative image brief: ${prompt}`,
         `Production constraints: culturally accurate contemporary Japanese business setting. ${baseStyle}`
       ].join("\n");
   }

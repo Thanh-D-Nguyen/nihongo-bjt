@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  BJT_AI_IMAGE_LICENSE,
   buildBjtAiImageMetadata,
+  buildBjtAiImageLicense,
   buildBjtImageGenerationPrompt,
   buildMinioPublicBaseUrl,
   imageMetadataForProductionSync,
@@ -42,12 +42,21 @@ describe("BJT question image metadata", () => {
 
   it("uses official-mock stimulusKind when legacy mediaHint is absent", () => {
     expect(resolveBjtImageMediaHint({ stimulusKind: "document" })).toBe("document");
+    expect(resolveBjtImageMediaHint({ stimulusKind: "diagram" })).toBe("diagram");
     expect(
       resolveBjtImageMediaHint({
         mediaHint: "illustration",
         stimulusKind: "document"
       })
     ).toBe("illustration");
+  });
+
+  it("puts authoritative content before shared production styling", () => {
+    const prompt = buildBjtImageGenerationPrompt("photo", "A manager points to the east exit.");
+
+    expect(prompt.indexOf("A manager points to the east exit.")).toBeLessThan(
+      prompt.indexOf("Create a professional business photograph")
+    );
   });
 
   it("reports missing learner alt text and generation prompts separately", () => {
@@ -75,22 +84,25 @@ describe("BJT question image metadata", () => {
   });
 
   it("records AI provenance, rights, object key, and prompt hash", () => {
+    const license = buildBjtAiImageLicense("pollinations", "flux");
     expect(
       buildBjtAiImageMetadata({
         generatedAt: "2026-07-26T12:00:00.000Z",
+        license,
         mediaAssetId: "asset-id",
-        model: "gpt-image-1",
+        model: "flux",
         objectKey: "bjt/ai/J2/reading/question.png",
-        promptHashSha256: "a".repeat(64)
+        promptHashSha256: "a".repeat(64),
+        provider: "pollinations"
       })
     ).toEqual({
       generatedAt: "2026-07-26T12:00:00.000Z",
-      license: BJT_AI_IMAGE_LICENSE,
+      license,
       mediaAssetId: "asset-id",
-      model: "gpt-image-1",
+      model: "flux",
       objectKey: "bjt/ai/J2/reading/question.png",
       promptHashSha256: "a".repeat(64),
-      provider: "openai",
+      provider: "pollinations",
       rightsStatus: "cleared"
     });
   });

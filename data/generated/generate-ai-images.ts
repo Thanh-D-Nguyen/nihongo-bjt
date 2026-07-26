@@ -1,8 +1,9 @@
 /**
- * Generate AI images for BJT questions using OpenAI gpt-image-1.
+ * Generate production BJT question images through a configured provider.
  *
  * Prerequisites:
- *   1. Add OPENAI_API_KEY to .env
+ *   1. Choose IMAGE_PROVIDER=openai|omniroute|pollinations
+ *   2. Add IMAGE_API_KEY/OPENAI_API_KEY when the provider requires one
  *   2. Run: DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:15432/nihongo_bjt?schema=content" npx tsx data/generated/generate-ai-images.ts
  *
  * Interactive mode (default): prompts you to pick levels and confirms cost.
@@ -10,6 +11,8 @@
  *   --dry-run / DRY_RUN=true — validate metadata and preview prompts without
  *                              requiring OpenAI/MinIO or writing anything
  *   LEVEL_FILTER  — e.g. "J3" or "J3,J4" (comma-separated)
+ *   TEST_TYPE_FILTER — e.g. "official"
+ *   TEST_SLUG_FILTER — comma-separated stable mock-test slugs
  *   MEDIA_FILTER  — e.g. "photo"
  *   LIMIT         — max questions to process
  *   YES           — "true" to skip confirmation prompt
@@ -17,19 +20,24 @@
 import "dotenv/config";
 import { parseServerEnv } from "../../packages/config/src/index.js";
 import { createPrismaClient, Prisma } from "../../packages/database/src/index.js";
-import OpenAI from "openai";
 import * as Minio from "minio";
 import { createHash } from "node:crypto";
 import * as readline from "node:readline/promises";
 import { stdin, stdout } from "node:process";
 import {
-  BJT_AI_IMAGE_LICENSE,
   buildBjtAiImageMetadata,
+  buildBjtAiImageLicense,
   buildBjtImageGenerationPrompt,
   buildMinioPublicBaseUrl,
   resolveBjtImageMediaHint,
   validateBjtQuestionImageMetadata
 } from "../../scripts/lib/bjt-question-image-metadata.js";
+import {
+  generateBjtImage,
+  parseBjtImageGeneratorConfig,
+  parseBjtPromptTranslatorConfig,
+  translateBjtImagePrompt
+} from "../../scripts/lib/bjt-image-generation-provider.js";
 
 // ── Config ─────────────────────────────────────────────────────────
 const env = parseServerEnv(process.env);
@@ -49,9 +57,18 @@ const MINIO_PUBLIC_URL = buildMinioPublicBaseUrl({
   port: env.MINIO_PUBLIC_PORT ?? env.MINIO_PORT,
   useSSL: env.MINIO_PUBLIC_USE_SSL ?? env.MINIO_USE_SSL
 });
-const IMAGE_MODEL = "gpt-image-1";
 const DRY_RUN = process.env.DRY_RUN === "true" || process.argv.includes("--dry-run");
+const IMAGE_CONFIG = parseBjtImageGeneratorConfig(process.env, {
+  requireCredentials: !DRY_RUN
+});
+const PROMPT_TRANSLATOR_CONFIG = parseBjtPromptTranslatorConfig(process.env);
+const IMAGE_LICENSE = buildBjtAiImageLicense(IMAGE_CONFIG.provider, IMAGE_CONFIG.model);
 const LEVEL_FILTER = process.env.LEVEL_FILTER ?? null;
+const TEST_TYPE_FILTER = process.env.TEST_TYPE_FILTER?.trim() || null;
+const TEST_SLUG_FILTER = (process.env.TEST_SLUG_FILTER ?? "")
+  .split(",")
+  .map((value) => value.trim())
+  .filter(Boolean);
 const MEDIA_FILTER = process.env.MEDIA_FILTER ?? null;
 const LIMIT = process.env.LIMIT ? parseInt(process.env.LIMIT, 10) : null;
 const AUTO_YES = process.env.YES === "true";
@@ -64,70 +81,29 @@ async function ask(question: string): Promise<string> {
   return answer.trim();
 }
 
-// ── Image generation ───────────────────────────────────────────────
-const MAX_RETRIES = 5;
-const BASE_DELAY_MS = 15_000; // 15s initial backoff for 429
-
-async function generateImage(prompt: string): Promise<Buffer> {
-  const apiKey = process.env.OPENAI_API_KEY?.trim();
-  if (!apiKey) {
-    throw new Error("OPENAI_API_KEY not set. Add it to .env and try again.");
-  }
-  const openai = new OpenAI({ apiKey });
-
-  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-    try {
-      const response = await openai.images.generate({
-        model: IMAGE_MODEL,
-        prompt,
-        n: 1,
-        size: "1024x1024",
-        quality: "low"
-      });
-
-      const imageData = response.data?.[0];
-
-      // gpt-image-1 returns b64_json by default
-      if (imageData?.b64_json) {
-        return Buffer.from(imageData.b64_json, "base64");
-      }
-
-      // Fallback: download from URL if provided
-      if (imageData?.url) {
-        const res = await fetch(imageData.url);
-        if (!res.ok) throw new Error(`Failed to download image: ${res.status}`);
-        return Buffer.from(await res.arrayBuffer());
-      }
-
-      throw new Error("No image data returned from OpenAI");
-    } catch (err: unknown) {
-      const status = (err as { status?: number }).status;
-      const isRateLimit = status === 429;
-
-      if (isRateLimit && attempt < MAX_RETRIES) {
-        // Exponential backoff: 15s, 30s, 60s, 120s, 240s
-        const delay = BASE_DELAY_MS * Math.pow(2, attempt);
-        console.log(
-          `    ⏳ Rate limit — waiting ${Math.round(delay / 1000)}s (retry ${attempt + 1}/${MAX_RETRIES})...`
-        );
-        await sleep(delay);
-        continue;
-      }
-
-      throw err;
-    }
-  }
-
-  throw new Error("Max retries exceeded");
-}
-
 async function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function storageSegment(value: string): string {
+  return (
+    value
+      .toLowerCase()
+      .replace(/[^a-z0-9._-]+/gu, "-")
+      .replace(/^-+|-+$/gu, "") || "unknown"
+  );
+}
+
 // ── Main ───────────────────────────────────────────────────────────
 async function main() {
-  console.log("🎨 BJT AI Image Generator (OpenAI gpt-image-1)");
+  console.log(
+    `🎨 BJT AI Image Generator (${IMAGE_CONFIG.provider}/${IMAGE_CONFIG.model}, ${IMAGE_CONFIG.width}x${IMAGE_CONFIG.height})`
+  );
+  if (PROMPT_TRANSLATOR_CONFIG) {
+    console.log(
+      `🌐 Prompt translator: ${PROMPT_TRANSLATOR_CONFIG.model} via ${PROMPT_TRANSLATOR_CONFIG.baseUrl}`
+    );
+  }
   console.log("================================================\n");
 
   if (DRY_RUN) console.log("⚠️  DRY RUN — no images will be generated\n");
@@ -156,7 +132,7 @@ async function main() {
 
   // 2. Fetch visual questions. imageAlt is learner-facing accessibility copy;
   // imagePrompt is the authoritative AI-generation brief.
-  const allQuestions = await prisma.bjtQuestion.findMany({
+  const fetchedQuestions = await prisma.bjtQuestion.findMany({
     where: {
       OR: [{ imageAlt: { not: null } }, { imagePrompt: { not: null } }]
     },
@@ -169,17 +145,31 @@ async function main() {
       section: {
         select: {
           code: true,
-          test: { select: { level: true } }
+          test: { select: { level: true, slug: true, type: true } }
         }
       }
     },
     orderBy: [{ section: { test: { level: "asc" } } }, { section: { code: "asc" } }]
   });
+  const allQuestions = fetchedQuestions.filter((question) => {
+    const test = question.section?.test;
+    if (TEST_TYPE_FILTER && test?.type !== TEST_TYPE_FILTER) return false;
+    if (TEST_SLUG_FILTER.length > 0 && (!test?.slug || !TEST_SLUG_FILTER.includes(test.slug))) {
+      return false;
+    }
+    return true;
+  });
+  if (TEST_TYPE_FILTER) console.log(`🎯 Test type filter: ${TEST_TYPE_FILTER}`);
+  if (TEST_SLUG_FILTER.length > 0) {
+    console.log(`🎯 Test slug filter: ${TEST_SLUG_FILTER.join(", ")}`);
+  }
 
   // 3. Build per-level stats
-  const levels = [...new Set(allQuestions.map((q) => q.section?.test?.level ?? "unknown"))].sort();
+  const scopeFor = (question: (typeof allQuestions)[number]) =>
+    question.section?.test?.level ?? question.section?.test?.slug ?? "unknown";
+  const levels = [...new Set(allQuestions.map(scopeFor))].sort();
   const levelStats = levels.map((level) => {
-    const qs = allQuestions.filter((q) => (q.section?.test?.level ?? "unknown") === level);
+    const qs = allQuestions.filter((q) => scopeFor(q) === level);
     const total = qs.length;
     const aiDone = qs.filter((q) => q.imageUrl?.includes("/ai/")).length;
     const svgPlaceholder = qs.filter((q) => q.imageUrl && !q.imageUrl.includes("/ai/")).length;
@@ -251,9 +241,7 @@ async function main() {
   }
 
   // 6. Filter questions for selected levels
-  let questions = allQuestions.filter((q) =>
-    selectedLevels.includes(q.section?.test?.level ?? "unknown")
-  );
+  let questions = allQuestions.filter((q) => selectedLevels.includes(scopeFor(q)));
 
   if (MEDIA_FILTER) {
     questions = questions.filter((q) => {
@@ -314,21 +302,29 @@ async function main() {
   }
 
   // 8. Cost estimate & confirmation
-  const COST_PER_IMAGE = 0.011; // gpt-image-1 low quality 1024x1024
+  const COST_PER_IMAGE = IMAGE_CONFIG.provider === "openai" ? 0.011 : 0;
   const estimatedCost = finalList.length * COST_PER_IMAGE;
 
   // Per-level breakdown
   const genByLevel: Record<string, number> = {};
   for (const q of finalList) {
-    const lv = q.section?.test?.level ?? "?";
+    const lv = scopeFor(q);
     genByLevel[lv] = (genByLevel[lv] ?? 0) + 1;
   }
 
   console.log(`\n📋 Sẽ generate ${finalList.length} ảnh:`);
   for (const [lv, cnt] of Object.entries(genByLevel).sort()) {
-    console.log(`   ${lv}: ${cnt} ảnh (~$${(cnt * COST_PER_IMAGE).toFixed(2)})`);
+    const costLabel =
+      IMAGE_CONFIG.provider === "openai"
+        ? ` (~$${(cnt * COST_PER_IMAGE).toFixed(2)})`
+        : " (free provider)";
+    console.log(`   ${lv}: ${cnt} ảnh${costLabel}`);
   }
-  console.log(`\n💰 Chi phí ước tính: ~$${estimatedCost.toFixed(2)}`);
+  console.log(
+    IMAGE_CONFIG.provider === "openai"
+      ? `\n💰 Chi phí ước tính: ~$${estimatedCost.toFixed(2)}`
+      : "\n💰 Provider được cấu hình ở chế độ miễn phí; không ước tính phí API."
+  );
 
   if (DRY_RUN) {
     console.log("\n--- DRY RUN: Sample prompts ---\n");
@@ -337,7 +333,7 @@ async function main() {
       const mediaHint = resolveBjtImageMediaHint(qf);
       const sectionCode = q.section?.code ?? "";
       const prompt = buildBjtImageGenerationPrompt(mediaHint, q.imagePrompt);
-      console.log(`[${q.section?.test?.level}/${sectionCode}] ${mediaHint}`);
+      console.log(`[${scopeFor(q)}/${sectionCode}] ${mediaHint}`);
       console.log(`  Alt: ${q.imageAlt}`);
       console.log(
         `  Prompt:\n${prompt
@@ -370,19 +366,34 @@ async function main() {
     const q = finalList[idx]!;
     const qf = (q.qualityFlags ?? {}) as Record<string, unknown>;
     const mediaHint = resolveBjtImageMediaHint(qf);
-    const level = q.section?.test?.level ?? "unknown";
+    const scope = scopeFor(q);
     const sectionCode = q.section?.code ?? "unknown";
-    const prompt = buildBjtImageGenerationPrompt(mediaHint, q.imagePrompt);
-
-    process.stdout.write(`  [${idx + 1}/${total}] ${level}/${sectionCode} (${mediaHint})... `);
+    process.stdout.write(`  [${idx + 1}/${total}] ${scope}/${sectionCode} (${mediaHint})... `);
 
     try {
-      const imageBuffer = await generateImage(prompt);
+      const translatedImagePrompt = PROMPT_TRANSLATOR_CONFIG
+        ? await translateBjtImagePrompt(q.imagePrompt!, PROMPT_TRANSLATOR_CONFIG, {
+            onRetry: (attempt, _error, delayMs) => {
+              console.log(
+                `\n    ⏳ Dịch prompt tạm lỗi — chờ ${Math.round(delayMs / 1000)}s (lần ${attempt}/${PROMPT_TRANSLATOR_CONFIG.maxAttempts})...`
+              );
+            }
+          })
+        : q.imagePrompt;
+      const prompt = buildBjtImageGenerationPrompt(mediaHint, translatedImagePrompt);
+      const generatedImage = await generateBjtImage(prompt, IMAGE_CONFIG, {
+        onRetry: (attempt, _error, delayMs) => {
+          console.log(
+            `\n    ⏳ Provider tạm lỗi — chờ ${Math.round(delayMs / 1000)}s (lần ${attempt}/${IMAGE_CONFIG.maxAttempts})...`
+          );
+        }
+      });
+      const imageBuffer = generatedImage.buffer;
 
       // Upload to MinIO under /ai/ path
-      const objectKey = `bjt/ai/${level}/${sectionCode}/${q.id}.png`;
+      const objectKey = `bjt/ai/${storageSegment(scope)}/${storageSegment(sectionCode)}/${q.id}.${generatedImage.extension}`;
       await minioClient.putObject(BUCKET, objectKey, imageBuffer, imageBuffer.length, {
-        "Content-Type": "image/png"
+        "Content-Type": generatedImage.mimeType
       });
 
       const imageUrl = `${MINIO_PUBLIC_URL}/${BUCKET}/${objectKey}`;
@@ -398,15 +409,16 @@ async function main() {
             accessibility: { altText: q.imageAlt },
             byteSize: imageBuffer.length,
             checksumSha256,
-            license: BJT_AI_IMAGE_LICENSE,
-            mimeType: "image/png",
+            license: IMAGE_LICENSE,
+            mimeType: generatedImage.mimeType,
             objectKey,
-            provider: "openai",
+            provider: IMAGE_CONFIG.provider,
             provenance: {
               generatedAt,
-              model: IMAGE_MODEL,
+              model: IMAGE_CONFIG.model,
+              promptTranslationModel: PROMPT_TRANSLATOR_CONFIG?.model,
               promptHashSha256,
-              provider: "openai",
+              provider: IMAGE_CONFIG.provider,
               questionId: q.id,
               source: "data/generated/generate-ai-images.ts"
             },
@@ -418,12 +430,13 @@ async function main() {
             accessibility: { altText: q.imageAlt },
             byteSize: imageBuffer.length,
             checksumSha256,
-            license: BJT_AI_IMAGE_LICENSE,
+            license: IMAGE_LICENSE,
             provenance: {
               generatedAt,
-              model: IMAGE_MODEL,
+              model: IMAGE_CONFIG.model,
+              promptTranslationModel: PROMPT_TRANSLATOR_CONFIG?.model,
               promptHashSha256,
-              provider: "openai",
+              provider: IMAGE_CONFIG.provider,
               questionId: q.id,
               source: "data/generated/generate-ai-images.ts"
             },
@@ -440,10 +453,13 @@ async function main() {
               ...qf,
               imageGeneration: buildBjtAiImageMetadata({
                 generatedAt,
+                license: IMAGE_LICENSE,
                 mediaAssetId: asset.id,
-                model: IMAGE_MODEL,
+                model: IMAGE_CONFIG.model,
                 objectKey,
-                promptHashSha256
+                promptTranslationModel: PROMPT_TRANSLATOR_CONFIG?.model,
+                promptHashSha256,
+                provider: IMAGE_CONFIG.provider
               })
             } as Prisma.InputJsonObject
           },

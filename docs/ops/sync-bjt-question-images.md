@@ -151,9 +151,31 @@ Trước khi sinh ảnh thật, luôn chạy validation/dry-run:
 DATABASE_URL=postgresql://... npx tsx data/generated/generate-ai-images.ts --dry-run
 ```
 
-Lệnh này không cần `OPENAI_API_KEY`, không gọi/ghi MinIO, dùng `imagePrompt` để
-preview prompt thật và trả exit code khác 0 nếu câu cần sinh ảnh thiếu
-`imageAlt` hoặc `imagePrompt`.
+Lệnh này không cần API key, không gọi/ghi MinIO, dùng `imagePrompt` để preview
+prompt thật và trả exit code khác 0 nếu câu cần sinh ảnh thiếu `imageAlt` hoặc
+`imagePrompt`.
+
+Generator hỗ trợ ba provider: `openai`, endpoint OpenAI-compatible
+`omniroute`, và endpoint ảnh miễn phí `pollinations`. Với OmniRoute local và
+model ảnh miễn phí, nên dùng một model text miễn phí để chuyển brief tiếng Nhật
+sang prompt tiếng Anh trước khi tạo ảnh:
+
+```bash
+IMAGE_PROVIDER=pollinations \
+IMAGE_MODEL=klein \
+IMAGE_PROMPT_TRANSLATION_BASE_URL=http://localhost:20128/v1 \
+IMAGE_PROMPT_TRANSLATION_MODEL=nvidia/meta/llama-3.1-8b-instruct \
+TEST_TYPE_FILTER=official \
+MEDIA_FILTER=photo \
+YES=true \
+pnpm exec tsx data/generated/generate-ai-images.ts
+```
+
+`MEDIA_FILTER=photo` là hàng rào chất lượng bắt buộc cho batch AI tự động. Không
+dùng model tạo ảnh để render biểu đồ, tài liệu, màn hình, biển báo hoặc sơ đồ có
+số/chữ cần chính xác; các loại `chart`, `document`, `diagram` phải dùng renderer
+xác định hoặc quy trình review thủ công. `imageAlt` vẫn là accessibility copy,
+không được dùng thay `imagePrompt`.
 
 Generator đọc trực tiếp `MINIO_ENDPOINT`, `MINIO_PORT`, `MINIO_BUCKET`,
 `MINIO_PUBLIC_*`, access key và secret từ environment; không có bucket/port
@@ -161,7 +183,8 @@ hard-code riêng. Mỗi ảnh sinh thật đồng thời upsert một `media.ass
 checksum, object key, model/provider, prompt hash, thời điểm tạo, license,
 accessibility alt và `rightsStatus=cleared`. Script sync giữ metadata này trên
 production và cập nhật `qualityFlags.imageGeneration.mediaAssetId` theo asset id
-của production.
+của production. Seed official mock bảo toàn `qualityFlags.imageGeneration` khi
+chạy lại, nên không làm mất provenance của ảnh đã duyệt.
 
 Nguyên nhân thật sự: **lưu full URL có host cứng vào DB**. Khuyến nghị:
 
