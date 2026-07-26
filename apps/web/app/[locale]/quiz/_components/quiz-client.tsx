@@ -45,8 +45,15 @@ function useAnimatedNumber(target: number, duration = 1200) {
   return value;
 }
 
-interface Template {
+export interface Template {
   _count: { sections: number; sessions: number };
+  blueprintMeta?: {
+    reference?: {
+      purpose?: string;
+      sourceName?: string;
+      sourceUrl?: string;
+    };
+  } | null;
   description: string | null;
   id: string;
   level: string | null;
@@ -160,6 +167,7 @@ export interface QuizLabels {
   officialModeNoTemplatesDescription: string;
   officialModeNoTemplatesTitle: string;
   officialModeUpgradeCta: string;
+  officialReferenceLink: string;
   officialTemplatesDescription: string;
   officialTemplatesHeading: string;
   practiceModeCardDescription?: string;
@@ -1389,7 +1397,7 @@ function OfficialSimulationGate({
 /*  Exam Card                                                          */
 /* ------------------------------------------------------------------ */
 
-function ExamCard({
+export function ExamCard({
   labels,
   locale,
   onStart,
@@ -1416,6 +1424,19 @@ function ExamCard({
       ? (labels.templateTypeOfficial ?? "Chính thức")
       : (labels.templateTypeMock ?? "Luyện tập");
   const isOfficial = template.type === "official";
+  const officialReferenceUrl = (() => {
+    if (!isOfficial) return null;
+    const rawUrl = template.blueprintMeta?.reference?.sourceUrl;
+    if (!rawUrl) return null;
+    try {
+      const parsed = new URL(rawUrl);
+      return parsed.protocol === "https:" && parsed.hostname === "www.kanken.or.jp"
+        ? parsed.toString()
+        : null;
+    } catch {
+      return null;
+    }
+  })();
   const cardTitle =
     isOfficial && level
       ? title
@@ -1518,6 +1539,17 @@ function ExamCard({
             {template.description}
           </p>
         )}
+        {officialReferenceUrl ? (
+          <a
+            className="mt-2 inline-flex w-fit items-center gap-1 text-xs font-semibold text-accent underline decoration-accent/30 underline-offset-4 hover:decoration-accent focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            href={officialReferenceUrl}
+            rel="noreferrer"
+            target="_blank"
+          >
+            {labels.officialReferenceLink}
+            <span aria-hidden>↗</span>
+          </a>
+        ) : null}
 
         {/* Action buttons */}
         <div className="mt-auto flex items-center gap-2 pt-4">

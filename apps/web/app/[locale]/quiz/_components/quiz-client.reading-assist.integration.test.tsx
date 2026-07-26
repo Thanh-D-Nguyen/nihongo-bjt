@@ -45,6 +45,7 @@ const labels = {
   officialModeNoTemplatesDescription: "Check back later",
   officialModeNoTemplatesTitle: "New simulation in preparation",
   officialModeUpgradeCta: "View plans",
+  officialReferenceLink: "BJT format reference",
   officialTemplatesDescription: "Three-part simulation",
   officialTemplatesHeading: "Choose a simulation",
   practiceTargetHeading: "Choose a target",

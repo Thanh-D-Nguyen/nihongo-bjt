@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  OFFICIAL_BJT_FORMAT_REFERENCE,
   MOCK_TIME_LIMIT_SECONDS,
   OFFICIAL_MOCK_FORMS,
   OFFICIAL_SECTION_SPECS,
@@ -8,11 +9,11 @@ import {
 } from "./official-mock-data.js";
 
 describe("BJT official full-mock seed data", () => {
-  it("ships at least two stable 80-question / 105-minute forms", () => {
+  it("ships exactly three stable 80-question / 105-minute forms", () => {
     const report = validateOfficialMockForms();
 
-    expect(report.mockCount).toBeGreaterThanOrEqual(2);
-    expect(report.totalQuestions).toBeGreaterThanOrEqual(200);
+    expect(report.mockCount).toBe(3);
+    expect(report.totalQuestions).toBe(240);
     for (const form of OFFICIAL_MOCK_FORMS) {
       expect(form.level).toBeNull();
       expect(form.type).toBe("official");
@@ -21,6 +22,7 @@ describe("BJT official full-mock seed data", () => {
         80
       );
       expect(form.blueprintMeta.scoreLabel).toBe("estimated");
+      expect(form.blueprintMeta.reference).toEqual(OFFICIAL_BJT_FORMAT_REFERENCE);
     }
   });
 

@@ -2,7 +2,12 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import { OfficialAvailabilityPanel, QuizModeSelector, type QuizLabels } from "./quiz-client";
+import {
+  ExamCard,
+  OfficialAvailabilityPanel,
+  QuizModeSelector,
+  type QuizLabels
+} from "./quiz-client";
 
 const labels = {
   filterTypeMock: "Targeted practice",
@@ -24,6 +29,7 @@ const labels = {
   officialModeNoTemplatesDescription: "No simulation is ready right now.",
   officialModeNoTemplatesTitle: "A new simulation is being prepared",
   officialModeUpgradeCta: "View upgrade options",
+  officialReferenceLink: "BJT format reference",
   practiceModeCardDescription: "Build confidence toward your target.",
   practiceModeCardTitle: "Practise toward a J rank",
   templateTypeMock: "Practice",
@@ -127,5 +133,72 @@ describe("official simulation availability", () => {
     );
 
     expect(html).toBe("");
+  });
+});
+
+describe("official simulation provenance", () => {
+  it("links every canonical official form to the allow-listed BJT structure source", () => {
+    const html = renderToStaticMarkup(
+      <ExamCard
+        labels={labels}
+        locale="en"
+        onStart={() => undefined}
+        submitting={false}
+        template={{
+          _count: { sections: 9, sessions: 0 },
+          blueprintMeta: {
+            reference: {
+              purpose: "exam-structure-reference-only",
+              sourceName: "BJT Business Japanese Proficiency Test",
+              sourceUrl: "https://www.kanken.or.jp/bjt/english/about/feature.html"
+            }
+          },
+          description: "Original KotobaWorks practice content.",
+          id: "official-a",
+          level: null,
+          slug: "bjt-full-simulation-a-v1",
+          timeLimitSeconds: 6300,
+          titleJa: "BJT総合模擬試験 A",
+          titleVi: "Đề thi thử BJT toàn diện A",
+          type: "official"
+        }}
+        userId="user-1"
+      />
+    );
+
+    expect(html).toContain("BJT format reference");
+    expect(html).toContain("https://www.kanken.or.jp/bjt/english/about/feature.html");
+    expect(html).toContain('rel="noreferrer"');
+  });
+
+  it("does not render untrusted reference URLs", () => {
+    const html = renderToStaticMarkup(
+      <ExamCard
+        labels={labels}
+        locale="en"
+        onStart={() => undefined}
+        submitting={false}
+        template={{
+          _count: { sections: 9, sessions: 0 },
+          blueprintMeta: {
+            reference: {
+              sourceUrl: "javascript:alert(document.domain)"
+            }
+          },
+          description: null,
+          id: "official-a",
+          level: null,
+          slug: "bjt-full-simulation-a-v1",
+          timeLimitSeconds: 6300,
+          titleJa: null,
+          titleVi: "Official simulation A",
+          type: "official"
+        }}
+        userId="user-1"
+      />
+    );
+
+    expect(html).not.toContain("BJT format reference");
+    expect(html).not.toContain("javascript:");
   });
 });

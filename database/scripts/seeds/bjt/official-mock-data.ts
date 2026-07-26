@@ -12,6 +12,11 @@ import { FORM_B_SIGNATURE_OVERRIDES, FORM_C_SECTION_DRAFTS } from "./official-mo
 
 export const OFFICIAL_MOCK_PROVENANCE = "nihongo-bjt-original-full-mock-v1";
 export const OFFICIAL_MOCK_LICENSE = "original-internal-production-content";
+export const OFFICIAL_BJT_FORMAT_REFERENCE = {
+  purpose: "exam-structure-reference-only",
+  sourceName: "BJT Business Japanese Proficiency Test",
+  sourceUrl: "https://www.kanken.or.jp/bjt/english/about/feature.html"
+} as const;
 
 export const MOCK_FORM_COUNT = 3;
 export const QUESTIONS_PER_MOCK = 80;
@@ -158,6 +163,7 @@ export type OfficialMockForm = {
       sections: string[];
     }>;
     contentVersion: string;
+    reference: typeof OFFICIAL_BJT_FORMAT_REFERENCE;
   };
 };
 
@@ -1712,7 +1718,8 @@ function buildBlueprintMeta(): OfficialMockForm["blueprintMeta"] {
         sections: ["RC_VOCAB_GRAMMAR", "RC_EXPRESSION", "RC_INTEGRATED"]
       }
     ],
-    contentVersion: OFFICIAL_MOCK_PROVENANCE
+    contentVersion: OFFICIAL_MOCK_PROVENANCE,
+    reference: OFFICIAL_BJT_FORMAT_REFERENCE
   };
 }
 
