@@ -32,7 +32,10 @@ Script: [scripts/sync-bjt-images-to-prod.ts](../../scripts/sync-bjt-images-to-pr
 Script đọc các câu hỏi có ảnh/audio từ **local DB**, tải object từ **local
 MinIO**, đẩy lên **prod MinIO**, đặt bucket policy public-read chỉ cho
 `GetObject`, rồi ghi URL đã đổi host vào **prod DB**. Idempotent — chạy lại
-nhiều lần an toàn.
+nhiều lần an toàn. UUID câu hỏi có thể khác nhau giữa hai môi trường: script ưu
+tiên UUID khi trùng, nếu không sẽ định vị duy nhất bằng `test slug + section
+code + prompt + scenario + audio script + skill tag`. Không tìm thấy hoặc có
+nhiều hơn một kết quả sẽ được báo lỗi trước khi upload object.
 
 ### Bước 1 — Khai báo biến môi trường
 

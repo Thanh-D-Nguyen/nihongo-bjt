@@ -62,6 +62,10 @@ import * as Minio from "minio";
 
 import { createPrismaClient, Prisma } from "../packages/database/src/index.js";
 import { imageMetadataForProductionSync } from "./lib/bjt-question-image-metadata.js";
+import {
+  buildBjtQuestionStableWhere,
+  selectBjtProductionQuestionId
+} from "./lib/bjt-production-question-locator.js";
 
 // ── Flags ────────────────────────────────────────────────────────────────────
 
@@ -208,6 +212,8 @@ function contentTypeFor(key: string): string {
 interface Stats {
   totalQuestions: number;
   totalMedia: number;
+  matchedById: number;
+  matchedByStableContent: number;
   copied: number;
   skippedObject: number;
   dbUpdated: number;
@@ -245,6 +251,16 @@ async function main() {
       imageAlt: true,
       imagePrompt: true,
       audioUrl: true,
+      audioScript: true,
+      prompt: true,
+      scenario: true,
+      skillTag: true,
+      section: {
+        select: {
+          code: true,
+          test: { select: { slug: true } }
+        }
+      },
       qualityFlags: true
     }
   });
@@ -252,6 +268,8 @@ async function main() {
   const stats: Stats = {
     totalQuestions: rows.length,
     totalMedia: 0,
+    matchedById: 0,
+    matchedByStableContent: 0,
     copied: 0,
     skippedObject: 0,
     dbUpdated: 0,
@@ -262,6 +280,43 @@ async function main() {
   console.log(`  Found ${rows.length} question(s) with media URLs.\n`);
 
   for (const row of rows) {
+    const identity = {
+      audioScript: row.audioScript,
+      id: row.id,
+      prompt: row.prompt,
+      scenario: row.scenario,
+      sectionCode: row.section.code,
+      skillTag: row.skillTag,
+      testSlug: row.section.test.slug
+    };
+    let prodQuestionId: string;
+    try {
+      const sameIdMatch = await prodDb.bjtQuestion.findUnique({
+        select: { id: true },
+        where: { id: row.id }
+      });
+      const stableMatches = sameIdMatch
+        ? []
+        : await prodDb.bjtQuestion.findMany({
+            select: { id: true },
+            take: 2,
+            where: buildBjtQuestionStableWhere(identity)
+          });
+      const resolved = selectBjtProductionQuestionId(identity, sameIdMatch, stableMatches);
+      prodQuestionId = resolved.id;
+      if (resolved.matchedBy === "id") {
+        stats.matchedById++;
+      } else {
+        stats.matchedByStableContent++;
+        console.log(`  ↔  ${row.id}  matched production question ${prodQuestionId}`);
+      }
+    } catch (err) {
+      stats.errors++;
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error(`  ✗  ${row.id}  question mapping ERROR: ${msg}`);
+      continue;
+    }
+
     const updates: {
       imageUrl?: string;
       imageAlt?: string | null;
@@ -375,7 +430,7 @@ async function main() {
         }
       }
     } else {
-      await prodDb.bjtQuestion.update({ where: { id: row.id }, data: updates });
+      await prodDb.bjtQuestion.update({ where: { id: prodQuestionId }, data: updates });
       stats.dbUpdated++;
     }
   }
@@ -384,6 +439,8 @@ async function main() {
   console.log("─────────────────────────────────────────────────────────────");
   console.log(`  Questions with media URLs  : ${stats.totalQuestions}`);
   console.log(`  Media URLs processed       : ${stats.totalMedia}`);
+  console.log(`  Questions matched by UUID  : ${stats.matchedById}`);
+  console.log(`  Matched by stable content  : ${stats.matchedByStableContent}`);
   console.log(`  Objects uploaded           : ${stats.copied}`);
   console.log(`  Objects already on prod    : ${stats.skippedObject}`);
   console.log(`  DB rows updated            : ${stats.dbUpdated}`);
