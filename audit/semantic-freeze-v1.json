@@ -1,0 +1,30 @@
+{
+  "freezeVersion": "semantic-freeze-v1",
+  "datasetFingerprint": "e48840e85b601de5222577726625b9b9aff621886b122b6c2a96d0b5966f1294",
+  "auditRubricVersion": "1.0.0",
+  "semanticJudgeRubricVersion": "1.1.0",
+  "semanticStatus": {
+    "JUDGED": 446,
+    "UNJUDGED": 274,
+    "FAILED": 0,
+    "NOT_REQUIRED": 0
+  },
+  "semanticDecision": {
+    "KEEP": 446,
+    "EDIT": 14,
+    "HUMAN_REVIEW": 0,
+    "REMOVE": 0,
+    "UNRESOLVED": 274
+  },
+  "fableReview": {
+    "requested": 14,
+    "completed": 0,
+    "status": "BLOCKED_PROVIDER",
+    "errors": [
+      "anthropic/claude-fable-5-1 HTTP 403 plan/capacity restriction",
+      "fallback xKiro text request HTTP 402 insufficient wallet balance"
+    ]
+  },
+  "freezeStatus": "NOT_FROZEN",
+  "note": "This artifact is a gate record only. Seed edits require rerunning Layer A, targeted semantic validation, fingerprinting, image briefs, and affected render manifests before freeze can become FROZEN."
+}

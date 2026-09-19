@@ -4,6 +4,36 @@ export interface BjtQuestionImageMetadata {
   imagePrompt: string | null;
 }
 
+export type BjtImageRequirement = "REQUIRED" | "BENEFICIAL" | "NOT_NEEDED";
+export type BjtImageGenerationMode =
+  | "AI_GENERATED"
+  | "DETERMINISTIC_RENDER"
+  | "HYBRID"
+  | "EXISTING_ASSET";
+
+export interface BjtQuestionImageBrief {
+  questionStableId: string;
+  level: string;
+  requirement: BjtImageRequirement;
+  generationMode: BjtImageGenerationMode | null;
+  archetype: string | null;
+  pedagogicalPurpose: string;
+  visualEvidenceRequired: boolean;
+  scene: string | null;
+  environment: string | null;
+  participants: string[];
+  participantRoles: string[];
+  actions: string[];
+  composition: string;
+  exactTextElements: string[];
+  exactDataElements: string[];
+  forbiddenInventions: string[];
+  culturalContext: string;
+  businessContext: string;
+  accessibilityAlt: string;
+  briefVersion: string;
+}
+
 export function buildBjtAiImageLicense(provider: string, model: string): string {
   return `AI-generated first-party commissioned content via ${provider} (${model})`;
 }

@@ -1,0 +1,24 @@
+{
+  "version": "targeted-14-local-adjudication-v1",
+  "reviewer": "rule-based source review after provider-blocked Fable request",
+  "providerStatus": {
+    "fable": "BLOCKED_HTTP_403",
+    "fallback": "BLOCKED_HTTP_402"
+  },
+  "reviews": [
+    {"questionId":"bjt-j5-practice-v3:LC_SCENE:0010","previousDecision":"REMOVE","finalDecision":"EDIT","reason":"valid service-interaction item; explanation was thin, not fundamentally unsuitable"},
+    {"questionId":"bjt-j5-practice-v3:LC_STATEMENT:0012","previousDecision":"EDIT","finalDecision":"EDIT","reason":"prompt now constrains intent so one response is best"},
+    {"questionId":"bjt-j5-practice-v3:LC_INTEGRATED:0028","previousDecision":"EDIT","finalDecision":"EDIT","reason":"bounded rewrite moves notice into office context while preserving preparation skill"},
+    {"questionId":"bjt-j5-practice-v3:LR_DOCUMENT:0037","previousDecision":"REMOVE","finalDecision":"EDIT","reason":"route-reading skill is reusable; rewritten as office wayfinding"},
+    {"questionId":"bjt-j5-practice-v3:LR_DOCUMENT:0038","previousDecision":"EDIT","finalDecision":"EDIT","reason":"instruction sequence is valid; rewritten to office printer context"},
+    {"questionId":"bjt-j5-practice-v3:RC_VOCAB_GRAMMAR:0045","previousDecision":"REMOVE","finalDecision":"EDIT","reason":"basic grammar remains appropriate for J5; explanation expanded"},
+    {"questionId":"bjt-j4-practice-v3:LC_STATEMENT:0013","previousDecision":"EDIT","finalDecision":"EDIT","reason":"valid workplace deadline response; explanation expanded"},
+    {"questionId":"bjt-j4-practice-v3:LC_STATEMENT:0021","previousDecision":"EDIT","finalDecision":"EDIT","reason":"valid keigo farewell; explanation corrected"},
+    {"questionId":"bjt-j4-practice-v3:LR_INTEGRATED:0040","previousDecision":"REMOVE","finalDecision":"EDIT","reason":"single-best shift-reading item; Vietnamese explanation corrected"},
+    {"questionId":"bjt-j4-practice-v3:RC_VOCAB_GRAMMAR:0053","previousDecision":"REMOVE","finalDecision":"EDIT","reason":"valid refusal-cushion grammar; prompt and option structure repaired"},
+    {"questionId":"bjt-j3-practice-v3:RC_EXPRESSION:0060","previousDecision":"EDIT","finalDecision":"EDIT","reason":"valid quotation-email expression; explanation expanded"},
+    {"questionId":"bjt-j3-practice-v3:RC_EXPRESSION:0066","previousDecision":"EDIT","finalDecision":"EDIT","reason":"valid agreement expression; incomplete explanation repaired"},
+    {"questionId":"bjt-j2-practice-v3:RC_VOCAB_GRAMMAR:0049","previousDecision":"EDIT","finalDecision":"EDIT","reason":"single-best keigo item restored by changing distractor A to 確認して"},
+    {"questionId":"bjt-j1-practice-v3:LR_INTEGRATED:0040","previousDecision":"REMOVE","finalDecision":"EDIT","reason":"advanced minutes-review item has a coherent single best answer; explanation expanded"}
+  ]
+}

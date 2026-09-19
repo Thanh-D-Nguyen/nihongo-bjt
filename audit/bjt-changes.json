@@ -1,0 +1,109 @@
+{
+  "version": 2,
+  "generatedAt": "2026-09-17T00:00:00.000Z",
+  "changes": [
+    {
+      "questionIds": [
+        "bjt-j5-practice-v3:LC_SCENE:0010",
+        "bjt-j5-practice-v3:LC_STATEMENT:0012",
+        "bjt-j5-practice-v3:LC_INTEGRATED:0028",
+        "bjt-j5-practice-v3:LR_DOCUMENT:0037",
+        "bjt-j5-practice-v3:LR_DOCUMENT:0038",
+        "bjt-j5-practice-v3:RC_VOCAB_GRAMMAR:0045",
+        "bjt-j4-practice-v3:LC_STATEMENT:0013",
+        "bjt-j4-practice-v3:LC_STATEMENT:0021",
+        "bjt-j4-practice-v3:LR_INTEGRATED:0040",
+        "bjt-j4-practice-v3:RC_VOCAB_GRAMMAR:0053",
+        "bjt-j3-practice-v3:RC_EXPRESSION:0060",
+        "bjt-j3-practice-v3:RC_EXPRESSION:0066",
+        "bjt-j2-practice-v3:RC_VOCAB_GRAMMAR:0049",
+        "bjt-j1-practice-v3:LR_INTEGRATED:0040"
+      ],
+      "sourceFile": "database/scripts/seeds/bjt/bjt-questions/j5.ts; database/scripts/seeds/bjt/bjt-questions/j4.ts; database/scripts/seeds/bjt/bjt-questions/j3.ts; database/scripts/seeds/bjt/bjt-questions/j2.ts; database/scripts/seeds/bjt/bjt-questions/j1.ts",
+      "field": "prompt/scenario/explanationVi/skillTag/options",
+      "oldValue": "See canonical seed source at the stable IDs above.",
+      "newValue": "Bounded repairs recorded in the canonical seed files; no questions removed.",
+      "reason": "Targeted adjudication converted all 6 REMOVE decisions to EDIT and retained 8 EDIT decisions. Fable provider was unavailable; edits are source-evidenced repairs.",
+      "reviewerModel": "local-source-adjudication-v1 (Fable blocked HTTP 403; fallback blocked HTTP 402)",
+      "rubricDimensions": ["B01", "B02", "B03", "B04", "B05", "B06", "B07", "B08", "B09", "B10", "B11"],
+      "previousValueArchive": "archive/audit-2026-09/"
+    },
+    {
+      "questionIds": [
+        "bjt-full-simulation-a-v1:RC_EXPRESSION:0062",
+        "bjt-full-simulation-b-v1:RC_EXPRESSION:0062"
+      ],
+      "sourceFile": "database/scripts/seeds/bjt/official-mock-data.ts",
+      "sourceLine": 1358,
+      "field": "why",
+      "previousValue": "Business Japanese often conveys rejection/deferral indirectly; pay attention to conditions and future possibility.",
+      "newValue": "Tiếng Nhật thương mại thường từ chối/hoãn một cách gián tiếp; cần chú ý tới điều kiện và khả năng trong tương lai.",
+      "reason": "explanationVi must be Vietnamese for the target learner; the shared template was English, so both form A and B RC_EXPRESSION:0062 failed check A10.",
+      "auditRule": "A10 explanation-language",
+      "previousValueArchive": "archive/audit-2026-09/"
+    },
+    {
+      "sourceFile": "database/scripts/seeds/bjt/bjt-questions/j5.ts",
+      "field": "explanationVi",
+      "previousValue": "'部' là đơn vị đếm tài liệu. Copy 10 bộ.",
+      "newValue": "「部」(bộ) là đơn vị đếm dùng cho tài liệu, sách vở. Khi nhờ in ấn, 「10部コピーしてください」nghĩa là in 10 bộ bản sao. Chú ý: 部 (bộ tài liệu) và 分 (phút) đều đọc 'bu' nhưng nghĩa khác nhau, cần phân biệt qua ngữ cảnh.",
+      "reason": "Explanation under 40 chars — too thin to teach effectively (A07); expanded with the document's full reasoning.",
+      "auditRule": "A07 explanation-length",
+      "previousValueArchive": "archive/audit-2026-09/"
+    },
+    {
+      "sourceFile": "database/scripts/seeds/bjt/bjt-questions/j4.ts",
+      "field": "explanationVi",
+      "previousValue": "Sơ đồ chỗ ngồi: hàng 3 = phòng kế toán.",
+      "newValue": "Theo sơ đồ座位表: 1列目 là quầy tiếp nhận, 2列目 là phòng kinh doanh, 3列目 là phòng kế toán, 4列目 là phòng nhân sự. Vì vậy muốn đến phòng kế toán (経理部) thì phải đi tới hàng thứ 3.",
+      "reason": "Explanation under 40 chars — too thin to teach effectively (A07); expanded with the document's full reasoning.",
+      "auditRule": "A07 explanation-length",
+      "previousValueArchive": "archive/audit-2026-09/"
+    },
+    {
+      "sourceFile": "database/scripts/seeds/bjt/bjt-questions/j4.ts",
+      "field": "explanationVi",
+      "previousValue": "Group work: 13:00-15:00 = 2 tiếng.",
+      "newValue": "Lịch研修: 9:00 tiếp nhận, 9:30 định hướng, 10:00讲座 về business manner, 12:00 ăn trưa, 13:00 làm việc nhóm, 15:00 tổng kết. Như vậy group work kéo dài từ 13:00 đến 15:00, tức là 2 tiếng.",
+      "reason": "Explanation under 40 chars — too thin to teach effectively (A07); expanded with the document's full reasoning.",
+      "auditRule": "A07 explanation-length",
+      "previousValueArchive": "archive/audit-2026-09/"
+    },
+    {
+      "sourceFile": "database/scripts/seeds/bjt/bjt-questions/j4.ts",
+      "field": "explanationVi",
+      "previousValue": "Chưa có thẻ IC → liên hệ phòng tổng vụ.",
+      "newValue": "Thông báo保安強化 quy định từ ngày 1 tháng sau: vào/ra tòa nhà cần thẻ IC, khách đến phải làm thẻ vào tại quầy tiếp nhận. Người chưa được cấp thẻ IC cần liên hệ phòng tổng vụ (総務部) để được cấp thẻ.",
+      "reason": "Explanation under 40 chars — too thin to teach effectively (A07); expanded with the document's full reasoning.",
+      "auditRule": "A07 explanation-length",
+      "previousValueArchive": "archive/audit-2026-09/"
+    },
+    {
+      "sourceFile": "database/scripts/seeds/bjt/bjt-questions/j4.ts",
+      "field": "explanationVi",
+      "previousValue": "Thứ Tư: họp team lúc 15:00.",
+      "newValue": "Theo lịch tuần: Thứ Hai có朝礼 lúc 9:00, Thứ Ba đi thăm công ty A và soạn提案書, Thứ Tư họp nhóm lúc 15:00, Thứ Năm báo cáo tiến độ, Thứ Sáu tổng kết. Vậy hoạt động ngày Thứ Tư là team meeting lúc 15:00.",
+      "reason": "Explanation under 40 chars — too thin to teach effectively (A07); expanded with the document's full reasoning.",
+      "auditRule": "A07 explanation-length",
+      "previousValueArchive": "archive/audit-2026-09/"
+    },
+    {
+      "sourceFile": "database/scripts/seeds/bjt/bjt-questions/j3.ts",
+      "field": "explanationVi",
+      "previousValue": "Triển lãm từ 10/11 đến 12/11 = 3 ngày.",
+      "newValue": "Thông báo出展 ghi rõ triển lãm「ビジネスITソリューション展2026」diễn ra từ ngày 10 đến ngày 12 tháng 11, giờ mở cửa từ 10:00. Tính theo số ngày: 10, 11, 12/11 → triển lãm kéo dài 3 ngày.",
+      "reason": "Explanation under 40 chars — too thin to teach effectively (A07); expanded with the document's full reasoning.",
+      "auditRule": "A07 explanation-length",
+      "previousValueArchive": "archive/audit-2026-09/"
+    },
+    {
+      "sourceFile": "database/scripts/seeds/bjt/bjt-questions/j3.ts",
+      "field": "explanationVi",
+      "previousValue": "10 người × 300 yên = 3,000 yên/tháng.",
+      "newValue": "Bảng giá「タイムクラウド」: phí cơ bản 300 yên/người/tháng. Công ty có 10 nhân viên → 10 × 300 = 3,000 yên mỗi tháng. Chú ý đơn vị tiền tệ 円 và cách tính phí theo đầu người.",
+      "reason": "Explanation under 40 chars — too thin to teach effectively (A07); expanded with the document's full reasoning.",
+      "auditRule": "A07 explanation-length",
+      "previousValueArchive": "archive/audit-2026-09/"
+    }
+  ]
+}

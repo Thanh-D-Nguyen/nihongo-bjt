@@ -1,0 +1,1304 @@
+{
+  "version": "risk-sample-v1",
+  "sampleSize": 24,
+  "selectionPolicy": "top 4 per level by low-confidence/low-score/semantic-risk/visual-interpretation signals",
+  "records": [
+    {
+      "score": 7,
+      "questionId": "bjt-j5-practice-v3:LC_INTEGRATED:0028",
+      "sourceFile": "database/scripts/seeds/bjt/bjt-questions/j5.ts",
+      "level": "J5",
+      "dataset": "practice",
+      "sectionCode": "LC_INTEGRATED",
+      "staticChecks": [],
+      "semanticChecks": {},
+      "issues": [],
+      "severity": "none",
+      "confidence": 1,
+      "recommendedAction": "EDIT",
+      "staticDecision": "KEEP",
+      "semanticStatus": "UNJUDGED",
+      "semanticDecision": null,
+      "finalDecision": "EDIT",
+      "promptDigest": "オフィスの管理担当者が掲示板に張り紙をしています。「来週月曜日、社内の水道設備の点検があります。9時から12時の間、給湯",
+      "adjudicationDecision": "EDIT",
+      "imageRequirement": "BENEFICIAL",
+      "imageArchetype": "office_environment"
+    },
+    {
+      "score": 6,
+      "questionId": "bjt-j5-practice-v3:LC_INTEGRATED:0026",
+      "sourceFile": "database/scripts/seeds/bjt/bjt-questions/j5.ts",
+      "level": "J5",
+      "dataset": "practice",
+      "sectionCode": "LC_INTEGRATED",
+      "staticChecks": [],
+      "semanticChecks": {
+        "B01": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "日本語はスーパーの店内放送として自然で、口語表現が適切。「となっております」「限定です」の使い分けも自然。"
+        },
+        "B02": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "スーパーのタイムセールはビジネスシーンとして現実的。国産豚肉の30%オフは具体的な情報で、実在するシナリオ。"
+        },
+        "B03": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "J5レベルに適切。タイムセール、国産、オフ、限定などの語彙はJ5で習得される範囲。文法もシンプルで理解しやすい。"
+        },
+        "B04": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "正解はC（5時まで）のみ。他の選択肢は明確に誤り。"
+        },
+        "B05": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "A（閉店まで）、B（3時まで）、D（明日まで）はすべて文脈的にあり得る誤答。特にAは「限定」という情報から推測される自然な誤答。"
+        },
+        "B06": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "正解はCのみ。他の選択肢は明確に誤り。"
+        },
+        "B07": {
+          "score": 3,
+          "confidence": 0.85,
+          "rationale": "説明は事実を伝えているが、なぜCが正解で他が誤りかの理由が不十分。例：「5時までの限定」という情報が直接答えになることを説明すべき。"
+        },
+        "B08": {
+          "score": 4,
+          "confidence": 0.85,
+          "rationale": "スーパーの店内放送を理解する力は実用的だが、聴解スキルとしてはやや単純。もう少し複雑な情報処理を問うとより良い。"
+        },
+        "B09": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "シナリオは現実的。スーパーのタイムセールは日常的なビジネスシーン。"
+        },
+        "B10": {
+          "score": 3,
+          "confidence": 0.8,
+          "rationale": "この問題は敬語を問うものではない。店内放送はカジュアルな表現なので、敬語の観点からは評価対象外。ただし、B01で自然さの評価は行われている。"
+        },
+        "B11": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "ビジネス日本語の聴解スキルを問う適切な問題。スーパーの店内放送はビジネス日本語の典型的なシナリオ。"
+        }
+      },
+      "issues": [],
+      "severity": "low",
+      "confidence": 1,
+      "recommendedAction": "KEEP",
+      "staticDecision": "KEEP",
+      "semanticStatus": "JUDGED",
+      "semanticDecision": "KEEP",
+      "finalDecision": "KEEP",
+      "promptDigest": "スーパーの店内放送です。「本日のタイムセール、お肉コーナーにて、国産豚肉が30%オフとなっております。5時までの限定です",
+      "imageRequirement": "BENEFICIAL",
+      "imageArchetype": "illustration"
+    },
+    {
+      "score": 6,
+      "questionId": "bjt-j5-practice-v3:LR_SITUATION:0031",
+      "sourceFile": "database/scripts/seeds/bjt/bjt-questions/j5.ts",
+      "level": "J5",
+      "dataset": "practice",
+      "sectionCode": "LR_SITUATION",
+      "staticChecks": [],
+      "semanticChecks": {
+        "B01": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "日本語は自然で文法的に正しい。定員表示の文章と質問の両方が自然なビジネス日本語。"
+        },
+        "B02": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "オフィスビルのエレベーターという現実的な職場シナリオ。表示の形式も実在する。"
+        },
+        "B03": {
+          "score": 3,
+          "confidence": 0.85,
+          "rationale": "J5（上級）レベルではやや初歩的すぎる。単純な算術問題であり、ビジネス日本語の高度なスキルを問うているとは言えない。"
+        },
+        "B04": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "明確に1つの正解（あと2人）が存在する。"
+        },
+        "B05": {
+          "score": 4,
+          "confidence": 0.8,
+          "rationale": "5人、3人、もう乗れないは誤答としてあり得るが、計算ミスで選ばれる可能性は低い。やや単純すぎる。"
+        },
+        "B06": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "正解が1つだけ（C）。他の選択肢は明確に誤り。"
+        },
+        "B07": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "ベトナム語の説明は論理的で正確。10人中8人→残り2人という計算を明確に伝えている。"
+        },
+        "B08": {
+          "score": 3,
+          "confidence": 0.8,
+          "rationale": "読解力と基礎的な論理を問うが、J5学習者にとって教育価値は限定的。より高度なビジネススキルを鍛えるには不十分。"
+        },
+        "B09": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "シナリオは現実的で人工的ではない。エレベーターの定員表示は日常でよく見られる。"
+        },
+        "B10": {
+          "score": 5,
+          "confidence": 0.9,
+          "rationale": "敬語問題ではないが、問題として問題ない。読解・論理問題として適切。"
+        },
+        "B11": {
+          "score": 3,
+          "confidence": 0.8,
+          "rationale": "BJTのスキル配列としては、J5レベルの読解・ビジネス判断力を問うべきだが、この問題は基礎的な算術に過ぎない。J5スキルとの整合性は低い。"
+        }
+      },
+      "issues": [],
+      "severity": "low",
+      "confidence": 1,
+      "recommendedAction": "KEEP",
+      "staticDecision": "KEEP",
+      "semanticStatus": "JUDGED",
+      "semanticDecision": "KEEP",
+      "finalDecision": "KEEP",
+      "promptDigest": "エレベーターに「定員10名　最大積載量650kg」と書いてあります。今8人乗っています。あと何人乗れますか。",
+      "imageRequirement": "BENEFICIAL",
+      "imageArchetype": "office_environment"
+    },
+    {
+      "score": 5,
+      "questionId": "bjt-j5-practice-v3:LC_SCENE:0010",
+      "sourceFile": "database/scripts/seeds/bjt/bjt-questions/j5.ts",
+      "level": "J5",
+      "dataset": "practice",
+      "sectionCode": "LC_SCENE",
+      "staticChecks": [],
+      "semanticChecks": {},
+      "issues": [],
+      "severity": "none",
+      "confidence": 1,
+      "recommendedAction": "EDIT",
+      "staticDecision": "KEEP",
+      "semanticStatus": "UNJUDGED",
+      "semanticDecision": null,
+      "finalDecision": "EDIT",
+      "promptDigest": "ドラッグストアのスタッフが「ポイントカードはお持ちですか」と聞いています。お客さんが財布を開けています。",
+      "adjudicationDecision": "EDIT",
+      "imageRequirement": "BENEFICIAL",
+      "imageArchetype": "workplace_photo"
+    },
+    {
+      "score": 9,
+      "questionId": "bjt-j4-practice-v3:RC_VOCAB_GRAMMAR:0054",
+      "sourceFile": "database/scripts/seeds/bjt/bjt-questions/j4.ts",
+      "level": "J4",
+      "dataset": "practice",
+      "sectionCode": "RC_VOCAB_GRAMMAR",
+      "staticChecks": [],
+      "semanticChecks": {
+        "B01": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "添付ファイルをご確認ください is a perfectly natural and idiomatic business Japanese expression."
+        },
+        "B02": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "This is one of the most common phrases in Japanese business emails. Extremely authentic."
+        },
+        "B03": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "The ご～ください pattern is core J4 material. The sentence structure and vocabulary are appropriate for this level."
+        },
+        "B04": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "Only A (確認) produces a correct, natural sentence. The other options create ungrammatical or unnatural forms."
+        },
+        "B05": {
+          "score": 3,
+          "confidence": 0.75,
+          "rationale": "B (見て) and D (読んで) are clearly wrong. However, C (チェック) is increasingly used in modern business Japanese as 'ごチェックください', which makes this distractor somewhat questionable. In strict formal Japanese it is not standard, but the boundary is blurring."
+        },
+        "B06": {
+          "score": 3,
+          "confidence": 0.7,
+          "rationale": "Since 'ごチェック' is gaining acceptance in business usage, there is a risk that some learners or native speakers might consider C acceptable, creating a potential second-correct-answer scenario."
+        },
+        "B07": {
+          "score": 3,
+          "confidence": 0.85,
+          "rationale": "The explanation is brief and correct but does not explain WHY the distractors are wrong or teach the grammar rule (ご＋動詞＋ください pattern). More pedagogical depth would improve it."
+        },
+        "B08": {
+          "score": 4,
+          "confidence": 0.85,
+          "rationale": "Good for teaching keigo patterns in email contexts, but the explanation could be more detailed to maximize learning value."
+        },
+        "B09": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "The sentence is completely natural and not artificially constructed."
+        },
+        "B10": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "The question tests keigo (ご～ください) register appropriately for J4 level."
+        },
+        "B11": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "Tests vocabulary/grammar in a realistic business email context, aligning well with BJT skills."
+        }
+      },
+      "issues": [],
+      "severity": "low",
+      "confidence": 1,
+      "recommendedAction": "KEEP",
+      "staticDecision": "KEEP",
+      "semanticStatus": "JUDGED",
+      "semanticDecision": "KEEP",
+      "finalDecision": "KEEP",
+      "promptDigest": "添付ファイルをご＿＿ください。",
+      "imageRequirement": "NOT_NEEDED",
+      "imageArchetype": null
+    },
+    {
+      "score": 5,
+      "questionId": "bjt-j4-practice-v3:LC_STATEMENT:0013",
+      "sourceFile": "database/scripts/seeds/bjt/bjt-questions/j4.ts",
+      "level": "J4",
+      "dataset": "practice",
+      "sectionCode": "LC_STATEMENT",
+      "staticChecks": [],
+      "semanticChecks": {},
+      "issues": [],
+      "severity": "none",
+      "confidence": 1,
+      "recommendedAction": "EDIT",
+      "staticDecision": "KEEP",
+      "semanticStatus": "UNJUDGED",
+      "semanticDecision": null,
+      "finalDecision": "EDIT",
+      "promptDigest": "上司に「この報告書、いつまでにできる？」と聞かれました。明後日までにできると答えます。",
+      "adjudicationDecision": "EDIT",
+      "imageRequirement": "BENEFICIAL",
+      "imageArchetype": "workplace_photo"
+    },
+    {
+      "score": 5,
+      "questionId": "bjt-j4-practice-v3:LC_STATEMENT:0021",
+      "sourceFile": "database/scripts/seeds/bjt/bjt-questions/j4.ts",
+      "level": "J4",
+      "dataset": "practice",
+      "sectionCode": "LC_STATEMENT",
+      "staticChecks": [],
+      "semanticChecks": {},
+      "issues": [],
+      "severity": "none",
+      "confidence": 1,
+      "recommendedAction": "EDIT",
+      "staticDecision": "KEEP",
+      "semanticStatus": "UNJUDGED",
+      "semanticDecision": null,
+      "finalDecision": "EDIT",
+      "promptDigest": "取引先の人が帰るとき、エレベーターまで見送ります。何と言いますか。",
+      "adjudicationDecision": "EDIT",
+      "imageRequirement": "BENEFICIAL",
+      "imageArchetype": "workplace_photo"
+    },
+    {
+      "score": 5,
+      "questionId": "bjt-j4-practice-v3:LR_INTEGRATED:0040",
+      "sourceFile": "database/scripts/seeds/bjt/bjt-questions/j4.ts",
+      "level": "J4",
+      "dataset": "practice",
+      "sectionCode": "LR_INTEGRATED",
+      "staticChecks": [],
+      "semanticChecks": {},
+      "issues": [],
+      "severity": "none",
+      "confidence": 1,
+      "recommendedAction": "EDIT",
+      "staticDecision": "KEEP",
+      "semanticStatus": "UNJUDGED",
+      "semanticDecision": null,
+      "finalDecision": "EDIT",
+      "promptDigest": "上司がシフト表を見ながら説明しています。「来週は山田が月・火、佐藤が水・木、田中が金・土の担当ね。日曜は全員休みだよ」。",
+      "adjudicationDecision": "EDIT",
+      "imageRequirement": "REQUIRED",
+      "imageArchetype": "table"
+    },
+    {
+      "score": 6,
+      "questionId": "bjt-j3-practice-v3:LR_SITUATION:0030",
+      "sourceFile": "database/scripts/seeds/bjt/bjt-questions/j3.ts",
+      "level": "J3",
+      "dataset": "practice",
+      "sectionCode": "LR_SITUATION",
+      "staticChecks": [],
+      "semanticChecks": {
+        "B01": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "日本語は自然で、会議室のドアに貼られた張り紙の表現は現実的。"
+        },
+        "B02": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "プロジェクトのキックオフミーティングというビジネスシナリオは、日本の企業でよく見られる現実的な状況。"
+        },
+        "B03": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "J3レベルにふさわしい語彙（プロジェクト、キックオフ、参加者、企画部、技術部、営業部）が使用されている。"
+        },
+        "B04": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "キックオフ＝開始という意味が明確で、Bが唯一の正解。"
+        },
+        "B05": {
+          "score": 3,
+          "confidence": 0.85,
+          "rationale": "A（定例報告会）は多少の関連性があるが、C（送別会）とD（採用面接）はシナリオとあまり関連がなく、誘惑力に欠ける。"
+        },
+        "B06": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "Bが唯一の正解で、他の選択肢は明確に誤り。"
+        },
+        "B07": {
+          "score": 4,
+          "confidence": 0.9,
+          "rationale": "Vietnamese explanationはキックオフミーティングの定義を正しく説明しているが、もう少し詳細な解説（例：プロジェクト開始時に開催される会議）があるとより良い。"
+        },
+        "B08": {
+          "score": 4,
+          "confidence": 0.85,
+          "rationale": "ビジネス用語「キックオフ」の意味を理解する問題は教育的価値があるが、もう少し文脈的な問題があるとより効果的。"
+        },
+        "B09": {
+          "score": 4,
+          "confidence": 0.85,
+          "rationale": "シナリオは現実的だが、もう少し具体的な状況（例：誰が張り紙を読んでいるか）があるとより自然。"
+        },
+        "B10": {
+          "score": 3,
+          "confidence": 0.8,
+          "rationale": "敬語の要素はほとんど含まれていないが、この問題の目的は敬語ではなく、ビジネス用語の理解なので許容範囲。"
+        },
+        "B11": {
+          "score": 4,
+          "confidence": 0.85,
+          "rationale": "ビジネス日本語の読解力を測る問題としてBJTスキルに合致している。"
+        }
+      },
+      "issues": [],
+      "severity": "low",
+      "confidence": 1,
+      "recommendedAction": "KEEP",
+      "staticDecision": "KEEP",
+      "semanticStatus": "JUDGED",
+      "semanticDecision": "KEEP",
+      "finalDecision": "KEEP",
+      "promptDigest": "会議室のドアに「〇〇プロジェクト キックオフミーティング　13:30～15:00　参加者：企画部・技術部・営業部」と書い",
+      "imageRequirement": "BENEFICIAL",
+      "imageArchetype": "meeting"
+    },
+    {
+      "score": 5,
+      "questionId": "bjt-j3-practice-v3:LC_STATEMENT:0021",
+      "sourceFile": "database/scripts/seeds/bjt/bjt-questions/j3.ts",
+      "level": "J3",
+      "dataset": "practice",
+      "sectionCode": "LC_STATEMENT",
+      "staticChecks": [],
+      "semanticChecks": {},
+      "issues": [],
+      "severity": "none",
+      "confidence": 1,
+      "recommendedAction": "KEEP",
+      "staticDecision": "KEEP",
+      "semanticStatus": "UNJUDGED",
+      "semanticDecision": null,
+      "finalDecision": "STATIC_KEEP_ONLY",
+      "promptDigest": "会議のまとめとして「本日の決定事項を確認します。第一に…」と発言します。これは何をしていますか。",
+      "imageRequirement": "BENEFICIAL",
+      "imageArchetype": "meeting"
+    },
+    {
+      "score": 5,
+      "questionId": "bjt-j3-practice-v3:RC_EXPRESSION:0060",
+      "sourceFile": "database/scripts/seeds/bjt/bjt-questions/j3.ts",
+      "level": "J3",
+      "dataset": "practice",
+      "sectionCode": "RC_EXPRESSION",
+      "staticChecks": [],
+      "semanticChecks": {},
+      "issues": [],
+      "severity": "none",
+      "confidence": 1,
+      "recommendedAction": "EDIT",
+      "staticDecision": "KEEP",
+      "semanticStatus": "UNJUDGED",
+      "semanticDecision": null,
+      "finalDecision": "EDIT",
+      "promptDigest": "見積書を送付するメールで「＿＿」",
+      "adjudicationDecision": "EDIT",
+      "imageRequirement": "NOT_NEEDED",
+      "imageArchetype": null
+    },
+    {
+      "score": 5,
+      "questionId": "bjt-j3-practice-v3:RC_EXPRESSION:0066",
+      "sourceFile": "database/scripts/seeds/bjt/bjt-questions/j3.ts",
+      "level": "J3",
+      "dataset": "practice",
+      "sectionCode": "RC_EXPRESSION",
+      "staticChecks": [],
+      "semanticChecks": {},
+      "issues": [],
+      "severity": "none",
+      "confidence": 1,
+      "recommendedAction": "EDIT",
+      "staticDecision": "KEEP",
+      "semanticStatus": "UNJUDGED",
+      "semanticDecision": null,
+      "finalDecision": "EDIT",
+      "promptDigest": "上司の提案に賛成するとき「＿＿」",
+      "adjudicationDecision": "EDIT",
+      "imageRequirement": "NOT_NEEDED",
+      "imageArchetype": null
+    },
+    {
+      "score": 8,
+      "questionId": "bjt-j2-practice-v3:LC_INTEGRATED:0027",
+      "sourceFile": "database/scripts/seeds/bjt/bjt-questions/j2.ts",
+      "level": "J2",
+      "dataset": "practice",
+      "sectionCode": "LC_INTEGRATED",
+      "staticChecks": [],
+      "semanticChecks": {
+        "B01": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "日本語は自然で、コンサルタントの提言として適切なビジネス表現が使用されている。選択肢も自然な日本語で書かれている。"
+        },
+        "B02": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "経営改革ミーティング、権限委譲、事後報告制度、ガバナンスなど、実社会で使われるビジネス用語が適切に使用されている。"
+        },
+        "B03": {
+          "score": 5,
+          "confidence": 0.9,
+          "rationale": "J2レベルに適切。ビジネス会議の文脈で、権限委譲やガバナンスに関する理解を問う内容であり、J2のビジネス日本語の範囲内。"
+        },
+        "B04": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "Bが明確に正解。他の選択肢は提案の核心を誤って解釈しており、迷う余地がない。"
+        },
+        "B05": {
+          "score": 3,
+          "confidence": 0.8,
+          "rationale": "選択肢は正解から明確に外れているが、やや極端な誤り（A:すべて廃止、C:すべて社長決裁、D:そのまま導入）で、より微妙な誤答が欲しい。"
+        },
+        "B06": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "正解はBのみで、他の選択肢は明確に誤り。二番目の正解が存在しない。"
+        },
+        "B07": {
+          "score": 5,
+          "confidence": 0.9,
+          "rationale": "ベトナム語の説明は正解の核心を正確に伝えている。問題（意思決定のスピード）と解決策（権限委譲＋事後報告）の両方を説明。"
+        },
+        "B08": {
+          "score": 4,
+          "confidence": 0.85,
+          "rationale": "ビジネス概念（権限委譲、ガバナンス）の理解を促進するが、より深いビジネススキル（交渉、プレゼンテーション分析）の訓練にはならない。"
+        },
+        "B09": {
+          "score": 5,
+          "confidence": 0.9,
+          "rationale": "外部コンサルタントが経営改革ミーティングで報告書を説明するシナリオは、実社会で起こりうる状況。人工的ではない。"
+        },
+        "B10": {
+          "score": 5,
+          "confidence": 0.9,
+          "rationale": "「提案します」「整備する必要があります」など、適切な敬語とビジネス表現が使用されている。"
+        },
+        "B11": {
+          "score": 5,
+          "confidence": 0.9,
+          "rationale": "LC_INTEGRATED（聴解）のスキルに合致。コンサルタントの提案の核心を理解する必要があるため、聴解能力を適切に評価。"
+        }
+      },
+      "issues": [],
+      "severity": "low",
+      "confidence": 1,
+      "recommendedAction": "KEEP",
+      "staticDecision": "KEEP",
+      "semanticStatus": "JUDGED",
+      "semanticDecision": "KEEP",
+      "finalDecision": "KEEP",
+      "promptDigest": "経営コンサルタントの提言：「御社の課題は、意思決定のスピードにあると考えます。現在、承認プロセスに平均10日かかっていま",
+      "imageRequirement": "BENEFICIAL",
+      "imageArchetype": "meeting"
+    },
+    {
+      "score": 7,
+      "questionId": "bjt-j2-practice-v3:RC_VOCAB_GRAMMAR:0049",
+      "sourceFile": "database/scripts/seeds/bjt/bjt-questions/j2.ts",
+      "level": "J2",
+      "dataset": "practice",
+      "sectionCode": "RC_VOCAB_GRAMMAR",
+      "staticChecks": [],
+      "semanticChecks": {},
+      "issues": [],
+      "severity": "none",
+      "confidence": 1,
+      "recommendedAction": "EDIT",
+      "staticDecision": "KEEP",
+      "semanticStatus": "UNJUDGED",
+      "semanticDecision": null,
+      "finalDecision": "EDIT",
+      "promptDigest": "弊社の新製品について、ぜひ一度ご（　　）いただければ幸いです。",
+      "adjudicationDecision": "EDIT",
+      "imageRequirement": "NOT_NEEDED",
+      "imageArchetype": null
+    },
+    {
+      "score": 6,
+      "questionId": "bjt-j2-practice-v3:LC_SCENE:0002",
+      "sourceFile": "database/scripts/seeds/bjt/bjt-questions/j2.ts",
+      "level": "J2",
+      "dataset": "practice",
+      "sectionCode": "LC_SCENE",
+      "staticChecks": [],
+      "semanticChecks": {
+        "B01": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "日本語の自然さは非常に高い。プロンプトの敬語表現（お聞かせいただけますか）と選択肢の表現（退職の挨拶、給与交渉、会社案内）はすべて自然で、ビジネス日本語として問題ない。"
+        },
+        "B02": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "採用面接のシナリオは現実的で、面接官が応募者の経験について質問する場面はビジネスの典型的な状況。"
+        },
+        "B03": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "J2レベルに適切。敬語表現やビジネス用語はJ2学習者の範囲内であり、文法構造も複雑すぎない。"
+        },
+        "B04": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "正解は明確にBであり、他の選択肢は文脈から容易に除外できる。"
+        },
+        "B05": {
+          "score": 4,
+          "confidence": 0.85,
+          "rationale": "選択肢A（退職の挨拶）とC（給与交渉）は面接の文脈から推測しにくい。D（会社案内）は少し不自然だが、ビジネスシーンとして考えられる。全体として十分だが、AとCはもう少し面接文脈に近づけるとより良い。"
+        },
+        "B06": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "正解はBのみで、他の選択肢は明確に誤り。"
+        },
+        "B07": {
+          "score": 3,
+          "confidence": 0.85,
+          "rationale": "説明は簡潔で正しいが、なぜBが正解で、他の選択肢が誤りなのかをもう少し詳しく説明すると良い。例えば、「面接官が質問している」という文脈から、応募者が退職や給与交渉をしているわけではないことを明確にするとより教育的。"
+        },
+        "B08": {
+          "score": 4,
+          "confidence": 0.85,
+          "rationale": "面接の場面を正しく理解する力を問う良い問題。ただし、説明がもう少し充実すれば、学習者の理解を深めることができる。"
+        },
+        "B09": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "シナリオは現実的で、人工的に作られたものではない。"
+        },
+        "B10": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "敬語の使い方が適切で、ビジネス日本語として問題ない。"
+        },
+        "B11": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "BJTのスキル（聴解力、文脈理解）に合致しており、面接というビジネスシーンを正しく理解する力を問う。"
+        }
+      },
+      "issues": [],
+      "severity": "low",
+      "confidence": 1,
+      "recommendedAction": "KEEP",
+      "staticDecision": "KEEP",
+      "semanticStatus": "JUDGED",
+      "semanticDecision": "KEEP",
+      "finalDecision": "KEEP",
+      "promptDigest": "面接官が「これまでのご経験の中で、最も困難だったプロジェクトについてお聞かせいただけますか」と聞いています。応募者がスー",
+      "imageRequirement": "BENEFICIAL",
+      "imageArchetype": "meeting"
+    },
+    {
+      "score": 6,
+      "questionId": "bjt-j2-practice-v3:LC_SCENE:0005",
+      "sourceFile": "database/scripts/seeds/bjt/bjt-questions/j2.ts",
+      "level": "J2",
+      "dataset": "practice",
+      "sectionCode": "LC_SCENE",
+      "staticChecks": [],
+      "semanticChecks": {
+        "B01": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "Prompt, scenario, and all options use natural, idiomatic Japanese. No awkward phrasing or unnatural word order detected."
+        },
+        "B02": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "The scenario of a joint venture risk-sharing negotiation in an international business department meeting is a highly authentic business context for J2 learners."
+        },
+        "B03": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "Vocabulary (合弁事業, リスク分担, 条件を詰める, 現地パートナー) and sentence structures are well within J2 level. No overly advanced or too simple items."
+        },
+        "B04": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "Only option B is correct. The correct answer directly paraphrases the prompt's key information. No ambiguity in the single-best-answer design."
+        },
+        "B05": {
+          "score": 3,
+          "confidence": 0.85,
+          "rationale": "Distractors A and D are somewhat plausible (contract-related outcomes), but C (withdrawal) is less naturally connected to the prompt. Overall plausibility is moderate — could be improved with more contextually linked wrong answers."
+        },
+        "B06": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "Only one correct answer exists. No second option could reasonably be considered correct."
+        },
+        "B07": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "Vietnamese explanation accurately conveys the meaning of the prompt and correctly identifies the answer. No errors in translation or reasoning."
+        },
+        "B08": {
+          "score": 4,
+          "confidence": 0.85,
+          "rationale": "Good pedagogical value for listening comprehension of business reports. Could be slightly enhanced by adding a follow-up question or vocabulary focus, but acceptable as-is."
+        },
+        "B09": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "No artificial elements detected. The scenario, prompt, and options all feel like a genuine business situation."
+        },
+        "B10": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "Appropriate business register throughout. The prompt uses 報告しています (polite continuous form) suitable for a formal departmental report. Options use natural business language."
+        },
+        "B11": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "Clearly tests BJT listening comprehension skill — understanding a business report and identifying the main point. Well-aligned with BJT objectives."
+        }
+      },
+      "issues": [],
+      "severity": "low",
+      "confidence": 1,
+      "recommendedAction": "KEEP",
+      "staticDecision": "KEEP",
+      "semanticStatus": "JUDGED",
+      "semanticDecision": "KEEP",
+      "finalDecision": "KEEP",
+      "promptDigest": "海外営業部の課長が「現地パートナーとの合弁事業について、リスク分担の条件を詰める段階に入りました」と報告しています。",
+      "imageRequirement": "BENEFICIAL",
+      "imageArchetype": "meeting"
+    },
+    {
+      "score": 8,
+      "questionId": "bjt-j1-practice-v3:LR_SITUATION:0030",
+      "sourceFile": "database/scripts/seeds/bjt/bjt-questions/j1.ts",
+      "level": "J1",
+      "dataset": "practice",
+      "sectionCode": "LR_SITUATION",
+      "staticChecks": [],
+      "semanticChecks": {
+        "B01": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "日本語は自然で、社内通知の文体として適切。文法的な誤りや不自然な表現は見当たらない。"
+        },
+        "B02": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "東京証券取引所プライム市場への市場区分変更とインサイダー取引規制の拡大は、実社会で起こりうるビジネスシナリオ。"
+        },
+        "B03": {
+          "score": 4,
+          "confidence": 0.85,
+          "rationale": "J1レベルとしてはやや高度な内容（インサイダー取引規制、市場区分変更）だが、ビジネス日本語の文脈では許容範囲。"
+        },
+        "B04": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "Bが明確に正解。A（全売却）は過剰対応、C（関係ないと判断）は無責任、D（知人に推奨）は違法行為であり、誤答が明確に除外可能。"
+        },
+        "B05": {
+          "score": 3,
+          "confidence": 0.8,
+          "rationale": "AとDはあまりに明らかな誤りであり、実社会で考えうる選択肢として弱すぎる。Cもやや明らかな誤り。より洗練された誤答が望ましい。"
+        },
+        "B06": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "正解が1つだけ明確。"
+        },
+        "B07": {
+          "score": 3,
+          "confidence": 0.8,
+          "rationale": "ベトナム語の説明は簡潔だが、なぜBが正解で他が誤りなのかの理由が不十分。より詳細な解説が望ましい。"
+        },
+        "B08": {
+          "score": 4,
+          "confidence": 0.85,
+          "rationale": "コンプライアンス対応の学習価値はあるが、より実践的なビジネススキル（報告・確認・対応）を問う問題として強化可能。"
+        },
+        "B09": {
+          "score": 3,
+          "confidence": 0.8,
+          "rationale": "シナリオは実社会で起こりうるが、やや簡略化されている印象。より具体的な状況説明があると良い。"
+        },
+        "B10": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "社内通知の文体として敬語・ビジネス語調が適切。"
+        },
+        "B11": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "ビジネス文書の読解と適切な行動判断を問うことで、BJTのスキルに合致。"
+        }
+      },
+      "issues": [],
+      "severity": "low",
+      "confidence": 1,
+      "recommendedAction": "KEEP",
+      "staticDecision": "KEEP",
+      "semanticStatus": "JUDGED",
+      "semanticDecision": "KEEP",
+      "finalDecision": "KEEP",
+      "promptDigest": "以下の社内通知と音声説明を踏まえ、従業員が取るべき行動として最も適切なものを選んでください。\n\n【社内通知】当社は本日付",
+      "imageRequirement": "BENEFICIAL",
+      "imageArchetype": "workplace_interaction"
+    },
+    {
+      "score": 7,
+      "questionId": "bjt-j1-practice-v3:LR_INTEGRATED:0040",
+      "sourceFile": "database/scripts/seeds/bjt/bjt-questions/j1.ts",
+      "level": "J1",
+      "dataset": "practice",
+      "sectionCode": "LR_INTEGRATED",
+      "staticChecks": [],
+      "semanticChecks": {},
+      "issues": [],
+      "severity": "none",
+      "confidence": 1,
+      "recommendedAction": "EDIT",
+      "staticDecision": "KEEP",
+      "semanticStatus": "UNJUDGED",
+      "semanticDecision": null,
+      "finalDecision": "EDIT",
+      "promptDigest": "以下の取締役会議事録案と議長の口頭補足を踏まえ、議事録の記載として最も不適切なものを選んでください。\n\n【議事録案】第3",
+      "adjudicationDecision": "EDIT",
+      "imageRequirement": "REQUIRED",
+      "imageArchetype": "table"
+    },
+    {
+      "score": 6,
+      "questionId": "bjt-j1-practice-v3:LC_SCENE:0001",
+      "sourceFile": "database/scripts/seeds/bjt/bjt-questions/j1.ts",
+      "level": "J1",
+      "dataset": "practice",
+      "sectionCode": "LC_SCENE",
+      "staticChecks": [],
+      "semanticChecks": {
+        "B01": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "Promptの日本語は自然で、記者会見の謝罪会見という文脈に完全に合致する。'この度の不祥事につきまして、関係者の皆様に多大なるご迷惑をおかけしましたことを深くお詫び申し上げます'は、ビジネス日本語として非常に自然な表現である。"
+        },
+        "B02": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "企業の記者会見でPR担当者が不祥事について謝罪するシナリオは、実社会で頻繁に起こるビジネスシーン。フラッシュが光っているという描写も記者会見の典型的な要素。非常にリアル。"
+        },
+        "B03": {
+          "score": 5,
+          "confidence": 0.9,
+          "rationale": "J1レベルに適切。不祥事、多大なる、ご迷惑、お詫び、関係者などの語彙はJ1で習得される範囲。文法も複雑すぎず、J1学習者にとって挑戦的だが到達可能なレベル。"
+        },
+        "B04": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "Bが明確に正解。プロンプトの謝罪会見の内容とBの「不祥事に関する謝罪会見」が完全に一致。他の選択肢は明らかに異なるシナリオ。"
+        },
+        "B05": {
+          "score": 3,
+          "confidence": 0.8,
+          "rationale": "選択肢A（新製品発表）、C（株主総会）、D（業績報告）はすべてビジネス会議の文脈ではあるが、プロンプトの謝罪会見と内容的にあまりにも異なる。より巧妙な紛らわしい選択肢（例：謝罪会見だが別の理由）があればより良い。"
+        },
+        "B06": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "B以外に正解がない。A、C、Dはすべてプロンプトの状況と矛盾する。"
+        },
+        "B07": {
+          "score": 5,
+          "confidence": 0.9,
+          "rationale": "Vietnamese explanationは状況の要約と日本語の翻訳を両方含み、学習者に状況を明確に伝える。'Họp báo xin lỗi về scandal'という簡潔なまとめも良い。"
+        },
+        "B08": {
+          "score": 4,
+          "confidence": 0.85,
+          "rationale": "読解力テストとして機能するが、やや直感的すぎる。より深い言語スキル（敬語の理解、文脈からの推論など）を問う問題と組み合わせるとより良い。"
+        },
+        "B09": {
+          "score": 5,
+          "confidence": 0.9,
+          "rationale": "シナリオは実社会で起こりうる状況。人工的ではない。"
+        },
+        "B10": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "おかけしました、お詫び申し上げます、ご迷惑など、適切な敬語が使用されている。"
+        },
+        "B11": {
+          "score": 5,
+          "confidence": 0.9,
+          "rationale": "LC_SCENEセクションの読解スキルに合致。プロンプトから状況を理解し、適切な選択肢を選ぶ能力を問う。BJTのスキルに整合する。"
+        }
+      },
+      "issues": [],
+      "severity": "low",
+      "confidence": 1,
+      "recommendedAction": "KEEP",
+      "staticDecision": "KEEP",
+      "semanticStatus": "JUDGED",
+      "semanticDecision": "KEEP",
+      "finalDecision": "KEEP",
+      "promptDigest": "記者会見場で広報担当者が「この度の不祥事につきまして、関係者の皆様に多大なるご迷惑をおかけしましたことを深くお詫び申し上",
+      "imageRequirement": "BENEFICIAL",
+      "imageArchetype": "workplace_photo"
+    },
+    {
+      "score": 6,
+      "questionId": "bjt-j1-practice-v3:LC_SCENE:0007",
+      "sourceFile": "database/scripts/seeds/bjt/bjt-questions/j1.ts",
+      "level": "J1",
+      "dataset": "practice",
+      "sectionCode": "LC_SCENE",
+      "staticChecks": [],
+      "semanticChecks": {
+        "B01": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "日本語は自然で、労使交渉の場面として適切。「春闘の要求書を提出いたします」は標準的なビジネス表現。"
+        },
+        "B02": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "春闘（年次賃上げ交渉）は日本の企業社会で実際に毎年行われる重要なイベント。シナリオも現実的。"
+        },
+        "B03": {
+          "score": 5,
+          "confidence": 0.9,
+          "rationale": "J1レベルに適切。春闘、ベースアップ、一時金などの語彙はJ1で習得すべきビジネス用語。文法もシンプル。"
+        },
+        "B04": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "Bが明確に正解。Aは方向性が逆、CとDは文脈から外れている。"
+        },
+        "B05": {
+          "score": 3,
+          "confidence": 0.85,
+          "rationale": "Aは最も説得力のある誤答だが、C（解雇通知）とD（福利厚生）は文脈からあまりにも遠い。2つの誤答が明らかに間違いすぎるため、B05を3に評価。"
+        },
+        "B06": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "正解はBのみ。他の選択肢は明確に誤り。"
+        },
+        "B07": {
+          "score": 4,
+          "confidence": 0.8,
+          "rationale": "説明は春闘の語彙を正しく説明しているが、各選択肢がなぜ正誤なのかの理由がもう少し詳しければより良い。"
+        },
+        "B08": {
+          "score": 4,
+          "confidence": 0.8,
+          "rationale": "春闘というビジネス用語と労使交渉の文脈を学ぶ価値がある。"
+        },
+        "B09": {
+          "score": 4,
+          "confidence": 0.85,
+          "rationale": "シナリオは現実的だが、CとDの誤答が人工的に見える。"
+        },
+        "B10": {
+          "score": 5,
+          "confidence": 0.9,
+          "rationale": "「提出いたします」は謙譲語で、組合代表が経営側に話すのに適切。"
+        },
+        "B11": {
+          "score": 5,
+          "confidence": 0.9,
+          "rationale": "ビジネス日本語の読解力を、現実的な労使交渉の場面から評価。BJTスキルに合致。"
+        }
+      },
+      "issues": [],
+      "severity": "low",
+      "confidence": 1,
+      "recommendedAction": "KEEP",
+      "staticDecision": "KEEP",
+      "semanticStatus": "JUDGED",
+      "semanticDecision": "KEEP",
+      "finalDecision": "KEEP",
+      "promptDigest": "労働組合の代表が経営側に「春闘の要求書を提出いたします。ベースアップ3.5%、一時金5.0ヶ月を要求いたします」と述べて",
+      "imageRequirement": "BENEFICIAL",
+      "imageArchetype": "meeting"
+    },
+    {
+      "score": 11,
+      "questionId": "bjt-j1plus-practice-v3:RC_VOCAB_GRAMMAR:0045",
+      "sourceFile": "database/scripts/seeds/bjt/bjt-questions/j1plus.ts",
+      "level": "J1+",
+      "dataset": "practice",
+      "sectionCode": "RC_VOCAB_GRAMMAR",
+      "staticChecks": [],
+      "semanticChecks": {
+        "B01": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "文法・文脈ともに自然な日本語。法律文書としての表現が適切で、誤字脱字もない。"
+        },
+        "B02": {
+          "score": 4,
+          "confidence": 0.85,
+          "rationale": "行政不服審査法はビジネス文脈では規制対応・コンプライアンスに関連するが、純粋なビジネス日本語としてはやや専門的。実務で行政処分に関わるビジネスパーソンには関連性がある。"
+        },
+        "B03": {
+          "score": 5,
+          "confidence": 0.9,
+          "rationale": "J1+ レベルにふさわしい。行政処分、審査請求、起算、不服といった語彙はJ1+学習者の到達度に合致する。"
+        },
+        "B04": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "正解が明確で、他の選択肢は紛れもない誤り。単一正解が保証されている。"
+        },
+        "B05": {
+          "score": 4,
+          "confidence": 0.8,
+          "rationale": "60日、6ヶ月、1年は紛らわしい選択肢だが、行政不服審査法の規定を知らない学習者には容易に混同される可能性がある。やや容易すぎる面がある。"
+        },
+        "B06": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "Bが唯一の正解。他の選択肢は明確に誤り。"
+        },
+        "B07": {
+          "score": 5,
+          "confidence": 0.9,
+          "rationale": "Vietnamese explanation は法律名（行政不服審査法）を特定し、期限（3ヶ月）と「起算して」の意味を正しく説明している。学習者の理解を助ける。"
+        },
+        "B08": {
+          "score": 4,
+          "confidence": 0.75,
+          "rationale": "特定の法律条文の知識を問うため、汎用的なビジネス日本語の学習にはやや限定的。ただし、行政手続きを理解するビジネスパーソンには有用。"
+        },
+        "B09": {
+          "score": 3,
+          "confidence": 0.7,
+          "rationale": "行政不服審査法の具体的な条文を問うため、やや人工的。より一般的なビジネスシナリオに置き換えることで自然さを高められる。"
+        },
+        "B10": {
+          "score": 5,
+          "confidence": 0.9,
+          "rationale": "法律文書としての丁重語・敬体表現が適切。行政処分、審査請求、起算といった用語の使い方が自然。"
+        },
+        "B11": {
+          "score": 5,
+          "confidence": 0.9,
+          "rationale": "RC_VOCAB_GRAMMAR セクションに合致。語彙・文法の知識を問う問題として適切。"
+        }
+      },
+      "issues": [],
+      "severity": "low",
+      "confidence": 1,
+      "recommendedAction": "KEEP",
+      "staticDecision": "KEEP",
+      "semanticStatus": "JUDGED",
+      "semanticDecision": "KEEP",
+      "finalDecision": "KEEP",
+      "promptDigest": "本法に基づく行政処分に対して不服がある者は、処分があったことを知った日の翌日から起算して（　　）以内に審査請求をすること",
+      "imageRequirement": "NOT_NEEDED",
+      "imageArchetype": null
+    },
+    {
+      "score": 9,
+      "questionId": "bjt-j1plus-practice-v3:LC_INTEGRATED:0028",
+      "sourceFile": "database/scripts/seeds/bjt/bjt-questions/j1plus.ts",
+      "level": "J1+",
+      "dataset": "practice",
+      "sectionCode": "LC_INTEGRATED",
+      "staticChecks": [],
+      "semanticChecks": {
+        "B01": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "日本語は非常に自然で、倫理委員会の議論をリアルに描写している。CMOの報告、法務部長の発言、外部倫理委員の主張がそれぞれ自然なビジネス日本語で書かれている。"
+        },
+        "B02": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "グローバル製薬会社の倫理委員会という設定は非常に現実的。臨床試験データのサブグループ分析、有害事象、規制当局への報告義務、被験者安全といったトピックは製薬業界の実際の倫理委員会議論に即している。"
+        },
+        "B03": {
+          "score": 5,
+          "confidence": 0.9,
+          "rationale": "J1+レベルに適切。専門用語（倫理委員会、チーフ・メディカル・オフィサー、サブグループ分析、統計的に有意、予期せぬ有害事象、規制当局、被験者）はJ1+の範囲内。文法構造も複雑だが適切。"
+        },
+        "B04": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "正解は明確にB（被験者の安全確保を最優先）。倫理委員会の文脈において、商業的利益の最大化（A）、報告の遅延（C）、統計的有意性のみでの承認（D）はすべて倫理的に誤りであり、正解が一意。"
+        },
+        "B05": {
+          "score": 3,
+          "confidence": 0.85,
+          "rationale": "選択肢A、C、Dは倫理的観点から明らかに誤りであり、誘惑性が低い。これは問題の性質上避けられないが、より現実的なビジネス判断を問う場合、選択肢がもう少し曖昧であればより良い。ただし、倫理原則を問う問題ではこの程度も許容範囲。"
+        },
+        "B06": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "正解はBのみ。他の選択肢はすべて倫理的に問題があるため、2つ目の正解が存在しない。"
+        },
+        "B07": {
+          "score": 4,
+          "confidence": 0.85,
+          "rationale": "Vietnamese explanationはシナリオの要点を正しく要約し、正解の理由を明確に説明している。ただし、もう少し詳細に議論の各要素を結びつけて説明するとより良い。"
+        },
+        "B08": {
+          "score": 5,
+          "confidence": 0.9,
+          "rationale": "製薬業界の倫理委員会における被験者安全の最優先原則を学ぶことができる。ビジネス日本語学習者にとって実用的な教訓。"
+        },
+        "B09": {
+          "score": 5,
+          "confidence": 0.9,
+          "rationale": "シナリオは非常に現実的。倫理委員会室、スクリーンに臨床試験データのグラフ、委員が深刻な表情で議論する描写は人工的ではない。"
+        },
+        "B10": {
+          "score": 5,
+          "confidence": 0.9,
+          "rationale": "CMOの報告、法務部長の発言、外部倫理委員の主張はそれぞれ適切な敬語・ビジネス語調で書かれている。"
+        },
+        "B11": {
+          "score": 5,
+          "confidence": 0.9,
+          "rationale": "ビジネス日本語の読解力と、専門的なビジネス判断力を問う問題としてBJTスキルに合致。倫理委員会の議論を理解し、適切な判断基準を識別する能力を評価。"
+        }
+      },
+      "issues": [],
+      "severity": "low",
+      "confidence": 1,
+      "recommendedAction": "KEEP",
+      "staticDecision": "KEEP",
+      "semanticStatus": "JUDGED",
+      "semanticDecision": "KEEP",
+      "finalDecision": "KEEP",
+      "promptDigest": "グローバル製薬会社の倫理委員会で、チーフ・メディカル・オフィサー、法務部長、外部倫理委員が新薬の臨床試験データについて議",
+      "imageRequirement": "REQUIRED",
+      "imageArchetype": "table"
+    },
+    {
+      "score": 9,
+      "questionId": "bjt-j1plus-practice-v3:LR_SITUATION:0033",
+      "sourceFile": "database/scripts/seeds/bjt/bjt-questions/j1plus.ts",
+      "level": "J1+",
+      "dataset": "practice",
+      "sectionCode": "LR_SITUATION",
+      "staticChecks": [],
+      "semanticChecks": {
+        "B01": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "日本語は自然で、法的・ビジネス用語が適切に使用されている。音声テキストも流暢で、仲裁廷の議論として自然な表現。"
+        },
+        "B02": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "ICC国際仲裁廷、FRAND宣言、ロイヤリティ料率算定、トップダウン・アプローチ、コンパラブル・ライセンス・アプローチ — すべて実在する知的財産業界の概念。非常に本物感のあるシナリオ。"
+        },
+        "B03": {
+          "score": 5,
+          "confidence": 0.9,
+          "rationale": "J1+ レベルに適切。特許紛争、仲裁廷、FRAND、ロイヤリティ料率、アプローチ等の語彙は高度だが、J1+ の学習者にとって到達可能な範囲。"
+        },
+        "B04": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "正解(B)が明確に正しく、他の選択肢は音声内容と矛盾する。単一正解が明確。"
+        },
+        "B05": {
+          "score": 3,
+          "confidence": 0.8,
+          "rationale": "選択肢A（クロスライセンス契約）、C（特許無効）、D（特許放棄）は音声内容から外れているが、やや遠い。もう少し音声内容に近い誤答を設計するとより良い。"
+        },
+        "B06": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "正解が1つだけ。他の選択肢は明確に誤り。"
+        },
+        "B07": {
+          "score": 5,
+          "confidence": 0.9,
+          "rationale": "ベトナム語の説明は音声内容を正確に要約しており、SEP紛争、日本側の主張、FRANDロイヤリティ算定方法の核心を適切に伝えている。"
+        },
+        "B08": {
+          "score": 4,
+          "confidence": 0.85,
+          "rationale": "聴取内容の要点把握を問う良問だが、選択肢がやや容易すぎる印象。もう少し深い理解を問う選択肢があるとより良い。"
+        },
+        "B09": {
+          "score": 5,
+          "confidence": 0.9,
+          "rationale": "シナリオは現実的で人工的ではない。国際仲裁廷の場面は実在するビジネス環境。"
+        },
+        "B10": {
+          "score": 5,
+          "confidence": 0.9,
+          "rationale": "法的・ビジネス文脈に適切な敬語・表現が使用されている。"
+        },
+        "B11": {
+          "score": 5,
+          "confidence": 0.9,
+          "rationale": "ビジネス日本語テストのスキル（聴取理解、要点把握）に合致する。"
+        }
+      },
+      "issues": [],
+      "severity": "low",
+      "confidence": 1,
+      "recommendedAction": "KEEP",
+      "staticDecision": "KEEP",
+      "semanticStatus": "JUDGED",
+      "semanticDecision": "KEEP",
+      "finalDecision": "KEEP",
+      "promptDigest": "【写真：国際特許紛争の仲裁廷。日本企業と米国企業の代理人が証拠資料を提示している】\n音声：「本件標準必須特許のライセンス",
+      "imageRequirement": "BENEFICIAL",
+      "imageArchetype": "workplace_photo"
+    },
+    {
+      "score": 8,
+      "questionId": "bjt-j1plus-practice-v3:LC_INTEGRATED:0029",
+      "sourceFile": "database/scripts/seeds/bjt/bjt-questions/j1plus.ts",
+      "level": "J1+",
+      "dataset": "practice",
+      "sectionCode": "LC_INTEGRATED",
+      "staticChecks": [],
+      "semanticChecks": {
+        "B01": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "日本語は自然で、ビジネス会議の対話として違和感がない。監査役の発言は敬語も適切に使用されており、実在する企業会議のトーンを再現している。"
+        },
+        "B02": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "国際合弁会社の役員会というシナリオは、日本企業のガバナンス構造に合致する。監査役の役割や本社・現地・日本側の三者関係は実社会のビジネス慣行を反映している。"
+        },
+        "B03": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "J1+ レベルに適切。合弁会社、役員会、監査役、ガバナンス、裁量などの語彙はJ1+ 範囲内。推論力もこのレベルで適切。"
+        },
+        "B04": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "正解(B)は明確に正しく、他の選択肢は文脈から容易に除外できる。"
+        },
+        "B05": {
+          "score": 3,
+          "confidence": 0.85,
+          "rationale": "選択肢A・C・Dは文脈から明らかな誤りだが、やや容易に除外できる。もう少し微妙な誤答を設けるとより良いが、現状でも問題ない。"
+        },
+        "B06": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "正解は一つだけ。他の選択肢は文脈から明確に誤り。"
+        },
+        "B07": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "Vietnamese explanation は正確に監査役の発言の機能を説明しており、両者の立場を認めつつ中立的な仲介者としての役割を指摘している。"
+        },
+        "B08": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "ビジネス文脈での発言機能の推論力を問うことで、実用的な読解スキルを育成している。"
+        },
+        "B09": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "シナリオは現実的なビジネス状況であり、人工的に作られた感がない。"
+        },
+        "B10": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "敬語の使い分けが適切。～と考えております、～しかねます、～かと存じますなど、各役職の立場に合わせた語調になっている。"
+        },
+        "B11": {
+          "score": 5,
+          "confidence": 0.95,
+          "rationale": "ビジネス日本語の読解・推論スキルに合致する。LC_INTEGRATED セクションのスキル目標と整合している。"
+        }
+      },
+      "issues": [],
+      "severity": "low",
+      "confidence": 1,
+      "recommendedAction": "KEEP",
+      "staticDecision": "KEEP",
+      "semanticStatus": "JUDGED",
+      "semanticDecision": "KEEP",
+      "finalDecision": "KEEP",
+      "promptDigest": "国際合弁会社の役員会で、日本側派遣社長、現地側副社長、本社からの監査役が経営方針の対立について議論しています。日本側社長",
+      "imageRequirement": "BENEFICIAL",
+      "imageArchetype": "meeting"
+    }
+  ]
+}

@@ -164,7 +164,7 @@ export const J5_DATA: SeedLevelData = {
         {
           prompt: "ドラッグストアのスタッフが「ポイントカードはお持ちですか」と聞いています。お客さんが財布を開けています。",
           scenario: "ドラッグストアのレジ。",
-          explanationVi: "Nhân viên hỏi 'Quý khách có thẻ tích điểm không?'. Khách đang mở ví.",
+          explanationVi: "Nhân viên hỏi khách có thẻ tích điểm hay không. Đáp án A nhắc lại đúng nội dung câu hỏi; B, C và D lần lượt nói về tư vấn thuốc, giới thiệu sản phẩm và trả hàng, đều không xuất hiện trong tình huống.",
           skillTag: "service-interaction",
           difficulty: "standard",
           options: opts(
@@ -198,9 +198,9 @@ export const J5_DATA: SeedLevelData = {
       titleJa: "発言聴解問題",
       questions: [
         {
-          prompt: "お店で「温めますか」と聞かれました。何と答えますか。",
+          prompt: "お店で「温めますか」と聞かれました。お弁当を温めてもらいたいとき、何と答えますか。",
           scenario: "コンビニでお弁当を買った場面。",
-          explanationVi: "Nhân viên hỏi 'Có hâm nóng không?'. Trả lời lịch sự 'Vâng, làm ơn'.",
+          explanationVi: "Vì muốn nhân viên hâm nóng hộp cơm, câu trả lời lịch sự là 「はい、お願いします」(Vâng, nhờ anh/chị giúp). 「いいえ、いりません」là từ chối nên không phù hợp với yêu cầu đã nêu; các đáp án còn lại không trả lời việc hâm nóng.",
           skillTag: "polite-response",
           difficulty: "easy",
           options: opts(
@@ -430,10 +430,10 @@ export const J5_DATA: SeedLevelData = {
           ),
         },
         {
-          prompt: "マンションの管理人が掲示板に張り紙をしています。「来週月曜日、水道の点検があります。9時から12時の間、水が出ません。水をためておいてください」。住民は何をしておくべきですか。",
-          scenario: "マンションの掲示板前。",
-          explanationVi: "Quản lý chung cư thông báo kiểm tra đường nước thứ Hai, 9-12h không có nước. Cần trữ nước trước.",
-          skillTag: "preparation-identification",
+          prompt: "オフィスの管理担当者が掲示板に張り紙をしています。「来週月曜日、社内の水道設備の点検があります。9時から12時の間、給湯室の水が出ません。必要な水を事前に準備してください」。社員は何をしておくべきですか。",
+          scenario: "オフィスの掲示板前。",
+          explanationVi: "Thông báo nội bộ cho biết khu bếp văn phòng sẽ không có nước từ 9 đến 12 giờ thứ Hai, vì vậy nhân viên cần chuẩn bị trước lượng nước cần thiết. Các lựa chọn khác không phải hành động được thông báo.",
+          skillTag: "workplace-preparation-identification",
           difficulty: "hard",
           options: opts(
             "月曜日に引っ越す。",
@@ -572,10 +572,10 @@ export const J5_DATA: SeedLevelData = {
           ),
         },
         {
-          prompt: "バスの路線図を見ています。○○駅前から△△病院まで行きたいです。路線図には「○○駅前→市役所前→△△病院前→公園前」と書いてあります。何番目のバス停で降りますか。",
-          scenario: "バス停で路線図を確認している場面。",
-          explanationVi: "Lộ trình: Ga XX → Tòa thị chính → Bệnh viện △△ → Công viên. Xuống trạm thứ 3 (trạm thứ 2 từ ga).",
-          skillTag: "route-reading",
+          prompt: "営業担当が社内の案内図を見ています。受付から営業部へ行きたいです。案内図には「受付→総務部→営業部→会議室」と書いてあります。何番目の場所で止まりますか。",
+          scenario: "オフィスの案内図を確認している場面。",
+          explanationVi: "Sơ đồ văn phòng đi từ quầy tiếp tân qua phòng tổng vụ rồi đến phòng kinh doanh. Vì vậy điểm cần đến là vị trí thứ ba trong sơ đồ: 営業部.",
+          skillTag: "workplace-route-reading",
           difficulty: "standard",
           options: opts(
             "1番目。",
@@ -586,10 +586,10 @@ export const J5_DATA: SeedLevelData = {
           ),
         },
         {
-          prompt: "商品の説明書を読んでいます。「使用方法：①フタを開ける ②中の液体をよく振る ③適量を手に取り、髪になじませる ④5分後に洗い流す」。液体を振った後、何をしますか。",
-          scenario: "ヘアトリートメントの使用説明書。",
-          explanationVi: "Hướng dẫn: lắc → lấy lượng vừa → thoa vào tóc → rửa sau 5 phút. Sau khi lắc → thoa tóc.",
-          skillTag: "instruction-sequence",
+          prompt: "オフィス用プリンターの説明書を読んでいます。「使用方法：①電源を入れる ②用紙をセットする ③印刷部数を入力する ④印刷ボタンを押す」。用紙をセットした後、何をしますか。",
+          scenario: "オフィス用プリンターの使用説明書。",
+          explanationVi: "Theo hướng dẫn, sau khi đặt giấy vào máy in thì nhập số bản cần in. Đây là bước ③; bước ④ chỉ thực hiện sau đó.",
+          skillTag: "workplace-instruction-sequence",
           difficulty: "standard",
           options: opts(
             "フタを閉める。",
@@ -702,7 +702,7 @@ export const J5_DATA: SeedLevelData = {
         {
           prompt: "明日は会議が＿＿ので、早く来てください。",
           scenario: null,
-          explanationVi: "'ある' (có) phù hợp: 'Ngày mai có cuộc họp nên hãy đến sớm.'",
+          explanationVi: "「会議」là sự vật nên dùng 「ある」, không dùng 「いる」vốn dành cho người hoặc động vật. Câu đầy đủ nghĩa là ngày mai có cuộc họp nên hãy đến sớm; 「する」và 「なる」không tạo thành cách nói tự nhiên ở đây.",
           skillTag: "basic-grammar",
           difficulty: "easy",
           options: opts("いる", "ある", "する", "なる", "B"),
@@ -798,7 +798,7 @@ export const J5_DATA: SeedLevelData = {
         {
           prompt: "この資料を10＿＿コピーしてください。",
           scenario: null,
-          explanationVi: "'部' là đơn vị đếm tài liệu. Copy 10 bộ.",
+          explanationVi: "「部」(bộ) là đơn vị đếm dùng cho tài liệu, sách vở. Khi nhờ in ấn, 「10部コピーしてください」nghĩa là in 10 bộ bản sao. Chú ý: 部 (bộ tài liệu) và 分 (phút) đều đọc 'bu' nhưng nghĩa khác nhau, cần phân biệt qua ngữ cảnh.",
           skillTag: "counter-word",
           difficulty: "hard",
           options: opts("個", "枚", "部", "冊", "C"),

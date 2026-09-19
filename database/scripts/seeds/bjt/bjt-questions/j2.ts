@@ -760,11 +760,11 @@ export const J2_DATA: SeedLevelData = {
         {
           prompt: "弊社の新製品について、ぜひ一度ご（　　）いただければ幸いです。",
           scenario: null,
-          explanationVi: "「ご検討いただく」là kính ngữ khiêm nhường (謙譲語) biểu thị sự nhờ vả lịch sự. 'Nếu quý vị có thể xem xét sản phẩm mới của chúng tôi thì thật vinh hạnh'.",
+          explanationVi: "「ご検討いただければ」là mẫu 「ご＋danh từ Hán＋いただく」dùng để nhờ đối tác xem xét một cách lịch sự. 「検討していただければ」không phù hợp sau 「ご」, còn 「検討なさ」và 「検討され」không tạo thành cấu trúc này.",
           skillTag: "keigo-kenjougo",
           difficulty: "easy",
           options: opts(
-            "検討して",
+            "確認して",
             "検討",
             "検討なさ",
             "検討され",

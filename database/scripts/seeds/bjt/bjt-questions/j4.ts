@@ -212,7 +212,7 @@ export const J4_DATA: SeedLevelData = {
         {
           prompt: "上司に「この報告書、いつまでにできる？」と聞かれました。明後日までにできると答えます。",
           scenario: "上司のデスクの前。",
-          explanationVi: "Sếp hỏi deadline báo cáo. Trả lời lịch sự: 'Ngày kia sẽ hoàn thành'.",
+          explanationVi: "Cấp trên hỏi thời hạn hoàn thành báo cáo. 「明後日までに仕上げます」cam kết sẽ hoàn thành trước hoặc trong ngày kia; A là câu hỏi xin xác nhận, C không trả lời thời hạn, còn D quá mơ hồ.",
           skillTag: "deadline-reporting",
           difficulty: "standard",
           options: opts(
@@ -324,7 +324,7 @@ export const J4_DATA: SeedLevelData = {
         {
           prompt: "取引先の人が帰るとき、エレベーターまで見送ります。何と言いますか。",
           scenario: "エレベーターホールで見送り。",
-          explanationVi: "Tiễn khách ra thang máy: 'Cảm ơn hôm nay đã bớt chút thời gian quý báu'.",
+          explanationVi: "Khi tiễn khách hàng, B là lời cảm ơn trang trọng vì họ đã đến dù bận rộn. A quá đơn giản, C là lời mời chung chung, còn D trộn cách nói thân mật バイバイ với ngữ cảnh công việc.",
           skillTag: "farewell-courtesy",
           difficulty: "hard",
           options: opts(
@@ -541,7 +541,7 @@ export const J4_DATA: SeedLevelData = {
         {
           prompt: "社内の座席表を見ています。「1列目：受付、2列目：営業部、3列目：経理部、4列目：人事部」。経理部のフロアに行きたいとき、何列目に行きますか。",
           scenario: "オフィスフロアの座席表。",
-          explanationVi: "Sơ đồ chỗ ngồi: hàng 3 = phòng kế toán.",
+          explanationVi: "Theo sơ đồ座位表: 1列目 là quầy tiếp nhận, 2列目 là phòng kinh doanh, 3列目 là phòng kế toán, 4列目 là phòng nhân sự. Vì vậy muốn đến phòng kế toán (経理部) thì phải đi tới hàng thứ 3.",
           skillTag: "floor-map-reading",
           difficulty: "easy",
           options: opts(
@@ -618,7 +618,7 @@ export const J4_DATA: SeedLevelData = {
         {
           prompt: "上司がシフト表を見ながら説明しています。「来週は山田が月・火、佐藤が水・木、田中が金・土の担当ね。日曜は全員休みだよ」。水曜日の担当は誰ですか。",
           scenario: "シフト表を見ながらの打ち合わせ。",
-          explanationVi: "Lịch tuần sau: Yamada T2-T3, Sato T4-T5, Tanaka T6-T7. Thứ Tư = Sato.",
+          explanationVi: "Lịch ghi rõ 山田 phụ trách thứ Hai và thứ Ba, 佐藤 phụ trách thứ Tư và thứ Năm, 田中 phụ trách thứ Sáu và thứ Bảy; Chủ nhật mọi người nghỉ. Vì vậy người phụ trách thứ Tư là 佐藤さん.",
           skillTag: "shift-reading",
           difficulty: "easy",
           options: opts(
@@ -660,7 +660,7 @@ export const J4_DATA: SeedLevelData = {
         {
           prompt: "社内研修のスケジュールを見ながら説明を聞いています。「9:00 受付、9:30 オリエンテーション、10:00 ビジネスマナー講座、12:00 昼食、13:00 グループワーク、15:00 発表、16:00 閉会」。グループワークは何時間ですか。",
           scenario: "研修のスケジュール表を配布されて説明を聞いている。",
-          explanationVi: "Group work: 13:00-15:00 = 2 tiếng.",
+          explanationVi: "Lịch研修: 9:00 tiếp nhận, 9:30 định hướng, 10:00讲座 về business manner, 12:00 ăn trưa, 13:00 làm việc nhóm, 15:00 tổng kết. Như vậy group work kéo dài từ 13:00 đến 15:00, tức là 2 tiếng.",
           skillTag: "schedule-duration",
           difficulty: "standard",
           options: opts(
@@ -757,12 +757,12 @@ export const J4_DATA: SeedLevelData = {
           options: opts("超過", "増加", "拡大", "膨張", "A"),
         },
         {
-          prompt: "＿＿ながら申し上げますが、その提案は難しいかと思います。",
+          prompt: "大変＿＿ながら申し上げますが、その提案は難しいかと思います。",
           scenario: null,
-          explanationVi: "'恐れ入り' = 'Xin thứ lỗi nhưng...' — mở đầu lịch sự khi từ chối.",
+          explanationVi: "「大変恐縮ながら」là cách mở đầu trang trọng, giảm nhẹ lời từ chối trong văn cảnh công việc. Các lựa chọn khác không kết hợp tự nhiên với 「ながら申し上げます」.",
           skillTag: "refusal-cushion",
           difficulty: "hard",
-          options: opts("すみません", "恐れ入り", "申し訳", "残念", "B"),
+          options: opts("恐縮", "恐れ入り", "申し訳", "残念", "A"),
         },
         {
           prompt: "添付ファイルをご＿＿ください。",
@@ -1011,7 +1011,7 @@ export const J4_DATA: SeedLevelData = {
         {
           prompt: "次の社内通知を読んでください。\n\n「セキュリティ強化のお知らせ\n来月1日より、以下の変更を実施します。\n1. 入退館にはICカードが必要です\n2. 来客は必ず受付で入館証を発行してください\n3. 退館時に入館証を返却してください\n4. カードの紛失は即日セキュリティ部に届け出てください\n※ICカード未発行の方は総務部まで」\n\nICカードをまだ持っていない場合、どうしますか。",
           scenario: null,
-          explanationVi: "Chưa có thẻ IC → liên hệ phòng tổng vụ.",
+          explanationVi: "Thông báo保安強化 quy định từ ngày 1 tháng sau: vào/ra tòa nhà cần thẻ IC, khách đến phải làm thẻ vào tại quầy tiếp nhận. Người chưa được cấp thẻ IC cần liên hệ phòng tổng vụ (総務部) để được cấp thẻ.",
           skillTag: "instruction-following",
           difficulty: "standard",
           options: opts(
@@ -1081,7 +1081,7 @@ export const J4_DATA: SeedLevelData = {
         {
           prompt: "次のメールを読んでください。\n\n「件名：今週の予定共有\n営業1課各位\n今週の予定です。\n月：全体朝礼（9:00）＋ 通常業務\n火：A社訪問（田中・山田）、B社提案書作成（佐藤）\n水：チームミーティング（15:00）\n木：C社納品対応（全員）\n金：月次報告書提出日\n佐藤」\n\n水曜日に何がありますか。",
           scenario: null,
-          explanationVi: "Thứ Tư: họp team lúc 15:00.",
+          explanationVi: "Theo lịch tuần: Thứ Hai có朝礼 lúc 9:00, Thứ Ba đi thăm công ty A và soạn提案書, Thứ Tư họp nhóm lúc 15:00, Thứ Năm báo cáo tiến độ, Thứ Sáu tổng kết. Vậy hoạt động ngày Thứ Tư là team meeting lúc 15:00.",
           skillTag: "schedule-extraction",
           difficulty: "easy",
           options: opts(

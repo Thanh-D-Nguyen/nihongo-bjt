@@ -1,0 +1,46 @@
+{
+  "rendererVersion": "1.0.0",
+  "total": 4,
+  "rendered": [
+    {
+      "rendererType": "map_layout",
+      "rendererVersion": "1.0.0",
+      "briefHashSha256": "92de6dc6de6c7b4dc775444c7027140b89d77388acb4e2f9db846182606f273a",
+      "outputChecksumSha256": "7d9bb820092de9b3455b638cfe85b1aba72cc3b64f80e95424a75ef7b4c46d2c",
+      "width": 1600,
+      "height": 900,
+      "contentId": "bjt-j5-practice-v3:LR_DOCUMENT:0037",
+      "generatedPath": "generated/bjt/bjt-j5-practice-v3_LR_DOCUMENT_0037-92de6dc6de6c.svg"
+    },
+    {
+      "rendererType": "chart",
+      "rendererVersion": "1.0.0",
+      "briefHashSha256": "a1159d889accaa833352fc80ac6a0b99cfcff39fee99be2d7566e267afd1b147",
+      "outputChecksumSha256": "36531aaf402fdc8d0fb287770eb46471583f9cdc79f9b496648b159a05ff2d96",
+      "width": 1600,
+      "height": 900,
+      "contentId": "bjt-j5-practice-v3:LR_DOCUMENT:0038",
+      "generatedPath": "generated/bjt/bjt-j5-practice-v3_LR_DOCUMENT_0038-a1159d889acc.svg"
+    },
+    {
+      "rendererType": "table",
+      "rendererVersion": "1.0.0",
+      "briefHashSha256": "5070c4a9e096d0711d75312d5d4cef7e48eda2c032c6578832468f56d99e7c87",
+      "outputChecksumSha256": "586c64cbfc11d187373a1a9e83bd2b83f7e385723dc9f76aadae54048bbb37a4",
+      "width": 1600,
+      "height": 900,
+      "contentId": "bjt-j4-practice-v3:LR_INTEGRATED:0040",
+      "generatedPath": "generated/bjt/bjt-j4-practice-v3_LR_INTEGRATED_0040-5070c4a9e096.svg"
+    },
+    {
+      "rendererType": "table",
+      "rendererVersion": "1.0.0",
+      "briefHashSha256": "8550e0c678de0da4195fc3fc51fbbfa1360da89916591d638ff90ff159d3ad60",
+      "outputChecksumSha256": "b693342f0b72bc9534a8549bc321dc1bf9de5815b16f6db317d2bd9b1f19ff8b",
+      "width": 1600,
+      "height": 900,
+      "contentId": "bjt-j1-practice-v3:LR_INTEGRATED:0040",
+      "generatedPath": "generated/bjt/bjt-j1-practice-v3_LR_INTEGRATED_0040-8550e0c678de.svg"
+    }
+  ]
+}

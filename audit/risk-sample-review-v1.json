@@ -1,0 +1,13 @@
+{
+  "version": "risk-sample-review-v1",
+  "sampleSize": 24,
+  "reviewedBy": "source-structure-risk-review",
+  "systemicIssues": [
+    "The local semantic judge over-penalizes non-business daily-life contexts even where bounded workplace rewrites preserve the tested skill.",
+    "The local judge flags short Vietnamese explanations and stale explanation translations reliably, but does not distinguish repairable explanation defects from content invalidity.",
+    "Visual briefs for exact-data records are correctly routed to deterministic rendering; no systemic mediaHint-only false-positive pattern was found."
+  ],
+  "falseKeepRate": null,
+  "note": "This is a structural risk sample, not a premium-model semantic re-review. No additional KEEP item was changed from this sample alone.",
+  "records": []
+}

@@ -66,6 +66,9 @@ Thumbs.db
 *.zip
 *.zst
 
+# Deterministic BJT render outputs are reproducible from audit manifests.
+generated/bjt/
+
 # Local/import archives
 archive/
 

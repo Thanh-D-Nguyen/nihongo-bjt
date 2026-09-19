@@ -626,7 +626,7 @@ export const J1_DATA: SeedLevelData = {
         {
           prompt: "以下の取締役会議事録案と議長の口頭補足を踏まえ、議事録の記載として最も不適切なものを選んでください。\n\n【議事録案】第3号議案：代表取締役の利益相反取引承認の件。出席取締役8名中7名の賛成で承認。なお、利害関係を有する田中取締役は議決に参加していない。\n【議長補足】「田中取締役には事前に退室いただきました。」",
           scenario: "取締役会議事録の確認作業。法務部によるレビュー。",
-          explanationVi: "Nghị quyết giao dịch lợi ích xung đột. 7/8 người tán thành, Tanaka không tham gia biểu quyết. Chủ tọa: Tanaka đã rời phòng trước. Cần ghi rõ Tanaka rời phòng (không chỉ không tham gia biểu quyết).",
+          explanationVi: "Biên bản đã ghi số phiếu và việc 田中 không tham gia biểu quyết, nhưng phần bổ sung của chủ tọa cho biết ông đã rời phòng trước. Vì vậy điểm cần bổ sung là việc 田中取締役 đã退室; các dữ kiện còn lại đã được ghi đúng.",
           skillTag: "corporate-minutes-review",
           difficulty: "hard",
           options: opts(

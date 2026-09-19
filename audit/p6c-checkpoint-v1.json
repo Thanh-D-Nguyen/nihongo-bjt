@@ -1,0 +1,37 @@
+{
+  "checkpoint": "P6C-first-batch",
+  "semanticFreeze": {
+    "version": "semantic-freeze-v1",
+    "datasetFingerprint": "e48840e85b601de5222577726625b9b9aff621886b122b6c2a96d0b5966f1294",
+    "status": "NOT_FROZEN",
+    "reason": "274 canonical records remain semantically unresolved; 14 repaired records require targeted revalidation"
+  },
+  "requiredImages": {
+    "total": 275,
+    "deterministicTotal": 267,
+    "hybridTotal": 8,
+    "deterministicRenderedBeforeEdits": 263,
+    "rerenderedAfterEdits": 4,
+    "excluded": 0,
+    "missing": 8,
+    "note": "8 HYBRID records are intentionally not rendered by the deterministic-only script"
+  },
+  "aiBatch": {
+    "attempted": 16,
+    "generatedOrResumed": 21,
+    "accepted": 0,
+    "regenerate": 0,
+    "rejected": 0,
+    "humanReview": 21,
+    "blockedOrFailed": 6,
+    "model": "gpt-image",
+    "provider": "xkiro",
+    "configuredConcurrency": 2,
+    "observedInFlightCapacity": 3,
+    "retries429": 6,
+    "qaManifest": "audit/p6c-ai-batch-1-qa.json",
+    "storageChecks": "21/21 objects present; 21/21 checksums matched"
+  },
+  "beneficialPriority": {"HIGH": 147, "MEDIUM": 42, "LOW": 46},
+  "remainingGate": "Do not scale BENEFICIAL generation until targeted semantic revalidation, visual QA of the 21 HUMAN_REVIEW assets, and a FROZEN content fingerprint are complete."
+}

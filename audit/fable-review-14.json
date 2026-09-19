@@ -1,0 +1,13 @@
+{
+  "provider": "xkiro",
+  "requestedModel": "anthropic/claude-fable-5-1",
+  "actualModel": null,
+  "rubricVersion": "targeted-14-v1",
+  "reviewedCount": 0,
+  "status": "BLOCKED_PROVIDER",
+  "errors": [
+    "Fable request returned HTTP 403: plan/capacity restriction",
+    "Fallback xKiro text request returned HTTP 402: insufficient wallet balance"
+  ],
+  "reviews": []
+}
