@@ -104,7 +104,7 @@ async function main() {
   let adjudicationByQuestion = new Map<string, RecommendedAction>();
   try {
     const adjudication = JSON.parse(await readFile(ADJUDICATION_PATH, "utf8")) as { reviews?: Array<{ questionId: string; finalDecision: RecommendedAction }> };
-    adjudicationByQuestion = new Map((adjudication.reviews ?? []).map((r) => [r.questionId, r.finalDecision]));
+    adjudicationByQuestion = new Map((adjudication.reviews ?? []).map((r) => [r.questionId, r.revalidatedDecision === "KEEP_AS_IS" ? "KEEP" : r.finalDecision]));
   } catch { /* targeted adjudication is optional */ }
 
   const records = layerA.records.map((r) => {

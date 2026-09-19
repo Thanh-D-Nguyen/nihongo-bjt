@@ -1,0 +1,23 @@
+{
+  "version": "p6c-hybrid-required-v1",
+  "total": 8,
+  "completed": 0,
+  "accepted": 0,
+  "regenerate": 0,
+  "rejected": 0,
+  "humanReview": 0,
+  "blocked": 8,
+  "missing": 8,
+  "status": "BLOCKED_CONTEXTUAL_BASE",
+  "reason": "The eight HYBRID briefs are practice/reading product-context records without canonical imagePrompt/contextual-base metadata in the current seed contract. Generating an arbitrary AI base would create ungrounded visual content. They require targeted brief enrichment before xKiro submission and deterministic overlay.",
+  "records": [
+    "bjt-j3-practice-v3:RC_INTEGRATED:0074",
+    "bjt-j3-practice-v3:RC_INTEGRATED:0079",
+    "bjt-j2-practice-v3:LR_DOCUMENT:0038",
+    "bjt-j2-practice-v3:LR_INTEGRATED:0041",
+    "bjt-j2-practice-v3:RC_INTEGRATED:0073",
+    "bjt-j2-practice-v3:RC_INTEGRATED:0078",
+    "bjt-full-simulation-b-v1:RC_INTEGRATED:0071",
+    "bjt-full-simulation-c-v1:RC_INTEGRATED:0075"
+  ]
+}

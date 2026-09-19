@@ -18,6 +18,7 @@ freeze.datasetFingerprint = hash.digest("hex");
 freeze.auditRubricVersion = audit.summary.rubricVersion;
 freeze.semanticStatus = { JUDGED: audit.summary.semanticCoverage.judged, UNJUDGED: audit.summary.decisionCounts.UNJUDGED ?? 0, FAILED: 0, NOT_REQUIRED: 0 };
 freeze.semanticDecision = { KEEP: audit.summary.decisionCounts.KEEP ?? 0, EDIT: audit.summary.decisionCounts.EDIT ?? 0, HUMAN_REVIEW: audit.summary.decisionCounts.HUMAN_REVIEW ?? 0, REMOVE: audit.summary.decisionCounts.REMOVE ?? 0, UNRESOLVED: audit.summary.decisionCounts.UNJUDGED ?? 0 };
-freeze.freezeStatus = "NOT_FROZEN";
+freeze.freezeStatus = freeze.semanticStatus.UNJUDGED === 0 && freeze.semanticStatus.FAILED === 0 && freeze.semanticDecision.UNRESOLVED === 0 && freeze.semanticDecision.EDIT === 0 && freeze.semanticDecision.HUMAN_REVIEW === 0 ? "FROZEN" : "NOT_FROZEN";
+if (freeze.freezeStatus === "FROZEN") { freeze.frozenAt = new Date().toISOString(); freeze.approvedCount = freeze.semanticDecision.KEEP; freeze.unresolvedCount = freeze.semanticDecision.UNRESOLVED; freeze.excludedCount = freeze.semanticDecision.REMOVE; freeze.judgedCount = freeze.semanticStatus.JUDGED; }
 await writeFile(resolve(process.cwd(), "audit/semantic-freeze-v1.json"), JSON.stringify(freeze, null, 2));
 console.log(JSON.stringify({ datasetFingerprint: freeze.datasetFingerprint, semanticStatus: freeze.semanticStatus, semanticDecision: freeze.semanticDecision }));

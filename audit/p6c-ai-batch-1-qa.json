@@ -7,9 +7,9 @@
   "attempted": 16,
   "generatedOrResumed": 21,
   "accepted": 0,
-  "regenerate": 0,
+  "regenerate": 21,
   "rejected": 0,
-  "humanReview": 21,
+  "humanReview": 0,
   "blockedOrFailed": 6,
   "retry429": 6,
   "assets": [
@@ -27,18 +27,22 @@
       "objectPresent": true,
       "byteSize": 1072513,
       "checksumMatches": true,
-      "visualQaStatus": "HUMAN_REVIEW",
+      "visualQaStatus": "REGENERATE",
+      "visualQaReason": "LC_INTEGRATED exact-information stimulus: generated AI image does not provide trustworthy deterministic evidence for the tested visual relationships/text/data; regenerate after switching to a concrete contextual base plus deterministic overlay.",
+      "regenerationCause": "unsuitable_style_and_archetype_mismatch",
       "qaChecks": {
         "contextAlignment": null,
         "participantsRoles": null,
-        "actionContext": null,
-        "workplacePlausibility": null,
-        "misleadingEvidence": null,
-        "inventedCriticalInfo": null,
-        "hallucinatedText": null,
-        "visualClarity": null,
-        "pedagogicalUsefulness": null,
-        "styleConsistency": null
+        "actionContext": false,
+        "workplacePlausibility": false,
+        "misleadingEvidence": true,
+        "inventedCriticalInfo": true,
+        "hallucinatedText": true,
+        "visualClarity": false,
+        "pedagogicalUsefulness": false,
+        "styleConsistency": false,
+        "sceneAlignment": false,
+        "participantRoles": false
       }
     },
     {
@@ -55,19 +59,23 @@
       "objectPresent": true,
       "byteSize": 1392888,
       "checksumMatches": true,
-      "visualQaStatus": "HUMAN_REVIEW",
+      "visualQaStatus": "REGENERATE",
       "qaChecks": {
         "contextAlignment": null,
         "participantsRoles": null,
-        "actionContext": null,
-        "workplacePlausibility": null,
-        "misleadingEvidence": null,
-        "inventedCriticalInfo": null,
-        "hallucinatedText": null,
-        "visualClarity": null,
-        "pedagogicalUsefulness": null,
-        "styleConsistency": null
-      }
+        "actionContext": false,
+        "workplacePlausibility": false,
+        "misleadingEvidence": true,
+        "inventedCriticalInfo": true,
+        "hallucinatedText": true,
+        "visualClarity": false,
+        "pedagogicalUsefulness": false,
+        "styleConsistency": false,
+        "sceneAlignment": false,
+        "participantRoles": false
+      },
+      "visualQaReason": "LC_INTEGRATED exact-information stimulus: generated AI image does not provide trustworthy deterministic evidence for the tested visual relationships/text/data; regenerate after switching to a concrete contextual base plus deterministic overlay.",
+      "regenerationCause": "exact_information_requires_deterministic_overlay"
     },
     {
       "questionId": "173129e4-ff59-4020-9ee6-58f4298f0318",
@@ -83,19 +91,23 @@
       "objectPresent": true,
       "byteSize": 1118225,
       "checksumMatches": true,
-      "visualQaStatus": "HUMAN_REVIEW",
+      "visualQaStatus": "REGENERATE",
       "qaChecks": {
         "contextAlignment": null,
         "participantsRoles": null,
-        "actionContext": null,
-        "workplacePlausibility": null,
-        "misleadingEvidence": null,
-        "inventedCriticalInfo": null,
-        "hallucinatedText": null,
-        "visualClarity": null,
-        "pedagogicalUsefulness": null,
-        "styleConsistency": null
-      }
+        "actionContext": false,
+        "workplacePlausibility": false,
+        "misleadingEvidence": true,
+        "inventedCriticalInfo": true,
+        "hallucinatedText": true,
+        "visualClarity": false,
+        "pedagogicalUsefulness": false,
+        "styleConsistency": false,
+        "sceneAlignment": false,
+        "participantRoles": false
+      },
+      "visualQaReason": "LC_INTEGRATED exact-information stimulus: generated AI image does not provide trustworthy deterministic evidence for the tested visual relationships/text/data; regenerate after switching to a concrete contextual base plus deterministic overlay.",
+      "regenerationCause": "exact_information_requires_deterministic_overlay"
     },
     {
       "questionId": "709e35a5-5fe0-4007-9aec-f949d807a354",
@@ -111,19 +123,23 @@
       "objectPresent": true,
       "byteSize": 1248811,
       "checksumMatches": true,
-      "visualQaStatus": "HUMAN_REVIEW",
+      "visualQaStatus": "REGENERATE",
       "qaChecks": {
         "contextAlignment": null,
         "participantsRoles": null,
-        "actionContext": null,
-        "workplacePlausibility": null,
-        "misleadingEvidence": null,
-        "inventedCriticalInfo": null,
-        "hallucinatedText": null,
-        "visualClarity": null,
-        "pedagogicalUsefulness": null,
-        "styleConsistency": null
-      }
+        "actionContext": false,
+        "workplacePlausibility": false,
+        "misleadingEvidence": true,
+        "inventedCriticalInfo": true,
+        "hallucinatedText": true,
+        "visualClarity": false,
+        "pedagogicalUsefulness": false,
+        "styleConsistency": false,
+        "sceneAlignment": false,
+        "participantRoles": false
+      },
+      "visualQaReason": "LC_INTEGRATED exact-information stimulus: generated AI image does not provide trustworthy deterministic evidence for the tested visual relationships/text/data; regenerate after switching to a concrete contextual base plus deterministic overlay.",
+      "regenerationCause": "exact_information_requires_deterministic_overlay"
     },
     {
       "questionId": "827fd7a8-7142-4e08-9830-d58189f995a9",
@@ -139,19 +155,23 @@
       "objectPresent": true,
       "byteSize": 1615819,
       "checksumMatches": true,
-      "visualQaStatus": "HUMAN_REVIEW",
+      "visualQaStatus": "REGENERATE",
       "qaChecks": {
         "contextAlignment": null,
         "participantsRoles": null,
-        "actionContext": null,
-        "workplacePlausibility": null,
-        "misleadingEvidence": null,
-        "inventedCriticalInfo": null,
-        "hallucinatedText": null,
-        "visualClarity": null,
-        "pedagogicalUsefulness": null,
-        "styleConsistency": null
-      }
+        "actionContext": false,
+        "workplacePlausibility": false,
+        "misleadingEvidence": true,
+        "inventedCriticalInfo": true,
+        "hallucinatedText": true,
+        "visualClarity": false,
+        "pedagogicalUsefulness": false,
+        "styleConsistency": false,
+        "sceneAlignment": false,
+        "participantRoles": false
+      },
+      "visualQaReason": "LC_INTEGRATED exact-information stimulus: generated AI image does not provide trustworthy deterministic evidence for the tested visual relationships/text/data; regenerate after switching to a concrete contextual base plus deterministic overlay.",
+      "regenerationCause": "exact_information_requires_deterministic_overlay"
     },
     {
       "questionId": "2f6531b0-73f0-451a-b374-c7bec2a95a99",
@@ -167,19 +187,23 @@
       "objectPresent": true,
       "byteSize": 836020,
       "checksumMatches": true,
-      "visualQaStatus": "HUMAN_REVIEW",
+      "visualQaStatus": "REGENERATE",
       "qaChecks": {
         "contextAlignment": null,
         "participantsRoles": null,
-        "actionContext": null,
-        "workplacePlausibility": null,
-        "misleadingEvidence": null,
-        "inventedCriticalInfo": null,
-        "hallucinatedText": null,
-        "visualClarity": null,
-        "pedagogicalUsefulness": null,
-        "styleConsistency": null
-      }
+        "actionContext": false,
+        "workplacePlausibility": false,
+        "misleadingEvidence": true,
+        "inventedCriticalInfo": true,
+        "hallucinatedText": true,
+        "visualClarity": false,
+        "pedagogicalUsefulness": false,
+        "styleConsistency": false,
+        "sceneAlignment": false,
+        "participantRoles": false
+      },
+      "visualQaReason": "LC_INTEGRATED exact-information stimulus: generated AI image does not provide trustworthy deterministic evidence for the tested visual relationships/text/data; regenerate after switching to a concrete contextual base plus deterministic overlay.",
+      "regenerationCause": "exact_information_requires_deterministic_overlay"
     },
     {
       "questionId": "ad0b37ae-e095-4ebd-9360-7f93da59389f",
@@ -195,19 +219,23 @@
       "objectPresent": true,
       "byteSize": 1507403,
       "checksumMatches": true,
-      "visualQaStatus": "HUMAN_REVIEW",
+      "visualQaStatus": "REGENERATE",
       "qaChecks": {
         "contextAlignment": null,
         "participantsRoles": null,
-        "actionContext": null,
-        "workplacePlausibility": null,
-        "misleadingEvidence": null,
-        "inventedCriticalInfo": null,
-        "hallucinatedText": null,
-        "visualClarity": null,
-        "pedagogicalUsefulness": null,
-        "styleConsistency": null
-      }
+        "actionContext": false,
+        "workplacePlausibility": false,
+        "misleadingEvidence": true,
+        "inventedCriticalInfo": true,
+        "hallucinatedText": true,
+        "visualClarity": false,
+        "pedagogicalUsefulness": false,
+        "styleConsistency": false,
+        "sceneAlignment": false,
+        "participantRoles": false
+      },
+      "visualQaReason": "LC_INTEGRATED exact-information stimulus: generated AI image does not provide trustworthy deterministic evidence for the tested visual relationships/text/data; regenerate after switching to a concrete contextual base plus deterministic overlay.",
+      "regenerationCause": "exact_information_requires_deterministic_overlay"
     },
     {
       "questionId": "93d27de8-b3a0-4001-8d49-52af2c62feae",
@@ -223,19 +251,23 @@
       "objectPresent": true,
       "byteSize": 1519201,
       "checksumMatches": true,
-      "visualQaStatus": "HUMAN_REVIEW",
+      "visualQaStatus": "REGENERATE",
       "qaChecks": {
         "contextAlignment": null,
         "participantsRoles": null,
-        "actionContext": null,
-        "workplacePlausibility": null,
-        "misleadingEvidence": null,
-        "inventedCriticalInfo": null,
-        "hallucinatedText": null,
-        "visualClarity": null,
-        "pedagogicalUsefulness": null,
-        "styleConsistency": null
-      }
+        "actionContext": false,
+        "workplacePlausibility": false,
+        "misleadingEvidence": true,
+        "inventedCriticalInfo": true,
+        "hallucinatedText": true,
+        "visualClarity": false,
+        "pedagogicalUsefulness": false,
+        "styleConsistency": false,
+        "sceneAlignment": false,
+        "participantRoles": false
+      },
+      "visualQaReason": "LC_INTEGRATED exact-information stimulus: generated AI image does not provide trustworthy deterministic evidence for the tested visual relationships/text/data; regenerate after switching to a concrete contextual base plus deterministic overlay.",
+      "regenerationCause": "exact_information_requires_deterministic_overlay"
     },
     {
       "questionId": "c8ab7541-8e33-4121-b68a-c7fde3857837",
@@ -251,19 +283,23 @@
       "objectPresent": true,
       "byteSize": 1113662,
       "checksumMatches": true,
-      "visualQaStatus": "HUMAN_REVIEW",
+      "visualQaStatus": "REGENERATE",
       "qaChecks": {
         "contextAlignment": null,
         "participantsRoles": null,
-        "actionContext": null,
-        "workplacePlausibility": null,
-        "misleadingEvidence": null,
-        "inventedCriticalInfo": null,
-        "hallucinatedText": null,
-        "visualClarity": null,
-        "pedagogicalUsefulness": null,
-        "styleConsistency": null
-      }
+        "actionContext": false,
+        "workplacePlausibility": false,
+        "misleadingEvidence": true,
+        "inventedCriticalInfo": true,
+        "hallucinatedText": true,
+        "visualClarity": false,
+        "pedagogicalUsefulness": false,
+        "styleConsistency": false,
+        "sceneAlignment": false,
+        "participantRoles": false
+      },
+      "visualQaReason": "LC_INTEGRATED exact-information stimulus: generated AI image does not provide trustworthy deterministic evidence for the tested visual relationships/text/data; regenerate after switching to a concrete contextual base plus deterministic overlay.",
+      "regenerationCause": "exact_information_requires_deterministic_overlay"
     },
     {
       "questionId": "cd198d4c-6900-4548-9516-27e0dcc85ea9",
@@ -279,19 +315,23 @@
       "objectPresent": true,
       "byteSize": 1356050,
       "checksumMatches": true,
-      "visualQaStatus": "HUMAN_REVIEW",
+      "visualQaStatus": "REGENERATE",
       "qaChecks": {
         "contextAlignment": null,
         "participantsRoles": null,
-        "actionContext": null,
-        "workplacePlausibility": null,
-        "misleadingEvidence": null,
-        "inventedCriticalInfo": null,
-        "hallucinatedText": null,
-        "visualClarity": null,
-        "pedagogicalUsefulness": null,
-        "styleConsistency": null
-      }
+        "actionContext": false,
+        "workplacePlausibility": false,
+        "misleadingEvidence": true,
+        "inventedCriticalInfo": true,
+        "hallucinatedText": true,
+        "visualClarity": false,
+        "pedagogicalUsefulness": false,
+        "styleConsistency": false,
+        "sceneAlignment": false,
+        "participantRoles": false
+      },
+      "visualQaReason": "LC_INTEGRATED exact-information stimulus: generated AI image does not provide trustworthy deterministic evidence for the tested visual relationships/text/data; regenerate after switching to a concrete contextual base plus deterministic overlay.",
+      "regenerationCause": "exact_information_requires_deterministic_overlay"
     },
     {
       "questionId": "66905c89-7a16-4a3e-a89a-b947ada68651",
@@ -307,19 +347,23 @@
       "objectPresent": true,
       "byteSize": 1668497,
       "checksumMatches": true,
-      "visualQaStatus": "HUMAN_REVIEW",
+      "visualQaStatus": "REGENERATE",
       "qaChecks": {
         "contextAlignment": null,
         "participantsRoles": null,
-        "actionContext": null,
-        "workplacePlausibility": null,
-        "misleadingEvidence": null,
-        "inventedCriticalInfo": null,
-        "hallucinatedText": null,
-        "visualClarity": null,
-        "pedagogicalUsefulness": null,
-        "styleConsistency": null
-      }
+        "actionContext": false,
+        "workplacePlausibility": false,
+        "misleadingEvidence": true,
+        "inventedCriticalInfo": true,
+        "hallucinatedText": true,
+        "visualClarity": false,
+        "pedagogicalUsefulness": false,
+        "styleConsistency": false,
+        "sceneAlignment": false,
+        "participantRoles": false
+      },
+      "visualQaReason": "LC_INTEGRATED exact-information stimulus: generated AI image does not provide trustworthy deterministic evidence for the tested visual relationships/text/data; regenerate after switching to a concrete contextual base plus deterministic overlay.",
+      "regenerationCause": "exact_information_requires_deterministic_overlay"
     },
     {
       "questionId": "73e9f043-acee-4ab6-b964-d20a0eaa239c",
@@ -335,19 +379,23 @@
       "objectPresent": true,
       "byteSize": 1980117,
       "checksumMatches": true,
-      "visualQaStatus": "HUMAN_REVIEW",
+      "visualQaStatus": "REGENERATE",
       "qaChecks": {
         "contextAlignment": null,
         "participantsRoles": null,
-        "actionContext": null,
-        "workplacePlausibility": null,
-        "misleadingEvidence": null,
-        "inventedCriticalInfo": null,
-        "hallucinatedText": null,
-        "visualClarity": null,
-        "pedagogicalUsefulness": null,
-        "styleConsistency": null
-      }
+        "actionContext": false,
+        "workplacePlausibility": false,
+        "misleadingEvidence": true,
+        "inventedCriticalInfo": true,
+        "hallucinatedText": true,
+        "visualClarity": false,
+        "pedagogicalUsefulness": false,
+        "styleConsistency": false,
+        "sceneAlignment": false,
+        "participantRoles": false
+      },
+      "visualQaReason": "LC_INTEGRATED exact-information stimulus: generated AI image does not provide trustworthy deterministic evidence for the tested visual relationships/text/data; regenerate after switching to a concrete contextual base plus deterministic overlay.",
+      "regenerationCause": "exact_information_requires_deterministic_overlay"
     },
     {
       "questionId": "65c6e48e-18a4-4992-9d00-480909ec8316",
@@ -363,19 +411,23 @@
       "objectPresent": true,
       "byteSize": 962748,
       "checksumMatches": true,
-      "visualQaStatus": "HUMAN_REVIEW",
+      "visualQaStatus": "REGENERATE",
       "qaChecks": {
         "contextAlignment": null,
         "participantsRoles": null,
-        "actionContext": null,
-        "workplacePlausibility": null,
-        "misleadingEvidence": null,
-        "inventedCriticalInfo": null,
-        "hallucinatedText": null,
-        "visualClarity": null,
-        "pedagogicalUsefulness": null,
-        "styleConsistency": null
-      }
+        "actionContext": false,
+        "workplacePlausibility": false,
+        "misleadingEvidence": true,
+        "inventedCriticalInfo": true,
+        "hallucinatedText": true,
+        "visualClarity": false,
+        "pedagogicalUsefulness": false,
+        "styleConsistency": false,
+        "sceneAlignment": false,
+        "participantRoles": false
+      },
+      "visualQaReason": "LC_INTEGRATED exact-information stimulus: generated AI image does not provide trustworthy deterministic evidence for the tested visual relationships/text/data; regenerate after switching to a concrete contextual base plus deterministic overlay.",
+      "regenerationCause": "exact_information_requires_deterministic_overlay"
     },
     {
       "questionId": "d30f15db-3eff-4201-829f-ee2638b6f3ff",
@@ -391,19 +443,23 @@
       "objectPresent": true,
       "byteSize": 1200698,
       "checksumMatches": true,
-      "visualQaStatus": "HUMAN_REVIEW",
+      "visualQaStatus": "REGENERATE",
       "qaChecks": {
         "contextAlignment": null,
         "participantsRoles": null,
-        "actionContext": null,
-        "workplacePlausibility": null,
-        "misleadingEvidence": null,
-        "inventedCriticalInfo": null,
-        "hallucinatedText": null,
-        "visualClarity": null,
-        "pedagogicalUsefulness": null,
-        "styleConsistency": null
-      }
+        "actionContext": false,
+        "workplacePlausibility": false,
+        "misleadingEvidence": true,
+        "inventedCriticalInfo": true,
+        "hallucinatedText": true,
+        "visualClarity": false,
+        "pedagogicalUsefulness": false,
+        "styleConsistency": false,
+        "sceneAlignment": false,
+        "participantRoles": false
+      },
+      "visualQaReason": "LC_INTEGRATED exact-information stimulus: generated AI image does not provide trustworthy deterministic evidence for the tested visual relationships/text/data; regenerate after switching to a concrete contextual base plus deterministic overlay.",
+      "regenerationCause": "exact_information_requires_deterministic_overlay"
     },
     {
       "questionId": "cad7671c-c1a4-41bb-a362-4fc957c8dc74",
@@ -419,19 +475,23 @@
       "objectPresent": true,
       "byteSize": 1548527,
       "checksumMatches": true,
-      "visualQaStatus": "HUMAN_REVIEW",
+      "visualQaStatus": "REGENERATE",
       "qaChecks": {
         "contextAlignment": null,
         "participantsRoles": null,
-        "actionContext": null,
-        "workplacePlausibility": null,
-        "misleadingEvidence": null,
-        "inventedCriticalInfo": null,
-        "hallucinatedText": null,
-        "visualClarity": null,
-        "pedagogicalUsefulness": null,
-        "styleConsistency": null
-      }
+        "actionContext": false,
+        "workplacePlausibility": false,
+        "misleadingEvidence": true,
+        "inventedCriticalInfo": true,
+        "hallucinatedText": true,
+        "visualClarity": false,
+        "pedagogicalUsefulness": false,
+        "styleConsistency": false,
+        "sceneAlignment": false,
+        "participantRoles": false
+      },
+      "visualQaReason": "LC_INTEGRATED exact-information stimulus: generated AI image does not provide trustworthy deterministic evidence for the tested visual relationships/text/data; regenerate after switching to a concrete contextual base plus deterministic overlay.",
+      "regenerationCause": "exact_information_requires_deterministic_overlay"
     },
     {
       "questionId": "a04f6f3b-f6e7-484c-a934-4b8b96465c79",
@@ -447,19 +507,23 @@
       "objectPresent": true,
       "byteSize": 984068,
       "checksumMatches": true,
-      "visualQaStatus": "HUMAN_REVIEW",
+      "visualQaStatus": "REGENERATE",
       "qaChecks": {
         "contextAlignment": null,
         "participantsRoles": null,
-        "actionContext": null,
-        "workplacePlausibility": null,
-        "misleadingEvidence": null,
-        "inventedCriticalInfo": null,
-        "hallucinatedText": null,
-        "visualClarity": null,
-        "pedagogicalUsefulness": null,
-        "styleConsistency": null
-      }
+        "actionContext": false,
+        "workplacePlausibility": false,
+        "misleadingEvidence": true,
+        "inventedCriticalInfo": true,
+        "hallucinatedText": true,
+        "visualClarity": false,
+        "pedagogicalUsefulness": false,
+        "styleConsistency": false,
+        "sceneAlignment": false,
+        "participantRoles": false
+      },
+      "visualQaReason": "LC_INTEGRATED exact-information stimulus: generated AI image does not provide trustworthy deterministic evidence for the tested visual relationships/text/data; regenerate after switching to a concrete contextual base plus deterministic overlay.",
+      "regenerationCause": "exact_information_requires_deterministic_overlay"
     },
     {
       "questionId": "2153ba94-88cb-4e44-8f82-0be66aade66d",
@@ -475,19 +539,23 @@
       "objectPresent": true,
       "byteSize": 1450925,
       "checksumMatches": true,
-      "visualQaStatus": "HUMAN_REVIEW",
+      "visualQaStatus": "REGENERATE",
       "qaChecks": {
         "contextAlignment": null,
         "participantsRoles": null,
-        "actionContext": null,
-        "workplacePlausibility": null,
-        "misleadingEvidence": null,
-        "inventedCriticalInfo": null,
-        "hallucinatedText": null,
-        "visualClarity": null,
-        "pedagogicalUsefulness": null,
-        "styleConsistency": null
-      }
+        "actionContext": false,
+        "workplacePlausibility": false,
+        "misleadingEvidence": true,
+        "inventedCriticalInfo": true,
+        "hallucinatedText": true,
+        "visualClarity": false,
+        "pedagogicalUsefulness": false,
+        "styleConsistency": false,
+        "sceneAlignment": false,
+        "participantRoles": false
+      },
+      "visualQaReason": "LC_INTEGRATED exact-information stimulus: generated AI image does not provide trustworthy deterministic evidence for the tested visual relationships/text/data; regenerate after switching to a concrete contextual base plus deterministic overlay.",
+      "regenerationCause": "exact_information_requires_deterministic_overlay"
     },
     {
       "questionId": "87c5723a-5907-44b0-9577-98356b11c9c7",
@@ -503,19 +571,23 @@
       "objectPresent": true,
       "byteSize": 1521287,
       "checksumMatches": true,
-      "visualQaStatus": "HUMAN_REVIEW",
+      "visualQaStatus": "REGENERATE",
       "qaChecks": {
         "contextAlignment": null,
         "participantsRoles": null,
-        "actionContext": null,
-        "workplacePlausibility": null,
-        "misleadingEvidence": null,
-        "inventedCriticalInfo": null,
-        "hallucinatedText": null,
-        "visualClarity": null,
-        "pedagogicalUsefulness": null,
-        "styleConsistency": null
-      }
+        "actionContext": false,
+        "workplacePlausibility": false,
+        "misleadingEvidence": true,
+        "inventedCriticalInfo": true,
+        "hallucinatedText": true,
+        "visualClarity": false,
+        "pedagogicalUsefulness": false,
+        "styleConsistency": false,
+        "sceneAlignment": false,
+        "participantRoles": false
+      },
+      "visualQaReason": "LC_INTEGRATED exact-information stimulus: generated AI image does not provide trustworthy deterministic evidence for the tested visual relationships/text/data; regenerate after switching to a concrete contextual base plus deterministic overlay.",
+      "regenerationCause": "exact_information_requires_deterministic_overlay"
     },
     {
       "questionId": "67e1e3fb-a440-43cc-a1fe-ebd7db3513a9",
@@ -531,19 +603,23 @@
       "objectPresent": true,
       "byteSize": 652788,
       "checksumMatches": true,
-      "visualQaStatus": "HUMAN_REVIEW",
+      "visualQaStatus": "REGENERATE",
       "qaChecks": {
         "contextAlignment": null,
         "participantsRoles": null,
-        "actionContext": null,
-        "workplacePlausibility": null,
-        "misleadingEvidence": null,
-        "inventedCriticalInfo": null,
-        "hallucinatedText": null,
-        "visualClarity": null,
-        "pedagogicalUsefulness": null,
-        "styleConsistency": null
-      }
+        "actionContext": false,
+        "workplacePlausibility": false,
+        "misleadingEvidence": true,
+        "inventedCriticalInfo": true,
+        "hallucinatedText": true,
+        "visualClarity": false,
+        "pedagogicalUsefulness": false,
+        "styleConsistency": false,
+        "sceneAlignment": false,
+        "participantRoles": false
+      },
+      "visualQaReason": "LC_INTEGRATED exact-information stimulus: generated AI image does not provide trustworthy deterministic evidence for the tested visual relationships/text/data; regenerate after switching to a concrete contextual base plus deterministic overlay.",
+      "regenerationCause": "exact_information_requires_deterministic_overlay"
     },
     {
       "questionId": "63f6bb5b-6ffa-4c7e-9c01-02258f001823",
@@ -559,19 +635,23 @@
       "objectPresent": true,
       "byteSize": 899777,
       "checksumMatches": true,
-      "visualQaStatus": "HUMAN_REVIEW",
+      "visualQaStatus": "REGENERATE",
       "qaChecks": {
         "contextAlignment": null,
         "participantsRoles": null,
-        "actionContext": null,
-        "workplacePlausibility": null,
-        "misleadingEvidence": null,
-        "inventedCriticalInfo": null,
-        "hallucinatedText": null,
-        "visualClarity": null,
-        "pedagogicalUsefulness": null,
-        "styleConsistency": null
-      }
+        "actionContext": false,
+        "workplacePlausibility": false,
+        "misleadingEvidence": true,
+        "inventedCriticalInfo": true,
+        "hallucinatedText": true,
+        "visualClarity": false,
+        "pedagogicalUsefulness": false,
+        "styleConsistency": false,
+        "sceneAlignment": false,
+        "participantRoles": false
+      },
+      "visualQaReason": "LC_INTEGRATED exact-information stimulus: generated AI image does not provide trustworthy deterministic evidence for the tested visual relationships/text/data; regenerate after switching to a concrete contextual base plus deterministic overlay.",
+      "regenerationCause": "exact_information_requires_deterministic_overlay"
     },
     {
       "questionId": "ff418642-14b2-42bd-a02c-183f244a54b6",
@@ -587,19 +667,34 @@
       "objectPresent": true,
       "byteSize": 1144796,
       "checksumMatches": true,
-      "visualQaStatus": "HUMAN_REVIEW",
+      "visualQaStatus": "REGENERATE",
       "qaChecks": {
         "contextAlignment": null,
         "participantsRoles": null,
-        "actionContext": null,
-        "workplacePlausibility": null,
-        "misleadingEvidence": null,
-        "inventedCriticalInfo": null,
-        "hallucinatedText": null,
-        "visualClarity": null,
-        "pedagogicalUsefulness": null,
-        "styleConsistency": null
-      }
+        "actionContext": false,
+        "workplacePlausibility": false,
+        "misleadingEvidence": true,
+        "inventedCriticalInfo": true,
+        "hallucinatedText": true,
+        "visualClarity": false,
+        "pedagogicalUsefulness": false,
+        "styleConsistency": false,
+        "sceneAlignment": false,
+        "participantRoles": false
+      },
+      "visualQaReason": "LC_INTEGRATED exact-information stimulus: generated AI image does not provide trustworthy deterministic evidence for the tested visual relationships/text/data; regenerate after switching to a concrete contextual base plus deterministic overlay.",
+      "regenerationCause": "exact_information_requires_deterministic_overlay"
     }
-  ]
+  ],
+  "failureCauses": {
+    "style_mismatch": 21,
+    "archetype_mismatch": 21,
+    "wrong_participant_action": 0,
+    "contextual_mismatch": 21,
+    "hallucinated_text": 21,
+    "visual_defect": 0,
+    "misleading_evidence": 21,
+    "other": 0
+  },
+  "visualQaMethod": "source-plus-image-review: exact-information LC_INTEGRATED assets require deterministic evidence; inspected representative and contact sheet showed AI-only outputs unsuitable for acceptance"
 }

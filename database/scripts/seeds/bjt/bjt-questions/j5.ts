@@ -588,14 +588,14 @@ export const J5_DATA: SeedLevelData = {
         {
           prompt: "オフィス用プリンターの説明書を読んでいます。「使用方法：①電源を入れる ②用紙をセットする ③印刷部数を入力する ④印刷ボタンを押す」。用紙をセットした後、何をしますか。",
           scenario: "オフィス用プリンターの使用説明書。",
-          explanationVi: "Theo hướng dẫn, sau khi đặt giấy vào máy in thì nhập số bản cần in. Đây là bước ③; bước ④ chỉ thực hiện sau đó.",
+          explanationVi: "Theo hướng dẫn, sau khi đặt giấy vào máy in thì nhập số bản cần in. Đây là bước ③; sau đó mới nhấn nút in ở bước ④.",
           skillTag: "workplace-instruction-sequence",
           difficulty: "standard",
           options: opts(
-            "フタを閉める。",
-            "すぐ洗い流す。",
-            "適量を手に取って髪につける。",
-            "5分待つ。",
+            "電源を切る。",
+            "用紙を取り出す。",
+            "印刷部数を入力する。",
+            "印刷ボタンを押す。",
             "C"
           ),
         },

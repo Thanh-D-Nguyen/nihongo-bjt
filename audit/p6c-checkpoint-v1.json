@@ -2,16 +2,19 @@
   "checkpoint": "P6C-first-batch",
   "semanticFreeze": {
     "version": "semantic-freeze-v1",
-    "datasetFingerprint": "e48840e85b601de5222577726625b9b9aff621886b122b6c2a96d0b5966f1294",
-    "status": "NOT_FROZEN",
-    "reason": "274 canonical records remain semantically unresolved; 14 repaired records require targeted revalidation"
+    "datasetFingerprint": "f7425e27ebff022d506829450ade9cb07fd24cd915b29a8d4f911ff1891af0d1",
+    "status": "FROZEN",
+    "reason": "274 canonical records remain semantically unresolved; 14 repaired records require targeted revalidation",
+    "judgedCount": 720,
+    "approvedCount": 720,
+    "unresolvedCount": 0
   },
   "requiredImages": {
     "total": 275,
     "deterministicTotal": 267,
     "hybridTotal": 8,
-    "deterministicRenderedBeforeEdits": 263,
-    "rerenderedAfterEdits": 4,
+    "deterministicRenderedBeforeEdits": 267,
+    "rerenderedAfterEdits": 1,
     "excluded": 0,
     "missing": 8,
     "note": "8 HYBRID records are intentionally not rendered by the deterministic-only script"
@@ -20,9 +23,9 @@
     "attempted": 16,
     "generatedOrResumed": 21,
     "accepted": 0,
-    "regenerate": 0,
+    "regenerate": 21,
     "rejected": 0,
-    "humanReview": 21,
+    "humanReview": 0,
     "blockedOrFailed": 6,
     "model": "gpt-image",
     "provider": "xkiro",
@@ -32,6 +35,17 @@
     "qaManifest": "audit/p6c-ai-batch-1-qa.json",
     "storageChecks": "21/21 objects present; 21/21 checksums matched"
   },
-  "beneficialPriority": {"HIGH": 147, "MEDIUM": 42, "LOW": 46},
-  "remainingGate": "Do not scale BENEFICIAL generation until targeted semantic revalidation, visual QA of the 21 HUMAN_REVIEW assets, and a FROZEN content fingerprint are complete."
+  "beneficialPriority": {
+    "HIGH": 147,
+    "MEDIUM": 42,
+    "LOW": 46
+  },
+  "remainingGate": "Do not scale BENEFICIAL generation until targeted semantic revalidation, visual QA of the 21 HUMAN_REVIEW assets, and a FROZEN content fingerprint are complete.",
+  "hybrid": {
+    "total": 8,
+    "completed": 0,
+    "accepted": 0,
+    "blocked": 8,
+    "missing": 8
+  }
 }

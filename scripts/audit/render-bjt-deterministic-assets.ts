@@ -14,5 +14,9 @@ for (const record of records) {
   await writeDeterministicRender(result);
   rendered.push(deterministicRenderProvenance(result));
 }
-await writeFile(resolve(process.cwd(), "audit/bjt-deterministic-render-manifest.json"), JSON.stringify({ rendererVersion: rendered[0]?.rendererVersion ?? "1.0.0", total: rendered.length, rendered }, null, 2));
-console.log(JSON.stringify({ eligible: records.length, rendered: rendered.length, scoped: only.size > 0, excludedBySemanticAction: input.records.filter((record) => record.requirement === "REQUIRED" && record.generationMode === "DETERMINISTIC_RENDER" && actionById.get(record.questionId) !== undefined && actionById.get(record.questionId) !== "KEEP").length }, null, 2));
+let existing: { rendered?: typeof rendered } = {};
+try { existing = JSON.parse(await readFile(resolve(process.cwd(), "audit/bjt-deterministic-render-manifest.json"), "utf8")) as { rendered?: typeof rendered }; } catch { /* first run */ }
+const byContentId = new Map([...(existing.rendered ?? []), ...rendered].map((item) => [item.contentId, item]));
+const merged = [...byContentId.values()];
+await writeFile(resolve(process.cwd(), "audit/bjt-deterministic-render-manifest.json"), JSON.stringify({ rendererVersion: rendered[0]?.rendererVersion ?? existing.rendered?.[0]?.rendererVersion ?? "1.0.0", total: merged.length, rendered: merged }, null, 2));
+console.log(JSON.stringify({ eligible: records.length, rendered: rendered.length, manifestTotal: merged.length, scoped: only.size > 0, excludedBySemanticAction: input.records.filter((record) => record.requirement === "REQUIRED" && record.generationMode === "DETERMINISTIC_RENDER" && actionById.get(record.questionId) !== undefined && actionById.get(record.questionId) !== "KEEP").length }, null, 2));

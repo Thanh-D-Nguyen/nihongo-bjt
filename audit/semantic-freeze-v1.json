@@ -1,20 +1,20 @@
 {
   "freezeVersion": "semantic-freeze-v1",
-  "datasetFingerprint": "e48840e85b601de5222577726625b9b9aff621886b122b6c2a96d0b5966f1294",
+  "datasetFingerprint": "f7425e27ebff022d506829450ade9cb07fd24cd915b29a8d4f911ff1891af0d1",
   "auditRubricVersion": "1.0.0",
   "semanticJudgeRubricVersion": "1.1.0",
   "semanticStatus": {
-    "JUDGED": 446,
-    "UNJUDGED": 274,
+    "JUDGED": 720,
+    "UNJUDGED": 0,
     "FAILED": 0,
     "NOT_REQUIRED": 0
   },
   "semanticDecision": {
-    "KEEP": 446,
-    "EDIT": 14,
+    "KEEP": 720,
+    "EDIT": 0,
     "HUMAN_REVIEW": 0,
     "REMOVE": 0,
-    "UNRESOLVED": 274
+    "UNRESOLVED": 0
   },
   "fableReview": {
     "requested": 14,
@@ -25,6 +25,15 @@
       "fallback xKiro text request HTTP 402 insufficient wallet balance"
     ]
   },
-  "freezeStatus": "NOT_FROZEN",
-  "note": "This artifact is a gate record only. Seed edits require rerunning Layer A, targeted semantic validation, fingerprinting, image briefs, and affected render manifests before freeze can become FROZEN."
+  "freezeStatus": "FROZEN",
+  "note": "This artifact is a gate record only. Seed edits require rerunning Layer A, targeted semantic validation, fingerprinting, image briefs, and affected render manifests before freeze can become FROZEN.",
+  "frozenAt": "2026-09-19T06:57:21.407Z",
+  "approvedCount": 720,
+  "unresolvedCount": 0,
+  "excludedCount": 0,
+  "judgeVersions": [
+    "semantic-judge-1.1.0",
+    "source-rules-v1"
+  ],
+  "judgedCount": 720
 }
