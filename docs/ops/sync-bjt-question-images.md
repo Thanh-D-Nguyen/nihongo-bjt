@@ -1,5 +1,9 @@
 # Đồng bộ media câu hỏi BJT từ Local lên Production
 
+> Runbook sinh ảnh (xKiro & provider khác) nằm ở
+> [generate-bjt-question-images.md](./generate-bjt-question-images.md). File này
+> chỉ nói về bước đưa media đã có lên production.
+
 Hướng dẫn sync ảnh và audio câu hỏi BJT từ local lên production. Metadata ảnh
 được tách rõ: `imageAlt` là mô tả ngắn hỗ trợ người học/screen reader,
 `imagePrompt` là brief chi tiết dành riêng cho bộ sinh ảnh AI. Không dùng
@@ -158,8 +162,9 @@ Lệnh này không cần API key, không gọi/ghi MinIO, dùng `imagePrompt` đ
 prompt thật và trả exit code khác 0 nếu câu cần sinh ảnh thiếu `imageAlt` hoặc
 `imagePrompt`.
 
-Generator hỗ trợ ba provider: `openai`, endpoint OpenAI-compatible
-`omniroute`, và endpoint ảnh miễn phí `pollinations`. Với OmniRoute local và
+Generator hỗ trợ bốn provider: `openai`, endpoint OpenAI-compatible
+`omniroute`, endpoint ảnh miễn phí `pollinations`, và `xkiro` (job bất đồng bộ —
+xem [generate-bjt-question-images.md](./generate-bjt-question-images.md)). Với OmniRoute local và
 model ảnh miễn phí, nên dùng một model text miễn phí để chuyển brief tiếng Nhật
 sang prompt tiếng Anh trước khi tạo ảnh:
 

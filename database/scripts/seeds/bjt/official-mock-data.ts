@@ -1355,7 +1355,7 @@ const EXPRESSION_ITEMS = [
       "相手との関係を直ちに終了する。",
       "すでに支払い手続きへ進んでいる。"
     ],
-    why: "Business Japanese often conveys rejection/deferral indirectly; pay attention to conditions and future possibility.",
+    why: "Tiếng Nhật thương mại thường từ chối/hoãn một cách gián tiếp; cần chú ý tới điều kiện và khả năng trong tương lai.",
     skill: "indirect_business_message",
     situation: "negotiation"
   },

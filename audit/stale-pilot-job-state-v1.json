@@ -1,0 +1,11 @@
+{
+  "version": "stale-pilot-job-state-v1",
+  "sourceQa": "audit/p6c-ai-batch-1-qa.json",
+  "state": "INVALIDATED_BY_VISUAL_REBASELINE",
+  "resumeEligible": false,
+  "syncEligible": false,
+  "preservedHistory": true,
+  "jobCount": 21,
+  "reason": "Previous jobs targeted exact-information LC_INTEGRATED stimuli with AI-only prompts before ImageBrief v2 and deterministic evidence rebaseline.",
+  "jobIdsPreserved": true
+}

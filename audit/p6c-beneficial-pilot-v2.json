@@ -1,0 +1,25 @@
+{
+  "version": "p6c-beneficial-pilot-v2",
+  "provider": "xkiro",
+  "model": "gpt-image",
+  "concurrency": 1,
+  "selectionPolicy": "source-grounded BENEFICIAL + AI_GENERATED; no exact visual evidence markers; audio/text carries answer; diverse levels and workplace contexts",
+  "candidates": [
+    {"questionId":"bjt-j5-practice-v3:LC_SCENE:0002","level":"J5","dataset":"practice","section":"LC_SCENE","reason":"reception-lobby atmosphere; answer is carried by spoken greeting"},
+    {"questionId":"bjt-j5-practice-v3:LC_STATEMENT:0013","level":"J5","dataset":"practice","section":"LC_STATEMENT","reason":"simple supervisor interaction; image adds workplace context only"},
+    {"questionId":"bjt-j4-practice-v3:LC_SCENE:0006","level":"J4","dataset":"practice","section":"LC_SCENE","reason":"coworker assistance at elevator; no exact visual detail determines answer"},
+    {"questionId":"bjt-j4-practice-v3:LC_STATEMENT:0019","level":"J4","dataset":"practice","section":"LC_STATEMENT","reason":"departure-before-business-trip context; answer is verbal courtesy"},
+    {"questionId":"bjt-j3-practice-v3:LC_SCENE:0005","level":"J3","dataset":"practice","section":"LC_SCENE","reason":"meeting participation context; speech determines response"},
+    {"questionId":"bjt-j3-practice-v3:LC_STATEMENT:0019","level":"J3","dataset":"practice","section":"LC_STATEMENT","reason":"team introduction context; no visual evidence is tested"},
+    {"questionId":"bjt-j2-practice-v3:LC_SCENE:0000","level":"J2","dataset":"practice","section":"LC_SCENE","reason":"client meeting atmosphere; negotiation language carries answer"},
+    {"questionId":"bjt-j2-practice-v3:LC_STATEMENT:0017","level":"J2","dataset":"practice","section":"LC_STATEMENT","reason":"project manager-client explanation; scene is supplemental"},
+    {"questionId":"bjt-j1-practice-v3:LC_STATEMENT:0012","level":"J1","dataset":"practice","section":"LC_STATEMENT","reason":"advanced workplace exchange; spoken register carries answer"},
+    {"questionId":"bjt-j1-practice-v3:LC_STATEMENT:0013","level":"J1","dataset":"practice","section":"LC_STATEMENT","reason":"executive workplace context; no exact visual evidence required"},
+    {"questionId":"bjt-j1plus-practice-v3:LC_SCENE:0004","level":"J1+","dataset":"practice","section":"LC_SCENE","reason":"boardroom context; negotiation speech carries answer"},
+    {"questionId":"bjt-full-simulation-a-v1:LC_STATEMENT:0007","level":"ALL","dataset":"official","section":"LC_STATEMENT","reason":"official business announcement context; answer is carried by audio"}
+  ],
+  "attempted": 0,
+  "generated": 0,
+  "visualQaStatus": "NOT_STARTED",
+  "note": "Manifest only. Generation intentionally not started in this checkpoint."
+}

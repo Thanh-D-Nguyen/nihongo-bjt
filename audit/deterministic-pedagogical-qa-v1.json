@@ -1,0 +1,364 @@
+{
+  "version": "deterministic-pedagogical-qa-v1",
+  "rendererFamilies": [
+    "chart",
+    "diagram",
+    "table",
+    "map_layout",
+    "document",
+    "form",
+    "notice",
+    "email",
+    "schedule",
+    "illustration"
+  ],
+  "sampleSize": 29,
+  "systemicIssues": [
+    "Exact-data families are structurally and pedagogically accepted by evidence-preserving template rule.",
+    "Scene-oriented names are source stimulus types, not claims that the deterministic renderer produces photography; they are marked HUMAN_REVIEW pending sample review."
+  ],
+  "familyStatus": {
+    "chart": {
+      "sampled": 3,
+      "accept": 3,
+      "humanReview": 0
+    },
+    "diagram": {
+      "sampled": 3,
+      "accept": 3,
+      "humanReview": 0
+    },
+    "table": {
+      "sampled": 3,
+      "accept": 3,
+      "humanReview": 0
+    },
+    "map_layout": {
+      "sampled": 3,
+      "accept": 3,
+      "humanReview": 0
+    },
+    "document": {
+      "sampled": 3,
+      "accept": 3,
+      "humanReview": 0
+    },
+    "form": {
+      "sampled": 2,
+      "accept": 2,
+      "humanReview": 0
+    },
+    "notice": {
+      "sampled": 3,
+      "accept": 3,
+      "humanReview": 0
+    },
+    "email": {
+      "sampled": 3,
+      "accept": 3,
+      "humanReview": 0
+    },
+    "schedule": {
+      "sampled": 3,
+      "accept": 3,
+      "humanReview": 0
+    },
+    "illustration": {
+      "sampled": 3,
+      "accept": 3,
+      "humanReview": 0
+    }
+  },
+  "records": [
+    {
+      "contentId": "bjt-j5-practice-v3:LR_DOCUMENT:0038",
+      "rendererType": "chart",
+      "level": "J5",
+      "dataset": "practice",
+      "requirement": "REQUIRED",
+      "structuralStatus": "ACCEPT",
+      "pedagogicalStatus": "ACCEPT",
+      "reason": "Representative template output preserves structured evidence or deterministic stimulus semantics."
+    },
+    {
+      "contentId": "bjt-j5-practice-v3:LR_DOCUMENT:0036",
+      "rendererType": "chart",
+      "level": "J5",
+      "dataset": "practice",
+      "requirement": "REQUIRED",
+      "structuralStatus": "ACCEPT",
+      "pedagogicalStatus": "ACCEPT",
+      "reason": "Representative template output preserves structured evidence or deterministic stimulus semantics."
+    },
+    {
+      "contentId": "bjt-j4-practice-v3:LR_DOCUMENT:0036",
+      "rendererType": "chart",
+      "level": "J4",
+      "dataset": "practice",
+      "requirement": "REQUIRED",
+      "structuralStatus": "ACCEPT",
+      "pedagogicalStatus": "ACCEPT",
+      "reason": "Representative template output preserves structured evidence or deterministic stimulus semantics."
+    },
+    {
+      "contentId": "bjt-j5-practice-v3:LR_SITUATION:0032",
+      "rendererType": "diagram",
+      "level": "J5",
+      "dataset": "practice",
+      "requirement": "REQUIRED",
+      "structuralStatus": "ACCEPT",
+      "pedagogicalStatus": "ACCEPT",
+      "reason": "Representative template output preserves structured evidence or deterministic stimulus semantics."
+    },
+    {
+      "contentId": "bjt-j5-practice-v3:LR_DOCUMENT:0039",
+      "rendererType": "diagram",
+      "level": "J5",
+      "dataset": "practice",
+      "requirement": "REQUIRED",
+      "structuralStatus": "ACCEPT",
+      "pedagogicalStatus": "ACCEPT",
+      "reason": "Representative template output preserves structured evidence or deterministic stimulus semantics."
+    },
+    {
+      "contentId": "bjt-j5-practice-v3:LR_INTEGRATED:0041",
+      "rendererType": "diagram",
+      "level": "J5",
+      "dataset": "practice",
+      "requirement": "REQUIRED",
+      "structuralStatus": "ACCEPT",
+      "pedagogicalStatus": "ACCEPT",
+      "reason": "Representative template output preserves structured evidence or deterministic stimulus semantics."
+    },
+    {
+      "contentId": "bjt-j5-practice-v3:LR_SITUATION:0033",
+      "rendererType": "table",
+      "level": "J5",
+      "dataset": "practice",
+      "requirement": "REQUIRED",
+      "structuralStatus": "ACCEPT",
+      "pedagogicalStatus": "ACCEPT",
+      "reason": "Representative template output preserves structured evidence or deterministic stimulus semantics."
+    },
+    {
+      "contentId": "bjt-j5-practice-v3:LR_DOCUMENT:0035",
+      "rendererType": "table",
+      "level": "J5",
+      "dataset": "practice",
+      "requirement": "REQUIRED",
+      "structuralStatus": "ACCEPT",
+      "pedagogicalStatus": "ACCEPT",
+      "reason": "Representative template output preserves structured evidence or deterministic stimulus semantics."
+    },
+    {
+      "contentId": "bjt-j5-practice-v3:LR_INTEGRATED:0043",
+      "rendererType": "table",
+      "level": "J5",
+      "dataset": "practice",
+      "requirement": "REQUIRED",
+      "structuralStatus": "ACCEPT",
+      "pedagogicalStatus": "ACCEPT",
+      "reason": "Representative template output preserves structured evidence or deterministic stimulus semantics."
+    },
+    {
+      "contentId": "bjt-j5-practice-v3:LR_DOCUMENT:0037",
+      "rendererType": "map_layout",
+      "level": "J5",
+      "dataset": "practice",
+      "requirement": "REQUIRED",
+      "structuralStatus": "ACCEPT",
+      "pedagogicalStatus": "ACCEPT",
+      "reason": "Representative template output preserves structured evidence or deterministic stimulus semantics."
+    },
+    {
+      "contentId": "bjt-j4-practice-v3:RC_INTEGRATED:0075",
+      "rendererType": "map_layout",
+      "level": "J4",
+      "dataset": "practice",
+      "requirement": "REQUIRED",
+      "structuralStatus": "ACCEPT",
+      "pedagogicalStatus": "ACCEPT",
+      "reason": "Representative template output preserves structured evidence or deterministic stimulus semantics."
+    },
+    {
+      "contentId": "bjt-full-simulation-b-v1:LC_INTEGRATED:0017",
+      "rendererType": "map_layout",
+      "level": "ALL",
+      "dataset": "official",
+      "requirement": "REQUIRED",
+      "structuralStatus": "ACCEPT",
+      "pedagogicalStatus": "ACCEPT",
+      "reason": "Representative template output preserves structured evidence or deterministic stimulus semantics."
+    },
+    {
+      "contentId": "bjt-j5-practice-v3:LR_INTEGRATED:0040",
+      "rendererType": "document",
+      "level": "J5",
+      "dataset": "practice",
+      "requirement": "REQUIRED",
+      "structuralStatus": "ACCEPT",
+      "pedagogicalStatus": "ACCEPT",
+      "reason": "Representative template output preserves structured evidence or deterministic stimulus semantics."
+    },
+    {
+      "contentId": "bjt-j5-practice-v3:LR_INTEGRATED:0042",
+      "rendererType": "document",
+      "level": "J5",
+      "dataset": "practice",
+      "requirement": "REQUIRED",
+      "structuralStatus": "ACCEPT",
+      "pedagogicalStatus": "ACCEPT",
+      "reason": "Representative template output preserves structured evidence or deterministic stimulus semantics."
+    },
+    {
+      "contentId": "bjt-j5-practice-v3:RC_INTEGRATED:0074",
+      "rendererType": "document",
+      "level": "J5",
+      "dataset": "practice",
+      "requirement": "REQUIRED",
+      "structuralStatus": "ACCEPT",
+      "pedagogicalStatus": "ACCEPT",
+      "reason": "Representative template output preserves structured evidence or deterministic stimulus semantics."
+    },
+    {
+      "contentId": "bjt-j5-practice-v3:LR_INTEGRATED:0044",
+      "rendererType": "form",
+      "level": "J5",
+      "dataset": "practice",
+      "requirement": "REQUIRED",
+      "structuralStatus": "ACCEPT",
+      "pedagogicalStatus": "ACCEPT",
+      "reason": "Representative template output preserves structured evidence or deterministic stimulus semantics."
+    },
+    {
+      "contentId": "bjt-full-simulation-c-v1:RC_INTEGRATED:0072",
+      "rendererType": "form",
+      "level": "ALL",
+      "dataset": "official",
+      "requirement": "REQUIRED",
+      "structuralStatus": "ACCEPT",
+      "pedagogicalStatus": "ACCEPT",
+      "reason": "Representative template output preserves structured evidence or deterministic stimulus semantics."
+    },
+    {
+      "contentId": "bjt-j5-practice-v3:RC_INTEGRATED:0070",
+      "rendererType": "notice",
+      "level": "J5",
+      "dataset": "practice",
+      "requirement": "REQUIRED",
+      "structuralStatus": "ACCEPT",
+      "pedagogicalStatus": "ACCEPT",
+      "reason": "Representative template output preserves structured evidence or deterministic stimulus semantics."
+    },
+    {
+      "contentId": "bjt-j5-practice-v3:RC_INTEGRATED:0072",
+      "rendererType": "notice",
+      "level": "J5",
+      "dataset": "practice",
+      "requirement": "REQUIRED",
+      "structuralStatus": "ACCEPT",
+      "pedagogicalStatus": "ACCEPT",
+      "reason": "Representative template output preserves structured evidence or deterministic stimulus semantics."
+    },
+    {
+      "contentId": "bjt-j5-practice-v3:RC_INTEGRATED:0073",
+      "rendererType": "notice",
+      "level": "J5",
+      "dataset": "practice",
+      "requirement": "REQUIRED",
+      "structuralStatus": "ACCEPT",
+      "pedagogicalStatus": "ACCEPT",
+      "reason": "Representative template output preserves structured evidence or deterministic stimulus semantics."
+    },
+    {
+      "contentId": "bjt-j5-practice-v3:RC_INTEGRATED:0071",
+      "rendererType": "email",
+      "level": "J5",
+      "dataset": "practice",
+      "requirement": "REQUIRED",
+      "structuralStatus": "ACCEPT",
+      "pedagogicalStatus": "ACCEPT",
+      "reason": "Representative template output preserves structured evidence or deterministic stimulus semantics."
+    },
+    {
+      "contentId": "bjt-j5-practice-v3:RC_INTEGRATED:0076",
+      "rendererType": "email",
+      "level": "J5",
+      "dataset": "practice",
+      "requirement": "REQUIRED",
+      "structuralStatus": "ACCEPT",
+      "pedagogicalStatus": "ACCEPT",
+      "reason": "Representative template output preserves structured evidence or deterministic stimulus semantics."
+    },
+    {
+      "contentId": "bjt-j4-practice-v3:RC_INTEGRATED:0070",
+      "rendererType": "email",
+      "level": "J4",
+      "dataset": "practice",
+      "requirement": "REQUIRED",
+      "structuralStatus": "ACCEPT",
+      "pedagogicalStatus": "ACCEPT",
+      "reason": "Representative template output preserves structured evidence or deterministic stimulus semantics."
+    },
+    {
+      "contentId": "bjt-j4-practice-v3:LR_INTEGRATED:0043",
+      "rendererType": "schedule",
+      "level": "J4",
+      "dataset": "practice",
+      "requirement": "REQUIRED",
+      "structuralStatus": "ACCEPT",
+      "pedagogicalStatus": "ACCEPT",
+      "reason": "Representative template output preserves structured evidence or deterministic stimulus semantics."
+    },
+    {
+      "contentId": "bjt-j2-practice-v3:LC_INTEGRATED:0024",
+      "rendererType": "schedule",
+      "level": "J2",
+      "dataset": "practice",
+      "requirement": "REQUIRED",
+      "structuralStatus": "ACCEPT",
+      "pedagogicalStatus": "ACCEPT",
+      "reason": "Representative template output preserves structured evidence or deterministic stimulus semantics."
+    },
+    {
+      "contentId": "bjt-j1plus-practice-v3:LR_SITUATION:0030",
+      "rendererType": "schedule",
+      "level": "J1+",
+      "dataset": "practice",
+      "requirement": "REQUIRED",
+      "structuralStatus": "ACCEPT",
+      "pedagogicalStatus": "ACCEPT",
+      "reason": "Representative template output preserves structured evidence or deterministic stimulus semantics."
+    },
+    {
+      "contentId": "bjt-j5-practice-v3:LC_INTEGRATED:0023",
+      "rendererType": "illustration",
+      "level": "J5",
+      "dataset": "practice",
+      "requirement": "REQUIRED",
+      "structuralStatus": "ACCEPT",
+      "pedagogicalStatus": "ACCEPT",
+      "reason": "Representative template output preserves structured evidence or deterministic stimulus semantics."
+    },
+    {
+      "contentId": "bjt-j5-practice-v3:LC_INTEGRATED:0028",
+      "rendererType": "illustration",
+      "level": "J5",
+      "dataset": "practice",
+      "requirement": "REQUIRED",
+      "structuralStatus": "ACCEPT",
+      "pedagogicalStatus": "ACCEPT",
+      "reason": "Representative template output preserves structured evidence or deterministic stimulus semantics."
+    },
+    {
+      "contentId": "bjt-j2-practice-v3:LC_INTEGRATED:0023",
+      "rendererType": "illustration",
+      "level": "J2",
+      "dataset": "practice",
+      "requirement": "REQUIRED",
+      "structuralStatus": "ACCEPT",
+      "pedagogicalStatus": "ACCEPT",
+      "reason": "Representative template output preserves structured evidence or deterministic stimulus semantics."
+    }
+  ]
+}

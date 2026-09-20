@@ -1,0 +1,15 @@
+{
+  "version": "visual-rebaseline-checkpoint-v2",
+  "semanticFreeze": "FROZEN",
+  "datasetFingerprint": "f7425e27ebff022d506829450ade9cb07fd24cd915b29a8d4f911ff1891af0d1",
+  "visualCounts": {"oldRequired":275,"oldBeneficial":235,"oldNotNeeded":210,"newRequired":329,"newBeneficial":181,"newNotNeeded":210},
+  "matrix": {"REQUIRED":{"DETERMINISTIC_RENDER":329},"BENEFICIAL":{"AI_GENERATED":172,"EXISTING_ASSET":9},"NOT_NEEDED":{}},
+  "reclassification": {"beneficialToRequired":54,"aiToDeterministic":54,"aiToHybrid":0,"toNotNeeded":0,"genuineBeneficialAi":172},
+  "deterministic": {"structuralComplete":329,"pedagogicalAccepted":329,"sampleSize":29,"templateRevisions":0,"briefRevisions":0,"systemicIssue":"stimulus archetype names are separated conceptually from deterministic_schematic render strategy"},
+  "hybrid": {"total":8,"convertedDeterministic":8,"remainHybrid":0,"humanReview":0,"blocked":0},
+  "requiredCoverage": {"total":329,"accepted":329,"blocked":0,"missing":0,"percentage":100},
+  "stalePilot": {"jobCount":21,"state":"INVALIDATED_BY_VISUAL_REBASELINE","resumeEligible":false,"syncEligible":false},
+  "newAiPilot": {"selected":12,"attempted":0,"accepted":0,"regenerate":0,"rejected":0,"humanReview":0,"status":"NOT_STARTED"},
+  "beneficialPriority": {"HIGH":113,"MEDIUM":24,"LOW":44},
+  "remainingGate":"Run the new 12-item genuine BENEFICIAL-only xKiro pilot at concurrency 1, visually QA every result, and stop if acceptance is poor. Do not begin scaled generation."
+}

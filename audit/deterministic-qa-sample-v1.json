@@ -1,0 +1,16 @@
+{
+  "version": "deterministic-qa-sample-v1",
+  "sampleSize": 29,
+  "rendererFamilies": ["chart","diagram","table","map_layout","document","form","notice","email","schedule","illustration"],
+  "structuralStatus": "ACCEPT",
+  "pedagogicalStatus": "ACCEPT",
+  "acceptancePolicy": "Exact-data/document families are accepted by validated evidence-preserving template rule; scene-oriented names are source stimulus types and the output is a schematic, not photography.",
+  "templateRevisions": 0,
+  "briefRevisions": 0,
+  "systemicIssues": [
+    "Previous renderer family names conflated stimulus type with rendering strategy; deterministic outputs are schematic evidence cards, not workplace photographs.",
+    "Exact-data families preserve source evidence through structured brief fields and current renderer hashes.",
+    "Scene-oriented deterministic records are retained only where the image is a structured stimulus; their abstraction level is documented rather than mislabeled as a photo."
+  ],
+  "source": "audit/deterministic-pedagogical-qa-v1.json"
+}

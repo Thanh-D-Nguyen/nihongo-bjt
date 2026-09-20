@@ -1,0 +1,16 @@
+{
+  "version": "p6c-beneficial-pilot-v3-manual-qa",
+  "method": "individual visual inspection under textPolicy NO_READABLE_TEXT (contextual-style-contract-v1.1)",
+  "assets": [
+    { "questionId": "bjt-full-simulation-b-v1:LC_SCENE:0002", "visualQaStatus": "ACCEPT", "textRisk": "NONE", "notes": "correct scene, believable Japanese workplace, no legible text anywhere" },
+    { "questionId": "bjt-j1-practice-v3:LC_SCENE:0000", "visualQaStatus": "ACCEPT", "textRisk": "INCIDENTAL_UNREADABLE", "notes": "distant background screen kept blank/soft — not readable" },
+    { "questionId": "bjt-j1-practice-v3:LC_SCENE:0001", "visualQaStatus": "ACCEPT", "textRisk": "NONE", "notes": "natural interaction, no lettering" },
+    { "questionId": "bjt-j1plus-practice-v3:LC_SCENE:0005", "visualQaStatus": "ACCEPT", "textRisk": "NONE", "notes": "roles/action match brief; clean composition" },
+    { "questionId": "bjt-j1plus-practice-v3:LC_SCENE:0006", "visualQaStatus": "ACCEPT", "textRisk": "INCIDENTAL_UNREADABLE", "notes": "background whiteboard out of focus; any marks illegible" },
+    { "questionId": "bjt-j2-practice-v3:LC_SCENE:0001", "visualQaStatus": "ACCEPT", "textRisk": "NONE", "notes": "scene matches brief; no text artifacts" },
+    { "questionId": "bjt-j3-practice-v3:LC_SCENE:0000", "visualQaStatus": "ACCEPT", "textRisk": "NONE", "notes": "believable workplace context, correct participants" },
+    { "questionId": "bjt-j4-practice-v3:LC_SCENE:0000", "visualQaStatus": "ACCEPT", "textRisk": "INCIDENTAL_UNREADABLE", "notes": "small turned-away signage, outside focal composition" },
+    { "questionId": "bjt-j5-practice-v3:LC_SCENE:0000", "visualQaStatus": "ACCEPT", "textRisk": "NONE", "notes": "convenience-store register scene; no legible price tags or labels" },
+    { "questionId": "bjt-full-simulation-b-v1:LC_STATEMENT:0005", "visualQaStatus": "REGENERATE", "textRisk": "READABLE_BUT_IRRELEVANT", "notes": "invented pseudo-Japanese lettering on a focal-area sign; not answer-bearing but violates NO_READABLE_TEXT — regenerate with stronger composition away from signage" }
+  ]
+}

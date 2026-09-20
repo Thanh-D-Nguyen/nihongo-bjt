@@ -197,6 +197,7 @@ async function main() {
               prompt: q.prompt,
               scenario: q.scenario,
               imageAlt: generateImageAlt(q, sectionData.code),
+              imagePrompt: q.imagePrompt ?? null,
               explanationVi: q.explanationVi,
               skillTag: q.skillTag,
               difficulty: q.difficulty,

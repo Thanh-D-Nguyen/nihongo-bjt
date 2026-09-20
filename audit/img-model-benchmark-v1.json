@@ -1,0 +1,40 @@
+{
+  "version": "img-model-benchmark-v1",
+  "date": "2026-09-20",
+  "provider": "xkiro",
+  "catalogQuery": "GET /v1/models?modality=image",
+  "availableModels": ["gpt-image", "sensenova/sensenova-u1.5-lite"],
+  "benchmarkPrompts": [
+    "p1: two colleagues discussing in Japanese office",
+    "p2: meeting room scene",
+    "p3: employee with office equipment",
+    "p4: workplace counter/reception",
+    "p5: open-plan office, background text must be illegible"
+  ],
+  "results": [
+    {
+      "model": "gpt-image",
+      "generationSuccess": "5/5",
+      "latencyMs": [38033, 30552, 50509, 44505, 37242],
+      "avgLatencyMs": 40148,
+      "textArtifacts": "some incidental pseudo-Japanese on background whiteboards/signage despite negative constraints; generally out-of-focus or small",
+      "contextFidelity": "high — all five scenes match the brief, correct roles and actions",
+      "visualQuality": "photorealistic, natural body language, believable contemporary Japanese workplace",
+      "consistency": "consistent style across all five",
+      "costUnit": "1 xKiro unit per image (per provider billing)"
+    },
+    {
+      "model": "sensenova/sensenova-u1.5-lite",
+      "generationSuccess": "5/5",
+      "latencyMs": [33914, 37364, 30410, 33583, 33767],
+      "avgLatencyMs": 33808,
+      "textArtifacts": "noticeable fabricated text/signage artifacts in several scenes; renderings lean illustrative",
+      "contextFidelity": "acceptable but occasionally stylized; scene identity preserved",
+      "visualQuality": "softer, semi-illustrative look; less convincing realism; weaker prompt following on the NO_READABLE_TEXT constraint",
+      "consistency": "consistent",
+      "costUnit": "1 xKiro unit per image"
+    }
+  ],
+  "recommendation": "KEEP gpt-image as the production model. It has better photorealism, prompt following, body/object correctness, and obeys the no-readable-text constraint more reliably. sensenova-u1.5-lite is faster on average but visually weaker for realistic Japanese workplace scenes and produced more text artifacts. No other image models are available on the account.",
+  "selectedProductionModel": "gpt-image"
+}

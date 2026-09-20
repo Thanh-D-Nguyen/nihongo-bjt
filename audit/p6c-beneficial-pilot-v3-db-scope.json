@@ -1,0 +1,97 @@
+{
+  "version": "p6c-beneficial-pilot-v3-db-scope",
+  "textPolicy": "NO_READABLE_TEXT",
+  "promptCompilerVersion": "bjt-image-generation-prompt-v2.1.0",
+  "candidates": [
+    {
+      "questionId": "bjt-full-simulation-b-v1:LC_SCENE:0002",
+      "level": "ALL",
+      "dataset": "official",
+      "section": "LC_SCENE",
+      "reason": "listening item (LC_SCENE); scene visual aids context, audio/text carries the tested content",
+      "dbQuestionId": "2f52ba08-bb37-4275-95f5-b0dc9d3176e2",
+      "prompt": "【模擬試験B・LC_SCENE 3】試作品の写真が共有スペースに置かれています。発見者はどうしますか。"
+    },
+    {
+      "questionId": "bjt-j1-practice-v3:LC_SCENE:0000",
+      "level": "J1",
+      "dataset": "practice",
+      "section": "LC_SCENE",
+      "reason": "listening item (LC_SCENE); scene visual aids context, audio/text carries the tested content",
+      "dbQuestionId": "7976920a-01bb-416b-8e3b-1afbbe51650d",
+      "prompt": "取締役会で議長が「本件に関しまして、反対のご意見がなければ、原案通り承認とさせていただきます」と述べています。出席者が静かに頷いています。"
+    },
+    {
+      "questionId": "bjt-j1plus-practice-v3:LC_SCENE:0005",
+      "level": "J1+",
+      "dataset": "practice",
+      "section": "LC_SCENE",
+      "reason": "listening item (LC_SCENE); scene visual aids context, audio/text carries the tested content",
+      "dbQuestionId": "347f2d24-0bb5-425f-b51a-d6c91bf13d90",
+      "prompt": "グローバル企業の経営会議で、CEOが「今般の構造改革につきましては、痛みを伴う決断ではございますが、将来世代への責任として断行する所存でございます。各部門長におかれましては、最大限のご協力を仰ぎたく存じます」と述べています。"
+    },
+    {
+      "questionId": "bjt-j2-practice-v3:LC_SCENE:0001",
+      "level": "J2",
+      "dataset": "practice",
+      "section": "LC_SCENE",
+      "reason": "listening item (LC_SCENE); scene visual aids context, audio/text carries the tested content",
+      "dbQuestionId": "cf86e7c2-b0b1-4b93-9d95-630cb142494b",
+      "prompt": "顧客が「先月納品された製品に不具合が見つかりまして、早急に対応していただきたいのですが」と電話で話しています。品質管理部の担当者がメモを取っています。"
+    },
+    {
+      "questionId": "bjt-j3-practice-v3:LC_SCENE:0000",
+      "level": "J3",
+      "dataset": "practice",
+      "section": "LC_SCENE",
+      "reason": "listening item (LC_SCENE); scene visual aids context, audio/text carries the tested content",
+      "dbQuestionId": "472cf148-ba5b-49fe-9912-dad10ea27e63",
+      "prompt": "営業担当が取引先で「こちらが新しいカタログでございます。ぜひご覧ください」とカタログを差し出しています。"
+    },
+    {
+      "questionId": "bjt-j4-practice-v3:LC_SCENE:0000",
+      "level": "J4",
+      "dataset": "practice",
+      "section": "LC_SCENE",
+      "reason": "listening item (LC_SCENE); scene visual aids context, audio/text carries the tested content",
+      "dbQuestionId": "4d7cb5f6-44eb-4576-9892-9c38d5ca9e5a",
+      "prompt": "社員が電話を取って「はい、○○株式会社でございます」と言っています。相手の声がスピーカーから聞こえています。"
+    },
+    {
+      "questionId": "bjt-j5-practice-v3:LC_SCENE:0000",
+      "level": "J5",
+      "dataset": "practice",
+      "section": "LC_SCENE",
+      "reason": "listening item (LC_SCENE); scene visual aids context, audio/text carries the tested content",
+      "dbQuestionId": "a1b6a523-3141-4d66-ab71-25c6dfa9b8a4",
+      "prompt": "コンビニの店員が「いらっしゃいませ」と言っています。お客さんはレジの前に立っています。"
+    },
+    {
+      "questionId": "bjt-full-simulation-b-v1:LC_STATEMENT:0005",
+      "level": "ALL",
+      "dataset": "official",
+      "section": "LC_STATEMENT",
+      "reason": "listening item (LC_STATEMENT); scene visual aids context, audio/text carries the tested content",
+      "dbQuestionId": "ac693b67-3ffd-4983-a89f-2ac0e8e0f6b5",
+      "prompt": "【模擬試験B・LC_STATEMENT 1】振込先変更の連絡を聞いてください。経理担当が最初にすることは何ですか。"
+    },
+    {
+      "questionId": "bjt-j1-practice-v3:LC_SCENE:0001",
+      "level": "J1",
+      "dataset": "practice",
+      "section": "LC_SCENE",
+      "reason": "listening item (LC_SCENE); scene visual aids context, audio/text carries the tested content",
+      "dbQuestionId": "589d7066-6d6b-4f08-bae7-e7d14be511ba",
+      "prompt": "記者会見場で広報担当者が「この度の不祥事につきまして、関係者の皆様に多大なるご迷惑をおかけしましたことを深くお詫び申し上げます」と頭を下げています。"
+    },
+    {
+      "questionId": "bjt-j1plus-practice-v3:LC_SCENE:0006",
+      "level": "J1+",
+      "dataset": "practice",
+      "section": "LC_SCENE",
+      "reason": "listening item (LC_SCENE); scene visual aids context, audio/text carries the tested content",
+      "dbQuestionId": "520960ce-3eae-41f1-94e9-62fc377067ec",
+      "prompt": "国際仲裁の場で、日本側の首席弁護士が「相手方のご主張は、準拠法の解釈において重大な瑕疵を含んでおり、仲裁廷におかれましても、この点につきご留意賜りたく存じます」と陳述しています。"
+    }
+  ]
+}

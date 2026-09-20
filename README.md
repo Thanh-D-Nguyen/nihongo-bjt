@@ -258,6 +258,28 @@ Note: the API package’s `build` script is currently `tsc --noEmit` (typecheck 
 
 Database backup/restore: [docs/ops/backup-restore.md](docs/ops/backup-restore.md). Keycloak local setup: [docker/keycloak/README.md](docker/keycloak/README.md). OIDC env reference: [docs/ops/keycloak-app-integration.md](docs/ops/keycloak-app-integration.md).
 
+## Local dev accounts
+
+These accounts are seeded for local development and testing. They do **not** have Keycloak/Google IdP links — use the local test bypass or auth link codes to log in.
+
+### Learners
+
+| Display Name | Email | User ID | Notes |
+|---|---|---|---|
+| Learner A | `learner-a@local.dev` | `a1111111-1111-4111-8111-111111111111` | UI locale: `vi` |
+| Learner B | `learner-b@local.dev` | `b2222222-2222-4222-8222-222222222222` | UI locale: `ja` |
+| Test User | `test@test.com` | `7e8ebed2-1af3-424d-94f0-169b24070ebc` | Legacy seed |
+| thanhnv11 | `thanhnv@rakumail.jp` | `12ae2af9-7fa9-435d-af73-df7c906b36fc` | Personal dev |
+
+### Admin
+
+| Display Name | Email | Actor ID | Role |
+|---|---|---|---|
+| Local Admin | `admin@local.dev` | `c3333333-3333-4333-8333-333333333333` | `admin.super` |
+| Default Seed Admin | *(seed default)* | `00000000-0000-4000-8000-000000000001` | `admin.super` |
+
+To use admin without Keycloak, set both `ADMIN_TEST_BYPASS=1` (API `.env`) and `NEXT_PUBLIC_ADMIN_TEST_BYPASS=1` (Admin `.env.local`), then restart both servers. Set `NEXT_PUBLIC_LOCAL_ADMIN_ACTOR_ID` to the actor ID above.
+
 ### MinIO and learner image uploads
 
 Presigned `PUT` from the browser requires CORS on the MinIO bucket: allow the learner app origin (for example `http://localhost:3000`), methods `PUT` and `GET`, and the headers the client sends (including `Content-Type`). If uploads fail in the network tab with a CORS error, add or adjust a CORS rule in MinIO for your environment.

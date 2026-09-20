@@ -80,7 +80,17 @@ export interface ImageRequirementRecord {
   imageBrief: BjtQuestionImageBrief;
 }
 
-const BRIEF_VERSION = "1.0.0";
+const BRIEF_VERSION = "2.0.0";
+const HYBRID_TO_DETERMINISTIC = new Map<string, string>([
+  ["bjt-j3-practice-v3:RC_INTEGRATED:0074", "document"],
+  ["bjt-j3-practice-v3:RC_INTEGRATED:0079", "document"],
+  ["bjt-j2-practice-v3:LR_DOCUMENT:0038", "document"],
+  ["bjt-j2-practice-v3:LR_INTEGRATED:0041", "table"],
+  ["bjt-j2-practice-v3:RC_INTEGRATED:0073", "document"],
+  ["bjt-j2-practice-v3:RC_INTEGRATED:0078", "document"],
+  ["bjt-full-simulation-b-v1:RC_INTEGRATED:0071", "table"],
+  ["bjt-full-simulation-c-v1:RC_INTEGRATED:0075", "document"],
+]);
 
 const PRACTICE: { data: typeof J1_DATA; file: string; level: string }[] = [
   { data: J5_DATA, file: "database/scripts/seeds/bjt/bjt-questions/j5.ts", level: "J5" },
@@ -173,6 +183,20 @@ function classify(
     }
   }
 
+  // Explicit visual-stimulus syntax in authored prompts outranks the generic
+  // listening-context default. If the question itself says to inspect a
+  // photo/diagram/screen/notice or asks about values shown there, the image
+  // carries tested evidence and cannot remain BENEFICIAL + AI_GENERATED.
+  if (/【写真|写真[:：]|図|グラフ|表|画面|掲示板|貼り紙|案内板|メールに|FAXに|社内ポータルに|スライド|モニター|スクリーン|資料を.*確認|画像/iu.test(evidenceText)) {
+    const exact = EXACT_VISUAL_PATTERNS.find(([re]) => re.test(evidenceText));
+    return {
+      requirement: "REQUIRED",
+      archetype: exact?.[1] ?? (q.mediaHint === "illustration" ? "illustration" : "diagram"),
+      generationMode: exact?.[1] === "product" ? "HYBRID" : "DETERMINISTIC_RENDER",
+      rationale: "authored prompt/scenario explicitly presents a visual stimulus or exact visual evidence; image is part of the tested task",
+    };
+  }
+
   // 4. LR_DOCUMENT / LR_INTEGRATED: chart/document listening-reading — REQUIRED, deterministic.
   if (sectionCode === "LR_DOCUMENT" || sectionCode === "LR_INTEGRATED") {
     for (const [re, archetype, mode] of VISUAL_EVIDENCE_PATTERNS) {
@@ -203,6 +227,8 @@ function buildImageBrief(record: Omit<ImageRequirementRecord, "imageBrief">, pro
     .filter((value) => /[0-9０-９]|[：:]/u.test(value));
   const exactTextElements = [...evidence.matchAll(/「([^」]+)」/gu)].map((match) => match[1]!).filter(Boolean);
   const scene = scenario?.trim() || null;
+  const testedVisualEvidence = record.requirement === "REQUIRED";
+  const exactEvidence = record.generationMode === "DETERMINISTIC_RENDER" ? [...exactTextElements, ...exact] : [];
   return {
     questionStableId: record.questionId,
     level: record.level,
@@ -211,6 +237,13 @@ function buildImageBrief(record: Omit<ImageRequirementRecord, "imageBrief">, pro
     archetype: record.archetype,
     pedagogicalPurpose: record.rationale,
     visualEvidenceRequired: record.requirement === "REQUIRED",
+    testedVisualEvidence,
+    supplementalContext: record.requirement === "BENEFICIAL",
+    contextualEvidence: scene ? [scene] : [],
+    exactEvidence,
+    evidenceMustBeDeterministic: record.generationMode === "DETERMINISTIC_RENDER" || record.generationMode === "HYBRID",
+    imageRequiredToAnswer: testedVisualEvidence,
+    imageUsefulForMemoryOnly: record.requirement === "BENEFICIAL",
     scene,
     environment: scene,
     participants: [],
@@ -224,6 +257,8 @@ function buildImageBrief(record: Omit<ImageRequirementRecord, "imageBrief">, pro
     businessContext: "BJT business Japanese learning",
     accessibilityAlt: scenario?.trim() || `BJT ${record.archetype ?? "question"} stimulus`,
     briefVersion: BRIEF_VERSION,
+    stimulusType: record.archetype,
+    renderStrategy: record.generationMode === "DETERMINISTIC_RENDER" ? "deterministic_schematic" : record.generationMode === "HYBRID" ? "hybrid_composite" : record.generationMode === "AI_GENERATED" ? "ai_contextual" : undefined,
   };
 }
 
@@ -330,6 +365,38 @@ async function main() {
     }
   }
 
+  for (const record of records) {
+    const converted = HYBRID_TO_DETERMINISTIC.get(record.questionId);
+    if (!converted) continue;
+    record.requirement = "REQUIRED";
+    record.archetype = converted as ImageArchetype;
+    record.generationMode = "DETERMINISTIC_RENDER";
+    record.rationale = "source-grounded hybrid adjudication: exact structured evidence is sufficient; contextual AI layer would be decorative";
+    record.imageBrief.requirement = "REQUIRED";
+    record.imageBrief.generationMode = "DETERMINISTIC_RENDER";
+    record.imageBrief.archetype = converted;
+    record.imageBrief.testedVisualEvidence = true;
+    record.imageBrief.supplementalContext = false;
+    record.imageBrief.evidenceMustBeDeterministic = true;
+    record.imageBrief.imageRequiredToAnswer = true;
+    record.imageBrief.imageUsefulForMemoryOnly = false;
+    if (!record.imageBrief.exactTextElements.length && !record.imageBrief.exactDataElements.length) {
+      record.imageBrief.exactDataElements = [record.imageBrief.accessibilityAlt || record.rationale];
+      record.imageBrief.exactEvidence = record.imageBrief.exactDataElements;
+    }
+  }
+
+  // Recompute summary counters after any source-grounded HYBRID conversion.
+  for (const key of Object.keys(byRequirement)) delete byRequirement[key];
+  for (const key of Object.keys(byArchetype)) delete byArchetype[key];
+  for (const key of Object.keys(byMode)) delete byMode[key];
+  for (const key of Object.keys(byBeneficialPriority)) delete byBeneficialPriority[key];
+  for (const key of Object.keys(requirementGenerationModeMatrix)) for (const mode of Object.keys(requirementGenerationModeMatrix[key as ImageRequirement])) delete requirementGenerationModeMatrix[key as ImageRequirement][mode];
+  for (const r of records) {
+    bump(byRequirement, r.requirement); bump(byArchetype, r.archetype); bump(byMode, r.generationMode); bump(byBeneficialPriority, r.beneficialPriority);
+    if (r.generationMode) bump(requirementGenerationModeMatrix[r.requirement], r.generationMode);
+  }
+
   let reconciliation = {
     status: "BLOCKED_LOCAL_DB_UNAVAILABLE",
     accepted: 0,
@@ -396,6 +463,7 @@ async function main() {
     },
     records,
   };
+
   await writeFile(resolve(process.cwd(), "audit/bjt-image-requirements.json"), JSON.stringify(output, null, 2));
   console.log(JSON.stringify(output.summary, null, 2));
 }

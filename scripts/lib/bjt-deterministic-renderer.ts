@@ -8,6 +8,7 @@ const WIDTH = 1600;
 const HEIGHT = 900;
 const ARCHETYPES = new Set([
   "schedule", "table", "chart", "email", "notice", "form", "diagram", "map_layout", "document"
+  , "illustration", "workplace_photo", "workplace_interaction", "meeting", "office_environment", "object_scene"
 ]);
 
 export interface DeterministicRenderResult {
@@ -20,6 +21,23 @@ export interface DeterministicRenderResult {
   contentId: string;
   generatedPath: string;
   svg: string;
+}
+
+export type DeterministicStimulusType =
+  | "chart" | "table" | "schedule" | "email" | "notice" | "form" | "diagram" | "map_layout" | "document";
+
+export interface DeterministicRenderAcceptance {
+  structuralStatus: "ACCEPT" | "STALE" | "INVALID";
+  pedagogicalStatus: "ACCEPT" | "REVISE_TEMPLATE" | "REVISE_BRIEF" | "HUMAN_REVIEW";
+  reason: string;
+}
+
+export type DeterministicPedagogicalStatus = "ACCEPT" | "REVISE_TEMPLATE" | "REVISE_BRIEF" | "HUMAN_REVIEW";
+
+export interface DeterministicAcceptanceRecord {
+  structuralStatus: "ACCEPT" | "STALE" | "INVALID";
+  pedagogicalStatus: DeterministicPedagogicalStatus;
+  pedagogicalReason: string;
 }
 
 export interface DeterministicRenderProvenance {
@@ -39,9 +57,9 @@ function escapeXml(value: string): string {
 
 function assertBrief(brief: BjtQuestionImageBrief): void {
   if (!brief || brief.generationMode !== "DETERMINISTIC_RENDER") throw new Error("brief must request DETERMINISTIC_RENDER");
-  if (!brief.questionStableId || !brief.briefVersion || !brief.archetype || !ARCHETYPES.has(brief.archetype)) throw new Error("brief has unsupported renderer fields");
+  if (!brief.questionStableId || !brief.briefVersion || !brief.archetype || !ARCHETYPES.has(brief.archetype) || brief.archetype === "workplace_photo") throw new Error("brief has unsupported renderer fields");
   if (!brief.visualEvidenceRequired) throw new Error("deterministic brief must require visual evidence");
-  if (brief.exactTextElements.length === 0 && brief.exactDataElements.length === 0) throw new Error("deterministic brief has no exact content");
+  if (brief.exactTextElements.length === 0 && brief.exactDataElements.length === 0 && !["illustration", "workplace_photo", "workplace_interaction", "meeting", "office_environment", "object_scene"].includes(brief.archetype)) throw new Error("deterministic brief has no exact content");
 }
 
 function contentLines(brief: BjtQuestionImageBrief): string[] {

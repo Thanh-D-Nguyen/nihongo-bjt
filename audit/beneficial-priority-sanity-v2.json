@@ -1,0 +1,12 @@
+{
+  "version": "beneficial-priority-sanity-v2",
+  "samples": {"HIGH":10,"MEDIUM":5,"LOW":5},
+  "results": {
+    "HIGH": {"meaningfulContext":10,"genericOnly":0,"decision":"PASS","reason":"Selected scenes add concrete role/environment context to listening tasks and improve situational comprehension."},
+    "MEDIUM": {"meaningfulContext":4,"genericOnly":1,"decision":"PASS_WITH_CAUTION","reason":"Most scenes add workplace realism; generic office-background cases should not be prioritized ahead of role-rich contexts."},
+    "LOW": {"meaningfulContext":2,"genericOnly":3,"decision":"PASS","reason":"Low items remain valid supplemental context but should be deferred unless reuse or UX evidence justifies generation."}
+  },
+  "recalibrated": true,
+  "finalCounts": {"HIGH":108,"MEDIUM":26,"LOW":45},
+  "ruleChange": "Generic single-scene office/environment records without distinct participant roles or memorable situational cues move down one priority band; role-rich, reusable workplace contexts remain HIGH."
+}

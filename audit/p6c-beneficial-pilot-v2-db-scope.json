@@ -1,0 +1,113 @@
+{
+  "version": "p6c-beneficial-pilot-v2-db-scope",
+  "candidates": [
+    {
+      "questionId": "bjt-j5-practice-v3:LC_SCENE:0002",
+      "level": "J5",
+      "dataset": "practice",
+      "section": "LC_SCENE",
+      "reason": "reception-lobby atmosphere; answer is carried by spoken greeting",
+      "dbQuestionId": "51189b78-027b-4dfb-80a0-38329f5a9b9f",
+      "prompt": "受付の人が「おはようございます。ご用件をお聞かせください」と言っています。訪問者がカバンを持って立っています。"
+    },
+    {
+      "questionId": "bjt-j5-practice-v3:LC_STATEMENT:0013",
+      "level": "J5",
+      "dataset": "practice",
+      "section": "LC_STATEMENT",
+      "reason": "simple supervisor interaction; image adds workplace context only",
+      "dbQuestionId": "4018b383-cc6c-4e4c-9b5b-7baab91526cb",
+      "prompt": "上司に「明日は何時に来られますか」と聞かれました。朝9時に来ると答えます。"
+    },
+    {
+      "questionId": "bjt-j4-practice-v3:LC_SCENE:0006",
+      "level": "J4",
+      "dataset": "practice",
+      "section": "LC_SCENE",
+      "reason": "coworker assistance at elevator; no exact visual detail determines answer",
+      "dbQuestionId": "7272773f-adac-450f-898e-dc0db0c4c8d7",
+      "prompt": "社員が段ボール箱を両手で持って、エレベーターのボタンの前で困っています。別の社員が「押しましょうか」と声をかけています。"
+    },
+    {
+      "questionId": "bjt-j4-practice-v3:LC_STATEMENT:0019",
+      "level": "J4",
+      "dataset": "practice",
+      "section": "LC_STATEMENT",
+      "reason": "departure-before-business-trip context; answer is verbal courtesy",
+      "dbQuestionId": "96ae6235-7ac6-4a91-b9a3-b52717c77ca0",
+      "prompt": "上司から「明日の出張、気をつけて行ってきてね」と言われました。何と答えますか。"
+    },
+    {
+      "questionId": "bjt-j3-practice-v3:LC_SCENE:0005",
+      "level": "J3",
+      "dataset": "practice",
+      "section": "LC_SCENE",
+      "reason": "meeting participation context; speech determines response",
+      "dbQuestionId": "29ec2667-c77d-4940-b6e1-40ba8a928bc6",
+      "prompt": "会議で司会が「では、営業部から今月の進捗報告をお願いします」と言い、営業部の社員が立ち上がって資料を配り始めています。"
+    },
+    {
+      "questionId": "bjt-j3-practice-v3:LC_STATEMENT:0019",
+      "level": "J3",
+      "dataset": "practice",
+      "section": "LC_STATEMENT",
+      "reason": "team introduction context; no visual evidence is tested",
+      "dbQuestionId": "7973a33a-ff89-4352-a90c-f58837edd81c",
+      "prompt": "新しいチームメンバーを紹介するとき「今月から我々のチームに加わった○○さんです。前職では3年間マーケティングを担当されていました」。次に何を言いますか。"
+    },
+    {
+      "questionId": "bjt-j2-practice-v3:LC_SCENE:0000",
+      "level": "J2",
+      "dataset": "practice",
+      "section": "LC_SCENE",
+      "reason": "client meeting atmosphere; negotiation language carries answer",
+      "dbQuestionId": "115525bf-aa62-43eb-af0d-be97eb122803",
+      "prompt": "取引先の部長が「御社の提案書を拝見しましたが、コスト面でもう少しご検討いただけないでしょうか」と言っています。営業担当が資料を広げています。"
+    },
+    {
+      "questionId": "bjt-j2-practice-v3:LC_STATEMENT:0017",
+      "level": "J2",
+      "dataset": "practice",
+      "section": "LC_STATEMENT",
+      "reason": "project manager-client explanation; scene is supplemental",
+      "dbQuestionId": "ab824862-86bc-4d40-b3cc-c548a172c06c",
+      "prompt": "「率直に申し上げますと、このスケジュールでは品質を担保することが困難です。納期を2週間延長していただくか、仕様を縮小するか、ご判断いただけますでしょうか。」"
+    },
+    {
+      "questionId": "bjt-j1-practice-v3:LC_STATEMENT:0012",
+      "level": "J1",
+      "dataset": "practice",
+      "section": "LC_STATEMENT",
+      "reason": "advanced workplace exchange; spoken register carries answer",
+      "dbQuestionId": "635ec810-aa75-498d-b2a2-913dc4e34e4b",
+      "prompt": "「この案件につきましては、社内のコンセンサスを得た上で、改めてご回答申し上げたいと存じます。」"
+    },
+    {
+      "questionId": "bjt-j1-practice-v3:LC_STATEMENT:0013",
+      "level": "J1",
+      "dataset": "practice",
+      "section": "LC_STATEMENT",
+      "reason": "executive workplace context; no exact visual evidence required",
+      "dbQuestionId": "5e618242-5966-431d-8501-630afc771d50",
+      "prompt": "「恐れ入りますが、弊社としましては、御社のご提示額では到底採算が合いかねます。再考いただけますと幸いに存じます。」"
+    },
+    {
+      "questionId": "bjt-j1plus-practice-v3:LC_SCENE:0004",
+      "level": "J1+",
+      "dataset": "practice",
+      "section": "LC_SCENE",
+      "reason": "boardroom context; negotiation speech carries answer",
+      "dbQuestionId": "7c4a9290-54c5-4666-bddc-1b4d89cc32b1",
+      "prompt": "外交レセプションで、日本大使が相手国の商工大臣に「両国間の経済連携につきましては、双方にとって実りある成果が期待できる段階に至ったものと確信いたしております。近いうちに忌憚のないご意見を賜れれば幸いに存じます」と述べています。"
+    },
+    {
+      "questionId": "bjt-full-simulation-a-v1:LC_STATEMENT:0007",
+      "level": "ALL",
+      "dataset": "official",
+      "section": "LC_STATEMENT",
+      "reason": "official business announcement context; answer is carried by audio",
+      "dbQuestionId": "fc901d5e-3afd-4ec5-b08a-08adc12b6e83",
+      "prompt": "【模擬試験A・LC_STATEMENT 3】青葉商事の業務連絡を聞いてください。参加者は資料をどこで受け取りますか。"
+    }
+  ]
+}

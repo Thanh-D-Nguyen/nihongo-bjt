@@ -11,6 +11,38 @@ export type BjtImageGenerationMode =
   | "HYBRID"
   | "EXISTING_ASSET";
 
+/**
+ * Text policy for AI-generated visuals. No tested or critical Japanese/text
+ * may ever depend on generative rendering — exact text is overlaid or rendered
+ * deterministically instead.
+ */
+export type BjtImageTextPolicy =
+  | "NO_READABLE_TEXT"
+  | "DETERMINISTIC_TEXT_ONLY"
+  | "TEXT_NOT_RELEVANT";
+
+/**
+ * Text-risk QA classification for AI-generated assets (section 5 of the image
+ * architecture contract). PROBLEMATIC assets must never be accepted.
+ */
+export type BjtAiImageTextRisk =
+  | "NONE"
+  | "INCIDENTAL_UNREADABLE"
+  | "READABLE_BUT_IRRELEVANT"
+  | "PROBLEMATIC";
+
+/**
+ * Default text policy by generation mode: AI-generated contextual images
+ * normally contain no readable text; exact-information visuals render text
+ * deterministically only.
+ */
+export const BJT_TEXT_POLICY_DEFAULTS: Record<BjtImageGenerationMode, BjtImageTextPolicy> = {
+  AI_GENERATED: "NO_READABLE_TEXT",
+  DETERMINISTIC_RENDER: "DETERMINISTIC_TEXT_ONLY",
+  HYBRID: "DETERMINISTIC_TEXT_ONLY",
+  EXISTING_ASSET: "TEXT_NOT_RELEVANT"
+};
+
 export interface BjtQuestionImageBrief {
   questionStableId: string;
   level: string;
@@ -19,6 +51,13 @@ export interface BjtQuestionImageBrief {
   archetype: string | null;
   pedagogicalPurpose: string;
   visualEvidenceRequired: boolean;
+  testedVisualEvidence: boolean;
+  supplementalContext: boolean;
+  contextualEvidence: string[];
+  exactEvidence: string[];
+  evidenceMustBeDeterministic: boolean;
+  imageRequiredToAnswer: boolean;
+  imageUsefulForMemoryOnly: boolean;
   scene: string | null;
   environment: string | null;
   participants: string[];
@@ -32,6 +71,9 @@ export interface BjtQuestionImageBrief {
   businessContext: string;
   accessibilityAlt: string;
   briefVersion: string;
+  textPolicy?: BjtImageTextPolicy;
+  stimulusType?: string;
+  renderStrategy?: "deterministic_schematic" | "ai_contextual" | "hybrid_composite";
 }
 
 export function buildBjtAiImageLicense(provider: string, model: string): string {
@@ -117,19 +159,22 @@ export function buildBjtImageGenerationPrompt(
   const baseStyle =
     "No answer cues, watermarks, or third-party logos. Suitable as an accessible BJT test stimulus.";
   const prompt = imagePrompt.trim();
+  const contextualContract = "Visual style contract v1.1: realistic Japanese workplace photography or naturalistic professional illustration; believable contemporary setting; natural body language; clean composition; no answer-revealing cues. Negative constraints: no infographic, no icon set, no flowchart, no UI mockup, no text-heavy poster, no decorative typography, no labels, no subtitles, no watermarks, no logos, no brand marks, no floating symbols, no speech bubbles, no arbitrary Japanese writing.";
+  const noReadableText =
+    "Text policy NO_READABLE_TEXT: the image must contain no readable text of any kind — no legible Japanese, English letters, numbers, signage, screens, documents, notices, labels, prices, dates, or names. If a sign, monitor, document, or poster naturally appears in the scene, keep it out of focus, turned away, blank, too small to read, or outside the focal composition. Do not attempt to render any lettering.";
 
   switch (mediaHint) {
     case "photo":
       return [
         `Authoritative scene brief — this content must dominate the image: ${prompt}`,
         "Create a professional business photograph for a Japanese BJT question.",
-        `Production constraints: photorealistic, natural observer angle, contemporary Japanese workplace, no visible or legible writing, letters, numbers, signage, screens, charts, or documents. ${baseStyle}`
+        `Production constraints: photorealistic, natural observer angle, contemporary Japanese workplace, no visible or legible writing, letters, numbers, signage, screens, charts, or documents. ${noReadableText} ${contextualContract} ${baseStyle}`
       ].join("\n");
     case "illustration":
       return [
         `Authoritative scene brief — this content must dominate the image: ${prompt}`,
         "Create a clean modern illustration for a Japanese BJT question.",
-        `Production constraints: restrained professional palette, clear visual hierarchy, culturally accurate Japanese workplace. ${baseStyle}`
+        `Production constraints: restrained professional palette, clear visual hierarchy, culturally accurate Japanese workplace. ${noReadableText} ${contextualContract} ${baseStyle}`
       ].join("\n");
     case "chart":
       return [
@@ -153,7 +198,7 @@ export function buildBjtImageGenerationPrompt(
       return [
         `Authoritative image brief — this content must dominate the image: ${prompt}`,
         "Create a professional image for a Japanese BJT question.",
-        `Production constraints: culturally accurate contemporary Japanese business setting. ${baseStyle}`
+        `Production constraints: culturally accurate contemporary Japanese business setting. ${noReadableText} ${contextualContract} ${baseStyle}`
       ].join("\n");
   }
 }

@@ -1,0 +1,14 @@
+{
+  "version": "hybrid-adjudication-v1",
+  "records": [
+    {"questionId":"bjt-j3-practice-v3:RC_INTEGRATED:0074","decision":"CONVERT_TO_DETERMINISTIC","reason":"Complaint record contains exact structured text; contextual imagery is not needed to answer."},
+    {"questionId":"bjt-j3-practice-v3:RC_INTEGRATED:0079","decision":"CONVERT_TO_DETERMINISTIC","reason":"Catalog pricing calculation depends on exact price and user count; deterministic catalog is sufficient."},
+    {"questionId":"bjt-j2-practice-v3:LR_DOCUMENT:0038","decision":"CONVERT_TO_DETERMINISTIC","reason":"Invoice and L/C amendment task depends on exact trade fields and amounts; no AI contextual base needed."},
+    {"questionId":"bjt-j2-practice-v3:LR_INTEGRATED:0041","decision":"CONVERT_TO_DETERMINISTIC","reason":"Competitive report and survey percentages are the tested evidence; render exact source data."},
+    {"questionId":"bjt-j2-practice-v3:RC_INTEGRATED:0073","decision":"CONVERT_TO_DETERMINISTIC","reason":"Board minutes and interview text are exact document evidence; contextual meeting imagery would be decorative."},
+    {"questionId":"bjt-j2-practice-v3:RC_INTEGRATED:0078","decision":"CONVERT_TO_DETERMINISTIC","reason":"Patent warning and legal memo are exact document evidence; deterministic document is sufficient."},
+    {"questionId":"bjt-full-simulation-b-v1:RC_INTEGRATED:0071","decision":"CONVERT_TO_DETERMINISTIC","reason":"Monthly metrics and target comparison are exact values; deterministic table is sufficient."},
+    {"questionId":"bjt-full-simulation-c-v1:RC_INTEGRATED:0075","decision":"CONVERT_TO_DETERMINISTIC","reason":"Refund/warranty policy combination is exact policy text; contextual product imagery is unnecessary."}
+  ],
+  "summary":{"convertedDeterministic":8,"remainHybrid":0,"humanReview":0}
+}

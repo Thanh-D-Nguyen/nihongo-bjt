@@ -1,0 +1,13 @@
+{
+  "version": "contextual-style-contract-v1.1",
+  "realism": "realistic contemporary Japanese workplace photography or naturalistic professional illustration",
+  "framing": "clean observer angle with one clear focal interaction",
+  "lighting": "neutral, believable office/daylight lighting",
+  "tone": "calm, professional, business-learning context",
+  "participants": "natural body language, plausible age/roles, no exaggerated expressions",
+  "textPolicy": "NO_READABLE_TEXT: no readable text of any kind — no legible Japanese, English letters, numbers, signage, screens, documents, notices, labels, prices, dates, names, logos, brands, watermarks, UI overlays, or speech bubbles; incidental signage must be out of focus, turned away, blank, or too small to read",
+  "negativeStyle": ["infographic", "icon set", "flowchart", "UI mockup", "text-heavy poster", "decorative typography", "floating symbols"],
+  "briefVersion": "2.0.0",
+  "promptCompilerVersion": "bjt-image-generation-prompt-v2.1.0",
+  "textRiskQa": ["NONE", "INCIDENTAL_UNREADABLE", "READABLE_BUT_IRRELEVANT", "PROBLEMATIC"]
+}

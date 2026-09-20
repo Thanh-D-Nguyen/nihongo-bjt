@@ -1,0 +1,12 @@
+{
+  "version": "p6c-final-checkpoint-v3",
+  "semantic": {"status":"FROZEN","datasetFingerprint":"f7425e27ebff022d506829450ade9cb07fd24cd915b29a8d4f911ff1891af0d1"},
+  "deterministicQa": {"artifact":"audit/deterministic-pedagogical-qa-v1.json","sampleSize":29,"familiesCovered":10,"accept":29,"reviseTemplate":0,"reviseBrief":0,"humanReview":0},
+  "requiredClosure": {"total":329,"structuralReady":329,"pedagogicalReady":329,"blocked":0,"missing":0,"percentage":100},
+  "staleOldPilot": {"jobCount":21,"state":"INVALIDATED_BY_VISUAL_REBASELINE","resumeEligible":false,"productionSyncEligible":false},
+  "pilotV2": {"selected":12,"attempted":12,"providerCompleted":12,"accept":12,"regenerate":0,"reject":0,"humanReview":0,"acceptanceRate":1,"provider":"xkiro","model":"gpt-image","concurrency":1,"retries":0,"http429":0,"terminalErrors":0},
+  "promptSystem": {"imageBriefVersion":"2.0.0","styleContractVersion":"contextual-style-contract-v1","promptCompilerVersion":"bjt-image-generation-prompt-v2.0.0","contentFingerprint":"f7425e27ebff022d506829450ade9cb07fd24cd915b29a8d4f911ff1891af0d1"},
+  "beneficialPriority": {"HIGH":108,"MEDIUM":26,"LOW":45,"sanityArtifact":"audit/beneficial-priority-sanity-v2.json"},
+  "scaleDecision":"READY_FOR_CONTROLLED_SCALE",
+  "nextGate":"Do not scale in this checkpoint. Next checkpoint must choose batch size, QA sampling, regeneration budget, and concurrency/cost controls from pilot evidence."
+}
