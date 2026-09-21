@@ -31,6 +31,14 @@ export interface HomepageLabels {
     estimatedBadge: string;
     streakLabel: string;
     streakUnit: string;
+    statStreak: string;
+    statReviewsDue: string;
+    statSessions: string;
+    weakAreasTitle: string;
+    weakAreasSubtitle: string;
+    readinessTitle: string;
+    readinessSubtitle: string;
+    readinessCta: string;
     emptyTitle: string;
     emptyCta: string;
     errorTitle: string;

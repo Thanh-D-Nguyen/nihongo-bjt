@@ -36,7 +36,6 @@ import {
   IconLogout,
   IconMagazine,
   IconMessage,
-  IconQuiz,
   IconReview,
   IconSearch,
   IconSettings,
@@ -229,7 +228,7 @@ export function LearnerAppFrame({
       [
         { href: base, icon: IconHome, label: nav.home },
         { href: `${base}/levels`, icon: IconLevels, label: nav.levelsNav },
-        { href: `${base}/quiz`, icon: IconQuiz, label: nav.quiz },
+        { href: `${base}/exercises`, icon: IconExercise, label: nav.exercises },
         { href: `${base}/flashcards`, icon: IconReview, label: nav.review },
         { href: `${base}/analytics`, icon: IconAnalytics, label: nav.analytics }
       ] satisfies NavItem[],
@@ -257,7 +256,7 @@ export function LearnerAppFrame({
         items: [
           { href: base, icon: IconHome, label: nav.home },
           { href: `${base}/flashcards`, icon: IconReview, label: nav.review },
-          { href: `${base}/quiz`, icon: IconQuiz, label: nav.quiz },
+          { href: `${base}/exercises`, icon: IconExercise, label: nav.exercises },
           { href: `${base}/me?tab=progress`, icon: IconAnalytics, label: nav.analytics }
         ],
         title: nav.footerLearning
@@ -296,7 +295,7 @@ export function LearnerAppFrame({
   const mobileNavItems = [
     { href: base, icon: IconHome, label: nav.home },
     { href: `${base}/levels`, icon: IconLevels, label: nav.levelsNav },
-    { href: `${base}/quiz`, icon: IconQuiz, label: nav.quiz },
+    { href: `${base}/exercises`, icon: IconExercise, label: nav.exercises },
     { href: `${base}/flashcards`, icon: IconReview, label: nav.review },
     { href: `${base}/analytics`, icon: IconAnalytics, label: nav.analytics }
   ];

@@ -245,6 +245,34 @@ export function TodayPlanHub({
 
       {isOffline ? <HomeStateCard title={copy.offlineTitle} tone="offline" /> : null}
 
+      {/* Stat Strip — prototype-aligned metrics row */}
+      <div className="mx-auto mb-6 grid w-full max-w-[1280px] grid-cols-3 gap-3 sm:gap-4">
+        <div className="rounded-xl bg-surface px-4 py-4 text-center shadow-xs ring-1 ring-border sm:px-6 sm:py-5">
+          {analyticsReady ? (
+            <p className="text-2xl font-bold tabular-nums text-navy sm:text-3xl">
+              {analyticsError ? "—" : streak}
+            </p>
+          ) : (
+            <SkeletonLine className="mx-auto h-8 w-12" />
+          )}
+          <p className="mt-1 text-xs font-medium text-muted sm:text-sm">{copy.statStreak}</p>
+        </div>
+        <div className="rounded-xl bg-surface px-4 py-4 text-center shadow-xs ring-1 ring-border sm:px-6 sm:py-5">
+          <p className="text-2xl font-bold tabular-nums text-navy sm:text-3xl">{dueCount}</p>
+          <p className="mt-1 text-xs font-medium text-muted sm:text-sm">{copy.statReviewsDue}</p>
+        </div>
+        <div className="rounded-xl bg-surface px-4 py-4 text-center shadow-xs ring-1 ring-border sm:px-6 sm:py-5">
+          {analyticsReady ? (
+            <p className="text-2xl font-bold tabular-nums text-navy sm:text-3xl">
+              {analyticsError ? "—" : analytics?.totals.completedBjtSessions ?? 0}
+            </p>
+          ) : (
+            <SkeletonLine className="mx-auto h-8 w-12" />
+          )}
+          <p className="mt-1 text-xs font-medium text-muted sm:text-sm">{copy.statSessions}</p>
+        </div>
+      </div>
+
       <div
         className={cn(
           "grid gap-4 lg:grid-cols-[minmax(0,1.65fr)_minmax(280px,0.75fr)] lg:gap-5",
