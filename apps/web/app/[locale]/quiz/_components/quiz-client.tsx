@@ -891,7 +891,7 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
         <div className="flex items-center justify-center gap-3 py-16">
           <div className="h-5 w-5 animate-spin rounded-full border-2 border-accent border-t-transparent" />
           <p className="text-sm font-medium text-muted">
-            {labels.resumingSession ?? "Đang khôi phục bài thi..."}
+            {labels.resumingSession ?? "Resuming exam…"}
           </p>
         </div>
       )}
@@ -1060,7 +1060,7 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
                   <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M4 2v20l1-1 5 3 4-3 4 3 1-3V2H4zm12 13-4-2.5L8 15V4h8v11z" />
                   </svg>
-                  {(labels.flaggedCount ?? "{n} đánh dấu").replace(
+                  {(labels.flaggedCount ?? "{n} flagged").replace(
                     "{n}",
                     String(flaggedQuestions.size)
                   )}
@@ -1693,7 +1693,7 @@ export function QuizQuestionPanel({
               onClick={onToggleFlag}
               title={
                 flagged
-                  ? (labels.unflagQuestion ?? "Bỏ đánh dấu")
+                  ? (labels.unflagQuestion ?? "Unflag")
                   : (labels.flagQuestion ?? "Đánh dấu xem lại")
               }
               type="button"
@@ -1720,7 +1720,7 @@ export function QuizQuestionPanel({
         </div>
         {/* Keyboard hint */}
         <p className="mt-1 text-[10px] text-muted/60">
-          {labels.keyboardHint ?? "A/B/C/D để chọn · F để đánh dấu"}
+          {labels.keyboardHint ?? "A/B/C/D to select · F to flag"}
         </p>
       </div>
 
@@ -2030,7 +2030,7 @@ function ResultsSummary({
                     <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
                     <line x1="4" x2="4" y1="22" y2="15" />
                   </svg>
-                  {(labels.flaggedCount ?? "{n} đánh dấu").replace("{n}", String(flaggedCount))}
+                  {(labels.flaggedCount ?? "{n} flagged").replace("{n}", String(flaggedCount))}
                 </span>
               )}
               {guessedCount > 0 && (
@@ -2218,7 +2218,7 @@ function RecommendedNext({
           {labels.recommendedNextTitle ?? "Luyện thêm theo điểm yếu"}
         </h3>
         <p className="mt-0.5 text-[11px] text-muted">
-          {labels.recommendedNextDesc ?? "Các mảng cần cải thiện dựa trên kết quả bài thi vừa rồi"}
+          {labels.recommendedNextDesc ?? "Areas to improve based on your recent exam results"}
         </p>
       </div>
       <div className="flex flex-wrap gap-2 px-4 py-3">
@@ -2298,7 +2298,7 @@ function SessionHistoryTimeline({
       </div>
       {history.length === 0 && (
         <p className="px-4 py-6 text-center text-xs text-muted">
-          {labels.historyEmpty ?? "Chưa có bài thi nào."}
+          {labels.historyEmpty ?? "No exam history yet."}
         </p>
       )}
     </section>
