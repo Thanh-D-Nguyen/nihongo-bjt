@@ -1814,7 +1814,33 @@
     "filterLevel": "Cấp độ",
     "questionOf": "Câu {current} / {total}",
     "timeSpent": "Thời gian",
-    "error": "Có lỗi xảy ra. Vui lòng thử lại."
+    "error": "Có lỗi xảy ra. Vui lòng thử lại.",
+    "recommended": "Gợi ý cho bạn",
+    "recommendedEmpty": "Chưa có gợi ý cá nhân hóa. Hoàn thành một phiên luyện tập để nhận đề xuất phù hợp.",
+    "browseAll": "Xem tất cả bài tập",
+    "filters": {
+      "all": "Tất cả",
+      "recommended": "Gợi ý",
+      "listening": "Nghe hiểu",
+      "reading": "Đọc hiểu",
+      "grammar": "Ngữ pháp",
+      "vocabulary": "Từ vựng",
+      "keigo": "Kính ngữ"
+    },
+    "card": {
+      "questions": "{count} câu hỏi",
+      "duration": "{min} phút",
+      "level": "Cấp {level}",
+      "difficulty": "{difficulty}",
+      "recommended": "Gợi ý",
+      "weakArea": "Điểm yếu",
+      "continue": "Tiếp tục"
+    },
+    "empty": {
+      "noResults": "Không có bài tập nào phù hợp với bộ lọc.",
+      "clearFilters": "Xóa bộ lọc",
+      "loading": "Đang tải bài tập…"
+    }
   },
   "gamification": {
     "title": "Thành tích",

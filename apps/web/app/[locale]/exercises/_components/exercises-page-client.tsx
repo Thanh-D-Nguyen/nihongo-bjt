@@ -63,6 +63,41 @@ export interface ExercisesLabels {
   questionOf: string;
   timeSpent: string;
   error: string;
+  recommended?: string;
+  recommendedEmpty?: string;
+  browseAll?: string;
+  filters?: {
+    all: string;
+    recommended: string;
+    listening: string;
+    reading: string;
+    grammar: string;
+    vocabulary: string;
+    keigo: string;
+  };
+  card?: {
+    questions: string;
+    duration: string;
+    level: string;
+    difficulty: string;
+    recommended: string;
+    weakArea: string;
+    continue: string;
+  };
+  empty?: {
+    noResults: string;
+    clearFilters: string;
+    loading: string;
+  };
+}
+
+interface StudyFeedItem {
+  id: string;
+  type: string;
+  title: string | null;
+  score: number;
+  source: string;
+  metadata: Record<string, string> | null;
 }
 
 const EXERCISE_TYPES = ["meaning_match", "cloze", "word_order", "translation", "listening"] as const;
@@ -110,8 +145,11 @@ export function ExercisesPageClient({
   const [reviewItems, setReviewItems] = useState<Array<{ exerciseId: string; exercise: Exercise | null }>>([]);
   const [reviewIndex, setReviewIndex] = useState(0);
   const [reviewRated, setReviewRated] = useState(false);
+  const [studyFeed, setStudyFeed] = useState<StudyFeedItem[]>([]);
+  const [studyFeedLoading, setStudyFeedLoading] = useState(true);
+  const [activeFilter, setActiveFilter] = useState<string>("all");
 
-  /* ── Fetch daily progress + due reviews on mount ─────────────────────── */
+  /* ── Fetch daily progress + due reviews + study feed on mount ────────── */
 
   useEffect(() => {
     learnerApiFetch("/api/exercises/daily-progress")
@@ -123,6 +161,18 @@ export function ExercisesPageClient({
       .then((r) => r.ok ? r.json() : [])
       .then((items) => { if (Array.isArray(items)) setDueCount(items.length); })
       .catch(() => {});
+
+    // Fetch personalized recommendations
+    setStudyFeedLoading(true);
+    learnerApiFetch("/api/recommendation/study-feed?limit=6")
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (data && Array.isArray(data.items)) {
+          setStudyFeed(data.items.filter((i: StudyFeedItem) => i.type === "exercise"));
+        }
+      })
+      .catch(() => {})
+      .finally(() => setStudyFeedLoading(false));
   }, []);
 
   /* ── Start review mode ───────────────────────────────────────────────── */
@@ -320,76 +370,154 @@ export function ExercisesPageClient({
       {/* ── Setup Phase ──────────────────────────────────────────────── */}
       {phase === "setup" && (
         <div className="mt-6 space-y-8">
-          {/* Daily Progress + Due Reviews banner */}
-          <div className="grid gap-3 sm:grid-cols-2">
-            {dailyProgress && (
-              <div className="overflow-hidden rounded-2xl border border-accent/15 bg-gradient-to-br from-accent/5 to-blue-50/40 p-4 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black uppercase tracking-wider text-muted">Mục tiêu hôm nay</span>
-                  {dailyProgress.isComplete && (
-                    <span className="rounded-full bg-leaf/12 px-2.5 py-0.5 text-xs font-black text-leaf">✓ Hoàn thành</span>
-                  )}
-                </div>
-                <p className="mt-2 text-2xl font-black tabular-nums text-ink">
-                  {dailyProgress.completed}<span className="text-base font-bold text-muted">/{dailyProgress.goal}</span>
-                </p>
-                <div className="mt-2 h-2 overflow-hidden rounded-full bg-ink/8">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-accent to-blue-500 transition-all duration-700 ease-out"
-                    style={{ width: `${dailyProgress.progress * 100}%` }}
-                  />
-                </div>
+          {/* Recommended for You — from /api/recommendation/study-feed */}
+          <div>
+            <h2 className="text-h3 text-ink">{labels.recommended ?? "Recommended for you"}</h2>
+            {studyFeedLoading ? (
+              <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-32 animate-pulse rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]" />
+                ))}
               </div>
-            )}
-            {dueCount > 0 && (
-              <button
-                type="button"
-                onClick={handleStartReview}
-                className="flex items-center gap-3 overflow-hidden rounded-2xl border border-amber-200/60 bg-gradient-to-br from-amber-50/60 to-orange-50/30 p-4 shadow-sm text-left transition hover:shadow-md hover:border-amber-300/60 active:scale-[0.98]"
-              >
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-100 text-lg" aria-hidden>🔄</span>
-                <div>
-                  <p className="text-sm font-black text-ink">Ôn tập lại</p>
-                  <p className="text-xs font-semibold text-muted">{dueCount} bài cần ôn hôm nay</p>
-                </div>
-              </button>
+            ) : studyFeed.length > 0 ? (
+              <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {studyFeed.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      // Start practice with recommended exercise type if available
+                      const metaType = item.metadata?.exerciseType as string | undefined;
+                      if (metaType && EXERCISE_TYPES.includes(metaType as typeof EXERCISE_TYPES[number])) {
+                        setSelectedType(metaType as typeof EXERCISE_TYPES[number]);
+                      }
+                      handleGenerate();
+                    }}
+                    className="group relative overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 text-left shadow-xs transition-all hover:border-[var(--color-border-hover)] hover:shadow-sm hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-navy)]"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="text-body font-bold text-ink line-clamp-2">
+                        {item.title ?? labels.types[item.metadata?.exerciseType ?? ""] ?? item.type}
+                      </h3>
+                      <span className="shrink-0 rounded-md bg-[var(--color-navy)]/10 px-2 py-0.5 text-[10px] font-bold text-[var(--color-navy)]">
+                        {labels.card?.recommended ?? "Recommended"}
+                      </span>
+                    </div>
+                    {item.metadata?.level && (
+                      <p className="mt-2 text-xs font-semibold text-muted">
+                        {labels.card?.level?.replace("{level}", item.metadata.level) ?? `Level ${item.metadata.level}`}
+                      </p>
+                    )}
+                    {item.metadata?.difficulty && (
+                      <p className="mt-1 text-[11px] text-muted">
+                        {labels.card?.difficulty?.replace("{difficulty}", item.metadata.difficulty) ?? item.metadata.difficulty}
+                      </p>
+                    )}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-3 text-body-sm text-muted">
+                {labels.recommendedEmpty ?? "No personalized recommendations yet. Complete a practice session to get tailored suggestions."}
+              </p>
             )}
           </div>
 
-          {/* Type filter — bento cards */}
+          {/* Due Reviews banner */}
+          {dueCount > 0 && (
+            <button
+              type="button"
+              onClick={handleStartReview}
+              className="flex w-full items-center gap-3 overflow-hidden rounded-xl border border-amber-200/60 bg-gradient-to-br from-amber-50/60 to-orange-50/30 p-4 text-left shadow-sm transition hover:border-amber-300/60 hover:shadow-md active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+            >
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-100 text-lg" aria-hidden>🔄</span>
+              <div>
+                <p className="text-sm font-bold text-ink">{labels.card?.continue ?? "Continue"} — Review</p>
+                <p className="text-xs font-semibold text-muted">
+                  {dueCount} {labels.card?.questions?.replace("{count}", String(dueCount)) ?? `${dueCount} items due`}
+                </p>
+              </div>
+            </button>
+          )}
+
+          {/* Daily Progress */}
+          {dailyProgress && (
+            <div className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-overline text-muted">Daily Goal</span>
+                {dailyProgress.isComplete && (
+                  <span className="rounded-full bg-[var(--color-leaf)]/12 px-2.5 py-0.5 text-xs font-bold text-[var(--color-leaf)]">✓</span>
+                )}
+              </div>
+              <p className="mt-2 text-2xl font-bold tabular-nums text-ink">
+                {dailyProgress.completed}<span className="text-base font-medium text-muted">/{dailyProgress.goal}</span>
+              </p>
+              <div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--color-border)]">
+                <div
+                  className="h-full rounded-full bg-[var(--color-navy)] transition-all duration-700 ease-out"
+                  style={{ width: `${Math.min(dailyProgress.progress * 100, 100)}%` }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Filter chips — skill/type filters backed by real exercise types */}
           <div>
-            <p className="mb-3 text-xs font-black uppercase tracking-wider text-muted">
-              {labels.filterType}
-            </p>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="flex flex-wrap gap-2">
+              {(["all", "listening", "reading", "grammar", "vocabulary", "keigo"] as const).map((f) => {
+                const active = activeFilter === f;
+                const labelKey = f as keyof NonNullable<ExercisesLabels["filters"]>;
+                const chipLabel = labels.filters?.[labelKey] ?? f;
+                return (
+                  <button
+                    key={f}
+                    type="button"
+                    onClick={() => setActiveFilter(f)}
+                    className={`min-h-[36px] rounded-lg px-3.5 py-1.5 text-sm font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-navy)] ${
+                      active
+                        ? "bg-[var(--color-navy)] text-white shadow-sm"
+                        : "bg-[var(--color-paper)] text-muted hover:bg-[var(--color-border)] hover:text-ink"
+                    }`}
+                  >
+                    {chipLabel}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Browse All — Type filter bento cards */}
+          <div>
+            <h2 className="text-h3 text-ink">{labels.browseAll ?? "Browse all exercises"}</h2>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {EXERCISE_TYPES.map((t) => {
                 const active = selectedType === t;
                 return (
                   <button
                     key={t}
-                    className={`exercise-type-card group relative overflow-hidden rounded-2xl border p-4 text-left transition-all ${
+                    className={`exercise-type-card group relative overflow-hidden rounded-xl border p-4 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-navy)] ${
                       active
-                        ? "border-accent/30 bg-gradient-to-br from-accent/8 to-blue-50/60 shadow-md shadow-accent/10 ring-1 ring-accent/15"
-                        : "border-ink/8 bg-white hover:border-ink/15 hover:bg-paper hover:shadow-sm"
+                        ? "border-[var(--color-navy)]/30 bg-[var(--color-navy)]/5 shadow-md ring-1 ring-[var(--color-navy)]/15"
+                        : "border-[var(--color-border)] bg-[var(--color-surface)] hover:border-[var(--color-border-hover)] hover:shadow-sm"
                     }`}
                     onClick={() => setSelectedType(t)}
                     type="button"
                   >
                     <span className={`grid h-10 w-10 place-items-center rounded-xl text-lg transition-colors ${
                       active
-                        ? "bg-accent/12 shadow-sm"
-                        : "bg-ink/[0.04] group-hover:bg-ink/[0.06]"
+                        ? "bg-[var(--color-navy)]/12 shadow-sm"
+                        : "bg-[var(--color-paper)] group-hover:bg-[var(--color-border)]"
                     }`} aria-hidden>
                       {EXERCISE_TYPE_ICONS[t]}
                     </span>
-                    <span className="mt-3 block text-sm font-black text-ink">
+                    <span className="mt-3 block text-sm font-bold text-ink">
                       {labels.types[t] ?? t}
                     </span>
-                    <span className="mt-0.5 block text-[11px] font-semibold text-muted">
+                    <span className="mt-0.5 block text-[11px] font-medium text-muted">
                       {EXERCISE_TYPE_HINTS[t]}
                     </span>
                     {active ? (
-                      <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[10px] text-white" aria-hidden>✓</span>
+                      <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--color-navy)] text-[10px] text-white" aria-hidden>✓</span>
                     ) : null}
                   </button>
                 );
@@ -399,7 +527,7 @@ export function ExercisesPageClient({
 
           {/* Level filter — pill buttons */}
           <div>
-            <p className="mb-3 text-xs font-black uppercase tracking-wider text-muted">
+            <p className="mb-3 text-overline text-muted">
               {labels.filterLevel}
             </p>
             <div className="flex flex-wrap gap-2">
@@ -408,10 +536,10 @@ export function ExercisesPageClient({
                 return (
                   <button
                     key={l}
-                    className={`exercise-level-pill min-h-[40px] rounded-xl px-4 py-2 text-sm font-bold transition-all ${
+                    className={`exercise-level-pill min-h-[40px] rounded-xl px-4 py-2 text-sm font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-navy)] ${
                       active
-                        ? "bg-ink text-surface shadow-sm"
-                        : "bg-paper text-ink/70 hover:bg-ink/5"
+                        ? "bg-[var(--color-navy)] text-white shadow-sm"
+                        : "bg-[var(--color-paper)] text-muted hover:bg-[var(--color-border)] hover:text-ink"
                     }`}
                     onClick={() => setSelectedLevel(l)}
                     type="button"

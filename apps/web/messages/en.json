@@ -1814,7 +1814,33 @@
     "filterLevel": "level",
     "questionOf": "Question {current} / {total}",
     "timeSpent": "Time required",
-    "error": "An error has occurred. Please try again."
+    "error": "An error has occurred. Please try again.",
+    "recommended": "Recommended for you",
+    "recommendedEmpty": "No personalized recommendations yet. Complete a practice session to get tailored suggestions.",
+    "browseAll": "Browse all exercises",
+    "filters": {
+      "all": "All",
+      "recommended": "Recommended",
+      "listening": "Listening",
+      "reading": "Reading",
+      "grammar": "Grammar",
+      "vocabulary": "Vocabulary",
+      "keigo": "Keigo"
+    },
+    "card": {
+      "questions": "{count} questions",
+      "duration": "{min} min",
+      "level": "Level {level}",
+      "difficulty": "{difficulty}",
+      "recommended": "Recommended",
+      "weakArea": "Weak area",
+      "continue": "Continue"
+    },
+    "empty": {
+      "noResults": "No exercises match your filters.",
+      "clearFilters": "Clear filters",
+      "loading": "Loading exercises…"
+    }
   },
   "gamification": {
     "title": "Achievements",
