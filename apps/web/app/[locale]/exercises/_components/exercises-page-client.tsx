@@ -89,6 +89,24 @@ export interface ExercisesLabels {
     clearFilters: string;
     loading: string;
   };
+  review?: {
+    title: string;
+    back: string;
+    notFound: string;
+    correctAnswer: string;
+    ratingPrompt: string;
+    again: string;
+    hard: string;
+    good: string;
+    easy: string;
+    recorded: string;
+    next: string;
+    complete: string;
+  };
+  completed?: {
+    goalComplete: string;
+    todayProgress: string;
+  };
 }
 
 interface StudyFeedItem {
@@ -572,14 +590,14 @@ export function ExercisesPageClient({
               <span className="rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-black tabular-nums text-amber-700 shadow-sm">
                 {reviewIndex + 1}/{reviewItems.length}
               </span>
-              <span className="text-sm font-bold text-muted">Ôn tập</span>
+              <span className="text-sm font-bold text-muted">{labels.review?.title ?? "Review"}</span>
             </div>
             <button
               type="button"
               className="text-xs font-bold text-muted hover:text-ink"
               onClick={() => { setPhase("setup"); setReviewItems([]); }}
             >
-              ← Quay lại
+              {labels.review?.back ?? "← Back"}
             </button>
           </div>
 
@@ -595,7 +613,7 @@ export function ExercisesPageClient({
           {(() => {
             const item = reviewItems[reviewIndex];
             const ex = item?.exercise as Exercise | null;
-            if (!ex) return <p className="text-sm text-muted">Không tìm thấy bài tập.</p>;
+            if (!ex) return <p className="text-sm text-muted">{labels.review?.notFound ?? "Exercise not found."}</p>;
 
             return (
               <div className="overflow-hidden rounded-[1.5rem] border border-amber-200/40 bg-white shadow-sm">
@@ -615,7 +633,7 @@ export function ExercisesPageClient({
                 <div className="p-5 sm:p-6">
                   {/* Show correct answer */}
                   <div className="rounded-xl border border-leaf/15 bg-leaf/5 p-4">
-                    <p className="text-xs font-black uppercase tracking-wider text-leaf">Đáp án đúng</p>
+                    <p className="text-xs font-black uppercase tracking-wider text-leaf">{labels.review?.correctAnswer ?? "Correct answer"}</p>
                     <p className="mt-1 text-sm font-bold text-ink">
                       {ex.choices?.find((c) => c.key === (ex.correctAnswer as Record<string, string>)?.key)?.text
                         ?? JSON.stringify(ex.correctAnswer)}
@@ -628,34 +646,34 @@ export function ExercisesPageClient({
                   {/* SRS Rating buttons */}
                   {!reviewRated ? (
                     <div className="mt-5">
-                      <p className="mb-3 text-xs font-black uppercase tracking-wider text-muted">Bạn nhớ tốt không?</p>
+                      <p className="mb-3 text-xs font-black uppercase tracking-wider text-muted">{labels.review?.ratingPrompt ?? "How well do you remember?"}</p>
                       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                         {([
-                          { key: "again", label: "Quên", color: "border-sakura/30 bg-sakura/8 text-sakura hover:bg-sakura/15" },
-                          { key: "hard", label: "Khó", color: "border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100" },
-                          { key: "good", label: "Được", color: "border-leaf/20 bg-leaf/8 text-leaf hover:bg-leaf/15" },
-                          { key: "easy", label: "Dễ", color: "border-accent/20 bg-accent/8 text-accent hover:bg-accent/15" },
-                        ] as const).map((r) => (
+                          { key: "again" as const, color: "border-sakura/30 bg-sakura/8 text-sakura hover:bg-sakura/15" },
+                          { key: "hard" as const, color: "border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100" },
+                          { key: "good" as const, color: "border-leaf/20 bg-leaf/8 text-leaf hover:bg-leaf/15" },
+                          { key: "easy" as const, color: "border-accent/20 bg-accent/8 text-accent hover:bg-accent/15" },
+                        ]).map((r) => (
                           <button
                             key={r.key}
                             type="button"
                             className={`min-h-11 rounded-xl border px-4 py-2.5 text-sm font-black transition ${r.color} active:scale-[0.97]`}
                             onClick={() => handleSrsRating(r.key)}
                           >
-                            {r.label}
+                            {labels.review?.[r.key] ?? r.key}
                           </button>
                         ))}
                       </div>
                     </div>
                   ) : (
                     <div className="mt-5 flex items-center justify-between">
-                      <span className="text-sm font-bold text-leaf">✓ Đã ghi nhận</span>
+                      <span className="text-sm font-bold text-leaf">{labels.review?.recorded ?? "✓ Recorded"}</span>
                       <button
                         type="button"
                         className="flex min-h-11 items-center gap-2 rounded-xl bg-ink px-5 text-sm font-black text-surface shadow-sm transition hover:bg-ink/90 active:scale-[0.98]"
                         onClick={handleNextReview}
                       >
-                        {reviewIndex >= reviewItems.length - 1 ? "Hoàn thành" : "Tiếp theo"}
+                        {reviewIndex >= reviewItems.length - 1 ? (labels.review?.complete ?? "Complete") : (labels.review?.next ?? "Next")}
                         <span aria-hidden>→</span>
                       </button>
                     </div>
@@ -778,8 +796,8 @@ export function ExercisesPageClient({
                 <div className="flex items-center gap-3">
                   <span className="grid h-10 w-10 place-items-center rounded-xl bg-leaf/15 text-xl" aria-hidden>🏆</span>
                   <div className="text-left">
-                    <p className="text-sm font-black text-leaf">Mục tiêu hoàn thành!</p>
-                    <p className="text-xs font-semibold text-muted">{dailyProgress.completed}/{dailyProgress.goal} bài hôm nay</p>
+                    <p className="text-sm font-black text-leaf">{labels.completed?.goalComplete ?? "Goal complete!"}</p>
+                    <p className="text-xs font-semibold text-muted">{labels.completed?.todayProgress?.replace("{completed}", String(dailyProgress.completed)).replace("{goal}", String(dailyProgress.goal)) ?? `${dailyProgress.completed}/${dailyProgress.goal} exercises today`}</p>
                   </div>
                 </div>
               </div>

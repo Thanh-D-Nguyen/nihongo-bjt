@@ -1840,6 +1840,24 @@
       "noResults": "No exercises match your filters.",
       "clearFilters": "Clear filters",
       "loading": "Loading exercises…"
+    },
+    "review": {
+      "title": "Review",
+      "back": "← Back",
+      "notFound": "Exercise not found.",
+      "correctAnswer": "Correct answer",
+      "ratingPrompt": "How well do you remember?",
+      "again": "Forgot",
+      "hard": "Hard",
+      "good": "Good",
+      "easy": "Easy",
+      "recorded": "✓ Recorded",
+      "next": "Next",
+      "complete": "Complete"
+    },
+    "completed": {
+      "goalComplete": "Goal complete!",
+      "todayProgress": "{completed}/{goal} exercises today"
     }
   },
   "gamification": {

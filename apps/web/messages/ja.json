@@ -1840,6 +1840,24 @@
       "noResults": "フィルターに一致する練習はありません。",
       "clearFilters": "フィルターをクリア",
       "loading": "練習を読み込み中…"
+    },
+    "review": {
+      "title": "復習",
+      "back": "← 戻る",
+      "notFound": "練習が見つかりません。",
+      "correctAnswer": "正解",
+      "ratingPrompt": "どれくらい覚えていますか？",
+      "again": "忘れた",
+      "hard": "難しい",
+      "good": "普通",
+      "easy": "簡単",
+      "recorded": "✓ 記録済み",
+      "next": "次へ",
+      "complete": "完了"
+    },
+    "completed": {
+      "goalComplete": "目標達成！",
+      "todayProgress": "今日 {completed}/{goal} 問"
     }
   },
   "gamification": {

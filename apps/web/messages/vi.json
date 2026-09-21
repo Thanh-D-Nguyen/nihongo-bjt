@@ -1840,6 +1840,24 @@
       "noResults": "Không có bài tập nào phù hợp với bộ lọc.",
       "clearFilters": "Xóa bộ lọc",
       "loading": "Đang tải bài tập…"
+    },
+    "review": {
+      "title": "Ôn tập",
+      "back": "← Quay lại",
+      "notFound": "Không tìm thấy bài tập.",
+      "correctAnswer": "Đáp án đúng",
+      "ratingPrompt": "Bạn nhớ tốt không?",
+      "again": "Quên",
+      "hard": "Khó",
+      "good": "Được",
+      "easy": "Dễ",
+      "recorded": "✓ Đã ghi nhận",
+      "next": "Tiếp theo",
+      "complete": "Hoàn thành"
+    },
+    "completed": {
+      "goalComplete": "Mục tiêu hoàn thành!",
+      "todayProgress": "{completed}/{goal} bài hôm nay"
     }
   },
   "gamification": {
