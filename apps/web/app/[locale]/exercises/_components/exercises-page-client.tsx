@@ -136,6 +136,16 @@ const EXERCISE_TYPE_HINTS: Record<string, string> = {
   listening: "Nghe và chọn đáp án đúng",
 };
 
+/* ── Filter chip → exercise type mapping ─────────────────────────────── */
+const FILTER_TO_TYPES: Record<string, readonly string[]> = {
+  all: EXERCISE_TYPES as unknown as readonly string[],
+  listening: ["listening"],
+  reading: ["cloze", "word_order"],
+  grammar: ["word_order", "translation"],
+  vocabulary: ["meaning_match", "cloze"],
+  keigo: ["translation"],
+};
+
 /* ── Component ─────────────────────────────────────────────────────────── */
 
 export function ExercisesPageClient({
@@ -397,9 +407,19 @@ export function ExercisesPageClient({
                   <div key={i} className="h-32 animate-pulse rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]" />
                 ))}
               </div>
-            ) : studyFeed.length > 0 ? (
+            ) : studyFeed.filter((item) => {
+                if (activeFilter === "all") return true;
+                const metaType = item.metadata?.exerciseType as string | undefined;
+                const allowedTypes = FILTER_TO_TYPES[activeFilter];
+                return metaType && allowedTypes ? allowedTypes.includes(metaType) : false;
+              }).length > 0 ? (
               <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {studyFeed.map((item) => (
+                {studyFeed.filter((item) => {
+                  if (activeFilter === "all") return true;
+                  const metaType = item.metadata?.exerciseType as string | undefined;
+                  const allowedTypes = FILTER_TO_TYPES[activeFilter];
+                  return metaType && allowedTypes ? allowedTypes.includes(metaType) : false;
+                }).map((item) => (
                   <button
                     key={item.id}
                     type="button"
@@ -508,7 +528,11 @@ export function ExercisesPageClient({
           <div>
             <h2 className="text-h3 text-ink">{labels.browseAll ?? "Browse all exercises"}</h2>
             <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {EXERCISE_TYPES.map((t) => {
+              {EXERCISE_TYPES.filter((t) => {
+                if (activeFilter === "all") return true;
+                const allowedTypes = FILTER_TO_TYPES[activeFilter];
+                return allowedTypes ? allowedTypes.includes(t) : true;
+              }).map((t) => {
                 const active = selectedType === t;
                 return (
                   <button

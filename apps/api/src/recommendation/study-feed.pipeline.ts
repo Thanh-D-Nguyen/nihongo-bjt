@@ -170,6 +170,12 @@ class WeakAreaDiscoverySource implements CandidateSource<StudyCandidate> {
         skillTag: r.tags[0],
         difficulty: this.normalizeDifficulty(r.difficulty),
         createdAt: Date.now(),
+        metadata: {
+          exerciseType: r.exercise_type,
+          level: r.level ?? undefined,
+          difficulty: r.difficulty,
+          tags: r.tags.join(","),
+        },
       },
       features: {
         weak_area_match: 1.0,
