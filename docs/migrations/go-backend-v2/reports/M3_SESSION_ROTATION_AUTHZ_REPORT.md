@@ -30,7 +30,7 @@ Independent review identified five blocking findings. All addressed:
 
 4. **Report accuracy**: Previous report falsely stated integration tests were ENVIRONMENT_BLOCKED. Integration tests were independently run and passed twice against disposable PG17 (see Verification Results below). Removed all references to deleted test helper. Distinguished unit tests (no DB) from integration tests (disposable PG17).
 
-5. **Intended-only commit**: Only `store.go`, `middleware.go`, `middleware_test.go`, and this report are modified. `ORCHESTRATION_STATE.md` left untouched until Sol gate acceptance. Unrelated dirty files preserved.
+5. **Cumulative scope**: The accepted M3 remainder wave spans seven commits after base `a0522664`. Cumulative diff adds `authz/middleware.go`, `authz/middleware_test.go`, `session/rotation_test.go`; modifies `session/store.go`, `session/store_test.go`, `authz/rbac_test.go`; deletes `authn/testing.go` (removed at `621320b0`); and maintains this report. `ORCHESTRATION_STATE.md` updated only after Sol gate acceptance. Unrelated dirty files preserved throughout.
 
 ## Artifact List (Cumulative M3 Remainder Wave)
 
@@ -38,10 +38,12 @@ Independent review identified five blocking findings. All addressed:
 |---|---|---|
 | Session store (rotation) | `apps/api-go/internal/session/store.go` | REPAIRED (bounded txCtx derived from caller, atomic rotation) |
 | Session store tests | `apps/api-go/internal/session/store_test.go` | REPAIRED (direct expired/revoked/disabled rotation rejection for learner and admin; concurrent-winner tests for both namespaces) |
+| Session rotation tests | `apps/api-go/internal/session/rotation_test.go` | ADDED (atomic rotation integration tests for learner and admin) |
 | Test helper (deleted) | `apps/api-go/internal/authn/testing.go` | DELETED at `621320b0` (was untracked production bypass risk) |
-| Admin authz middleware | `apps/api-go/internal/authz/middleware.go` | REPAIRED (unexported key, generic deny, nil safety) |
-| Admin authz middleware tests | `apps/api-go/internal/authz/middleware_test.go` | REWRITTEN (real guard chain, mock seam, no test helper) |
-| M3 rotation/authz report | `docs/migrations/go-backend-v2/reports/M3_SESSION_ROTATION_AUTHZ_REPORT.md` | REWRITTEN across five commits (this file) |
+| Admin authz middleware | `apps/api-go/internal/authz/middleware.go` | ADDED (composed AdminGuard → RequirePermission/RequireAnyPermission) |
+| Admin authz middleware tests | `apps/api-go/internal/authz/middleware_test.go` | ADDED (real guard chain, mock seam, no test helper) |
+| Admin RBAC tests | `apps/api-go/internal/authz/rbac_test.go` | REPAIRED (distinct placeholders for varchar/text in seedRoleWithPermission) |
+| M3 rotation/authz report | `docs/migrations/go-backend-v2/reports/M3_SESSION_ROTATION_AUTHZ_REPORT.md` | REWRITTEN across seven commits (this file) |
 
 ## Architecture Decisions
 
@@ -102,7 +104,7 @@ Both runs executed against the same fresh production-like DB instance, proving r
 
 ## Rollback
 
-Code-level only. No schema changes. Revert all six M3 remainder commits after accepted base `a0522664` in reverse chronological order: `<pending>`, `7db1e777`, `c45eddbc`, `3c4603d1`, `621320b0`, `02fd4874`, `a2dd34d0`. Existing M2 session tables remain intact. No data migration to reverse. Do not use history rewrite.
+Code-level only. No schema changes. Revert all seven M3 remainder commits after accepted base `a0522664` in reverse chronological order: `3e228d1e`, `7db1e777`, `c45eddbc`, `3c4603d1`, `621320b0`, `02fd4874`, `a2dd34d0`. Existing M2 session tables remain intact. No data migration to reverse. Do not use history rewrite.
 
 ## M3 Full Credential Gate Status
 
