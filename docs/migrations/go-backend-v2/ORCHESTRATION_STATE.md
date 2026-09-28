@@ -1,9 +1,9 @@
 # Go Backend Migration Orchestration State
 
-- Current phase: M3_PARTIAL complete — session core security repairs verified; credential gate remains pending
-- Current accepted code checkpoint: `0d59a78684e6215694d91e2a67cd2c5853b79ac4` (M3 partial only)
-- Last completed wave: M3_PARTIAL (`M3_PARTIAL_SESSION_CORE_REPAIR_PASS`; credential gate GATED_UNKNOWN_PRODUCTION)
-- Next wave: M3 independent auth infrastructure (session middleware, CSRF/rate-limit foundations, first-party Argon2id hashing); legacy credential verifier and cutover remain gated on production evidence
+- Current phase: M3_INDEPENDENT_AUTH_INFRA complete — Argon2id hasher, HTTP session guards, CSRF defense verified; credential gate remains pending
+- Current accepted code checkpoint: `0d59a78684e6215694d91e2a67cd2c5853b79ac4` (M3 partial session core) + uncommitted M3 auth infra (pending review)
+- Last completed wave: M3_INDEPENDENT_AUTH_INFRA (Argon2id credential package, learner/admin HTTP guards, CSRF middleware; all tests PASS including race; ARM64 build PASS; credential gate GATED_UNKNOWN_PRODUCTION)
+- Next wave: M3 full (login endpoints, legacy Keycloak verifier) — BLOCKED on production Keycloak credential format confirmation
 - Completed checkpoint commits:
   - `0fc4486f5cfd2edc4433359753be573605234006` — P0.1 plan rebase
   - `6b3a5a6a` — M0 repository truth
