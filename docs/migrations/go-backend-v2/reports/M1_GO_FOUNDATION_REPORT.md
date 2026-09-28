@@ -2,7 +2,7 @@
 
 ## Identification
 - **Starting HEAD**: `025124c3336f819b9ac0d30ba80c1da752800f92`
-- **Final HEAD**: (pending final repair commit)
+- **Accepted M1 checkpoint**: `0cb530224b8f4cedaea37b442254c2835bc03d08`
 - **Branch**: `main`
 - **Wave**: M1 — Go foundation + deployment foundations
 - **Date**: 2026-09-28

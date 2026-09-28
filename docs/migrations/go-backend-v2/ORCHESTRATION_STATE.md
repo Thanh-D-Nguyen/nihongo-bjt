@@ -1,7 +1,7 @@
 # Go Backend Migration Orchestration State
 
 - Current phase: M2 — Identity/auth persistence + Keycloak credential investigation gate (next)
-- Current accepted HEAD: (pending final M1 repair commit)
+- Current accepted HEAD: `0cb530224b8f4cedaea37b442254c2835bc03d08`
 - Last completed wave: M1 (`M1_PASS` — repaired after three REVISE rounds including typed-nil Redis fix and real Docker ARM64 container validation)
 - Next wave: M2 — Identity/auth persistence + Keycloak credential investigation gate
 - Completed checkpoint commits:
@@ -18,7 +18,7 @@
   - `54ef68d4` — M1 Go foundation (initial, REVISE after independent review)
   - `1f76f8ce` — M1 repair round 1 (ping seams, config validation, safe errors, meaningful tests)
   - `b80a174d` — M1 repair round 2 (dependency alignment to Go 1.23-compatible versions)
-  - (pending) — M1 repair round 3 (typed-nil Redis interface fix, composition regression test, Docker ARM64 container validation)
+  - `0cb53022` — M1 repair round 3; accepted M1 checkpoint (typed-nil Redis fix and Docker ARM64 validation)
 - Open blockers: none for M2
 - Gated unknowns: Keycloak credential format (M2 hard gate); Google OAuth production status (M4); production MinIO object inventory (M7)
 - Important architecture decisions: Go `net/http` + chi + pgx; first-party opaque sessions; PostgreSQL authoritative; Redis retained for ephemeral concerns; Meilisearch retained; learner Web keeps Next runtime; Admin static export evaluated only after M6; media target is `gocloud.dev/blob/fileblob` at `/srv/kotobawork/data/media`; uploads stream through Go; public media via Caddy; private media via authenticated Go streaming; no replacement S3 daemon by default; Go API runs on port 4001 parallel with NestJS :4000 during migration; toolchain pinned to Go 1.23 across go.mod/Dockerfile/CI; ping seams for testable readiness without live dependencies; typed-nil guard at composition boundary prevents Go interface nil pitfall
