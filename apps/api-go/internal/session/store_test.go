@@ -587,3 +587,32 @@ func TestRotateAdminSession_ConcurrentWinner(t *testing.T) {
 		t.Errorf("old token should be invalid after rotation, got %v", err)
 	}
 }
+
+func TestRotateAdminSession_RejectsRevokedToken(t *testing.T) {
+	db := testPool(t)
+	store := NewStore(db)
+	actorID := newUUID(t)
+	seedActiveAdmin(t, db, actorID)
+
+	raw, err := store.CreateAdminSession(context.Background(), actorID, "", "", time.Now().Add(24*time.Hour))
+	if err != nil {
+		t.Fatalf("CreateAdminSession: %v", err)
+	}
+
+	// Obtain session ID and revoke through Store with correct owner
+	var sessID string
+	err = db.QueryRow(context.Background(),
+		`SELECT id FROM auth.admin_session WHERE actor_id = $1 AND revoked_at IS NULL ORDER BY created_at DESC LIMIT 1`, actorID).Scan(&sessID)
+	if err != nil {
+		t.Fatalf("find admin session: %v", err)
+	}
+	if err := store.RevokeAdminSession(context.Background(), sessID, actorID); err != nil {
+		t.Fatalf("RevokeAdminSession: %v", err)
+	}
+
+	// Rotation with the same raw token must fail
+	_, err = store.RotateAdminSession(context.Background(), raw, "", "", time.Now().Add(24*time.Hour))
+	if !errors.Is(err, ErrSessionNotFound) {
+		t.Errorf("expected ErrSessionNotFound for revoked admin token rotation, got %v", err)
+	}
+}

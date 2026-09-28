@@ -40,7 +40,7 @@ Independent review identified five blocking findings. All addressed:
 
 1. **Atomic rotation via pgx transaction**: Old session revoked and new session inserted in single transaction with `FOR UPDATE` row lock. Prevents concurrent rotation races and ensures old token is invalidated before new token is returned.
 2. **Owner-scoped revocation**: Rotation requires matching owner identity (userID or actorID) derived from valid current session. Cross-user/cross-actor rotation is impossible by construction.
-3. **Bounded transaction context**: All transaction operations use 5s `txCtx` independent of caller context. Prevents unbounded blocking on stuck transactions.
+3. **Bounded transaction context**: All transaction operations use a 5s `txCtx` derived from the caller context. The transaction inherits caller cancellation AND enforces its own 5s deadline, preventing unbounded blocking on stuck transactions while respecting upstream cancellation.
 4. **Mock SessionLookup seam**: `authz/middleware_test.go` defines a local `mockSessionLookup` interface satisfying `authn.SessionLookup`. Enables full guard chain testing without DB or test helpers in production packages.
 5. **Generic permission denial**: Denial responses never expose specific permission codes. Prevents information leakage about RBAC policy structure.
 6. **Unexported context key**: `adminPrincipalKey` is unexported; only `GetPrincipal()` provides read access. Prevents external packages from fabricating authenticated context.
