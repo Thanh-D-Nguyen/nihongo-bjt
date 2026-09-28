@@ -1,9 +1,9 @@
 # Go Backend Migration Orchestration State
 
-- Current phase: M3 limited work — credential gate remains pending
-- Current accepted HEAD: `9c98bad90628d1ca24f71c3034aa3d4a63bf8851` (M2 persistence checkpoint; credential gate pending)
-- Last completed wave: M2 persistence (`M2_PERSISTENCE_PASS_CREDENTIAL_GATE_PENDING`)
-- Next wave: M3 — Go HTTP handler scaffolding (non-auth); credential verifier BLOCKED until production Keycloak format confirmed
+- Current phase: M3_PARTIAL complete — session core + RBAC loader done; credential gate remains pending
+- Current accepted HEAD: `b2c61e0d3a5b148922322e80e7e835be74feb719` (M3 partial session core checkpoint)
+- Last completed wave: M3_PARTIAL (`M3_PARTIAL_SESSION_CORE_PASS`; credential gate GATED_UNKNOWN_PRODUCTION)
+- Next wave: M3 remaining (login/password endpoints, HTTP session middleware) BLOCKED until production Keycloak credential format confirmed; non-auth M3 scaffolding may proceed independently
 - Completed checkpoint commits:
   - `0fc4486f5cfd2edc4433359753be573605234006` — P0.1 plan rebase
   - `6b3a5a6a` — M0 repository truth
