@@ -1,9 +1,10 @@
 # Migration Status (Revised)
 ## Current checkpoint
-- Wave: H0 (complete) → M1 next
+- Wave: M1 (complete) → M2 next
 - Accepted M0 checkpoint: `8808472426195547c779c662981d8dc582b580ca`
-- H0 report: `reports/H0_DOCUMENTATION_HYGIENE_REPORT.md`
-- Status: H0_PASS — documentation classified, stale references identified, no destructive actions
+- Accepted H0 checkpoint: `17c3e606b0a333103445ed054582b726bff52781`
+- M1 report: `reports/M1_GO_FOUNDATION_REPORT.md`
+- Status: M1_PASS_WITH_ENVIRONMENT_BLOCKED_DOCKER — Go scaffold verified; Docker ARM64 build blocked by local daemon unavailability
 ## Completed
 - Repository inventory captured (100 controllers, 710 HTTP routes, 174 Prisma models, 22 PostgreSQL schemas)
 - API compatibility matrix COMPLETE: 710 per-route rows extracted from all 100 controller files

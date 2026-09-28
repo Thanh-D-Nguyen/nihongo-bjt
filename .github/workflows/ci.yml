@@ -47,3 +47,20 @@ jobs:
       - run: pnpm test
       - run: pnpm openapi:generate
       - run: pnpm build
+
+  go-checks:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api-go
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+      - run: go mod download
+      - run: gofmt -l . | tee /dev/stderr | (! read)
+      - run: go vet ./...
+      - run: go test ./...
+      - run: go test -race ./...
+      - run: GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -o /dev/null ./cmd/api

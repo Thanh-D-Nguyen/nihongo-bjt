@@ -1,0 +1,154 @@
+// Package httpserver provides the HTTP server, router, and health endpoints.
+package httpserver
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"log/slog"
+	"net/http"
+	"time"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
+
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/config"
+)
+
+// Dependencies holds external dependencies required by the HTTP server.
+type Dependencies struct {
+	Config  *config.Config
+	Logger  *slog.Logger
+	DB      *pgxpool.Pool
+	Redis   *redis.Client // nil if Redis is not configured
+	Version string
+}
+
+// NewRouter creates the chi router with all routes and middleware.
+func NewRouter(deps Dependencies) http.Handler {
+	r := chi.NewRouter()
+
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
+	r.Use(slogMiddleware(deps.Logger))
+	r.Use(middleware.Recoverer)
+	r.Use(middleware.Timeout(30 * time.Second))
+
+	r.Get("/health/live", liveHandler(deps))
+	r.Get("/health/ready", readyHandler(deps))
+
+	return r
+}
+
+// Server wraps the HTTP server with configuration.
+type Server struct {
+	httpServer *http.Server
+	logger     *slog.Logger
+}
+
+// NewServer creates a new configured HTTP server.
+func NewServer(deps Dependencies, handler http.Handler) *Server {
+	return &Server{
+		httpServer: &http.Server{
+			Addr:         ":" + deps.Config.Port,
+			Handler:      handler,
+			ReadTimeout:  deps.Config.ServerReadTimeout,
+			WriteTimeout: deps.Config.ServerWriteTimeout,
+			IdleTimeout:  deps.Config.ServerIdleTimeout,
+		},
+		logger: deps.Logger,
+	}
+}
+
+// Start begins listening. It returns immediately; use Shutdown to stop.
+func (s *Server) Start() error {
+	s.logger.Info("HTTP server starting", "addr", s.httpServer.Addr)
+	if err := s.httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		return fmt.Errorf("http server: %w", err)
+	}
+	return nil
+}
+
+// Shutdown gracefully stops the server with the given context deadline.
+func (s *Server) Shutdown(ctx context.Context) error {
+	s.logger.Info("HTTP server shutting down")
+	return s.httpServer.Shutdown(ctx)
+}
+
+func liveHandler(deps Dependencies) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(map[string]string{
+			"status": "ok",
+		})
+	}
+}
+
+func readyHandler(deps Dependencies) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		status := "ok"
+		httpStatus := http.StatusOK
+		checks := map[string]string{}
+
+		// Check PostgreSQL
+		dbCtx, dbCancel := context.WithTimeout(ctx, 3*time.Second)
+		defer dbCancel()
+		if err := deps.DB.Ping(dbCtx); err != nil {
+			checks["postgres"] = "fail"
+			status = "degraded"
+			httpStatus = http.StatusServiceUnavailable
+			deps.Logger.Error("readiness: postgres ping failed", "error", err)
+		} else {
+			checks["postgres"] = "ok"
+		}
+
+		// Check Redis (only if configured)
+		if deps.Redis != nil {
+			redisCtx, redisCancel := context.WithTimeout(ctx, 3*time.Second)
+			defer redisCancel()
+			if err := deps.Redis.Ping(redisCtx).Err(); err != nil {
+				checks["redis"] = "fail"
+				status = "degraded"
+				httpStatus = http.StatusServiceUnavailable
+				deps.Logger.Error("readiness: redis ping failed", "error", err)
+			} else {
+				checks["redis"] = "ok"
+			}
+		} else {
+			checks["redis"] = "not_configured"
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(httpStatus)
+		resp := map[string]interface{}{
+			"status": status,
+			"checks": checks,
+		}
+		if deps.Version != "" {
+			resp["version"] = deps.Version
+		}
+		_ = json.NewEncoder(w).Encode(resp)
+	}
+}
+
+func slogMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			start := time.Now()
+			ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
+			next.ServeHTTP(ww, r)
+			logger.LogAttrs(r.Context(), slog.LevelInfo, "request",
+				slog.String("method", r.Method),
+				slog.String("path", r.URL.Path),
+				slog.Int("status", ww.Status()),
+				slog.Duration("duration", time.Since(start)),
+				slog.Int("bytes", ww.BytesWritten()),
+			)
+		})
+	}
+}
