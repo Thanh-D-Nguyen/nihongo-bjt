@@ -4,10 +4,12 @@
 - **Starting HEAD**: `ef26020d` (post-checkpoint docs)
 - **Initial M3_INDEPENDENT_ENDPOINTS commit**: `bd57e52` (REVISE after independent review)
 - **Repair commits**: CSRF wiring, admin/me deferral, handler/router tests, CORS config tests
+- **Test/profile repair commit**: `296bf63` (UUID v4 IDs, t.Skip for no-DB, profile omitempty fix)
 - **Branch**: `main`
 - **Wave**: M3_INDEPENDENT_ENDPOINTS — learner/admin session endpoints and profile store
 - **Date**: 2026-09-28
 - **Prior accepted checkpoint**: `3e228d1e` (M3 rotation/authz remainder)
+- **Sol acceptance status**: PENDING — implementation evidence complete, awaiting independent review
 
 ## Scope
 HTTP handler scaffolding for learner and admin session endpoints that are independent of password credential verification. Profile store for current-user data. CSRF guard wiring from CORS_ORIGINS. No login endpoint, no credential verifier, no rate limiter (deferred — see below).
@@ -76,7 +78,7 @@ No Next.js route handler changes. Go endpoints are additive and run on port 4001
 3. **Owner-scoped revocation**: `RevokeLearnerSession(ctx, sessionID, userID)` requires both session ID and owning user ID — prevents cross-user revocation. Same pattern for admin.
 4. **Disabled account rejection**: Lookup queries JOIN parent table and filter `status = 'active'`. Disabled accounts return `ErrSessionNotFound` (generic 401).
 5. **No credential leakage**: Error responses use generic messages ("unauthorized", "internal"). Detailed errors logged server-side only.
-6. **Profile response safety**: `GetLearnerProfile` selects only public columns. No password hash, keycloak subject, or internal metadata exposed.
+6. **Profile response safety**: `GetLearnerPublicProfile` selects only public columns. No password hash or internal metadata exposed. `keycloakSubject` IS returned to match NestJS `AuthController.me` behavior (Prisma select includes it). For future first-party users without a Keycloak subject, the field will be null; no synthetic sub is invented.
 7. **Token format validation**: `ValidateRawToken` rejects empty, wrong-length, non-hex tokens before any DB call.
 
 ## Verification Results
@@ -87,33 +89,38 @@ No Next.js route handler changes. Go endpoints are additive and run on port 4001
 | gofmt | `gofmt -l .` | ✅ CLEAN |
 | go vet | `go vet ./...` | ✅ PASS |
 | go test | `go test ./...` | ✅ PASS (app, authn, authz, config, credential, httpserver, session) |
-| go test -race | `go test -race ./internal/httpserver/... ./internal/config/...` | ✅ PASS |
-| ARM64 build | `GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build ./cmd/api` | ✅ PASS (ELF ARM aarch64 static) |
+| go test -race | `go test -race ./...` | ✅ PASS |
+| ARM64 build | `GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -o /tmp/api-go-m3-endpoints ./cmd/api` | ✅ PASS |
+| git diff --check | `git diff --check` | ✅ CLEAN |
+
+### PostgreSQL 17 Integration (Actual Evidence)
+Disposable `postgres:17-alpine` container (`m3-revise-pg`) with M2 schema + stub parent tables applied. Tests run with `-count=2` against real SQL:
+
+```
+TEST_DATABASE_URL="postgres://postgres:m3test@localhost:15433/m3session?sslmode=disable" \
+GOTOOLCHAIN=go1.23.0 go test -v -count=2 -run "TestLearnerMe_|TestLearnerLogout_|TestAdminSession_|TestAdminLogout_|TestCSRF_|TestNamespaceIsolation_|TestAdminMe_|TestLearnerMe_Post" ./internal/httpserver/...
+```
+
+**Result**: 23/23 tests PASS × 2 rounds = 46 executions, 0 failures.
+
+Tests cover: learner me success + exact JSON shape + nullable nulls, no-cookie/invalid-token/expired/revoked/disabled rejection, logout success + DB revocation + cookie deletion + replay rejection + owner-scoped isolation, CSRF missing/untrusted/trusted/empty-origin behavior, admin session with real displayName + disabled actor rejection, admin logout + revocation + cookie deletion, learner/admin namespace isolation, admin/me not mounted, POST method rejection.
+
+Without `TEST_DATABASE_URL`, all integration tests `t.Skip` so `go test ./...` passes cleanly in CI or environments without a disposable DB.
 
 ### Test Coverage Summary
 - `internal/app`: composition wiring tests
 - `internal/authn`: guard + CSRF unit tests
-- `internal/authz`: RBAC store integration tests
-- `internal/config`: 18 tests including 6 new CORS origin parsing tests
+- `internal/authz`: RBAC store integration tests (PG17)
+- `internal/config`: 18 tests including CORS origin parsing
 - `internal/credential`: Argon2 verifier tests
-- `internal/httpserver`: 13 tests including 4 new handler/router tests (admin/me removed, learner/auth/me mounted, admin/session mounted, CSRF config wiring)
-- `internal/session`: store, token, rotation tests
-
-### PostgreSQL 17 Integration
-Session/authz/profile integration tests require `TEST_DATABASE_URL` with M2 schema applied. These are skipped when the environment variable is unset (CI/local without disposable DB). When available, they exercise real SQL against production-like schema.
-
-## Rollback
-Code-level only: leave additive tables and Go code intact. No destructive schema changes in this wave. The existing NestJS API on port 4000 remains the production path; Go endpoints on port 4001 are purely additive.
+- `internal/httpserver`: 23 endpoint behavior tests (PG17 integration) + router/config tests
+- `internal/session`: store, token, rotation tests (PG17 integration)
 
 ## Gate Status
 **NOT YET ACCEPTED BY SOL** — This report documents implementation evidence. Independent Sol verification is required before marking M3_INDEPENDENT_ENDPOINTS as accepted and updating ORCHESTRATION_STATE.md.
-- `internal/config`: validation tests (cached)
-- `internal/credential`: placeholder tests (cached)
-- `internal/httpserver`: handler + router tests including live/ready (0.521s)
-- `internal/session`: store + token + rotation integration tests (cached)
 
 ## Rollback Guidance
-This wave is purely additive. Rollback is code-level: revert commit `bd57e52`. No schema changes, no data migration, no destructive operations. Existing NestJS endpoints remain authoritative on port 4000.
+This wave is purely additive. Rollback is code-level: revert commits `bd57e52` and `296bf63`. No schema changes, no data migration, no destructive operations. Existing NestJS endpoints remain authoritative on port 4000.
 
 ## Gated Unknowns (Unchanged)
 - **Production Keycloak credential format**: GATED_UNKNOWN_PRODUCTION. M3 login/verifier BLOCKED until resolved.
@@ -121,4 +128,4 @@ This wave is purely additive. Rollback is code-level: revert commit `bd57e52`. N
 - **Production MinIO object inventory**: M7 gate.
 
 ## Next Wave
-M3 independent endpoint/rate-limit remainder: additional non-auth endpoints that do not require credential verification. Login/legacy verifier remains BLOCKED by credential gate. Do not move to M4.
+Credential-dependent M3 work remains BLOCKED by production Keycloak credential metadata gate. Do not move to M4.
