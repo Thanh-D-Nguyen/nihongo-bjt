@@ -56,8 +56,13 @@ func New(version string) (*App, error) {
 		Config:  cfg,
 		Logger:  logger,
 		DB:      dbPool,
-		Redis:   redisClient,
 		Version: version,
+	}
+	// Guard against typed-nil interface: only assign Redis if the concrete
+	// client is non-nil. A typed-nil *redis.Client assigned to a
+	// redisx.Pinger interface is non-nil and causes readiness to panic.
+	if redisClient != nil {
+		deps.Redis = redisClient
 	}
 
 	router := httpserver.NewRouter(deps)
@@ -80,13 +85,11 @@ func (a *App) Shutdown(ctx context.Context) {
 	if err := a.Server.Shutdown(ctx); err != nil {
 		a.Logger.Error("HTTP server shutdown error", "error", err)
 	}
-
 	if a.Redis != nil {
 		if err := a.Redis.Close(); err != nil {
 			a.Logger.Error("redis close error", "error", err)
 		}
 	}
-
 	a.DB.Close()
 	a.Logger.Info("application shutdown complete")
 }

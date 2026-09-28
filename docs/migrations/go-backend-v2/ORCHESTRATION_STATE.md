@@ -1,8 +1,8 @@
 # Go Backend Migration Orchestration State
 
 - Current phase: M2 — Identity/auth persistence + Keycloak credential investigation gate (next)
-- Current accepted HEAD: (pending M1 repair commit)
-- Last completed wave: M1 (`M1_PASS_WITH_ENVIRONMENT_BLOCKED_DOCKER` — repaired after REVISE)
+- Current accepted HEAD: (pending final M1 repair commit)
+- Last completed wave: M1 (`M1_PASS` — repaired after three REVISE rounds including typed-nil Redis fix and real Docker ARM64 container validation)
 - Next wave: M2 — Identity/auth persistence + Keycloak credential investigation gate
 - Completed checkpoint commits:
   - `0fc4486f5cfd2edc4433359753be573605234006` — P0.1 plan rebase
@@ -16,12 +16,14 @@
   - `88084724` — M0 output-contract closure; accepted M0 checkpoint
   - `17c3e606` — H0 documentation hygiene; accepted H0 checkpoint
   - `54ef68d4` — M1 Go foundation (initial, REVISE after independent review)
-  - (pending) — M1 Go foundation repair (toolchain alignment, ping seams, config validation, safe errors, meaningful tests)
+  - `1f76f8ce` — M1 repair round 1 (ping seams, config validation, safe errors, meaningful tests)
+  - `b80a174d` — M1 repair round 2 (dependency alignment to Go 1.23-compatible versions)
+  - (pending) — M1 repair round 3 (typed-nil Redis interface fix, composition regression test, Docker ARM64 container validation)
 - Open blockers: none for M2
-- Gated unknowns: Keycloak credential format (M2 hard gate); Google OAuth production status (M4); runtime resource baseline/Docker availability; production MinIO object inventory; external production integration evidence
-- Important architecture decisions: Go `net/http` + chi + pgx; first-party opaque sessions; PostgreSQL authoritative; Redis retained for ephemeral concerns; Meilisearch retained; learner Web keeps Next runtime; Admin static export evaluated only after M6; media target is `gocloud.dev/blob/fileblob` at `/srv/kotobawork/data/media`; uploads stream through Go; public media via Caddy; private media via authenticated Go streaming; no replacement S3 daemon by default; Go API runs on port 4001 parallel with NestJS :4000 during migration; toolchain pinned to Go 1.23 across go.mod/Dockerfile/CI; ping seams for testable readiness without live dependencies
+- Gated unknowns: Keycloak credential format (M2 hard gate); Google OAuth production status (M4); production MinIO object inventory (M7)
+- Important architecture decisions: Go `net/http` + chi + pgx; first-party opaque sessions; PostgreSQL authoritative; Redis retained for ephemeral concerns; Meilisearch retained; learner Web keeps Next runtime; Admin static export evaluated only after M6; media target is `gocloud.dev/blob/fileblob` at `/srv/kotobawork/data/media`; uploads stream through Go; public media via Caddy; private media via authenticated Go streaming; no replacement S3 daemon by default; Go API runs on port 4001 parallel with NestJS :4000 during migration; toolchain pinned to Go 1.23 across go.mod/Dockerfile/CI; ping seams for testable readiness without live dependencies; typed-nil guard at composition boundary prevents Go interface nil pitfall
 - Rollback status: existing NestJS/Keycloak/MinIO/GCP paths retained; no retirement action started; Go service is purely additive
 - Production status: no cutover performed; GCP remains rollback/reference
-- Latest test baseline: `pnpm prisma:validate` PASS; `pnpm typecheck` PASS (8/8); `pnpm build` PASS (7/7); lint PRE_EXISTING in tmp scratch files (75 errors/25 warnings); tests ENVIRONMENT_BLOCKED by unreachable DB (855 passed/4 failed); Docker/resource baseline unavailable locally
-- M1 outcomes (repaired): Go module scaffold at apps/api-go verified with GOTOOLCHAIN=local (gofmt/vet/test/race/ARM64 build all PASS); toolchain aligned to Go 1.23 across go.mod/Dockerfile/CI; config loading with fail-fast validation for port/timeouts/pool sizing/DATABASE_URL; safe error handling verified by negative secret-leakage test; health endpoints with postgres.Pinger/redisx.Pinger interfaces enabling mock-based readiness tests; comprehensive test coverage (live independent of DB, ready 503 on nil/failing deps, no error detail leakage); multi-stage Dockerfile with non-root user; CI workflow updated with parallel go-checks job; deployment strategy documented; Docker ARM64 build ENVIRONMENT_BLOCKED (daemon unavailable locally)
+- Latest test baseline: `pnpm prisma:validate` PASS; `pnpm typecheck` PASS (8/8); `pnpm build` PASS (7/7); lint PRE_EXISTING in tmp scratch files (75 errors/25 warnings); tests ENVIRONMENT_BLOCKED by unreachable DB (855 passed/4 failed); Docker/resource baseline available locally
+- M1 outcomes (final): Go module scaffold at apps/api-go verified with GOTOOLCHAIN=go1.23.0 (gofmt/vet/test/race/ARM64 build all PASS); toolchain aligned to Go 1.23 across go.mod/Dockerfile/CI; dependencies downgraded to Go 1.23-compatible versions (pgx v5.7.6, go-redis v9.7.3); config loading with fail-fast validation for port/timeouts/pool sizing/DATABASE_URL; safe error handling verified by negative secret-leakage test; health endpoints with postgres.Pinger/redisx.Pinger interfaces enabling mock-based readiness tests; typed-nil Redis interface bug fixed at composition boundary with regression test; Docker ARM64 build PASS with real container validation (live=200, ready=503 with safe JSON when DB unreachable and Redis unconfigured); CI workflow updated with parallel go-checks job; deployment strategy documented
 - H0 outcomes: documentation classified; stale references identified (cursor-prompts old phase numbering, GCP-specific ops runbooks, DigitalOcean runbook, IDE rules NestJS assumptions); cleanup proposals documented with timing; no destructive actions taken; deploy/gcp preserved as rollback reference
