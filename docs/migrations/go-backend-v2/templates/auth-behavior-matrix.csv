@@ -1,14 +1,17 @@
 capability,current_behavior,current_source,keycloak_dependency,target_go_behavior,test_required,status,notes
-login,,,,,,,
-logout,,,,,,,
-current_user,,,,,,,
-registration,,,,,,,
-email_verification,,,,,,,
-password_reset,,,,,,,
-password_change,,,,,,,
-session_expiry,,,,,,,
-session_revocation,,,,,,,
-admin_role,,,,,,,
-account_disable,,,,,,,
-oauth_google,,,,,,,
-websocket_auth,,,,,,,
+login,Bearer token via Keycloak OIDC; no server-side session; clients obtain tokens directly from Keycloak token endpoint,apps/api/src/keycloak/keycloak-auth.guard.ts:56-64,HARD — all learner and admin auth depends on Keycloak JWT verification via jose library,First-party opaque sessions with Argon2id password hashing; cookie-based for web; Bearer for mobile/API,Yes,VERIFIED_CURRENT,No cookies/sessions in NestJS API; logout is client-side token discard
+logout,No server-side logout endpoint; clients discard tokens and optionally call Keycloak logout,N/A (client-side behavior),SOFT — only needed if Go must interop during transition,Server-side session revocation + cookie clearing,Yes,GATED_UNKNOWN,No NestJS logout endpoint exists; verify Keycloak logout URL usage in frontend BFF routes
+current_user,KeycloakAuthGuard provisions JIT user via claims.sub → appUserId; req.keycloakUser shape {appUserId email name realmRoles sub},apps/api/src/keycloak/keycloak-user.service.ts:13-64,HARD — every authenticated route depends on provisionLearner,Session-based current user from PostgreSQL session table,Yes,VERIFIED_CURRENT,Property is req.keycloakUser NOT req.user; no Passport/JWT strategy anywhere
+registration,Handled entirely by Keycloak; Google OAuth creates users via upsert flow,N/A (Keycloak manages registration),HARD — registration goes through Keycloak or Google OAuth,Direct registration with email verification if required,Yes,VERIFIED_CURRENT,Google OAuth disabled when Keycloak active (auth.service.ts:33-34)
+email_verification,Handled by Keycloak,N/A,HARD,Go-managed email verification with single-use tokens,Yes,GATED_UNKNOWN,No email verification logic in NestJS; fully delegated to Keycloak
+password_reset,Handled by Keycloak,N/A,HARD,Go-managed password reset with single-use expiring tokens,Yes,GATED_UNKNOWN,No password reset logic in NestJS; fully delegated to Keycloak
+password_change,Handled by Keycloak,N/A,HARD,Go-managed password change with old-password verification,Yes,GATED_UNKNOWN,No password change endpoint in NestJS API
+session_expiry,No server-side sessions; JWT expiry controlled by Keycloak token lifetime,N/A,HARD — token validation uses jwtVerify with expiration check,Configurable session TTL with sliding/expiry semantics,Yes,VERIFIED_CURRENT,Completely stateless; no refresh token endpoint in NestJS
+session_revocation,Not possible without server-side session store; only Keycloak admin can revoke tokens,N/A,HARD,Server-side session deletion for immediate revocation,Yes,VERIFIED_CURRENT,No session store exists; this is a new capability for Go
+admin_role,Hybrid: Keycloak realm roles gate admin portal access; DB-stored permissions for fine-grained RBAC,apps/api/src/admin/admin-rbac.guard.ts + admin-auth.service.ts,HARD — admin auth requires both Keycloak realm role AND DB permission sync,Pure DB-based RBAC loaded from PostgreSQL; no Keycloak dependency,Yes,VERIFIED_CURRENT,Realm roles synced additively to DB on each request; wildcard * grants all
+account_disable,No disable mechanism found in NestJS API; would require Keycloak admin action,N/A,HARD,DB-based account status field with enforcement in auth middleware,Yes,GATED_UNKNOWN,No account disable endpoint or status field observed in auth code
+oauth_google,Feature-gated behind social_growth flag; DISABLED when KEYCLOAK_ISSUER_URL is set; full callback flow exists in code,apps/api/src/auth/google-oauth.controller.ts + auth.service.ts,SOFT — code exists but production-disabled when Keycloak active,Migrate if production-active; retire with documentation if inactive,Yes,GATED_UNKNOWN_PRODUCTION,Cannot prove production status from repo alone; needs runtime/env evidence
+websocket_auth,PresenceGateway: verifies Bearer token from client.handshake.auth.token via same KeycloakTokenService; BattleGateway: NO connection auth,apps/api/src/presence/presence.gateway.ts:71-98,HARD — presence auth depends on Keycloak JWT verification,WebSocket connection auth via session token or Bearer; protocol TBD,Yes,VERIFIED_CURRENT,Battle gateway has zero auth; silent disconnect on presence auth failure
+mobile_auth,No mobile-specific auth flow in NestJS API; mobile clients authenticate directly against Keycloak OIDC endpoints,N/A,HARD — mobile uses same Keycloak token flow as web,PKCE flow migrated to Go token endpoint; custom redirect URI support,Yes,VERIFIED_CURRENT_ABSENT,Zero PKCE/mobile references in API source; mobile talks to Keycloak directly
+rbac_learner,Minimal: all authenticated learners access all learner routes; entitlement checks via EntitlementGuard for premium features,apps/api/src/monetization/entitlement.guard.ts,SOFT — entitlement checks query DB not Keycloak,Retain DB-based entitlement system; no Keycloak dependency,Yes,VERIFIED_CURRENT,EntitlementGuard must run AFTER KeycloakAuthGuard
+rbac_admin,Full permission-based: 13 route groups with permission arrays; stored in authz.admin_* tables; synced from Keycloak realm roles,apps/api/src/admin/admin.rbac.ts:4-37,HARD — initial gate requires Keycloak realm role,Pure DB RBAC with no Keycloak gate; permissions loaded at session creation,Yes,VERIFIED_CURRENT,Test fixture roles: superadmin(*) admin operator viewer

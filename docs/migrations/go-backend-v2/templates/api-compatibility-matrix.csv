@@ -1,1 +1,42 @@
 domain,method,path,nest_handler,auth,permission,input_contract,output_contract,frontend_callers,side_effects,go_status,contract_test,cutover_status,notes
+SUMMARY,,,,,,,,,,,,,
+total_controllers: 100,,,,,,,,,,,,,
+total_routes: 710,,,,,,,,,,,,,
+GET: 365 | POST: 237 | PUT: 14 | PATCH: 63 | DELETE: 31,,,,,,,,,,,,,
+admin_guarded: 59 controllers (AdminRbacGuard class-level),,,,,,,,,,,,,
+learner_guarded: 48 controllers (KeycloakAuthGuard class-level),,,,,,,,,,,,,
+public: ~15 controllers (no guard),,,,,,,,,,,,,
+mixed_auth: nhk-news companion quiz daily analytics (per-route guards),,,,,,,,,,,,,
+ADMIN_CORE,GET,/api/admin/session,AdminController.getSession,AdminRbacGuard,session_bootstrap,,,session probe only,PENDING,,,"Session bootstrap mode; no fine-grained permission check"
+ADMIN_CORE,GET,/api/admin/me,AdminController.getMe,AdminRbacGuard,admin_core,,,returns admin principal,PENDING,,,
+ADMIN_CORE,GET,/api/admin/iam/roles,AdminController.listRoles,AdminRbacGuard,iam.manage,,,role list,PENDING,,,
+ADMIN_CORE,GET,/api/admin/iam/permissions,AdminController.listPermissions,AdminRbacGuard,iam.manage,,,permission list,PENDING,,,
+AUTH,GET,/api/auth/me,AuthController.getMe,KeycloakAuthGuard,,,KeycloakAuthenticatedUser,current user profile,PENDING,,,
+AUTH,POST,/api/auth/profile,AuthController.updateProfile,KeycloakAuthGuard,,,profile update DTO,updated profile,PENDING,,,
+AUTH,GET,/api/auth/identities,AuthController.getIdentities,KeycloakAuthGuard,,,linked identity providers,PENDING,,,
+AUTH,POST,/api/auth/link/exchange,AuthController.exchangeLinkCode,PublicRoute,,,linkCode,user info + masked email,PENDING,,,SHA-256 hashed; 5-min TTL; single-use
+GOOGLE_OAUTH,GET,/api/auth/google/start,GoogleOAuthController.start,PublicRoute,social_growth feature flag,,signed state + redirect URL,302 redirect to Google,PENDING,,,"DISABLED when KEYCLOAK_ISSUER_URL set; HMAC-signed state with 10-min expiry"
+GOOGLE_OAUTH,GET,/api/auth/google/callback,GoogleOAuthController.callback,PublicRoute,social_growth feature flag,,code + state,302 redirect to web app with linkCode,PENDING,,,Creates one-time linkCode for session bridge
+HEALTH,GET,/api/health/live,HealthController.live,PublicRoute,,,,liveness probe,PENDING,,,
+HEALTH,GET,/api/health/ready,HealthController.ready,PublicRoute,,,,readiness probe (DB+Redis+Meili),PENDING,,,
+HEALTH,GET,/api/health/version,HealthController.version,PublicRoute,,,,version info,PENDING,,,
+SEARCH,GET,/api/search/search,SearchController.search,PublicRoute,,,query params,search results,PENDING,,,Meilisearch projection
+SEARCH,GET,/api/search/suggest,SearchController.suggest,PublicRoute,,,query prefix,suggestions,PENDING,,,
+CONTENT,GET,/api/dictionary/search,CanonicalContentController.dictionarySearch,PublicRoute,,,search params,dictionary entries,PENDING,,,
+CONTENT,GET,/api/kanji/list,CanonicalContentController.kanjiList,PublicRoute,,,pagination,kanji list,PENDING,,,
+CONTENT,GET,/api/kanji/:id/stroke,CanonicalContentController.kanjiStroke,PublicRoute,,,,StreamableFile SVG,PENDING,,,Returns StreamableFile not JSON
+BOOKMARKS,GET,/api/bookmarks/check/:type/:id,BookmarksController.check,KeycloakAuthGuard,,,type + id,bookmark status,PENDING,,,
+BOOKMARKS,POST,/api/bookmarks/:type/:id,BookmarksController.add,KeycloakAuthGuard,,,type + id,created bookmark,PENDING,,,
+FLASHCARDS,GET,/api/flashcards/decks,FlashcardsController.listDecks,KeycloakAuthGuard,,,pagination,deck list,PENDING,,,
+FLASHCARDS,POST,/api/flashcards/decks/generate,FlashcardsController.generateDeck,KeycloakAuthGuard,,,generation params,new deck,PENDING,,,
+EXERCISE,POST,/api/exercises/sessions,ExerciseController.createSession,KeycloakAuthGuard,,,exercise config,new session,PENDING,,,
+QUIZ,POST,/api/quiz/start,QuizController.start,KeycloakAuthGuard,,,quiz template,quiz session,PENDING,,,
+BATTLE_WS,WS,/battle,BattleGateway,mixed (lobby events),,,socket.io events,battle orchestration,PENDING,,,"NO connection auth; 9 @SubscribeMessage handlers; Zod validation"
+PRESENCE_WS,WS,/presence,PresenceGateway,KeycloakAuthGuard (handshake.auth.token),,,token in handshake,presence tracking,PENDING,,,"Verifies Bearer via KeycloakTokenService; heartbeat + batch query"
+STRIPE_WEBHOOK,POST,/api/webhooks/stripe,StripeWebhookController.handle,PublicRoute (signature verified),,,raw body + stripe-signature,200 OK,PENDING,,,"RawBodyRequest required; idempotency via event.id; handles checkout.session.completed subscription.updated subscription.deleted invoice.payment_failed"
+BILLING_WEBHOOK_ADMIN,POST,/api/admin/billing/webhook,BillingWebhookController.ingest,AdminRbacGuard,billing_webhook,,local provider only,event ingested,PENDING,,,"Manual ingest for local/dev provider only; signature always true for local"
+MONETIZATION,GET,/api/learner/monetization/summary,LearnerMonetizationController.summary,KeycloakAuthGuard,,,entitlement summary,PENDING,,,
+GROWTH_PUBLIC,GET,/api/public/shares/:token,PublicGrowthController.getShare,PublicRoute,,,share token,share data,PENDING,,,
+GROWTH_PUBLIC,GET,/api/public/shares/:token/image,PublicGrowthController.getShareImage,PublicRoute,,,share token,image buffer,PENDING,,,"Writes directly to @Res()"
+NHK_NEWS,GET,/api/nhk-news/list,NhkNewsController.list,PublicRoute,,,pagination,news articles,PENDING,,,
+NHK_NEWS,POST,/api/nhk-news/:id/flashcard,NhkNewsController.createFlashcard,KeycloakAuthGuard,,,article id,created flashcard,PENDING,,,"Mixed auth controller: public reads guarded writes"
