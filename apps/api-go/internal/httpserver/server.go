@@ -50,10 +50,9 @@ func NewRouter(deps Dependencies) http.Handler {
 
 	// Guard configuration.
 	guardCfg := authn.DefaultGuardConfig(deps.Logger)
-	// TODO(M3_ENDPOINTS): populate TrustedOrigins from config/env when CORS_ORIGINS is wired.
-	// Empty list is valid but rejects all unsafe requests until configured.
 	csrfCfg := authn.CSRFConfig{
-		Logger: deps.Logger,
+		Logger:         deps.Logger,
+		TrustedOrigins: deps.Config.CORSOrigins,
 	}
 
 	// Learner auth routes — guarded by learner session cookie + CSRF for unsafe methods.
@@ -78,8 +77,7 @@ func NewRouter(deps Dependencies) http.Handler {
 
 		r.Group(func(ar chi.Router) {
 			ar.Use(adminGuard)
-			ar.Get("/api/admin/session", adminSessionHandler(deps.Logger))
-			ar.Get("/api/admin/me", adminMeHandler(deps.RBACStore, deps.Logger))
+			ar.Get("/api/admin/session", adminSessionHandler(deps.RBACStore, deps.Logger))
 		})
 
 		r.Group(func(ar chi.Router) {

@@ -184,3 +184,81 @@ func TestLoad_NoSecretLeakageInErrors(t *testing.T) {
 		t.Errorf("error message leaks password: %v", err)
 	}
 }
+
+func TestLoad_CORSOrigins_Valid(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://localhost/test")
+	t.Setenv("CORS_ORIGINS", "https://app.example.com, http://localhost:3000 , https://admin.example.com")
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(cfg.CORSOrigins) != 3 {
+		t.Fatalf("expected 3 origins, got %d: %v", len(cfg.CORSOrigins), cfg.CORSOrigins)
+	}
+	want := []string{"https://app.example.com", "http://localhost:3000", "https://admin.example.com"}
+	for i, w := range want {
+		if cfg.CORSOrigins[i] != w {
+			t.Errorf("origin[%d] = %q, want %q", i, cfg.CORSOrigins[i], w)
+		}
+	}
+}
+
+func TestLoad_CORSOrigins_Empty(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://localhost/test")
+	t.Setenv("CORS_ORIGINS", "")
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cfg.CORSOrigins != nil {
+		t.Errorf("expected nil origins for empty input, got %v", cfg.CORSOrigins)
+	}
+}
+
+func TestLoad_CORSOrigins_InvalidScheme(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://localhost/test")
+	t.Setenv("CORS_ORIGINS", "ftp://example.com")
+	_, err := Load()
+	if err == nil {
+		t.Fatal("expected error for non-http scheme")
+	}
+	if !strings.Contains(err.Error(), "scheme must be http or https") {
+		t.Errorf("expected scheme error, got: %v", err)
+	}
+}
+
+func TestLoad_CORSOrigins_MissingHost(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://localhost/test")
+	t.Setenv("CORS_ORIGINS", "https://")
+	_, err := Load()
+	if err == nil {
+		t.Fatal("expected error for missing host")
+	}
+	if !strings.Contains(err.Error(), "missing host") {
+		t.Errorf("expected missing host error, got: %v", err)
+	}
+}
+
+func TestLoad_CORSOrigins_PathNotAllowed(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://localhost/test")
+	t.Setenv("CORS_ORIGINS", "https://example.com/api")
+	_, err := Load()
+	if err == nil {
+		t.Fatal("expected error for path in origin")
+	}
+	if !strings.Contains(err.Error(), "path not allowed") {
+		t.Errorf("expected path error, got: %v", err)
+	}
+}
+
+func TestLoad_CORSOrigins_UserinfoNotAllowed(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://localhost/test")
+	t.Setenv("CORS_ORIGINS", "https://user:pass@example.com")
+	_, err := Load()
+	if err == nil {
+		t.Fatal("expected error for userinfo in origin")
+	}
+	if !strings.Contains(err.Error(), "userinfo not allowed") {
+		t.Errorf("expected userinfo error, got: %v", err)
+	}
+}

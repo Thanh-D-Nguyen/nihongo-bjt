@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -22,6 +23,11 @@ type Config struct {
 	DBPoolMaxConns       int32
 	DBPoolMinConns       int32
 	DBConnAcquireTimeout time.Duration
+
+	// CORSOrigins is the parsed list of trusted origins for CSRF validation.
+	// Sourced from CORS_ORIGINS env var (comma-separated). Empty is valid but
+	// rejects all unsafe requests until configured.
+	CORSOrigins []string
 }
 
 // Load reads configuration from environment variables and validates required fields.
@@ -77,6 +83,11 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("config: DB_POOL_MAX_CONNS must be >= DB_POOL_MIN_CONNS")
 	}
 
+	corsOrigins, err := parseCORSOrigins(os.Getenv("CORS_ORIGINS"))
+	if err != nil {
+		return nil, fmt.Errorf("config: CORS_ORIGINS %w", err)
+	}
+
 	cfg := &Config{
 		Port:                 port,
 		DatabaseURL:          dbURL,
@@ -89,8 +100,51 @@ func Load() (*Config, error) {
 		DBPoolMaxConns:       maxConns,
 		DBPoolMinConns:       minConns,
 		DBConnAcquireTimeout: acquireTimeout,
+		CORSOrigins:          corsOrigins,
 	}
 	return cfg, nil
+}
+
+// parseCORSOrigins splits a comma-separated list of origins, trims whitespace,
+// and validates each entry is a well-formed scheme+host URL suitable for CSRF.
+// Empty input returns nil (valid but rejects all unsafe requests until configured).
+func parseCORSOrigins(raw string) ([]string, error) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return nil, nil
+	}
+	parts := strings.Split(raw, ",")
+	out := make([]string, 0, len(parts))
+	for i, p := range parts {
+		p = strings.TrimSpace(p)
+		if p == "" {
+			continue
+		}
+		u, err := url.Parse(p)
+		if err != nil {
+			return nil, fmt.Errorf("origin[%d]: invalid URL", i)
+		}
+		if u.Scheme != "http" && u.Scheme != "https" {
+			return nil, fmt.Errorf("origin[%d]: scheme must be http or https", i)
+		}
+		if u.Host == "" {
+			return nil, fmt.Errorf("origin[%d]: missing host", i)
+		}
+		if u.User != nil {
+			return nil, fmt.Errorf("origin[%d]: userinfo not allowed", i)
+		}
+		if u.Path != "" && u.Path != "/" {
+			return nil, fmt.Errorf("origin[%d]: path not allowed", i)
+		}
+		if u.RawQuery != "" {
+			return nil, fmt.Errorf("origin[%d]: query not allowed", i)
+		}
+		if u.Fragment != "" {
+			return nil, fmt.Errorf("origin[%d]: fragment not allowed", i)
+		}
+		out = append(out, p)
+	}
+	return out, nil
 }
 
 func getEnv(key, fallback string) string {

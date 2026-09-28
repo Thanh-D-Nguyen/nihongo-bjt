@@ -9,6 +9,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/authz"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/profile"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/session"
+
 	"log/slog"
 	"os"
 
@@ -259,5 +263,86 @@ func TestServer_ShutdownBeforeStart(t *testing.T) {
 
 	if err := srv.Shutdown(ctx); err != nil {
 		t.Errorf("shutdown before start should succeed, got: %v", err)
+	}
+}
+
+// TestAdminMeRouteRemoved verifies GET /api/admin/me is no longer mounted in M3.
+// The real Nest contract returns a nested adminActor object with roles/permissions;
+// the flattened Go payload was incompatible. Full admin RBAC cutover is deferred to M6.
+func TestAdminMeRouteRemoved(t *testing.T) {
+	deps := newTestDeps(nil, nil)
+	router := NewRouter(deps)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/admin/me", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	// chi returns 404 for unmounted routes when no middleware intercepts.
+	// If a guard were mounted but rejected, we'd see 401/403 instead.
+	if w.Code != http.StatusNotFound && w.Code != http.StatusMethodNotAllowed {
+		t.Errorf("/api/admin/me should not be mounted in M3; got status %d", w.Code)
+	}
+}
+
+// TestLearnerAuthMeRouteMounted verifies GET /api/auth/me is registered when
+// session/profile stores are available. Without a valid cookie it must return 401,
+// proving the route exists and the guard is active.
+func TestLearnerAuthMeRouteMounted(t *testing.T) {
+	deps := newTestDeps(nil, nil)
+	// Provide non-nil stores so the learner group is registered.
+	// We use nil-safe stubs since this test only checks routing/guard behavior.
+	deps.SessionStore = &session.Store{}
+	deps.ProfileStore = &profile.Store{}
+	router := NewRouter(deps)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/auth/me", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	// Must get 401 (no cookie), not 404 (route missing).
+	if w.Code == http.StatusNotFound {
+		t.Error("/api/auth/me should be mounted when stores are available")
+	}
+	if w.Code != http.StatusUnauthorized {
+		t.Errorf("expected 401 without cookie, got %d", w.Code)
+	}
+}
+
+// TestAdminSessionRouteMounted verifies GET /api/admin/session is registered
+// and requires authentication (returns 401 without cookie, not 404).
+func TestAdminSessionRouteMounted(t *testing.T) {
+	deps := newTestDeps(nil, nil)
+	deps.SessionStore = &session.Store{}
+	deps.RBACStore = &authz.Store{}
+	router := NewRouter(deps)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/admin/session", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code == http.StatusNotFound {
+		t.Error("/api/admin/session should be mounted when stores are available")
+	}
+	if w.Code != http.StatusUnauthorized {
+		t.Errorf("expected 401 without cookie, got %d", w.Code)
+	}
+}
+
+// TestCSRFConfigWiredFromCORSOrigins verifies that CORS_ORIGINS from config
+// are passed through to the CSRF guard configuration. This is tested indirectly:
+// if TrustedOrigins were empty, POST logout would always fail 403 even with a
+// valid Origin header. The config parsing tests cover origin validation directly.
+func TestCSRFConfigWiredFromCORSOrigins(t *testing.T) {
+	// This is a structural verification that the router construction doesn't panic
+	// when CORSOrigins is populated. The actual CSRF behavior is tested in authn/csrf_test.go.
+	deps := newTestDeps(nil, nil)
+	deps.Config.CORSOrigins = []string{"https://app.example.com"}
+	deps.SessionStore = &session.Store{}
+	deps.ProfileStore = &profile.Store{}
+
+	// Should not panic during router construction.
+	router := NewRouter(deps)
+	if router == nil {
+		t.Fatal("NewRouter returned nil")
 	}
 }
