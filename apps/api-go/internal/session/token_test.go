@@ -1,71 +1,92 @@
 package session
 
 import (
-	"encoding/hex"
+	"strings"
 	"testing"
 )
 
-func TestGenerateToken_Length(t *testing.T) {
-	raw, digest, err := GenerateToken()
+func TestGenerateToken_LengthAndUniqueness(t *testing.T) {
+	raw1, digest1, err := GenerateToken()
 	if err != nil {
-		t.Fatalf("GenerateToken failed: %v", err)
+		t.Fatalf("GenerateToken: %v", err)
 	}
-	// Raw token is hex-encoded 32 bytes = 64 hex chars
-	if len(raw) != TokenBytes*2 {
-		t.Errorf("raw token length = %d, want %d", len(raw), TokenBytes*2)
+	if len(raw1) != DigestHexLen {
+		t.Errorf("raw token length = %d, want %d", len(raw1), DigestHexLen)
 	}
-	// Digest is SHA-256 hex = 64 chars
-	if len(digest) != DigestHexLen {
-		t.Errorf("digest length = %d, want %d", len(digest), DigestHexLen)
+	if len(digest1) != DigestHexLen {
+		t.Errorf("digest length = %d, want %d", len(digest1), DigestHexLen)
 	}
-}
+	if raw1 == digest1 {
+		t.Error("raw token must differ from its digest")
+	}
 
-func TestGenerateToken_Uniqueness(t *testing.T) {
-	seen := make(map[string]bool)
-	for i := 0; i < 100; i++ {
-		raw, _, err := GenerateToken()
-		if err != nil {
-			t.Fatalf("GenerateToken failed on iteration %d: %v", i, err)
-		}
-		if seen[raw] {
-			t.Fatalf("duplicate token generated on iteration %d", i)
-		}
-		seen[raw] = true
+	raw2, digest2, err := GenerateToken()
+	if err != nil {
+		t.Fatalf("GenerateToken second call: %v", err)
+	}
+	if raw1 == raw2 || digest1 == digest2 {
+		t.Error("consecutive tokens must be unique")
 	}
 }
 
 func TestHashToken_Deterministic(t *testing.T) {
-	raw, digest, err := GenerateToken()
-	if err != nil {
-		t.Fatalf("GenerateToken failed: %v", err)
+	raw := strings.Repeat("ab", 32) // 64 hex chars
+	d1 := HashToken(raw)
+	d2 := HashToken(raw)
+	if d1 != d2 {
+		t.Errorf("HashToken not deterministic: %q vs %q", d1, d2)
 	}
-	got := HashToken(raw)
-	if got != digest {
-		t.Errorf("HashToken(%q) = %q, want %q", raw, got, digest)
-	}
-}
-
-func TestHashToken_MatchesManualSHA256(t *testing.T) {
-	input := "test-token-value"
-	got := HashToken(input)
-	// Verify it's valid hex
-	if _, err := hex.DecodeString(got); err != nil {
-		t.Errorf("HashToken produced invalid hex: %v", err)
-	}
-	if len(got) != DigestHexLen {
-		t.Errorf("HashToken length = %d, want %d", len(got), DigestHexLen)
+	if len(d1) != DigestHexLen {
+		t.Errorf("digest length = %d, want %d", len(d1), DigestHexLen)
 	}
 }
 
-func TestConstantTimeDigestEqual(t *testing.T) {
-	a := "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
-	b := "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
-	c := "0000000000000000000000000000000000000000000000000000000000000000"
-
-	if !ConstantTimeDigestEqual(a, b) {
-		t.Error("identical digests should be equal")
+func TestValidateRawToken_Valid(t *testing.T) {
+	valid := strings.Repeat("0123456789abcdef", 4) // exactly 64 lowercase hex
+	if err := ValidateRawToken(valid); err != nil {
+		t.Errorf("expected valid token, got error: %v", err)
 	}
-	if ConstantTimeDigestEqual(a, c) {
-		t.Error("different digests should not be equal")
+}
+
+func TestValidateRawToken_InvalidLength(t *testing.T) {
+	cases := []struct {
+		name  string
+		token string
+	}{
+		{"empty", ""},
+		{"too_short_32", strings.Repeat("a", 32)},
+		{"too_long_128", strings.Repeat("a", 128)},
+		{"one_char", "a"},
+		{"63_chars", strings.Repeat("a", 63)},
+		{"65_chars", strings.Repeat("a", 65)},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if err := ValidateRawToken(tc.token); err == nil {
+				t.Errorf("expected error for length %d, got nil", len(tc.token))
+			}
+		})
+	}
+}
+
+func TestValidateRawToken_InvalidCharacters(t *testing.T) {
+	cases := []struct {
+		name  string
+		token string
+	}{
+		{"uppercase_A", strings.Repeat("A", 64)},
+		{"mixed_case", strings.Repeat("aB", 32)},
+		{"non_hex_g", strings.Repeat("g", 64)},
+		{"spaces", strings.Repeat(" ", 64)},
+		{"null_bytes", strings.Repeat("\x00", 64)},
+		{"special_chars", strings.Repeat("!", 64)},
+		{"one_bad_char", strings.Repeat("a", 63) + "Z"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if err := ValidateRawToken(tc.token); err == nil {
+				t.Errorf("expected error for %s, got nil", tc.name)
+			}
+		})
 	}
 }

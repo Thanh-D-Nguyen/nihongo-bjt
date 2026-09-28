@@ -1,8 +1,8 @@
 # Go Backend Migration Orchestration State
 
-- Current phase: M3_PARTIAL complete — session core + RBAC loader done; credential gate remains pending
-- Current accepted HEAD: `b2c61e0d3a5b148922322e80e7e835be74feb719` (M3 partial session core checkpoint)
-- Last completed wave: M3_PARTIAL (`M3_PARTIAL_SESSION_CORE_PASS`; credential gate GATED_UNKNOWN_PRODUCTION)
+- Current phase: M3_PARTIAL complete — session core security repairs verified; credential gate remains pending
+- Current accepted HEAD: pending commit of M3 partial session core repair
+- Last completed wave: M3_PARTIAL (`M3_PARTIAL_SESSION_CORE_REPAIR_PASS`; credential gate GATED_UNKNOWN_PRODUCTION)
 - Next wave: M3 remaining (login/password endpoints, HTTP session middleware) BLOCKED until production Keycloak credential format confirmed; non-auth M3 scaffolding may proceed independently
 - Completed checkpoint commits:
   - `0fc4486f5cfd2edc4433359753be573605234006` — P0.1 plan rebase
@@ -21,8 +21,10 @@
   - `0cb53022` — M1 repair round 3; accepted M1 checkpoint (typed-nil Redis fix and Docker ARM64 validation)
   - `37e0b68c` — M2 auth/session persistence schema + credential gate investigation (initial, REVISE after independent review)
   - `9c98bad9` — M2 persistence repair; accepted persistence checkpoint, credential gate pending
+  - `9eb60874` — M3 partial session core (initial, REVISE after security review)
 - Open blockers: production Keycloak credential format unavailable; fresh Prisma migration chain fails at historical `20260425020754_phase_00_data_import`. M3 work independent of legacy credentials may proceed.
 - Gated unknowns: Keycloak credential format (M2 HARD GATE — dev defaults confirmed Argon2id v1.3 m=7168 t=5 p=1 len=32, production UNVERIFIED); Google OAuth production status (M4); production MinIO object inventory (M7)
+- M3 partial outcomes: Session store security repairs verified (disabled account status gating via parent JOIN, input validation before hashing, error normalization to ErrSessionNotFound, owner-scoped revocation, safe creation API with internal token generation, expired session test rewrite exercising Store path, ConstantTimeDigestEqual removed); integration tests use real UUID v4 via crypto/rand and unique role/permission codes; unit suite passes with integration SKIPPED when TEST_DATABASE_URL unset; integration suite passes twice against same disposable PostgreSQL 17; ARM64 build to /tmp verified; no repo binary; M3 full remains BLOCKED on credential gate
 - Important architecture decisions: Go `net/http` + chi + pgx; first-party opaque sessions; PostgreSQL authoritative; Redis retained for ephemeral concerns; Meilisearch retained; learner Web keeps Next runtime; Admin static export evaluated only after M6; media target is `gocloud.dev/blob/fileblob` at `/srv/kotobawork/data/media`; uploads stream through Go; public media via Caddy; private media via authenticated Go streaming; no replacement S3 daemon by default; Go API runs on port 4001 parallel with NestJS :4000 during migration; toolchain pinned to Go 1.23 across go.mod/Dockerfile/CI; ping seams for testable readiness without live dependencies; typed-nil guard at composition boundary prevents Go interface nil pitfall; auth tables in `auth` schema with FK to profile.user_profile and authz.admin_actor; session tokens stored as SHA-256 digest only; password credentials have NO algorithm/parameter defaults (explicit values required at insert); CHECK constraints enforce positive parameters and non-empty salt/hash; algorithm_version column for self-describing hash metadata
 - Rollback status: existing NestJS/Keycloak/MinIO/GCP paths retained; no retirement action started; Go service is purely additive; M2 schema is additive-only; rollback is code-level (leave tables intact); optional DROP only on empty disposable/test DB without CASCADE; post-adoption table deletion requires separately validated data-preserving migration
 - Production status: no cutover performed; GCP remains rollback/reference

@@ -2,6 +2,7 @@ package authz
 
 import (
 	"context"
+	crand "crypto/rand"
 	"errors"
 	"fmt"
 	"os"
@@ -15,7 +16,7 @@ func testPool(t *testing.T) *pgxpool.Pool {
 	t.Helper()
 	url := os.Getenv("TEST_DATABASE_URL")
 	if url == "" {
-		t.Skip("TEST_DATABASE_URL not set; skipping integration test")
+		t.Skip("TEST_DATABASE_URL not set; skipping integration test (requires disposable PostgreSQL 17 with M2 schema)")
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -27,12 +28,35 @@ func testPool(t *testing.T) *pgxpool.Pool {
 	return pool
 }
 
+// newUUID generates a real UUID v4 via crypto/rand for test PK columns.
+func newUUID(t *testing.T) string {
+	t.Helper()
+	var b [16]byte
+	if _, err := crand.Read(b[:]); err != nil {
+		t.Fatalf("crypto/rand: %v", err)
+	}
+	b[6] = (b[6] & 0x0f) | 0x40 // version 4
+	b[8] = (b[8] & 0x3f) | 0x80 // variant RFC4122
+	return fmt.Sprintf("%08x-%04x-%04x-%04x-%012x",
+		b[0:4], b[4:6], b[6:8], b[8:10], b[10:16])
+}
+
+// uniqueCode generates a unique varchar-safe code for role/permission codes.
+func uniqueCode(t *testing.T, prefix string) string {
+	t.Helper()
+	var b [8]byte
+	if _, err := crand.Read(b[:]); err != nil {
+		t.Fatalf("crypto/rand: %v", err)
+	}
+	return fmt.Sprintf("%s_%x", prefix, b[:])
+}
+
 func seedAdminActor(t *testing.T, db *pgxpool.Pool, actorID, email string) {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	_, err := db.Exec(ctx,
-		`INSERT INTO authz.admin_actor (id, display_name, email, status) VALUES ($1, 'Test Admin', $2, 'active') ON CONFLICT (id) DO NOTHING`,
+		`INSERT INTO authz.admin_actor (id, display_name, email, status) VALUES ($1, 'Test Admin', $2, 'active') ON CONFLICT (id) DO UPDATE SET status = 'active'`,
 		actorID, email)
 	if err != nil {
 		t.Fatalf("seed admin actor: %v", err)
@@ -44,15 +68,18 @@ func seedRoleWithPermission(t *testing.T, db *pgxpool.Pool, actorID, roleCode, p
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	var roleID, permID string
-	err := db.QueryRow(ctx, `INSERT INTO authz.admin_role (code, name, status) VALUES ($1, $2, 'active') RETURNING id`, roleCode, roleCode).Scan(&roleID)
+	var roleID string
+	err := db.QueryRow(ctx, `INSERT INTO authz.admin_role (code, name, status) VALUES ($1, $1, 'active') ON CONFLICT (code) DO UPDATE SET status = 'active' RETURNING id`, roleCode).Scan(&roleID)
 	if err != nil {
 		t.Fatalf("seed role: %v", err)
 	}
-	err = db.QueryRow(ctx, `INSERT INTO authz.admin_permission (code) VALUES ($1) RETURNING id`, permCode).Scan(&permID)
+
+	var permID string
+	err = db.QueryRow(ctx, `INSERT INTO authz.admin_permission (code) VALUES ($1) ON CONFLICT (code) DO UPDATE SET code = EXCLUDED.code RETURNING id`, permCode).Scan(&permID)
 	if err != nil {
 		t.Fatalf("seed permission: %v", err)
 	}
+
 	_, err = db.Exec(ctx, `INSERT INTO authz.admin_actor_role (actor_id, role_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`, actorID, roleID)
 	if err != nil {
 		t.Fatalf("seed actor-role: %v", err)
@@ -66,9 +93,11 @@ func seedRoleWithPermission(t *testing.T, db *pgxpool.Pool, actorID, roleCode, p
 func TestLoadPrincipal_WithPermissions(t *testing.T) {
 	db := testPool(t)
 	store := NewStore(db)
-	actorID := "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+	actorID := newUUID(t)
+	roleCode := uniqueCode(t, "role_perm")
+	permCode := uniqueCode(t, "perm_read")
 	seedAdminActor(t, db, actorID, fmt.Sprintf("admin-%s@example.com", actorID[:8]))
-	seedRoleWithPermission(t, db, actorID, "test_role_m3", "admin.content.read")
+	seedRoleWithPermission(t, db, actorID, roleCode, permCode)
 
 	p, err := store.LoadPrincipal(context.Background(), actorID)
 	if err != nil {
@@ -77,20 +106,23 @@ func TestLoadPrincipal_WithPermissions(t *testing.T) {
 	if p.ActorID != actorID {
 		t.Errorf("ActorID = %q, want %q", p.ActorID, actorID)
 	}
-	if !p.HasPermission("admin.content.read") {
-		t.Error("expected admin.content.read permission")
+	if !p.HasPermission(permCode) {
+		t.Errorf("expected %s permission", permCode)
 	}
-	if p.HasPermission("admin.content.write") {
-		t.Error("should not have admin.content.write")
+	unrelatedPerm := uniqueCode(t, "perm_unrelated")
+	if p.HasPermission(unrelatedPerm) {
+		t.Errorf("should not have %s", unrelatedPerm)
 	}
 }
 
 func TestLoadPrincipal_Wildcard(t *testing.T) {
 	db := testPool(t)
 	store := NewStore(db)
-	actorID := "b2c3d4e5-f6a7-8901-bcde-f12345678901"
+	actorID := newUUID(t)
+	roleCode := uniqueCode(t, "role_wild")
 	seedAdminActor(t, db, actorID, fmt.Sprintf("super-%s@example.com", actorID[:8]))
-	seedRoleWithPermission(t, db, actorID, "superadmin_m3", "*")
+	// Permission code must be literal "*" for wildcard semantics; role code is unique per run.
+	seedRoleWithPermission(t, db, actorID, roleCode, "*")
 
 	p, err := store.LoadPrincipal(context.Background(), actorID)
 	if err != nil {
@@ -107,7 +139,7 @@ func TestLoadPrincipal_Wildcard(t *testing.T) {
 func TestLoadPrincipal_DisabledActor(t *testing.T) {
 	db := testPool(t)
 	store := NewStore(db)
-	actorID := "c3d4e5f6-a7b8-9012-cdef-123456789012"
+	actorID := newUUID(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	_, err := db.Exec(ctx,

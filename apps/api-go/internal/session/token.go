@@ -33,3 +33,19 @@ func HashToken(rawToken string) string {
 	h := sha256.Sum256([]byte(rawToken))
 	return hex.EncodeToString(h[:])
 }
+
+// ValidateRawToken checks that the input is exactly 64 lowercase hex characters
+// (a 32-byte token). Returns nil if valid, or an error describing the violation.
+// This prevents unbounded hashing of attacker-controlled input in lookup paths.
+func ValidateRawToken(raw string) error {
+	if len(raw) != DigestHexLen {
+		return fmt.Errorf("session: invalid token length %d", len(raw))
+	}
+	for i := 0; i < len(raw); i++ {
+		c := raw[i]
+		if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f')) {
+			return fmt.Errorf("session: invalid token character at position %d", i)
+		}
+	}
+	return nil
+}
