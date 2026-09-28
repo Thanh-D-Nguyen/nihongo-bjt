@@ -214,6 +214,139 @@ func (s *Store) RevokeAllAdminSessions(ctx context.Context, actorID string) erro
 	return nil
 }
 
+// RotateLearnerSession atomically revokes the current session and creates a new one
+// within a single transaction. The old raw token is validated and resolved to confirm
+// ownership before rotation. Returns the new raw token exactly once.
+// Rejects malformed, expired, revoked, or disabled-account sessions.
+func (s *Store) RotateLearnerSession(ctx context.Context, oldRawToken, userAgent, ipAddress string, newExpiry time.Time) (newRawToken string, err error) {
+	if err := ValidateRawToken(oldRawToken); err != nil {
+		return "", ErrInvalidToken
+	}
+	if !newExpiry.After(time.Now()) {
+		return "", ErrInvalidExpiry
+	}
+
+	oldDigest := HashToken(oldRawToken)
+	newRaw, newDigest, err := GenerateToken()
+	if err != nil {
+		return "", err
+	}
+
+	tx, err := s.db.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return "", fmt.Errorf("session: rotate learner begin tx: %w", err)
+	}
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback(ctx)
+		}
+	}()
+
+	// Resolve old session with owner/status check inside the transaction.
+	var sessID, userID string
+	const lookupQ = `SELECT s.id, s.user_id FROM auth.session s
+		JOIN profile.user_profile u ON u.id = s.user_id
+		WHERE s.token_digest = $1 AND s.revoked_at IS NULL AND s.expires_at > now() AND u.status = 'active'
+		FOR UPDATE`
+	row := tx.QueryRow(ctx, lookupQ, oldDigest)
+	if scanErr := row.Scan(&sessID, &userID); scanErr != nil {
+		if errors.Is(scanErr, pgx.ErrNoRows) {
+			return "", ErrSessionNotFound
+		}
+		return "", fmt.Errorf("session: rotate learner lookup: %w", scanErr)
+	}
+
+	// Revoke old session.
+	const revokeQ = `UPDATE auth.session SET revoked_at = now() WHERE id = $1 AND user_id = $2 AND revoked_at IS NULL`
+	tag, err := tx.Exec(ctx, revokeQ, sessID, userID)
+	if err != nil {
+		return "", fmt.Errorf("session: rotate learner revoke: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		// Concurrent rotation already revoked this session.
+		return "", ErrSessionNotFound
+	}
+
+	// Insert new session preserving owner and metadata.
+	const insertQ = `INSERT INTO auth.session (user_id, token_digest, expires_at, user_agent, ip_address)
+		VALUES ($1, $2, $3, $4, $5)`
+	_, err = tx.Exec(ctx, insertQ, userID, newDigest, newExpiry, nullString(userAgent), nullString(ipAddress))
+	if err != nil {
+		return "", fmt.Errorf("session: rotate learner insert: %w", err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return "", fmt.Errorf("session: rotate learner commit: %w", err)
+	}
+	return newRaw, nil
+}
+
+// RotateAdminSession atomically revokes the current admin session and creates a new one
+// within a single transaction. The old raw token is validated and resolved to confirm
+// ownership before rotation. Returns the new raw token exactly once.
+// Rejects malformed, expired, revoked, or disabled-actor sessions.
+func (s *Store) RotateAdminSession(ctx context.Context, oldRawToken, userAgent, ipAddress string, newExpiry time.Time) (newRawToken string, err error) {
+	if err := ValidateRawToken(oldRawToken); err != nil {
+		return "", ErrInvalidToken
+	}
+	if !newExpiry.After(time.Now()) {
+		return "", ErrInvalidExpiry
+	}
+
+	oldDigest := HashToken(oldRawToken)
+	newRaw, newDigest, err := GenerateToken()
+	if err != nil {
+		return "", err
+	}
+
+	tx, err := s.db.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return "", fmt.Errorf("session: rotate admin begin tx: %w", err)
+	}
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback(ctx)
+		}
+	}()
+
+	// Resolve old session with owner/status check inside the transaction.
+	var sessID, actorID string
+	const lookupQ = `SELECT s.id, s.actor_id FROM auth.admin_session s
+		JOIN authz.admin_actor a ON a.id = s.actor_id
+		WHERE s.token_digest = $1 AND s.revoked_at IS NULL AND s.expires_at > now() AND a.status = 'active'
+		FOR UPDATE`
+	row := tx.QueryRow(ctx, lookupQ, oldDigest)
+	if scanErr := row.Scan(&sessID, &actorID); scanErr != nil {
+		if errors.Is(scanErr, pgx.ErrNoRows) {
+			return "", ErrSessionNotFound
+		}
+		return "", fmt.Errorf("session: rotate admin lookup: %w", scanErr)
+	}
+
+	// Revoke old session.
+	const revokeQ = `UPDATE auth.admin_session SET revoked_at = now() WHERE id = $1 AND actor_id = $2 AND revoked_at IS NULL`
+	tag, err := tx.Exec(ctx, revokeQ, sessID, actorID)
+	if err != nil {
+		return "", fmt.Errorf("session: rotate admin revoke: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return "", ErrSessionNotFound
+	}
+
+	// Insert new session preserving owner and metadata.
+	const insertQ = `INSERT INTO auth.admin_session (actor_id, token_digest, expires_at, user_agent, ip_address)
+		VALUES ($1, $2, $3, $4, $5)`
+	_, err = tx.Exec(ctx, insertQ, actorID, newDigest, newExpiry, nullString(userAgent), nullString(ipAddress))
+	if err != nil {
+		return "", fmt.Errorf("session: rotate admin insert: %w", err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return "", fmt.Errorf("session: rotate admin commit: %w", err)
+	}
+	return newRaw, nil
+}
+
 func nullString(s string) *string {
 	if s == "" {
 		return nil
