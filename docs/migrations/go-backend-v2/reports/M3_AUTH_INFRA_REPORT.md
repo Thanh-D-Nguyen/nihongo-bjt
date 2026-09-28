@@ -28,11 +28,11 @@ First-party Argon2id credential hashing, HTTP session guards for learner/admin c
 ### Argon2id Implementation (`internal/credential/argon2.go`)
 - **Algorithm**: Argon2id v1.3 (PHC string format: `$argon2id$v=19$m=<mem>,t=<iter>,p=<par>$<salt>$<hash>`)
 - **Default parameters**: Memory=65536 KiB, Iterations=3, Parallelism=2, SaltLen=16, HashLen=32
-- **Parameter bounds**: Memory [1, 1048576] KiB, Iterations [1, 100], Parallelism [1, 32], SaltLen [1, 64], HashLen [16, 128]
+- **Parameter bounds**: Memory [1, 131072] KiB, Iterations [1, 6], Parallelism [1, 4], SaltLen [1, 64], HashLen [1, 64]; password input ≤1024 bytes. OCI A1 benchmarking remains required before production login.
 - **Salt generation**: `crypto/rand` for each hash; never reused
 - **Verification**: Constant-time comparison via `subtle.ConstantTimeCompare` on decoded hash bytes
-- **Decode validation**: Validates algorithm ID, version, parameter bounds, base64 encoding, non-empty salt/hash, max record length (4096 bytes). Derives SaltLen/HashLen from decoded bytes (not stored in PHC format).
-- **Error types**: `ErrMismatch`, `ErrMalformedRecord`, `ErrUnsupportedAlgo`, `ErrInvalidParams` — all safe for user-facing responses without leaking internals
+- **Decode validation**: Validates algorithm ID, version, parameter bounds before conversion, duplicate keys, base64 encoding, non-empty salt/hash, and max record length (512 bytes). Derives SaltLen/HashLen from decoded bytes.
+- **Error types**: `ErrMismatch`, `ErrMalformedRecord`, `ErrUnsupportedAlgo`, `ErrInvalidParams`, `ErrPasswordTooLong`; future login handlers must normalize responses to avoid account enumeration.
 - **No hardcoded secrets**: All parameters are explicit; `DefaultParams()` returns a value copy
 
 ### Tests (`internal/credential/argon2_test.go`)
@@ -70,7 +70,7 @@ First-party Argon2id credential hashing, HTTP session guards for learner/admin c
 - Default cookie names match spec (`bjt_web_session`, `bjt_admin_session`)
 - Cookie extraction: present, missing, whitespace-trimmed
 - Namespace isolation: admin cookie rejected by learner guard, learner cookie rejected by admin guard
-- No raw token in logs (structural invariant documented)
+- Valid learner/admin session → identity in context; missing/invalid session → 401; backend error → 500; raw token absent from captured logs
 
 ## CSRF Defense (`internal/authn/csrf.go`)
 
@@ -79,7 +79,7 @@ First-party Argon2id credential hashing, HTTP session guards for learner/admin c
 - Safe methods (GET, HEAD, OPTIONS) pass through unconditionally
 - Explicit trusted origins allowlist from config; **fail closed** when empty
 - Prefers `Origin` header; falls back to `Referer` URL parsing
-- Trailing slash normalization for origin comparison
+- Strict URL parsing; path-bearing `Origin` and malformed trusted-origin configuration fail closed
 - Logs untrusted/missing origin events at WARN level without sensitive data
 
 ### Tests (`internal/authn/csrf_test.go`)
@@ -90,7 +90,7 @@ First-party Argon2id credential hashing, HTTP session guards for learner/admin c
 - Empty trusted origins list rejects all unsafe requests (fail closed)
 - Referer fallback works for trusted origin
 - Referer fallback rejects untrusted origin
-- Trailing slash normalization matches config with/without trailing slash
+- Invalid trusted-origin config and path-bearing `Origin` are rejected
 - Origin header takes precedence over Referer
 - Neither header present → empty string extracted
 
@@ -112,7 +112,7 @@ First-party Argon2id credential hashing, HTTP session guards for learner/admin c
 ### Integration Tests
 - Session and authz integration tests require `TEST_DATABASE_URL` pointing at disposable PostgreSQL 17 with M2 schema
 - Without `TEST_DATABASE_URL`: integration tests SKIP (not FAIL); unit tests all PASS
-- With `TEST_DATABASE_URL`: session store tests (create/lookup/revoke/expiry/disabled/cross-namespace) and RBAC tests (permissions/wildcard/disabled actor) all PASS
+- Session/RBAC PostgreSQL 17 integration passed twice in the prior M3 partial checkpoint. This auth-infrastructure wave did not rerun those database tests; its new guard tests use a lookup seam.
 
 ## Security Properties Verified
 1. **No raw tokens in logs or error responses**: Guards use fixed JSON error strings; credential package errors are typed without internal details

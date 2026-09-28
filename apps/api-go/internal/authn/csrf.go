@@ -31,25 +31,25 @@ func ValidateCSRFConfig(cfg CSRFConfig) error {
 	for i, raw := range cfg.TrustedOrigins {
 		u, err := url.Parse(raw)
 		if err != nil {
-			return fmt.Errorf("csrf: trusted origin[%d] %q: invalid URL: %w", i, raw, err)
+			return fmt.Errorf("csrf: trusted origin[%d]: invalid URL", i)
 		}
 		if u.Scheme != "http" && u.Scheme != "https" {
-			return fmt.Errorf("csrf: trusted origin[%d] %q: scheme must be http or https, got %q", i, raw, u.Scheme)
+			return fmt.Errorf("csrf: trusted origin[%d]: scheme must be http or https", i)
 		}
 		if u.Host == "" {
-			return fmt.Errorf("csrf: trusted origin[%d] %q: missing host", i, raw)
+			return fmt.Errorf("csrf: trusted origin[%d]: missing host", i)
 		}
 		if u.User != nil {
-			return fmt.Errorf("csrf: trusted origin[%d] %q: userinfo not allowed", i, raw)
+			return fmt.Errorf("csrf: trusted origin[%d]: userinfo not allowed", i)
 		}
 		if u.Path != "" && u.Path != "/" {
-			return fmt.Errorf("csrf: trusted origin[%d] %q: path not allowed (got %q)", i, raw, u.Path)
+			return fmt.Errorf("csrf: trusted origin[%d]: path not allowed", i)
 		}
 		if u.RawQuery != "" {
-			return fmt.Errorf("csrf: trusted origin[%d] %q: query not allowed", i, raw)
+			return fmt.Errorf("csrf: trusted origin[%d]: query not allowed", i)
 		}
 		if u.Fragment != "" {
-			return fmt.Errorf("csrf: trusted origin[%d] %q: fragment not allowed", i, raw)
+			return fmt.Errorf("csrf: trusted origin[%d]: fragment not allowed", i)
 		}
 	}
 	return nil
@@ -74,15 +74,14 @@ func CSRFGuard(cfg CSRFConfig) func(http.Handler) http.Handler {
 
 	// Pre-parse trusted origins into normalized scheme+host for fast comparison.
 	trusted := make(map[string]bool, len(cfg.TrustedOrigins))
-	for _, raw := range cfg.TrustedOrigins {
-		u, err := url.Parse(raw)
-		if err != nil {
-			// Should not happen if ValidateCSRFConfig was called first.
-			logger.Error("csrf: skipping malformed trusted origin", "origin", raw, "error", err)
-			continue
+	if err := ValidateCSRFConfig(cfg); err != nil {
+		logger.Error("csrf: invalid trusted origins; rejecting unsafe requests", "error", err)
+	} else {
+		for _, raw := range cfg.TrustedOrigins {
+			u, _ := url.Parse(raw)
+			key := strings.ToLower(u.Scheme) + "://" + strings.ToLower(u.Host)
+			trusted[key] = true
 		}
-		key := strings.ToLower(u.Scheme) + "://" + strings.ToLower(u.Host)
-		trusted[key] = true
 	}
 
 	return func(next http.Handler) http.Handler {
@@ -116,6 +115,10 @@ func CSRFGuard(cfg CSRFConfig) func(http.Handler) http.Handler {
 func extractOrigin(r *http.Request) string {
 	// Prefer Origin header (always scheme+host).
 	if raw := r.Header.Get("Origin"); raw != "" {
+		u, err := url.Parse(raw)
+		if err != nil || u.Path != "" || u.RawQuery != "" || u.Fragment != "" {
+			return ""
+		}
 		return normalizeOrigin(raw)
 	}
 

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -231,6 +232,43 @@ func TestCSRFGuard_EmptyTrustedOrigins_RejectsAll(t *testing.T) {
 
 	if w.Code != http.StatusForbidden {
 		t.Errorf("expected 403 with empty trusted origins, got %d", w.Code)
+	}
+}
+
+func TestCSRFGuard_InvalidConfigFailsClosed(t *testing.T) {
+	cfg := CSRFConfig{TrustedOrigins: []string{"https://app.example.com/path"}, Logger: csrfTestLogger()}
+	handler := CSRFGuard(cfg)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Error("invalid config must not authorize request")
+	}))
+	req := httptest.NewRequest(http.MethodPost, "/api/test", nil)
+	req.Header.Set("Origin", "https://app.example.com")
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, req)
+	if w.Code != http.StatusForbidden {
+		t.Fatalf("expected 403, got %d", w.Code)
+	}
+}
+
+func TestValidateCSRFConfig_DoesNotEchoCredentials(t *testing.T) {
+	err := ValidateCSRFConfig(CSRFConfig{TrustedOrigins: []string{"https://user:secret@app.example.com"}})
+	if err == nil {
+		t.Fatal("expected invalid config")
+	}
+	if strings.Contains(err.Error(), "secret") {
+		t.Fatal("validation error exposed credentials")
+	}
+}
+
+func TestCSRFGuard_OriginWithPathRejected(t *testing.T) {
+	handler := CSRFGuard(validCSRFConfig())(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Error("path-bearing Origin must not authorize request")
+	}))
+	req := httptest.NewRequest(http.MethodPost, "/api/test", nil)
+	req.Header.Set("Origin", "https://app.example.com/path")
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, req)
+	if w.Code != http.StatusForbidden {
+		t.Fatalf("expected 403, got %d", w.Code)
 	}
 }
 
