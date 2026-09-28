@@ -1,10 +1,9 @@
 # Migration Status (Revised)
 ## Current checkpoint
-- Wave: M0
-- Starting HEAD: `0fc4486f5cfd2edc4433359753be573605234006`
-- Prior M0 commit: `6b3a5a6a2f395e43bcda6712a39050edc2aaeee9`
-- Current HEAD: (pending revision commit)
-- Status: REVISED — all blocking defects addressed
+- Wave: H0 (complete) → M1 next
+- Accepted M0 checkpoint: `8808472426195547c779c662981d8dc582b580ca`
+- H0 report: `reports/H0_DOCUMENTATION_HYGIENE_REPORT.md`
+- Status: H0_PASS — documentation classified, stale references identified, no destructive actions
 ## Completed
 - Repository inventory captured (100 controllers, 710 HTTP routes, 174 Prisma models, 22 PostgreSQL schemas)
 - API compatibility matrix COMPLETE: 710 per-route rows extracted from all 100 controller files

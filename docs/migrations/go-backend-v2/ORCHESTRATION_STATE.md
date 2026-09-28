@@ -1,9 +1,9 @@
 # Go Backend Migration Orchestration State
 
-- Current phase: H0 — Documentation hygiene
-- Current accepted HEAD: `8808472426195547c779c662981d8dc582b580ca`
-- Last completed wave: M0 (`M0_PASS`)
-- Next wave: H0 — classify documentation hygiene; no delete/move without explicit approval
+- Current phase: M1 — Go foundation + deployment foundations (next)
+- Current accepted HEAD: (pending H0 commit)
+- Last completed wave: H0 (`H0_PASS`)
+- Next wave: M1 — Go module scaffold, config, health endpoints, pgx pool, ARM64 build verification
 - Completed checkpoint commits:
   - `0fc4486f5cfd2edc4433359753be573605234006` — P0.1 plan rebase
   - `6b3a5a6a` — M0 repository truth
@@ -14,9 +14,11 @@
   - `8d0be28a` — M0 input/permission systematic repair
   - `b05da94f` — M0 token-safe input contracts
   - `88084724` — M0 output-contract closure; accepted M0 checkpoint
-- Open blockers: none for H0/M1
+  - (pending) — H0 documentation hygiene
+- Open blockers: none for M1
 - Gated unknowns: Keycloak credential format (M2 hard gate); Google OAuth production status (M4); runtime resource baseline/Docker availability; production MinIO object inventory; external production integration evidence
 - Important architecture decisions: Go `net/http` + chi + pgx; first-party opaque sessions; PostgreSQL authoritative; Redis retained for ephemeral concerns; Meilisearch retained; learner Web keeps Next runtime; Admin static export evaluated only after M6; media target is `gocloud.dev/blob/fileblob` at `/srv/kotobawork/data/media`; uploads stream through Go; public media via Caddy; private media via authenticated Go streaming; no replacement S3 daemon by default
 - Rollback status: existing NestJS/Keycloak/MinIO/GCP paths retained; no retirement action started
 - Production status: no cutover performed; GCP remains rollback/reference
 - Latest test baseline: `pnpm prisma:validate` PASS; `pnpm typecheck` PASS (8/8); `pnpm build` PASS (7/7); lint PRE_EXISTING in tmp scratch files (75 errors/25 warnings); tests ENVIRONMENT_BLOCKED by unreachable DB (855 passed/4 failed); Docker/resource baseline unavailable locally
+- H0 outcomes: documentation classified; stale references identified (cursor-prompts old phase numbering, GCP-specific ops runbooks, DigitalOcean runbook, IDE rules NestJS assumptions); cleanup proposals documented with timing; no destructive actions taken; deploy/gcp preserved as rollback reference
