@@ -3,11 +3,11 @@
 ## Identification
 - **Starting HEAD**: `ef26020d` (post-checkpoint docs)
 - **Initial M3_INDEPENDENT_ENDPOINTS commit**: `bd57e52` (REVISE after independent review)
-- **Repair commits**: CSRF wiring, admin/me deferral, handler/router tests, CORS config tests
-- **Test/profile repair commit**: `296bf63` (UUID v4 IDs, t.Skip for no-DB, profile omitempty fix)
+- **Repair commits**: `c60db076` (CSRF wiring, admin/me deferral, handler/router tests), `296bf63` (UUID v4 IDs, t.Skip for no-DB, profile omitempty fix), `bf482dc` (report truth repair)
+- **Final format/comment repair**: pending commit (gofmt, duplicate comment removal, report accuracy)
 - **Branch**: `main`
 - **Wave**: M3_INDEPENDENT_ENDPOINTS — learner/admin session endpoints and profile store
-- **Date**: 2026-09-28
+- **Date**: 2026-09-29
 - **Prior accepted checkpoint**: `3e228d1e` (M3 rotation/authz remainder)
 - **Sol acceptance status**: PENDING — implementation evidence complete, awaiting independent review
 
@@ -74,7 +74,7 @@ No Next.js route handler changes. Go endpoints are additive and run on port 4001
 ## Security Properties Verified
 
 1. **HttpOnly session cookies**: Learner (`bjt_web_session`) and admin (`bjt_admin_session`) use separate cookie names with namespace isolation.
-2. **CSRF on unsafe methods**: POST logout routes require valid Origin/Referer via `CSRFGuard`. Empty trusted origins list rejects all unsafe requests until `CORS_ORIGINS` is wired (TODO documented in code).
+2. **CSRF on unsafe methods**: POST logout routes require valid Origin/Referer via `CSRFGuard`. TrustedOrigins are wired from `config.CORSOrigins` at router construction in `NewRouter`. Missing/invalid Origin returns 403.
 3. **Owner-scoped revocation**: `RevokeLearnerSession(ctx, sessionID, userID)` requires both session ID and owning user ID — prevents cross-user revocation. Same pattern for admin.
 4. **Disabled account rejection**: Lookup queries JOIN parent table and filter `status = 'active'`. Disabled accounts return `ErrSessionNotFound` (generic 401).
 5. **No credential leakage**: Error responses use generic messages ("unauthorized", "internal"). Detailed errors logged server-side only.
@@ -101,11 +101,9 @@ TEST_DATABASE_URL="postgres://postgres:m3test@localhost:15433/m3session?sslmode=
 GOTOOLCHAIN=go1.23.0 go test -v -count=2 -run "TestLearnerMe_|TestLearnerLogout_|TestAdminSession_|TestAdminLogout_|TestCSRF_|TestNamespaceIsolation_|TestAdminMe_|TestLearnerMe_Post" ./internal/httpserver/...
 ```
 
-**Result**: 23/23 tests PASS × 2 rounds = 46 executions, 0 failures.
+**Result**: All 23 selected endpoint test functions PASS × 2 rounds = 46 executions, 0 failures. Test names exercised: TestLearnerMe_Success_ExactJSONShape, TestLearnerMe_NullableFieldsPresentAsNull, TestLearnerMe_NoCookie_Returns401, TestLearnerMe_InvalidToken_Returns401, TestLearnerMe_ExpiredSession_FilteredBySQL, TestLearnerMe_RevokedSession_Returns401, TestLearnerMe_DisabledUser_Returns401, TestLearnerLogout_Success_RevokeAndClearCookie, TestLearnerLogout_ReplayAfterRevoke_Returns401, TestLearnerLogout_OwnerScoped_CannotRevokeOther, TestLearnerLogout_NoCookie_Returns401, TestCSRF_RejectsMissingOrigin, TestCSRF_RejectsUntrustedOrigin, TestCSRF_AcceptsTrustedOrigin, TestCSRF_EmptyTrustedOrigins_RejectsAllUnsafe, TestAdminSession_Success_WithRealDisplayName, TestAdminSession_NoCookie_Returns401, TestAdminSession_DisabledActor_Returns401, TestAdminLogout_Success_RevokeAndClearCookie, TestNamespaceIsolation_LearnerCookieCannotAccessAdmin, TestNamespaceIsolation_AdminCookieCannotAccessLearner, TestAdminMe_NotMounted, TestLearnerMe_PostNotAllowed.
 
-Tests cover: learner me success + exact JSON shape + nullable nulls, no-cookie/invalid-token/expired/revoked/disabled rejection, logout success + DB revocation + cookie deletion + replay rejection + owner-scoped isolation, CSRF missing/untrusted/trusted/empty-origin behavior, admin session with real displayName + disabled actor rejection, admin logout + revocation + cookie deletion, learner/admin namespace isolation, admin/me not mounted, POST method rejection.
-
-Without `TEST_DATABASE_URL`, all integration tests `t.Skip` so `go test ./...` passes cleanly in CI or environments without a disposable DB.
+These cover: learner me success + exact JSON shape + nullable nulls, no-cookie/invalid-token/expired/revoked/disabled rejection, logout success + DB revocation + cookie deletion + replay rejection + owner-scoped isolation, CSRF missing/untrusted/trusted/empty-origin behavior, admin session with real displayName + disabled actor rejection, admin logout + revocation + cookie deletion, learner/admin namespace isolation, admin/me not mounted, POST method rejection. The default `go test ./...` suite (without TEST_DATABASE_URL) skips these integration tests via t.Skip and passes cleanly; this is distinct from the real PG17 pass above.
 
 ### Test Coverage Summary
 - `internal/app`: composition wiring tests
@@ -120,7 +118,7 @@ Without `TEST_DATABASE_URL`, all integration tests `t.Skip` so `go test ./...` p
 **NOT YET ACCEPTED BY SOL** — This report documents implementation evidence. Independent Sol verification is required before marking M3_INDEPENDENT_ENDPOINTS as accepted and updating ORCHESTRATION_STATE.md.
 
 ## Rollback Guidance
-This wave is purely additive. Rollback is code-level: revert commits `bd57e52` and `296bf63`. No schema changes, no data migration, no destructive operations. Existing NestJS endpoints remain authoritative on port 4000.
+This wave is purely additive. Rolling back this endpoint slice means reverting the cumulative implementation commits (`bd57e52`, `c60db076`, `296bf63`, `bf482dc`, and the final format/comment repair commit) or routing traffic away from the Go service. No schema changes, no data migration, no destructive operations. Existing NestJS endpoints remain authoritative on port 4000.
 
 ## Gated Unknowns (Unchanged)
 - **Production Keycloak credential format**: GATED_UNKNOWN_PRODUCTION. M3 login/verifier BLOCKED until resolved.
