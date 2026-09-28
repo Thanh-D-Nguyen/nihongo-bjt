@@ -10,8 +10,6 @@ import (
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/session"
 )
 
-// Ensure imports are used without leaking context into handler signatures.
-
 // adminSessionHandler implements GET /api/admin/session — validates the admin session
 // and returns actor ID + display name. Mirrors NestJS AdminController.session().
 // This is a session bootstrap probe; it does NOT check fine-grained permissions.

@@ -16,19 +16,23 @@ var ErrProfileNotFound = errors.New("profile: not found or inactive")
 
 // LearnerPublicProfile contains only the public fields exposed by GET /api/auth/me.
 // This mirrors the NestJS KeycloakUserService.getLearnerPublicProfile select shape.
+// LearnerPublicProfile contains only the public fields exposed by GET /api/auth/me.
+// This mirrors the NestJS KeycloakUserService.getLearnerPublicProfile select shape.
+// Nullable fields use pointer types WITHOUT omitempty so that JSON serialization
+// includes them as null when the DB value is NULL, matching Prisma's behavior.
 type LearnerPublicProfile struct {
 	ID                 string  `json:"id"`
 	DisplayName        string  `json:"displayName"`
-	Email              *string `json:"email,omitempty"`
+	Email              *string `json:"email"`
 	Status             string  `json:"status"`
-	KeycloakSubject    *string `json:"keycloakSubject,omitempty"`
-	AvatarAssetID      *string `json:"avatarAssetId,omitempty"`
-	CoverAssetID       *string `json:"coverAssetId,omitempty"`
-	ThemeMode          *string `json:"themeMode,omitempty"`
-	UILocale           *string `json:"uiLocale,omitempty"`
-	ExplanationLocale  *string `json:"explanationLocale,omitempty"`
-	DensityPreference  *string `json:"densityPreference,omitempty"`
-	FontSizePreference *string `json:"fontSizePreference,omitempty"`
+	KeycloakSubject    *string `json:"keycloakSubject"`
+	AvatarAssetID      *string `json:"avatarAssetId"`
+	CoverAssetID       *string `json:"coverAssetId"`
+	ThemeMode          *string `json:"themeMode"`
+	UILocale           *string `json:"uiLocale"`
+	ExplanationLocale  *string `json:"explanationLocale"`
+	DensityPreference  *string `json:"densityPreference"`
+	FontSizePreference *string `json:"fontSizePreference"`
 	SharePostcardOptIn bool    `json:"sharePostcardOptIn"`
 }
 
