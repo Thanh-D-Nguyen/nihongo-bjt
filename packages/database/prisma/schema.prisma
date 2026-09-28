@@ -3523,39 +3523,39 @@ model UserSocialConnection {
 // === M2: First-party Go auth persistence (additive) ===
 
 model PasswordCredential {
-  id            String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId        String      @unique @map("user_id") @db.Uuid
-  algorithm     String      @default("argon2id") @db.VarChar(32)
-  hashIterations Int       @default(5) @map("hash_iterations")
-  memoryKib     Int         @default(7168) @map("memory_kib")
-  parallelism   Int         @default(1)
-  hashLength    Int         @default(32) @map("hash_length")
-  salt          Bytes
-  hashedValue   Bytes       @map("hashed_value")
-  createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt     DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
-  user          UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id              String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String      @unique @map("user_id") @db.Uuid
+  algorithm       String      @db.VarChar(32)
+  algorithmVersion String?    @map("algorithm_version") @db.VarChar(16)
+  hashIterations  Int         @map("hash_iterations")
+  memoryKib       Int         @map("memory_kib")
+  parallelism     Int
+  hashLength      Int         @map("hash_length")
+  salt            Bytes
+  hashedValue     Bytes       @map("hashed_value")
+  createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user            UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([userId], map: "idx_password_credential_user")
   @@map("password_credential")
   @@schema("auth")
 }
 
 model AdminPasswordCredential {
-  id            String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  actorId       String     @unique @map("actor_id") @db.Uuid
-  algorithm     String     @default("argon2id") @db.VarChar(32)
-  hashIterations Int      @default(5) @map("hash_iterations")
-  memoryKib     Int        @default(7168) @map("memory_kib")
-  parallelism   Int        @default(1)
-  hashLength    Int        @default(32) @map("hash_length")
-  salt          Bytes
-  hashedValue   Bytes      @map("hashed_value")
-  createdAt     DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt     DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
-  actor         AdminActor @relation(fields: [actorId], references: [id], onDelete: Cascade)
+  id               String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  actorId          String     @unique @map("actor_id") @db.Uuid
+  algorithm        String     @db.VarChar(32)
+  algorithmVersion String?    @map("algorithm_version") @db.VarChar(16)
+  hashIterations   Int        @map("hash_iterations")
+  memoryKib        Int        @map("memory_kib")
+  parallelism      Int
+  hashLength       Int        @map("hash_length")
+  salt             Bytes
+  hashedValue      Bytes      @map("hashed_value")
+  createdAt        DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+  actor            AdminActor @relation(fields: [actorId], references: [id], onDelete: Cascade)
 
-  @@index([actorId], map: "idx_admin_password_credential_actor")
   @@map("admin_password_credential")
   @@schema("auth")
 }
@@ -3572,7 +3572,6 @@ model Session {
   user        UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, expiresAt], map: "idx_session_user_expires")
-  @@index([tokenDigest], map: "idx_session_token_digest")
   @@map("session")
   @@schema("auth")
 }
@@ -3589,7 +3588,6 @@ model AdminSession {
   actor       AdminActor @relation(fields: [actorId], references: [id], onDelete: Cascade)
 
   @@index([actorId, expiresAt], map: "idx_admin_session_actor_expires")
-  @@index([tokenDigest], map: "idx_admin_session_token_digest")
   @@map("admin_session")
   @@schema("auth")
 }

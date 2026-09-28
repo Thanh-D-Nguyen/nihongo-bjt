@@ -1,11 +1,12 @@
 # Migration Status (Revised)
 ## Current checkpoint
-- Wave: M2 (persistence complete, credential gate pending) → M3 scaffolding next (verifier blocked)
+- Wave: M2 (persistence REVISED, credential gate pending) → M3 scaffolding next (verifier blocked)
 - Accepted M0 checkpoint: `8808472426195547c779c662981d8dc582b580ca`
 - Accepted H0 checkpoint: `17c3e606b0a333103445ed054582b726bff52781`
 - Accepted M1 checkpoint: `0cb530224b8f4cedaea37b442254c2835bc03d08`
+- M2 initial commit: `37e0b68c49712fe3665a0e847cc6ce6221b4ed9a` (REVISE after independent review)
 - M2 report: `reports/M2_AUTH_PERSISTENCE_REPORT.md`
-- Status: M2_PERSISTENCE_PASS_CREDENTIAL_GATE_PENDING — additive auth/session schema (4 tables in auth schema) validated and integration-tested on disposable Postgres; Keycloak credential HARD GATE classified GATED_UNKNOWN_PRODUCTION (dev defaults confirmed Argon2id v1.3 m=7168 t=5 p=1 len=32, production format unverified); M3 credential verifier BLOCKED until production format confirmed
+- Status: M2_PERSISTENCE_PASS_CREDENTIAL_GATE_PENDING (REVISED) — additive auth/session schema (4 tables in auth schema) with NO hardcoded algorithm/parameter defaults; CHECK constraints enforce positive values and non-empty salt/hash; redundant indexes removed; rollback guidance corrected to code-level; full Prisma migration chain on Postgres 17 FAILED at 20260425020754_phase_00_data_import (PRE_EXISTING); M2 migration separately verified on fresh Postgres 17; Keycloak credential HARD GATE classified GATED_UNKNOWN_PRODUCTION (dev metadata only; production UNVERIFIED); M3 credential verifier BLOCKED until production format confirmed
 ## Completed
 - Repository inventory captured (100 controllers, 710 HTTP routes, 174 Prisma models, 22 PostgreSQL schemas)
 - API compatibility matrix COMPLETE: 710 per-route rows extracted from all 100 controller files
