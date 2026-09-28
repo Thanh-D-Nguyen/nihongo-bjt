@@ -9,7 +9,7 @@
 - **Wave**: M3_INDEPENDENT_ENDPOINTS — learner/admin session endpoints and profile store
 - **Date**: 2026-09-29
 - **Prior accepted checkpoint**: `3e228d1e` (M3 rotation/authz remainder)
-- **Sol acceptance status**: PENDING — implementation evidence complete, awaiting independent review
+- **Sol acceptance status**: PASS at `d946152f` after independent source, Git, PostgreSQL 17, Go test/race/vet, gofmt, and ARM64 review
 
 ## Scope
 HTTP handler scaffolding for learner and admin session endpoints that are independent of password credential verification. Profile store for current-user data. CSRF guard wiring from CORS_ORIGINS. No login endpoint, no credential verifier, no rate limiter (deferred — see below).
@@ -115,7 +115,7 @@ These cover: learner me success + exact JSON shape + nullable nulls, no-cookie/i
 - `internal/session`: store, token, rotation tests (PG17 integration)
 
 ## Gate Status
-**NOT YET ACCEPTED BY SOL** — This report documents implementation evidence. Independent Sol verification is required before marking M3_INDEPENDENT_ENDPOINTS as accepted and updating ORCHESTRATION_STATE.md.
+**PASS — M3_INDEPENDENT_ENDPOINTS accepted by Sol at `d946152f`.** The credential-dependent remainder of M3 remains blocked on production Keycloak credential metadata. No M4 work or production cutover has begun.
 
 ## Rollback Guidance
 This wave is purely additive. Roll back by routing traffic away from Go or reverting the endpoint code commits (`bd57e528`, `c60db076`, `296bf63c`, `eaafd348`) in reverse order; the report commits can remain as history. No schema changes, data migration, or destructive operations occurred. Existing NestJS endpoints remain authoritative on port 4000.
