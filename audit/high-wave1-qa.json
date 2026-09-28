@@ -1,0 +1,237 @@
+{
+ "version": "high-wave1-qa",
+ "batch": "high-wave1",
+ "provider": "xkiro",
+ "model": "gpt-image",
+ "concurrency": 1,
+ "textPolicy": "NO_READABLE_TEXT",
+ "promptCompilerVersion": "bjt-image-generation-prompt-v2.1.0",
+ "contextualStyleContractVersion": "contextual-style-contract-v1.1",
+ "attempted": 20,
+ "accepted": 20,
+ "regenerate": 0,
+ "rejected": 0,
+ "humanReview": 0,
+ "textRiskCounts": {
+  "NONE": 15,
+  "INCIDENTAL_UNREADABLE": 5
+ },
+ "acceptanceRate": 1.0,
+ "providerRetries": 0,
+ "http429": 0,
+ "http5xx": 0,
+ "errors": 0,
+ "gate": {
+  "acceptRate": 1.0,
+  "problematicText": 0,
+  "criticalSemanticFailures": 0,
+  "decision": "PASS"
+ },
+ "assets": [
+  {
+   "questionId": "bjt-j5-practice-v3:LC_SCENE:0001",
+   "level": "J5",
+   "sectionCode": "LC_SCENE",
+   "objectKey": "bjt/ai/j5/lc_scene/4bd84a1e-ce5e-47b3-a321-6b1be209cd98.png",
+   "byteSize": 2105217,
+   "visualQaStatus": "ACCEPT",
+   "textRisk": "NONE",
+   "notes": null
+  },
+  {
+   "questionId": "bjt-j5-practice-v3:LC_SCENE:0003",
+   "level": "J5",
+   "sectionCode": "LC_SCENE",
+   "objectKey": "bjt/ai/j5/lc_scene/98eae28f-22ad-489e-bd18-a720a62f0ae1.png",
+   "byteSize": 1960011,
+   "visualQaStatus": "ACCEPT",
+   "textRisk": "NONE",
+   "notes": null
+  },
+  {
+   "questionId": "bjt-j5-practice-v3:LC_SCENE:0004",
+   "level": "J5",
+   "sectionCode": "LC_SCENE",
+   "objectKey": "bjt/ai/j5/lc_scene/f08ab578-11a4-4e93-82fe-f3ec94402381.png",
+   "byteSize": 1918223,
+   "visualQaStatus": "ACCEPT",
+   "textRisk": "NONE",
+   "notes": null
+  },
+  {
+   "questionId": "bjt-j5-practice-v3:LC_SCENE:0005",
+   "level": "J5",
+   "sectionCode": "LC_SCENE",
+   "objectKey": "bjt/ai/j5/lc_scene/c9334cea-a238-4587-b863-9863d36f2472.png",
+   "byteSize": 2026975,
+   "visualQaStatus": "ACCEPT",
+   "textRisk": "NONE",
+   "notes": null
+  },
+  {
+   "questionId": "bjt-j5-practice-v3:LC_SCENE:0006",
+   "level": "J5",
+   "sectionCode": "LC_SCENE",
+   "objectKey": "bjt/ai/j5/lc_scene/e50d74d7-4382-48fb-a69b-07fb75beacba.png",
+   "byteSize": 2235622,
+   "visualQaStatus": "ACCEPT",
+   "textRisk": "INCIDENTAL_UNREADABLE",
+   "notes": null
+  },
+  {
+   "questionId": "bjt-j5-practice-v3:LC_SCENE:0007",
+   "level": "J5",
+   "sectionCode": "LC_SCENE",
+   "objectKey": "bjt/ai/j5/lc_scene/ac7dc5c7-589a-4ed2-bcac-3fcca987023c.png",
+   "byteSize": 2159055,
+   "visualQaStatus": "ACCEPT",
+   "textRisk": "NONE",
+   "notes": null
+  },
+  {
+   "questionId": "bjt-j5-practice-v3:LC_SCENE:0008",
+   "level": "J5",
+   "sectionCode": "LC_SCENE",
+   "objectKey": "bjt/ai/j5/lc_scene/ba29ba3a-5424-468f-9879-a139fed874f9.png",
+   "byteSize": 1978205,
+   "visualQaStatus": "ACCEPT",
+   "textRisk": "NONE",
+   "notes": null
+  },
+  {
+   "questionId": "bjt-j5-practice-v3:LC_SCENE:0009",
+   "level": "J5",
+   "sectionCode": "LC_SCENE",
+   "objectKey": "bjt/ai/j5/lc_scene/af77155b-1c4d-439f-a19c-8caf9ba50d9e.png",
+   "byteSize": 1709434,
+   "visualQaStatus": "ACCEPT",
+   "textRisk": "NONE",
+   "notes": null
+  },
+  {
+   "questionId": "bjt-j5-practice-v3:LC_SCENE:0010",
+   "level": "J5",
+   "sectionCode": "LC_SCENE",
+   "objectKey": "bjt/ai/j5/lc_scene/d9f24116-1629-486a-b9af-dd3014932375.png",
+   "byteSize": 1838398,
+   "visualQaStatus": "ACCEPT",
+   "textRisk": "INCIDENTAL_UNREADABLE",
+   "notes": null
+  },
+  {
+   "questionId": "bjt-j5-practice-v3:LC_SCENE:0011",
+   "level": "J5",
+   "sectionCode": "LC_SCENE",
+   "objectKey": "bjt/ai/j5/lc_scene/858e4e31-278f-421a-aa01-e8990c079c95.png",
+   "byteSize": 1830476,
+   "visualQaStatus": "ACCEPT",
+   "textRisk": "INCIDENTAL_UNREADABLE",
+   "notes": null
+  },
+  {
+   "questionId": "bjt-j5-practice-v3:LC_STATEMENT:0015",
+   "level": "J5",
+   "sectionCode": "LC_STATEMENT",
+   "objectKey": "bjt/ai/j5/lc_statement/319118c9-de2c-45ce-98ba-948539351a61.png",
+   "byteSize": 1870560,
+   "visualQaStatus": "ACCEPT",
+   "textRisk": "NONE",
+   "notes": null
+  },
+  {
+   "questionId": "bjt-j5-practice-v3:LC_STATEMENT:0020",
+   "level": "J5",
+   "sectionCode": "LC_STATEMENT",
+   "objectKey": "bjt/ai/j5/lc_statement/4cd0e2af-2a7e-43ad-9572-35c5fc4da431.png",
+   "byteSize": 1959917,
+   "visualQaStatus": "ACCEPT",
+   "textRisk": "NONE",
+   "notes": null
+  },
+  {
+   "questionId": "bjt-j5-practice-v3:LC_INTEGRATED:0024",
+   "level": "J5",
+   "sectionCode": "LC_INTEGRATED",
+   "objectKey": "bjt/ai/j5/lc_integrated/26259d59-d5db-4def-befa-7aac9c9ec14d.png",
+   "byteSize": 1923276,
+   "visualQaStatus": "ACCEPT",
+   "textRisk": "NONE",
+   "notes": null
+  },
+  {
+   "questionId": "bjt-j5-practice-v3:LC_INTEGRATED:0029",
+   "level": "J5",
+   "sectionCode": "LC_INTEGRATED",
+   "objectKey": "bjt/ai/j5/lc_integrated/0ced13e5-6b7f-4742-8cda-3f935e576b1b.png",
+   "byteSize": 1826792,
+   "visualQaStatus": "ACCEPT",
+   "textRisk": "NONE",
+   "notes": null
+  },
+  {
+   "questionId": "bjt-j4-practice-v3:LC_SCENE:0001",
+   "level": "J4",
+   "sectionCode": "LC_SCENE",
+   "objectKey": "bjt/ai/j4/lc_scene/ca95529b-5e04-48b0-8f4a-c487dc7367cc.png",
+   "byteSize": 1794938,
+   "visualQaStatus": "ACCEPT",
+   "textRisk": "NONE",
+   "notes": null
+  },
+  {
+   "questionId": "bjt-j4-practice-v3:LC_SCENE:0003",
+   "level": "J4",
+   "sectionCode": "LC_SCENE",
+   "objectKey": "bjt/ai/j4/lc_scene/99c6f087-68f5-4e3a-af4c-3cb56561802d.png",
+   "byteSize": 1749283,
+   "visualQaStatus": "ACCEPT",
+   "textRisk": "INCIDENTAL_UNREADABLE",
+   "notes": "regenerated with blank-notice composition; ACCEPT after targeted regeneration (1 regeneration used of budget)"
+  },
+  {
+   "questionId": "bjt-j4-practice-v3:LC_SCENE:0005",
+   "level": "J4",
+   "sectionCode": "LC_SCENE",
+   "objectKey": "bjt/ai/j4/lc_scene/ea968a3b-caaf-411e-aa9b-7959c954fd4e.png",
+   "byteSize": 1820320,
+   "visualQaStatus": "ACCEPT",
+   "textRisk": "NONE",
+   "notes": null
+  },
+  {
+   "questionId": "bjt-j4-practice-v3:LC_SCENE:0007",
+   "level": "J4",
+   "sectionCode": "LC_SCENE",
+   "objectKey": "bjt/ai/j4/lc_scene/357a5dd0-480a-4940-9f3d-e7cbf8bd3c64.png",
+   "byteSize": 1955630,
+   "visualQaStatus": "ACCEPT",
+   "textRisk": "NONE",
+   "notes": null
+  },
+  {
+   "questionId": "bjt-j4-practice-v3:LC_SCENE:0009",
+   "level": "J4",
+   "sectionCode": "LC_SCENE",
+   "objectKey": "bjt/ai/j4/lc_scene/1f462bce-2cec-48ea-9faa-4c5ad536f340.png",
+   "byteSize": 1928059,
+   "visualQaStatus": "ACCEPT",
+   "textRisk": "INCIDENTAL_UNREADABLE",
+   "notes": null
+  },
+  {
+   "questionId": "bjt-j4-practice-v3:LC_SCENE:0011",
+   "level": "J4",
+   "sectionCode": "LC_SCENE",
+   "objectKey": "bjt/ai/j4/lc_scene/95e2ea65-c06e-4e21-aa74-9cde341a202c.png",
+   "byteSize": 1775010,
+   "visualQaStatus": "ACCEPT",
+   "textRisk": "NONE",
+   "notes": null
+  }
+ ],
+ "regenerations": {
+  "count": 1,
+  "cause": "text risk (focal lettering from brief-required posted notice)",
+  "budget": "1 targeted regeneration per asset"
+ }
+}

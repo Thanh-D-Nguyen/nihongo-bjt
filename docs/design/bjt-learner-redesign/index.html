@@ -1,0 +1,2700 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KotobaWorks — BJT Learner Redesign Prototype</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* ═══════════════════════════════════════════════════════════
+   DESIGN SYSTEM — KotobaWorks BJT Learner Redesign
+   Direction: Quiet Mastery + Japanese Editorial Discipline
+   ═══════════════════════════════════════════════════════════ */
+
+      :root {
+        /* ── Palette ── */
+        --navy: #1b2a4a;
+        --navy-hover: #243560;
+        --navy-pressed: #141f38;
+        --blue: #2563eb;
+        --blue-hover: #1d4ed8;
+        --blue-light: #dbeafe;
+        --sky: #eff6ff;
+        --ink: #111827;
+        --muted: #4b5563;
+        --subtle: #9ca3af;
+        --paper: #f8fafc;
+        --surface: #ffffff;
+        --border: #e2e8f0;
+        --border-hover: #cbd5e1;
+        --success: #059669;
+        --success-soft: #ecfdf5;
+        --warning: #d97706;
+        --warning-soft: #fffbeb;
+        --danger: #dc2626;
+        --danger-soft: #fef2f2;
+        --sakura: #f9a8d4;
+        --gold: #f59e0b;
+
+        /* ── Typography ── */
+        --font-latin: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+        --font-jp: "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+
+        /* ── Spacing (4px base) ── */
+        --sp-xs: 4px;
+        --sp-sm: 8px;
+        --sp-md: 16px;
+        --sp-lg: 24px;
+        --sp-xl: 32px;
+        --sp-xxl: 48px;
+
+        /* ── Radii ── */
+        --radius-sm: 6px;
+        --radius-md: 10px;
+        --radius-lg: 14px;
+        --radius-xl: 20px;
+        --radius-full: 9999px;
+
+        /* ── Shadows ── */
+        --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+        --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+        --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -1px rgba(15, 23, 42, 0.04);
+        --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.03);
+
+        /* ── Motion ── */
+        --ease-out: cubic-bezier(0, 0, 0.2, 1);
+        --ease-in: cubic-bezier(0.4, 0, 1, 1);
+        --duration-fast: 150ms;
+        --duration-normal: 200ms;
+        --duration-moderate: 300ms;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+
+      /* ── Reset ── */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        font-size: 16px;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      body {
+        font-family: var(--font-latin);
+        color: var(--ink);
+        background: var(--paper);
+        line-height: 1.6;
+        min-height: 100vh;
+      }
+
+      /* ── Japanese Text Treatment ── */
+      .jp {
+        font-family: var(--font-jp);
+        line-height: 1.8;
+        letter-spacing: 0.01em;
+        word-break: keep-all;
+        overflow-wrap: break-word;
+        line-break: strict;
+      }
+      .jp-heading {
+        font-feature-settings: "palt" 1;
+      }
+      ruby {
+        ruby-position: over;
+      }
+      rt {
+        font-size: 0.5em;
+        line-height: 1.2;
+        color: var(--muted);
+      }
+
+      /* ── Focus States ── */
+      :focus-visible {
+        outline: 3px solid var(--blue);
+        outline-offset: 2px;
+        border-radius: var(--radius-sm);
+      }
+
+      /* ── Layout Shell ── */
+      .app-shell {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+      .main-content {
+        flex: 1;
+        width: 100%;
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: var(--sp-md);
+      }
+
+      /* ── Header / Nav ── */
+      .header {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: rgba(248, 250, 252, 0.95);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid transparent;
+        transition:
+          border-color var(--duration-fast),
+          box-shadow var(--duration-fast);
+      }
+      .header.scrolled {
+        border-bottom-color: rgba(17, 24, 39, 0.08);
+        box-shadow: var(--shadow-sm);
+      }
+      .header-inner {
+        max-width: 1280px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        gap: var(--sp-md);
+        padding: var(--sp-sm) var(--sp-md);
+        min-height: 56px;
+      }
+      .brand {
+        font-weight: 700;
+        font-size: 18px;
+        color: var(--navy);
+        text-decoration: none;
+        white-space: nowrap;
+      }
+      .nav-primary {
+        display: none;
+        gap: var(--sp-xs);
+        align-items: center;
+      }
+      .nav-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 12px;
+        border-radius: var(--radius-md);
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--muted);
+        text-decoration: none;
+        transition: all var(--duration-fast);
+        white-space: nowrap;
+        cursor: pointer;
+        border: none;
+        background: none;
+      }
+      .nav-item:hover {
+        background: rgba(17, 24, 39, 0.04);
+        color: var(--ink);
+      }
+      .nav-item.active {
+        background: var(--ink);
+        color: var(--surface);
+      }
+      .nav-item svg {
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+      }
+      .search-bar {
+        display: none;
+        flex: 1;
+        max-width: 320px;
+        align-items: center;
+        gap: var(--sp-sm);
+        background: var(--surface);
+        border: 1px solid rgba(17, 24, 39, 0.06);
+        border-radius: var(--radius-md);
+        padding: 0 12px;
+        height: 40px;
+        transition:
+          border-color var(--duration-fast),
+          box-shadow var(--duration-fast);
+      }
+      .search-bar:focus-within {
+        border-color: rgba(37, 99, 235, 0.35);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+      }
+      .search-bar input {
+        flex: 1;
+        border: none;
+        outline: none;
+        font-size: 14px;
+        color: var(--ink);
+        background: transparent;
+      }
+      .search-bar input::placeholder {
+        color: var(--subtle);
+      }
+      .user-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: var(--radius-full);
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(37, 99, 235, 0.05));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--ink);
+        border: 1px solid rgba(17, 24, 39, 0.08);
+        cursor: pointer;
+      }
+      .mobile-menu-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: var(--radius-md);
+        border: 1px solid rgba(17, 24, 39, 0.06);
+        background: var(--surface);
+        cursor: pointer;
+        color: var(--ink);
+      }
+
+      /* ── Screen Container ── */
+      .screen {
+        display: none;
+        animation: fadeIn var(--duration-moderate) var(--ease-out);
+      }
+      .screen.active {
+        display: block;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(4px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* ── Section Headers ── */
+      .section-header {
+        margin-bottom: var(--sp-lg);
+      }
+      .section-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--ink);
+        margin-bottom: var(--sp-xs);
+      }
+      .section-subtitle {
+        font-size: 14px;
+        color: var(--muted);
+      }
+
+      /* ── Cards ── */
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: var(--sp-lg);
+        box-shadow: var(--shadow-xs);
+        transition: box-shadow var(--duration-fast);
+      }
+      .card:hover {
+        box-shadow: var(--shadow-sm);
+      }
+
+      /* ── Buttons ── */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--sp-sm);
+        padding: 10px 20px;
+        border-radius: var(--radius-md);
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all var(--duration-fast);
+        border: none;
+        min-height: 44px;
+        text-decoration: none;
+      }
+      .btn-primary {
+        background: var(--navy);
+        color: #fff;
+      }
+      .btn-primary:hover {
+        background: var(--navy-hover);
+      }
+      .btn-primary:active {
+        background: var(--navy-pressed);
+      }
+      .btn-secondary {
+        background: transparent;
+        color: var(--blue);
+        border: 1.5px solid var(--blue);
+      }
+      .btn-secondary:hover {
+        background: var(--sky);
+      }
+      .btn-ghost {
+        background: transparent;
+        color: var(--muted);
+      }
+      .btn-ghost:hover {
+        background: rgba(17, 24, 39, 0.04);
+        color: var(--ink);
+      }
+      .btn-sm {
+        padding: 6px 14px;
+        font-size: 13px;
+        min-height: 36px;
+      }
+      .btn-lg {
+        padding: 14px 28px;
+        font-size: 16px;
+        min-height: 48px;
+      }
+
+      /* ── Badges ── */
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 10px;
+        border-radius: var(--radius-full);
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .badge-navy {
+        background: var(--navy);
+        color: #fff;
+      }
+      .badge-blue {
+        background: var(--blue-light);
+        color: var(--blue);
+      }
+      .badge-success {
+        background: var(--success-soft);
+        color: var(--success);
+      }
+      .badge-warning {
+        background: var(--warning-soft);
+        color: var(--warning);
+      }
+      .badge-danger {
+        background: var(--danger-soft);
+        color: var(--danger);
+      }
+
+      /* ── Progress Bars ── */
+      .progress-track {
+        width: 100%;
+        height: 8px;
+        background: var(--border);
+        border-radius: var(--radius-full);
+        overflow: hidden;
+      }
+      .progress-fill {
+        height: 100%;
+        border-radius: var(--radius-full);
+        transition: width var(--duration-moderate) var(--ease-out);
+      }
+      .progress-fill.navy {
+        background: var(--navy);
+      }
+      .progress-fill.blue {
+        background: var(--blue);
+      }
+      .progress-fill.success {
+        background: var(--success);
+      }
+
+      /* ═══════════════════════════════════════════════════════════
+   SCREEN 1: LEARNER HOME — Command Center
+   ═══════════════════════════════════════════════════════════ */
+      .home-hero {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: var(--sp-lg);
+        margin-bottom: var(--sp-xl);
+      }
+      .level-card {
+        background: var(--navy);
+        color: #fff;
+        border-radius: var(--radius-xl);
+        padding: var(--sp-xl);
+        position: relative;
+        overflow: hidden;
+      }
+      .level-card::after {
+        content: "";
+        position: absolute;
+        top: -40px;
+        right: -40px;
+        width: 160px;
+        height: 160px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.06);
+      }
+      .level-label {
+        font-size: 13px;
+        font-weight: 600;
+        opacity: 0.8;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: var(--sp-xs);
+      }
+      .level-current {
+        font-size: 48px;
+        font-weight: 700;
+        line-height: 1.1;
+        margin-bottom: var(--sp-sm);
+        font-family: var(--font-latin);
+      }
+      .level-target {
+        font-size: 14px;
+        opacity: 0.7;
+        margin-bottom: var(--sp-lg);
+      }
+      .level-progress-row {
+        display: flex;
+        align-items: center;
+        gap: var(--sp-md);
+        margin-top: var(--sp-md);
+      }
+      .level-progress-label {
+        font-size: 13px;
+        opacity: 0.8;
+        white-space: nowrap;
+      }
+      .level-progress-track {
+        flex: 1;
+        height: 6px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: var(--radius-full);
+        overflow: hidden;
+      }
+      .level-progress-fill {
+        height: 100%;
+        background: var(--sakura);
+        border-radius: var(--radius-full);
+      }
+
+      .next-action-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-xl);
+        padding: var(--sp-xl);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+      .next-action-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: var(--sp-sm);
+      }
+      .next-action-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--ink);
+        margin-bottom: var(--sp-xs);
+      }
+      .next-action-desc {
+        font-size: 14px;
+        color: var(--muted);
+        margin-bottom: var(--sp-lg);
+        line-height: 1.5;
+      }
+
+      .home-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: var(--sp-md);
+      }
+      .stat-strip {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--sp-sm);
+      }
+      .stat-item {
+        text-align: center;
+        padding: var(--sp-md);
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+      }
+      .stat-value {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--navy);
+        font-variant-numeric: tabular-nums;
+      }
+      .stat-label {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 2px;
+      }
+
+      .weak-area-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--sp-sm);
+      }
+      .weak-area-item {
+        display: flex;
+        align-items: center;
+        gap: var(--sp-md);
+        padding: var(--sp-md);
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+      }
+      .weak-area-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .weak-area-info {
+        flex: 1;
+        min-width: 0;
+      }
+      .weak-area-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--ink);
+      }
+      .weak-area-detail {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .activity-row {
+        display: flex;
+        align-items: center;
+        gap: var(--sp-md);
+        padding: var(--sp-sm) 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .activity-row:last-child {
+        border-bottom: none;
+      }
+      .activity-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: var(--radius-full);
+        flex-shrink: 0;
+      }
+      .activity-text {
+        flex: 1;
+        font-size: 13px;
+        color: var(--ink);
+      }
+      .activity-time {
+        font-size: 12px;
+        color: var(--subtle);
+        white-space: nowrap;
+      }
+
+      /* ═══════════════════════════════════════════════════════════
+   SCREEN 2: BJT ROADMAP
+   ═══════════════════════════════════════════════════════════ */
+      .roadmap-track {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        position: relative;
+        padding-left: var(--sp-xl);
+      }
+      .roadmap-track::before {
+        content: "";
+        position: absolute;
+        left: 15px;
+        top: 24px;
+        bottom: 24px;
+        width: 2px;
+        background: var(--border);
+      }
+      .roadmap-node {
+        position: relative;
+        display: flex;
+        align-items: flex-start;
+        gap: var(--sp-lg);
+        padding: var(--sp-md) 0;
+      }
+      .roadmap-dot {
+        position: absolute;
+        left: calc(-1 * var(--sp-xl) + 8px);
+        top: 20px;
+        width: 16px;
+        height: 16px;
+        border-radius: var(--radius-full);
+        border: 3px solid var(--border);
+        background: var(--paper);
+        z-index: 1;
+      }
+      .roadmap-node.completed .roadmap-dot {
+        border-color: var(--success);
+        background: var(--success);
+      }
+      .roadmap-node.current .roadmap-dot {
+        border-color: var(--navy);
+        background: var(--navy);
+        box-shadow: 0 0 0 4px rgba(27, 42, 74, 0.15);
+      }
+      .roadmap-node.locked .roadmap-dot {
+        border-color: var(--border);
+        background: var(--paper);
+      }
+      .roadmap-content {
+        flex: 1;
+      }
+      .roadmap-level {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--ink);
+        margin-bottom: 2px;
+      }
+      .roadmap-node.locked .roadmap-level {
+        color: var(--subtle);
+      }
+      .roadmap-desc {
+        font-size: 13px;
+        color: var(--muted);
+        margin-bottom: var(--sp-sm);
+      }
+      .roadmap-skills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--sp-xs);
+      }
+      .skill-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 10px;
+        border-radius: var(--radius-full);
+        font-size: 11px;
+        font-weight: 600;
+        background: var(--sky);
+        color: var(--blue);
+      }
+      .roadmap-node.locked .skill-chip {
+        background: rgba(17, 24, 39, 0.04);
+        color: var(--subtle);
+      }
+
+      .readiness-panel {
+        margin-top: var(--sp-xl);
+        padding: var(--sp-lg);
+        background: var(--sky);
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--blue-light);
+      }
+      .readiness-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--navy);
+        margin-bottom: var(--sp-sm);
+      }
+      .readiness-score {
+        font-size: 32px;
+        font-weight: 700;
+        color: var(--navy);
+        font-variant-numeric: tabular-nums;
+      }
+      .readiness-label {
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      /* ═══════════════════════════════════════════════════════════
+   SCREEN 3: PRACTICE DISCOVERY
+   ═══════════════════════════════════════════════════════════ */
+      .practice-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--sp-sm);
+        margin-bottom: var(--sp-lg);
+      }
+      .filter-chip {
+        padding: 6px 14px;
+        border-radius: var(--radius-full);
+        font-size: 13px;
+        font-weight: 500;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        color: var(--muted);
+        cursor: pointer;
+        transition: all var(--duration-fast);
+      }
+      .filter-chip:hover {
+        border-color: var(--border-hover);
+        color: var(--ink);
+      }
+      .filter-chip.active {
+        background: var(--navy);
+        color: #fff;
+        border-color: var(--navy);
+      }
+
+      .practice-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: var(--sp-md);
+      }
+      .practice-card {
+        display: flex;
+        flex-direction: column;
+        gap: var(--sp-sm);
+        padding: var(--sp-lg);
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        cursor: pointer;
+        transition: all var(--duration-fast);
+      }
+      .practice-card:hover {
+        border-color: var(--border-hover);
+        box-shadow: var(--shadow-sm);
+      }
+      .practice-card-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: var(--sp-sm);
+      }
+      .practice-card-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--ink);
+      }
+      .practice-card-meta {
+        display: flex;
+        gap: var(--sp-sm);
+        align-items: center;
+      }
+      .practice-card-desc {
+        font-size: 13px;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+      .practice-card-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: var(--sp-xs);
+      }
+      .practice-card-stats {
+        font-size: 12px;
+        color: var(--subtle);
+      }
+      .recommended-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 8px;
+        border-radius: var(--radius-full);
+        font-size: 11px;
+        font-weight: 700;
+        background: var(--warning-soft);
+        color: var(--warning);
+      }
+
+      /* ═══════════════════════════════════════════════════════════
+   SCREEN 4: QUESTION / PRACTICE
+   ═══════════════════════════════════════════════════════════ */
+      .question-shell {
+        max-width: 720px;
+        margin: 0 auto;
+      }
+      .question-progress {
+        display: flex;
+        align-items: center;
+        gap: var(--sp-md);
+        margin-bottom: var(--sp-lg);
+      }
+      .question-counter {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+      }
+      .question-timer {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--navy);
+        font-variant-numeric: tabular-nums;
+        margin-left: auto;
+      }
+      .question-content {
+        margin-bottom: var(--sp-xl);
+      }
+      .question-passage {
+        font-size: 18px;
+        line-height: 2;
+        color: var(--ink);
+        padding: var(--sp-lg);
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        margin-bottom: var(--sp-lg);
+      }
+      .question-prompt {
+        font-size: 15px;
+        color: var(--ink);
+        margin-bottom: var(--sp-lg);
+        font-weight: 500;
+      }
+      .answer-options {
+        display: flex;
+        flex-direction: column;
+        gap: var(--sp-sm);
+      }
+      .answer-option {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--sp-md);
+        padding: var(--sp-md);
+        background: var(--surface);
+        border: 2px solid var(--border);
+        border-radius: var(--radius-lg);
+        cursor: pointer;
+        transition: all var(--duration-fast);
+        font-size: 15px;
+        line-height: 1.6;
+      }
+      .answer-option:hover {
+        border-color: var(--border-hover);
+        background: var(--paper);
+      }
+      .answer-option.selected {
+        border-color: var(--navy);
+        background: var(--sky);
+      }
+      .answer-option.correct {
+        border-color: var(--success);
+        background: var(--success-soft);
+      }
+      .answer-option.incorrect {
+        border-color: var(--danger);
+        background: var(--danger-soft);
+      }
+      .answer-marker {
+        width: 28px;
+        height: 28px;
+        border-radius: var(--radius-full);
+        border: 2px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--muted);
+        flex-shrink: 0;
+        transition: all var(--duration-fast);
+      }
+      .answer-option.selected .answer-marker {
+        border-color: var(--navy);
+        background: var(--navy);
+        color: #fff;
+      }
+      .answer-option.correct .answer-marker {
+        border-color: var(--success);
+        background: var(--success);
+        color: #fff;
+      }
+      .answer-option.incorrect .answer-marker {
+        border-color: var(--danger);
+        background: var(--danger);
+        color: #fff;
+      }
+      .answer-text {
+        flex: 1;
+        padding-top: 2px;
+      }
+
+      .explanation-panel {
+        margin-top: var(--sp-lg);
+        padding: var(--sp-lg);
+        background: var(--sky);
+        border-radius: var(--radius-lg);
+        border-left: 3px solid var(--blue);
+      }
+      .explanation-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--navy);
+        margin-bottom: var(--sp-sm);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .explanation-jp {
+        font-size: 15px;
+        line-height: 1.8;
+        color: var(--ink);
+        margin-bottom: var(--sp-sm);
+      }
+      .explanation-vi {
+        font-size: 14px;
+        line-height: 1.6;
+        color: var(--muted);
+      }
+
+      .question-actions {
+        display: flex;
+        gap: var(--sp-sm);
+        margin-top: var(--sp-xl);
+        justify-content: flex-end;
+      }
+
+      /* ═══════════════════════════════════════════════════════════
+   SCREEN 5: MOCK EXAM COCKPIT
+   ═══════════════════════════════════════════════════════════ */
+      .exam-shell {
+        position: fixed;
+        inset: 0;
+        z-index: 200;
+        background: var(--paper);
+        display: none;
+        flex-direction: column;
+      }
+      .exam-shell.active {
+        display: flex;
+      }
+      .exam-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: var(--sp-sm) var(--sp-lg);
+        border-bottom: 1px solid var(--border);
+        background: var(--surface);
+        min-height: 48px;
+      }
+      .exam-section-label {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--navy);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .exam-timer {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--ink);
+        font-variant-numeric: tabular-nums;
+      }
+      .exam-timer.urgent {
+        color: var(--danger);
+      }
+      .exam-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: var(--sp-lg);
+      }
+      .exam-question-nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: var(--sp-sm) var(--sp-lg);
+        border-top: 1px solid var(--border);
+        background: var(--surface);
+      }
+      .exam-nav-dots {
+        display: flex;
+        gap: 4px;
+        flex-wrap: wrap;
+      }
+      .exam-nav-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: var(--radius-full);
+        background: var(--border);
+        transition: background var(--duration-fast);
+      }
+      .exam-nav-dot.answered {
+        background: var(--navy);
+      }
+      .exam-nav-dot.current {
+        background: var(--blue);
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
+      }
+
+      /* ═══════════════════════════════════════════════════════════
+   SCREEN 6: RESULT / REVIEW
+   ═══════════════════════════════════════════════════════════ */
+      .result-hero {
+        text-align: center;
+        padding: var(--sp-xxl) var(--sp-lg);
+        background: var(--navy);
+        color: #fff;
+        border-radius: var(--radius-xl);
+        margin-bottom: var(--sp-xl);
+      }
+      .result-band-label {
+        font-size: 13px;
+        font-weight: 600;
+        opacity: 0.8;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: var(--sp-xs);
+      }
+      .result-band {
+        font-size: 56px;
+        font-weight: 700;
+        line-height: 1;
+        margin-bottom: var(--sp-sm);
+      }
+      .result-score {
+        font-size: 18px;
+        opacity: 0.8;
+        font-variant-numeric: tabular-nums;
+      }
+      .result-estimated {
+        font-size: 12px;
+        opacity: 0.6;
+        margin-top: var(--sp-xs);
+      }
+
+      .result-breakdown {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: var(--sp-md);
+        margin-bottom: var(--sp-xl);
+      }
+      .breakdown-item {
+        display: flex;
+        align-items: center;
+        gap: var(--sp-md);
+        padding: var(--sp-md);
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+      }
+      .breakdown-label {
+        flex: 1;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--ink);
+      }
+      .breakdown-score {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--navy);
+        font-variant-numeric: tabular-nums;
+      }
+      .breakdown-bar {
+        width: 80px;
+        height: 6px;
+        background: var(--border);
+        border-radius: var(--radius-full);
+        overflow: hidden;
+      }
+      .breakdown-bar-fill {
+        height: 100%;
+        border-radius: var(--radius-full);
+      }
+
+      .coaching-panel {
+        padding: var(--sp-lg);
+        background: var(--success-soft);
+        border: 1px solid rgba(5, 150, 105, 0.15);
+        border-radius: var(--radius-lg);
+        margin-bottom: var(--sp-xl);
+      }
+      .coaching-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--success);
+        margin-bottom: var(--sp-sm);
+        display: flex;
+        align-items: center;
+        gap: var(--sp-sm);
+      }
+      .coaching-text {
+        font-size: 14px;
+        color: var(--ink);
+        line-height: 1.6;
+        margin-bottom: var(--sp-md);
+      }
+
+      .mistake-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--sp-sm);
+      }
+      .mistake-item {
+        padding: var(--sp-md);
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        border-left: 3px solid var(--danger);
+      }
+      .mistake-question {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--ink);
+        margin-bottom: var(--sp-xs);
+      }
+      .mistake-detail {
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .mistake-correct {
+        color: var(--success);
+        font-weight: 600;
+      }
+
+      /* ═══════════════════════════════════════════════════════════
+   SCREEN 7: PROGRESS / ANALYTICS
+   ═══════════════════════════════════════════════════════════ */
+      .analytics-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: var(--sp-md);
+      }
+      .chart-card {
+        padding: var(--sp-lg);
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+      }
+      .chart-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--ink);
+        margin-bottom: var(--sp-md);
+      }
+      .bar-chart {
+        display: flex;
+        flex-direction: column;
+        gap: var(--sp-sm);
+      }
+      .bar-row {
+        display: flex;
+        align-items: center;
+        gap: var(--sp-sm);
+      }
+      .bar-label {
+        width: 60px;
+        font-size: 12px;
+        color: var(--muted);
+        text-align: right;
+        flex-shrink: 0;
+      }
+      .bar-track {
+        flex: 1;
+        height: 20px;
+        background: var(--paper);
+        border-radius: var(--radius-sm);
+        overflow: hidden;
+      }
+      .bar-fill {
+        height: 100%;
+        border-radius: var(--radius-sm);
+        transition: width var(--duration-moderate) var(--ease-out);
+      }
+      .bar-value {
+        width: 40px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--ink);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .radar-placeholder {
+        width: 100%;
+        aspect-ratio: 1;
+        max-width: 280px;
+        margin: 0 auto;
+        background: var(--paper);
+        border-radius: var(--radius-full);
+        border: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+      }
+      .radar-axis {
+        position: absolute;
+        background: var(--border);
+      }
+      .radar-axis.h {
+        width: 100%;
+        height: 1px;
+        top: 50%;
+      }
+      .radar-axis.v {
+        height: 100%;
+        width: 1px;
+        left: 50%;
+      }
+      .radar-shape {
+        width: 60%;
+        height: 60%;
+        background: rgba(27, 42, 74, 0.12);
+        border: 2px solid var(--navy);
+        border-radius: 40% 60% 50% 50%;
+        transform: rotate(-15deg);
+      }
+      .radar-labels {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--sp-sm);
+        justify-content: center;
+        margin-top: var(--sp-md);
+      }
+      .radar-label {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--muted);
+        padding: 2px 8px;
+        background: var(--paper);
+        border-radius: var(--radius-full);
+      }
+
+      .streak-row {
+        display: flex;
+        gap: 3px;
+        margin-top: var(--sp-sm);
+      }
+      .streak-day {
+        flex: 1;
+        aspect-ratio: 1;
+        border-radius: var(--radius-sm);
+        background: var(--border);
+        transition: background var(--duration-fast);
+      }
+      .streak-day.active {
+        background: var(--navy);
+      }
+      .streak-day.today {
+        border: 2px solid var(--blue);
+      }
+
+      /* ═══════════════════════════════════════════════════════════
+   SCREEN 8: MISTAKE REVIEW
+   ═══════════════════════════════════════════════════════════ */
+      .mistake-review-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--sp-md);
+      }
+      .mistake-review-card {
+        padding: var(--sp-lg);
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+      }
+      .mr-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: var(--sp-sm);
+        margin-bottom: var(--sp-md);
+      }
+      .mr-skill {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--blue);
+      }
+      .mr-count {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--danger);
+      }
+      .mr-question {
+        font-size: 15px;
+        line-height: 1.8;
+        color: var(--ink);
+        margin-bottom: var(--sp-md);
+      }
+      .mr-answers {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--sp-sm);
+        margin-bottom: var(--sp-md);
+      }
+      .mr-answer {
+        padding: var(--sp-sm) var(--sp-md);
+        border-radius: var(--radius-md);
+        font-size: 13px;
+        line-height: 1.5;
+      }
+      .mr-answer.wrong {
+        background: var(--danger-soft);
+        color: var(--danger);
+        border: 1px solid rgba(220, 38, 38, 0.15);
+      }
+      .mr-answer.right {
+        background: var(--success-soft);
+        color: var(--success);
+        border: 1px solid rgba(5, 150, 105, 0.15);
+      }
+      .mr-explanation {
+        font-size: 13px;
+        color: var(--muted);
+        line-height: 1.6;
+        padding-top: var(--sp-sm);
+        border-top: 1px solid var(--border);
+      }
+      .mr-actions {
+        display: flex;
+        gap: var(--sp-sm);
+        margin-top: var(--sp-md);
+      }
+
+      /* ═══════════════════════════════════════════════════════════
+   RESPONSIVE BREAKPOINTS
+   ═══════════════════════════════════════════════════════════ */
+      @media (min-width: 768px) {
+        .home-hero {
+          grid-template-columns: 1fr 1fr;
+        }
+        .home-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+        .practice-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .result-breakdown {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .analytics-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .mr-answers {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      @media (min-width: 1024px) {
+        .nav-primary {
+          display: flex;
+        }
+        .search-bar {
+          display: flex;
+        }
+        .mobile-menu-btn {
+          display: none;
+        }
+        .main-content {
+          padding: var(--sp-lg) var(--sp-xl);
+        }
+        .home-grid {
+          grid-template-columns: 1fr 1fr 1fr;
+        }
+        .practice-grid {
+          grid-template-columns: repeat(3, 1fr);
+        }
+        .analytics-grid {
+          grid-template-columns: repeat(3, 1fr);
+        }
+      }
+
+      @media (max-width: 767px) {
+        .level-current {
+          font-size: 36px;
+        }
+        .result-band {
+          font-size: 42px;
+        }
+        .question-passage {
+          font-size: 16px;
+          padding: var(--sp-md);
+        }
+        .stat-strip {
+          grid-template-columns: repeat(3, 1fr);
+          gap: var(--sp-xs);
+        }
+        .stat-value {
+          font-size: 18px;
+        }
+        .stat-item {
+          padding: var(--sp-sm);
+        }
+      }
+
+      /* ── Mobile Bottom Nav ── */
+      .mobile-nav {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--surface);
+        border-top: 1px solid var(--border);
+        z-index: 90;
+        padding: var(--sp-xs) 0 env(safe-area-inset-bottom, var(--sp-xs));
+      }
+      .mobile-nav-item {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        padding: var(--sp-sm) 0;
+        font-size: 10px;
+        font-weight: 600;
+        color: var(--muted);
+        cursor: pointer;
+        border: none;
+        background: none;
+        transition: color var(--duration-fast);
+      }
+      .mobile-nav-item.active {
+        color: var(--navy);
+      }
+      .mobile-nav-item svg {
+        width: 22px;
+        height: 22px;
+      }
+      @media (min-width: 1024px) {
+        .mobile-nav {
+          display: none;
+        }
+      }
+      @media (max-width: 1023px) {
+        .main-content {
+          padding-bottom: 72px;
+        }
+      }
+
+      /* ── Prototype Navigation Tabs ── */
+      .proto-nav {
+        display: flex;
+        gap: var(--sp-xs);
+        overflow-x: auto;
+        padding: var(--sp-sm) var(--sp-md);
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        scrollbar-width: none;
+      }
+      .proto-nav::-webkit-scrollbar {
+        display: none;
+      }
+      .proto-tab {
+        padding: 6px 14px;
+        border-radius: var(--radius-full);
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        color: var(--muted);
+        cursor: pointer;
+        transition: all var(--duration-fast);
+      }
+      .proto-tab:hover {
+        border-color: var(--border-hover);
+        color: var(--ink);
+      }
+      .proto-tab.active {
+        background: var(--navy);
+        color: #fff;
+        border-color: var(--navy);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <!-- ═══ HEADER ═══ -->
+      <header class="header" id="header">
+        <div class="header-inner">
+          <a
+            href="#"
+            class="brand"
+            onclick="
+              navigate('home');
+              return false;
+            "
+            >KotobaWorks</a
+          >
+
+          <nav class="nav-primary" aria-label="Main navigation">
+            <button class="nav-item active" data-screen="home" onclick="navigate('home')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                <polyline points="9 22 9 12 15 12 15 22" />
+              </svg>
+              Home
+            </button>
+            <button class="nav-item" data-screen="roadmap" onclick="navigate('roadmap')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+              </svg>
+              BJT Roadmap
+            </button>
+            <button class="nav-item" data-screen="practice" onclick="navigate('practice')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
+              </svg>
+              Practice
+            </button>
+            <button class="nav-item" data-screen="review" onclick="navigate('review')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path
+                  d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
+                />
+                <polyline points="22 6 12 13 2 6" />
+              </svg>
+              Review
+            </button>
+            <button class="nav-item" data-screen="progress" onclick="navigate('progress')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="20" x2="18" y2="10" />
+                <line x1="12" y1="20" x2="12" y2="4" />
+                <line x1="6" y1="20" x2="6" y2="14" />
+              </svg>
+              Progress
+            </button>
+          </nav>
+
+          <div class="search-bar">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              style="flex-shrink: 0; color: var(--subtle)"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input type="search" placeholder="Tìm kiếm từ vựng, ngữ pháp..." aria-label="Search" />
+          </div>
+
+          <div class="user-avatar" title="Nguyễn Thanh">NT</div>
+
+          <button
+            class="mobile-menu-btn"
+            aria-label="Menu"
+            onclick="document.querySelector('.proto-nav').scrollIntoView({ behavior: 'smooth' })"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- ═══ PROTOTYPE SCREEN NAVIGATION ═══ -->
+      <div class="proto-nav" role="tablist" aria-label="Prototype screens">
+        <button class="proto-tab active" data-screen="home" onclick="navigate('home')">Home</button>
+        <button class="proto-tab" data-screen="roadmap" onclick="navigate('roadmap')">
+          BJT Roadmap
+        </button>
+        <button class="proto-tab" data-screen="practice" onclick="navigate('practice')">
+          Practice
+        </button>
+        <button class="proto-tab" data-screen="question" onclick="navigate('question')">
+          Question
+        </button>
+        <button class="proto-tab" data-screen="exam" onclick="startExam()">Mock Exam</button>
+        <button class="proto-tab" data-screen="result" onclick="navigate('result')">Result</button>
+        <button class="proto-tab" data-screen="progress" onclick="navigate('progress')">
+          Progress
+        </button>
+        <button class="proto-tab" data-screen="mistakes" onclick="navigate('mistakes')">
+          Mistakes
+        </button>
+      </div>
+
+      <!-- ═══ MAIN CONTENT ═══ -->
+      <main class="main-content">
+        <!-- SCREEN 1: HOME -->
+        <section class="screen active" id="screen-home" aria-label="Learner Home">
+          <div class="home-hero">
+            <div class="level-card">
+              <div class="level-label">Current Level</div>
+              <div class="level-current">J3</div>
+              <div class="level-target">Target: J2 · Estimated 68% ready</div>
+              <div class="level-progress-row">
+                <span class="level-progress-label">Progress</span>
+                <div class="level-progress-track">
+                  <div class="level-progress-fill" style="width: 68%"></div>
+                </div>
+                <span class="level-progress-label">68%</span>
+              </div>
+            </div>
+            <div class="next-action-card">
+              <div class="next-action-label">Recommended Next</div>
+              <div class="next-action-title jp jp-heading">聴解練習 — Business Meetings</div>
+              <div class="next-action-desc">
+                Your listening comprehension in business contexts scored 52% on the last mock exam.
+                This 15-minute focused practice targets your weakest area.
+              </div>
+              <button class="btn btn-primary" onclick="navigate('question')">Start Practice</button>
+            </div>
+          </div>
+
+          <div class="stat-strip" style="margin-bottom: var(--sp-lg)">
+            <div class="stat-item">
+              <div class="stat-value">12</div>
+              <div class="stat-label">Day Streak</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value">847</div>
+              <div class="stat-label">Words Learned</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value">23</div>
+              <div class="stat-label">Reviews Due</div>
+            </div>
+          </div>
+
+          <div class="home-grid">
+            <div class="card">
+              <div class="section-header">
+                <div class="section-title">Weak Areas</div>
+                <div class="section-subtitle">Skills needing attention</div>
+              </div>
+              <div class="weak-area-list">
+                <div class="weak-area-item">
+                  <div
+                    class="weak-area-icon"
+                    style="background: var(--danger-soft); color: var(--danger)"
+                  >
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" />
+                      <path d="M19 10v2a7 7 0 01-14 0v-2" />
+                    </svg>
+                  </div>
+                  <div class="weak-area-info">
+                    <div class="weak-area-name">Listening Comprehension</div>
+                    <div class="weak-area-detail">52% accuracy · 3 practices recommended</div>
+                  </div>
+                  <div class="progress-track" style="width: 60px">
+                    <div
+                      class="progress-fill danger"
+                      style="width: 52%; background: var(--danger)"
+                    ></div>
+                  </div>
+                </div>
+                <div class="weak-area-item">
+                  <div
+                    class="weak-area-icon"
+                    style="background: var(--warning-soft); color: var(--warning)"
+                  >
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                    </svg>
+                  </div>
+                  <div class="weak-area-info">
+                    <div class="weak-area-name">Reading Speed</div>
+                    <div class="weak-area-detail">Avg 180 chars/min · Target 250+</div>
+                  </div>
+                  <div class="progress-track" style="width: 60px">
+                    <div
+                      class="progress-fill warning"
+                      style="width: 65%; background: var(--warning)"
+                    ></div>
+                  </div>
+                </div>
+                <div class="weak-area-item">
+                  <div
+                    class="weak-area-icon"
+                    style="background: var(--warning-soft); color: var(--warning)"
+                  >
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+                      <line x1="9" y1="9" x2="9.01" y2="9" />
+                      <line x1="15" y1="9" x2="15.01" y2="9" />
+                    </svg>
+                  </div>
+                  <div class="weak-area-info">
+                    <div class="weak-area-name">Keigo (敬語)</div>
+                    <div class="weak-area-detail">Sonkeigo / Kenjōgo confusion · 8 mistakes</div>
+                  </div>
+                  <div class="progress-track" style="width: 60px">
+                    <div
+                      class="progress-fill warning"
+                      style="width: 58%; background: var(--warning)"
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="section-header">
+                <div class="section-title">Recent Activity</div>
+                <div class="section-subtitle">Last 24 hours</div>
+              </div>
+              <div class="activity-row">
+                <div class="activity-dot" style="background: var(--success)"></div>
+                <div class="activity-text jp">読解練習「ビジネスメール」完了</div>
+                <div class="activity-time">2h ago</div>
+              </div>
+              <div class="activity-row">
+                <div class="activity-dot" style="background: var(--blue)"></div>
+                <div class="activity-text jp">語彙レビュー 42単語</div>
+                <div class="activity-time">5h ago</div>
+              </div>
+              <div class="activity-row">
+                <div class="activity-dot" style="background: var(--warning)"></div>
+                <div class="activity-text">Mock Exam #7 — Scored 385/500</div>
+                <div class="activity-time">Yesterday</div>
+              </div>
+              <div class="activity-row">
+                <div class="activity-dot" style="background: var(--success)"></div>
+                <div class="activity-text jp">文法「受身形」マスター</div>
+                <div class="activity-time">Yesterday</div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="section-header">
+                <div class="section-title">Mock Exam Readiness</div>
+                <div class="section-subtitle">Based on recent performance</div>
+              </div>
+              <div style="text-align: center; padding: var(--sp-md) 0">
+                <div
+                  style="
+                    font-size: 36px;
+                    font-weight: 700;
+                    color: var(--navy);
+                    font-variant-numeric: tabular-nums;
+                  "
+                >
+                  72%
+                </div>
+                <div style="font-size: 13px; color: var(--muted); margin-top: 4px">
+                  Ready for J2 Mock Exam
+                </div>
+              </div>
+              <div class="progress-track" style="margin-bottom: var(--sp-md)">
+                <div class="progress-fill navy" style="width: 72%"></div>
+              </div>
+              <button class="btn btn-secondary btn-sm" style="width: 100%" onclick="startExam()">
+                Take Mock Exam
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- SCREEN 2: BJT ROADMAP -->
+        <section class="screen" id="screen-roadmap" aria-label="BJT Roadmap">
+          <div class="section-header">
+            <div class="section-title">BJT Progression Roadmap</div>
+            <div class="section-subtitle">Your path from J5 to J1+</div>
+          </div>
+
+          <div class="roadmap-track">
+            <div class="roadmap-node completed">
+              <div class="roadmap-dot"></div>
+              <div class="roadmap-content">
+                <div class="roadmap-level">J5 — Foundation</div>
+                <div class="roadmap-desc">
+                  Basic greetings, self-introduction, simple daily conversations
+                </div>
+                <div class="roadmap-skills">
+                  <span class="skill-chip">✓ Hiragana/Katakana</span>
+                  <span class="skill-chip">✓ Basic Kanji (100+)</span>
+                  <span class="skill-chip">✓ Self-introduction</span>
+                </div>
+              </div>
+            </div>
+            <div class="roadmap-node completed">
+              <div class="roadmap-dot"></div>
+              <div class="roadmap-content">
+                <div class="roadmap-level">J4 — Elementary</div>
+                <div class="roadmap-desc">
+                  Daily life conversations, basic business phrases, simple reading
+                </div>
+                <div class="roadmap-skills">
+                  <span class="skill-chip">✓ Basic Keigo</span>
+                  <span class="skill-chip">✓ Shopping & Travel</span>
+                  <span class="skill-chip">✓ Short Passages</span>
+                </div>
+              </div>
+            </div>
+            <div class="roadmap-node current">
+              <div class="roadmap-dot"></div>
+              <div class="roadmap-content">
+                <div class="roadmap-level">J3 — Intermediate</div>
+                <div class="roadmap-desc">
+                  Business meetings, email writing, understanding main points of news
+                </div>
+                <div class="roadmap-skills">
+                  <span class="skill-chip">◐ Business Email</span>
+                  <span class="skill-chip">◐ Meeting Participation</span>
+                  <span class="skill-chip">○ News Comprehension</span>
+                  <span class="skill-chip">○ Keigo Mastery</span>
+                </div>
+                <div style="margin-top: var(--sp-sm)">
+                  <div class="progress-track">
+                    <div class="progress-fill navy" style="width: 68%"></div>
+                  </div>
+                  <div style="font-size: 12px; color: var(--muted); margin-top: 4px">
+                    68% complete · Est. 4 weeks to J2
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="roadmap-node locked">
+              <div class="roadmap-dot"></div>
+              <div class="roadmap-content">
+                <div class="roadmap-level">J2 — Upper Intermediate</div>
+                <div class="roadmap-desc">
+                  Complex business discussions, report writing, nuanced communication
+                </div>
+                <div class="roadmap-skills">
+                  <span class="skill-chip">Report Writing</span>
+                  <span class="skill-chip">Negotiation</span>
+                  <span class="skill-chip">Advanced Listening</span>
+                </div>
+              </div>
+            </div>
+            <div class="roadmap-node locked">
+              <div class="roadmap-dot"></div>
+              <div class="roadmap-content">
+                <div class="roadmap-level">J1 — Advanced</div>
+                <div class="roadmap-desc">
+                  Professional fluency, abstract topics, cultural nuance
+                </div>
+                <div class="roadmap-skills">
+                  <span class="skill-chip">Abstract Discussion</span>
+                  <span class="skill-chip">Cultural Nuance</span>
+                  <span class="skill-chip">Presentation</span>
+                </div>
+              </div>
+            </div>
+            <div class="roadmap-node locked">
+              <div class="roadmap-dot"></div>
+              <div class="roadmap-content">
+                <div class="roadmap-level">J1+ — Near-Native</div>
+                <div class="roadmap-desc">
+                  Near-native proficiency, specialized domains, leadership communication
+                </div>
+                <div class="roadmap-skills">
+                  <span class="skill-chip">Specialized Vocabulary</span>
+                  <span class="skill-chip">Leadership Communication</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="readiness-panel">
+            <div class="readiness-title">Mock Exam Readiness</div>
+            <div style="display: flex; align-items: baseline; gap: var(--sp-sm)">
+              <div class="readiness-score">72%</div>
+              <div class="readiness-label">ready for J2 assessment</div>
+            </div>
+            <div style="margin-top: var(--sp-md)">
+              <div class="progress-track">
+                <div class="progress-fill blue" style="width: 72%"></div>
+              </div>
+            </div>
+            <button
+              class="btn btn-primary btn-sm"
+              style="margin-top: var(--sp-md)"
+              onclick="startExam()"
+            >
+              Take J2 Mock Exam
+            </button>
+          </div>
+        </section>
+
+        <!-- SCREEN 3: PRACTICE DISCOVERY -->
+        <section class="screen" id="screen-practice" aria-label="Practice Discovery">
+          <div class="section-header">
+            <div class="section-title">Practice</div>
+            <div class="section-subtitle">Choose focused practice based on your needs</div>
+          </div>
+
+          <div class="practice-filters">
+            <button class="filter-chip active">All</button>
+            <button class="filter-chip">Recommended</button>
+            <button class="filter-chip">Listening</button>
+            <button class="filter-chip">Reading</button>
+            <button class="filter-chip">Grammar</button>
+            <button class="filter-chip">Vocabulary</button>
+            <button class="filter-chip">Keigo</button>
+          </div>
+
+          <div class="practice-grid">
+            <div class="practice-card" onclick="navigate('question')">
+              <div class="practice-card-header">
+                <div class="practice-card-title jp jp-heading">聴解 — ビジネス会議</div>
+                <span class="recommended-badge">★ Recommended</span>
+              </div>
+              <div class="practice-card-desc">
+                Listen to business meeting excerpts and answer comprehension questions. Targets your
+                weakest skill area.
+              </div>
+              <div class="practice-card-footer">
+                <div class="practice-card-stats">15 min · J3 · 10 questions</div>
+                <span class="badge badge-danger">Weak</span>
+              </div>
+            </div>
+
+            <div class="practice-card" onclick="navigate('question')">
+              <div class="practice-card-header">
+                <div class="practice-card-title jp jp-heading">読解 — 社内メール</div>
+              </div>
+              <div class="practice-card-desc">
+                Read internal company emails and identify key information, tone, and required
+                actions.
+              </div>
+              <div class="practice-card-footer">
+                <div class="practice-card-stats">12 min · J3 · 8 questions</div>
+                <span class="badge badge-blue">Normal</span>
+              </div>
+            </div>
+
+            <div class="practice-card" onclick="navigate('question')">
+              <div class="practice-card-header">
+                <div class="practice-card-title jp jp-heading">敬語の使い分け</div>
+              </div>
+              <div class="practice-card-desc">
+                Practice distinguishing sonkeigo, kenjōgo, and teineigo in business contexts.
+              </div>
+              <div class="practice-card-footer">
+                <div class="practice-card-stats">10 min · J3 · 12 questions</div>
+                <span class="badge badge-warning">Needs Work</span>
+              </div>
+            </div>
+
+            <div class="practice-card" onclick="navigate('question')">
+              <div class="practice-card-header">
+                <div class="practice-card-title jp jp-heading">文法 — 受身形・使役形</div>
+              </div>
+              <div class="practice-card-desc">
+                Master passive and causative forms commonly used in business Japanese reporting.
+              </div>
+              <div class="practice-card-footer">
+                <div class="practice-card-stats">10 min · J3-J2 · 15 questions</div>
+                <span class="badge badge-blue">Normal</span>
+              </div>
+            </div>
+
+            <div class="practice-card" onclick="navigate('question')">
+              <div class="practice-card-header">
+                <div class="practice-card-title jp jp-heading">語彙 — 経済・ビジネス用語</div>
+              </div>
+              <div class="practice-card-desc">
+                Essential business and economic vocabulary for BJT reading and listening sections.
+              </div>
+              <div class="practice-card-footer">
+                <div class="practice-card-stats">8 min · J3 · 20 words</div>
+                <span class="badge badge-success">Strong</span>
+              </div>
+            </div>
+
+            <div class="practice-card" onclick="navigate('question')">
+              <div class="practice-card-header">
+                <div class="practice-card-title jp jp-heading">会話 — クレーム対応</div>
+              </div>
+              <div class="practice-card-desc">
+                Handle customer complaints with appropriate keigo and problem-solving language.
+              </div>
+              <div class="practice-card-footer">
+                <div class="practice-card-stats">15 min · J2 · Scenario</div>
+                <span class="badge badge-blue">Challenge</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SCREEN 4: QUESTION / PRACTICE -->
+        <section class="screen" id="screen-question" aria-label="Practice Question">
+          <div class="question-shell">
+            <div class="question-progress">
+              <div class="progress-track" style="flex: 1; height: 4px">
+                <div class="progress-fill navy" style="width: 30%"></div>
+              </div>
+              <div class="question-counter">3 / 10</div>
+              <div class="question-timer">12:34</div>
+            </div>
+
+            <div class="question-content">
+              <div class="question-passage jp">
+                <ruby>山田<rt>やまだ</rt></ruby
+                >部長：<br />
+                お<ruby>疲<rt>つか</rt></ruby
+                >れ<ruby>様<rt>さま</rt></ruby
+                >です。来週の水曜日に<ruby>予定<rt>よてい</rt></ruby
+                >されていた<ruby>会議<rt>かいぎ</rt></ruby
+                >ですが、<ruby>社長<rt>しゃちょう</rt></ruby
+                >のご<ruby>都合<rt>つごう</rt></ruby
+                >により、金曜日の午後3時に変更させていただきたいと存じます。<ruby
+                  >御<rt>ご</rt></ruby
+                ><ruby>確認<rt>かくにん</rt></ruby
+                >のほど、よろしくお<ruby>願<rt>ねが</rt></ruby
+                >いいたします。
+              </div>
+              <div class="question-prompt">このメールの主な目的は何ですか。</div>
+            </div>
+
+            <div class="answer-options">
+              <div class="answer-option" onclick="selectAnswer(this, false)">
+                <div class="answer-marker">A</div>
+                <div class="answer-text jp">社長に会議の中止を知らせるため</div>
+              </div>
+              <div class="answer-option selected" onclick="selectAnswer(this, true)">
+                <div class="answer-marker">B</div>
+                <div class="answer-text jp">会議の日時変更を確認してもらうため</div>
+              </div>
+              <div class="answer-option" onclick="selectAnswer(this, false)">
+                <div class="answer-marker">C</div>
+                <div class="answer-text jp">新しい会議の議題を伝えるため</div>
+              </div>
+              <div class="answer-option" onclick="selectAnswer(this, false)">
+                <div class="answer-marker">D</div>
+                <div class="answer-text jp">社長のスケジュールを共有するため</div>
+              </div>
+            </div>
+
+            <div class="explanation-panel" id="explanation" style="display: none">
+              <div class="explanation-title">Explanation</div>
+              <div class="explanation-jp jp">
+                正解はBです。「変更させていただきたいと存じます」「ご確認ください」は、日時変更の依頼と確認を求める表現です。このメールは会議の中止（A）や議題の変更（C）ではなく、日程の変更を伝えています。
+              </div>
+              <div class="explanation-vi">
+                Đáp án đúng là B. 「変更させていただきたいと存じます」và「ご確認ください」là cách
+                diễn đạt yêu cầu xác nhận việc thay đổi ngày giờ. Email này không thông báo hủy họp
+                (A) hay thay đổi nội dung (C), mà truyền đạt việc thay đổi lịch trình.
+              </div>
+            </div>
+
+            <div class="question-actions">
+              <button class="btn btn-ghost" onclick="navigate('practice')">Exit</button>
+              <button class="btn btn-primary" onclick="showExplanation()">Check Answer</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- SCREEN 6: RESULT / REVIEW -->
+        <section class="screen" id="screen-result" aria-label="Result and Review">
+          <div class="result-hero">
+            <div class="result-band-label">Estimated BJT Band</div>
+            <div class="result-band">J3</div>
+            <div class="result-score">385 / 500 points</div>
+            <div class="result-estimated">Estimated score · Not an official BJT result</div>
+          </div>
+
+          <div class="coaching-panel">
+            <div class="coaching-title">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+                <polyline points="22 4 12 14.01 9 11.01" />
+              </svg>
+              Next Step Recommendation
+            </div>
+            <div class="coaching-text">
+              Your listening comprehension is holding back your overall score. Focus on business
+              listening practice this week — just 15 minutes daily could push you to J2 readiness
+              within 3 weeks.
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="navigate('question')">
+              Start Listening Practice
+            </button>
+          </div>
+
+          <div class="section-header">
+            <div class="section-title">Section Breakdown</div>
+          </div>
+          <div class="result-breakdown">
+            <div class="breakdown-item">
+              <div class="breakdown-label jp">聴解 (Listening)</div>
+              <div class="breakdown-score">52%</div>
+              <div class="breakdown-bar">
+                <div class="breakdown-bar-fill" style="width: 52%; background: var(--danger)"></div>
+              </div>
+            </div>
+            <div class="breakdown-item">
+              <div class="breakdown-label jp">読解 (Reading)</div>
+              <div class="breakdown-score">78%</div>
+              <div class="breakdown-bar">
+                <div
+                  class="breakdown-bar-fill"
+                  style="width: 78%; background: var(--success)"
+                ></div>
+              </div>
+            </div>
+            <div class="breakdown-item">
+              <div class="breakdown-label jp">語彙 (Vocabulary)</div>
+              <div class="breakdown-score">85%</div>
+              <div class="breakdown-bar">
+                <div
+                  class="breakdown-bar-fill"
+                  style="width: 85%; background: var(--success)"
+                ></div>
+              </div>
+            </div>
+            <div class="breakdown-item">
+              <div class="breakdown-label jp">文法 (Grammar)</div>
+              <div class="breakdown-score">71%</div>
+              <div class="breakdown-bar">
+                <div
+                  class="breakdown-bar-fill"
+                  style="width: 71%; background: var(--warning)"
+                ></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-header">
+            <div class="section-title">Key Mistakes</div>
+            <div class="section-subtitle">Review these to improve</div>
+          </div>
+          <div class="mistake-list">
+            <div class="mistake-item">
+              <div class="mistake-question jp">
+                「変更させていただきたいと存じます」の意味を正しく理解できなかった。
+              </div>
+              <div class="mistake-detail">
+                You chose A (中止を知らせる) · Correct:
+                <span class="mistake-correct">B (日時変更の確認)</span>
+              </div>
+            </div>
+            <div class="mistake-item">
+              <div class="mistake-question jp">敬語：「おっしゃる」vs「申し上げる」の使い分け</div>
+              <div class="mistake-detail">
+                Confused sonkeigo with kenjōgo ·
+                <span class="mistake-correct">Review Keigo module</span>
+              </div>
+            </div>
+            <div class="mistake-item">
+              <div class="mistake-question jp">長文読解：主旨把握の問題で詳細に引きずられた</div>
+              <div class="mistake-detail">
+                Selected detail-level answer instead of main idea ·
+                <span class="mistake-correct">Practice skimming</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: var(--sp-sm); margin-top: var(--sp-xl)">
+            <button class="btn btn-secondary" onclick="navigate('mistakes')">
+              Review All Mistakes
+            </button>
+            <button class="btn btn-primary" onclick="navigate('practice')">
+              Continue Studying
+            </button>
+          </div>
+        </section>
+
+        <!-- SCREEN 7: PROGRESS / ANALYTICS -->
+        <section class="screen" id="screen-progress" aria-label="Progress Analytics">
+          <div class="section-header">
+            <div class="section-title">Your Progress</div>
+            <div class="section-subtitle">Track your BJT preparation journey</div>
+          </div>
+
+          <div class="analytics-grid">
+            <div class="chart-card">
+              <div class="chart-title">BJT Score Trend</div>
+              <div class="bar-chart">
+                <div class="bar-row">
+                  <div class="bar-label">Exam 4</div>
+                  <div class="bar-track">
+                    <div class="bar-fill" style="width: 58%; background: var(--navy)"></div>
+                  </div>
+                  <div class="bar-value">290</div>
+                </div>
+                <div class="bar-row">
+                  <div class="bar-label">Exam 5</div>
+                  <div class="bar-track">
+                    <div class="bar-fill" style="width: 64%; background: var(--navy)"></div>
+                  </div>
+                  <div class="bar-value">320</div>
+                </div>
+                <div class="bar-row">
+                  <div class="bar-label">Exam 6</div>
+                  <div class="bar-track">
+                    <div class="bar-fill" style="width: 70%; background: var(--navy)"></div>
+                  </div>
+                  <div class="bar-value">350</div>
+                </div>
+                <div class="bar-row">
+                  <div class="bar-label">Exam 7</div>
+                  <div class="bar-track">
+                    <div class="bar-fill" style="width: 77%; background: var(--blue)"></div>
+                  </div>
+                  <div class="bar-value">385</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="chart-card">
+              <div class="chart-title">Skill Radar</div>
+              <div class="radar-placeholder">
+                <div class="radar-axis h"></div>
+                <div class="radar-axis v"></div>
+                <div class="radar-shape"></div>
+              </div>
+              <div class="radar-labels">
+                <span class="radar-label">Listening 52%</span>
+                <span class="radar-label">Reading 78%</span>
+                <span class="radar-label">Vocab 85%</span>
+                <span class="radar-label">Grammar 71%</span>
+                <span class="radar-label">Speaking 65%</span>
+              </div>
+            </div>
+
+            <div class="chart-card">
+              <div class="chart-title">Study Consistency</div>
+              <div
+                style="
+                  font-size: 28px;
+                  font-weight: 700;
+                  color: var(--navy);
+                  margin-bottom: var(--sp-xs);
+                  font-variant-numeric: tabular-nums;
+                "
+              >
+                12 days
+              </div>
+              <div style="font-size: 13px; color: var(--muted); margin-bottom: var(--sp-md)">
+                Current streak · Best: 18 days
+              </div>
+              <div class="streak-row">
+                <div class="streak-day active"></div>
+                <div class="streak-day active"></div>
+                <div class="streak-day active"></div>
+                <div class="streak-day active"></div>
+                <div class="streak-day active"></div>
+                <div class="streak-day active"></div>
+                <div class="streak-day active today"></div>
+              </div>
+              <div
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  font-size: 10px;
+                  color: var(--subtle);
+                  margin-top: 4px;
+                "
+              >
+                <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span
+                ><span>Sat</span><span>Sun</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="chart-card" style="margin-top: var(--sp-md)">
+            <div class="chart-title">Mock Exam History</div>
+            <div style="overflow-x: auto">
+              <table style="width: 100%; border-collapse: collapse; font-size: 13px">
+                <thead>
+                  <tr style="border-bottom: 2px solid var(--border); text-align: left">
+                    <th style="padding: 8px; color: var(--muted); font-weight: 600">Date</th>
+                    <th style="padding: 8px; color: var(--muted); font-weight: 600">Score</th>
+                    <th style="padding: 8px; color: var(--muted); font-weight: 600">Band</th>
+                    <th style="padding: 8px; color: var(--muted); font-weight: 600">Δ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style="border-bottom: 1px solid var(--border)">
+                    <td style="padding: 8px">Sep 18</td>
+                    <td style="padding: 8px; font-weight: 700; font-variant-numeric: tabular-nums">
+                      385
+                    </td>
+                    <td style="padding: 8px"><span class="badge badge-navy">J3</span></td>
+                    <td style="padding: 8px; color: var(--success); font-weight: 600">+35</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid var(--border)">
+                    <td style="padding: 8px">Sep 10</td>
+                    <td style="padding: 8px; font-weight: 700; font-variant-numeric: tabular-nums">
+                      350
+                    </td>
+                    <td style="padding: 8px"><span class="badge badge-navy">J3</span></td>
+                    <td style="padding: 8px; color: var(--success); font-weight: 600">+30</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid var(--border)">
+                    <td style="padding: 8px">Aug 28</td>
+                    <td style="padding: 8px; font-weight: 700; font-variant-numeric: tabular-nums">
+                      320
+                    </td>
+                    <td style="padding: 8px"><span class="badge badge-blue">J4→J3</span></td>
+                    <td style="padding: 8px; color: var(--success); font-weight: 600">+30</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px">Aug 15</td>
+                    <td style="padding: 8px; font-weight: 700; font-variant-numeric: tabular-nums">
+                      290
+                    </td>
+                    <td style="padding: 8px"><span class="badge badge-blue">J4</span></td>
+                    <td style="padding: 8px; color: var(--muted)">—</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- SCREEN 8: MISTAKE REVIEW -->
+        <section class="screen" id="screen-mistakes" aria-label="Mistake Review">
+          <div class="section-header">
+            <div class="section-title">Mistake Review</div>
+            <div class="section-subtitle">Learn from your errors · 12 items to review</div>
+          </div>
+
+          <div class="mistake-review-list">
+            <div class="mistake-review-card">
+              <div class="mr-header">
+                <div class="mr-skill">Listening · Business Meeting</div>
+                <div class="mr-count">Missed 3× times</div>
+              </div>
+              <div class="mr-question jp">
+                <ruby>会議<rt>かいぎ</rt></ruby
+                >の<ruby>日程<rt>にってい</rt></ruby
+                >を<ruby>変更<rt>へんこう</rt></ruby
+                >する<ruby>際<rt>さい</rt></ruby
+                >、どの<ruby>表現<rt>ひょうげん</rt></ruby
+                >が最も<ruby>適切<rt>てきせつ</rt></ruby
+                >か。
+              </div>
+              <div class="mr-answers">
+                <div class="mr-answer wrong">✗ 会議をキャンセルします</div>
+                <div class="mr-answer right">✓ 変更させていただきたいと存じます</div>
+              </div>
+              <div class="mr-explanation">
+                <span class="jp"
+                  >「変更させていただきたいと存じます」は謙譲語＋丁寧語の正しい組み合わせです。「キャンセル」は意味が異なります。</span
+                >
+                <br /><br />
+                「変更させていただきたいと存じます」là sự kết hợp đúng giữa khiêm nhường ngữ và thể
+                lịch sự. 「キャンセル」có nghĩa khác (hủy bỏ).
+              </div>
+              <div class="mr-actions">
+                <button class="btn btn-sm btn-secondary">Practice Similar</button>
+                <button class="btn btn-sm btn-ghost">Save to Flashcards</button>
+              </div>
+            </div>
+
+            <div class="mistake-review-card">
+              <div class="mr-header">
+                <div class="mr-skill">Grammar · Keigo</div>
+                <div class="mr-count">Missed 2× times</div>
+              </div>
+              <div class="mr-question jp">
+                上司に報告する時、「<u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u>」と言うのが正しい。
+              </div>
+              <div class="mr-answers">
+                <div class="mr-answer wrong">✗ 言いました</div>
+                <div class="mr-answer right">✓ 申し上げました</div>
+              </div>
+              <div class="mr-explanation">
+                <span class="jp"
+                  >自分の動作には謙譲語「申し上げる」を使います。「言う」の尊敬語「おっしゃる」は相手の動作に使います。</span
+                >
+                <br /><br />
+                Đối với hành động của bản thân, dùng khiêm nhường ngữ「申し上げる」。Tôn kính
+                ngữ「おっしゃる」dùng cho hành động của đối phương.
+              </div>
+              <div class="mr-actions">
+                <button class="btn btn-sm btn-secondary">Practice Similar</button>
+                <button class="btn btn-sm btn-ghost">Save to Flashcards</button>
+              </div>
+            </div>
+
+            <div class="mistake-review-card">
+              <div class="mr-header">
+                <div class="mr-skill">Reading · Main Idea</div>
+                <div class="mr-count">Missed 1× time</div>
+              </div>
+              <div class="mr-question jp">
+                この文章の<ruby>主旨<rt>しゅし</rt></ruby
+                >として最も<ruby>適当<rt>てきとう</rt></ruby
+                >なものはどれか。
+              </div>
+              <div class="mr-answers">
+                <div class="mr-answer wrong">✗ 具体的なデータの詳細</div>
+                <div class="mr-answer right">✓ 全体の主張・結論</div>
+              </div>
+              <div class="mr-explanation">
+                <span class="jp"
+                  >主旨問題では、詳細ではなく文章全体のメッセージを捉えることが重要です。</span
+                >
+                <br /><br />
+                Với câu hỏi chủ đề, cần nắm bắt thông điệp tổng thể thay vì tập trung vào chi tiết
+                cụ thể.
+              </div>
+              <div class="mr-actions">
+                <button class="btn btn-sm btn-secondary">Practice Similar</button>
+                <button class="btn btn-sm btn-ghost">Save to Flashcards</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <!-- ═══ MOBILE BOTTOM NAV ═══ -->
+      <nav class="mobile-nav" aria-label="Mobile navigation">
+        <button class="mobile-nav-item active" data-screen="home" onclick="navigate('home')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+          </svg>
+          Home
+        </button>
+        <button class="mobile-nav-item" data-screen="roadmap" onclick="navigate('roadmap')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+          </svg>
+          Roadmap
+        </button>
+        <button class="mobile-nav-item" data-screen="practice" onclick="navigate('practice')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 20h9" />
+            <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
+          </svg>
+          Practice
+        </button>
+        <button class="mobile-nav-item" data-screen="review" onclick="navigate('review')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+            <polyline points="22 6 12 13 2 6" />
+          </svg>
+          Review
+        </button>
+        <button class="mobile-nav-item" data-screen="progress" onclick="navigate('progress')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="20" x2="18" y2="10" />
+            <line x1="12" y1="20" x2="12" y2="4" />
+            <line x1="6" y1="20" x2="6" y2="14" />
+          </svg>
+          Progress
+        </button>
+      </nav>
+
+      <!-- ═══ MOCK EXAM OVERLAY ═══ -->
+      <div class="exam-shell" id="exam-shell">
+        <div class="exam-header">
+          <div class="exam-section-label">Section 1: Listening</div>
+          <div class="exam-timer" id="exam-timer">45:00</div>
+          <button
+            class="btn btn-sm btn-ghost"
+            onclick="endExam()"
+            style="min-height: 32px; padding: 4px 12px"
+          >
+            End Exam
+          </button>
+        </div>
+        <div class="exam-body">
+          <div class="question-shell">
+            <div class="question-progress">
+              <div class="progress-track" style="flex: 1; height: 4px">
+                <div class="progress-fill navy" style="width: 10%"></div>
+              </div>
+              <div class="question-counter">1 / 25</div>
+            </div>
+            <div class="question-content">
+              <div class="question-passage jp" style="font-size: 17px">
+                次の会話を聞いて、質問に答えてください。<br /><br />
+                <ruby>田中<rt>たなか</rt></ruby
+                >：<ruby>佐藤<rt>さとう</rt></ruby
+                >さん、先月の<ruby>売上<rt>うりあげ</rt></ruby
+                ><ruby>報告書<rt>ほうこくしょ</rt></ruby
+                >を<ruby>拝見<rt>はいけん</rt></ruby
+                >しました。前年<ruby>比<rt>ひ</rt></ruby
+                >で15%の<ruby>増<rt>ぞう</rt></ruby
+                >加とのことですが、<ruby>特<rt>とく</rt></ruby
+                >に<ruby>新規<rt>しんき</rt></ruby
+                ><ruby>顧客<rt>こきゃく</rt></ruby
+                >の<ruby>獲得<rt>かくとく</rt></ruby
+                >が<ruby>好調<rt>こうちょう</rt></ruby
+                >だったようですね。
+              </div>
+              <div class="question-prompt">田中さんが特に評価している点は何ですか。</div>
+            </div>
+            <div class="answer-options">
+              <div class="answer-option" onclick="this.classList.toggle('selected')">
+                <div class="answer-marker">A</div>
+                <div class="answer-text jp">売上の減少</div>
+              </div>
+              <div class="answer-option" onclick="this.classList.toggle('selected')">
+                <div class="answer-marker">B</div>
+                <div class="answer-text jp">新規顧客の獲得</div>
+              </div>
+              <div class="answer-option" onclick="this.classList.toggle('selected')">
+                <div class="answer-marker">C</div>
+                <div class="answer-text jp">コスト削減</div>
+              </div>
+              <div class="answer-option" onclick="this.classList.toggle('selected')">
+                <div class="answer-marker">D</div>
+                <div class="answer-text jp">従業員の増加</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="exam-question-nav">
+          <button class="btn btn-sm btn-ghost">← Previous</button>
+          <div class="exam-nav-dots">
+            <div class="exam-nav-dot current"></div>
+            <div class="exam-nav-dot"></div>
+            <div class="exam-nav-dot"></div>
+            <div class="exam-nav-dot"></div>
+            <div class="exam-nav-dot"></div>
+            <div class="exam-nav-dot"></div>
+            <div class="exam-nav-dot"></div>
+            <div class="exam-nav-dot"></div>
+            <div class="exam-nav-dot"></div>
+            <div class="exam-nav-dot"></div>
+          </div>
+          <button class="btn btn-sm btn-primary">Next →</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ── Navigation ──
+      function navigate(screenId) {
+        // Hide exam shell if open
+        document.getElementById("exam-shell").classList.remove("active");
+
+        // Update screens
+        document.querySelectorAll(".screen").forEach((s) => s.classList.remove("active"));
+        const target = document.getElementById("screen-" + screenId);
+        if (target) target.classList.add("active");
+
+        // Update proto tabs
+        document
+          .querySelectorAll(".proto-tab")
+          .forEach((t) => t.classList.toggle("active", t.dataset.screen === screenId));
+
+        // Update desktop nav
+        document
+          .querySelectorAll(".nav-item")
+          .forEach((n) => n.classList.toggle("active", n.dataset.screen === screenId));
+
+        // Update mobile nav
+        document
+          .querySelectorAll(".mobile-nav-item")
+          .forEach((n) => n.classList.toggle("active", n.dataset.screen === screenId));
+
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      // ── Exam Mode ──
+      let examTimerInterval = null;
+      function startExam() {
+        document.getElementById("exam-shell").classList.add("active");
+        let seconds = 45 * 60;
+        const timerEl = document.getElementById("exam-timer");
+        if (examTimerInterval) clearInterval(examTimerInterval);
+        examTimerInterval = setInterval(() => {
+          seconds--;
+          if (seconds <= 0) {
+            clearInterval(examTimerInterval);
+            endExam();
+            return;
+          }
+          const m = Math.floor(seconds / 60);
+          const s = seconds % 60;
+          timerEl.textContent = String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+          timerEl.classList.toggle("urgent", seconds < 300);
+        }, 1000);
+      }
+      function endExam() {
+        if (examTimerInterval) clearInterval(examTimerInterval);
+        document.getElementById("exam-shell").classList.remove("active");
+        navigate("result");
+      }
+
+      // ── Question Interaction ──
+      function selectAnswer(el, isCorrect) {
+        el.closest(".answer-options")
+          .querySelectorAll(".answer-option")
+          .forEach((o) => {
+            o.classList.remove("selected", "correct", "incorrect");
+          });
+        el.classList.add("selected");
+      }
+      function showExplanation() {
+        const exp = document.getElementById("explanation");
+        exp.style.display = "block";
+        const options = document.querySelectorAll(".answer-option");
+        options[1].classList.add("correct");
+        options[0].classList.add("incorrect");
+        exp.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+
+      // ── Header scroll effect ──
+      window.addEventListener(
+        "scroll",
+        () => {
+          document.getElementById("header").classList.toggle("scrolled", window.scrollY > 10);
+        },
+        { passive: true }
+      );
+
+      // ── Filter chips toggle ──
+      document.querySelectorAll(".filter-chip").forEach((chip) => {
+        chip.addEventListener("click", () => {
+          chip
+            .closest(".practice-filters")
+            .querySelectorAll(".filter-chip")
+            .forEach((c) => c.classList.remove("active"));
+          chip.classList.add("active");
+        });
+      });
+    </script>
+  </body>
+</html>

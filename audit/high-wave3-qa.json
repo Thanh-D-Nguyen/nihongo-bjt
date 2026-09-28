@@ -1,0 +1,198 @@
+{
+ "version": "high-wave3-qa",
+ "batch": "high-wave3",
+ "provider": "xkiro",
+ "model": "gpt-image",
+ "concurrency": 1,
+ "textPolicy": "NO_READABLE_TEXT",
+ "promptCompilerVersion": "bjt-image-generation-prompt-v2.1.0",
+ "contextualStyleContractVersion": "contextual-style-contract-v1.1",
+ "planned": 37,
+ "generated": 16,
+ "billingBlocked": 21,
+ "billingBlockedStatus": "BLOCKED_EXTERNAL_PAYMENT",
+ "attempted": 16,
+ "accepted": 16,
+ "regenerate": 0,
+ "rejected": 0,
+ "humanReview": 0,
+ "textRiskCounts": {
+  "NONE": 16,
+  "INCIDENTAL_UNREADABLE": 0,
+  "READABLE_BUT_IRRELEVANT": 0,
+  "PROBLEMATIC": 0
+ },
+ "acceptanceRate": 1.0,
+ "http429": 0,
+ "http402": 21,
+ "http5xx": 0,
+ "gate": {
+  "acceptRate": 1.0,
+  "problematicText": 0,
+  "criticalSemanticFailures": 0,
+  "decision": "PASS"
+ },
+ "assets": [
+  {
+   "questionId": "bjt-j1-practice-v3:LC_SCENE:0004",
+   "level": "J1",
+   "sectionCode": "LC_SCENE",
+   "objectKey": "bjt/ai/j1/lc_scene/7b11c344-8d7d-401f-94f6-5719ab4b4362.png",
+   "byteSize": 1824639,
+   "visualQaStatus": "ACCEPT",
+   "textRisk": "NONE",
+   "notes": "law-firm meeting with contract drafts on table, no readable text"
+  },
+  {
+   "questionId": "bjt-j1-practice-v3:LC_SCENE:0005",
+   "level": "J1",
+   "sectionCode": "LC_SCENE",
+   "objectKey": "bjt/ai/j1/lc_scene/aed249ff-52d7-4245-8ea7-a3638f6f394d.png",
+   "byteSize": 1762454,
+   "visualQaStatus": "ACCEPT",
+   "textRisk": "NONE",
+   "notes": "early-morning emergency executive meeting, no readable text"
+  },
+  {
+   "questionId": "bjt-j1-practice-v3:LC_SCENE:0009",
+   "level": "J1",
+   "sectionCode": "LC_SCENE",
+   "objectKey": "bjt/ai/j1/lc_scene/cac184da-6118-491c-b819-b76d4a0365af.png",
+   "byteSize": 1734806,
+   "visualQaStatus": "ACCEPT",
+   "textRisk": "NONE",
+   "notes": "committee reviewing governance report draft, no readable text"
+  },
+  {
+   "questionId": "bjt-j1-practice-v3:LC_SCENE:0011",
+   "level": "J1",
+   "sectionCode": "LC_SCENE",
+   "objectKey": "bjt/ai/j1/lc_scene/977f4c2b-4c50-4edd-9b1a-c7fd7565943b.png",
+   "byteSize": 1755987,
+   "visualQaStatus": "ACCEPT",
+   "textRisk": "NONE",
+   "notes": "executive meeting with projected patent materials, no readable text"
+  },
+  {
+   "questionId": "bjt-j1-practice-v3:LC_STATEMENT:0015",
+   "level": "J1",
+   "sectionCode": "LC_STATEMENT",
+   "objectKey": "bjt/ai/j1/lc_statement/343fdfbd-6ecb-4011-aa1a-e63a63d73aed.png",
+   "byteSize": 1816209,
+   "visualQaStatus": "ACCEPT",
+   "textRisk": "NONE",
+   "notes": "strategy meeting, new project planning, no readable text"
+  },
+  {
+   "questionId": "bjt-j1-practice-v3:LC_STATEMENT:0016",
+   "level": "J1",
+   "sectionCode": "LC_STATEMENT",
+   "objectKey": "bjt/ai/j1/lc_statement/70309313-f8cf-4943-b15a-d874659849a2.png",
+   "byteSize": 1790455,
+   "visualQaStatus": "ACCEPT",
+   "textRisk": "NONE",
+   "notes": "extraordinary board meeting, finance officer speaking, no readable text"
+  },
+  {
+   "questionId": "bjt-j1-practice-v3:LC_STATEMENT:0017",
+   "level": "J1",
+   "sectionCode": "LC_STATEMENT",
+   "objectKey": "bjt/ai/j1/lc_statement/cd089924-ddf2-487b-a580-3f1051f2c049.png",
+   "byteSize": 1830868,
+   "visualQaStatus": "ACCEPT",
+   "textRisk": "NONE",
+   "notes": "compliance committee discussion, no readable text"
+  },
+  {
+   "questionId": "bjt-j1-practice-v3:LC_STATEMENT:0020",
+   "level": "J1",
+   "sectionCode": "LC_STATEMENT",
+   "objectKey": "bjt/ai/j1/lc_statement/5c156713-cdd5-4df3-ab52-12b8ba28d288.png",
+   "byteSize": 1893074,
+   "visualQaStatus": "ACCEPT",
+   "textRisk": "NONE",
+   "notes": "PR strategy meeting, no readable text"
+  },
+  {
+   "questionId": "bjt-j2-practice-v3:LC_INTEGRATED:0027",
+   "level": "J2",
+   "sectionCode": "LC_INTEGRATED",
+   "objectKey": "bjt/ai/j2/lc_integrated/a7e342b2-566b-493d-9bd2-e60b7630baa7.png",
+   "byteSize": 1698636,
+   "visualQaStatus": "ACCEPT",
+   "textRisk": "NONE",
+   "notes": "external consultant presenting report, plausible, no readable text"
+  },
+  {
+   "questionId": "bjt-j2-practice-v3:LC_STATEMENT:0012",
+   "level": "J2",
+   "sectionCode": "LC_STATEMENT",
+   "objectKey": "bjt/ai/j2/lc_statement/0ad348e9-2320-437a-9caf-73f193e024bf.png",
+   "byteSize": 1742767,
+   "visualQaStatus": "ACCEPT",
+   "textRisk": "NONE",
+   "notes": "adjudicated in previous session (ACCEPT, textRisk NONE) — preserved"
+  },
+  {
+   "questionId": "bjt-j2-practice-v3:LC_STATEMENT:0013",
+   "level": "J2",
+   "sectionCode": "LC_STATEMENT",
+   "objectKey": "bjt/ai/j2/lc_statement/3801b092-37fb-441f-abd3-a607621e2384.png",
+   "byteSize": 1825953,
+   "visualQaStatus": "ACCEPT",
+   "textRisk": "NONE",
+   "notes": "plausible workplace scene aligned with brief; no readable text, no answer cues"
+  },
+  {
+   "questionId": "bjt-j2-practice-v3:LC_STATEMENT:0014",
+   "level": "J2",
+   "sectionCode": "LC_STATEMENT",
+   "objectKey": "bjt/ai/j2/lc_statement/9bd26c0d-1435-4c99-a590-f8cf7d1c7da1.png",
+   "byteSize": 1803091,
+   "visualQaStatus": "ACCEPT",
+   "textRisk": "NONE",
+   "notes": "plausible workplace scene aligned with brief; no readable text, no answer cues"
+  },
+  {
+   "questionId": "bjt-j2-practice-v3:LC_STATEMENT:0015",
+   "level": "J2",
+   "sectionCode": "LC_STATEMENT",
+   "objectKey": "bjt/ai/j2/lc_statement/59c8583c-5123-4f16-8194-3a5efb811002.png",
+   "byteSize": 1772053,
+   "visualQaStatus": "ACCEPT",
+   "textRisk": "NONE",
+   "notes": "plausible workplace scene aligned with brief; no readable text, no answer cues"
+  },
+  {
+   "questionId": "bjt-j2-practice-v3:LC_STATEMENT:0018",
+   "level": "J2",
+   "sectionCode": "LC_STATEMENT",
+   "objectKey": "bjt/ai/j2/lc_statement/882d8fc5-9740-431d-af7f-34b6545db8d1.png",
+   "byteSize": 1734796,
+   "visualQaStatus": "ACCEPT",
+   "textRisk": "NONE",
+   "notes": "plausible workplace scene aligned with brief; no readable text, no answer cues"
+  },
+  {
+   "questionId": "bjt-j2-practice-v3:LC_STATEMENT:0020",
+   "level": "J2",
+   "sectionCode": "LC_STATEMENT",
+   "objectKey": "bjt/ai/j2/lc_statement/eaa15c5f-54c4-479a-8695-0581ff7ed4b5.png",
+   "byteSize": 1842945,
+   "visualQaStatus": "ACCEPT",
+   "textRisk": "NONE",
+   "notes": "plausible workplace scene aligned with brief; no readable text, no answer cues"
+  },
+  {
+   "questionId": "bjt-j2-practice-v3:LC_STATEMENT:0021",
+   "level": "J2",
+   "sectionCode": "LC_STATEMENT",
+   "objectKey": "bjt/ai/j2/lc_statement/e3dee698-936a-4f26-ab85-1e7cfc007e97.png",
+   "byteSize": 1810796,
+   "visualQaStatus": "ACCEPT",
+   "textRisk": "NONE",
+   "notes": "plausible workplace scene aligned with brief; no readable text, no answer cues"
+  }
+ ],
+ "notes": "All 21 non-generated items blocked by xKiro HTTP 402 insufficient wallet balance before job creation; no images produced, no retries. Preserved as externally blocked, not image failures."
+}

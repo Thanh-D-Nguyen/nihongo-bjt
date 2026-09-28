@@ -1,0 +1,192 @@
+{
+ "version": "high-wave-db-scope",
+ "batch": "high-wave3",
+ "promptCompilerVersion": "bjt-image-generation-prompt-v2.1.0",
+ "candidates": [
+  {
+   "questionId": "bjt-j2-practice-v3:LC_STATEMENT:0012",
+   "dbQuestionId": "0ad348e9-2320-437a-9caf-73f193e024bf",
+   "prompt": "「本件につきましては、社内で十分に検討した上で、改めてご回答申し上げます。」"
+  },
+  {
+   "questionId": "bjt-j2-practice-v3:LC_STATEMENT:0013",
+   "dbQuestionId": "3801b092-37fb-441f-abd3-a607621e2384",
+   "prompt": "「誠に恐れ入りますが、予算の都合上、ご要望の仕様での対応は難しい状況でございます。」"
+  },
+  {
+   "questionId": "bjt-j2-practice-v3:LC_STATEMENT:0014",
+   "dbQuestionId": "9bd26c0d-1435-4c99-a590-f8cf7d1c7da1",
+   "prompt": "「先日ご提出いただいた企画書、大変興味深く拝読いたしました。ぜひ次回の役員会で取り上げさせていただければと存じます。」"
+  },
+  {
+   "questionId": "bjt-j2-practice-v3:LC_STATEMENT:0015",
+   "dbQuestionId": "59c8583c-5123-4f16-8194-3a5efb811002",
+   "prompt": "「今回の件でお客様にご迷惑をおかけしたことは事実ですので、再発防止策を含めた書面での回答をお約束いたします。」"
+  },
+  {
+   "questionId": "bjt-j2-practice-v3:LC_STATEMENT:0018",
+   "dbQuestionId": "882d8fc5-9740-431d-af7f-34b6545db8d1",
+   "prompt": "「ご多忙のところ恐縮ですが、来月の株主総会に向けた資料の最終確認を、今週中にお願いできればと存じます。」"
+  },
+  {
+   "questionId": "bjt-j2-practice-v3:LC_STATEMENT:0020",
+   "dbQuestionId": "eaa15c5f-54c4-479a-8695-0581ff7ed4b5",
+   "prompt": "「当初の見込みより市場の反応が芳しくないため、マーケティング予算の配分を見直し、デジタル施策に重点を移すことを提案いたします。」"
+  },
+  {
+   "questionId": "bjt-j2-practice-v3:LC_STATEMENT:0021",
+   "dbQuestionId": "e3dee698-936a-4f26-ab85-1e7cfc007e97",
+   "prompt": "「本件は法的リスクを伴う案件でございますので、顧問弁護士の見解を伺った上で最終判断を下したいと考えております。」"
+  },
+  {
+   "questionId": "bjt-j2-practice-v3:LC_INTEGRATED:0027",
+   "dbQuestionId": "a7e342b2-566b-493d-9bd2-e60b7630baa7",
+   "prompt": "経営コンサルタントの提言：「御社の課題は、意思決定のスピードにあると考えます。現在、承認プロセスに平均10日かかっていますが、競合他社は3日で意思決定しています。権限委譲を進め、部長決裁で完結する範囲を拡大することを提案します。ただし、ガバ"
+  },
+  {
+   "questionId": "bjt-j1-practice-v3:LC_SCENE:0004",
+   "dbQuestionId": "7b11c344-8d7d-401f-94f6-5719ab4b4362",
+   "prompt": "弁護士が「本契約第12条の競業避止義務の範囲につきまして、地理的制限と期間の妥当性について再検討が必要かと存じます」と意見を述べています。"
+  },
+  {
+   "questionId": "bjt-j1-practice-v3:LC_SCENE:0005",
+   "dbQuestionId": "aed249ff-52d7-4245-8ea7-a3638f6f394d",
+   "prompt": "社長が緊急役員会議で「本日午前中にサイバー攻撃を受け、顧客情報の一部が流出した可能性がございます。直ちに対策本部を設置します」と発言しています。"
+  },
+  {
+   "questionId": "bjt-j1-practice-v3:LC_SCENE:0009",
+   "dbQuestionId": "cac184da-6118-491c-b819-b76d4a0365af",
+   "prompt": "社外取締役が「コーポレートガバナンス・コードの改訂に伴い、取締役会の実効性評価の開示方法について議論すべきと考えます」と発言しています。"
+  },
+  {
+   "questionId": "bjt-j1-practice-v3:LC_SCENE:0011",
+   "dbQuestionId": "977f4c2b-4c50-4edd-9b1a-c7fd7565943b",
+   "prompt": "知的財産部長が「競合他社の新製品が当社の特許権を侵害している可能性が高く、差止請求の準備を進めるべきと考えます」と経営会議で報告しています。"
+  },
+  {
+   "questionId": "bjt-j1-practice-v3:LC_STATEMENT:0015",
+   "dbQuestionId": "343fdfbd-6ecb-4011-aa1a-e63a63d73aed",
+   "prompt": "「ご提案の方向性には概ね賛同いたしますが、実行のタイムラインについてはもう少し現実的な見直しが必要ではないかと考えております。」"
+  },
+  {
+   "questionId": "bjt-j1-practice-v3:LC_STATEMENT:0016",
+   "dbQuestionId": "70309313-f8cf-4943-b15a-d874659849a2",
+   "prompt": "「率直に申し上げますと、現状のままでは来期の事業継続が極めて困難な状況にあると認識しております。抜本的な構造改革が不可避です。」"
+  },
+  {
+   "questionId": "bjt-j1-practice-v3:LC_STATEMENT:0017",
+   "dbQuestionId": "cd089924-ddf2-487b-a580-3f1051f2c049",
+   "prompt": "「本件につきましては、法令遵守の観点から、外部の専門家による第三者委員会を設置し、事実関係の調査を行うことが適切かと存じます。」"
+  },
+  {
+   "questionId": "bjt-j1-practice-v3:LC_STATEMENT:0020",
+   "dbQuestionId": "5c156713-cdd5-4df3-ab52-12b8ba28d288",
+   "prompt": "「ステークホルダーの皆様への説明責任を果たすべく、今回の決定に至った経緯と根拠を速やかに開示することが肝要かと存じます。」"
+  },
+  {
+   "questionId": "bjt-j1-practice-v3:LC_INTEGRATED:0023",
+   "dbQuestionId": "073cf649-462a-4a6f-8ac2-7dfa09ef0325",
+   "prompt": "危機管理会議で法務、広報、技術の各部門長が報告しています。法務：「個人情報保護法に基づく報告義務があります」広報：「記者会見は48時間以内が望ましい」技術：「影響範囲の特定にはあと24時間必要です」。最優先すべき対応は何ですか。"
+  },
+  {
+   "questionId": "bjt-j1-practice-v3:LC_INTEGRATED:0024",
+   "dbQuestionId": "0d1dd04a-1777-41bf-9f37-e132a0b65677",
+   "prompt": "株主総会で株主から3つの質問が出されました。①役員報酬の妥当性、②政策保有株式の縮減計画、③気候変動対応の具体策。議長として最も適切な対応順序はどれですか。"
+  },
+  {
+   "questionId": "bjt-j1-practice-v3:LC_INTEGRATED:0025",
+   "dbQuestionId": "48d20f79-5366-4596-b672-d272f724ea9d",
+   "prompt": "海外子会社の再編会議で、CFOが「為替ヘッジのコストが利益を圧迫している」、COOが「現地の規制強化で事業継続が困難」、法務が「撤退には現地労働法の制約がある」と報告しています。経営判断として適切なのはどれですか。"
+  },
+  {
+   "questionId": "bjt-j1-practice-v3:LC_INTEGRATED:0027",
+   "dbQuestionId": "4634ed8a-4832-4be5-b07c-45bac9e94c4b",
+   "prompt": "買収後のPMI会議で、人事部長が「統合後の組織文化の衝突が深刻化しています」、営業部長が「顧客の離反率が想定の2倍です」と報告しています。最優先すべき対策はどれですか。"
+  },
+  {
+   "questionId": "bjt-j1-practice-v3:LC_INTEGRATED:0028",
+   "dbQuestionId": "097a425e-0b5d-430a-a4c0-ad678a46ce7e",
+   "prompt": "社外取締役から「現在のCEO後継者計画は不十分ではないか」との指摘を受けました。指名委員会の委員長として適切な対応はどれですか。"
+  },
+  {
+   "questionId": "bjt-j1-practice-v3:LC_INTEGRATED:0029",
+   "dbQuestionId": "90572041-d002-4a6e-8b54-a7dbf4791fd9",
+   "prompt": "規制当局からの立入検査通知を受け、コンプライアンス委員会で対応を協議しています。法務部長：「全面的な協力が基本方針」総務部長：「文書保全命令を直ちに発出すべき」経営企画：「事業への影響を最小化したい」。最優先の対応はどれですか。"
+  },
+  {
+   "questionId": "bjt-j1-practice-v3:LR_SITUATION:0030",
+   "dbQuestionId": "b95ebcc6-af03-4d58-9f4a-388f6ad13532",
+   "prompt": "以下の社内通知と音声説明を踏まえ、従業員が取るべき行動として最も適切なものを選んでください。\n\n【社内通知】当社は本日付で東京証券取引所プライム市場への市場区分変更の承認を受けました。これに伴い、インサイダー取引規制の対象範囲が拡大します。"
+  },
+  {
+   "questionId": "bjt-j1-practice-v3:LR_SITUATION:0032",
+   "dbQuestionId": "e906f31d-297b-4adf-863f-8bd91d5252d3",
+   "prompt": "以下のIR資料と電話会議の内容を踏まえ、アナリストの質問に対するIR担当者の最適な回答を選んでください。\n\n【IR資料】当期純利益：前年比▲15%。要因：為替差損（30億円）、構造改革費用（20億円）。\n【アナリスト】「来期のガイダンスにつ"
+  },
+  {
+   "questionId": "bjt-j1-practice-v3:LR_SITUATION:0033",
+   "dbQuestionId": "c721c927-3663-48f5-a8d6-c07d77d9f825",
+   "prompt": "以下の人事部通知とCEOのビデオメッセージを踏まえ、事業部長として最も適切な対応を選んでください。\n\n【通知】経営効率化に伴い、全社で15%の人員削減を実施。各事業部で対象者リストを2週間以内に提出のこと。\n【CEO】「痛みを伴う決断ですが"
+  },
+  {
+   "questionId": "bjt-j1plus-practice-v3:LC_SCENE:0007",
+   "dbQuestionId": "6f8da978-0588-4aca-8406-ed2725b2e240",
+   "prompt": "政府の規制改革会議で、委員長が「本日の議論を総括いたしますと、規制の在り方につきましては、イノベーション促進と消費者保護の均衡点を見出すべく、引き続き慎重な検討を重ねる必要があるという点で、委員各位のご認識は概ね一致しているものと理解いたし"
+  },
+  {
+   "questionId": "bjt-j1plus-practice-v3:LC_SCENE:0008",
+   "dbQuestionId": "2baf4f36-e9b1-406e-be5d-f6eb20e46077",
+   "prompt": "日系メガバンクと欧州銀行の戦略提携調印式で、日本側頭取が「本提携を契機として、グローバル金融市場における両行のプレゼンスを一層高めるとともに、お客様に対するソリューション提供力を飛躍的に向上させてまいる所存でございます」と挨拶しています。"
+  },
+  {
+   "questionId": "bjt-j1plus-practice-v3:LC_SCENE:0009",
+   "dbQuestionId": "dc1aa632-aa0c-4178-a881-05b7285f212d",
+   "prompt": "企業の危機管理委員会で、法務担当役員が「報道対応につきましては、現時点では事実関係の確認が完了するまで、いかなるコメントも差し控えるのが賢明かと存じます。なお、当局への報告については、法定期限に十分留意の上、粛々と対応してまいります」と述べ"
+  },
+  {
+   "questionId": "bjt-j1plus-practice-v3:LC_STATEMENT:0017",
+   "dbQuestionId": "4943a3a0-8397-4edc-bb72-b0d4210e04ce",
+   "prompt": "「異文化コミュニケーションにおいて最も留意すべきは、我々の当然視している前提が、必ずしも普遍的ではないという認識を持つことではないかと思料いたします。ハイコンテクストな日本的コミュニケーションの強みを活かしつつ、明示的な言語化の技術を磨くこ"
+  },
+  {
+   "questionId": "bjt-j1plus-practice-v3:LC_STATEMENT:0018",
+   "dbQuestionId": "fea54b5c-1b36-49dc-ad5b-24798dd9b959",
+   "prompt": "「本日の取締役会決議につきましては、善管注意義務の観点から、取締役各位が十分な情報に基づき合理的な判断を行ったことを、議事録上明確にしておく必要がございます。」"
+  },
+  {
+   "questionId": "bjt-j1plus-practice-v3:LC_INTEGRATED:0024",
+   "dbQuestionId": "bb47f7be-a69f-4b78-9efc-e854e78c2b8c",
+   "prompt": "経営統合に向けた協議で、A社CEO、B社社長、統合準備委員会の委員長が議論しています。A社CEOが「対等の精神を基本としつつ」と前置きした上で存続会社はA社とする案を提示。B社社長が「対等とおっしゃるのであれば、経営体制についても均衡ある配"
+  },
+  {
+   "questionId": "bjt-j1plus-practice-v3:LC_INTEGRATED:0029",
+   "dbQuestionId": "9a1b0d4b-2d3d-46d2-bf04-b954c1ec64de",
+   "prompt": "国際合弁会社の役員会で、日本側派遣社長、現地側副社長、本社からの監査役が経営方針の対立について議論しています。日本側社長が「本社の方針との整合性を確保しつつ、現地の事情にも配慮したいと考えておりますが」と述べ、現地副社長が「現地市場を理解し"
+  },
+  {
+   "questionId": "bjt-full-simulation-b-v1:LC_STATEMENT:0006",
+   "dbQuestionId": "2348d450-fa8a-4be4-bf88-58972db7f8d1",
+   "prompt": "【模擬試験B・LC_STATEMENT 2】相談窓口の説明を聞いてください。匿名相談者について正しいものはどれですか。"
+  },
+  {
+   "questionId": "bjt-full-simulation-b-v1:LC_STATEMENT:0012",
+   "dbQuestionId": "13f9ca42-1fb1-4ab3-a07f-91a0b144cae4",
+   "prompt": "【模擬試験B・LC_STATEMENT 8】サービス終了の案内を聞いてください。既存利用者への対応は何ですか。"
+  },
+  {
+   "questionId": "bjt-full-simulation-c-v1:LC_STATEMENT:0006",
+   "dbQuestionId": "86d4278d-4d7c-4719-be1f-306e3aa366ff",
+   "prompt": "【模擬試験C・LC_STATEMENT 2】情報セキュリティ部からの注意を聞いてください。社員がしてはいけないことは何ですか。"
+  },
+  {
+   "questionId": "bjt-full-simulation-c-v1:LC_STATEMENT:0009",
+   "dbQuestionId": "1c99afa4-8b5e-437c-81ee-bf93bf4afa8d",
+   "prompt": "【模擬試験C・LC_STATEMENT 5】議事録の訂正依頼を聞いてください。どこを直しますか。"
+  },
+  {
+   "questionId": "bjt-full-simulation-c-v1:LC_STATEMENT:0013",
+   "dbQuestionId": "140a0edb-3159-4609-9b13-add238994a41",
+   "prompt": "【模擬試験C・LC_STATEMENT 9】メンター制度の説明を聞いてください。相談内容の扱いはどうなりますか。"
+  }
+ ]
+}

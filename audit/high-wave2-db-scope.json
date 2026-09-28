@@ -1,0 +1,157 @@
+{
+ "version": "high-wave-db-scope",
+ "batch": "high-wave2",
+ "promptCompilerVersion": "bjt-image-generation-prompt-v2.1.0",
+ "candidates": [
+  {
+   "questionId": "bjt-j4-practice-v3:LC_STATEMENT:0015",
+   "dbQuestionId": "69df7d07-52a9-455f-8092-26e5dfbfa159",
+   "prompt": "会議の日程を変更したいとき、参加者にメールで何と書きますか。"
+  },
+  {
+   "questionId": "bjt-j4-practice-v3:LC_STATEMENT:0020",
+   "dbQuestionId": "36d67eb5-d9fb-4a8d-a0cd-f28bdce49d36",
+   "prompt": "会議で自分の意見を言いたいとき、何と言って発言しますか。"
+  },
+  {
+   "questionId": "bjt-j4-practice-v3:LC_INTEGRATED:0022",
+   "dbQuestionId": "3030f858-10a1-48e4-9fdc-68bc3393a4ab",
+   "prompt": "上司と部下が話しています。上司：「来週の月曜に新しいパソコンが届くから、古いのはデータを消してから総務に返してね」部下：「わかりました。データのバックアップはどうしますか」上司：「USBに保存して、それも総務に渡して」。部下がすることを順番"
+  },
+  {
+   "questionId": "bjt-j4-practice-v3:LC_INTEGRATED:0023",
+   "dbQuestionId": "ed8ed917-5872-4677-9337-ef54c10f475b",
+   "prompt": "人事部の社員が社内放送しています。「本日午後3時より、4階の大会議室で安全講習会を行います。全社員必ず出席してください。資料は会場で配布します。筆記用具をお持ちください」。社員が持っていくものは何ですか。"
+  },
+  {
+   "questionId": "bjt-j4-practice-v3:LC_INTEGRATED:0024",
+   "dbQuestionId": "fb4f98e4-31ed-4539-a598-58f0bb99d0e1",
+   "prompt": "総務の人が説明しています。「備品を注文するときは、まず申請書を書いて、課長の印鑑をもらってから、総務に提出してください。急ぎの場合は先にメールで連絡してもらえれば対応します」。急ぎの場合、最初に何をしますか。"
+  },
+  {
+   "questionId": "bjt-j4-practice-v3:LC_INTEGRATED:0026",
+   "dbQuestionId": "3d87d2a3-ab59-4e35-8c5d-6f762d8c32da",
+   "prompt": "電話で取引先と話しています。取引先：「来週の打ち合わせですが、火曜日はいかがですか」自分：「火曜は出張がありまして…水曜はいかがでしょうか」取引先：「水曜の午後なら空いています」自分：「では、水曜の午後2時でお願いいたします」。打ち合わせは"
+  },
+  {
+   "questionId": "bjt-j4-practice-v3:LC_INTEGRATED:0027",
+   "dbQuestionId": "8a1e0555-0c6f-48b3-8450-da7a047442d8",
+   "prompt": "部長が朝礼で話しています。「今月の目標は新規顧客20社です。先月は15社でした。あと5社多く獲得する必要があります。各チーム、担当エリアを確認して、訪問計画を今週中に出してください」。今週中に出すものは何ですか。"
+  },
+  {
+   "questionId": "bjt-j4-practice-v3:LR_SITUATION:0030",
+   "dbQuestionId": "d6d72fe9-0579-408b-a50a-4f07fb0562f8",
+   "prompt": "オフィスのドアに「会議中　関係者以外立入禁止」と書いてあります。今、中に入ってもいいですか。"
+  },
+  {
+   "questionId": "bjt-j3-practice-v3:LC_SCENE:0003",
+   "dbQuestionId": "49685825-2faf-459b-a76c-f259ccf703a6",
+   "prompt": "空港のロビーで社員がスーツケースを引きながら携帯電話で「はい、今空港に着きました。これからホテルに向かいます」と話しています。"
+  },
+  {
+   "questionId": "bjt-j3-practice-v3:LC_SCENE:0004",
+   "dbQuestionId": "69f96ffb-decc-45b7-a6c9-1f492a8298ae",
+   "prompt": "社員2人がホワイトボードの前で「納期は来月20日で、作業工程はこの3つに分けましょう」「人員は各工程2人ずつでどうですか」と議論しています。"
+  },
+  {
+   "questionId": "bjt-j3-practice-v3:LC_SCENE:0007",
+   "dbQuestionId": "c5af28aa-e018-4d32-bc6c-bd24494926a5",
+   "prompt": "社員が展示会の会場で来場者に「弊社の最新技術についてご説明いたします。こちらのパネルをご覧ください」と案内しています。"
+  },
+  {
+   "questionId": "bjt-j3-practice-v3:LC_SCENE:0008",
+   "dbQuestionId": "6b195ce1-4e0c-472a-9ff9-043ca8b318f0",
+   "prompt": "課長がチームメンバーに「今回のクレーム、原因を調べて明日までに報告書を出して」と言っています。メンバーがノートに書き留めています。"
+  },
+  {
+   "questionId": "bjt-j3-practice-v3:LC_SCENE:0009",
+   "dbQuestionId": "84155307-688f-4074-90e3-247634e93a2e",
+   "prompt": "受付の社員が来客2名に「こちらの面談室にどうぞ。担当の田中は間もなく参ります」と言って、部屋のドアを開けています。"
+  },
+  {
+   "questionId": "bjt-j3-practice-v3:LC_SCENE:0010",
+   "dbQuestionId": "55068018-c3a0-418a-932e-a3a551e7f4ec",
+   "prompt": "社員が電話で「在庫を確認いたしますので、折り返しお電話してもよろしいでしょうか」と話しています。メモを取りながら電話をしています。"
+  },
+  {
+   "questionId": "bjt-j3-practice-v3:LC_SCENE:0011",
+   "dbQuestionId": "9a56b4ff-01b5-4616-bf5d-7ebcbd6faa9c",
+   "prompt": "3人の社員がランチを食べながら「来週の歓送迎会、幹事は誰がやる？」「私がやりますよ。店は前回のところでいいですか」と話しています。"
+  },
+  {
+   "questionId": "bjt-j3-practice-v3:LC_STATEMENT:0012",
+   "dbQuestionId": "56c7c344-630e-47cd-b53c-8dfbc2c986e4",
+   "prompt": "取引先の部長に「ご検討のほど、よろしくお願いいたします」と言って提案書を渡します。この後、相手は何と言いますか。"
+  },
+  {
+   "questionId": "bjt-j3-practice-v3:LC_STATEMENT:0013",
+   "dbQuestionId": "9bddb783-f8f1-4b64-a0d9-361d151437d4",
+   "prompt": "会議の冒頭で司会として「それでは、定刻になりましたので、会議を始めさせていただきます」と言います。次に何を言いますか。"
+  },
+  {
+   "questionId": "bjt-j3-practice-v3:LC_STATEMENT:0014",
+   "dbQuestionId": "f9a230cf-b601-4d0c-801a-8869aa2cf446",
+   "prompt": "上司に「この案件、スケジュール的に厳しいんだが…」と相談されました。何と答えますか。"
+  },
+  {
+   "questionId": "bjt-j3-practice-v3:LC_STATEMENT:0016",
+   "dbQuestionId": "83522e95-a28e-4047-90e8-a0bfc83fdb45",
+   "prompt": "プレゼンの途中で聞き手から「すみません、その数字の根拠を教えていただけますか」と質問されました。手元に詳細データがありません。"
+  },
+  {
+   "questionId": "bjt-j3-practice-v3:LC_STATEMENT:0021",
+   "dbQuestionId": "c5dead9f-b09b-4754-aa1e-0804d1f04e9d",
+   "prompt": "会議のまとめとして「本日の決定事項を確認します。第一に…」と発言します。これは何をしていますか。"
+  },
+  {
+   "questionId": "bjt-j3-practice-v3:LC_INTEGRATED:0022",
+   "dbQuestionId": "3935b5d9-720e-4253-b3d9-046e883637a6",
+   "prompt": "課長と社員が話しています。課長：「来週の大阪出張、2泊3日で行ってくれ。月曜に支社でミーティング、火曜にA社訪問、水曜は報告書を書いて戻ってきて」社員：「承知しました。ホテルの予約はどうしましょう」課長：「総務に頼んで」。社員が総務に頼むこ"
+  },
+  {
+   "questionId": "bjt-j3-practice-v3:LC_INTEGRATED:0023",
+   "dbQuestionId": "dc055687-4941-4128-843b-6be34755ba6b",
+   "prompt": "マーケティング部のミーティングです。部長：「新商品のターゲットは30代女性にしよう」社員A：「SNSでの宣伝が効果的だと思います」社員B：「インフルエンサーを使うのはいかがでしょう」部長：「では、SNS戦略とインフルエンサー案、両方の見積も"
+  },
+  {
+   "questionId": "bjt-j3-practice-v3:LC_INTEGRATED:0025",
+   "dbQuestionId": "47c7c065-3f84-427a-9481-858f4d17a131",
+   "prompt": "取引先との電話です。取引先：「納品が3日遅れるとのことですが、うちの生産ラインに影響が出ます」自分：「大変申し訳ございません。原因は部品の入荷遅延です。現在、別ルートで手配中です」取引先：「いつ届きますか」自分：「明後日には確実にお届けいた"
+  },
+  {
+   "questionId": "bjt-j3-practice-v3:LC_INTEGRATED:0029",
+   "dbQuestionId": "2cb59c35-0626-4e1b-9136-b4ac7f01b1fc",
+   "prompt": "営業会議で話しています。課長：「A社との契約更新だが、先方が値下げを要求している。5%下げると利益が出ない」社員：「代わりに保守サービスをつけて付加価値を提案するのはどうですか」課長：「いいね、見積もりを作って」。社員の提案は？"
+  },
+  {
+   "questionId": "bjt-j3-practice-v3:LR_SITUATION:0030",
+   "dbQuestionId": "1f41f6bb-b21c-4534-bf5c-7ee20fb7fc73",
+   "prompt": "会議室のドアに「〇〇プロジェクト キックオフミーティング　13:30～15:00　参加者：企画部・技術部・営業部」と書いてあります。この会議は何の会議ですか。"
+  },
+  {
+   "questionId": "bjt-j2-practice-v3:LC_SCENE:0002",
+   "dbQuestionId": "fea0f68d-8a18-4d77-a980-1b485cfc519d",
+   "prompt": "面接官が「これまでのご経験の中で、最も困難だったプロジェクトについてお聞かせいただけますか」と聞いています。応募者がスーツ姿で椅子に座っています。"
+  },
+  {
+   "questionId": "bjt-j2-practice-v3:LC_SCENE:0006",
+   "dbQuestionId": "73969d43-79e1-4776-8536-3396f9c2bb28",
+   "prompt": "人事部長が「今回の組織再編に伴い、一部の部署統合について社員への説明会を実施いたします」と述べています。"
+  },
+  {
+   "questionId": "bjt-j2-practice-v3:LC_SCENE:0007",
+   "dbQuestionId": "69d336d8-1823-4aab-8dc1-0e67dcbe7606",
+   "prompt": "工場長が「今回のリコール対象製品について、出荷停止と全品回収の手配を至急お願いします」と指示しています。"
+  },
+  {
+   "questionId": "bjt-j2-practice-v3:LC_SCENE:0009",
+   "dbQuestionId": "64c627d8-252b-45ea-b414-d51ef9524b71",
+   "prompt": "監査役が「前年度の会計処理について、いくつか確認させていただきたい点がございます」と経理担当者に伝えています。"
+  },
+  {
+   "questionId": "bjt-j2-practice-v3:LC_SCENE:0011",
+   "dbQuestionId": "5b12bcb5-e939-4d57-8b27-10384e0027b7",
+   "prompt": "社長が「海外子会社の業績悪化に伴い、現地経営陣との緊急協議を行うため、来週出張いたします」と役員会で説明しています。"
+  }
+ ]
+}

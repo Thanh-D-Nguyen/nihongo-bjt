@@ -1,0 +1,107 @@
+{
+ "version": "high-wave-db-scope",
+ "batch": "high-wave1",
+ "promptCompilerVersion": "bjt-image-generation-prompt-v2.1.0",
+ "candidates": [
+  {
+   "questionId": "bjt-j5-practice-v3:LC_SCENE:0001",
+   "dbQuestionId": "4bd84a1e-ce5e-47b3-a321-6b1be209cd98",
+   "prompt": "レストランのウェイターが「ご注文はお決まりですか」と聞いています。お客さんはメニューを見ています。"
+  },
+  {
+   "questionId": "bjt-j5-practice-v3:LC_SCENE:0003",
+   "dbQuestionId": "98eae28f-22ad-489e-bd18-a720a62f0ae1",
+   "prompt": "工場で班長が「この部品を箱に入れてください」と言っています。新しい作業員が部品を手に持っています。"
+  },
+  {
+   "questionId": "bjt-j5-practice-v3:LC_SCENE:0004",
+   "dbQuestionId": "f08ab578-11a4-4e93-82fe-f3ec94402381",
+   "prompt": "ホテルのフロントで「チェックインですか」とスタッフが聞いています。お客さんがスーツケースを持っています。"
+  },
+  {
+   "questionId": "bjt-j5-practice-v3:LC_SCENE:0005",
+   "dbQuestionId": "c9334cea-a238-4587-b863-9863d36f2472",
+   "prompt": "スーパーのスタッフが「袋はご利用ですか」と聞いています。お客さんが商品をレジに置いています。"
+  },
+  {
+   "questionId": "bjt-j5-practice-v3:LC_SCENE:0006",
+   "dbQuestionId": "e50d74d7-4382-48fb-a69b-07fb75beacba",
+   "prompt": "宅配便のドライバーが「こちらにサインをお願いします」と言っています。受け取る人がペンを持っています。"
+  },
+  {
+   "questionId": "bjt-j5-practice-v3:LC_SCENE:0007",
+   "dbQuestionId": "ac7dc5c7-589a-4ed2-bcac-3fcca987023c",
+   "prompt": "清掃員が「この部屋は今掃除中です。少しお待ちください」と言っています。ドアの前に「清掃中」の看板があります。"
+  },
+  {
+   "questionId": "bjt-j5-practice-v3:LC_SCENE:0008",
+   "dbQuestionId": "ba29ba3a-5424-468f-9879-a139fed874f9",
+   "prompt": "バスのドライバーが「次は○○駅前です。お降りの方はボタンを押してください」と言っています。"
+  },
+  {
+   "questionId": "bjt-j5-practice-v3:LC_SCENE:0009",
+   "dbQuestionId": "af77155b-1c4d-439f-a19c-8caf9ba50d9e",
+   "prompt": "郵便局の窓口で「この荷物は速達でよろしいですか」と聞いています。お客さんが小さな箱を出しています。"
+  },
+  {
+   "questionId": "bjt-j5-practice-v3:LC_SCENE:0010",
+   "dbQuestionId": "d9f24116-1629-486a-b9af-dd3014932375",
+   "prompt": "ドラッグストアのスタッフが「ポイントカードはお持ちですか」と聞いています。お客さんが財布を開けています。"
+  },
+  {
+   "questionId": "bjt-j5-practice-v3:LC_SCENE:0011",
+   "dbQuestionId": "858e4e31-278f-421a-aa01-e8990c079c95",
+   "prompt": "駅の改札で駅員が「このきっぷは期限が切れています」と言っています。お客さんが困った顔をしています。"
+  },
+  {
+   "questionId": "bjt-j5-practice-v3:LC_STATEMENT:0015",
+   "dbQuestionId": "319118c9-de2c-45ce-98ba-948539351a61",
+   "prompt": "お客さんが「トイレはどこですか」と聞いています。トイレは2階にあります。"
+  },
+  {
+   "questionId": "bjt-j5-practice-v3:LC_STATEMENT:0020",
+   "dbQuestionId": "4cd0e2af-2a7e-43ad-9572-35c5fc4da431",
+   "prompt": "「すみません、この商品の値段を教えてください」とお客さんに聞かれました。値札を確認します。"
+  },
+  {
+   "questionId": "bjt-j5-practice-v3:LC_INTEGRATED:0024",
+   "dbQuestionId": "26259d59-d5db-4def-befa-7aac9c9ec14d",
+   "prompt": "コンビニの店長と店員が話しています。店長：「明日の朝、パンの納品が6時に来るから、5時半に開けてくれる？」店員：「はい、わかりました」。店員は明日何をしますか。"
+  },
+  {
+   "questionId": "bjt-j5-practice-v3:LC_INTEGRATED:0029",
+   "dbQuestionId": "0ced13e5-6b7f-4742-8cda-3f935e576b1b",
+   "prompt": "バイト先の先輩が説明しています。「お客さんが来たら、まず『いらっしゃいませ』と言って、席に案内して、メニューを渡してね。水はセルフサービスだから、置いてある場所を教えてあげて」。お水について何と言いますか。"
+  },
+  {
+   "questionId": "bjt-j4-practice-v3:LC_SCENE:0001",
+   "dbQuestionId": "ca95529b-5e04-48b0-8f4a-c487dc7367cc",
+   "prompt": "受付で社員が「お名刺を頂戴できますか」と言って、来客に手を差し出しています。"
+  },
+  {
+   "questionId": "bjt-j4-practice-v3:LC_SCENE:0003",
+   "dbQuestionId": "99c6f087-68f5-4e3a-af4c-3cb56561802d",
+   "prompt": "会議室の入口で社員が「本日の会議は隣の部屋に変更になりました」と案内しています。参加者が移動しています。"
+  },
+  {
+   "questionId": "bjt-j4-practice-v3:LC_SCENE:0005",
+   "dbQuestionId": "ea968a3b-caaf-411e-aa9b-7959c954fd4e",
+   "prompt": "社員食堂で2人の社員がトレーを持って席を探しています。食堂はほぼ満席です。"
+  },
+  {
+   "questionId": "bjt-j4-practice-v3:LC_SCENE:0007",
+   "dbQuestionId": "357a5dd0-480a-4940-9f3d-e7cbf8bd3c64",
+   "prompt": "受付の社員が来客に「少々お待ちください。担当者に連絡いたします」と言って、内線電話を取っています。"
+  },
+  {
+   "questionId": "bjt-j4-practice-v3:LC_SCENE:0009",
+   "dbQuestionId": "1f462bce-2cec-48ea-9faa-4c5ad536f340",
+   "prompt": "朝、社員がタイムカードを機械に通しています。時計は8時55分を指しています。"
+  },
+  {
+   "questionId": "bjt-j4-practice-v3:LC_SCENE:0011",
+   "dbQuestionId": "95e2ea65-c06e-4e21-aa74-9cde341a202c",
+   "prompt": "上司が部下に「このファイル、共有フォルダに入れておいて」と言っています。部下がパソコンで操作しています。"
+  }
+ ]
+}
