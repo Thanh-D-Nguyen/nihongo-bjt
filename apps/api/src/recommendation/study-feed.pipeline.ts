@@ -172,7 +172,7 @@ class WeakAreaDiscoverySource implements CandidateSource<StudyCandidate> {
         createdAt: Date.now(),
         metadata: {
           exerciseType: r.exercise_type,
-          level: r.level ?? undefined,
+          ...(r.level === null ? {} : { level: r.level }),
           difficulty: r.difficulty,
           tags: r.tags.join(","),
         },
