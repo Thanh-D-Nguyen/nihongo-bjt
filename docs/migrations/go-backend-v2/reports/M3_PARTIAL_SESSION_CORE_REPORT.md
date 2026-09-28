@@ -2,9 +2,9 @@
 
 ## Identification
 - **Starting HEAD**: `9eb608746d1fc4e993d28c56b3c229bac1f1c2bb` (initial M3 partial, REVISE after security review)
-- **Accepted M3 partial checkpoint**: pending commit of this repair
+- **Accepted M3 partial checkpoint**: `0d59a78684e6215694d91e2a67cd2c5853b79ac4`
 - **Branch**: `main`
-- **Wave**: M3 — Go HTTP handler scaffolding (non-auth); credential verifier BLOCKED
+- **Wave**: M3 partial — session persistence and RBAC loader; credential verifier BLOCKED
 - **Date**: 2026-09-28
 - **Accepted M2 persistence checkpoint**: `9c98bad90628d1ca24f71c3034aa3d4a63bf8851`
 
@@ -17,7 +17,7 @@ Security-critical repairs to session store and RBAC integration tests identified
 **Finding**: LookupLearnerSession and LookupAdminSession did not check parent account status; disabled accounts retained active tokens.
 **Fix**: Both lookup queries now JOIN parent tables (`profile.user_profile` / `authz.admin_actor`) and require `status = 'active'`. Disabled or missing accounts return `ErrSessionNotFound`.
 **Files**: `apps/api-go/internal/session/store.go:112-129` (learner), `store.go:142-159` (admin).
-**Tests**: `TestLookupLearnerSession_DisabledUser`, `TestLookupAdminSession_DisabledActor` — both seed disabled accounts, create sessions via SQL bypass, verify Store lookup returns ErrSessionNotFound.
+**Tests**: `TestLookupLearnerSession_DisabledUser`, `TestLookupAdminSession_DisabledActor` — both create a session, disable the account, then verify Store lookup returns ErrSessionNotFound.
 
 ### 2. Expired Session Test Rewrite
 **Finding**: Original test used bogus doubly-hashed value and verified SQL COUNT instead of Store behavior.
@@ -84,8 +84,7 @@ Security-critical repairs to session store and RBAC integration tests identified
 |---|---|---|
 | Container | `docker run postgres:17-alpine` on port 15434 | ✅ STARTED |
 | Schema | Minimal prerequisite tables (profile, authz, auth schemas) | ✅ APPLIED |
-| Pass 1 | `TEST_DATABASE_URL=... go test ./internal/session ./internal/authz -count=1 -v` | ✅ ALL PASS (session: 22 tests, authz: 5 tests) |
-| Pass 2 | Same command, same DB | ✅ ALL PASS (session: 0.666s, authz: 0.351s) |
+| Independent repeat | `TEST_DATABASE_URL=... GOTOOLCHAIN=go1.23.0 go test ./internal/session ./internal/authz -count=2 -v` against disposable PG17 `m3session` DB | ✅ Both runs PASS, same DB |
 | Cleanup | `docker rm -f m3-pg17` | ✅ REMOVED |
 
 ### Security Review

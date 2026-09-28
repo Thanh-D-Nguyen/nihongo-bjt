@@ -1,9 +1,9 @@
 # Go Backend Migration Orchestration State
 
 - Current phase: M3_PARTIAL complete — session core security repairs verified; credential gate remains pending
-- Current accepted HEAD: pending commit of M3 partial session core repair
+- Current accepted code checkpoint: `0d59a78684e6215694d91e2a67cd2c5853b79ac4` (M3 partial only)
 - Last completed wave: M3_PARTIAL (`M3_PARTIAL_SESSION_CORE_REPAIR_PASS`; credential gate GATED_UNKNOWN_PRODUCTION)
-- Next wave: M3 remaining (login/password endpoints, HTTP session middleware) BLOCKED until production Keycloak credential format confirmed; non-auth M3 scaffolding may proceed independently
+- Next wave: M3 independent auth infrastructure (session middleware, CSRF/rate-limit foundations, first-party Argon2id hashing); legacy credential verifier and cutover remain gated on production evidence
 - Completed checkpoint commits:
   - `0fc4486f5cfd2edc4433359753be573605234006` — P0.1 plan rebase
   - `6b3a5a6a` — M0 repository truth
@@ -22,6 +22,7 @@
   - `37e0b68c` — M2 auth/session persistence schema + credential gate investigation (initial, REVISE after independent review)
   - `9c98bad9` — M2 persistence repair; accepted persistence checkpoint, credential gate pending
   - `9eb60874` — M3 partial session core (initial, REVISE after security review)
+  - `0d59a786` — M3 partial session core security repair; accepted partial checkpoint
 - Open blockers: production Keycloak credential format unavailable; fresh Prisma migration chain fails at historical `20260425020754_phase_00_data_import`. M3 work independent of legacy credentials may proceed.
 - Gated unknowns: Keycloak credential format (M2 HARD GATE — dev defaults confirmed Argon2id v1.3 m=7168 t=5 p=1 len=32, production UNVERIFIED); Google OAuth production status (M4); production MinIO object inventory (M7)
 - M3 partial outcomes: Session store security repairs verified (disabled account status gating via parent JOIN, input validation before hashing, error normalization to ErrSessionNotFound, owner-scoped revocation, safe creation API with internal token generation, expired session test rewrite exercising Store path, ConstantTimeDigestEqual removed); integration tests use real UUID v4 via crypto/rand and unique role/permission codes; unit suite passes with integration SKIPPED when TEST_DATABASE_URL unset; integration suite passes twice against same disposable PostgreSQL 17; ARM64 build to /tmp verified; no repo binary; M3 full remains BLOCKED on credential gate
