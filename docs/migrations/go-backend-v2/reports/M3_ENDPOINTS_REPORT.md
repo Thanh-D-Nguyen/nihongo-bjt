@@ -4,7 +4,7 @@
 - **Starting HEAD**: `ef26020d` (post-checkpoint docs)
 - **Initial M3_INDEPENDENT_ENDPOINTS commit**: `bd57e52` (REVISE after independent review)
 - **Repair commits**: `c60db076` (CSRF wiring, admin/me deferral, handler/router tests), `296bf63` (UUID v4 IDs, t.Skip for no-DB, profile omitempty fix), `bf482dc` (report truth repair)
-- **Final format/comment repair**: pending commit (gofmt, duplicate comment removal, report accuracy)
+- **Final format/comment repair**: `eaafd348` (gofmt, duplicate comment removal, report accuracy)
 - **Branch**: `main`
 - **Wave**: M3_INDEPENDENT_ENDPOINTS — learner/admin session endpoints and profile store
 - **Date**: 2026-09-29
@@ -62,7 +62,7 @@ No Next.js route handler changes. Go endpoints are additive and run on port 4001
 
 | File | Purpose |
 |------|---------|
-| `internal/profile/store.go` | Profile store: `GetLearnerProfile(ctx, userID)` queries `profile.user_profile` for public fields including keycloakSubject (exposed because Nest public profile does so). Bounded context (5s). |
+| `internal/profile/store.go` | Profile store: `GetLearnerPublicProfile(ctx, userID)` queries `profile.user_profile` for public fields including keycloakSubject (exposed because Nest public profile does so). Bounded context (5s). |
 | `internal/httpserver/handler_auth.go` | Learner handlers: `learnerMeHandler`, `learnerLogoutHandler`. Uses JSON responses, safe error handling, no credential leakage. |
 | `internal/httpserver/handler_admin.go` | Admin handlers: `adminSessionHandler` (with real displayName via authz.Store), `adminLogoutHandler`. No adminMeHandler (deferred to M6). |
 | `internal/httpserver/server.go` | Modified: wired `ProfileStore`, `RBACStore`, `SessionStore` into `Dependencies`; mounted learner/admin route groups with guards; CSRF guard uses `deps.Config.CORSOrigins` for trusted origins. |
@@ -97,7 +97,7 @@ No Next.js route handler changes. Go endpoints are additive and run on port 4001
 Disposable `postgres:17-alpine` container (`m3-revise-pg`) with M2 schema + stub parent tables applied. Tests run with `-count=2` against real SQL:
 
 ```
-TEST_DATABASE_URL="postgres://postgres:m3test@localhost:15433/m3session?sslmode=disable" \
+TEST_DATABASE_URL="<disposable-pg17-url>" \
 GOTOOLCHAIN=go1.23.0 go test -v -count=2 -run "TestLearnerMe_|TestLearnerLogout_|TestAdminSession_|TestAdminLogout_|TestCSRF_|TestNamespaceIsolation_|TestAdminMe_|TestLearnerMe_Post" ./internal/httpserver/...
 ```
 
@@ -118,7 +118,7 @@ These cover: learner me success + exact JSON shape + nullable nulls, no-cookie/i
 **NOT YET ACCEPTED BY SOL** — This report documents implementation evidence. Independent Sol verification is required before marking M3_INDEPENDENT_ENDPOINTS as accepted and updating ORCHESTRATION_STATE.md.
 
 ## Rollback Guidance
-This wave is purely additive. Rolling back this endpoint slice means reverting the cumulative implementation commits (`bd57e52`, `c60db076`, `296bf63`, `bf482dc`, and the final format/comment repair commit) or routing traffic away from the Go service. No schema changes, no data migration, no destructive operations. Existing NestJS endpoints remain authoritative on port 4000.
+This wave is purely additive. Roll back by routing traffic away from Go or reverting the endpoint code commits (`bd57e528`, `c60db076`, `296bf63c`, `eaafd348`) in reverse order; the report commits can remain as history. No schema changes, data migration, or destructive operations occurred. Existing NestJS endpoints remain authoritative on port 4000.
 
 ## Gated Unknowns (Unchanged)
 - **Production Keycloak credential format**: GATED_UNKNOWN_PRODUCTION. M3 login/verifier BLOCKED until resolved.
