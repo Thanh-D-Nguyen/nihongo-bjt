@@ -12,8 +12,8 @@
   - `621320b0` — repair round 1 (test helper deletion staged, unexported context key, generic deny)
   - `3c4603d1` — coverage/helper removal (direct rotation rejection tests, testing.go deletion confirmed)
   - `c45eddbc` — final repair (admin revoked-token rotation test, txCtx wording corrected)
-- `7db1e777` — documentation-only report correction (cumulative commits, rollback, ARM64 path)
-- `<pending>` — test harness fix: seedRoleWithPermission distinct placeholders for varchar/text; production-like PG17 verification
+  - `7db1e777` — documentation-only report correction (cumulative commits, rollback, ARM64 path)
+  - `3e228d1e` — test harness fix (seedRoleWithPermission distinct placeholders for varchar/text; production-like PG17 verification)
 
 ## Scope
 Atomic learner/admin session rotation in `session.Store`; composed admin authorization middleware (`AdminGuard` → `RequirePermission`/`RequireAnyPermission`) using existing `authz.Store.LoadPrincipal`; PostgreSQL 17 integration tests for rotation and RBAC against disposable DB. No login endpoints, no credential verifier, no client routing changes, no schema migration. Production Keycloak credential format remains GATED_UNKNOWN_PRODUCTION; this work is independent.
@@ -30,7 +30,7 @@ Independent review identified five blocking findings. All addressed:
 
 4. **Report accuracy**: Previous report falsely stated integration tests were ENVIRONMENT_BLOCKED. Integration tests were independently run and passed twice against disposable PG17 (see Verification Results below). Removed all references to deleted test helper. Distinguished unit tests (no DB) from integration tests (disposable PG17).
 
-5. **Cumulative scope**: The accepted M3 remainder wave spans seven commits after base `a0522664`. Cumulative diff adds `authz/middleware.go`, `authz/middleware_test.go`, `session/rotation_test.go`; modifies `session/store.go`, `session/store_test.go`, `authz/rbac_test.go`; deletes `authn/testing.go` (removed at `621320b0`); and maintains this report. `ORCHESTRATION_STATE.md` updated only after Sol gate acceptance. Unrelated dirty files preserved throughout.
+5. **Cumulative scope**: The accepted M3 remainder wave spans seven commits after base `a0522664`. Cumulative diff from `a0522664..3e228d1e` adds `authz/middleware.go`, `authz/middleware_test.go`, `session/rotation_test.go`; modifies `session/store.go`, `session/store_test.go`, `authz/rbac_test.go`; and maintains this report. An intermediate production test helper (`authn/testing.go`) was introduced in an early commit and removed before the accepted state; it is absent from the final tree. `ORCHESTRATION_STATE.md` updated only after Sol gate acceptance. Unrelated dirty files preserved throughout.
 
 ## Artifact List (Cumulative M3 Remainder Wave)
 

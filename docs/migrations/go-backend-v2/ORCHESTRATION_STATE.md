@@ -21,21 +21,22 @@
   - `0cb53022` — M1 repair round 3; accepted M1 checkpoint (typed-nil Redis fix and Docker ARM64 validation)
   - `37e0b68c` — M2 auth/session persistence schema + credential gate investigation (initial, REVISE after independent review)
   - `9c98bad9` — M2 persistence repair; accepted persistence checkpoint, credential gate pending
- - `a2dd34d0` — M3 initial rotation/authz scaffold
- - `02fd4874` — M3 implementation (bounded txCtx, atomic rotation, middleware)
- - `621320b0` — M3 repair round 1 (test helper deletion staged, unexported context key, generic deny)
- - `3c4603d1` — M3 coverage/helper removal (direct rotation rejection tests, testing.go deletion confirmed)
- - `c45eddbc` — M3 final repair (admin revoked-token rotation test, txCtx wording corrected)
- - `7db1e777` — M3 documentation-only report correction (cumulative commits, rollback, ARM64 path)
- - `3e228d1e` — M3 test harness fix (seedRoleWithPermission distinct placeholders for varchar/text; production-like PG17 verification); accepted M3 rotation/authz checkpoint
   - `9eb60874` — M3 partial session core (initial, REVISE after security review)
   - `0d59a786` — M3 partial session core security repair; accepted partial checkpoint
   - `ce489de1` — M3 first-party Argon2id, HTTP session guards, CSRF (initial, REVISE after security review)
   - `cd4075af` — M3 auth infrastructure repair (Argon2 bounds, guard/CSRF tests)
   - `a0522664` — final CSRF fail-closed fix and evidence correction; accepted M3 independent infrastructure checkpoint
+  - `a2dd34d0` — M3 initial rotation/authz scaffold
+  - `02fd4874` — M3 implementation (bounded txCtx, atomic rotation, middleware)
+  - `621320b0` — M3 repair round 1 (test helper deletion staged, unexported context key, generic deny)
+  - `3c4603d1` — M3 coverage/helper removal (direct rotation rejection tests, testing.go deletion confirmed)
+  - `c45eddbc` — M3 final repair (admin revoked-token rotation test, txCtx wording corrected)
+  - `7db1e777` — M3 documentation-only report correction (cumulative commits, rollback, ARM64 path)
+  - `3e228d1e` — M3 test harness fix (seedRoleWithPermission distinct placeholders for varchar/text; production-like PG17 verification); accepted M3 rotation/authz checkpoint
 - Open blockers: production Keycloak credential metadata inaccessible (local GCP account lists only unrelated project); fresh Prisma migration chain fails at historical `20260425020754_phase_00_data_import`. M3 work independent of legacy credentials may proceed.
 - Gated unknowns: Keycloak credential format (M2 HARD GATE — dev defaults confirmed Argon2id v1.3 m=7168 t=5 p=1 len=32, production UNVERIFIED); Google OAuth production status (M4); production MinIO object inventory (M7)
 - M3 partial outcomes: Session store security repairs verified (disabled account status gating via parent JOIN, input validation before hashing, error normalization to ErrSessionNotFound, owner-scoped revocation, safe creation API with internal token generation, expired session test rewrite exercising Store path, ConstantTimeDigestEqual removed); integration tests use real UUID v4 via crypto/rand and unique role/permission codes; unit suite passes with integration SKIPPED when TEST_DATABASE_URL unset; integration suite passes twice against same disposable PostgreSQL 17; ARM64 build to /tmp verified; no repo binary; M3 full remains BLOCKED on credential gate
+- M3 rotation/authz outcomes: Atomic learner/admin session rotation with bounded txCtx; admin permission middleware (AdminGuard → RequirePermission/RequireAnyPermission); direct negatives for expired/revoked/disabled/concurrent-winner rotation; production-like PG17 integration (admin_role.code VARCHAR(80), name TEXT) PASS x2; Go test/race/vet/gofmt + ARM64 static build PASS at 3e228d1e; full M3 still BLOCKED on production Keycloak credential metadata
 - Important architecture decisions: Go `net/http` + chi + pgx; first-party opaque sessions; PostgreSQL authoritative; Redis retained for ephemeral concerns; Meilisearch retained; learner Web keeps Next runtime; Admin static export evaluated only after M6; media target is `gocloud.dev/blob/fileblob` at `/srv/kotobawork/data/media`; uploads stream through Go; public media via Caddy; private media via authenticated Go streaming; no replacement S3 daemon by default; Go API runs on port 4001 parallel with NestJS :4000 during migration; toolchain pinned to Go 1.23 across go.mod/Dockerfile/CI; ping seams for testable readiness without live dependencies; typed-nil guard at composition boundary prevents Go interface nil pitfall; auth tables in `auth` schema with FK to profile.user_profile and authz.admin_actor; session tokens stored as SHA-256 digest only; password credentials have NO algorithm/parameter defaults (explicit values required at insert); CHECK constraints enforce positive parameters and non-empty salt/hash; algorithm_version column for self-describing hash metadata
 - Rollback status: existing NestJS/Keycloak/MinIO/GCP paths retained; no retirement action started; Go service is purely additive; M2 schema is additive-only; rollback is code-level (leave tables intact); optional DROP only on empty disposable/test DB without CASCADE; post-adoption table deletion requires separately validated data-preserving migration
 - Production status: no cutover performed; GCP remains rollback/reference
