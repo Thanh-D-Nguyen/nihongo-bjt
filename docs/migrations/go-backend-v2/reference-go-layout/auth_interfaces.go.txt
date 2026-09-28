@@ -1,0 +1,23 @@
+// Reference interfaces only. Adapt names and semantics to the real repository.
+
+type PasswordHasher interface {
+    Hash(ctx context.Context, password string) (encoded string, err error)
+    Verify(ctx context.Context, encoded, password string) (ok bool, needsRehash bool, err error)
+}
+
+type SessionStore interface {
+    Create(ctx context.Context, s Session) error
+    GetByTokenHash(ctx context.Context, tokenHash []byte) (Session, error)
+    Rotate(ctx context.Context, oldID string, next Session) error
+    Revoke(ctx context.Context, sessionID string, at time.Time) error
+    RevokeAllForUser(ctx context.Context, userID string, exceptSessionID *string, at time.Time) error
+}
+
+type UserRepository interface {
+    FindByID(ctx context.Context, id string) (User, error)
+    FindByLogin(ctx context.Context, login string) (User, error)
+}
+
+type AuthorizationService interface {
+    RequirePermission(ctx context.Context, user User, permission string) error
+}
