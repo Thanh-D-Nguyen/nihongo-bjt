@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -12,9 +13,32 @@ import (
 	"os"
 
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/config"
+	"github.com/redis/go-redis/v9"
 )
 
-func newTestDeps() Dependencies {
+// mockDBPinger implements postgres.Pinger for testing.
+type mockDBPinger struct {
+	err error
+}
+
+func (m *mockDBPinger) Ping(ctx context.Context) error {
+	return m.err
+}
+
+// mockRedisPinger implements redisx.Pinger for testing.
+type mockRedisPinger struct {
+	err error
+}
+
+func (m *mockRedisPinger) Ping(ctx context.Context) *redis.StatusCmd {
+	cmd := redis.NewStatusCmd(ctx, "PONG")
+	if m.err != nil {
+		cmd.SetErr(m.err)
+	}
+	return cmd
+}
+
+func newTestDeps(db Pinger, redisClient RedisPinger) Dependencies {
 	return Dependencies{
 		Config: &config.Config{
 			Port:               "4001",
@@ -23,12 +47,22 @@ func newTestDeps() Dependencies {
 			ServerIdleTimeout:  60 * time.Second,
 		},
 		Logger:  slog.New(slog.NewJSONHandler(os.Stdout, nil)),
+		DB:      db,
+		Redis:   redisClient,
 		Version: "test",
 	}
 }
 
-func TestLiveHandler(t *testing.T) {
-	deps := newTestDeps()
+// Pinger and RedisPinger are type aliases to avoid importing postgres/redisx in tests.
+// The actual types are satisfied by mockDBPinger and mockRedisPinger via duck typing
+// since server.go uses the interfaces from those packages.
+type Pinger = interface{ Ping(context.Context) error }
+type RedisPinger = interface {
+	Ping(context.Context) *redis.StatusCmd
+}
+
+func TestLiveHandler_AlwaysOK(t *testing.T) {
+	deps := newTestDeps(nil, nil)
 	router := NewRouter(deps)
 
 	req := httptest.NewRequest(http.MethodGet, "/health/live", nil)
@@ -48,30 +82,9 @@ func TestLiveHandler(t *testing.T) {
 	}
 }
 
-func TestReadyHandler_NoDB(t *testing.T) {
-	deps := newTestDeps()
-	// DB is nil — readiness should fail with 503
-	router := NewRouter(deps)
-
-	req := httptest.NewRequest(http.MethodGet, "/health/ready", nil)
-	w := httptest.NewRecorder()
-
-	// This will panic if DB is nil and we try to ping it, so we test that
-	// the handler handles nil DB gracefully. In real usage, DB is always set.
-	// For this test, we verify the handler doesn't crash when Redis is nil.
-	defer func() {
-		if r := recover(); r != nil {
-			t.Logf("recovered from panic (expected when DB is nil): %v", r)
-		}
-	}()
-
-	router.ServeHTTP(w, req)
-	// If we get here without panic, the handler handled nil deps
-	t.Logf("ready handler returned %d with nil DB", w.Code)
-}
-
-func TestSlogMiddleware(t *testing.T) {
-	deps := newTestDeps()
+func TestLiveHandler_IndependentOfDB(t *testing.T) {
+	// Live should return 200 even when DB pinger would fail
+	deps := newTestDeps(&mockDBPinger{err: context.DeadlineExceeded}, nil)
 	router := NewRouter(deps)
 
 	req := httptest.NewRequest(http.MethodGet, "/health/live", nil)
@@ -79,26 +92,172 @@ func TestSlogMiddleware(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
-		t.Errorf("expected 200, got %d", w.Code)
+		t.Errorf("live must be independent of DB; expected 200, got %d", w.Code)
 	}
 }
 
-func TestNewServer(t *testing.T) {
-	deps := newTestDeps()
+func TestReadyHandler_HealthyAll(t *testing.T) {
+	deps := newTestDeps(&mockDBPinger{err: nil}, &mockRedisPinger{err: nil})
+	router := NewRouter(deps)
+
+	req := httptest.NewRequest(http.MethodGet, "/health/ready", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", w.Code)
+	}
+
+	var resp map[string]interface{}
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+	if resp["status"] != "ok" {
+		t.Errorf("expected status ok, got %v", resp["status"])
+	}
+	checks := resp["checks"].(map[string]interface{})
+	if checks["postgres"] != "ok" {
+		t.Errorf("expected postgres ok, got %v", checks["postgres"])
+	}
+	if checks["redis"] != "ok" {
+		t.Errorf("expected redis ok, got %v", checks["redis"])
+	}
+}
+
+func TestReadyHandler_NilDB_Returns503(t *testing.T) {
+	deps := newTestDeps(nil, nil) // nil DB = not configured
+	router := NewRouter(deps)
+
+	req := httptest.NewRequest(http.MethodGet, "/health/ready", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusServiceUnavailable {
+		t.Errorf("expected 503 for nil DB, got %d", w.Code)
+	}
+
+	var resp map[string]interface{}
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+	if resp["status"] != "degraded" {
+		t.Errorf("expected status degraded, got %v", resp["status"])
+	}
+	checks := resp["checks"].(map[string]interface{})
+	if checks["postgres"] != "fail" {
+		t.Errorf("expected postgres fail, got %v", checks["postgres"])
+	}
+	if checks["redis"] != "not_configured" {
+		t.Errorf("expected redis not_configured, got %v", checks["redis"])
+	}
+}
+
+func TestReadyHandler_DBFailure_Returns503(t *testing.T) {
+	deps := newTestDeps(&mockDBPinger{err: context.DeadlineExceeded}, nil)
+	router := NewRouter(deps)
+
+	req := httptest.NewRequest(http.MethodGet, "/health/ready", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusServiceUnavailable {
+		t.Errorf("expected 503 for DB failure, got %d", w.Code)
+	}
+
+	var resp map[string]interface{}
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+	checks := resp["checks"].(map[string]interface{})
+	if checks["postgres"] != "fail" {
+		t.Errorf("expected postgres fail, got %v", checks["postgres"])
+	}
+}
+
+func TestReadyHandler_RedisFailure_Returns503(t *testing.T) {
+	deps := newTestDeps(&mockDBPinger{err: nil}, &mockRedisPinger{err: context.DeadlineExceeded})
+	router := NewRouter(deps)
+
+	req := httptest.NewRequest(http.MethodGet, "/health/ready", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusServiceUnavailable {
+		t.Errorf("expected 503 for Redis failure, got %d", w.Code)
+	}
+
+	var resp map[string]interface{}
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+	checks := resp["checks"].(map[string]interface{})
+	if checks["postgres"] != "ok" {
+		t.Errorf("expected postgres ok, got %v", checks["postgres"])
+	}
+	if checks["redis"] != "fail" {
+		t.Errorf("expected redis fail, got %v", checks["redis"])
+	}
+}
+
+func TestReadyHandler_NoErrorDetailsInResponse(t *testing.T) {
+	sentinelErr := "INTERNAL_DB_CONNECTION_REFUSED_SECRET_HOST_12345"
+	deps := newTestDeps(&mockDBPinger{err: &sentinelError{msg: sentinelErr}}, nil)
+	router := NewRouter(deps)
+
+	req := httptest.NewRequest(http.MethodGet, "/health/ready", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	body := w.Body.String()
+	if strings.Contains(body, sentinelErr) {
+		t.Errorf("response body leaks internal error details: %s", body)
+	}
+	if strings.Contains(body, "SECRET") || strings.Contains(body, "HOST") {
+		t.Errorf("response body may leak sensitive info: %s", body)
+	}
+}
+
+type sentinelError struct{ msg string }
+
+func (e *sentinelError) Error() string { return e.msg }
+
+func TestReadyHandler_VersionIncluded(t *testing.T) {
+	deps := newTestDeps(&mockDBPinger{err: nil}, nil)
+	deps.Version = "v1.2.3"
+	router := NewRouter(deps)
+
+	req := httptest.NewRequest(http.MethodGet, "/health/ready", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	var resp map[string]interface{}
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+	if resp["version"] != "v1.2.3" {
+		t.Errorf("expected version v1.2.3, got %v", resp["version"])
+	}
+}
+
+func TestNewServer_Addr(t *testing.T) {
+	deps := newTestDeps(nil, nil)
 	router := NewRouter(deps)
 	srv := NewServer(deps, router)
 
-	if srv == nil {
-		t.Fatal("expected non-nil server")
-	}
 	if srv.httpServer.Addr != ":4001" {
 		t.Errorf("expected addr :4001, got %s", srv.httpServer.Addr)
 	}
+}
+
+func TestServer_ShutdownBeforeStart(t *testing.T) {
+	deps := newTestDeps(nil, nil)
+	router := NewRouter(deps)
+	srv := NewServer(deps, router)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
-	// Shutdown on a server that hasn't started should return immediately
+
 	if err := srv.Shutdown(ctx); err != nil {
-		t.Errorf("unexpected shutdown error: %v", err)
+		t.Errorf("shutdown before start should succeed, got: %v", err)
 	}
 }

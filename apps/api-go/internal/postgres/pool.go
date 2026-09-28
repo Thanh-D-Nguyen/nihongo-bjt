@@ -18,27 +18,31 @@ type PoolConfig struct {
 }
 
 // NewPool creates a new pgx connection pool with the given configuration.
+// Returns safe error messages that never contain connection strings or credentials.
 func NewPool(ctx context.Context, cfg PoolConfig) (*pgxpool.Pool, error) {
 	poolCfg, err := pgxpool.ParseConfig(cfg.URL)
 	if err != nil {
-		return nil, fmt.Errorf("postgres: parse config: %w", err)
+		return nil, fmt.Errorf("postgres: invalid database configuration")
 	}
-
 	poolCfg.MaxConns = cfg.MaxConns
 	poolCfg.MinConns = cfg.MinConns
 	poolCfg.ConnConfig.ConnectTimeout = cfg.AcquireTimeout
 
 	pool, err := pgxpool.NewWithConfig(ctx, poolCfg)
 	if err != nil {
-		return nil, fmt.Errorf("postgres: create pool: %w", err)
+		return nil, fmt.Errorf("postgres: failed to create connection pool")
 	}
-
 	return pool, nil
 }
 
+// Pinger is the interface used by readiness checks to verify PostgreSQL connectivity.
+type Pinger interface {
+	Ping(ctx context.Context) error
+}
+
 // Ping checks connectivity to PostgreSQL with a bounded timeout.
-func Ping(ctx context.Context, pool *pgxpool.Pool) error {
+func Ping(ctx context.Context, p Pinger) error {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
-	return pool.Ping(ctx)
+	return p.Ping(ctx)
 }

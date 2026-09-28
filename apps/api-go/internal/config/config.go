@@ -3,53 +3,93 @@ package config
 
 import (
 	"fmt"
+	"net/url"
 	"os"
-	"strings"
+	"strconv"
 	"time"
 )
 
 // Config holds all validated application configuration.
 type Config struct {
-	Port        string
-	DatabaseURL string
-	RedisURL    string
-	LogLevel    string
-
-	ServerReadTimeout  time.Duration
-	ServerWriteTimeout time.Duration
-	ServerIdleTimeout  time.Duration
-	ShutdownTimeout    time.Duration
-
+	Port                 string
+	DatabaseURL          string
+	RedisURL             string
+	LogLevel             string
+	ServerReadTimeout    time.Duration
+	ServerWriteTimeout   time.Duration
+	ServerIdleTimeout    time.Duration
+	ShutdownTimeout      time.Duration
 	DBPoolMaxConns       int32
 	DBPoolMinConns       int32
 	DBConnAcquireTimeout time.Duration
 }
 
 // Load reads configuration from environment variables and validates required fields.
+// Returns safe error messages that never contain credentials or connection strings.
 func Load() (*Config, error) {
-	port := getEnv("API_GO_PORT", "4001")
 	dbURL := os.Getenv("DATABASE_URL")
-	redisURL := os.Getenv("REDIS_URL")
-	logLevel := getEnv("LOG_LEVEL", "info")
-
 	if dbURL == "" {
 		return nil, fmt.Errorf("config: DATABASE_URL is required")
+	}
+	// Validate DATABASE_URL is parseable; do not include it in errors
+	if _, err := url.Parse(dbURL); err != nil {
+		return nil, fmt.Errorf("config: DATABASE_URL is not a valid URL")
+	}
+
+	port := getEnv("API_GO_PORT", "4001")
+	if err := validatePort(port); err != nil {
+		return nil, fmt.Errorf("config: API_GO_PORT %w", err)
+	}
+
+	readTimeout, err := durEnv("SERVER_READ_TIMEOUT", 15*time.Second)
+	if err != nil {
+		return nil, fmt.Errorf("config: SERVER_READ_TIMEOUT %w", err)
+	}
+	writeTimeout, err := durEnv("SERVER_WRITE_TIMEOUT", 15*time.Second)
+	if err != nil {
+		return nil, fmt.Errorf("config: SERVER_WRITE_TIMEOUT %w", err)
+	}
+	idleTimeout, err := durEnv("SERVER_IDLE_TIMEOUT", 60*time.Second)
+	if err != nil {
+		return nil, fmt.Errorf("config: SERVER_IDLE_TIMEOUT %w", err)
+	}
+	shutdownTimeout, err := durEnv("SHUTDOWN_TIMEOUT", 10*time.Second)
+	if err != nil {
+		return nil, fmt.Errorf("config: SHUTDOWN_TIMEOUT %w", err)
+	}
+	acquireTimeout, err := durEnv("DB_CONN_ACQUIRE_TIMEOUT", 5*time.Second)
+	if err != nil {
+		return nil, fmt.Errorf("config: DB_CONN_ACQUIRE_TIMEOUT %w", err)
+	}
+
+	maxConns, err := int32Env("DB_POOL_MAX_CONNS", 20)
+	if err != nil {
+		return nil, fmt.Errorf("config: DB_POOL_MAX_CONNS %w", err)
+	}
+	minConns, err := int32Env("DB_POOL_MIN_CONNS", 2)
+	if err != nil {
+		return nil, fmt.Errorf("config: DB_POOL_MIN_CONNS %w", err)
+	}
+	if minConns < 1 {
+		return nil, fmt.Errorf("config: DB_POOL_MIN_CONNS must be >= 1")
+	}
+	if maxConns < minConns {
+		return nil, fmt.Errorf("config: DB_POOL_MAX_CONNS must be >= DB_POOL_MIN_CONNS")
 	}
 
 	cfg := &Config{
 		Port:                 port,
 		DatabaseURL:          dbURL,
-		RedisURL:             redisURL, // optional; readiness skips Redis check if empty
-		LogLevel:             logLevel,
-		ServerReadTimeout:    durEnv("SERVER_READ_TIMEOUT", 15*time.Second),
-		ServerWriteTimeout:   durEnv("SERVER_WRITE_TIMEOUT", 15*time.Second),
-		ServerIdleTimeout:    durEnv("SERVER_IDLE_TIMEOUT", 60*time.Second),
-		ShutdownTimeout:      durEnv("SHUTDOWN_TIMEOUT", 10*time.Second),
-		DBPoolMaxConns:       int32Env("DB_POOL_MAX_CONNS", 20),
-		DBPoolMinConns:       int32Env("DB_POOL_MIN_CONNS", 2),
-		DBConnAcquireTimeout: durEnv("DB_CONN_ACQUIRE_TIMEOUT", 5*time.Second),
+		RedisURL:             os.Getenv("REDIS_URL"), // optional; empty = skip Redis in readiness
+		LogLevel:             getEnv("LOG_LEVEL", "info"),
+		ServerReadTimeout:    readTimeout,
+		ServerWriteTimeout:   writeTimeout,
+		ServerIdleTimeout:    idleTimeout,
+		ShutdownTimeout:      shutdownTimeout,
+		DBPoolMaxConns:       maxConns,
+		DBPoolMinConns:       minConns,
+		DBConnAcquireTimeout: acquireTimeout,
 	}
-
 	return cfg, nil
 }
 
@@ -60,54 +100,43 @@ func getEnv(key, fallback string) string {
 	return fallback
 }
 
-func durEnv(key string, fallback time.Duration) time.Duration {
+func durEnv(key string, fallback time.Duration) (time.Duration, error) {
 	v := os.Getenv(key)
 	if v == "" {
-		return fallback
+		return fallback, nil
 	}
 	d, err := time.ParseDuration(v)
 	if err != nil {
-		return fallback
+		return 0, fmt.Errorf("invalid duration %q: %w", v, err)
 	}
-	return d
+	if d <= 0 {
+		return 0, fmt.Errorf("must be positive, got %v", d)
+	}
+	return d, nil
 }
 
-func int32Env(key string, fallback int32) int32 {
+func int32Env(key string, fallback int32) (int32, error) {
 	v := os.Getenv(key)
 	if v == "" {
-		return fallback
+		return fallback, nil
 	}
-	var n int32
-	for _, c := range v {
-		if c < '0' || c > '9' {
-			return fallback
-		}
-		n = n*10 + int32(c-'0')
+	n, err := strconv.ParseInt(v, 10, 32)
+	if err != nil {
+		return 0, fmt.Errorf("invalid integer %q: %w", v, err)
 	}
-	return n
+	if n <= 0 {
+		return 0, fmt.Errorf("must be positive, got %d", n)
+	}
+	return int32(n), nil
 }
 
-// MaskedDatabaseURL returns DATABASE_URL with password redacted for logging.
-func MaskedDatabaseURL(raw string) string {
-	// Standard URL format: scheme://user:pass@host/path
-	schemeEnd := strings.Index(raw, "://")
-	if schemeEnd < 0 {
-		return raw
+func validatePort(port string) error {
+	n, err := strconv.Atoi(port)
+	if err != nil {
+		return fmt.Errorf("invalid port %q: %w", port, err)
 	}
-	prefix := raw[:schemeEnd+3] // e.g. "postgres://"
-	remainder := raw[schemeEnd+3:]
-
-	at := strings.Index(remainder, "@")
-	if at < 0 {
-		return raw
+	if n < 1 || n > 65535 {
+		return fmt.Errorf("port %d out of range [1, 65535]", n)
 	}
-	userinfo := remainder[:at]
-	host := remainder[at:] // "@host/path"
-
-	colon := strings.Index(userinfo, ":")
-	if colon < 0 {
-		// No password present
-		return raw
-	}
-	return prefix + userinfo[:colon+1] + "***" + host
+	return nil
 }

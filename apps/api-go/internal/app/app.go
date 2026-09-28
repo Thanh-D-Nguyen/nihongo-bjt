@@ -30,7 +30,7 @@ type App struct {
 func New(version string) (*App, error) {
 	cfg, err := config.Load()
 	if err != nil {
-		return nil, fmt.Errorf("app: load config: %w", err)
+		return nil, fmt.Errorf("app: %w", err)
 	}
 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
@@ -44,12 +44,12 @@ func New(version string) (*App, error) {
 		AcquireTimeout: cfg.DBConnAcquireTimeout,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("app: postgres pool: %w", err)
+		return nil, fmt.Errorf("app: %w", err)
 	}
 
 	redisClient, err := redisx.NewClient(redisx.ClientConfig{URL: cfg.RedisURL})
 	if err != nil {
-		return nil, fmt.Errorf("app: redis client: %w", err)
+		return nil, fmt.Errorf("app: %w", err)
 	}
 
 	deps := httpserver.Dependencies{
@@ -88,7 +88,6 @@ func (a *App) Shutdown(ctx context.Context) {
 	}
 
 	a.DB.Close()
-
 	a.Logger.Info("application shutdown complete")
 }
 

@@ -12,18 +12,18 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/redis/go-redis/v9"
 
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/config"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/postgres"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/redisx"
 )
 
 // Dependencies holds external dependencies required by the HTTP server.
 type Dependencies struct {
 	Config  *config.Config
 	Logger  *slog.Logger
-	DB      *pgxpool.Pool
-	Redis   *redis.Client // nil if Redis is not configured
+	DB      postgres.Pinger // nil if not configured; readiness returns 503
+	Redis   redisx.Pinger   // nil if not configured; readiness reports not_configured
 	Version string
 }
 
@@ -37,7 +37,7 @@ func NewRouter(deps Dependencies) http.Handler {
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(30 * time.Second))
 
-	r.Get("/health/live", liveHandler(deps))
+	r.Get("/health/live", liveHandler())
 	r.Get("/health/ready", readyHandler(deps))
 
 	return r
@@ -78,7 +78,7 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	return s.httpServer.Shutdown(ctx)
 }
 
-func liveHandler(deps Dependencies) http.HandlerFunc {
+func liveHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -95,10 +95,13 @@ func readyHandler(deps Dependencies) http.HandlerFunc {
 		httpStatus := http.StatusOK
 		checks := map[string]string{}
 
-		// Check PostgreSQL
-		dbCtx, dbCancel := context.WithTimeout(ctx, 3*time.Second)
-		defer dbCancel()
-		if err := deps.DB.Ping(dbCtx); err != nil {
+		// Check PostgreSQL (required)
+		if deps.DB == nil {
+			checks["postgres"] = "fail"
+			status = "degraded"
+			httpStatus = http.StatusServiceUnavailable
+			deps.Logger.Error("readiness: postgres not configured")
+		} else if err := postgres.Ping(ctx, deps.DB); err != nil {
 			checks["postgres"] = "fail"
 			status = "degraded"
 			httpStatus = http.StatusServiceUnavailable
@@ -107,20 +110,16 @@ func readyHandler(deps Dependencies) http.HandlerFunc {
 			checks["postgres"] = "ok"
 		}
 
-		// Check Redis (only if configured)
-		if deps.Redis != nil {
-			redisCtx, redisCancel := context.WithTimeout(ctx, 3*time.Second)
-			defer redisCancel()
-			if err := deps.Redis.Ping(redisCtx).Err(); err != nil {
-				checks["redis"] = "fail"
-				status = "degraded"
-				httpStatus = http.StatusServiceUnavailable
-				deps.Logger.Error("readiness: redis ping failed", "error", err)
-			} else {
-				checks["redis"] = "ok"
-			}
-		} else {
+		// Check Redis (optional)
+		if deps.Redis == nil {
 			checks["redis"] = "not_configured"
+		} else if err := redisx.Ping(ctx, deps.Redis); err != nil {
+			checks["redis"] = "fail"
+			status = "degraded"
+			httpStatus = http.StatusServiceUnavailable
+			deps.Logger.Error("readiness: redis ping failed", "error", err)
+		} else {
+			checks["redis"] = "ok"
 		}
 
 		w.Header().Set("Content-Type", "application/json")
