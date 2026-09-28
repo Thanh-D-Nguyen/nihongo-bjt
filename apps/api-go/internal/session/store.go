@@ -232,13 +232,16 @@ func (s *Store) RotateLearnerSession(ctx context.Context, oldRawToken, userAgent
 		return "", err
 	}
 
-	tx, err := s.db.BeginTx(ctx, pgx.TxOptions{})
+	txCtx, txCancel := context.WithTimeout(ctx, 5*time.Second)
+	defer txCancel()
+
+	tx, err := s.db.BeginTx(txCtx, pgx.TxOptions{})
 	if err != nil {
 		return "", fmt.Errorf("session: rotate learner begin tx: %w", err)
 	}
 	defer func() {
 		if err != nil {
-			_ = tx.Rollback(ctx)
+			_ = tx.Rollback(txCtx)
 		}
 	}()
 
@@ -248,7 +251,7 @@ func (s *Store) RotateLearnerSession(ctx context.Context, oldRawToken, userAgent
 		JOIN profile.user_profile u ON u.id = s.user_id
 		WHERE s.token_digest = $1 AND s.revoked_at IS NULL AND s.expires_at > now() AND u.status = 'active'
 		FOR UPDATE`
-	row := tx.QueryRow(ctx, lookupQ, oldDigest)
+	row := tx.QueryRow(txCtx, lookupQ, oldDigest)
 	if scanErr := row.Scan(&sessID, &userID); scanErr != nil {
 		if errors.Is(scanErr, pgx.ErrNoRows) {
 			return "", ErrSessionNotFound
@@ -258,7 +261,7 @@ func (s *Store) RotateLearnerSession(ctx context.Context, oldRawToken, userAgent
 
 	// Revoke old session.
 	const revokeQ = `UPDATE auth.session SET revoked_at = now() WHERE id = $1 AND user_id = $2 AND revoked_at IS NULL`
-	tag, err := tx.Exec(ctx, revokeQ, sessID, userID)
+	tag, err := tx.Exec(txCtx, revokeQ, sessID, userID)
 	if err != nil {
 		return "", fmt.Errorf("session: rotate learner revoke: %w", err)
 	}
@@ -270,12 +273,12 @@ func (s *Store) RotateLearnerSession(ctx context.Context, oldRawToken, userAgent
 	// Insert new session preserving owner and metadata.
 	const insertQ = `INSERT INTO auth.session (user_id, token_digest, expires_at, user_agent, ip_address)
 		VALUES ($1, $2, $3, $4, $5)`
-	_, err = tx.Exec(ctx, insertQ, userID, newDigest, newExpiry, nullString(userAgent), nullString(ipAddress))
+	_, err = tx.Exec(txCtx, insertQ, userID, newDigest, newExpiry, nullString(userAgent), nullString(ipAddress))
 	if err != nil {
 		return "", fmt.Errorf("session: rotate learner insert: %w", err)
 	}
 
-	if err := tx.Commit(ctx); err != nil {
+	if err := tx.Commit(txCtx); err != nil {
 		return "", fmt.Errorf("session: rotate learner commit: %w", err)
 	}
 	return newRaw, nil
@@ -299,13 +302,16 @@ func (s *Store) RotateAdminSession(ctx context.Context, oldRawToken, userAgent, 
 		return "", err
 	}
 
-	tx, err := s.db.BeginTx(ctx, pgx.TxOptions{})
+	txCtx, txCancel := context.WithTimeout(ctx, 5*time.Second)
+	defer txCancel()
+
+	tx, err := s.db.BeginTx(txCtx, pgx.TxOptions{})
 	if err != nil {
 		return "", fmt.Errorf("session: rotate admin begin tx: %w", err)
 	}
 	defer func() {
 		if err != nil {
-			_ = tx.Rollback(ctx)
+			_ = tx.Rollback(txCtx)
 		}
 	}()
 
@@ -315,7 +321,7 @@ func (s *Store) RotateAdminSession(ctx context.Context, oldRawToken, userAgent, 
 		JOIN authz.admin_actor a ON a.id = s.actor_id
 		WHERE s.token_digest = $1 AND s.revoked_at IS NULL AND s.expires_at > now() AND a.status = 'active'
 		FOR UPDATE`
-	row := tx.QueryRow(ctx, lookupQ, oldDigest)
+	row := tx.QueryRow(txCtx, lookupQ, oldDigest)
 	if scanErr := row.Scan(&sessID, &actorID); scanErr != nil {
 		if errors.Is(scanErr, pgx.ErrNoRows) {
 			return "", ErrSessionNotFound
@@ -325,7 +331,7 @@ func (s *Store) RotateAdminSession(ctx context.Context, oldRawToken, userAgent, 
 
 	// Revoke old session.
 	const revokeQ = `UPDATE auth.admin_session SET revoked_at = now() WHERE id = $1 AND actor_id = $2 AND revoked_at IS NULL`
-	tag, err := tx.Exec(ctx, revokeQ, sessID, actorID)
+	tag, err := tx.Exec(txCtx, revokeQ, sessID, actorID)
 	if err != nil {
 		return "", fmt.Errorf("session: rotate admin revoke: %w", err)
 	}
@@ -336,12 +342,12 @@ func (s *Store) RotateAdminSession(ctx context.Context, oldRawToken, userAgent, 
 	// Insert new session preserving owner and metadata.
 	const insertQ = `INSERT INTO auth.admin_session (actor_id, token_digest, expires_at, user_agent, ip_address)
 		VALUES ($1, $2, $3, $4, $5)`
-	_, err = tx.Exec(ctx, insertQ, actorID, newDigest, newExpiry, nullString(userAgent), nullString(ipAddress))
+	_, err = tx.Exec(txCtx, insertQ, actorID, newDigest, newExpiry, nullString(userAgent), nullString(ipAddress))
 	if err != nil {
 		return "", fmt.Errorf("session: rotate admin insert: %w", err)
 	}
 
-	if err := tx.Commit(ctx); err != nil {
+	if err := tx.Commit(txCtx); err != nil {
 		return "", fmt.Errorf("session: rotate admin commit: %w", err)
 	}
 	return newRaw, nil

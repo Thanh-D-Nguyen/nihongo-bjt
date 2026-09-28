@@ -1,123 +1,108 @@
-# M3 Session Rotation & Admin Authz Middleware Report
+# M3 Session Rotation + Admin Authorization Report
 
 ## Identification
-- **Starting HEAD**: `fed1ad2c544807c32bec59f33ec18e4d1f6ef892`
+- **Starting HEAD**: `a0522664` (accepted M3 independent auth infra code)
+- **Initial rotation/authz commit**: `a2dd34d0`
+- **Revised repair commit**: `02fd4874` (this wave)
 - **Branch**: `main`
-- **Wave**: M3 — Independent remainder (session rotation + admin authz middleware)
+- **Wave**: M3 — Session rotation + admin authorization middleware (independent of credential gate)
 - **Date**: 2026-09-28
-- **Accepted M3 auth infra checkpoint**: `a0522664` (code), `fed1ad2c` (metadata)
-- **Status**: PENDING SOL REVIEW — do not mark accepted in ORCHESTRATION_STATE
+- **Accepted M3 infra checkpoint**: `a0522664`
 
 ## Scope
-Atomic session rotation for learner/admin namespaces and admin authorization middleware. No credential verifier, login endpoints, client routing changes, or schema migrations. Production Keycloak credential format remains GATED_UNKNOWN_PRODUCTION.
+Atomic learner/admin session rotation in `session.Store`; composed admin authorization middleware (`AdminGuard` → `RequirePermission`/`RequireAnyPermission`) using existing `authz.Store.LoadPrincipal`; PostgreSQL 17 integration tests for rotation and RBAC against disposable DB. No login endpoints, no credential verifier, no client routing changes, no schema migration. Production Keycloak credential format remains GATED_UNKNOWN_PRODUCTION; this work is independent.
 
-## Artifacts
+## Repair Summary (REVISE of a2dd34d0)
+
+Independent review identified five blocking findings. All addressed:
+
+1. **Deleted production test helper**: Removed `apps/api-go/internal/authn/testing.go` which exported `WithAdminIdentity`/`WithLearnerIdentity` context fabricators in the production package. Rewrote `apps/api-go/internal/authz/middleware_test.go` to exercise the real `authn.AdminGuard` chain with a mock `SessionLookup` seam, proving the actual boundary without bypass hooks. Tests cover missing cookie, invalid session, successful identity injection, permission allow/deny/wildcard, inactive actor, nil principal (500), and backend error paths.
+
+2. **Unexported context key**: Changed `AdminPrincipalKey` to unexported `adminPrincipalKey` in `authz/middleware.go`. `GetPrincipal()` accessor retained as the only read path. Permission denial response now returns generic `"insufficient permissions"` instead of exposing dynamic permission codes. Added nil-principal safety test returning 500.
+
+3. **Bounded transaction context**: Both `RotateLearnerSession` and `RotateAdminSession` now use a dedicated `txCtx` with 5s timeout for all operations inside the transaction (BeginTx, QueryRow FOR UPDATE, Exec revoke/insert, Commit). Caller context is no longer passed unbounded into transaction body. Existing disabled-account and expired-token tests cover rejection paths; FOR UPDATE concurrency verified by real PG17 integration.
+
+4. **Report accuracy**: Previous report falsely stated integration tests were ENVIRONMENT_BLOCKED. Integration tests were independently run and passed twice against disposable PG17 (see Verification Results below). Removed all references to deleted test helper. Distinguished unit tests (no DB) from integration tests (disposable PG17).
+
+5. **Intended-only commit**: Only `store.go`, `middleware.go`, `middleware_test.go`, and this report are modified. `ORCHESTRATION_STATE.md` left untouched until Sol gate acceptance. Unrelated dirty files preserved.
+
+## Artifact List
 
 | Artifact | Path | Status |
 |---|---|---|
-| Session rotation | `apps/api-go/internal/session/store.go` | MODIFIED (RotateLearnerSession, RotateAdminSession added) |
-| Rotation integration tests | `apps/api-go/internal/session/rotation_test.go` | CREATED |
-| Admin authz middleware | `apps/api-go/internal/authz/middleware.go` | CREATED |
-| Admin authz middleware tests | `apps/api-go/internal/authz/middleware_test.go` | CREATED |
-| Report (this file) | `docs/migrations/go-backend-v2/reports/M3_SESSION_ROTATION_AUTHZ_REPORT.md` | CREATED |
+| Session store (rotation) | `apps/api-go/internal/session/store.go` | REPAIRED (bounded txCtx, atomic rotation) |
+| Admin authz middleware | `apps/api-go/internal/authz/middleware.go` | REPAIRED (unexported key, generic deny, nil safety) |
+| Admin authz middleware tests | `apps/api-go/internal/authz/middleware_test.go` | REWRITTEN (real guard chain, mock seam, no test helper) |
+| Deleted test helper | `apps/api-go/internal/authn/testing.go` | DELETED |
+| M3 rotation/authz report | `docs/migrations/go-backend-v2/reports/M3_SESSION_ROTATION_AUTHZ_REPORT.md` | REWRITTEN (this file) |
 
-## Session Rotation Design
+## Architecture Decisions
 
-### Atomic Transaction Pattern
-Both `RotateLearnerSession` and `RotateAdminSession` follow the same pattern:
-1. Validate old raw token format and new expiry (fail fast before DB)
-2. Generate new token internally via `GenerateToken()`
-3. Begin pgx transaction
-4. Lookup old session with `FOR UPDATE` lock, joining owner table to verify active status
-5. Revoke old session with owner-scoped WHERE clause; check `RowsAffected() == 0` for concurrent loss
-6. Insert new session preserving owner ID and accepting fresh metadata
-7. Commit transaction; rollback on any error
-
-### Security Properties
-- **No raw token/digest in logs or errors**: All error messages use sentinel strings
-- **Owner-scoped revocation**: Prevents cross-user/cross-actor session hijacking
-- **Concurrent winner semantics**: `FOR UPDATE` + `RowsAffected` check ensures exactly one concurrent rotation succeeds
-- **Disabled account rejection**: JOIN to `user_profile`/`admin_actor` with `status = 'active'` filter
-- **Namespace isolation**: Learner tokens cannot rotate admin sessions and vice versa
-- **New token returned exactly once**: Caller receives raw token; only digest stored
-
-### Error Mapping
-| Condition | Error |
-|---|---|
-| Malformed old token | `ErrInvalidToken` |
-| Past new expiry | `ErrInvalidExpiry` |
-| Expired/revoked/disabled/concurrent-loss | `ErrSessionNotFound` |
-| Backend failure | Wrapped `fmt.Errorf` |
-
-## Admin Authz Middleware Design
-
-### Interface Seam
-`PrincipalLoader` interface abstracts `authz.Store.LoadPrincipal` for unit testing without DB:
-```go
-type PrincipalLoader interface {
-    LoadPrincipal(ctx context.Context, actorID string) (*AdminPrincipal, error)
-}
-```
-
-### Middleware Functions
-- `RequirePermission(loader, permission)` — single permission check
-- `RequireAnyPermission(loader, permissions)` — any-of check
-- Both inject resolved `*AdminPrincipal` into context via `AdminPrincipalKey`
-- `GetPrincipal(ctx)` — retrieval helper for downstream handlers
-
-### Response Behavior
-| Condition | HTTP Status | Content-Type |
-|---|---|---|
-| No identity in context | 401 | application/json |
-| Inactive actor (`ErrActorNotActive`) | 403 | application/json |
-| Insufficient permission | 403 | application/json |
-| Backend error | 500 | application/json |
-
-All error responses are JSON `{"error": "..."}`. No internal details leaked.
-
-## Test Coverage
-
-### Unit Tests (no DB required)
-- `authz/middleware_test.go`: 8 tests covering allow, deny, wildcard, missing identity, inactive actor, backend error, any-permission allow/deny
-- All use `mockLoader` implementing `PrincipalLoader` interface
-
-### Integration Tests (require TEST_DATABASE_URL)
-- `session/rotation_test.go`: 7 tests covering:
-  - Learner rotation success with metadata update
-  - Rejection of non-active old token
-  - Rejection of past new expiry
-  - Concurrent winner (5 goroutines, exactly 1 succeeds)
-  - Admin rotation success
-  - Cross-namespace rejection (learner token cannot rotate admin)
-  - Invalid token format rejection
-
-### Integration Test Execution
-Integration tests use `t.Skip` when `TEST_DATABASE_URL` is unset, ensuring `go test ./...` passes in CI without DB. When run against disposable PostgreSQL 17 with M2 schema, all tests pass.
-
-**Note**: Integration tests were NOT executed in this wave because no disposable DB was confirmed available. They are ENVIRONMENT_BLOCKED for this commit. Prior M3 checkpoint established DB integration repeatability.
+1. **Atomic rotation via pgx transaction**: Old session revoked and new session inserted in single transaction with `FOR UPDATE` row lock. Prevents concurrent rotation races and ensures old token is invalidated before new token is returned.
+2. **Owner-scoped revocation**: Rotation requires matching owner identity (userID or actorID) derived from valid current session. Cross-user/cross-actor rotation is impossible by construction.
+3. **Bounded transaction context**: All transaction operations use 5s `txCtx` independent of caller context. Prevents unbounded blocking on stuck transactions.
+4. **Mock SessionLookup seam**: `authz/middleware_test.go` defines a local `mockSessionLookup` interface satisfying `authn.SessionLookup`. Enables full guard chain testing without DB or test helpers in production packages.
+5. **Generic permission denial**: Denial responses never expose specific permission codes. Prevents information leakage about RBAC policy structure.
+6. **Unexported context key**: `adminPrincipalKey` is unexported; only `GetPrincipal()` provides read access. Prevents external packages from fabricating authenticated context.
+7. **No schema migration**: Rotation uses existing M2 `auth.session` and `auth.admin_session` tables. No new columns, indexes, or constraints.
 
 ## Verification Results
 
-Pending execution after file creation. Will run:
-- `gofmt -w . && test -z "$(gofmt -l .)"`
-- `GOTOOLCHAIN=go1.23.0 go vet ./...`
-- `GOTOOLCHAIN=go1.23.0 go test ./...`
-- `GOTOOLCHAIN=go1.23.0 go test -race ./...`
-- `GOTOOLCHAIN=go1.23.0 GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -o /tmp/api-go-m3-remainder ./cmd/api`
+### Go Toolchain (all with GOTOOLCHAIN=go1.23.0)
+
+| Check | Command | Result |
+|---|---|---|
+| gofmt | `gofmt -w . && test -z "$(gofmt -l .)"` | ✅ CLEAN |
+| go vet | `GOTOOLCHAIN=go1.23.0 go vet ./...` | ✅ PASS |
+| go test | `GOTOOLCHAIN=go1.23.0 go test ./...` | ✅ PASS (all packages) |
+| go test -race | `GOTOOLCHAIN=go1.23.0 go test -race ./...` | ✅ PASS |
+| ARM64 build | `GOTOOLCHAIN=go1.23.0 GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -o /tmp/api-go-m3-revise ./cmd/api` | ✅ PASS (ELF ARM aarch64 static) |
+
+### PostgreSQL 17 Integration Tests (Disposable DB)
+
+**Environment**: Disposable `postgres:17-alpine` container (`m3-revise-pg`), database `m3session`, M2 auth persistence schema + authz RBAC stub tables applied. Port 15433. Password reset to `postgres` after container recreation.
+
+| Run | Package | Duration | Result |
+|---|---|---|---|
+| 1 | `internal/session` | 1.105s | ✅ PASS |
+| 1 | `internal/authz` | 0.557s | ✅ PASS |
+| 2 | `internal/session` | (included above) | ✅ PASS |
+| 2 | `internal/authz` | (included above) | ✅ PASS |
+
+Command: `TEST_DATABASE_URL="postgres://postgres:postgres@127.0.0.1:15433/m3session?sslmode=disable" GOTOOLCHAIN=go1.23.0 go test ./internal/session ./internal/authz -count=2`
+
+Both runs executed against the same disposable DB instance, proving repeatability. No secrets logged; connection string used only via environment variable.
+
+### Unit Test Coverage (No DB Required)
+
+- **session/token**: Token generation, validation, hashing, constant-time comparison, format rejection (empty, short, long, non-hex, uppercase, mixed case)
+- **session/store (unit)**: Create rejects past expiry; lookup validates token format before DB call
+- **authz/middleware**: Full composed guard chain with mock seam — missing cookie, invalid session, successful identity injection, permission allow/deny/wildcard, inactive actor, nil principal (500), backend error (500), no raw token in logs
+- **authz/rbac**: LoadPrincipal with permissions, wildcard, disabled actor, missing actor, HasAnyPermission without wildcard
+
+## Security Negatives Verified
+
+1. **No raw token exposure**: Rotation methods never log or return digest; errors wrap with generic messages. Middleware tests assert captured log output contains no token material.
+2. **Owner-scoped rotation**: Cross-user/cross-actor rotation rejected by SQL WHERE clause including owner ID.
+3. **Disabled account rejection**: Lookup joins `user_profile`/`admin_actor` with `status='active'` filter; disabled accounts return `ErrSessionNotFound`.
+4. **Expired/revoked rejection**: SQL WHERE filters `expires_at > now() AND revoked_at IS NULL`; expired/revoked tokens return `ErrSessionNotFound`.
+5. **Bounded parameters**: Transaction timeout prevents unbounded blocking; token validation rejects malformed input before any DB call.
+6. **Generic denial messages**: Permission denial returns `"insufficient permissions"` without exposing specific permission codes.
+7. **Unexported context key**: External packages cannot fabricate admin identity via context manipulation.
+8. **No production test helpers**: Deleted `authn/testing.go`; no exported context fabricators in production packages.
 
 ## Rollback
-Code-level only. New functions and files are additive; no existing behavior modified. Remove `RotateLearnerSession`, `RotateAdminSession` from store.go and delete `rotation_test.go`, `middleware.go`, `middleware_test.go` to revert.
 
-## M3 Full Credential Gate
-**STILL BLOCKED**. Production Keycloak credential format unavailable. This wave does not resolve the gate. M3 full requires:
-1. Production Keycloak DB or Admin REST API access
-2. Credential metadata inspection (algorithm/parameters only)
-3. Verifier implementation matching production format
+Code-level only. No schema changes. Revert commits `a2dd34d0` and `02fd4874` to remove rotation and middleware changes. Existing M2 session tables remain intact. No data migration to reverse.
 
-## Limits and Exclusions
-- No login/logout endpoints mounted
-- No cookie handling (guards from prior checkpoint handle that)
-- No rate limiting (deferred to actual endpoint implementation)
-- No schema migration
-- No ORCHESTRATION_STATE modification (pending Sol acceptance)
-- Integration tests skipped in this wave (ENVIRONMENT_BLOCKED)
+## M3 Full Credential Gate Status
+
+**GATED_UNKNOWN_PRODUCTION** — unchanged. Production Keycloak credential format remains unavailable. This wave is independent of credential verification; rotation and authorization middleware operate on first-party opaque sessions only. M3 full acceptance requires production credential metadata confirmation before legacy verifier implementation.
+
+## Limits and Deferred Work
+
+1. **No login/logout endpoints**: Session creation/destruction endpoints deferred to post-gate M3 completion.
+2. **No rate limiting**: Login attempt throttling deferred to actual endpoint implementation.
+3. **No CSRF token binding**: Cookie-authenticated unsafe methods not yet mounted; Origin/Referer validation from prior M3 infra commit remains sufficient for scaffold.
+4. **No idle session expiry**: Only absolute expiry implemented; sliding window deferred pending product decision.
+5. **No credential verifier**: Blocked on production Keycloak metadata. Dev defaults confirmed Argon2id v1.3 m=7168 t=5 p=1 len=32; production UNVERIFIED.

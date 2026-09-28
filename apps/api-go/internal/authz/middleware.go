@@ -5,18 +5,16 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
 )
 
-// contextKey is an unexported type for context keys to avoid collisions.
-type contextKey string
+// contextKey is an unexported type for context keys to prevent cross-package fabrication.
+type contextKey int
 
 const (
-	// AdminPrincipalKey stores the resolved AdminPrincipal in request context.
-	AdminPrincipalKey contextKey = "admin_principal"
+	adminPrincipalKey contextKey = iota
 )
 
 // PrincipalLoader abstracts permission loading for testability.
@@ -25,38 +23,43 @@ type PrincipalLoader interface {
 }
 
 // RequirePermission returns middleware that checks whether the authenticated
-// admin principal (set by AdminGuard in request context) has the given permission.
-// Returns 401 if no identity present, 403 if insufficient permission or inactive actor,
-// 500 on backend errors. Never leaks internal details.
+// admin principal (set by authn.AdminGuard in request context) has the given permission.
+// Returns 401 for missing/invalid session, 403 for insufficient permission or inactive actor,
+// 500 on backend errors or unexpected loader results. Never leaks internal details or
+// the specific permission code that was checked.
 func RequirePermission(loader PrincipalLoader, permission string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
 
-			// Extract actor ID from context (set by authn.AdminGuard).
 			identity, ok := authn.GetAdminIdentity(ctx)
 			if !ok || identity.ActorID == "" {
-				writeJSONError(w, http.StatusUnauthorized, "unauthorized: no admin identity")
+				writeJSONError(w, http.StatusUnauthorized, "unauthorized")
 				return
 			}
 
 			principal, err := loader.LoadPrincipal(ctx, identity.ActorID)
 			if err != nil {
 				if errors.Is(err, ErrActorNotActive) {
-					writeJSONError(w, http.StatusForbidden, "forbidden: account inactive")
+					writeJSONError(w, http.StatusForbidden, "forbidden")
 					return
 				}
 				writeJSONError(w, http.StatusInternalServerError, "internal error")
 				return
 			}
-
-			if !principal.HasPermission(permission) {
-				writeJSONError(w, http.StatusForbidden, fmt.Sprintf("forbidden: missing permission %q", permission))
+			if principal == nil {
+				// Defensive: loader returned (nil, nil). Treat as internal error
+				// rather than panicking downstream.
+				writeJSONError(w, http.StatusInternalServerError, "internal error")
 				return
 			}
 
-			// Inject principal into context for downstream handlers.
-			next.ServeHTTP(w, r.WithContext(context.WithValue(ctx, AdminPrincipalKey, principal)))
+			if !principal.HasPermission(permission) {
+				writeJSONError(w, http.StatusForbidden, "forbidden")
+				return
+			}
+
+			next.ServeHTTP(w, r.WithContext(context.WithValue(ctx, adminPrincipalKey, principal)))
 		})
 	}
 }
@@ -70,33 +73,38 @@ func RequireAnyPermission(loader PrincipalLoader, permissions []string) func(htt
 
 			identity, ok := authn.GetAdminIdentity(ctx)
 			if !ok || identity.ActorID == "" {
-				writeJSONError(w, http.StatusUnauthorized, "unauthorized: no admin identity")
+				writeJSONError(w, http.StatusUnauthorized, "unauthorized")
 				return
 			}
 
 			principal, err := loader.LoadPrincipal(ctx, identity.ActorID)
 			if err != nil {
 				if errors.Is(err, ErrActorNotActive) {
-					writeJSONError(w, http.StatusForbidden, "forbidden: account inactive")
+					writeJSONError(w, http.StatusForbidden, "forbidden")
 					return
 				}
 				writeJSONError(w, http.StatusInternalServerError, "internal error")
 				return
 			}
-
-			if !principal.HasAnyPermission(permissions) {
-				writeJSONError(w, http.StatusForbidden, "forbidden: insufficient permissions")
+			if principal == nil {
+				writeJSONError(w, http.StatusInternalServerError, "internal error")
 				return
 			}
 
-			next.ServeHTTP(w, r.WithContext(context.WithValue(ctx, AdminPrincipalKey, principal)))
+			if !principal.HasAnyPermission(permissions) {
+				writeJSONError(w, http.StatusForbidden, "forbidden")
+				return
+			}
+
+			next.ServeHTTP(w, r.WithContext(context.WithValue(ctx, adminPrincipalKey, principal)))
 		})
 	}
 }
 
 // GetPrincipal retrieves the AdminPrincipal from context, or nil if not present.
+// This is the only supported accessor; the context key is unexported.
 func GetPrincipal(ctx context.Context) *AdminPrincipal {
-	p, _ := ctx.Value(AdminPrincipalKey).(*AdminPrincipal)
+	p, _ := ctx.Value(adminPrincipalKey).(*AdminPrincipal)
 	return p
 }
 
