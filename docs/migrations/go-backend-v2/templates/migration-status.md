@@ -1,66 +1,52 @@
-# Migration Status
-
+# Migration Status (Revised)
 ## Current checkpoint
-
 - Wave: M0
 - Starting HEAD: `0fc4486f5cfd2edc4433359753be573605234006`
-- Current HEAD: (pending commit)
-- Status: IN_PROGRESS
-
+- Prior M0 commit: `6b3a5a6a2f395e43bcda6712a39050edc2aaeee9`
+- Current HEAD: (pending revision commit)
+- Status: REVISED — all blocking defects addressed
 ## Completed
-
-- Repository inventory captured (100 controllers, 710 routes, 174 Prisma models)
-- Auth behavior matrix populated (learner, admin, mobile, realtime, OAuth)
+- Repository inventory captured (100 controllers, 710 HTTP routes, 174 Prisma models, 22 PostgreSQL schemas)
+- API compatibility matrix COMPLETE: 710 per-route rows extracted from all 100 controller files
+- Auth behavior matrix populated (learner, admin, mobile, realtime, OAuth, RBAC)
 - Media migration inventory populated (13 key patterns, 6 DB reference types)
-- API compatibility matrix summary populated (route counts, auth distribution)
-- Background job inventory complete (5 crons, 0 BullMQ workers)
-- Realtime inventory complete (2 gateways, 11 events, 0 frontend consumers)
-- Infrastructure/deployment inventory complete (PM2 on GCP VM, Docker Compose infra)
-- ARM64 audit complete (all images multi-arch, sharp is ARM64-safe)
-- Next.js BFF route handler inventory complete (17 routes, all Keycloak auth)
-- Prisma schema validation PASS
-
-## In progress
-
-- Quality baseline (typecheck/lint/test/build pending environment verification)
-- Resource baseline (local Docker services not verified running)
-
+- Background job inventory complete (5 cron classes, 10 @Cron decorators, 0 BullMQ workers confirmed)
+- Realtime inventory CORRECTED: 2 gateways, 2 frontend consumer files (was incorrectly reported as zero)
+- Infrastructure/deployment inventory complete (PM2 on GCP VM, Docker Compose infra, Caddy reverse proxy)
+- ARM64 audit complete with command-level evidence (4/5 images VERIFIED, MinIO NOT CONFIRMED)
+- Next.js BFF route handler inventory complete (17 routes: 10 web + 7 admin, all Keycloak auth)
+- Quality baseline EXECUTED: typecheck PASS, lint FAIL (PRE_EXISTING tmp/ files), test FAIL (ENVIRONMENT_BLOCKED), build PASS
+- Resource baseline ATTEMPTED: Docker daemon unavailable locally (ENVIRONMENT_BLOCKED with exact error)
+- Prisma schema validation PASS (174 models, 22 explicit schemas)
 ## Blockers
-
-- Google OAuth production status: GATED_UNKNOWN_PRODUCTION (requires runtime/env evidence)
-- Keycloak credential format: GATED_UNKNOWN (requires Keycloak export investigation in M2)
-- MinIO object counts/sizes: GATED_UNKNOWN (requires running MinIO instance)
-- Full API route detail matrix: summary captured; per-route detail for all 710 routes deferred to M1+ as needed
-
+- Google OAuth production status: GATED_UNKNOWN_PRODUCTION (requires runtime/env evidence) → M4
+- Keycloak credential format: GATED_UNKNOWN (requires Keycloak export investigation) → M2 HARD GATE
+- MinIO object counts/sizes: GATED_UNKNOWN (requires running MinIO instance) → M7
+- MinIO ARM64 image: NOT CONFIRMED (script returned NOT CONFIRMED for this tag format) → M1
+- Integration tests: ENVIRONMENT_BLOCKED (Docker daemon not running locally) → M1
+- Resource baseline: ENVIRONMENT_BLOCKED (Docker daemon not running locally) → M7
 ## Tests
-
-| Gate | Result | Evidence |
-|---|---|---|
-| Prisma validate | PASS | `pnpm prisma:validate` exit 0; schema valid |
-| Typecheck | PENDING | Environment Node version mismatch warning (24.12.0 vs 24.16.0 wanted) |
-| Lint | PENDING | Not yet executed |
-| Tests | PENDING | Not yet executed |
-| Build | PENDING | Not yet executed |
-
+| Gate | Command | Result | Classification |
+|---|---|---|---|
+| Prisma validate | `pnpm prisma:validate` | PASS (exit 0) | ✅ CLEAN |
+| Typecheck | `pnpm typecheck` | PASS (8/8 tasks, exit 0) | ✅ CLEAN |
+| Lint | `pnpm lint` | FAIL (75 errors, 25 warnings) | ⚠️ PRE_EXISTING — all in `tmp/` scratch files, zero in app source |
+| Tests | `pnpm test` | FAIL (4 failed / 855 passed) | ⚠️ ENVIRONMENT_BLOCKED — DB unreachable (Docker not running) |
+| Build | `pnpm build` | PASS (7/7 tasks, exit 0) | ✅ CLEAN |
 ## Compatibility
-
 - Migrated routes: 0 (M0 is investigation only)
 - Remaining Nest routes: 710
 - Auth users migrated: 0
 - Remaining Keycloak dependencies: ALL (learner, admin, mobile, realtime, BFF)
-
 ## Rollback
-
 Current rollback path:
-
 ```text
 No migration applied. Existing NestJS/Keycloak/MinIO/GCP paths fully retained.
 Rollback = do nothing.
 ```
-
 ## Next actions
-
-1. Complete quality baseline (typecheck, lint, test, build) when environment permits
-2. H0: Documentation hygiene classification based on M0 findings
-3. M1: Go foundation + deployment foundations
-4. M2: Keycloak credential investigation gate (HARD GATE)
+1. H0: Documentation hygiene classification based on M0 findings
+2. M1: Go foundation + deployment foundations
+3. M2: Keycloak credential investigation gate (HARD GATE)
+4. M4: Google OAuth migrate/retire decision
+5. M7: MinIO object reconciliation
