@@ -2,12 +2,16 @@
 
 ## Identification
 - **Starting HEAD**: `a0522664` (accepted M3 independent auth infra code)
-- **Initial rotation/authz commit**: `a2dd34d0`
-- **Revised repair commit**: `02fd4874` (this wave)
 - **Branch**: `main`
 - **Wave**: M3 — Session rotation + admin authorization middleware (independent of credential gate)
 - **Date**: 2026-09-28
 - **Accepted M3 infra checkpoint**: `a0522664`
+- **Cumulative M3 remainder commits** (after accepted base `a0522664`):
+  - `a2dd34d0` — initial rotation/authz scaffold
+  - `02fd4874` — implementation (bounded txCtx, atomic rotation, middleware)
+  - `621320b0` — repair round 1 (test helper deletion staged, unexported context key, generic deny)
+  - `3c4603d1` — coverage/helper removal (direct rotation rejection tests, testing.go deletion confirmed)
+  - `c45eddbc` — final repair (admin revoked-token rotation test, txCtx wording corrected)
 
 ## Scope
 Atomic learner/admin session rotation in `session.Store`; composed admin authorization middleware (`AdminGuard` → `RequirePermission`/`RequireAnyPermission`) using existing `authz.Store.LoadPrincipal`; PostgreSQL 17 integration tests for rotation and RBAC against disposable DB. No login endpoints, no credential verifier, no client routing changes, no schema migration. Production Keycloak credential format remains GATED_UNKNOWN_PRODUCTION; this work is independent.
@@ -26,15 +30,16 @@ Independent review identified five blocking findings. All addressed:
 
 5. **Intended-only commit**: Only `store.go`, `middleware.go`, `middleware_test.go`, and this report are modified. `ORCHESTRATION_STATE.md` left untouched until Sol gate acceptance. Unrelated dirty files preserved.
 
-## Artifact List
+## Artifact List (Cumulative M3 Remainder Wave)
 
 | Artifact | Path | Status |
 |---|---|---|
-| Session store (rotation) | `apps/api-go/internal/session/store.go` | REPAIRED (bounded txCtx, atomic rotation) |
+| Session store (rotation) | `apps/api-go/internal/session/store.go` | REPAIRED (bounded txCtx derived from caller, atomic rotation) |
+| Session store tests | `apps/api-go/internal/session/store_test.go` | REPAIRED (direct expired/revoked/disabled rotation rejection for learner and admin; concurrent-winner tests for both namespaces) |
+| Test helper (deleted) | `apps/api-go/internal/authn/testing.go` | DELETED at `621320b0` (was untracked production bypass risk) |
 | Admin authz middleware | `apps/api-go/internal/authz/middleware.go` | REPAIRED (unexported key, generic deny, nil safety) |
 | Admin authz middleware tests | `apps/api-go/internal/authz/middleware_test.go` | REWRITTEN (real guard chain, mock seam, no test helper) |
-| Deleted test helper | `apps/api-go/internal/authn/testing.go` | DELETED |
-| M3 rotation/authz report | `docs/migrations/go-backend-v2/reports/M3_SESSION_ROTATION_AUTHZ_REPORT.md` | REWRITTEN (this file) |
+| M3 rotation/authz report | `docs/migrations/go-backend-v2/reports/M3_SESSION_ROTATION_AUTHZ_REPORT.md` | REWRITTEN across five commits (this file) |
 
 ## Architecture Decisions
 
@@ -56,7 +61,7 @@ Independent review identified five blocking findings. All addressed:
 | go vet | `GOTOOLCHAIN=go1.23.0 go vet ./...` | ✅ PASS |
 | go test | `GOTOOLCHAIN=go1.23.0 go test ./...` | ✅ PASS (all packages) |
 | go test -race | `GOTOOLCHAIN=go1.23.0 go test -race ./...` | ✅ PASS |
-| ARM64 build | `GOTOOLCHAIN=go1.23.0 GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -o /tmp/api-go-m3-revise ./cmd/api` | ✅ PASS (ELF ARM aarch64 static) |
+| ARM64 build | `GOTOOLCHAIN=go1.23.0 GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -o /tmp/api-go-m3-final ./cmd/api` | ✅ PASS (ELF ARM aarch64 static) |
 
 ### PostgreSQL 17 Integration Tests (Disposable DB)
 
@@ -93,7 +98,7 @@ Both runs executed against the same disposable DB instance, proving repeatabilit
 
 ## Rollback
 
-Code-level only. No schema changes. Revert commits `a2dd34d0` and `02fd4874` to remove rotation and middleware changes. Existing M2 session tables remain intact. No data migration to reverse.
+Code-level only. No schema changes. Revert all five M3 remainder commits after accepted base `a0522664` in reverse chronological order: `c45eddbc`, `3c4603d1`, `621320b0`, `02fd4874`, `a2dd34d0`. Existing M2 session tables remain intact. No data migration to reverse. Do not use history rewrite.
 
 ## M3 Full Credential Gate Status
 
