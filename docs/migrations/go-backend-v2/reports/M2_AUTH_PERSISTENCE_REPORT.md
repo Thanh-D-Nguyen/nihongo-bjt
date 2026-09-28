@@ -3,7 +3,7 @@
 ## Identification
 - **Starting HEAD**: `13a54b4f59734243282ac06856863755116a5a5a`
 - **Initial M2 commit**: `37e0b68c49712fe3665a0e847cc6ce6221b4ed9a` (REVISE after independent review)
-- **Final HEAD**: (pending repair commit)
+- **Accepted persistence checkpoint**: `9c98bad90628d1ca24f71c3034aa3d4a63bf8851` (credential gate pending)
 - **Branch**: `main`
 - **Wave**: M2 — Identity/auth persistence + Keycloak credential investigation HARD GATE
 - **Date**: 2026-09-28
@@ -24,7 +24,7 @@ Independent review identified six blocking findings. All addressed:
 
 4. **Redundant indexes removed**: Dropped secondary B-tree indexes on `password_credential.user_id`, `admin_password_credential.actor_id`, `session.token_digest`, and `admin_session.token_digest`. These columns already have UNIQUE constraints which create implicit unique indexes. Retained composite expiry indexes (`idx_session_user_expires`, `idx_admin_session_actor_expires`).
 
-5. **Commit SHA placeholders fixed**: This report and ORCHESTRATION_STATE updated with actual initial M2 commit SHA `37e0b68c`. Final repair commit SHA recorded after commit.
+5. **Checkpoint metadata**: Initial M2 commit `37e0b68c` was revised in `9c98bad9`; credential gate remains pending.
 
 6. **Credential metadata accuracy**: Removed inference "salt is embedded in stored hash per Argon2 spec" — this was inferred from Admin REST API omission, not observed from DB storage format. Rephrased to state only what was directly observed: Admin REST API credential response does not expose a separate salt field; the internal DB storage format was not directly inspected.
 
@@ -81,8 +81,8 @@ Rationale:
 | `auth.admin_session` | Admin opaque session tokens (digest-only) | `authz.admin_actor(id)` ON DELETE CASCADE | `(token_digest)` |
 
 ### Column Design Decisions
-- **No algorithm/parameter defaults**: All hash parameter columns (`algorithm`, `algorithm_version`, `hash_iterations`, `memory_kib`, `parallelism`, `hash_length`) are NOT NULL without defaults. M3+ code must supply explicit values at insert time. This prevents silent conflation of source (Keycloak) and target (Go) parameters.
-- **`algorithm_version`**: Nullable VARCHAR(16) for self-describing hash format versioning (e.g., "1.3" for Argon2 v1.3). Enables future algorithm agility without schema changes.
+- **No algorithm/parameter defaults**: The algorithm and numeric hash parameter columns are NOT NULL without defaults; `algorithm_version` is nullable without a default. M3+ code must supply explicit values at insert time. This prevents silent conflation of source (Keycloak) and target (Go) parameters.
+- **`algorithm_version`**: Nullable VARCHAR(16) for hash format versioning (e.g., "1.3" for Argon2 v1.3). Enables future algorithm agility without schema changes.
 - **CHECK constraints**: `chk_password_credential_params` and `chk_admin_password_credential_params` enforce `hash_iterations > 0`, `memory_kib > 0`, `parallelism > 0`, `hash_length > 0`, `octet_length(salt) > 0`, `octet_length(hashed_value) > 0`, and `algorithm <> ''`.
 - **Binary fields**: `salt` and `hashed_value` are BYTEA (not text) to prevent accidental logging.
 - **Session tokens**: Only SHA-256 digest stored (VARCHAR 64); no raw tokens.
