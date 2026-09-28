@@ -2,7 +2,7 @@
 
 ## Identification
 - **Starting HEAD**: `6072c24e2e9b97dde32947b428a8d33b26d9824b`
-- **Final HEAD**: (pending commit)
+- **Accepted H0 checkpoint**: `17c3e606b0a333103445ed054582b726bff52781`
 - **Branch**: `main`
 - **Wave**: H0 — Documentation hygiene
 - **Date**: 2026-09-28
@@ -51,9 +51,9 @@ Documentation classification and cleanup proposal only. No files deleted, moved,
 **Timing**: Post-M1 evaluation.
 
 ### 2. docs/ops/ — GCP-Specific Runbooks Without OCI Equivalents
-**Files affected**: 
+**Files affected**:
 - `gcp-battle-mobile-responsive-runbook.md`
-- `gcp-content-dictionary-and-onboarding-runbook.md`  
+- `gcp-content-dictionary-and-onboarding-runbook.md`
 - `gcp-homepage-mobile-responsive-runbook.md`
 - `gcp-keycloak-publish-cicd-guide.md`
 - `deploy-gcp-credit-runbook.md`

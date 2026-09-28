@@ -1,7 +1,7 @@
 # Go Backend Migration Orchestration State
 
 - Current phase: M1 — Go foundation + deployment foundations (next)
-- Current accepted HEAD: (pending H0 commit)
+- Current accepted HEAD: `17c3e606b0a333103445ed054582b726bff52781`
 - Last completed wave: H0 (`H0_PASS`)
 - Next wave: M1 — Go module scaffold, config, health endpoints, pgx pool, ARM64 build verification
 - Completed checkpoint commits:
@@ -14,7 +14,7 @@
   - `8d0be28a` — M0 input/permission systematic repair
   - `b05da94f` — M0 token-safe input contracts
   - `88084724` — M0 output-contract closure; accepted M0 checkpoint
-  - (pending) — H0 documentation hygiene
+  - `17c3e606` — H0 documentation hygiene; accepted H0 checkpoint
 - Open blockers: none for M1
 - Gated unknowns: Keycloak credential format (M2 hard gate); Google OAuth production status (M4); runtime resource baseline/Docker availability; production MinIO object inventory; external production integration evidence
 - Important architecture decisions: Go `net/http` + chi + pgx; first-party opaque sessions; PostgreSQL authoritative; Redis retained for ephemeral concerns; Meilisearch retained; learner Web keeps Next runtime; Admin static export evaluated only after M6; media target is `gocloud.dev/blob/fileblob` at `/srv/kotobawork/data/media`; uploads stream through Go; public media via Caddy; private media via authenticated Go streaming; no replacement S3 daemon by default
