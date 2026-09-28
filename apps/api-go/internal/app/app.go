@@ -10,20 +10,26 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/authz"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/config"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/postgres"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/profile"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/redisx"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/session"
 )
 
 // App holds all application dependencies and manages lifecycle.
 type App struct {
-	Config  *config.Config
-	Logger  *slog.Logger
-	DB      *pgxpool.Pool
-	Redis   *redis.Client
-	Server  *httpserver.Server
-	Version string
+	Config       *config.Config
+	Logger       *slog.Logger
+	DB           *pgxpool.Pool
+	Redis        *redis.Client
+	SessionStore *session.Store
+	ProfileStore *profile.Store
+	RBACStore    *authz.Store
+	Server       *httpserver.Server
+	Version      string
 }
 
 // New creates and initializes the application with all dependencies.
@@ -52,11 +58,18 @@ func New(version string) (*App, error) {
 		return nil, fmt.Errorf("app: %w", err)
 	}
 
+	sessionStore := session.NewStore(dbPool)
+	profileStore := profile.NewStore(dbPool)
+	rbacStore := authz.NewStore(dbPool)
+
 	deps := httpserver.Dependencies{
-		Config:  cfg,
-		Logger:  logger,
-		DB:      dbPool,
-		Version: version,
+		Config:       cfg,
+		Logger:       logger,
+		DB:           dbPool,
+		SessionStore: sessionStore,
+		ProfileStore: profileStore,
+		RBACStore:    rbacStore,
+		Version:      version,
 	}
 	// Guard against typed-nil interface: only assign Redis if the concrete
 	// client is non-nil. A typed-nil *redis.Client assigned to a
@@ -69,12 +82,15 @@ func New(version string) (*App, error) {
 	server := httpserver.NewServer(deps, router)
 
 	return &App{
-		Config:  cfg,
-		Logger:  logger,
-		DB:      dbPool,
-		Redis:   redisClient,
-		Server:  server,
-		Version: version,
+		Config:       cfg,
+		Logger:       logger,
+		DB:           dbPool,
+		Redis:        redisClient,
+		SessionStore: sessionStore,
+		ProfileStore: profileStore,
+		RBACStore:    rbacStore,
+		Server:       server,
+		Version:      version,
 	}, nil
 }
 

@@ -13,18 +13,25 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/authz"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/config"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/postgres"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/profile"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/redisx"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/session"
 )
 
 // Dependencies holds external dependencies required by the HTTP server.
 type Dependencies struct {
-	Config  *config.Config
-	Logger  *slog.Logger
-	DB      postgres.Pinger // nil if not configured; readiness returns 503
-	Redis   redisx.Pinger   // nil if not configured; readiness reports not_configured
-	Version string
+	Config       *config.Config
+	Logger       *slog.Logger
+	DB           postgres.Pinger // nil if not configured; readiness returns 503
+	Redis        redisx.Pinger   // nil if not configured; readiness reports not_configured
+	SessionStore *session.Store  // nil if DB not configured
+	ProfileStore *profile.Store  // nil if DB not configured
+	RBACStore    *authz.Store    // nil if DB not configured
+	Version      string
 }
 
 // NewRouter creates the chi router with all routes and middleware.
@@ -37,8 +44,50 @@ func NewRouter(deps Dependencies) http.Handler {
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(30 * time.Second))
 
+	// Health endpoints — no auth required.
 	r.Get("/health/live", liveHandler())
 	r.Get("/health/ready", readyHandler(deps))
+
+	// Guard configuration.
+	guardCfg := authn.DefaultGuardConfig(deps.Logger)
+	// TODO(M3_ENDPOINTS): populate TrustedOrigins from config/env when CORS_ORIGINS is wired.
+	// Empty list is valid but rejects all unsafe requests until configured.
+	csrfCfg := authn.CSRFConfig{
+		Logger: deps.Logger,
+	}
+
+	// Learner auth routes — guarded by learner session cookie + CSRF for unsafe methods.
+	if deps.SessionStore != nil && deps.ProfileStore != nil {
+		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
+
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Get("/api/auth/me", learnerMeHandler(deps.ProfileStore, deps.Logger))
+		})
+
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Use(authn.CSRFGuard(csrfCfg))
+			lr.Post("/api/auth/logout", learnerLogoutHandler(deps.SessionStore, deps.Logger, guardCfg.LearnerCookieName))
+		})
+	}
+
+	// Admin auth routes — guarded by admin session cookie + CSRF for unsafe methods.
+	if deps.SessionStore != nil && deps.RBACStore != nil {
+		adminGuard := authn.AdminGuard(deps.SessionStore, guardCfg)
+
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Get("/api/admin/session", adminSessionHandler(deps.Logger))
+			ar.Get("/api/admin/me", adminMeHandler(deps.RBACStore, deps.Logger))
+		})
+
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Post("/api/admin/logout", adminLogoutHandler(deps.SessionStore, deps.Logger, guardCfg.AdminCookieName))
+		})
+	}
 
 	return r
 }
