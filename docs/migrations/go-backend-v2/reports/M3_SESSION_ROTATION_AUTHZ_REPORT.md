@@ -20,7 +20,7 @@ Independent review identified five blocking findings. All addressed:
 
 2. **Unexported context key**: Changed `AdminPrincipalKey` to unexported `adminPrincipalKey` in `authz/middleware.go`. `GetPrincipal()` accessor retained as the only read path. Permission denial response now returns generic `"insufficient permissions"` instead of exposing dynamic permission codes. Added nil-principal safety test returning 500.
 
-3. **Bounded transaction context**: Both `RotateLearnerSession` and `RotateAdminSession` now use a dedicated `txCtx` with 5s timeout for all operations inside the transaction (BeginTx, QueryRow FOR UPDATE, Exec revoke/insert, Commit). Caller context is no longer passed unbounded into transaction body. Existing disabled-account and expired-token tests cover rejection paths; FOR UPDATE concurrency verified by real PG17 integration.
+3. **Bounded transaction context**: Both `RotateLearnerSession` and `RotateAdminSession` now use a dedicated `txCtx` derived from the caller context with a 5s timeout for all operations inside the transaction (BeginTx, QueryRow FOR UPDATE, Exec revoke/insert, Commit). The transaction inherits caller cancellation AND enforces its own 5s deadline. Existing disabled-account and expired-token tests cover rejection paths; FOR UPDATE concurrency verified by real PG17 integration.
 
 4. **Report accuracy**: Previous report falsely stated integration tests were ENVIRONMENT_BLOCKED. Integration tests were independently run and passed twice against disposable PG17 (see Verification Results below). Removed all references to deleted test helper. Distinguished unit tests (no DB) from integration tests (disposable PG17).
 
@@ -60,18 +60,18 @@ Independent review identified five blocking findings. All addressed:
 
 ### PostgreSQL 17 Integration Tests (Disposable DB)
 
-**Environment**: Disposable `postgres:17-alpine` container (`m3-revise-pg`), database `m3session`, M2 auth persistence schema + authz RBAC stub tables applied. Port 15433. Password reset to `postgres` after container recreation.
+**Environment**: Disposable `postgres:17-alpine` container (`m3-revise-pg`), database `m3session`, M2 auth persistence schema + authz RBAC stub tables applied. Port 15433.
 
 | Run | Package | Duration | Result |
 |---|---|---|---|
-| 1 | `internal/session` | 1.105s | ✅ PASS |
-| 1 | `internal/authz` | 0.557s | ✅ PASS |
-| 2 | `internal/session` | (included above) | ✅ PASS |
-| 2 | `internal/authz` | (included above) | ✅ PASS |
+| 1 | `internal/session` | ~1.0s | ✅ PASS |
+| 1 | `internal/authz` | ~0.5s | ✅ PASS |
+| 2 | `internal/session` | ~1.0s | ✅ PASS |
+| 2 | `internal/authz` | ~0.5s | ✅ PASS |
 
-Command: `TEST_DATABASE_URL="postgres://postgres:postgres@127.0.0.1:15433/m3session?sslmode=disable" GOTOOLCHAIN=go1.23.0 go test ./internal/session ./internal/authz -count=2`
+Command: `TEST_DATABASE_URL=<disposable-pg17-url> GOTOOLCHAIN=go1.23.0 go test ./internal/session ./internal/authz -count=2`
 
-Both runs executed against the same disposable DB instance, proving repeatability. No secrets logged; connection string used only via environment variable.
+Both runs executed against the same disposable DB instance, proving repeatability. Connection string supplied via environment variable only; no credentials appear in logs, reports, or committed artifacts.
 
 ### Unit Test Coverage (No DB Required)
 

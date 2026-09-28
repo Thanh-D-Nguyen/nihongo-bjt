@@ -436,3 +436,154 @@ func TestRevokeAdminSession_OwnerScoped(t *testing.T) {
 		t.Errorf("cross-owner revoke should NOT affect victim admin session, got %v", err)
 	}
 }
+
+func TestRotateLearnerSession_RejectsExpiredToken(t *testing.T) {
+	db := testPool(t)
+	store := NewStore(db)
+	userID := newUUID(t)
+	seedActiveUser(t, db, userID)
+
+	raw, err := store.CreateLearnerSession(context.Background(), userID, "", "", time.Now().Add(24*time.Hour))
+	if err != nil {
+		t.Fatalf("CreateLearnerSession: %v", err)
+	}
+
+	// Expire the session directly in DB
+	digest := HashToken(raw)
+	_, err = db.Exec(context.Background(),
+		`UPDATE auth.session SET expires_at = now() - interval '1 hour' WHERE token_digest = $1`, digest)
+	if err != nil {
+		t.Fatalf("expire session: %v", err)
+	}
+
+	_, err = store.RotateLearnerSession(context.Background(), raw, "", "", time.Now().Add(24*time.Hour))
+	if !errors.Is(err, ErrSessionNotFound) {
+		t.Errorf("expected ErrSessionNotFound for expired token rotation, got %v", err)
+	}
+}
+
+func TestRotateLearnerSession_RejectsRevokedToken(t *testing.T) {
+	db := testPool(t)
+	store := NewStore(db)
+	userID := newUUID(t)
+	seedActiveUser(t, db, userID)
+
+	raw, err := store.CreateLearnerSession(context.Background(), userID, "", "", time.Now().Add(24*time.Hour))
+	if err != nil {
+		t.Fatalf("CreateLearnerSession: %v", err)
+	}
+
+	// Get session ID and revoke via Store
+	var sessID string
+	err = db.QueryRow(context.Background(),
+		`SELECT id FROM auth.session WHERE user_id = $1 AND revoked_at IS NULL ORDER BY created_at DESC LIMIT 1`, userID).Scan(&sessID)
+	if err != nil {
+		t.Fatalf("find session: %v", err)
+	}
+	if err := store.RevokeLearnerSession(context.Background(), sessID, userID); err != nil {
+		t.Fatalf("RevokeLearnerSession: %v", err)
+	}
+
+	_, err = store.RotateLearnerSession(context.Background(), raw, "", "", time.Now().Add(24*time.Hour))
+	if !errors.Is(err, ErrSessionNotFound) {
+		t.Errorf("expected ErrSessionNotFound for revoked token rotation, got %v", err)
+	}
+}
+
+func TestRotateLearnerSession_RejectsDisabledUser(t *testing.T) {
+	db := testPool(t)
+	store := NewStore(db)
+	userID := newUUID(t)
+	seedActiveUser(t, db, userID)
+
+	raw, err := store.CreateLearnerSession(context.Background(), userID, "", "", time.Now().Add(24*time.Hour))
+	if err != nil {
+		t.Fatalf("CreateLearnerSession: %v", err)
+	}
+
+	// Disable the user after session creation
+	seedDisabledUser(t, db, userID)
+
+	_, err = store.RotateLearnerSession(context.Background(), raw, "", "", time.Now().Add(24*time.Hour))
+	if !errors.Is(err, ErrSessionNotFound) {
+		t.Errorf("expected ErrSessionNotFound for disabled user rotation, got %v", err)
+	}
+}
+
+func TestRotateAdminSession_RejectsDisabledActor(t *testing.T) {
+	db := testPool(t)
+	store := NewStore(db)
+	actorID := newUUID(t)
+	seedActiveAdmin(t, db, actorID)
+
+	raw, err := store.CreateAdminSession(context.Background(), actorID, "", "", time.Now().Add(24*time.Hour))
+	if err != nil {
+		t.Fatalf("CreateAdminSession: %v", err)
+	}
+
+	// Disable the admin after session creation
+	seedDisabledAdmin(t, db, actorID)
+
+	_, err = store.RotateAdminSession(context.Background(), raw, "", "", time.Now().Add(24*time.Hour))
+	if !errors.Is(err, ErrSessionNotFound) {
+		t.Errorf("expected ErrSessionNotFound for disabled admin rotation, got %v", err)
+	}
+}
+
+func TestRotateAdminSession_ConcurrentWinner(t *testing.T) {
+	db := testPool(t)
+	store := NewStore(db)
+	actorID := newUUID(t)
+	seedActiveAdmin(t, db, actorID)
+
+	raw, err := store.CreateAdminSession(context.Background(), actorID, "", "", time.Now().Add(24*time.Hour))
+	if err != nil {
+		t.Fatalf("CreateAdminSession: %v", err)
+	}
+
+	type result struct {
+		raw string
+		err error
+	}
+	ch := make(chan result, 2)
+	for i := 0; i < 2; i++ {
+		go func() {
+			newRaw, rotErr := store.RotateAdminSession(context.Background(), raw, "", "", time.Now().Add(24*time.Hour))
+			ch <- result{newRaw, rotErr}
+		}()
+	}
+
+	r1 := <-ch
+	r2 := <-ch
+
+	var winner, loser result
+	if r1.err == nil && errors.Is(r2.err, ErrSessionNotFound) {
+		winner, loser = r1, r2
+	} else if r2.err == nil && errors.Is(r1.err, ErrSessionNotFound) {
+		winner, loser = r2, r1
+	} else {
+		t.Fatalf("expected exactly one winner and one ErrSessionNotFound; got (%v, %v)", r1.err, r2.err)
+	}
+
+	if winner.raw == "" {
+		t.Error("winner returned empty raw token")
+	}
+	if !errors.Is(loser.err, ErrSessionNotFound) {
+		t.Errorf("loser expected ErrSessionNotFound, got %v", loser.err)
+	}
+
+	// Winner's new token must be valid
+	sess, err := store.LookupAdminSession(context.Background(), winner.raw)
+	if err != nil {
+		t.Fatalf("winner token lookup failed: %v", err)
+	}
+	if sess.ActorID != actorID {
+		t.Errorf("winner session ActorID = %q, want %q", sess.ActorID, actorID)
+	}
+
+	// Old token must no longer work
+	_, err = store.LookupAdminSession(context.Background(), raw)
+	if !errors.Is(err, ErrSessionNotFound) {
+		t.Errorf("old token should be invalid after rotation, got %v", err)
+	}
+}
