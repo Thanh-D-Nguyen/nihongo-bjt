@@ -1,0 +1,24 @@
+app.__BASE_DOMAIN__ {
+  reverse_proxy 127.0.0.1:3000
+}
+
+admin.__BASE_DOMAIN__ {
+  reverse_proxy 127.0.0.1:3001
+}
+
+api.__BASE_DOMAIN__ {
+  reverse_proxy 127.0.0.1:4000
+}
+
+auth.__BASE_DOMAIN__ {
+  @blocked_admin {
+    path /admin*
+    not remote_ip __ADMIN_IP__/32
+  }
+  respond @blocked_admin 403
+  reverse_proxy 127.0.0.1:8080
+}
+
+media.__BASE_DOMAIN__ {
+  reverse_proxy 127.0.0.1:9000
+}
