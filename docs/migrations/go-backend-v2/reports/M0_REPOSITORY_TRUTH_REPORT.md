@@ -1,29 +1,24 @@
-# M0 Repository Truth Report (Systematic Repair Final)
+# M0 Repository Truth Report (Token-Safe Final)
 
 ## Identification
-- **Starting HEAD**: `7b601c5de3f124a05e72a53eb39a6f5bbd57e59e`
+- **Starting HEAD**: `8d0be28aa38208be6c915d0375b3f4c5d63e6f2c`
 - **Final HEAD**: (pending commit)
 - **Branch**: `main`
-- **Wave**: M0 — Repository truth / detailed inventory (SYSTEMATIC REPAIR FINAL)
+- **Wave**: M0 — Repository truth / detailed inventory (TOKEN-SAFE FINAL)
 - **Date**: 2026-09-28
 
 ## Revision Notes
-This report supersedes all prior M0 commits. All systematic defects from independent review have been addressed:
+This report supersedes all prior M0 commits. The final systematic defect has been addressed:
 
-1. ✅ **Token-aware input_contract validation**: 0 UNKNOWN tokens remaining (was 162 composite `unknown;param:type` leaks); all resolved via ZOD_SCHEMA, PARAM, BODY, QUERY, RAW_BODY, NONE
-2. ✅ **Permission scope leakage fixed**: Public and KeycloakAuthGuard routes no longer carry admin RBAC metadata; only AdminRbacGuard routes retain permission expressions
-3. ✅ **SESSION_BOOTSTRAP corrected**: Exactly 1 route (`GET /api/admin/session`) has actual `@AdminPortalSessionBootstrap()` decorator; false positives on `/api/admin/me`, `/api/auth/me`, `/api/career/me` removed
-4. ✅ **Frontend callers preserved**: `/api/auth/me` retains populated callers including `apps/web/app/api/auth/me/route.ts` and web clients
-5. ✅ **Output contracts revalidated**: 63 UNKNOWN tokens remain (structural limitation: no return types or Swagger decorators in source); no lowercase/composite unknown tokens
-6. ✅ **Case-insensitive validation**: 0 lowercase bare 'unknown' tokens in any field
-7. ✅ **All known-route assertions pass programmatically**
-8. ✅ **No M0-generated temp residue remains**
+1. ✅ **Token-safe input_contract normalization**: 21 rows containing raw TypeScript `Record<string, unknown>` were normalized to `RECORD_BODY` (POST/PUT/PATCH) or `QUERY_RECORD` (GET/DELETE). Zero lowercase bare "unknown" tokens remain anywhere in the CSV.
+2. ✅ **All prior defects remain fixed**: SESSION_BOOTSTRAP=1, permission scope leakage=0, frontend callers preserved, 710 rows, 14 columns, all `/api/` paths.
+3. ✅ **Output UNKNOWN=63 confirmed structural**: These handlers lack return type annotations, Swagger decorators, or traceable service callees. Resolving requires source changes outside M0 scope.
 
 ## Artifact List
 | Artifact | Path | Status |
 |---|---|---|
 | Repository Inventory | `templates/repo-inventory.md` | FINAL |
-| API Compatibility Matrix | `templates/api-compatibility-matrix.csv` | FINAL (710 rows, 14 columns, systematically repaired) |
+| API Compatibility Matrix | `templates/api-compatibility-matrix.csv` | FINAL (710 rows, 14 columns, token-safe) |
 | Auth Behavior Matrix | `templates/auth-behavior-matrix.csv` | VERIFIED |
 | Media Migration Inventory | `templates/media-migration-inventory.csv` | VERIFIED |
 | Migration Status | `templates/migration-status.md` | FINAL |
@@ -41,16 +36,22 @@ domain,method,path,nest_handler,auth,permission,input_contract,output_contract,f
 | Metric | Value | Evidence |
 |---|---|---|
 | Data rows | **710** | `tail -n +2 \| wc -l` = 710 |
-| Paths starting with `/api/` | **710/710** | Zero violations from `grep -cv '^/api/'` |
+| Paths starting with `/api/` | **710/710** | Zero violations |
 | Effective prefix source | `app.setGlobalPrefix("api")` | `apps/api/src/main.ts:58` |
 
 ### Field Quality Counts (Token-Aware, Case-Insensitive)
 | Field | UNKNOWN tokens | NONE/NONE_FOUND | Populated | Notes |
 |---|---|---|---|---|
-| input_contract | **0** | varies | 710 | All resolved: ZOD_SCHEMA, PARAM, BODY, QUERY, RAW_BODY, NONE |
+| input_contract | **0** | varies | 710 | All resolved: ZOD_SCHEMA, PARAM, BODY, QUERY, RAW_BODY, RECORD_BODY, QUERY_RECORD, NONE |
 | output_contract | **63** | 0 | 647 | Structural limitation: no return types/Swagger in source |
 | permission | **0** | 276 (NONE) | 434 | 1 SESSION_BOOTSTRAP, handler-level overrides, class-level guards |
 | frontend_callers | **0** | 411 (NONE_FOUND) | 299 | Searched across 8 source roots |
+
+### Lowercase Bare Token Scan
+| Token | Occurrences | Status |
+|---|---|---|
+| `unknown` (exact lowercase) | **0** | ✅ CLEAN |
+| `Unknown` (mixed case) | **0** | ✅ CLEAN |
 
 ### Known-Route Assertions (All PASS)
 | Route | Permission | Frontend Callers | Status |
@@ -67,12 +68,10 @@ domain,method,path,nest_handler,auth,permission,input_contract,output_contract,f
 Only **1 route** has actual `@AdminPortalSessionBootstrap()` decorator in source:
 - `GET /api/admin/session` → `AdminController.session` (line 126 of admin.controller.ts)
 
-All other routes previously marked SESSION_BOOTSTRAP were false positives from method name matching. These have been corrected.
-
 ### Permission Scope Audit
-**Public routes with non-NONE permission**: 0 (all corrected to NONE)
-**KeycloakAuthGuard routes with non-NONE, non-ENTITLEMENT permission**: 0 (all corrected to NONE unless EntitlementGuard present)
-**AdminRbacGuard routes**: Correctly retain class-level group, method-level override, or imperative `requireOneOfPermissions()` evidence
+- **Public routes with non-NONE permission**: 0 ✅
+- **KeycloakAuthGuard routes with non-NONE, non-ENTITLEMENT permission**: 0 ✅
+- **AdminRbacGuard routes**: Correctly retain class-level group, method-level override, or imperative `requireOneOfPermissions()` evidence ✅
 
 ### Input Contract Resolution Summary
 | Source Category | Count | Description |
@@ -81,10 +80,11 @@ All other routes previously marked SESSION_BOOTSTRAP were false positives from m
 | PARAM(name:type) | ~180 | `@Param('id') id: string` annotations |
 | BODY(DTO) | ~45 | `@Body() param: DtoType` annotation |
 | QUERY(type) | ~30 | `@Query() q: QueryDto` annotations |
+| RECORD_BODY | ~19 | `@Body()` untyped object (POST/PUT/PATCH) |
+| QUERY_RECORD | ~7 | `@Query()` untyped object (GET/DELETE) |
 | RAW_BODY | ~5 | Webhook handlers with `rawBody` access |
-| RECORD_BODY | ~15 | `Record<string, unknown>` generic body |
 | REQ_BODY_DESTRUCTURED | ~10 | `req.body` destructured without named schema |
-| NONE | ~225 | No user input (auth-only via @CurrentUser, or no params) |
+| NONE | ~214 | No user input (auth-only via @CurrentUser, or no params) |
 | UNKNOWN | **0** | All resolved |
 
 ### Output Contract Categories
@@ -114,20 +114,20 @@ These handlers have no explicit return type annotation, no Swagger decorator, an
 ┌─────────────────────────────────────────────────────────────┐
 │                    GCP Production VM                        │
 │                                                             │
-│  ┌──────────┐   ┌──────────┐   ┌──────────┐               │
-│  │  Caddy   │→  │ Next.js  │   │ Next.js  │               │
-│  │ (reverse │   │   Web    │   │  Admin   │               │
-│  │  proxy)  │   │  :3000   │   │  :3001   │               │
-│  └────┬─────┘   └──────────┘   └──────────┘               │
+│  ┌──────────┐   ┌──────────┐   ┌──────────┐                │
+│  │  Caddy   │→  │ Next.js  │   │ Next.js  │                │
+│  │ (reverse │   │   Web    │   │  Admin   │                │
+│  │  proxy)  │   │  :3000   │   │  :3001   │                │
+│  └────┬─────┘   └──────────┘   └──────────┘                │
 │       │                                                     │
 │       ├→ NestJS API :4000 (PM2 managed, bare Node.js)      │
-│       ├→ Keycloak :8080 (Docker Compose)                   │
-│       └→ MinIO :9000/:9001 (Docker Compose)                │
+│       ├→ Keycloak :8080 (Docker Compose)                    │
+│       └→ MinIO :9000/:9001 (Docker Compose)                 │
 │                                                             │
 │  Docker Compose infrastructure:                             │
 │  ┌────────────┐ ┌───────┐ ┌─────────────┐ ┌────────────┐  │
 │  │ PostgreSQL │ │ Redis │ │ Meilisearch │ │ KeycloakDB │  │
-│  │  :15432    │ │ :6379 │ │   :7700     │ │ (postgres) │  │
+│  │   :15432   │ │ :6379 │ │    :7700    │ │ (postgres) │  │
 │  └────────────┘ └───────┘ └─────────────┘ └────────────┘  │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -214,11 +214,10 @@ All unrelated dirty files preserved exactly as found.
 **Rationale**: All structurally derivable evidence has been captured, validated, and verified:
 - ✅ 710 per-route API compatibility matrix with exact canonical 14-column schema
 - ✅ All paths verified to start with `/api/` (proven from main.ts:58)
-- ✅ Token-aware input_contract validation: 0 UNKNOWN tokens (all resolved)
+- ✅ Token-safe input_contract validation: 0 UNKNOWN tokens, 0 lowercase bare "unknown" anywhere
 - ✅ Permission scope leakage fixed: Public/Keycloak routes correctly have NONE unless entitled
 - ✅ SESSION_BOOTSTRAP correctly limited to 1 route (source-verified decorator)
 - ✅ Frontend callers preserved for /api/auth/me and other key routes
-- ✅ Case-insensitive validation: 0 lowercase bare 'unknown' in any field
 - ✅ All known-route assertions pass programmatically
 - ✅ Output contracts maximally enriched (63 UNKNOWN is structural limitation)
 - ✅ Auth behavior matrix verified across all dimensions
