@@ -1,10 +1,11 @@
 // Package authn provides HTTP session authentication guards for learner and admin sessions.
-// These guards validate opaque session cookies against the PostgreSQL session store.
+// These guards validate opaque session cookies against a session lookup seam.
 // They do NOT implement login endpoints or credential verification.
 package authn
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -33,6 +34,13 @@ type AdminIdentity struct {
 	ActorID   string
 }
 
+// SessionLookup is the subset of session.Store used by guards.
+// This interface enables unit testing without a real database.
+type SessionLookup interface {
+	LookupLearnerSession(ctx context.Context, rawToken string) (*session.LearnerSession, error)
+	LookupAdminSession(ctx context.Context, rawToken string) (*session.AdminSession, error)
+}
+
 // GuardConfig holds configuration for session guards.
 type GuardConfig struct {
 	LearnerCookieName string // default: "bjt_web_session"
@@ -49,10 +57,17 @@ func DefaultGuardConfig(logger *slog.Logger) GuardConfig {
 	}
 }
 
+// jsonError writes a JSON error response with the given status code.
+func jsonError(w http.ResponseWriter, msg string, status int) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(map[string]string{"error": msg})
+}
+
 // LearnerGuard returns middleware that validates a learner session cookie and injects
 // LearnerIdentity into the request context. Returns 401 for missing/invalid/expired/revoked/disabled sessions.
 // Does NOT touch health routes — caller should mount only on authenticated route groups.
-func LearnerGuard(store *session.Store, cfg GuardConfig) func(http.Handler) http.Handler {
+func LearnerGuard(store SessionLookup, cfg GuardConfig) func(http.Handler) http.Handler {
 	cookieName := cfg.LearnerCookieName
 	if cookieName == "" {
 		cookieName = "bjt_web_session"
@@ -66,18 +81,18 @@ func LearnerGuard(store *session.Store, cfg GuardConfig) func(http.Handler) http
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			raw := extractCookie(r, cookieName)
 			if raw == "" {
-				http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
+				jsonError(w, "unauthorized", http.StatusUnauthorized)
 				return
 			}
 
 			sess, err := store.LookupLearnerSession(r.Context(), raw)
 			if err != nil {
 				if errors.Is(err, session.ErrSessionNotFound) || errors.Is(err, session.ErrInvalidToken) {
-					http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
+					jsonError(w, "unauthorized", http.StatusUnauthorized)
 					return
 				}
 				logger.Error("learner session lookup failed", "error", err)
-				http.Error(w, `{"error":"internal"}`, http.StatusInternalServerError)
+				jsonError(w, "internal", http.StatusInternalServerError)
 				return
 			}
 
@@ -92,7 +107,7 @@ func LearnerGuard(store *session.Store, cfg GuardConfig) func(http.Handler) http
 
 // AdminGuard returns middleware that validates an admin session cookie and injects
 // AdminIdentity into the request context. Returns 401 for missing/invalid/expired/revoked/disabled sessions.
-func AdminGuard(store *session.Store, cfg GuardConfig) func(http.Handler) http.Handler {
+func AdminGuard(store SessionLookup, cfg GuardConfig) func(http.Handler) http.Handler {
 	cookieName := cfg.AdminCookieName
 	if cookieName == "" {
 		cookieName = "bjt_admin_session"
@@ -106,18 +121,18 @@ func AdminGuard(store *session.Store, cfg GuardConfig) func(http.Handler) http.H
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			raw := extractCookie(r, cookieName)
 			if raw == "" {
-				http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
+				jsonError(w, "unauthorized", http.StatusUnauthorized)
 				return
 			}
 
 			sess, err := store.LookupAdminSession(r.Context(), raw)
 			if err != nil {
 				if errors.Is(err, session.ErrSessionNotFound) || errors.Is(err, session.ErrInvalidToken) {
-					http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
+					jsonError(w, "unauthorized", http.StatusUnauthorized)
 					return
 				}
 				logger.Error("admin session lookup failed", "error", err)
-				http.Error(w, `{"error":"internal"}`, http.StatusInternalServerError)
+				jsonError(w, "internal", http.StatusInternalServerError)
 				return
 			}
 

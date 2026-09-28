@@ -17,7 +17,7 @@ import (
 // Algorithm identifier stored in encoded records.
 const algorithmID = "argon2id"
 
-// Default parameters for new hashes. These are conservative starting values;
+// Default parameters for new hashes. Conservative starting values;
 // production should benchmark on Oracle A1 per canonical spec.
 const (
 	DefaultMemoryKiB   = 64 * 1024 // 64 MiB
@@ -28,13 +28,16 @@ const (
 )
 
 // Parameter bounds to prevent DoS via oversized hash requests.
+// Caps are aligned to ~3× default budget (<=128MiB, <=6 rounds, <=4 lanes)
+// to allow modest tuning while bounding worst-case cost on ARM64 targets.
 const (
-	MaxMemoryKiB   = 1024 * 1024 // 1 GiB
-	MaxIterations  = 100
-	MaxParallelism = 16
-	MaxHashLen     = 128
+	MaxMemoryKiB   = 128 * 1024 // 128 MiB
+	MaxIterations  = 6
+	MaxParallelism = 4
+	MaxHashLen     = 64
 	MaxSaltLen     = 64
-	MaxEncodedLen  = 1024
+	MaxEncodedLen  = 512
+	MaxPasswordLen = 1024 // bytes; rejects unbounded attacker input before work
 )
 
 var (
@@ -42,6 +45,7 @@ var (
 	ErrUnsupportedAlgo = errors.New("credential: unsupported algorithm")
 	ErrInvalidParams   = errors.New("credential: invalid parameters")
 	ErrMismatch        = errors.New("credential: password mismatch")
+	ErrPasswordTooLong = errors.New("credential: password exceeds max length")
 )
 
 // Params holds Argon2id hashing parameters.
@@ -86,7 +90,11 @@ func (p Params) Validate() error {
 
 // Hash generates an Argon2id hash of the password with random salt and returns
 // a self-describing encoded string: $argon2id$v=<ver>$m=<mem>,t=<iter>,p=<par>$<salt_b64>$<hash_b64>
+// Rejects passwords longer than MaxPasswordLen before any allocation or work.
 func Hash(password []byte, p Params) (string, error) {
+	if len(password) > MaxPasswordLen {
+		return "", ErrPasswordTooLong
+	}
 	if err := p.Validate(); err != nil {
 		return "", err
 	}
@@ -108,8 +116,11 @@ func Hash(password []byte, p Params) (string, error) {
 
 // Verify compares a password against an encoded hash record using constant-time
 // comparison. Returns nil on match, ErrMismatch on wrong password, or other
-// errors for malformed/unsupported records.
+// errors for malformed/unsupported records. Rejects oversized passwords before work.
 func Verify(password []byte, encoded string) error {
+	if len(password) > MaxPasswordLen {
+		return ErrPasswordTooLong
+	}
 	p, salt, expectedHash, err := Decode(encoded)
 	if err != nil {
 		return err
@@ -192,22 +203,41 @@ func parseVersion(s string) (uint32, error) {
 
 func parseParams(s string) (Params, error) {
 	var p Params
+	seen := map[string]bool{}
 	for _, kv := range strings.Split(s, ",") {
 		eq := strings.IndexByte(kv, '=')
 		if eq < 0 {
 			return Params{}, fmt.Errorf("%w: missing '=' in param segment %q", ErrMalformedRecord, kv)
 		}
 		key, val := kv[:eq], kv[eq+1:]
-		n, err := strconv.ParseUint(val, 10, 32)
+		if key == "" {
+			return Params{}, fmt.Errorf("%w: empty param key", ErrMalformedRecord)
+		}
+		if seen[key] {
+			return Params{}, fmt.Errorf("%w: duplicate param key %q", ErrMalformedRecord, key)
+		}
+		seen[key] = true
+
+		n, err := strconv.ParseUint(val, 10, 64)
 		if err != nil {
 			return Params{}, fmt.Errorf("%w: invalid param value %q=%q: %v", ErrMalformedRecord, key, val, err)
 		}
+
 		switch key {
 		case "m":
+			if n > uint64(MaxMemoryKiB) {
+				return Params{}, fmt.Errorf("%w: memory_kib %d exceeds max %d", ErrInvalidParams, n, MaxMemoryKiB)
+			}
 			p.MemoryKiB = uint32(n)
 		case "t":
+			if n > uint64(MaxIterations) {
+				return Params{}, fmt.Errorf("%w: iterations %d exceeds max %d", ErrInvalidParams, n, MaxIterations)
+			}
 			p.Iterations = uint32(n)
 		case "p":
+			if n > uint64(MaxParallelism) {
+				return Params{}, fmt.Errorf("%w: parallelism %d exceeds max %d", ErrInvalidParams, n, MaxParallelism)
+			}
 			p.Parallelism = uint8(n)
 		default:
 			return Params{}, fmt.Errorf("%w: unknown param key %q", ErrMalformedRecord, key)
