@@ -1,11 +1,11 @@
 # Migration Status (Revised)
 ## Current checkpoint
-- Wave: M1 (complete) → M2 next
+- Wave: M2 (persistence complete, credential gate pending) → M3 scaffolding next (verifier blocked)
 - Accepted M0 checkpoint: `8808472426195547c779c662981d8dc582b580ca`
 - Accepted H0 checkpoint: `17c3e606b0a333103445ed054582b726bff52781`
-- M1 commits: `54ef68d4` (initial, REVISE), `1f76f8ce` (repair round 1), `b80a174d` (dependency alignment), (pending final typed-nil fix)
-- M1 report: `reports/M1_GO_FOUNDATION_REPORT.md`
-- Status: M1_PASS — typed-nil Redis interface fixed at composition boundary; Docker ARM64 build and container validation PASS (live=200, ready=503 with safe JSON); toolchain aligned to Go 1.23; all verification passes with GOTOOLCHAIN=go1.23.0
+- Accepted M1 checkpoint: `0cb530224b8f4cedaea37b442254c2835bc03d08`
+- M2 report: `reports/M2_AUTH_PERSISTENCE_REPORT.md`
+- Status: M2_PERSISTENCE_PASS_CREDENTIAL_GATE_PENDING — additive auth/session schema (4 tables in auth schema) validated and integration-tested on disposable Postgres; Keycloak credential HARD GATE classified GATED_UNKNOWN_PRODUCTION (dev defaults confirmed Argon2id v1.3 m=7168 t=5 p=1 len=32, production format unverified); M3 credential verifier BLOCKED until production format confirmed
 ## Completed
 - Repository inventory captured (100 controllers, 710 HTTP routes, 174 Prisma models, 22 PostgreSQL schemas)
 - API compatibility matrix COMPLETE: 710 per-route rows extracted from all 100 controller files
