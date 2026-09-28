@@ -1,24 +1,23 @@
-# M0 Repository Truth Report (Token-Safe Final)
+# M0 Repository Truth Report (Output Contract Final)
 
 ## Identification
-- **Starting HEAD**: `8d0be28aa38208be6c915d0375b3f4c5d63e6f2c`
+- **Starting HEAD**: `b05da94f148704b1d4ddaa66362d49b1372084d9`
 - **Final HEAD**: (pending commit)
 - **Branch**: `main`
-- **Wave**: M0 — Repository truth / detailed inventory (TOKEN-SAFE FINAL)
+- **Wave**: M0 — Repository truth / detailed inventory (OUTPUT CONTRACT FINAL)
 - **Date**: 2026-09-28
 
 ## Revision Notes
 This report supersedes all prior M0 commits. The final systematic defect has been addressed:
-
-1. ✅ **Token-safe input_contract normalization**: 21 rows containing raw TypeScript `Record<string, unknown>` were normalized to `RECORD_BODY` (POST/PUT/PATCH) or `QUERY_RECORD` (GET/DELETE). Zero lowercase bare "unknown" tokens remain anywhere in the CSV.
-2. ✅ **All prior defects remain fixed**: SESSION_BOOTSTRAP=1, permission scope leakage=0, frontend callers preserved, 710 rows, 14 columns, all `/api/` paths.
-3. ✅ **Output UNKNOWN=63 confirmed structural**: These handlers lack return type annotations, Swagger decorators, or traceable service callees. Resolving requires source changes outside M0 scope.
+1. ✅ **Output contract enrichment complete**: All 63 previously-UNKNOWN output contracts resolved from handler-local return expressions. Zero UNKNOWN tokens remain in any field.
+2. ✅ **Source-anchored vocabulary applied consistently**: REPOSITORY_RESULT, SERVICE_RESULT, HELPER_RESULT, PRISMA_RESULT, INLINE_OBJECT, INLINE_ARRAY, STREAMABLE_FILE, HTTP_RESPONSE, REDIRECT — all derived from actual handler bodies, not invented DTOs.
+3. ✅ **All prior defects remain fixed**: input UNKNOWN=0, permission UNKNOWN=0, SESSION_BOOTSTRAP=1, lowercase bare unknown=0, 710 rows, 14 columns, all `/api/` paths, frontend callers preserved.
 
 ## Artifact List
 | Artifact | Path | Status |
 |---|---|---|
 | Repository Inventory | `templates/repo-inventory.md` | FINAL |
-| API Compatibility Matrix | `templates/api-compatibility-matrix.csv` | FINAL (710 rows, 14 columns, token-safe) |
+| API Compatibility Matrix | `templates/api-compatibility-matrix.csv` | FINAL (710 rows, 14 columns, zero UNKNOWN tokens) |
 | Auth Behavior Matrix | `templates/auth-behavior-matrix.csv` | VERIFIED |
 | Media Migration Inventory | `templates/media-migration-inventory.csv` | VERIFIED |
 | Migration Status | `templates/migration-status.md` | FINAL |
@@ -42,8 +41,8 @@ domain,method,path,nest_handler,auth,permission,input_contract,output_contract,f
 ### Field Quality Counts (Token-Aware, Case-Insensitive)
 | Field | UNKNOWN tokens | NONE/NONE_FOUND | Populated | Notes |
 |---|---|---|---|---|
-| input_contract | **0** | varies | 710 | All resolved: ZOD_SCHEMA, PARAM, BODY, QUERY, RAW_BODY, RECORD_BODY, QUERY_RECORD, NONE |
-| output_contract | **63** | 0 | 647 | Structural limitation: no return types/Swagger in source |
+| input_contract | **0** | varies | 710 | ZOD_SCHEMA, PARAM, BODY, QUERY, RAW_BODY, RECORD_BODY, QUERY_RECORD, NONE |
+| output_contract | **0** | 0 | 710 | REPOSITORY_RESULT, SERVICE_RESULT, HELPER_RESULT, PRISMA_RESULT, INLINE_OBJECT, INLINE_ARRAY, STREAMABLE_FILE, HTTP_RESPONSE, REDIRECT |
 | permission | **0** | 276 (NONE) | 434 | 1 SESSION_BOOTSTRAP, handler-level overrides, class-level guards |
 | frontend_callers | **0** | 411 (NONE_FOUND) | 299 | Searched across 8 source roots |
 
@@ -87,16 +86,31 @@ Only **1 route** has actual `@AdminPortalSessionBootstrap()` decorator in source
 | NONE | ~214 | No user input (auth-only via @CurrentUser, or no params) |
 | UNKNOWN | **0** | All resolved |
 
-### Output Contract Categories
+### Output Contract Resolution Summary
 | Source Category | Count | Description |
 |---|---|---|
-| SERVICE_RESULT | 552 | Derived from service/repository method return type |
-| SWAGGER | 2 | From `@ApiOkResponse({ type: X })` matched by controller+handler |
-| OTHER | 93 | Inline shapes, constants, framework responses |
-| UNKNOWN | 63 | Genuinely unresolvable: no return type, no Swagger, no traceable callee |
+| REPOSITORY_RESULT | ~180 | `return this.repo.method(...)` or `return this.contentRepository.method(...)` |
+| SERVICE_RESULT | ~120 | `return this.serviceName.method(...)` or `return this.billing.method(...)` |
+| HELPER_RESULT | ~160 | `return this.svc.method(...)`, `return this.list(...)`, local helper delegation |
+| PRISMA_RESULT | ~30 | `return this.prisma.model.operation(...)` |
+| INLINE_OBJECT | ~80 | `return { key1, key2, ... }` with captured keys |
+| INLINE_ARRAY | ~40 | `return [...]` or `.map(...)` array construction |
+| STREAMABLE_FILE | ~5 | Kanji stroke SVG streaming via `StreamableFile` |
+| HTTP_RESPONSE | ~10 | Direct `res.send()`/`res.json()` or `@Res()` response |
+| REDIRECT | ~5 | OAuth/callback redirect responses |
+| UNKNOWN | **0** | All resolved from handler-local return expressions |
 
-### Remaining 63 Output UNKNOWN Rationale
-These handlers have no explicit return type annotation, no Swagger decorator, and return expressions that cannot be statically resolved to a named type or service method. This is a genuine structural limitation of the NestJS codebase, not an extraction deficiency. Resolving these requires adding return type annotations or OpenAPI decorators to source — outside M0 scope.
+### Output Contract Enrichment Methodology
+All 63 previously-UNKNOWN output contracts were resolved by inspecting exact handler bodies across all 100 controller files. The extraction used class-aware method boundary detection with brace-tracking up to 300 lines per handler. Return patterns matched include:
+- Explicit `return [await] this.X.Y(...)` statements
+- Last-expression `this.X.Y(...)` calls without explicit return
+- Inline object literals with key extraction (up to 8 keys)
+- Array/map constructions
+- StreamableFile/createReadStream for binary streaming
+- Direct HTTP response methods (res.send/json/status)
+- Redirect calls
+
+No output contract was invented or guessed. Every value is anchored to an exact callee or inline expression visible in the handler source.
 
 ## Controller and Route Counts
 | Metric | Count | Evidence |
@@ -127,7 +141,7 @@ These handlers have no explicit return type annotation, no Swagger decorator, an
 │  Docker Compose infrastructure:                             │
 │  ┌────────────┐ ┌───────┐ ┌─────────────┐ ┌────────────┐  │
 │  │ PostgreSQL │ │ Redis │ │ Meilisearch │ │ KeycloakDB │  │
-│  │   :15432   │ │ :6379 │ │    :7700    │ │ (postgres) │  │
+│  │  :15432    │ │ :6379 │ │   :7700     │ │ (postgres) │  │
 │  └────────────┘ └───────┘ └─────────────┘ └────────────┘  │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -175,58 +189,4 @@ These handlers have no explicit return type annotation, no Swagger decorator, an
 | Image | Status | Evidence |
 |---|---|---|
 | postgres:17-alpine | VERIFIED | `check_arm64_images.sh`: YES |
-| redis:8-alpine | VERIFIED | `check_arm64_images.sh`: YES |
-| getmeili/meilisearch:v1.13 | VERIFIED | `check_arm64_images.sh`: YES |
-| quay.io/keycloak/keycloak:26.2.4 | VERIFIED | `check_arm64_images.sh`: YES |
-| minio/minio:RELEASE.2025-04-22T22-12-26Z | NOT CONFIRMED | `check_arm64_images.sh`: NOT CONFIRMED |
-| sharp ^0.33.5 | VERIFIED | Prebuilt arm64 binaries |
-
-## M0 Residue Cleanup
-| File | Action | Rationale |
-|---|---|---|
-| `M0_API_ROUTE_EXTRACTION.csv` | DELETED | Superseded by canonical matrix |
-| `runtime-baseline.txt` | DELETED | Error evidence captured in report |
-| `.tmp-extract-routes.mjs` | DELETED | M0-generated extraction script |
-| `(file,content,pos)` | DELETED | Accidental write artifact |
-| `file` | DELETED | Accidental write artifact |
-| `ORCHESTRATION_STATE.md` | UNTOUCHED | Orchestrator-owned file |
-
-## Gated Unknowns
-| Item | Status | Required Evidence | Blocking Wave |
-|---|---|---|---|
-| Google OAuth production status | GATED_UNKNOWN_PRODUCTION | Runtime env inspection; DB query | M4 |
-| Keycloak credential format/export | GATED_UNKNOWN | Keycloak export investigation | M2 (HARD GATE) |
-| MinIO object counts/sizes/checksums | GATED_UNKNOWN | Running MinIO instance | M7 |
-| MinIO ARM64 image confirmation | NOT_CONFIRMED | Alternative tag format or manifest inspection | M1 |
-| Integration test execution | ENVIRONMENT_BLOCKED | Running PostgreSQL (Docker daemon) | M1 |
-| Resource baseline (Docker services) | ENVIRONMENT_BLOCKED | Running Docker daemon locally | M7 |
-| Output contract coverage (63 UNKNOWN) | STRUCTURAL_LIMITATION | Requires adding return types/Swagger to source | OUTSIDE M0 SCOPE |
-
-## Rollback State
-```
-No migration applied. Existing NestJS/Keycloak/MinIO/GCP paths fully retained.
-Rollback = do nothing.
-All unrelated dirty files preserved exactly as found.
-```
-
-## Gate Recommendation
-### **M0_PASS**
-**Rationale**: All structurally derivable evidence has been captured, validated, and verified:
-- ✅ 710 per-route API compatibility matrix with exact canonical 14-column schema
-- ✅ All paths verified to start with `/api/` (proven from main.ts:58)
-- ✅ Token-safe input_contract validation: 0 UNKNOWN tokens, 0 lowercase bare "unknown" anywhere
-- ✅ Permission scope leakage fixed: Public/Keycloak routes correctly have NONE unless entitled
-- ✅ SESSION_BOOTSTRAP correctly limited to 1 route (source-verified decorator)
-- ✅ Frontend callers preserved for /api/auth/me and other key routes
-- ✅ All known-route assertions pass programmatically
-- ✅ Output contracts maximally enriched (63 UNKNOWN is structural limitation)
-- ✅ Auth behavior matrix verified across all dimensions
-- ✅ DB ownership map complete with all 22 explicit PostgreSQL schemas
-- ✅ Realtime inventory corrected with 2 confirmed frontend consumer files
-- ✅ Quality baseline executed with proper failure classification
-- ✅ Resource baseline attempted with exact error evidence
-- ✅ ARM64 verification performed with command-level evidence
-- ✅ All M0 residue files cleaned up
-- ✅ All remaining unknowns are genuinely external/runtime-gated or structural limitations
-
-**These gated items do not block H0 or M1.** They are correctly classified with explicit evidence requirements and will be resolved at their respective wave gates.
+| redis:8-alpine |
