@@ -12,6 +12,8 @@
   - `621320b0` — repair round 1 (test helper deletion staged, unexported context key, generic deny)
   - `3c4603d1` — coverage/helper removal (direct rotation rejection tests, testing.go deletion confirmed)
   - `c45eddbc` — final repair (admin revoked-token rotation test, txCtx wording corrected)
+- `7db1e777` — documentation-only report correction (cumulative commits, rollback, ARM64 path)
+- `<pending>` — test harness fix: seedRoleWithPermission distinct placeholders for varchar/text; production-like PG17 verification
 
 ## Scope
 Atomic learner/admin session rotation in `session.Store`; composed admin authorization middleware (`AdminGuard` → `RequirePermission`/`RequireAnyPermission`) using existing `authz.Store.LoadPrincipal`; PostgreSQL 17 integration tests for rotation and RBAC against disposable DB. No login endpoints, no credential verifier, no client routing changes, no schema migration. Production Keycloak credential format remains GATED_UNKNOWN_PRODUCTION; this work is independent.
@@ -63,9 +65,11 @@ Independent review identified five blocking findings. All addressed:
 | go test -race | `GOTOOLCHAIN=go1.23.0 go test -race ./...` | ✅ PASS |
 | ARM64 build | `GOTOOLCHAIN=go1.23.0 GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -o /tmp/api-go-m3-final ./cmd/api` | ✅ PASS (ELF ARM aarch64 static) |
 
-### PostgreSQL 17 Integration Tests (Disposable DB)
+### PostgreSQL 17 Integration Tests (Production-Like Schema)
 
-**Environment**: Disposable `postgres:17-alpine` container (`m3-revise-pg`), database `m3session`, M2 auth persistence schema + authz RBAC stub tables applied. Port 15433.
+**Environment**: Fresh disposable `postgres:17-alpine` container (`m3-prodlike-pg`), database `m3prodlike`. Parent tables created with **production-exact column types** (`authz.admin_role.code VARCHAR(80)`, `authz.admin_role.name TEXT`, `authz.admin_permission.code VARCHAR(120)`, `authz.admin_actor.status VARCHAR(32)`, `profile.user_profile.status VARCHAR(32)`). M2 auth session persistence migration applied. Port 15435.
+
+This verification was added after independent Sol review found that prior disposable DB tests used stub tables where `admin_role.code` and `admin_role.name` had identical types, masking a real `SQLSTATE 42P08` parameter type inference failure in the `seedRoleWithPermission` test harness. The harness was fixed to use distinct placeholders (`$1`, `$2`) for varchar and text columns.
 
 | Run | Package | Duration | Result |
 |---|---|---|---|
@@ -76,7 +80,7 @@ Independent review identified five blocking findings. All addressed:
 
 Command: `TEST_DATABASE_URL=<disposable-pg17-url> GOTOOLCHAIN=go1.23.0 go test ./internal/session ./internal/authz -count=2`
 
-Both runs executed against the same disposable DB instance, proving repeatability. Connection string supplied via environment variable only; no credentials appear in logs, reports, or committed artifacts.
+Both runs executed against the same fresh production-like DB instance, proving repeatability with schema-faithful column types. Connection string supplied via environment variable only; no credentials appear in logs, reports, or committed artifacts.
 
 ### Unit Test Coverage (No DB Required)
 
@@ -98,7 +102,7 @@ Both runs executed against the same disposable DB instance, proving repeatabilit
 
 ## Rollback
 
-Code-level only. No schema changes. Revert all five M3 remainder commits after accepted base `a0522664` in reverse chronological order: `c45eddbc`, `3c4603d1`, `621320b0`, `02fd4874`, `a2dd34d0`. Existing M2 session tables remain intact. No data migration to reverse. Do not use history rewrite.
+Code-level only. No schema changes. Revert all six M3 remainder commits after accepted base `a0522664` in reverse chronological order: `<pending>`, `7db1e777`, `c45eddbc`, `3c4603d1`, `621320b0`, `02fd4874`, `a2dd34d0`. Existing M2 session tables remain intact. No data migration to reverse. Do not use history rewrite.
 
 ## M3 Full Credential Gate Status
 

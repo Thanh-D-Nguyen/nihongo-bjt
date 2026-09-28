@@ -69,7 +69,7 @@ func seedRoleWithPermission(t *testing.T, db *pgxpool.Pool, actorID, roleCode, p
 	defer cancel()
 
 	var roleID string
-	err := db.QueryRow(ctx, `INSERT INTO authz.admin_role (code, name, status) VALUES ($1, $1, 'active') ON CONFLICT (code) DO UPDATE SET status = 'active' RETURNING id`, roleCode).Scan(&roleID)
+	err := db.QueryRow(ctx, `INSERT INTO authz.admin_role (code, name, status) VALUES ($1, $2, 'active') ON CONFLICT (code) DO UPDATE SET status = 'active' RETURNING id`, roleCode, roleCode).Scan(&roleID)
 	if err != nil {
 		t.Fatalf("seed role: %v", err)
 	}
