@@ -15,6 +15,7 @@ import (
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/config"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/credential"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/jobs"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/postgres"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/profile"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/redisx"
@@ -32,6 +33,7 @@ type App struct {
 	RBACStore    *authz.Store
 	RateLimiter  *authn.RateLimiter
 	Server       *httpserver.Server
+	Scheduler    *jobs.Scheduler
 	Version      string
 }
 
@@ -93,6 +95,16 @@ func New(version string) (*App, error) {
 	router := httpserver.NewRouter(deps)
 	server := httpserver.NewServer(deps, router)
 
+	// Background jobs scheduler — config-driven enable/disable for cutover.
+	jobsCfg := jobs.LoadConfig()
+	scheduler := jobs.NewScheduler(dbPool, logger, jobsCfg)
+	handlers := jobs.NewHandlers(dbPool, logger, jobsCfg)
+	if err := jobs.RegisterAll(scheduler, handlers); err != nil {
+		dbPool.Close()
+		return nil, fmt.Errorf("app: jobs registration: %w", err)
+	}
+	scheduler.Start()
+
 	return &App{
 		Config:       cfg,
 		Logger:       logger,
@@ -103,6 +115,7 @@ func New(version string) (*App, error) {
 		RBACStore:    rbacStore,
 		RateLimiter:  rateLimiter,
 		Server:       server,
+		Scheduler:    scheduler,
 		Version:      version,
 	}, nil
 }
@@ -113,6 +126,9 @@ func (a *App) Shutdown(ctx context.Context) {
 
 	if err := a.Server.Shutdown(ctx); err != nil {
 		a.Logger.Error("HTTP server shutdown error", "error", err)
+	}
+	if a.Scheduler != nil {
+		a.Scheduler.Stop()
 	}
 	if a.RateLimiter != nil {
 		a.RateLimiter.Stop()
