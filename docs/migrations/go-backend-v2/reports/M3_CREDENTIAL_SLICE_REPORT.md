@@ -2,7 +2,7 @@
 
 - **Date:** 2026-09-29
 - **Scope:** Credential store (`internal/credential`) — Argon2id PHC mapping to M2 columnar schema, focused unit tests, integration test harness repair.
-- **Status:** PASS (default suite). PG17 integration SKIPPED (no `TEST_DATABASE_URL` in this environment).
+- **Status:** Credential slice PASS after Sol review. PG17 integration PASS ×2 on a disposable PostgreSQL 17 database with M2 tables and production-like UUID parent tables. Full M3 remains PENDING.
 - **Not in scope:** Login handler, rate limiter, session creation wiring (draft files remain uncommitted; see Pending Items).
 
 ## Changes
@@ -52,15 +52,12 @@ $ gofmt -l internal/credential/
 ```
 
 **Default suite:** 171 passed, 0 failed, 63 skipped (integration tests skipped without DB).
-**Race detector:** PASS on credential package.
-**Vet:** Clean.
-**Gofmt:** Clean.
+**Sol independent verification (2026-09-29):** `GOTOOLCHAIN=go1.23.0 go test ./...`, `go test -race ./...`, `go vet ./...`, `gofmt -l internal/credential`, and `git diff --check` PASS. With `TEST_DATABASE_URL` pointing at the existing disposable PostgreSQL 17 `m3session` database, `GOTOOLCHAIN=go1.23.0 go test ./internal/credential -count=2 -v` PASS; learner/admin credential insert, read, verify, upsert, missing and malformed-row integration cases each ran twice. The password was supplied through the local container environment and was not logged or committed.
 
 ## Skipped Gates
 
 | Gate | Reason |
 |------|--------|
-| PG17 integration tests ×2 | `TEST_DATABASE_URL` not set in this environment. Integration tests are wired and will run when a disposable PG17 with M2 schema is available. |
 | Full M3 PASS | Login handler, rate limiter, and session creation wiring are draft/unreviewed. Not committed. |
 
 ## Pending Items (Uncommitted Drafts)
