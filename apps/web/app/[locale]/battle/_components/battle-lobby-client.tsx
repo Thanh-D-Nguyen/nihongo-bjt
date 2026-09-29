@@ -334,7 +334,6 @@ function LobbyRosterColumn({
 
 export function BattleLobbyClient() {
   const {
-    accessToken,
     battleMode,
     botChoices,
     botChoicesLoading,
@@ -658,7 +657,6 @@ export function BattleLobbyClient() {
       {/* Available battle configs from admin */}
       <div className="mt-4">
         <BattleConfigsPanel
-          accessToken={accessToken}
           labels={labels}
           locale={locale}
           onSelectConfig={setSelectedConfig}

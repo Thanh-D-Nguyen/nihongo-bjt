@@ -4,8 +4,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"],
-      "@nihongo-bjt/keycloak-oidc": ["../../packages/keycloak-oidc/src/index.ts"]
-    },
+          },
     "allowJs": false,
     "incremental": true,
     "isolatedModules": true,

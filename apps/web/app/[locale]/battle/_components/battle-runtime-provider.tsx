@@ -43,6 +43,7 @@ type BattleRuntimeContextValue = {
   labels: BattlePageLabels;
   locale: string;
   userId: string | null;
+  /** @deprecated Always null for Go-native cookie auth; retained for interface compatibility. */
   accessToken: string | null;
   learnerDisplayName: string;
   socketConnected: boolean;
@@ -152,7 +153,7 @@ export function BattleRuntimeProvider({
   const handledUrlIntentsRef = useRef<Set<string>>(new Set());
   const lobbyJoinedRef = useRef(false);
   const pendingLobbyActionsRef = useRef<Array<(socket: Socket) => void>>([]);
-  const { accessToken, displayName, email, userId } = useKeycloakAuth();
+  const { displayName, email, isAuthenticated, userId } = useKeycloakAuth();
   const [answerPending, setAnswerPending] = useState(false);
   const [answerResult, setAnswerResult] = useState<AnswerResultEvent | null>(null);
   const [botChoices, setBotChoices] = useState<BattleBotStageProfile[]>(fallbackBotChoices);
@@ -512,7 +513,7 @@ export function BattleRuntimeProvider({
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      if (!accessToken) {
+      if (!isAuthenticated) {
         setBotChoices(fallbackBotChoices);
         return;
       }
@@ -520,7 +521,7 @@ export function BattleRuntimeProvider({
       try {
         const response = await fetch(`${apiBase}/api/battle/bots`, {
           cache: "no-store",
-          headers: { Authorization: `Bearer ${accessToken}` }
+          credentials: "include"
         });
         if (!response.ok) {
           if (!cancelled) setBotChoices(fallbackBotChoices);
@@ -545,12 +546,12 @@ export function BattleRuntimeProvider({
     return () => {
       cancelled = true;
     };
-  }, [accessToken, botKey]);
+  }, [isAuthenticated, botKey]);
 
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      if (!accessToken || !userId) {
+      if (!isAuthenticated || !userId) {
         setLobbyMessages([]);
         return;
       }
@@ -558,7 +559,7 @@ export function BattleRuntimeProvider({
         const params = new URLSearchParams({ limit: "40", roomKey: "global", userId });
         const response = await fetch(`${apiBase}/api/battle/chat/recent?${params.toString()}`, {
           cache: "no-store",
-          headers: { Authorization: `Bearer ${accessToken}` }
+          credentials: "include"
         });
         if (!response.ok) return;
         const data = (await response.json()) as LobbyMessage[];
@@ -570,7 +571,7 @@ export function BattleRuntimeProvider({
     return () => {
       cancelled = true;
     };
-  }, [accessToken, userId]);
+  }, [isAuthenticated, userId]);
 
   useEffect(() => {
     if (!round || answerResult) return;
@@ -917,7 +918,7 @@ export function BattleRuntimeProvider({
         labels,
         locale,
         userId,
-        accessToken,
+        accessToken: null,
         learnerDisplayName,
         socketConnected,
         answerPending,
@@ -980,7 +981,6 @@ export function BattleRuntimeProvider({
       labels,
       locale,
       userId,
-      accessToken,
       learnerDisplayName,
       socketConnected,
       answerPending,

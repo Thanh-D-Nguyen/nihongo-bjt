@@ -1,11 +1,8 @@
 "use client";
 
 import { learnerApiFetch } from "../../../lib/learner-api";
-import { isWebKeycloakEnabled } from "../../../lib/public-keycloak";
 
 import type { CareerRank, ChapterResult, ContextMemo, MissionArc, MissionChapter, NpcRelation, StoryNpc, UserCareerState } from "./types";
-
-const DEV_CAREER_USER_ID = "00000000-0000-4000-8000-000000000101";
 
 export interface CareerMeResponse {
   nextRank: CareerRank | null;
@@ -35,12 +32,11 @@ export interface ChapterCompleteResponse {
 }
 
 export function careerMe() {
-  return apiJson<CareerMeResponse>(withDevUser("/api/career/me"));
+  return apiJson<CareerMeResponse>("/api/career/me");
 }
 
 export function clockIn() {
   return apiJson<CareerMeResponse>("/api/career/clock-in", {
-    body: devBody(),
     headers: { "Content-Type": "application/json" },
     method: "POST"
   });
@@ -51,33 +47,31 @@ export function careerRanks() {
 }
 
 export function careerInbox() {
-  return apiJson<ContextMemo[]>(withDevUser("/api/career/inbox"));
+  return apiJson<ContextMemo[]>("/api/career/inbox");
 }
 
 export function updateCareerProfile(data: { jpWorkName: string }) {
-  const body = { ...data, ...(isWebKeycloakEnabled() ? {} : { userId: DEV_CAREER_USER_ID }) };
   return apiJson<CareerMeResponse>("/api/career/me", {
-    body: JSON.stringify(body),
+    body: JSON.stringify(data),
     headers: { "Content-Type": "application/json" },
     method: "PATCH"
   });
 }
 
 export function storyArcs() {
-  return apiJson<MissionArc[]>(withDevUser("/api/story/arcs"));
+  return apiJson<MissionArc[]>("/api/story/arcs");
 }
 
 export function storyArcDetail(slug: string) {
-  return apiJson<ArcDetailResponse>(withDevUser(`/api/story/arcs/${encodeURIComponent(slug)}`));
+  return apiJson<ArcDetailResponse>(`/api/story/arcs/${encodeURIComponent(slug)}`);
 }
 
 export function storyChapter(id: string) {
-  return apiJson<ChapterDetailResponse>(withDevUser(`/api/story/chapters/${encodeURIComponent(id)}`));
+  return apiJson<ChapterDetailResponse>(`/api/story/chapters/${encodeURIComponent(id)}`);
 }
 
 export function startChapterAttempt(id: string) {
   return apiJson<unknown>(`/api/story/chapters/${encodeURIComponent(id)}/attempts`, {
-    body: devBody(),
     headers: { "Content-Type": "application/json" },
     method: "POST"
   });
@@ -85,7 +79,6 @@ export function startChapterAttempt(id: string) {
 
 export function completeCurrentChapterAttempt(id: string) {
   return apiJson<ChapterCompleteResponse>(`/api/story/chapters/${encodeURIComponent(id)}/attempts/current/complete`, {
-    body: devBody(),
     headers: { "Content-Type": "application/json" },
     method: "POST"
   });
@@ -97,16 +90,4 @@ async function apiJson<T>(path: string, init?: RequestInit): Promise<T> {
     throw new Error(`Career RPG API failed: ${response.status}`);
   }
   return response.json() as Promise<T>;
-}
-
-function withDevUser(path: string) {
-  if (isWebKeycloakEnabled()) {
-    return path;
-  }
-  const joiner = path.includes("?") ? "&" : "?";
-  return `${path}${joiner}userId=${encodeURIComponent(DEV_CAREER_USER_ID)}`;
-}
-
-function devBody() {
-  return isWebKeycloakEnabled() ? undefined : JSON.stringify({ userId: DEV_CAREER_USER_ID });
 }

@@ -24,7 +24,8 @@ export type BattleConfigItem = {
 };
 
 type Props = {
-  accessToken: string | null;
+  /** @deprecated No longer used; retained for call-site compatibility. */
+  accessToken?: string | null;
   labels: BattlePageLabels;
   locale: string;
   onSelectConfig: (config: BattleConfigItem) => void;
@@ -79,7 +80,7 @@ function getGameTypeMeta(gameType: string): GameTypeMeta {
   return GAME_TYPE_META[gameType] ?? GAME_TYPE_META.custom!;
 }
 
-export function BattleConfigsPanel({ accessToken, onSelectConfig, selectedConfigId }: Props) {
+export function BattleConfigsPanel({ onSelectConfig, selectedConfigId }: Props) {
   const [configs, setConfigs] = useState<BattleConfigItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [countdownTick, setCountdownTick] = useState(0);
@@ -87,16 +88,15 @@ export function BattleConfigsPanel({ accessToken, onSelectConfig, selectedConfig
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      if (!accessToken) {
-        setLoading(false);
-        return;
-      }
       try {
         const res = await fetch(`${apiBase}/api/battle/configs/available`, {
           cache: "no-store",
-          headers: { Authorization: `Bearer ${accessToken}` }
+          credentials: "include"
         });
-        if (!res.ok) return;
+        if (!res.ok) {
+          if (!cancelled) setLoading(false);
+          return;
+        }
         const data = (await res.json()) as BattleConfigItem[];
         if (!cancelled) setConfigs(data);
       } catch {
@@ -106,7 +106,7 @@ export function BattleConfigsPanel({ accessToken, onSelectConfig, selectedConfig
       }
     })();
     return () => { cancelled = true; };
-  }, [accessToken]);
+  }, []);
 
   // Tick countdown every 30s for upcoming battles
   useEffect(() => {

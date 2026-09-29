@@ -23,17 +23,20 @@ type PresenceOptions = {
  * Connects to the /presence WebSocket namespace when the user is authenticated.
  * Sends periodic heartbeats to keep the user marked as "online".
  * Auto-disconnects on logout or unmount.
+ *
+ * Go-native auth uses HttpOnly session cookies — no Bearer token needed.
+ * Cookies are sent automatically on the WebSocket upgrade request.
  */
 export function usePresence(options?: PresenceOptions) {
-  const { accessToken } = useKeycloakAuth();
+  const { isAuthenticated, userId } = useKeycloakAuth();
   const socketRef = useRef<Socket | null>(null);
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const onChallengeRef = useRef(options?.onChallengeReceived);
   onChallengeRef.current = options?.onChallengeReceived;
 
   useEffect(() => {
-    if (!accessToken) {
-      // Disconnect if token is gone (logout)
+    if (!isAuthenticated || !userId) {
+      // Disconnect if user logged out
       socketRef.current?.disconnect();
       socketRef.current = null;
       if (heartbeatRef.current) {
@@ -43,15 +46,15 @@ export function usePresence(options?: PresenceOptions) {
       return;
     }
 
-    // Already connected with this token
+    // Already connected
     if (socketRef.current?.connected) return;
 
     const socket = io(`${API_URL}/presence`, {
-      auth: { token: accessToken },
       transports: ["websocket"],
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 3000,
+      withCredentials: true,
     });
 
     socket.on("connect", () => {
@@ -84,5 +87,5 @@ export function usePresence(options?: PresenceOptions) {
         heartbeatRef.current = null;
       }
     };
-  }, [accessToken]);
+  }, [isAuthenticated, userId]);
 }

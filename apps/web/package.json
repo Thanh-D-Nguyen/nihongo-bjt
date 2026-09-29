@@ -12,8 +12,7 @@
   },
   "dependencies": {
     "@nihongo-bjt/config": "workspace:*",
-    "@nihongo-bjt/keycloak-oidc": "workspace:*",
-    "@nihongo-bjt/shared": "workspace:*",
+        "@nihongo-bjt/shared": "workspace:*",
     "@nihongo-bjt/ui": "workspace:*",
     "@rive-app/react-canvas": "^4.28.3",
     "dotenv": "^17.4.2",
