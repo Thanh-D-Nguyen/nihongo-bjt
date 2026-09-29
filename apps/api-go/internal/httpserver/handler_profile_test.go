@@ -28,7 +28,9 @@ func seedFullProfileUser(t *testing.T, db *pgxpool.Pool, userID, email string) {
 	defer cancel()
 	coverAssetID := "00000000-0000-0000-0000-000000000001"
 	_, err := db.Exec(ctx,
-		`INSERT INTO media.asset (id) VALUES ($1) ON CONFLICT (id) DO NOTHING`, coverAssetID)
+		`INSERT INTO media.asset (id, object_key, mime_type, content_type, size_bytes, storage_path, original_filename)
+		 VALUES ($1::uuid, $1::text, 'image/png', 'image/png', 0, '', 'cover.png')
+		 ON CONFLICT (id) DO NOTHING`, coverAssetID)
 	if err != nil {
 		t.Fatalf("seed media asset failed: %v", err)
 	}

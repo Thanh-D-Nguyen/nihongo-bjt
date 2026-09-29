@@ -28,6 +28,10 @@ type Config struct {
 	// Sourced from CORS_ORIGINS env var (comma-separated). Empty is valid but
 	// rejects all unsafe requests until configured.
 	CORSOrigins []string
+
+	// MediaBasePath is the filesystem path for media file storage.
+	// Sourced from MEDIA_BASE_PATH env var. Defaults to /srv/kotobawork/data/media.
+	MediaBasePath string
 }
 
 // Load reads configuration from environment variables and validates required fields.
@@ -88,6 +92,8 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("config: CORS_ORIGINS %w", err)
 	}
 
+	mediaBasePath := getEnv("MEDIA_BASE_PATH", "/srv/kotobawork/data/media")
+
 	cfg := &Config{
 		Port:                 port,
 		DatabaseURL:          dbURL,
@@ -101,6 +107,7 @@ func Load() (*Config, error) {
 		DBPoolMinConns:       minConns,
 		DBConnAcquireTimeout: acquireTimeout,
 		CORSOrigins:          corsOrigins,
+		MediaBasePath:        mediaBasePath,
 	}
 	return cfg, nil
 }

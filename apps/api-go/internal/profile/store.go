@@ -52,16 +52,14 @@ func (s *Store) GetLearnerByEmail(ctx context.Context, email string) (*LearnerPu
 	defer cancel()
 
 	const q = `SELECT id, display_name, email, status, keycloak_subject,
-		avatar_asset_id, cover_asset_id, theme_mode, ui_locale, explanation_locale,
-		density_preference, font_size_preference, share_postcard_opt_in
+		cover_asset_id, theme_mode, density_preference, font_size_preference, share_postcard_opt_in
 		FROM profile.user_profile
 		WHERE lower(email) = $1 AND status = 'active'`
 	row := s.db.QueryRow(ctx, q, email)
 	var p LearnerPublicProfile
 	if err := row.Scan(
 		&p.ID, &p.DisplayName, &p.Email, &p.Status, &p.KeycloakSubject,
-		&p.AvatarAssetID, &p.CoverAssetID, &p.ThemeMode, &p.UILocale, &p.ExplanationLocale,
-		&p.DensityPreference, &p.FontSizePreference, &p.SharePostcardOptIn,
+		&p.CoverAssetID, &p.ThemeMode, &p.DensityPreference, &p.FontSizePreference, &p.SharePostcardOptIn,
 	); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
@@ -78,8 +76,7 @@ func (s *Store) GetLearnerPublicProfile(ctx context.Context, userID string) (*Le
 	defer cancel()
 
 	const q = `SELECT id, display_name, email, status, keycloak_subject,
-		avatar_asset_id, cover_asset_id, theme_mode, ui_locale, explanation_locale,
-		density_preference, font_size_preference, share_postcard_opt_in
+		cover_asset_id, theme_mode, density_preference, font_size_preference, share_postcard_opt_in
 	FROM profile.user_profile
 	WHERE id = $1 AND status = 'active'`
 
@@ -87,8 +84,7 @@ func (s *Store) GetLearnerPublicProfile(ctx context.Context, userID string) (*Le
 	var p LearnerPublicProfile
 	if err := row.Scan(
 		&p.ID, &p.DisplayName, &p.Email, &p.Status, &p.KeycloakSubject,
-		&p.AvatarAssetID, &p.CoverAssetID, &p.ThemeMode, &p.UILocale, &p.ExplanationLocale,
-		&p.DensityPreference, &p.FontSizePreference, &p.SharePostcardOptIn,
+		&p.CoverAssetID, &p.ThemeMode, &p.DensityPreference, &p.FontSizePreference, &p.SharePostcardOptIn,
 	); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrProfileNotFound

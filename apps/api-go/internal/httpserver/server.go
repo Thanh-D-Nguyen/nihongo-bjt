@@ -13,11 +13,13 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"gocloud.dev/blob"
 
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authz"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/config"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/credential"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/media"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/postgres"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/profile"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/redisx"
@@ -36,6 +38,8 @@ type Dependencies struct {
 	RBACStore       *authz.Store       // nil if DB not configured
 	CredentialStore *credential.Store  // nil if DB not configured
 	RateLimiter     *authn.RateLimiter // nil disables login (fail closed in handler)
+	MediaStore      *media.Store       // nil if DB not configured; media endpoints return 503
+	MediaBucket     *blob.Bucket       // nil if media storage not configured; upload/stream return 503
 	Version         string
 }
 
@@ -173,6 +177,25 @@ func NewRouter(deps Dependencies) http.Handler {
 				ar.Delete("/api/admin/actors/{id}/roles/{roleId}", removeRoleHandler(deps.DBPool, deps.Logger))
 			})
 		}
+
+	}
+
+	// M7: Media upload — authenticated (learner session + CSRF), rate-limited.
+	if deps.DBPool != nil && deps.MediaStore != nil && deps.MediaBucket != nil && deps.SessionStore != nil {
+		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Use(authn.CSRFGuard(csrfCfg))
+			lr.Post("/api/media/upload", uploadMediaHandler(
+				deps.MediaStore, deps.MediaBucket, deps.RateLimiter, deps.Logger,
+			))
+		})
+	}
+
+	// M7: Media metadata and streaming — public (no auth required).
+	if deps.MediaStore != nil && deps.MediaBucket != nil {
+		r.Get("/api/media/{id}", getMediaMetadataHandler(deps.MediaStore, deps.Logger))
+		r.Get("/api/media/{id}/stream", streamMediaHandler(deps.MediaStore, deps.MediaBucket, deps.Logger))
 	}
 
 	return r

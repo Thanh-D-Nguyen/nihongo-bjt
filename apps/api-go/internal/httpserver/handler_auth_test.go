@@ -248,7 +248,7 @@ func TestLearnerMe_Success_ExactJSONShape(t *testing.T) {
 	defaultedFields := map[string]string{
 		"themeMode":          `"system"`,
 		"densityPreference":  `"comfortable"`,
-		"fontSizePreference": `"default"`,
+		"fontSizePreference": `"medium"`,
 	}
 	for f, want := range defaultedFields {
 		raw := resp[f]
