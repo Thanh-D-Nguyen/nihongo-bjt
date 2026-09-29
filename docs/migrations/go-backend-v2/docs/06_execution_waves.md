@@ -8,7 +8,7 @@ P0.1   Plan rebase                               DONE
 M0     Repository truth / detailed inventory
 H0     Documentation hygiene
 M1     Go foundation + deployment foundations
-M2     Identity/auth persistence + Keycloak credential investigation gate
+M2     Identity/auth persistence + approved identity-reset decision
 M3     Auth core
 M4     Account lifecycle + Google OAuth decision/migration
 M5     Learner Web auth cutover
@@ -71,15 +71,15 @@ GCP deployment docs remain as rollback reference until Oracle migration proven.
 
 Do NOT create unnecessary NestJS Dockerfiles.
 
-## M2 — Identity/auth persistence + credential investigation
+## M2 — Identity/auth persistence + identity-reset decision
 
 - Backward-compatible auth/session tables (additive);
-- **HARD GATE**: investigate Keycloak credential storage/export format;
-- establish hash algorithm, parameters, extraction feasibility;
-- choose password migration approach (re-auth / legacy verifier / forced reset);
-- document decision with evidence.
+- **Decision 2026-09-29**: `LEGACY_CREDENTIAL_MIGRATION = NOT_REQUIRED`; `IDENTITY_RESET_APPROVED = TRUE`;
+- use fresh application-owned IDs and Argon2id credentials; no legacy password verifier;
+- map account dependencies and prepare a backed-up, reviewed identity-only reset manifest before deletion;
+- preserve non-user content/media and GCP rollback artifacts.
 
-Do NOT implement credential verifier without passing the investigation gate.
+Do not delay M3 for production Keycloak credential metadata. Do not reset legacy identities until replacement auth and affected clients are verified.
 
 ## M3 — Auth core
 
@@ -239,7 +239,7 @@ Disable only after:
 - zero admin dependency;
 - zero mobile dependency (or explicitly retired with evidence);
 - zero API/realtime token dependency;
-- password migration complete;
+- fresh Go credentials and account lifecycle validated; identity reset backed up, reviewed, and completed safely;
 - role behavior proven;
 - rollback window complete.
 

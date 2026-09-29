@@ -1,4 +1,6 @@
 # Migration Status (Revised)
+
+> Historical M0/M2 snapshot. For the current phase and the 2026-09-29 identity-reset decision (`LEGACY_CREDENTIAL_MIGRATION = NOT_REQUIRED`, `IDENTITY_RESET_APPROVED = TRUE`), use `../ORCHESTRATION_STATE.md`. The credential gate and blocker entries below are superseded.
 ## Current checkpoint
 - Wave: M2 (persistence REVISED, credential gate pending) → M3 scaffolding next (verifier blocked)
 - Accepted M0 checkpoint: `8808472426195547c779c662981d8dc582b580ca`

@@ -1,5 +1,7 @@
 # M3 Independent Endpoints Report
 
+> **Decision addendum (2026-09-29):** The later user-approved identity reset closes the production Keycloak credential gate referenced below. `LEGACY_CREDENTIAL_MIGRATION = NOT_REQUIRED`; `IDENTITY_RESET_APPROVED = TRUE`. The endpoint evidence and accepted M3 slice remain valid. Next complete fresh Go login/session creation and rate limiting; no legacy verifier is required. See `../ORCHESTRATION_STATE.md` for current phase.
+
 ## Identification
 - **Starting HEAD**: `ef26020d` (post-checkpoint docs)
 - **Initial M3_INDEPENDENT_ENDPOINTS commit**: `bd57e52` (REVISE after independent review)

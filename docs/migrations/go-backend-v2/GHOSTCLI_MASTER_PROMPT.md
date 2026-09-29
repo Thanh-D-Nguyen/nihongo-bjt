@@ -145,7 +145,7 @@ Do not:
 - cut DNS early;
 - delete Keycloak early;
 - delete MinIO data early;
-- invalidate user credentials destructively;
+- reset legacy identity/credentials before fresh Go auth, client cutovers, a tested backup, and an independently reviewed identity-only reset manifest;
 - rewrite media keys without migration proof;
 - commit secrets;
 - perform irreversible schema/data cleanup before rollback window closes.
@@ -296,17 +296,9 @@ Keycloak removal scope MUST include:
 
 Keycloak cannot be disabled until ALL active clients have migrated.
 
-## Password migration
+## Password migration / identity reset decision (2026-09-29)
 
-Approach remains UNDECIDED.
-
-Hard investigation gate before credential implementation:
-
-1. inspect actual Keycloak credential storage/export
-2. establish hash format and feasibility
-3. then choose: re-auth migration / legacy hash verifier + Argon2id rehash / forced reset
-
-Never guess credential format.
+`LEGACY_CREDENTIAL_MIGRATION = NOT_REQUIRED`; `IDENTITY_RESET_APPROVED = TRUE`. The user approved resetting legacy identity/account data because there is no meaningful production user population. Build fresh Go Argon2id auth with application-owned IDs; do not inspect production Keycloak credential hashes, build a legacy verifier, or implement re-auth/compatibility reset. Preserve authored content, curriculum, media, search source content, product configuration, and non-user reference data. Defer destructive identity cleanup until replacement auth and all affected clients work, then require a foreign-key inventory, row counts, tested backup, and independently reviewed exact reset manifest. Keep GCP rollback through the stability window.
 
 See `docs/03_auth_replacement_spec.md` and `docs/15_mobile_auth_migration.md`.
 
@@ -404,7 +396,7 @@ P0.1   Plan rebase                               DONE
 M0     Repository truth / detailed inventory
 H0     Documentation hygiene
 M1     Go foundation + deployment foundations
-M2     Identity/auth persistence + Keycloak credential investigation gate
+M2     Identity/auth persistence + approved identity-reset decision
 M3     Auth core
 M4     Account lifecycle + Google OAuth decision/migration
 M5     Learner Web auth cutover

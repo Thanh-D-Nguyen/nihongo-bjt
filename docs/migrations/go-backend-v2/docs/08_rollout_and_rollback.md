@@ -68,13 +68,11 @@ If a migration only adds tables/columns, older app can usually ignore them.
 
 Prefer that over dropping production data to "rollback schema".
 
-## Password migration rollback
+## Identity-reset rollback (decision 2026-09-29)
 
-Never design a migration that leaves users unable to authenticate if Go is rolled back.
+Legacy credential migration is NOT_REQUIRED and the user approved resetting identity/account-scoped data. Preserve non-user content and media. Do not reset legacy identities until fresh Go auth and affected clients are verified, a database backup has been restored successfully in a test, and an exact identity-only reset manifest has passed independent review.
 
-If new hashes are created, preserve enough mapping/state for rollback during transition.
-
-The password migration approach remains UNDECIDED until M2 credential investigation completes. Whatever approach is chosen must include explicit rollback semantics.
+Keep GCP/Keycloak recoverable during the stability window. Fresh Go accounts may not authenticate against old Keycloak if traffic is rolled back, so the rollback procedure must state how the backed-up account state and Go auth path are restored or retained. Do not claim seamless account rollback without a test.
 
 ## Keycloak deletion
 

@@ -159,7 +159,7 @@ Do NOT expose private media through Caddy file_server. Do NOT introduce custom C
 10. Never commit production secrets.
 11. ARM64 compatibility is mandatory.
 12. Do not add RustFS or another S3 server unless a real requirement justifies it.
-13. Password migration approach remains UNDECIDED until Keycloak credential store investigation completes.
+13. Legacy credential migration is NOT_REQUIRED: the user approved an identity/account reset on 2026-09-29. Build fresh Go Argon2id auth; preserve non-user content and media. See `docs/03_auth_replacement_spec.md`.
 14. Mobile client (`nihongo-mobile`) is in scope for auth migration.
 15. Background jobs and realtime have dedicated migration waves.
 

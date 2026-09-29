@@ -1,5 +1,7 @@
 # M2 Identity/Auth Persistence + Keycloak Credential Gate Report
 
+> **Decision addendum (2026-09-29):** `LEGACY_CREDENTIAL_MIGRATION = NOT_REQUIRED`; `IDENTITY_RESET_APPROVED = TRUE`. The user approved resetting legacy identity/account data because the deployment has no meaningful production user population. The production Keycloak credential-format gate below is historical investigation evidence, no longer a prerequisite. Build fresh Go Argon2id auth with application-owned user IDs; do not build a legacy verifier, re-auth migration, or compatibility reset flow. Preserve authored content, curriculum, media, search source content, product configuration, and non-user reference data. Before destructive cleanup, inventory foreign keys, create/test a restorable backup, capture row counts, and independently review an identity-only reset manifest. No reset or backup snapshot has been taken yet; existing GCP/Keycloak remains the rollback path.
+
 ## Identification
 - **Starting HEAD**: `13a54b4f59734243282ac06856863755116a5a5a`
 - **Initial M2 commit**: `37e0b68c49712fe3665a0e847cc6ce6221b4ed9a` (REVISE after independent review)

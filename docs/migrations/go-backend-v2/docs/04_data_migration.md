@@ -72,20 +72,11 @@ auth.oauth_accounts
 
 Legacy `keycloakSubject` columns remain populated during transition for rollback.
 
-## Password migration gate
+## Identity reset decision
 
-**APPROACH REMAINS UNDECIDED.**
+`LEGACY_CREDENTIAL_MIGRATION = NOT_REQUIRED`; `IDENTITY_RESET_APPROVED = TRUE` (2026-09-29). Fresh Go identity and Argon2id credentials replace legacy accounts. No legacy password verifier or credential export is required.
 
-M2 prerequisite investigation:
-
-1. Inspect actual Keycloak credential storage format and export feasibility.
-2. Establish hash algorithm, parameters, and extraction method.
-3. Then choose ONE approach:
-   - A. User re-authentication migration
-   - B. Legacy hash verifier + Argon2id rehash on login
-   - C. Forced password reset
-
-Do not implement dual-verifier without validated credential format evidence.
+Do not delete identity data before the replacement auth path and Web/Admin/mobile clients are verified. Before reset, inventory foreign keys and account dependencies, create and test a restorable backup, preserve Keycloak configuration/export if safe, capture row counts, and review an exact reset manifest. Delete only identity/account-scoped rows in that manifest. Preserve authored content, media, curriculum, search source content, product configuration, and non-user reference data. Keep rollback artifacts through the stability window.
 
 See `docs/03_auth_replacement_spec.md`.
 

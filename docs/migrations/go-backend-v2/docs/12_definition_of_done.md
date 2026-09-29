@@ -50,9 +50,10 @@
 - [ ] Admin authorization regression tested.
 - [ ] CSRF defense.
 - [ ] Rate limiting.
-- [ ] Keycloak credential investigation gate PASSED.
-- [ ] Password migration approach selected with evidence.
-- [ ] Existing credential migration implemented and validated.
+- [x] Legacy credential migration marked NOT_REQUIRED by explicit user decision (2026-09-29).
+- [ ] Fresh first-party credentials and a safe first-admin bootstrap validated.
+- [ ] Identity-only reset manifest, foreign-key inventory, row counts, backup and tested restore completed before destructive cleanup.
+- [ ] Non-user content/media preserved across identity reset.
 - [ ] Google OAuth migrated or explicitly retired with documentation.
 - [ ] Mobile PKCE flow migrated and validated.
 - [ ] Per-app cookie prefix isolation maintained during transition.

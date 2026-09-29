@@ -89,22 +89,15 @@ Goal:
 - expensive enough to resist offline guessing;
 - cheap enough to avoid trivial login DoS.
 
-Never use SHA-256/MD5/bcrypt migration shortcuts unless required for a legacy transitional verifier.
+Never use SHA-256/MD5/bcrypt for new password credentials.
 
-## Migrating existing passwords from Keycloak
+## Legacy credentials and identity reset (decision 2026-09-29)
 
-**APPROACH REMAINS UNDECIDED.**
+`LEGACY_CREDENTIAL_MIGRATION = NOT_REQUIRED` and `IDENTITY_RESET_APPROVED = TRUE`.
 
-Hard investigation gate before credential implementation (M2 prerequisite):
+The user confirmed there is no meaningful production user population and approved discarding legacy Keycloak users, credentials, sessions, and disposable application account data. Create fresh application-owned user IDs and Go Argon2id credentials. Do not implement a Keycloak password verifier, re-auth migration, or compatibility reset flow. Production Keycloak credential metadata is no longer a prerequisite for M3.
 
-1. Inspect actual Keycloak credential storage/export format.
-2. Establish hash algorithm, parameters, and feasibility of extraction.
-3. Then choose ONE of:
-   - **A. User re-authentication migration**: user logs in against Keycloak during transition; Go captures password and creates Argon2id hash.
-   - **B. Keycloak credential hash migration**: export hashes, implement dual verifier with immediate Argon2id rehash.
-   - **C. Forced password reset**: only if A/B are unsuitable; requires explicit product decision.
-
-Never guess credential format. Do not implement dual-verifier without validated credential format evidence.
+The reset approval is limited to identity/account-scoped data. Preserve authored BJT questions, vocabulary, curriculum, exercises, media/audio/images, search source content, product configuration, and non-user reference data. Before any destructive identity cleanup, map foreign-key dependencies, make and test a restorable backup, retain Keycloak configuration/export where safe, record affected row counts, and independently review an exact deletion manifest. Keep old identity data until fresh Go auth and client cutovers are verified; retain GCP rollback and backup artifacts through the stability window.
 
 ## CSRF
 
@@ -234,6 +227,6 @@ Keycloak may be removed only when:
 - no API validates Keycloak tokens;
 - no websocket depends on Keycloak tokens;
 - account lifecycle works;
-- password migration plan is complete and validated;
+- fresh Go credentials and account lifecycle are validated; identity reset is backed up and scoped to account data;
 - role behavior is proven;
 - rollback window is complete.
