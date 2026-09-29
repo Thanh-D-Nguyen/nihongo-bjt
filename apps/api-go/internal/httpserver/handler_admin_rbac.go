@@ -222,8 +222,9 @@ func createActorHandler(
 			return
 		}
 
-		// Set credential using the profile table (admin actors share profile.user_profile for credentials).
-		if err := credStore.SetLearnerCredentialTx(ctx, tx, actorID, []byte(password)); err != nil {
+		// Set admin credential within the same transaction (admin actors live in authz.admin_actor,
+		// not profile.user_profile, so we must use the admin credential table).
+		if err := credStore.SetAdminCredentialTx(ctx, tx, actorID, []byte(password)); err != nil {
 			logger.Error("create-actor: set credential failed", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return

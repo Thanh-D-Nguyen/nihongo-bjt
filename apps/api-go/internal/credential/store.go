@@ -161,6 +161,45 @@ func (s *Store) upsertLearner(ctx context.Context, userID string, p Params, salt
 	return nil
 }
 
+// SetAdminCredentialTx hashes and stores an admin password credential within
+// an existing transaction. This is required when the admin actor row is created
+// in the same transaction and not yet visible outside it (FK constraint).
+func (s *Store) SetAdminCredentialTx(ctx context.Context, tx pgx.Tx, actorID string, password []byte) error {
+	encoded, err := Hash(password, DefaultParams())
+	if err != nil {
+		return fmt.Errorf("credential: hash admin: %w", err)
+	}
+	p, salt, hash, err := Decode(encoded)
+	if err != nil {
+		return fmt.Errorf("credential: decode admin: %w", err)
+	}
+	return s.upsertAdminTx(ctx, tx, actorID, p, salt, hash)
+}
+
+func (s *Store) upsertAdminTx(ctx context.Context, tx pgx.Tx, actorID string, p Params, salt, hash []byte) error {
+	const q = `INSERT INTO auth.admin_password_credential
+		(actor_id, algorithm, algorithm_version, hash_iterations, memory_kib, parallelism, hash_length, salt, hashed_value)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		ON CONFLICT (actor_id) DO UPDATE SET
+			algorithm = EXCLUDED.algorithm,
+			algorithm_version = EXCLUDED.algorithm_version,
+			hash_iterations = EXCLUDED.hash_iterations,
+			memory_kib = EXCLUDED.memory_kib,
+			parallelism = EXCLUDED.parallelism,
+			hash_length = EXCLUDED.hash_length,
+			salt = EXCLUDED.salt,
+			hashed_value = EXCLUDED.hashed_value,
+			updated_at = now()`
+	_, err := tx.Exec(ctx, q,
+		actorID, algorithmID, fmt.Sprintf("%d", argon2.Version),
+		int(p.Iterations), int(p.MemoryKiB), int(p.Parallelism), int(p.HashLen),
+		salt, hash)
+	if err != nil {
+		return fmt.Errorf("credential: upsert admin tx: %w", err)
+	}
+	return nil
+}
+
 func (s *Store) upsertAdmin(ctx context.Context, actorID string, p Params, salt, hash []byte) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
