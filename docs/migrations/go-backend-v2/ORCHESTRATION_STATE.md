@@ -1,9 +1,9 @@
 # Go Backend Migration Orchestration State
 
-- Current phase: M8 search integration accepted; next = M9 notifications & preferences sync
-- Current accepted implementation/code checkpoint: `6b0d571` (M8 search integration PASS — compile/race/vet/gofmt/arm64 all clean; 6 integration tests skip gracefully without TEST_MEILISEARCH_URL; httpserver suite -count=2 PASS)
-- Last completed wave: M8_SEARCH_INTEGRATION PASS (2 endpoints: GET /api/search learner-guarded unified search, POST /api/search/index admin-only reindex trigger; SearchClient with connection pooling, ping health check, sequential multi-index fallback; all static gates clean; committed at 6b0d571)
-- Next wave: M9 notifications & preferences sync (notification delivery, preference persistence, sync endpoints). Inspect canonical plan in docs/migrations/go-backend-v2/ for exact scope. Build on M5 profile store and M4 lifecycle patterns.
+- Current phase: M9 business write accepted; next = M10 notifications & preferences sync
+- Current accepted implementation/code checkpoint: `1c8ecb8` (M9 business write PASS — compile/race/vet/gofmt/arm64 all clean; 17 integration tests skip gracefully without TEST_DATABASE_URL; httpserver suite PASS)
+- Last completed wave: M9_BUSINESS_WRITE PASS (9 endpoints: bookmark toggle/check/list, exercise start/answer/complete, quiz start/answer; all learner-session guarded with CSRF; 17 integration tests; all static gates clean; committed at 1c8ecb8)
+- Next wave: M10 notifications & preferences sync (notification delivery, preference persistence, sync endpoints). Inspect canonical plan in docs/migrations/go-backend-v2/ for exact scope. Build on M5 profile store and M4 lifecycle patterns.
 - Decision: `LEGACY_CREDENTIAL_MIGRATION = NOT_REQUIRED`; `IDENTITY_RESET_APPROVED = TRUE`. The user approved resetting identity/account-scoped data only. This closes the M2 production credential-format gate without obtaining Keycloak metadata.
 - Completed checkpoint commits:
   - `0fc4486f5cfd2edc4433359753be573605234006` — P0.1 plan rebase
