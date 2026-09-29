@@ -16,7 +16,6 @@ import (
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authz"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/config"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/credential"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/postgres"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/profile"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/redisx"
@@ -29,12 +28,10 @@ type Dependencies struct {
 	Logger       *slog.Logger
 	DB           postgres.Pinger // nil if not configured; readiness returns 503
 	Redis        redisx.Pinger   // nil if not configured; readiness reports not_configured
-	SessionStore    *session.Store     // nil if DB not configured
-	ProfileStore    *profile.Store     // nil if DB not configured
-	RBACStore       *authz.Store       // nil if DB not configured
-	CredentialStore *credential.Store  // nil if DB not configured
-	RateLimiter     *authn.RateLimiter // nil disables rate limiting (safe fallback)
-	Version         string
+	SessionStore *session.Store  // nil if DB not configured
+	ProfileStore *profile.Store  // nil if DB not configured
+	RBACStore    *authz.Store    // nil if DB not configured
+	Version      string
 }
 
 // NewRouter creates the chi router with all routes and middleware.
@@ -80,25 +77,13 @@ func NewRouter(deps Dependencies) http.Handler {
 		})
 	}
 
-	// Login routes — public but CSRF-protected and rate-limited. No session guard.
-	if deps.CredentialStore != nil && deps.ProfileStore != nil && deps.SessionStore != nil {
-		r.Group(func(lr chi.Router) {
-			lr.Use(authn.CSRFGuard(csrfCfg))
-			lr.Post("/api/auth/login", learnerLoginHandler(
-				deps.CredentialStore, deps.ProfileStore, deps.SessionStore,
-				deps.RateLimiter, deps.Logger,
-			))
-		})
-	}
-	if deps.CredentialStore != nil && deps.RBACStore != nil && deps.SessionStore != nil {
-		r.Group(func(ar chi.Router) {
-			ar.Use(authn.CSRFGuard(csrfCfg))
-			ar.Post("/api/admin/login", adminLoginHandler(
-				deps.CredentialStore, deps.RBACStore, deps.SessionStore,
-				deps.RateLimiter, deps.Logger,
-			))
-		})
-	}
+	// NOTE: Login routes (/api/auth/login, /api/admin/login) are intentionally
+	// deferred. The handler implementation (handler_login.go) remains an
+	// uncommitted draft pending security review. Do not re-add these routes
+	// until the login handler, cookie attributes, credential error paths,
+	// and rate-limiter wiring have been independently reviewed and tested.
+	// The rate limiter and credential store are committed and ready for use
+	// when the login handler is accepted.
 
 	// Admin auth routes — guarded by admin session cookie + CSRF for unsafe methods.
 	if deps.SessionStore != nil && deps.RBACStore != nil {
