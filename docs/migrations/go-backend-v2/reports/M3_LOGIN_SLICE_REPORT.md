@@ -1,9 +1,9 @@
 # M3 Login Slice Report
 
 - **Date:** 2026-09-29
-- **Scope:** Learner/admin first-party password login handlers (`internal/httpserver/handler_login.go`), route/composition wiring (`server.go`, `app.go`), dedicated security tests (`handler_login_test.go`).
-- **Status:** PENDING — handler, wiring, and unit/race/vet PASS; PG17 integration tests SKIPPED (no database available in this environment). Full M3 remains PENDING until bootstrap-admin.
-- **Not in scope:** Bootstrap-admin, M4, identity cleanup, trusted-proxy strategy.
+- **Scope:** Learner/admin first-party password login handlers (`internal/httpserver/handler_login.go`), route/composition wiring (`server.go`, `app.go`), profile/authz store lookups (`profile/store.go`, `authz/rbac.go`), dedicated security tests (`handler_login_test.go`).
+- **Status:** PENDING — handler, wiring, store lookups, and unit/race/vet PASS from clean `git archive` snapshot. PG17 integration tests SKIPPED (database unavailable in this environment). Full M3 remains PENDING until bootstrap-admin and PG17 verification.
+- **Not in scope:** Bootstrap-admin, M4, identity cleanup, trusted-proxy strategy, rate limiter shutdown wiring.
 
 ## Changes
 
@@ -25,6 +25,12 @@
 - Constructs `credential.NewStore(dbPool)` and `authn.NewRateLimiter(authn.DefaultRateLimiterConfig())` with error handling; passes both to `httpserver.Dependencies`.
 - Rate limiter lifecycle: constructed at startup; `Stop()` must be called on shutdown (wiring deferred to app shutdown hook in future slice).
 
+### `apps/api-go/internal/profile/store.go`
+- Added `GetLearnerByEmail(ctx, email) (*LearnerPublicProfile, error)`: looks up active learner by normalized email; returns `(nil, nil)` for unknown to prevent enumeration. Required for login handler compilation from clean HEAD.
+
+### `apps/api-go/internal/authz/rbac.go`
+- `GetActiveActorIDByEmail` already existed in uncommitted draft; confirmed present and removed accidental duplicate appended during repair. Required for admin login handler compilation from clean HEAD.
+
 ### `apps/api-go/internal/httpserver/handler_login_test.go`
 - 22 tests exercising actual HTTP router/handlers against real stores:
   - **Success:** learner/admin login sets Secure HttpOnly SameSite=Lax cookie; session exists in DB with correct UserID/ActorID.
@@ -35,36 +41,42 @@
   - **Fixation prevention:** two consecutive logins produce different tokens.
   - **Namespace isolation:** learner cookie rejected on admin session endpoint.
 
-## Verification Evidence
+## Verification Evidence (clean `git archive` snapshot at HEAD ba7e812)
 
 ```
-$ cd apps/api-go && unset TEST_DATABASE_URL && go build ./...
+$ git log --oneline -6
+ba7e8121 fix(api-go): add GetLearnerByEmail to profile store for login handler compilation
+ce8a63b2 feat(api-go): add learner/admin password login with rate limiting and security tests
+52e3e6a5 fix(api-go): move NormalizePeerIP to production code with validated host extraction
+bf9bc14e fix(api-go): defer login routes and add NormalizePeerIP to make rate-limit slice self-contained
+dc22845b feat(api-go): add bounded login abuse rate limiter with fail-closed policy
+a6fc9aee docs(m3): record verified PG17 credential evidence
+
+$ TMPDIR=$(mktemp -d) && git archive HEAD | tar -x -C "$TMPDIR" && cd "$TMPDIR/apps/api-go"
+$ unset TEST_DATABASE_URL && go build ./...
 ---BUILD_EXIT:0---
-
 $ go test ./...
-ok  github.com/kotobawork/nihongo-bjt/api-go/internal/app        0.667s
-ok  github.com/kotobawork/nihongo-bjt/api-go/internal/authn      (cached)
-ok  github.com/kotobawork/nihongo-bjt/api-go/internal/authz      (cached)
-ok  github.com/kotobawork/nihongo-bjt/api-go/internal/config     (cached)
-ok  github.com/kotobawork/nihongo-bjt/api-go/internal/credential (cached)
-ok  github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver 1.122s
-ok  github.com/kotobawork/nihongo-bjt/api-go/internal/session    (cached)
+ok  github.com/kotobawork/nihongo-bjt/api-go/internal/app         0.797s
+ok  github.com/kotobawork/nihongo-bjt/api-go/internal/authn       1.498s
+ok  github.com/kotobawork/nihongo-bjt/api-go/internal/authz       2.825s
+ok  github.com/kotobawork/nihongo-bjt/api-go/internal/config      1.813s
+ok  github.com/kotobawork/nihongo-bjt/api-go/internal/credential  3.287s
+ok  github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver  3.721s
+ok  github.com/kotobawork/nihongo-bjt/api-go/internal/session     3.191s
 ---TEST_EXIT:0---
-
-$ go test -race ./internal/httpserver/... ./internal/authn/...
-ok  github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver 1.605s
-ok  github.com/kotobawork/nihongo-bjt/api-go/internal/authn      (cached)
+$ go test -race ./internal/httpserver/... ./internal/authn/... ./internal/authz/...
+ok  github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver  2.399s
+ok  github.com/kotobawork/nihongo-bjt/api-go/internal/authn       1.646s
+ok  github.com/kotobawork/nihongo-bjt/api-go/internal/authz       2.996s
 ---RACE_EXIT:0---
-
 $ go vet ./...
 ---VET_EXIT:0---
-
-$ gofmt -l internal/httpserver/handler_login.go internal/httpserver/handler_login_test.go internal/httpserver/server.go internal/app/app.go
+$ gofmt -l .
 (clean)
 ```
 
-**Default suite:** All packages PASS, 0 failures.
-**Race detector:** PASS on httpserver and authn packages.
+**Default suite:** All packages PASS, 0 failures, from clean archive.
+**Race detector:** PASS on httpserver, authn, and authz packages.
 **Vet:** Clean.
 **Gofmt:** Clean.
 
@@ -74,7 +86,6 @@ $ gofmt -l internal/httpserver/handler_login.go internal/httpserver/handler_logi
 |------|--------|
 | PG17 integration tests (`-count=2`) | `TEST_DATABASE_URL` not set; local PostgreSQL 17 unavailable (role "postgres" does not exist). Tests require disposable PG17 with M2 schema. |
 | Linux/arm64 cross-build | Not executed; no cross-compilation target configured in this environment. |
-| Clean git-archive test | Deferred until PG17 available; current HEAD compiles from dirty workspace but integration tests cannot validate end-to-end behavior without DB. |
 | Rate limiter Stop lifecycle on shutdown | `app.go` constructs the limiter but does not yet wire `Stop()` into graceful shutdown. Documented as follow-up. |
 | Trusted-proxy strategy | Not implemented. All clients behind a reverse proxy share the proxy's peer IP. Account-key dimension provides additional cardinality protection. |
 
@@ -93,4 +104,4 @@ $ gofmt -l internal/httpserver/handler_login.go internal/httpserver/handler_logi
 
 ## Rollback
 
-Revert with `git revert <commit-sha>`. No schema changes. No data migration. Existing tables unchanged.
+Revert commits `ba7e812` and `ce8a63b` with `git revert`. No schema changes. No data migration. Existing tables unchanged.
