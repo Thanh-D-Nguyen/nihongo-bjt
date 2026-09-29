@@ -254,12 +254,29 @@ func TestLearnerMe_Success_ExactJSONShape(t *testing.T) {
 		t.Errorf("sub = %q, want %q", subVal, kcSub)
 	}
 
-	// Nullable fields should serialize as JSON null, not be omitted
-	nullFields := []string{"avatarAssetId", "coverAssetId", "themeMode", "uiLocale", "explanationLocale", "densityPreference", "fontSizePreference"}
-	for _, f := range nullFields {
+	// Truly nullable FK fields should serialize as JSON null when unset.
+	nullableFKFields := []string{"avatarAssetId", "coverAssetId"}
+	for _, f := range nullableFKFields {
 		raw := prof[f]
 		if string(raw) != "null" {
 			t.Errorf("profile.%s = %s, want null (omitempty may be active)", f, string(raw))
+		}
+	}
+	// DB-defaulted NOT NULL columns must serialize with their default values,
+	// not as null. The schema defines: theme_mode DEFAULT 'system',
+	// ui_locale DEFAULT 'vi', explanation_locale DEFAULT 'vi',
+	// density_preference DEFAULT 'comfortable', font_size_preference DEFAULT 'default'.
+	defaultedFields := map[string]string{
+		"themeMode":          `"system"`,
+		"uiLocale":           `"vi"`,
+		"explanationLocale":  `"vi"`,
+		"densityPreference":  `"comfortable"`,
+		"fontSizePreference": `"default"`,
+	}
+	for f, want := range defaultedFields {
+		raw := prof[f]
+		if string(raw) != want {
+			t.Errorf("profile.%s = %s, want %s (DB default)", f, string(raw), want)
 		}
 	}
 }
