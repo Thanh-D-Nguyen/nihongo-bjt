@@ -1,9 +1,9 @@
 # Go Backend Migration Orchestration State
 
-- Current phase: M3 fresh first-party auth core; legacy credential gate closed by user-approved identity reset (2026-09-29)
-- Current accepted implementation/code checkpoint: `b70bd7a` (M3 bootstrap-admin CLI PASS + TestLearnerMe profile field fix; full M3 COMPLETE)
-- Last completed wave: M3_BOOTSTRAP_ADMIN PASS (CLI provisions first admin actor with Argon2id credentials; idempotent; 4 integration tests ×2 against disposable PG17 PASS; httpserver suite ×2, race, vet, gofmt, ARM64 all PASS; TestLearnerMe DB-default field expectations corrected; independently verified by orchestrator at 2026-09-29)
-- Next wave: M4 account lifecycle (email verification, password reset/change, account disable/delete, registration). No legacy Keycloak verifier.
+- Current phase: M4 account lifecycle complete; Google OAuth retired; next = M5 learner profile & preferences
+- Current accepted implementation/code checkpoint: `f21d9b2e` (M4 account lifecycle PASS + Google OAuth retirement decision)
+- Last completed wave: M4_ACCOUNT_LIFECYCLE PASS (6 endpoints: register, forgot-password, reset-password, change-password, disable, delete; 12 integration tests ×2 against disposable PG17 PASS; httpserver suite, race, vet, gofmt, ARM64 all PASS; 7 repairs applied during verification; Google OAuth RETIRE decision documented; independently verified by orchestrator at 2026-09-29)
+- Next wave: M5 learner profile & preferences (GET/PUT /api/auth/me profile fields, display name, preferences, cover image, theme/font/density settings). Build on M4 registration which creates the initial profile row.
 - Decision: `LEGACY_CREDENTIAL_MIGRATION = NOT_REQUIRED`; `IDENTITY_RESET_APPROVED = TRUE`. The user approved resetting identity/account-scoped data only. This closes the M2 production credential-format gate without obtaining Keycloak metadata.
 - Completed checkpoint commits:
   - `0fc4486f5cfd2edc4433359753be573605234006` — P0.1 plan rebase
