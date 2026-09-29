@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { RequireKeycloakAuth } from "../../../../../components/auth/require-keycloak-auth";
-import { useKeycloakAuth } from "../../../../../components/auth/keycloak-auth-provider";
+import { useKeycloakAuth } from "../../../../../lib/go-auth-provider";
 import { LotoGameToggle } from "./loto-game-toggle";
 import { LotoHeroPrediction } from "./loto-hero-prediction";
 import { LotoHistoryCard } from "./loto-history-card";
@@ -103,7 +103,7 @@ export function LotoHubClient({ labels, locale }: { labels: LotoLabels; locale: 
 }
 
 function LotoHubInner({ labels }: { labels: LotoLabels; locale: string }) {
-  const { accessToken } = useKeycloakAuth();
+  const { isAuthenticated } = useKeycloakAuth();
   const [game, setGame] = useState<LotoGame>("loto6");
   const [nextDraw, setNextDraw] = useState<NextDrawData | null>(null);
   const [feed, setFeed] = useState<FeedItem[]>([]);
@@ -120,18 +120,18 @@ function LotoHubInner({ labels }: { labels: LotoLabels; locale: string }) {
 
   const fetchHeaders = useCallback(() => {
     const h: Record<string, string> = { "Content-Type": "application/json" };
-    if (accessToken) h.Authorization = `Bearer ${accessToken}`;
     return h;
-  }, [accessToken]);
+  }, []);
 
   // Fetch next draw hero
   useEffect(() => {
-    if (!accessToken) return;
+    if (!isAuthenticated) return;
     const controller = new AbortController();
     setNextDraw(null);
     setNextDrawError(false);
     fetch(`${API}/api/magazine/loto/next-draw?game=${game}`, {
       headers: fetchHeaders(),
+      credentials: "same-origin",
       signal: controller.signal
     })
       .then((r) => {
@@ -143,11 +143,11 @@ function LotoHubInner({ labels }: { labels: LotoLabels; locale: string }) {
         if (!isAbortError(error)) setNextDrawError(true);
       });
     return () => controller.abort();
-  }, [game, accessToken, fetchHeaders, retryKey]);
+  }, [game, isAuthenticated, fetchHeaders, retryKey]);
 
   // Fetch feed (reset on game change)
   useEffect(() => {
-    if (!accessToken) return;
+    if (!isAuthenticated) return;
     const controller = new AbortController();
     loadMoreAbortRef.current?.abort();
     loadMoreAbortRef.current = null;
@@ -160,6 +160,7 @@ function LotoHubInner({ labels }: { labels: LotoLabels; locale: string }) {
     setFeedError(false);
     fetch(`${API}/api/magazine/loto/feed?game=${game}&page=1&limit=10`, {
       headers: fetchHeaders(),
+      credentials: "same-origin",
       signal: controller.signal
     })
       .then((r) => {
@@ -180,11 +181,11 @@ function LotoHubInner({ labels }: { labels: LotoLabels; locale: string }) {
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [game, accessToken, fetchHeaders, retryKey]);
+  }, [game, isAuthenticated, fetchHeaders, retryKey]);
 
   // Load more
   const loadMore = useCallback(() => {
-    if (!hasMore || loading || feedError || !accessToken || loadMoreInFlightRef.current) {
+    if (!hasMore || loading || feedError || !isAuthenticated || loadMoreInFlightRef.current) {
       return;
     }
     const nextPage = page + 1;
@@ -195,6 +196,7 @@ function LotoHubInner({ labels }: { labels: LotoLabels; locale: string }) {
     setFeedError(false);
     fetch(`${API}/api/magazine/loto/feed?game=${game}&page=${nextPage}&limit=10`, {
       headers: fetchHeaders(),
+      credentials: "same-origin",
       signal: controller.signal
     })
       .then((r) => {
@@ -220,7 +222,7 @@ function LotoHubInner({ labels }: { labels: LotoLabels; locale: string }) {
         loadMoreInFlightRef.current = false;
         if (!controller.signal.aborted) setLoading(false);
       });
-  }, [hasMore, loading, feedError, accessToken, page, game, fetchHeaders]);
+  }, [hasMore, loading, feedError, isAuthenticated, page, game, fetchHeaders]);
 
   // Intersection observer for infinite scroll
   useEffect(() => {

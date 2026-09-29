@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
+import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
 import { learnerApiFetchOptional } from "../../../../lib/learner-api";
 
 export interface AdSlotLabels {

@@ -3,7 +3,7 @@
 import { cn } from "@nihongo-bjt/ui";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useKeycloakAuth } from "../../../../../components/auth/keycloak-auth-provider";
+import { useKeycloakAuth } from "../../../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../../../lib/learner-api";
 
 interface Choice {

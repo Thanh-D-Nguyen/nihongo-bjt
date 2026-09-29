@@ -3,7 +3,7 @@
 import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { KeycloakAuthProvider } from "../../../components/auth/keycloak-auth-provider";
+import { GoAuthProvider } from "../../../lib/go-auth-provider";
 import { usePresence, type ChallengeReceivedPayload } from "../../../hooks/use-presence";
 
 import { AppearanceSync } from "../../_components/appearance-sync";
@@ -85,11 +85,15 @@ function PresenceConnector({
   );
 }
 
+/**
+ * Auth shell for the learner app. Now uses Go-native cookie-based sessions
+ * instead of Keycloak OIDC. The name is retained for backward compatibility
+ * with existing imports; will be renamed in a follow-up cleanup.
+ */
 export function KeycloakAuthShell({
   children,
   companionLabels,
   focusTimerLabels,
-  kcAccessCookiePresent = false,
   locale,
   nav,
   presenceLabels,
@@ -98,6 +102,7 @@ export function KeycloakAuthShell({
   children: ReactNode;
   companionLabels: CompanionBotLabels;
   focusTimerLabels: FocusMiniIndicatorLabels;
+  /** @deprecated No longer used; retained for call-site compatibility. */
   kcAccessCookiePresent?: boolean;
   locale: string;
   nav: LearnerNavLabels;
@@ -105,7 +110,7 @@ export function KeycloakAuthShell({
   searchLabels: SearchDropdownLabels;
 }) {
   return (
-    <KeycloakAuthProvider kcAccessCookiePresent={kcAccessCookiePresent} locale={locale}>
+    <GoAuthProvider locale={locale}>
       <PresenceConnector labels={presenceLabels} locale={locale} />
       <FocusTimerProvider>
         <AppearanceSync />
@@ -114,6 +119,6 @@ export function KeycloakAuthShell({
         </LearnerAppFrame>
         <FocusMiniIndicator labels={focusTimerLabels} />
       </FocusTimerProvider>
-    </KeycloakAuthProvider>
+    </GoAuthProvider>
   );
 }

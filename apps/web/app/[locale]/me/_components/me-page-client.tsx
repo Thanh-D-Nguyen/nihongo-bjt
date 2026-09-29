@@ -11,7 +11,7 @@ import {
   ProgressBar,
 } from "@nihongo-bjt/ui";
 
-import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
+import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../../lib/learner-api";
 import { useProfileImageUpload } from "../../profile/_components/use-profile-image-upload";
 import { MeTabProgress } from "./me-tab-progress";
@@ -134,7 +134,7 @@ export function MePageClient({
 
   /* ── Load profile + quick stats ── */
   const loadData = useCallback(async () => {
-    if (!auth.accessToken) {
+    if (!auth.isAuthenticated) {
       setLoading(auth.loading);
       return;
     }
@@ -142,12 +142,12 @@ export function MePageClient({
     setError(false);
     try {
       const [profileRes, statsRes] = await Promise.all([
-        learnerApiFetch("/api/auth/me"),
-        learnerApiFetch("/api/learner/analytics?days=7"),
+        fetch("/api/auth/me", { cache: "no-store", credentials: "same-origin" }),
+        fetch("/api/learner/analytics?days=7", { credentials: "same-origin" }),
       ]);
       if (profileRes.ok) {
         const body = await profileRes.json();
-        setProfile(body.profile);
+        setProfile(body);
       }
       if (statsRes.ok) {
         const body = await statsRes.json();
@@ -164,7 +164,7 @@ export function MePageClient({
     } finally {
       setLoading(false);
     }
-  }, [auth.accessToken, auth.loading]);
+  }, [auth.isAuthenticated, auth.loading]);
 
   useEffect(() => {
     void loadData();
@@ -174,9 +174,9 @@ export function MePageClient({
   useEffect(() => {
     let cancelled = false;
     async function loadAssetUrl(assetId: string | null, setter: (url: string | null) => void) {
-      if (!assetId || !auth.accessToken) { setter(null); return; }
+      if (!assetId || !auth.isAuthenticated) { setter(null); return; }
       try {
-        const res = await learnerApiFetch(`/api/media/assets/${assetId}/read-url`);
+        const res = await fetch(`/api/media/assets/${assetId}/read-url`, { credentials: "same-origin" });
         if (res.ok) {
           const body = await res.json();
           if (!cancelled) setter(body.readUrl);
@@ -186,7 +186,7 @@ export function MePageClient({
     void loadAssetUrl(profile?.avatarAssetId ?? null, setAvatarUrl);
     void loadAssetUrl(profile?.coverAssetId ?? null, setCoverUrl);
     return () => { cancelled = true; };
-  }, [auth.accessToken, profile?.avatarAssetId, profile?.coverAssetId]);
+  }, [auth.isAuthenticated, profile?.avatarAssetId, profile?.coverAssetId]);
 
   /* ── Image upload ── */
   const updateProfileImage = useCallback(

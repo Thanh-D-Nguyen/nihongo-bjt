@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 
-import { useKeycloakAuth } from "../../components/auth/keycloak-auth-provider";
+import { useKeycloakAuth } from "../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../lib/learner-api";
 
 interface ActiveSession {

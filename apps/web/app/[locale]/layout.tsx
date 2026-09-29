@@ -1,10 +1,8 @@
 import { isSupportedLocale, type SupportedLocale } from "@nihongo-bjt/config";
-import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import en from "../../messages/en.json";
 import ja from "../../messages/ja.json";
 import vi from "../../messages/vi.json";
-import { learnerKcCookies } from "../../lib/kc-cookies";
 import { KeycloakAuthShell } from "./_components/keycloak-auth-shell";
 import { PwaRegister } from "../_components/pwa-register";
 import { AmbientProvider } from "../_hooks/use-ambient-mode";
@@ -40,8 +38,6 @@ export default async function LearnerLayout({
   const loc = locale as SupportedLocale;
   const skipLabel = skipLabels[loc] ?? vi.a11y.skipToContent;
   const t = messages[loc] ?? messages.vi;
-  const jar = await cookies();
-  const kcAccessCookiePresent = Boolean(jar.get(learnerKcCookies.access)?.value);
 
   return (
     <div lang={locale as SupportedLocale}>
@@ -55,7 +51,6 @@ export default async function LearnerLayout({
         <KeycloakAuthShell
           companionLabels={t.nav.companion}
           focusTimerLabels={t.focusTimer}
-          kcAccessCookiePresent={kcAccessCookiePresent}
           locale={locale}
           nav={t.nav}
           presenceLabels={t.presence}

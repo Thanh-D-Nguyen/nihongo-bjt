@@ -15,7 +15,7 @@ import {
   AnnotatedJapaneseText,
   type ReadingAssistDisplayMode
 } from "../../../../components/reading-assist/annotated-japanese-text";
-import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
+import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../../lib/learner-api";
 import { recordStudyProgress } from "../../../_hooks/use-study-progress";
 import { ShareDrawer } from "../../_components/share-drawer";

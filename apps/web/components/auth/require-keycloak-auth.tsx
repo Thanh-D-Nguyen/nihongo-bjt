@@ -3,26 +3,28 @@
 import { useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
 
-import { isWebKeycloakEnabled } from "../../lib/public-keycloak";
-import { useKeycloakAuth } from "./keycloak-auth-provider";
+import { useGoAuth } from "../../lib/go-auth-provider";
 
+/**
+ * Route guard that redirects unauthenticated users to /login.
+ * Replaces Keycloak-based auth check with Go-native session cookie auth.
+ * Name retained for backward compatibility; will be renamed in follow-up cleanup.
+ */
 export function RequireKeycloakAuth({ locale, children }: { locale: string; children: ReactNode }) {
-  const { loading, accessToken } = useKeycloakAuth();
+  const { loading, isAuthenticated } = useGoAuth();
   const router = useRouter();
-  const enabled = isWebKeycloakEnabled();
 
   useEffect(() => {
-    if (!enabled) return;
     if (loading) return;
-    if (accessToken) return;
+    if (isAuthenticated) return;
     const returnTo =
       typeof window !== "undefined"
         ? `${window.location.pathname}${window.location.search}`
         : `/${locale}`;
     router.replace(`/${locale}/login?returnTo=${encodeURIComponent(returnTo)}`);
-  }, [accessToken, enabled, loading, locale, router]);
+  }, [isAuthenticated, loading, locale, router]);
 
-  if (enabled && (loading || !accessToken)) {
+  if (loading || !isAuthenticated) {
     return null;
   }
 

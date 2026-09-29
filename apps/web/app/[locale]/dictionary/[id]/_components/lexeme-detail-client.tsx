@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
-import { useKeycloakAuth } from "../../../../../components/auth/keycloak-auth-provider";
+import { useKeycloakAuth } from "../../../../../lib/go-auth-provider";
 import { AnnotatedJapaneseText } from "../../../../../components/reading-assist/annotated-japanese-text";
 import { learnerApiFetchOptional } from "../../../../../lib/learner-api";
 import { ContentActions, type ContentActionLabels } from "../../../_components/content-actions";

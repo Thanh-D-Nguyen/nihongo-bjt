@@ -15,7 +15,7 @@ import {
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { useKeycloakAuth } from "../../../components/auth/keycloak-auth-provider";
+import { useKeycloakAuth } from "../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../lib/learner-api";
 import { ActivityBarChart } from "./_components/activity-bar-chart";
 import { ActivityHeatmap } from "./_components/activity-heatmap";

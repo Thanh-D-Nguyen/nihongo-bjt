@@ -14,7 +14,7 @@ import {
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { io, type Socket } from "socket.io-client";
 
-import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
+import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../../lib/learner-api";
 import { recordStudyProgress } from "../../../_hooks/use-study-progress";
 import {

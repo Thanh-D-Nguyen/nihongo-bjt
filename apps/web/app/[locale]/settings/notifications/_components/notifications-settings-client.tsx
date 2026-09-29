@@ -3,7 +3,7 @@
 import { Card, CardContent, PageHeader, SectionHeader, Toggle } from "@nihongo-bjt/ui";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 
-import { useKeycloakAuth } from "../../../../../components/auth/keycloak-auth-provider";
+import { useKeycloakAuth } from "../../../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../../../lib/learner-api";
 import { usePushSubscription } from "../../../../_hooks/use-push-subscription";
 

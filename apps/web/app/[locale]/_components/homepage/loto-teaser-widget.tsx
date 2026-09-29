@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
+import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
 
 interface LotoTeaser {
   drawNumber: number | null;
@@ -15,18 +15,18 @@ interface LotoTeaser {
 const API = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/$/u, "");
 
 export function LotoTeaserWidget({ locale }: { locale: string }) {
-  const { accessToken } = useKeycloakAuth();
+  const { isAuthenticated } = useKeycloakAuth();
   const [teaser, setTeaser] = useState<LotoTeaser | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchTeaser = useCallback(async () => {
-    if (!accessToken) {
+    if (!isAuthenticated) {
       setLoading(false);
       return;
     }
     try {
       const res = await fetch(`${API}/api/magazine/loto/next-draw?game=loto6`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
+        credentials: "same-origin",
       });
       if (res.ok) {
         const data = await res.json();
@@ -37,14 +37,14 @@ export function LotoTeaserWidget({ locale }: { locale: string }) {
     } finally {
       setLoading(false);
     }
-  }, [accessToken]);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     fetchTeaser();
   }, [fetchTeaser]);
 
   // Don't render if no data or not logged in
-  if (!accessToken || loading) return null;
+  if (!isAuthenticated || loading) return null;
   if (!teaser) return null;
 
   const firstSet = teaser.sets?.[0]?.mainNumbers ?? [];

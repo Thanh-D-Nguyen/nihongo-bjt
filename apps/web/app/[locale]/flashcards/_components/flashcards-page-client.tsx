@@ -27,7 +27,7 @@ import {
   IconSpark
 } from "../../../_components/app-icons";
 import { AdSlot, type AdSlotLabels } from "../../_components/ads/ad-slot";
-import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
+import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
 import { queueSizeForUser } from "../../../../lib/offline-review-queue";
 import { learnerApiFetch } from "../../../../lib/learner-api";
 import { DeckBrowser, type DeckLabels, type LibraryDeckFilter } from "./deck-browser";

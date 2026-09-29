@@ -15,7 +15,7 @@ import {
   useState
 } from "react";
 
-import { useKeycloakAuth } from "../../components/auth/keycloak-auth-provider";
+import { useKeycloakAuth } from "../../lib/go-auth-provider";
 import { learnerApiFetchOptional } from "../../lib/learner-api";
 import { AnnouncementStrip } from "./announcement-strip";
 import { BrandFull } from "./brand-logo";
@@ -136,13 +136,11 @@ export function LearnerAppFrame({
   const base = `/${locale}`;
   const scrolled = useScrolled();
   const {
-    accessToken,
+    isAuthenticated,
     displayName,
     email,
-    kcAccessCookiePresent,
     loading: authLoading,
-    logout,
-    sessionFailedWithCookie
+    logout
   } = useKeycloakAuth();
   const [mounted, setMounted] = useState(false);
   const [globalSearchQuery, setGlobalSearchQuery] = useState("");
@@ -179,9 +177,9 @@ export function LearnerAppFrame({
 
   const [dueCount, setDueCount] = useState(0);
   useEffect(() => {
-    if (!accessToken) return;
+    if (!isAuthenticated) return;
     let cancelled = false;
-    learnerApiFetchOptional("/api/review/next?limit=100")
+    fetch("/api/review/next?limit=100", { credentials: "same-origin" })
       .then((r) => (r.ok ? r.json() : []))
       .then((data: unknown) => {
         if (!cancelled) setDueCount(Array.isArray(data) ? data.length : 0);
@@ -190,7 +188,7 @@ export function LearnerAppFrame({
     return () => {
       cancelled = true;
     };
-  }, [accessToken]);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (!userMenuOpen && !exploreMenuOpen && !mobileMenuOpen) return;
@@ -653,13 +651,13 @@ export function LearnerAppFrame({
 
           {/* Right actions */}
           <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-            {mounted && authLoading && kcAccessCookiePresent ? (
+            {mounted && authLoading ? (
               <Badge className="hidden sm:inline-flex" role="status">
                 {nav.sessionChecking}
               </Badge>
             ) : null}
 
-            {mounted && accessToken ? (
+            {mounted && isAuthenticated ? (
               <div className="relative" ref={userMenuRef}>
                 <button
                   aria-expanded={userMenuOpen}
@@ -750,8 +748,7 @@ export function LearnerAppFrame({
 
             {mounted &&
             !authLoading &&
-            !accessToken &&
-            (!kcAccessCookiePresent || sessionFailedWithCookie) ? (
+            !isAuthenticated ? (
               <>
                 <LocaleSwitcher
                   currentLocale={locale}

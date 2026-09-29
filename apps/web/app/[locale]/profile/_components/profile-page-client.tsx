@@ -4,7 +4,7 @@ import { Button, Card, CardContent, CardHeader, CardTitle, ProgressBar } from "@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type ChangeEvent } from "react";
 
-import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
+import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../../lib/learner-api";
 import { useProfileImageUpload } from "./use-profile-image-upload";
 
@@ -89,7 +89,7 @@ export function ProfilePageClient({
   const [error, setError] = useState(false);
 
   const loadProfile = useCallback(async () => {
-    if (!auth.accessToken) {
+    if (!auth.isAuthenticated) {
       setLoading(auth.loading);
       return;
     }
@@ -97,18 +97,18 @@ export function ProfilePageClient({
     setLoading(true);
     setError(false);
     try {
-      const response = await learnerApiFetch("/api/auth/me");
+      const response = await fetch("/api/auth/me", { cache: "no-store", credentials: "same-origin" });
       if (!response.ok) {
         throw new Error("profile_load_failed");
       }
-      const body = (await response.json()) as ProfileResponse;
-      setProfile(body.profile);
+      const body = (await response.json()) as Record<string, unknown>;
+      setProfile(body as unknown as LearnerProfile);
     } catch {
       setError(true);
     } finally {
       setLoading(false);
     }
-  }, [auth.accessToken, auth.loading]);
+  }, [auth.isAuthenticated, auth.loading]);
 
   useEffect(() => {
     void loadProfile();
@@ -118,12 +118,12 @@ export function ProfilePageClient({
     let cancelled = false;
 
     async function loadAssetUrl(assetId: string | null, setter: (url: string | null) => void) {
-      if (!assetId || !auth.accessToken) {
+      if (!assetId || !auth.isAuthenticated) {
         setter(null);
         return;
       }
       try {
-        const response = await learnerApiFetch(`/api/media/assets/${assetId}/read-url`);
+        const response = await fetch(`/api/media/assets/${assetId}/read-url`, { credentials: "same-origin" });
         if (!response.ok) return;
         const body = (await response.json()) as AssetReadUrlResponse;
         if (!cancelled) setter(body.readUrl);
@@ -138,7 +138,7 @@ export function ProfilePageClient({
     return () => {
       cancelled = true;
     };
-  }, [auth.accessToken, profile?.avatarAssetId, profile?.coverAssetId]);
+  }, [auth.isAuthenticated, profile?.avatarAssetId, profile?.coverAssetId]);
 
   const updateProfileImage = useCallback(
     async (field: "avatarAssetId" | "coverAssetId", assetId: string | null) => {

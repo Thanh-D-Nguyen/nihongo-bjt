@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { io, type Socket } from "socket.io-client";
 
-import { useKeycloakAuth } from "../components/auth/keycloak-auth-provider";
+import { useKeycloakAuth } from "../lib/go-auth-provider";
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/$/u, "");
 const HEARTBEAT_INTERVAL_MS = 60_000; // 60s (server TTL is 90s)

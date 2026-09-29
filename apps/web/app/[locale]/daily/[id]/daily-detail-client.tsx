@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
+import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
 import { ShareDrawer } from "../../_components/share-drawer";
 import { AnnotatedJapaneseText } from "../../../../components/reading-assist/annotated-japanese-text";
 import { learnerApiFetch, learnerApiFetchOptional } from "../../../../lib/learner-api";

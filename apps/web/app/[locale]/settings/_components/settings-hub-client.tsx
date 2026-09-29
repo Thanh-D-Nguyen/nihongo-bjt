@@ -7,7 +7,7 @@ import {
 } from "@nihongo-bjt/ui";
 import Link from "next/link";
 
-import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
+import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
 
 /* ── Types ── */
 
@@ -180,7 +180,7 @@ export function SettingsHubClient({
         >
           {s.backToHome}
         </Link>
-        {auth.accessToken ? (
+        {auth.isAuthenticated ? (
           <Button variant="danger" type="button" onClick={auth.logout}>
             {s.signOut}
           </Button>

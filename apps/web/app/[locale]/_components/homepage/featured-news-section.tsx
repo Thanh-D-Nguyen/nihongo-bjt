@@ -4,7 +4,7 @@ import { Badge, Button, ErrorState, SectionHeader, TabButton, TabsList } from "@
 import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 
-import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
+import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../../lib/learner-api";
 import { IconBookmark, IconDocument } from "../../../_components/app-icons";
 import { NhkCreateDeckDialog } from "../nhk-create-deck-dialog";

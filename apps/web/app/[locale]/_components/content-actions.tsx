@@ -4,7 +4,7 @@ import type { BookmarkTargetType } from "@nihongo-bjt/shared";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { learnerApiFetch } from "../../../lib/learner-api";
-import { useKeycloakAuth } from "../../../components/auth/keycloak-auth-provider";
+import { useKeycloakAuth } from "../../../lib/go-auth-provider";
 
 /* ── Icons ──────────────────────────────────── */
 

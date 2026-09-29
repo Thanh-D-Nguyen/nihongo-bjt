@@ -4,7 +4,7 @@ import DOMPurify from "isomorphic-dompurify";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { useKeycloakAuth } from "../../../../../components/auth/keycloak-auth-provider";
+import { useKeycloakAuth } from "../../../../../lib/go-auth-provider";
 import { learnerApiFetch, learnerApiFetchOptional } from "../../../../../lib/learner-api";
 import { NhkCreateDeckDialog } from "../../../_components/nhk-create-deck-dialog";
 import { toIntlLocale } from "@/lib/locale-utils";

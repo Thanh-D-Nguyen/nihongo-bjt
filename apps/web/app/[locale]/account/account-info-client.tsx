@@ -12,7 +12,7 @@ import {
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { useKeycloakAuth } from "../../../components/auth/keycloak-auth-provider";
+import { useKeycloakAuth } from "../../../lib/go-auth-provider";
 import { learnerApiFetchOptional } from "../../../lib/learner-api";
 
 type AccountInfoLabels = {
@@ -123,7 +123,7 @@ export function AccountInfoClient({
               <div className="rounded-xl border border-ink/10 bg-paper/70 p-3">
                 <dt className="text-xs font-semibold text-muted">{labels.accountStatus}</dt>
                 <dd className="mt-1 text-sm font-semibold text-ink">
-                  {auth.accessToken ? labels.signedIn : labels.signedOut}
+                  {auth.isAuthenticated ? labels.signedIn : labels.signedOut}
                 </dd>
               </div>
               <div className="rounded-xl border border-ink/10 bg-paper/70 p-3">
@@ -173,7 +173,7 @@ export function AccountInfoClient({
             >
               {labels.settings}
             </Link>
-            {auth.accessToken ? (
+            {auth.isAuthenticated ? (
               <Button className="sm:ml-auto" variant="danger" type="button" onClick={auth.logout}>
                 {labels.signOut}
               </Button>

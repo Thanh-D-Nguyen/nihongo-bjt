@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { useKeycloakAuth } from "../../components/auth/keycloak-auth-provider";
+import { useKeycloakAuth } from "../../lib/go-auth-provider";
 import {
   APPEARANCE_CHANGE_EVENT,
   APPEARANCE_STORAGE_KEY,
@@ -26,14 +26,17 @@ export function AppearanceSync() {
   }, []);
 
   useEffect(() => {
-    if (!auth.accessToken) return;
+    if (!auth.isAuthenticated) return;
     let cancelled = false;
 
     async function syncServerAppearance() {
-      const response = await learnerApiFetch("/api/auth/me");
+      const response = await fetch("/api/auth/me", {
+        cache: "no-store",
+        credentials: "same-origin"
+      });
       if (!response.ok || cancelled) return;
-      const body = (await response.json()) as { profile?: unknown };
-      const next = appearanceFromProfile(body.profile);
+      const body = (await response.json()) as Record<string, unknown>;
+      const next = appearanceFromProfile(body);
       if (cancelled) return;
       setActiveTheme(next.theme);
       saveAppearance(next);
@@ -48,7 +51,7 @@ export function AppearanceSync() {
     return () => {
       cancelled = true;
     };
-  }, [auth.accessToken]);
+  }, [auth.isAuthenticated]);
 
   useEffect(() => {
     function onAppearanceChange(event: Event) {

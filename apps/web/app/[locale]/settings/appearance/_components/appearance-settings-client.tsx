@@ -4,7 +4,7 @@ import { Card, CardContent, PageHeader } from "@nihongo-bjt/ui";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { useKeycloakAuth } from "../../../../../components/auth/keycloak-auth-provider";
+import { useKeycloakAuth } from "../../../../../lib/go-auth-provider";
 import {
   DEFAULT_APPEARANCE,
   type AppearanceState,
@@ -62,20 +62,19 @@ export function AppearanceSettingsClient({
     saveAppearance(cached);
 
     // Fetch from server and reconcile
-    if (auth.accessToken) {
-      learnerApiFetch("/api/auth/me")
+    if (auth.isAuthenticated) {
+      fetch("/api/auth/me", { cache: "no-store", credentials: "same-origin" })
         .then((r) => (r.ok ? r.json() : null))
         .then((data) => {
-          const profile = data?.profile;
-          if (!profile) return;
-          const serverState = appearanceFromProfile(profile);
+          if (!data) return;
+          const serverState = appearanceFromProfile(data);
           setState(serverState);
           saveAppearance(serverState);
         })
         .catch(() => { /* use cached */ });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auth.accessToken]);
+  }, [auth.isAuthenticated]);
 
   // Listen for system theme changes
   useEffect(() => {
@@ -89,13 +88,14 @@ export function AppearanceSettingsClient({
   // Persist to server (debounced)
   const persistToServer = useCallback(
     (next: AppearanceState) => {
-      if (!auth.accessToken) return;
+      if (!auth.isAuthenticated) return;
       if (debounceRef.current) clearTimeout(debounceRef.current);
       debounceRef.current = setTimeout(async () => {
         setSaving(true);
         try {
-          await learnerApiFetch("/api/auth/profile", {
+          await fetch("/api/auth/me", {
             method: "PUT",
+            credentials: "same-origin",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               themeMode: next.theme,
@@ -109,7 +109,7 @@ export function AppearanceSettingsClient({
         finally { setSaving(false); }
       }, 600);
     },
-    [auth.accessToken]
+    [auth.isAuthenticated]
   );
 
   const apply = useCallback(

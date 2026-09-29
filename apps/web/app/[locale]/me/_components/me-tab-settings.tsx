@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
+import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
 
 /* ─── Types ─── */
 

@@ -16,7 +16,7 @@ import {
 
 import { VoiceSearchButton } from "../../../_components/search-advanced-inputs";
 import { IconSearch } from "../../../_components/nav-icons";
-import { useKeycloakAuth } from "../../../../components/auth/keycloak-auth-provider";
+import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
 import { useRecentSearches } from "../../../../lib/use-recent-searches";
 import {
   SearchDropdown,
