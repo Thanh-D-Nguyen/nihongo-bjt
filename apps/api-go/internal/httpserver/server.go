@@ -23,6 +23,7 @@ import (
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/postgres"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/profile"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/redisx"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/search"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/session"
 )
 
@@ -40,6 +41,7 @@ type Dependencies struct {
 	RateLimiter     *authn.RateLimiter // nil disables login (fail closed in handler)
 	MediaStore      *media.Store       // nil if DB not configured; media endpoints return 503
 	MediaBucket     *blob.Bucket       // nil if media storage not configured; upload/stream return 503
+	SearchClient    *search.Client     // nil if Meilisearch not configured; search endpoints return 503
 	Version         string
 }
 
@@ -196,6 +198,23 @@ func NewRouter(deps Dependencies) http.Handler {
 	if deps.MediaStore != nil && deps.MediaBucket != nil {
 		r.Get("/api/media/{id}", getMediaMetadataHandler(deps.MediaStore, deps.Logger))
 		r.Get("/api/media/{id}/stream", streamMediaHandler(deps.MediaStore, deps.MediaBucket, deps.Logger))
+	}
+
+	// M8: Search — learner session-guarded; reindex is admin-only.
+	if deps.SearchClient != nil && deps.SessionStore != nil {
+		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Get("/api/search", searchHandler(deps.SearchClient, deps.Logger))
+		})
+	}
+	if deps.SearchClient != nil && deps.SessionStore != nil {
+		adminGuard := authn.AdminGuard(deps.SessionStore, guardCfg)
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Post("/api/search/index", reindexHandler(deps.SearchClient, deps.Logger))
+		})
 	}
 
 	return r
