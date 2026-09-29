@@ -78,15 +78,15 @@ func run(ctx context.Context) error {
 	}
 
 	// Ensure default admin role exists.
-	const ensureRole = `INSERT INTO authz.admin_role (id, name, code, status, created_at, updated_at)
-		VALUES ('00000000-0000-0000-0000-000000000001', 'Super Admin', 'super_admin', 'active', now(), now())
+	const ensureRole = `INSERT INTO authz.admin_role (id, name, code, status, created_at)
+		VALUES ('00000000-0000-0000-0000-000000000001', 'Super Admin', 'super_admin', 'active', now())
 		ON CONFLICT (id) DO NOTHING`
 	if _, err := pool.Exec(ctx, ensureRole); err != nil {
 		return fmt.Errorf("ensure admin role: %w", err)
 	}
 
 	// Assign role to actor.
-	const assignRole = `INSERT INTO authz.admin_actor_role (actor_id, role_id, created_at)
+	const assignRole = `INSERT INTO authz.admin_actor_role (actor_id, role_id, granted_at)
 		VALUES ($1, '00000000-0000-0000-0000-000000000001', now())
 		ON CONFLICT (actor_id, role_id) DO NOTHING`
 	if _, err := pool.Exec(ctx, assignRole, actorID); err != nil {
