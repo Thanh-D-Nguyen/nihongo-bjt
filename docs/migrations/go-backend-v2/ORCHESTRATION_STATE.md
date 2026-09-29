@@ -1,9 +1,9 @@
 # Go Backend Migration Orchestration State
 
-- Current phase: M9 business write accepted; next = M10 notifications & preferences sync
-- Current accepted implementation/code checkpoint: `1c8ecb8` (M9 business write PASS — compile/race/vet/gofmt/arm64 all clean; 17 integration tests skip gracefully without TEST_DATABASE_URL; httpserver suite PASS)
-- Last completed wave: M9_BUSINESS_WRITE PASS (9 endpoints: bookmark toggle/check/list, exercise start/answer/complete, quiz start/answer; all learner-session guarded with CSRF; 17 integration tests; all static gates clean; committed at 1c8ecb8)
-- Next wave: M10 notifications & preferences sync (notification delivery, preference persistence, sync endpoints). Inspect canonical plan in docs/migrations/go-backend-v2/ for exact scope. Build on M5 profile store and M4 lifecycle patterns.
+- Current phase: M10 background jobs accepted; next = M11 remaining integrations
+- Current accepted implementation/code checkpoint: `94fbc97` (M10 background jobs PASS — robfig/cron/v3 scheduler with PG advisory locks, timezone-aware scheduling, config toggles, structured slog logging; 10 cron job stubs + 4 queue stubs; all static gates clean; committed at 94fbc97)
+- Last completed wave: M10_BACKGROUND_JOBS PASS (scheduler infrastructure, 10 cron handlers stubbed, 4 queue equivalents stubbed, advisory lock duplicate-run protection, JOBS_ENABLED/LOTO_AUTOPILOT_ENABLED config toggles; all static gates clean; committed at 94fbc97)
+- Next wave: M11 remaining integrations (Stripe/billing webhook migration, Sharp/image processing replacement or retention decision, search orchestration closure, any remaining Nest-only dependencies). Inspect canonical plan in docs/migrations/go-backend-v2/docs/06_execution_waves.md for exact scope.
 - Decision: `LEGACY_CREDENTIAL_MIGRATION = NOT_REQUIRED`; `IDENTITY_RESET_APPROVED = TRUE`. The user approved resetting identity/account-scoped data only. This closes the M2 production credential-format gate without obtaining Keycloak metadata.
 - Completed checkpoint commits:
   - `0fc4486f5cfd2edc4433359753be573605234006` — P0.1 plan rebase
