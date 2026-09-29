@@ -3,6 +3,7 @@ package authn
 
 import (
 	"errors"
+	"net"
 	"sync"
 	"time"
 )
@@ -187,4 +188,72 @@ func (rl *RateLimiter) evict() {
 			delete(rl.buckets, k)
 		}
 	}
+}
+
+// NormalizePeerIP extracts the host portion of a RemoteAddr string, stripping
+// the ephemeral port. It does NOT consult X-Forwarded-For or X-Real-IP headers;
+// those are untrusted until a validated trusted-proxy strategy exists.
+//
+// Malformed or empty input returns the fixed key "unknown" so that all
+// unparseable addresses share one fail-closed bucket rather than each
+// producing a fresh attacker-controlled entry.
+//
+// Login handlers must use this (not r.RemoteAddr directly) to ensure distinct
+// source ports share one rate-limit bucket.
+func NormalizePeerIP(remoteAddr string) string {
+	if remoteAddr == "" {
+		return "unknown"
+	}
+	host, _, err := net.SplitHostPort(remoteAddr)
+	if err != nil {
+		// No port present or malformed. If it is a valid bare IP (v4 or v6),
+		// return it as-is. Otherwise fall back to the stable fail-closed key.
+		if net.ParseIP(remoteAddr) != nil {
+			return remoteAddr
+		}
+		return "unknown"
+	}
+	if host == "" {
+		return "unknown"
+	}
+	// Validate the extracted host: accept only valid IPs or well-formed
+	// hostnames. Reject anything that SplitHostPort accepted but is not a
+	// real network identifier (e.g. "not-an-address" from "not-an-address:abc").
+	if net.ParseIP(host) != nil {
+		return host
+	}
+	// Accept DNS hostnames: non-empty, no whitespace, contains at least one
+	// dot or is "localhost". Anything else is treated as malformed.
+	if isValidHostname(host) {
+		return host
+	}
+	return "unknown"
+}
+
+// isValidHostname reports whether s looks like a plausible DNS hostname.
+// It accepts names with at least one dot (e.g. "example.com") and the
+// special case "localhost". It rejects strings with whitespace, empty
+// labels, or other characters invalid in DNS names.
+func isValidHostname(s string) bool {
+	if s == "" {
+		return false
+	}
+	if s == "localhost" {
+		return true
+	}
+	// Must contain at least one dot to distinguish from arbitrary strings.
+	hasDot := false
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		if c == '.' {
+			hasDot = true
+			continue
+		}
+		// Allow alphanumeric and hyphen (standard DNS label chars).
+		if (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '-' {
+			continue
+		}
+		return false
+	}
+	return hasDot
 }

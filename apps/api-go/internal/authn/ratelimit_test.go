@@ -3,7 +3,6 @@ package authn
 import (
 	"errors"
 	"fmt"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -308,37 +307,9 @@ func TestDefaultRateLimiterConfig_Validates(t *testing.T) {
 	}
 }
 
-// NormalizePeerIP extracts the host portion of a RemoteAddr string, stripping
-// the ephemeral port. It does NOT consult X-Forwarded-For or X-Real-IP headers;
-// those are untrusted until a validated trusted-proxy strategy exists. Exported
-// for testing; login handlers must use this (not r.RemoteAddr directly) to
-// ensure distinct source ports share one rate-limit bucket.
-func NormalizePeerIP(remoteAddr string) string {
-	if remoteAddr == "" {
-		return ""
-	}
-	// IPv6 with port: [::1]:port → ::1
-	if len(remoteAddr) > 0 && remoteAddr[0] == '[' {
-		end := strings.IndexByte(remoteAddr, ']')
-		if end < 0 {
-			return remoteAddr
-		}
-		return remoteAddr[1:end]
-	}
-	// Bare IPv6 contains multiple colons (e.g. "::1", "2001:db8::1").
-	// RemoteAddr only appends ":port" to bracketed IPv6, so a bare address
-	// with >1 colon is never host:port — return as-is.
-	if strings.Count(remoteAddr, ":") > 1 {
-		return remoteAddr
-	}
-	// IPv4 or hostname: host:port → host
-	if colon := strings.LastIndexByte(remoteAddr, ':'); colon >= 0 {
-		return remoteAddr[:colon]
-	}
-	return remoteAddr
-}
+// --- NormalizePeerIP tests (production helper in ratelimit.go) ---
 
-func TestNormalizePeerIP_StripsPortAndIgnoresHeaders(t *testing.T) {
+func TestNormalizePeerIP_StripsPortAndHandlesMalformed(t *testing.T) {
 	cases := []struct {
 		name       string
 		remoteAddr string
@@ -348,8 +319,11 @@ func TestNormalizePeerIP_StripsPortAndIgnoresHeaders(t *testing.T) {
 		{"ipv4 no port", "10.0.0.1", "10.0.0.1"},
 		{"ipv6 with port", "[::1]:8080", "::1"},
 		{"ipv6 no port", "::1", "::1"},
-		{"empty", "", ""},
+		{"ipv6 full with port", "[2001:db8::1]:443", "2001:db8::1"},
 		{"localhost with port", "127.0.0.1:12345", "127.0.0.1"},
+		{"empty maps to unknown", "", "unknown"},
+		{"malformed maps to unknown", "not-an-address:abc", "unknown"},
+		{"just colon maps to unknown", ":", "unknown"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -362,10 +336,10 @@ func TestNormalizePeerIP_StripsPortAndIgnoresHeaders(t *testing.T) {
 }
 
 func TestNormalizePeerIP_DifferentPortsShareKey(t *testing.T) {
-	// Simulates two requests from the same client IP with different ephemeral
-	// ports. Both must produce the same normalized key so they share one
-	// rate-limit bucket — verifying the root cause fix for the finding that
-	// raw r.RemoteAddr includes source port.
+	// Two requests from the same client IP with different ephemeral ports
+	// must produce the same normalized key so they share one rate-limit
+	// bucket — verifying the root cause fix for raw r.RemoteAddr including
+	// source port.
 	rl, _ := newTestLimiter(t, RateLimiterConfig{
 		Limit: 2, Window: time.Minute, TTL: 5 * time.Minute,
 		MaxKeys: 100, EvictEvery: 30 * time.Second,
@@ -397,42 +371,55 @@ func TestNormalizePeerIP_DifferentPortsShareKey(t *testing.T) {
 	}
 }
 
-func TestNormalizePeerIP_ForgedHeadersDoNotAffectKey(t *testing.T) {
-	// Even if an attacker sends X-Forwarded-For or X-Real-IP headers, the
-	// normalized key is derived solely from RemoteAddr. This test documents
-	// that header values are irrelevant to the limiter key — the HTTP handler
-	// must pass NormalizePeerIP(r.RemoteAddr), not any header value.
-	spoofedHeader := "1.2.3.4"
-	actualRemoteAddr := "192.168.1.100:55555"
-
-	// The correct key uses RemoteAddr only.
-	correctKey := "ip:" + NormalizePeerIP(actualRemoteAddr)
-	// A naive implementation trusting headers would produce this wrong key.
-	wrongKey := "ip:" + spoofedHeader
-
-	if correctKey == wrongKey {
-		t.Fatal("keys should differ when headers are spoofed")
-	}
-
+func TestNormalizePeerIP_MalformedMapsToStableBucket(t *testing.T) {
+	// Malformed or empty RemoteAddr must map to a single stable key ("unknown"),
+	// not to a fresh attacker-controlled bucket per request. This prevents
+	// flooding with garbage addresses from bypassing the hard cap.
 	rl, _ := newTestLimiter(t, RateLimiterConfig{
-		Limit: 1, Window: time.Minute, TTL: 5 * time.Minute,
+		Limit: 2, Window: time.Minute, TTL: 5 * time.Minute,
 		MaxKeys: 100, EvictEvery: 30 * time.Second,
 	})
 
-	ok, _ := rl.Allow(correctKey)
-	if !ok {
-		t.Fatal("first request with real RemoteAddr should be allowed")
+	malformedAddrs := []string{"", ":", "garbage", "not-valid:abc"}
+	for _, addr := range malformedAddrs {
+		key := "ip:" + NormalizePeerIP(addr)
+		if key != "ip:unknown" {
+			t.Fatalf("malformed addr %q should map to ip:unknown, got %q", addr, key)
+		}
 	}
-	// The spoofed-header key is a completely separate bucket — it does NOT
-	// consume the real IP's token. This proves header spoofing cannot bypass
-	// the limiter (it creates a new bucket instead).
-	ok, _ = rl.Allow(wrongKey)
+
+	// All malformed inputs share one bucket. After limit=2, further ones denied.
+	ok, _ := rl.Allow("ip:unknown")
 	if !ok {
-		t.Fatal("spoofed header key should have its own bucket")
+		t.Fatal("first malformed request should be allowed")
 	}
-	// But the real IP is still limited.
-	ok, _ = rl.Allow(correctKey)
+	ok, _ = rl.Allow("ip:unknown")
+	if !ok {
+		t.Fatal("second malformed request should be allowed")
+	}
+	ok, _ = rl.Allow("ip:unknown")
 	if ok {
-		t.Fatal("real IP should be denied after limit exhausted")
+		t.Fatal("third malformed request should be denied (limit=2)")
+	}
+	if rl.Len() != 1 {
+		t.Fatalf("expected 1 bucket for all malformed addrs, got %d", rl.Len())
+	}
+}
+
+func TestNormalizePeerIP_DependsOnlyOnRemoteAddr(t *testing.T) {
+	// Documents that NormalizePeerIP depends ONLY on its input string and
+	// does NOT consult any HTTP headers. When the login handler passes
+	// r.RemoteAddr, X-Forwarded-For / X-Real-IP values cannot influence
+	// the returned key. This is a property of the function signature, not
+	// an end-to-end HTTP guarantee (the handler is not yet wired).
+	ip := NormalizePeerIP("192.168.1.1:8080")
+	if ip != "192.168.1.1" {
+		t.Fatalf("unexpected normalization: %q", ip)
+	}
+	// Same input always produces same output regardless of external state.
+	for i := 0; i < 10; i++ {
+		if got := NormalizePeerIP("192.168.1.1:8080"); got != ip {
+			t.Fatalf("iteration %d: got %q, want %q", i, got, ip)
+		}
 	}
 }
