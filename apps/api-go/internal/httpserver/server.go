@@ -153,6 +153,26 @@ func NewRouter(deps Dependencies) http.Handler {
 			ar.Use(authn.CSRFGuard(csrfCfg))
 			ar.Post("/api/admin/logout", adminLogoutHandler(deps.SessionStore, deps.Logger, guardCfg.AdminCookieName))
 		})
+
+		// M6: Admin RBAC management routes — guarded by admin session + CSRF for unsafe methods.
+		if deps.DBPool != nil && deps.CredentialStore != nil && deps.RBACStore != nil {
+			r.Group(func(ar chi.Router) {
+				ar.Use(adminGuard)
+				ar.Get("/api/admin/actors", listActorsHandler(deps.DBPool, deps.Logger))
+				ar.Get("/api/admin/roles", listRolesHandler(deps.DBPool, deps.Logger))
+				ar.Get("/api/admin/permissions", listPermissionsHandler(deps.DBPool, deps.Logger))
+			})
+			r.Group(func(ar chi.Router) {
+				ar.Use(adminGuard)
+				ar.Use(authn.CSRFGuard(csrfCfg))
+				ar.Post("/api/admin/actors", createActorHandler(
+					deps.DBPool, deps.CredentialStore, deps.RateLimiter, deps.Logger,
+				))
+				ar.Put("/api/admin/actors/{id}/status", updateActorStatusHandler(deps.DBPool, deps.Logger))
+				ar.Post("/api/admin/actors/{id}/roles", assignRoleHandler(deps.DBPool, deps.Logger))
+				ar.Delete("/api/admin/actors/{id}/roles/{roleId}", removeRoleHandler(deps.DBPool, deps.Logger))
+			})
+		}
 	}
 
 	return r

@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -13,6 +12,8 @@ import (
 	"time"
 
 	"log/slog"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authz"
@@ -124,9 +125,8 @@ func TestListActors_Success(t *testing.T) {
 	seedAdminActor(t, pool, actorID, email, "List Actor")
 	rawToken := createAdminSession(t, sessStore, actorID)
 
-	req := httptest.NewRequest(http.MethodGet, "/api/admin/actors", nil)
+	req, _ := http.NewRequest(http.MethodGet, srv.URL+"/api/admin/actors", nil)
 	req.AddCookie(&http.Cookie{Name: "bjt_admin_session", Value: rawToken})
-	srv.Client().Transport.(*http.Transport).CloseIdleConnections()
 	resp, err := srv.Client().Do(req)
 	if err != nil {
 		t.Fatalf("request failed: %v", err)
@@ -162,12 +162,11 @@ func TestCreateActor_Success(t *testing.T) {
 		"password":    "securepass123",
 	}
 	b, _ := json.Marshal(body)
-	req := httptest.NewRequest(http.MethodPost, "/api/admin/actors", bytes.NewReader(b))
+	req, _ := http.NewRequest(http.MethodPost, srv.URL+"/api/admin/actors", bytes.NewReader(b))
 	req.Header.Set("Content-Type", "application/json")
 	req.AddCookie(&http.Cookie{Name: "bjt_admin_session", Value: rawToken})
 	req.Header.Set("X-CSRF-Token", "test-csrf")
 	req.Header.Set("Origin", "http://localhost:3000")
-	srv.Client().Transport.(*http.Transport).CloseIdleConnections()
 	resp, err := srv.Client().Do(req)
 	if err != nil {
 		t.Fatalf("request failed: %v", err)
@@ -207,7 +206,7 @@ func TestCreateActor_DuplicateEmail(t *testing.T) {
 	b, _ := json.Marshal(body)
 
 	// First creation should succeed.
-	req := httptest.NewRequest(http.MethodPost, "/api/admin/actors", bytes.NewReader(b))
+	req, _ := http.NewRequest(http.MethodPost, srv.URL+"/api/admin/actors", bytes.NewReader(b))
 	req.Header.Set("Content-Type", "application/json")
 	req.AddCookie(&http.Cookie{Name: "bjt_admin_session", Value: rawToken})
 	req.Header.Set("X-CSRF-Token", "test-csrf")
@@ -222,7 +221,7 @@ func TestCreateActor_DuplicateEmail(t *testing.T) {
 	}
 
 	// Second creation with same email should conflict.
-	req2 := httptest.NewRequest(http.MethodPost, "/api/admin/actors", bytes.NewReader(b))
+	req2, _ := http.NewRequest(http.MethodPost, srv.URL+"/api/admin/actors", bytes.NewReader(b))
 	req2.Header.Set("Content-Type", "application/json")
 	req2.AddCookie(&http.Cookie{Name: "bjt_admin_session", Value: rawToken})
 	req2.Header.Set("X-CSRF-Token", "test-csrf")
@@ -254,7 +253,7 @@ func TestCreateActor_WeakPassword(t *testing.T) {
 		"password":    "short",
 	}
 	b, _ := json.Marshal(body)
-	req := httptest.NewRequest(http.MethodPost, "/api/admin/actors", bytes.NewReader(b))
+	req, _ := http.NewRequest(http.MethodPost, srv.URL+"/api/admin/actors", bytes.NewReader(b))
 	req.Header.Set("Content-Type", "application/json")
 	req.AddCookie(&http.Cookie{Name: "bjt_admin_session", Value: rawToken})
 	req.Header.Set("X-CSRF-Token", "test-csrf")
@@ -286,7 +285,7 @@ func TestUpdateActorStatus_Success(t *testing.T) {
 
 	body := map[string]string{"status": "disabled"}
 	b, _ := json.Marshal(body)
-	req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/api/admin/actors/%s/status", targetID), bytes.NewReader(b))
+	req, _ := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/api/admin/actors/%s/status", srv.URL, targetID), bytes.NewReader(b))
 	req.Header.Set("Content-Type", "application/json")
 	req.AddCookie(&http.Cookie{Name: "bjt_admin_session", Value: rawToken})
 	req.Header.Set("X-CSRF-Token", "test-csrf")
@@ -322,7 +321,7 @@ func TestUpdateActorStatus_CannotDisableSelf(t *testing.T) {
 
 	body := map[string]string{"status": "disabled"}
 	b, _ := json.Marshal(body)
-	req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/api/admin/actors/%s/status", adminID), bytes.NewReader(b))
+	req, _ := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/api/admin/actors/%s/status", srv.URL, adminID), bytes.NewReader(b))
 	req.Header.Set("Content-Type", "application/json")
 	req.AddCookie(&http.Cookie{Name: "bjt_admin_session", Value: rawToken})
 	req.Header.Set("X-CSRF-Token", "test-csrf")
@@ -357,7 +356,7 @@ func TestAssignRole_Success(t *testing.T) {
 
 	body := map[string]string{"roleId": roleID}
 	b, _ := json.Marshal(body)
-	req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/admin/actors/%s/roles", targetID), bytes.NewReader(b))
+	req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/admin/actors/%s/roles", srv.URL, targetID), bytes.NewReader(b))
 	req.Header.Set("Content-Type", "application/json")
 	req.AddCookie(&http.Cookie{Name: "bjt_admin_session", Value: rawToken})
 	req.Header.Set("X-CSRF-Token", "test-csrf")
@@ -405,7 +404,7 @@ func TestAssignRole_Idempotent(t *testing.T) {
 	b, _ := json.Marshal(body)
 
 	// First assignment.
-	req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/admin/actors/%s/roles", targetID), bytes.NewReader(b))
+	req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/admin/actors/%s/roles", srv.URL, targetID), bytes.NewReader(b))
 	req.Header.Set("Content-Type", "application/json")
 	req.AddCookie(&http.Cookie{Name: "bjt_admin_session", Value: rawToken})
 	req.Header.Set("X-CSRF-Token", "test-csrf")
@@ -420,7 +419,7 @@ func TestAssignRole_Idempotent(t *testing.T) {
 	}
 
 	// Second assignment (idempotent).
-	req2 := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/admin/actors/%s/roles", targetID), bytes.NewReader(b))
+	req2, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/admin/actors/%s/roles", srv.URL, targetID), bytes.NewReader(b))
 	req2.Header.Set("Content-Type", "application/json")
 	req2.AddCookie(&http.Cookie{Name: "bjt_admin_session", Value: rawToken})
 	req2.Header.Set("X-CSRF-Token", "test-csrf")
@@ -463,7 +462,7 @@ func TestRemoveRole_Success(t *testing.T) {
 		t.Fatalf("pre-assign role: %v", err)
 	}
 
-	req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/admin/actors/%s/roles/%s", targetID, roleID), nil)
+	req, _ := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/api/admin/actors/%s/roles/%s", srv.URL, targetID, roleID), nil)
 	req.AddCookie(&http.Cookie{Name: "bjt_admin_session", Value: rawToken})
 	req.Header.Set("X-CSRF-Token", "test-csrf")
 	req.Header.Set("Origin", "http://localhost:3000")
@@ -491,7 +490,7 @@ func TestListRoles_Success(t *testing.T) {
 	roleID := newUUID(t)
 	seedAdminRole(t, pool, roleID, "list-test-role", "List Test Role")
 
-	req := httptest.NewRequest(http.MethodGet, "/api/admin/roles", nil)
+	req, _ := http.NewRequest(http.MethodGet, srv.URL+"/api/admin/roles", nil)
 	req.AddCookie(&http.Cookie{Name: "bjt_admin_session", Value: rawToken})
 	resp, err := srv.Client().Do(req)
 	if err != nil {
@@ -532,7 +531,7 @@ func TestListPermissions_Success(t *testing.T) {
 	permID := newUUID(t)
 	seedAdminPermission(t, pool, permID, "users:read")
 
-	req := httptest.NewRequest(http.MethodGet, "/api/admin/permissions", nil)
+	req, _ := http.NewRequest(http.MethodGet, srv.URL+"/api/admin/permissions", nil)
 	req.AddCookie(&http.Cookie{Name: "bjt_admin_session", Value: rawToken})
 	resp, err := srv.Client().Do(req)
 	if err != nil {
