@@ -1,9 +1,9 @@
 # Go Backend Migration Orchestration State
 
 - Current phase: M3 fresh first-party auth core; legacy credential gate closed by user-approved identity reset (2026-09-29)
-- Current accepted implementation/code checkpoint: `40192b56` (M3 learner/admin session endpoints and accepted report; no cutover)
-- Last completed wave: M3_INDEPENDENT_ENDPOINTS PASS (learner me/logout and admin session/logout; CSRF trusted origins, PostgreSQL revocation, PG17 endpoint tests ×2, Go/race/vet and ARM64 build PASS)
-- Next wave: M3 fresh Go learner/admin login, session creation, rate limiting, and safe first-admin bootstrap using new Argon2id credentials; then M4 account lifecycle. No legacy Keycloak verifier.
+- Current accepted implementation/code checkpoint: `03014ea4` (M3 login slice PASS after independent PG17 verification; full M3 still PENDING bootstrap-admin)
+- Last completed wave: M3_LOGIN_SLICE PASS (22 login integration tests ×2 = 44 executions against disposable PG17 with production-like UNIQUE constraints; Go test/race/vet/gofmt and linux/arm64 build all PASS; independently verified by orchestrator at 2026-09-29)
+- Next wave: M3 bootstrap-admin (first admin actor creation flow); then M4 account lifecycle. No legacy Keycloak verifier.
 - Decision: `LEGACY_CREDENTIAL_MIGRATION = NOT_REQUIRED`; `IDENTITY_RESET_APPROVED = TRUE`. The user approved resetting identity/account-scoped data only. This closes the M2 production credential-format gate without obtaining Keycloak metadata.
 - Completed checkpoint commits:
   - `0fc4486f5cfd2edc4433359753be573605234006` — P0.1 plan rebase
