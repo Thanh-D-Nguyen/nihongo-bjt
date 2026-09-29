@@ -10,8 +10,10 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authz"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/config"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/credential"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/postgres"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/profile"
@@ -61,15 +63,23 @@ func New(version string) (*App, error) {
 	sessionStore := session.NewStore(dbPool)
 	profileStore := profile.NewStore(dbPool)
 	rbacStore := authz.NewStore(dbPool)
+	credentialStore := credential.NewStore(dbPool)
+	rateLimiter, err := authn.NewRateLimiter(authn.DefaultRateLimiterConfig())
+	if err != nil {
+		dbPool.Close()
+		return nil, fmt.Errorf("app: rate limiter: %w", err)
+	}
 
 	deps := httpserver.Dependencies{
-		Config:       cfg,
-		Logger:       logger,
-		DB:           dbPool,
-		SessionStore: sessionStore,
-		ProfileStore: profileStore,
-		RBACStore:    rbacStore,
-		Version:      version,
+		Config:          cfg,
+		Logger:          logger,
+		DB:              dbPool,
+		SessionStore:    sessionStore,
+		ProfileStore:    profileStore,
+		RBACStore:       rbacStore,
+		CredentialStore: credentialStore,
+		RateLimiter:     rateLimiter,
+		Version:         version,
 	}
 	// Guard against typed-nil interface: only assign Redis if the concrete
 	// client is non-nil. A typed-nil *redis.Client assigned to a
