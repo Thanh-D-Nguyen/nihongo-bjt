@@ -1,0 +1,31 @@
+# Version control
+.git
+.gitignore
+
+# IDE and editor files
+.vscode
+.idea
+*.swp
+*.swo
+
+# Test and documentation
+*_test.go
+*.md
+LICENSE
+
+# Build artifacts
+/tmp
+/vendor
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Go tooling cache
+go.work
+go.work.sum
