@@ -21,21 +21,28 @@ import (
 )
 
 // seedFullProfileUser creates a user with all M5 profile fields populated for testing.
+// Seeds a media.asset row first so cover_asset_id FK is satisfied.
 func seedFullProfileUser(t *testing.T, db *pgxpool.Pool, userID, email string) {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
+	coverAssetID := "00000000-0000-0000-0000-000000000001"
 	_, err := db.Exec(ctx,
+		`INSERT INTO media.asset (id) VALUES ($1) ON CONFLICT (id) DO NOTHING`, coverAssetID)
+	if err != nil {
+		t.Fatalf("seed media asset failed: %v", err)
+	}
+	_, err = db.Exec(ctx,
 		`INSERT INTO profile.user_profile (id, display_name, email, status, theme_mode,
 			font_size_preference, density_preference, flashcard_style_slug,
 			cover_asset_id, ads_personalization_opt_in, share_postcard_opt_in)
 		 VALUES ($1, 'Test Learner', $2, 'active', 'dark', 'medium', 'comfortable', 'minimal',
-			'00000000-0000-0000-0000-000000000001', true, false)
+			$3, true, false)
 		 ON CONFLICT (id) DO UPDATE SET display_name='Test Learner', email=$2, status='active',
 			theme_mode='dark', font_size_preference='medium', density_preference='comfortable',
-			flashcard_style_slug='minimal', cover_asset_id='00000000-0000-0000-0000-000000000001',
+			flashcard_style_slug='minimal', cover_asset_id=$3,
 			ads_personalization_opt_in=true, share_postcard_opt_in=false`,
-		userID, email)
+		userID, email, coverAssetID)
 	if err != nil {
 		t.Fatalf("seed full profile user failed: %v", err)
 	}
