@@ -200,6 +200,45 @@ func NewRouter(deps Dependencies) http.Handler {
 		r.Get("/api/media/{id}/stream", streamMediaHandler(deps.MediaStore, deps.MediaBucket, deps.Logger))
 	}
 
+	// M9: Business write APIs — bookmarks, exercise sessions, quiz sessions.
+	// All learner-facing write endpoints require session guard + CSRF for unsafe methods.
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
+
+		// Bookmark list endpoints (GET — session guard only, no CSRF).
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Get("/api/bookmarks/words", listBookmarksHandler(deps.DBPool, "lexeme", deps.Logger))
+			lr.Get("/api/bookmarks/kanji", listBookmarksHandler(deps.DBPool, "kanji", deps.Logger))
+			lr.Get("/api/bookmarks/grammar", listBookmarksHandler(deps.DBPool, "grammar", deps.Logger))
+			lr.Get("/api/bookmarks/check/{type}/{id}", checkBookmarkHandler(deps.DBPool, deps.Logger))
+		})
+
+		// Bookmark toggle (POST — session + CSRF).
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Use(authn.CSRFGuard(csrfCfg))
+			lr.Post("/api/bookmarks/{type}/{id}", toggleBookmarkHandler(deps.DBPool, deps.Logger))
+		})
+
+		// Exercise session endpoints.
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Use(authn.CSRFGuard(csrfCfg))
+			lr.Post("/api/exercises/sessions", startExerciseSessionHandler(deps.DBPool, deps.Logger))
+			lr.Post("/api/exercises/sessions/{id}/answer", submitExerciseAnswerHandler(deps.DBPool, deps.Logger))
+			lr.Post("/api/exercises/sessions/{id}/complete", completeExerciseSessionHandler(deps.DBPool, deps.Logger))
+		})
+
+		// Quiz session endpoints.
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Use(authn.CSRFGuard(csrfCfg))
+			lr.Post("/api/quiz/start", startQuizSessionHandler(deps.DBPool, deps.Logger))
+			lr.Post("/api/quiz/session/{id}/answer", submitQuizAnswerHandler(deps.DBPool, deps.Logger))
+		})
+	}
+
 	// M8: Search — learner session-guarded; reindex is admin-only.
 	if deps.SearchClient != nil && deps.SessionStore != nil {
 		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)

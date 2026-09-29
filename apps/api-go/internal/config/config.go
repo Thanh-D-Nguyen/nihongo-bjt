@@ -32,6 +32,14 @@ type Config struct {
 	// MediaBasePath is the filesystem path for media file storage.
 	// Sourced from MEDIA_BASE_PATH env var. Defaults to /srv/kotobawork/data/media.
 	MediaBasePath string
+
+	// MeilisearchURL is the base URL for the Meilisearch instance.
+	// Sourced from MEILISEARCH_URL env var. Empty disables search endpoints (503).
+	MeilisearchURL string
+
+	// MeilisearchAPIKey is the API key for Meilisearch authentication.
+	// Sourced from MEILISEARCH_API_KEY env var. Empty is valid when Meilisearch has no auth.
+	MeilisearchAPIKey string
 }
 
 // Load reads configuration from environment variables and validates required fields.
@@ -108,6 +116,8 @@ func Load() (*Config, error) {
 		DBConnAcquireTimeout: acquireTimeout,
 		CORSOrigins:          corsOrigins,
 		MediaBasePath:        mediaBasePath,
+		MeilisearchURL:       os.Getenv("MEILISEARCH_URL"),
+		MeilisearchAPIKey:    os.Getenv("MEILISEARCH_API_KEY"),
 	}
 	return cfg, nil
 }
