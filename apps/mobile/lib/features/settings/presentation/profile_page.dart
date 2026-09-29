@@ -23,7 +23,7 @@ export 'package:nihongo_bjt/features/settings/presentation/profile_providers.dar
 
 /// "Me" hub (Phase 10.2): the learner's account, learning snapshot, quick
 /// actions, preferences, account/about info, and sign-out — all backed by real
-/// data (identity claims, device-local study summary, live subscription, real
+/// data (API profile, device-local study summary, live subscription, real
 /// build version). No fabricated metrics, no dead rows.
 class ProfilePage extends ConsumerWidget {
   const ProfilePage({super.key});
@@ -33,7 +33,7 @@ class ProfilePage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
 
     final auth = ref.watch(authControllerProvider);
-    final claims = ref.watch(profileClaimsProvider);
+    final isAuthenticated = ref.watch(isAuthenticatedProvider);
     final settings =
         ref.watch(settingsControllerProvider).value ?? UserSettings.defaults;
 
@@ -41,7 +41,7 @@ class ProfilePage extends ConsumerWidget {
     // signing-out state instead of the fallback learner identity so the
     // learner gets clear feedback and never sees a confusing authenticated
     // profile flash before the redirect to login (ANDROID-QA-P2-003).
-    if (auth.isLoading && claims.isEmpty) {
+    if (auth.isLoading && !isAuthenticated) {
       return AppScaffold(
         title: l10n.profileTitle,
         body: _SigningOutView(message: l10n.profileSigningOut),
@@ -63,11 +63,11 @@ class ProfilePage extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                ProfileHeroSection(claims: claims),
+                ProfileHeroSection(isAuthenticated: isAuthenticated),
                 const SizedBox(height: AppSpacing.m),
                 const ProfileSnapshotCard(),
                 const SizedBox(height: AppSpacing.m),
-                ProfileIdentityCard(claims: claims),
+                ProfileIdentityCard(isAuthenticated: isAuthenticated),
                 const SizedBox(height: AppSpacing.l),
                 ProfileSectionLabel(l10n.profileActionsSection),
                 const SizedBox(height: AppSpacing.s),

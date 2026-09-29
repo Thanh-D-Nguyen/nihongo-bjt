@@ -11,9 +11,8 @@ import 'package:nihongo_bjt/l10n/gen/app_localizations.dart';
 
 /// First-party login surface.
 ///
-/// Account login (email/username + password) is the primary path, with a single
-/// federated "Continue with Google" hand-off and a link to Register. The hosted
-/// browser entry point, forgot-password, and the unused social providers were
+/// Account login (email/username + password) is the sole authentication path.
+/// The hosted browser entry point, forgot-password, and social providers were
 /// removed so the screen stays focused and never surfaces a fake action. All
 /// colors come from [AppPalette] so light and dark render correctly.
 class LoginPage extends ConsumerStatefulWidget {
@@ -43,11 +42,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final palette = context.palette;
-    final environment = ref.watch(appEnvironmentProvider);
     final session = ref.watch(authControllerProvider);
     final isLoading = session.isLoading;
     final error = session.hasError ? _messageFor(l10n, session.error!) : null;
-    final showGoogle = environment.googleSignInEnabled;
 
     return AuthScreenShell(
       busy: isLoading,
@@ -136,15 +133,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           loading: isLoading,
           onPressed: _submitPasswordLogin,
         ),
-        if (showGoogle) ...[
-          const SizedBox(height: AppSpacing.l),
-          AuthOrDivider(label: l10n.loginDivider),
-          const SizedBox(height: AppSpacing.l),
-          GoogleSignInButton(
-            label: l10n.loginContinueWithGoogle,
-            onPressed: isLoading ? null : _continueWithGoogle,
-          ),
-        ],
         const SizedBox(height: AppSpacing.s),
         AuthFooterPrompt(
           prompt: l10n.loginNoAccountPrompt,
@@ -171,11 +159,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           username: _usernameController.text.trim(),
           password: _passwordController.text,
         );
-  }
-
-  Future<void> _continueWithGoogle() {
-    final hint = ref.read(appEnvironmentProvider).googleIdpHint;
-    return ref.read(authControllerProvider.notifier).signIn(idpHint: hint);
   }
 
   void _goToRegister() => context.goNamed(Routes.register);

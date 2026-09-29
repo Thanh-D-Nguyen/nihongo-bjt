@@ -7,7 +7,6 @@ import 'package:nihongo_bjt/features/auth/presentation/auth_controller.dart';
 import 'package:nihongo_bjt/features/settings/data/user_settings_repository.dart';
 import 'package:nihongo_bjt/features/settings/domain/app_locale_option.dart';
 import 'package:nihongo_bjt/features/settings/domain/app_theme_option.dart';
-import 'package:nihongo_bjt/features/settings/domain/id_token_claims.dart';
 import 'package:nihongo_bjt/features/settings/domain/user_settings.dart';
 
 /// Repository over the device-scoped settings DAO.
@@ -113,9 +112,10 @@ final hapticsEnabledProvider = Provider<bool>((ref) {
   return settings?.hapticsEnabled ?? true;
 });
 
-/// Display identity decoded from the current session's ID token, or
-/// [IdTokenClaims.empty] when there is no authenticated session.
-final profileClaimsProvider = Provider<IdTokenClaims>((ref) {
+/// Whether the user is currently authenticated. Profile screens use this to
+/// decide whether to show identity information fetched from the API rather
+/// than decoded from an OIDC ID token (which no longer exists).
+final isAuthenticatedProvider = Provider<bool>((ref) {
   final session = ref.watch(authControllerProvider).value;
-  return IdTokenClaims.fromIdToken(session?.tokens?.idToken);
+  return session?.isAuthenticated ?? false;
 });

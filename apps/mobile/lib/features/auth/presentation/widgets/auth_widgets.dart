@@ -217,9 +217,9 @@ class AuthPrimaryButton extends StatelessWidget {
 
 /// "Continue with Google" button using the official multi-colour Google glyph.
 ///
-/// This drives the federated Google flow via Keycloak (`kc_idp_hint`); it is a
-/// real OAuth hand-off, never a decorative button. Rendered only when the
-/// environment enables Google sign-in.
+/// Retained as a UI building block for future social-login integration.
+/// Currently unused by the login screen since authentication is handled by
+/// the Go-native session token API.
 class GoogleSignInButton extends StatelessWidget {
   const GoogleSignInButton({
     required this.label,

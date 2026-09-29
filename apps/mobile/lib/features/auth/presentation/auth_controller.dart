@@ -1,9 +1,8 @@
-import 'package:flutter_appauth/flutter_appauth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nihongo_bjt/core/auth/auth_token_store.dart';
 import 'package:nihongo_bjt/core/auth/secure_auth_token_store.dart';
 import 'package:nihongo_bjt/core/config/app_environment.dart';
-import 'package:nihongo_bjt/features/auth/data/keycloak_auth_repository.dart';
+import 'package:nihongo_bjt/features/auth/data/go_native_auth_repository.dart';
 import 'package:nihongo_bjt/features/auth/domain/auth_repository.dart';
 import 'package:nihongo_bjt/features/auth/domain/auth_session.dart';
 import 'package:nihongo_bjt/features/auth/domain/auth_tokens.dart';
@@ -13,29 +12,22 @@ final appEnvironmentProvider = Provider<AppEnvironment>((ref) {
   return AppEnvironment.fromDartDefine();
 });
 
-/// AppAuth client used by the Keycloak repository.
-final appAuthProvider = Provider<FlutterAppAuth>((ref) {
-  return const FlutterAppAuth();
-});
-
-/// Secure persistence for the session tokens.
+/// Secure persistence for the session token.
 final authTokenStoreProvider = Provider<AuthTokenStore>((ref) {
   return SecureAuthTokenStore.withDefaults();
 });
 
-/// OIDC provider abstraction (Keycloak via AppAuth).
+/// Go-native session token auth repository.
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
-  return KeycloakAuthRepository(
-    appAuth: ref.watch(appAuthProvider),
+  return GoNativeAuthRepository(
     environment: ref.watch(appEnvironmentProvider),
   );
 });
 
-/// Upper bound for session restore, secure token IO and silent token refresh.
+/// Upper bound for session restore and secure token IO.
 ///
-/// If secure storage, the identity provider or network stalls, protected API
-/// screens should fall back to unauthenticated/error states instead of leaving
-/// loaders pending forever.
+/// If secure storage or network stalls, protected API screens should fall back
+/// to unauthenticated/error states instead of leaving loaders pending forever.
 final authRefreshTimeoutProvider = Provider<Duration>((ref) {
   return const Duration(seconds: 12);
 });
@@ -50,13 +42,12 @@ class AuthController extends AsyncNotifier<AuthSession> {
   AuthTokenStore get _store => ref.read(authTokenStoreProvider);
   AuthRepository get _repository => ref.read(authRepositoryProvider);
   Duration get _timeout => ref.read(authRefreshTimeoutProvider);
-  Future<AuthTokens>? _refreshInFlight;
 
   @override
   Future<AuthSession> build() => _restoreSession();
 
-  /// Reads any stored tokens and decides the initial session: valid → keep;
-  /// expired but refreshable → refresh; otherwise unauthenticated.
+  /// Reads any stored session token and validates it against the server.
+  /// Valid → authenticated; expired or invalid → unauthenticated.
   Future<AuthSession> _restoreSession() async {
     final AuthTokens? stored;
     try {
@@ -68,39 +59,30 @@ class AuthController extends AsyncNotifier<AuthSession> {
 
     if (stored == null) return const AuthSession.unauthenticated();
 
-    if (!stored.isAccessTokenExpired) {
-      return AuthSession.authenticated(stored);
-    }
-
-    try {
-      final refreshed = await _repository
-          .refresh(stored.refreshToken)
-          .timeout(_timeout);
-      await _store.write(refreshed).timeout(_timeout);
-      return AuthSession.authenticated(refreshed);
-    } on Object {
-      // Refresh failed (expired/revoked): drop the stale session.
+    // Check local expiry first to avoid unnecessary network calls.
+    if (stored.isExpired) {
       await _clearStoreBestEffort();
       return const AuthSession.unauthenticated();
     }
+
+    // Validate against the server to catch revoked sessions.
+    try {
+      final valid = await _repository
+          .validateSession(stored.sessionToken)
+          .timeout(_timeout);
+      if (valid) return AuthSession.authenticated(stored);
+    } on Object {
+      // Network failure during validation: keep the stored session so the
+      // user is not logged out due to transient connectivity issues.
+      return AuthSession.authenticated(stored);
+    }
+
+    await _clearStoreBestEffort();
+    return const AuthSession.unauthenticated();
   }
 
-  /// Starts the browser sign-in flow and persists the resulting session.
-  /// On failure the state becomes an [AsyncError] and remains unauthenticated.
-  Future<void> signIn({
-    String? idpHint,
-    AuthBrowserFlow flow = AuthBrowserFlow.signIn,
-  }) async {
-    state = const AsyncLoading<AuthSession>();
-    state = await AsyncValue.guard(() async {
-      final tokens = await _repository.signIn(idpHint: idpHint, flow: flow);
-      await _store.write(tokens).timeout(_timeout);
-      return AuthSession.authenticated(tokens);
-    });
-  }
-
-  /// Signs in with the first-party email/password form and persists tokens.
-  /// Passwords are passed only to the provider call and are never stored.
+  /// Signs in with email/password against the Go-native API and persists the
+  /// session token. On failure the state becomes an [AsyncError].
   Future<void> signInWithPassword({
     required String username,
     required String password,
@@ -116,16 +98,18 @@ class AuthController extends AsyncNotifier<AuthSession> {
     });
   }
 
-  /// Returns a valid access token for API calls, refreshing the session when
-  /// the stored access token is near expiry. Returns `null` when no valid
-  /// session can be recovered.
+  /// Returns the current session token for API calls, or `null` when no valid
+  /// session exists. Unlike OIDC there is no refresh — expired sessions require
+  /// re-authentication.
   Future<String?> currentAccessToken() async {
     final current = state.value?.tokens;
     if (current == null) return null;
-    if (!current.isAccessTokenExpired) return current.accessToken;
-
-    final refreshed = await _refreshCurrentSession(current.refreshToken);
-    return refreshed?.accessToken;
+    if (current.isExpired) {
+      await _clearStoreBestEffort();
+      state = const AsyncData(AuthSession.unauthenticated());
+      return null;
+    }
+    return current.sessionToken;
   }
 
   /// Ends the session locally (and remotely when possible) and clears storage.
@@ -133,42 +117,16 @@ class AuthController extends AsyncNotifier<AuthSession> {
     final current = state.value?.tokens;
     state = const AsyncLoading<AuthSession>();
     state = await AsyncValue.guard(() async {
-      try {
-        await _repository.signOut(idToken: current?.idToken);
-      } on Object {
-        // Best-effort remote logout; always clear the local session.
+      if (current != null) {
+        try {
+          await _repository.signOut(current.sessionToken);
+        } on Object {
+          // Best-effort remote logout; always clear the local session.
+        }
       }
       await _clearStoreBestEffort();
       return const AuthSession.unauthenticated();
     });
-  }
-
-  Future<AuthTokens?> _refreshCurrentSession(String refreshToken) async {
-    final existing = _refreshInFlight;
-    if (existing != null) {
-      try {
-        return await existing;
-      } on Object {
-        return null;
-      }
-    }
-
-    final refresh = _repository.refresh(refreshToken).timeout(_timeout);
-    _refreshInFlight = refresh;
-    try {
-      final refreshed = await refresh;
-      await _store.write(refreshed).timeout(_timeout);
-      state = AsyncData(AuthSession.authenticated(refreshed));
-      return refreshed;
-    } on Object {
-      await _clearStoreBestEffort();
-      state = const AsyncData(AuthSession.unauthenticated());
-      return null;
-    } finally {
-      if (_refreshInFlight == refresh) {
-        _refreshInFlight = null;
-      }
-    }
   }
 
   Future<void> _clearStoreBestEffort() async {

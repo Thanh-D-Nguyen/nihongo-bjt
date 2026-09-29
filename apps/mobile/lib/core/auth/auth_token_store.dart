@@ -1,16 +1,16 @@
 import 'package:nihongo_bjt/features/auth/domain/auth_tokens.dart';
 
-/// Persists the authenticated session's tokens between app launches.
+/// Persistence contract for the authenticated session.
 ///
-/// Implementations must use platform-secure storage (Keychain / encrypted
-/// preferences). Tokens must never be written to logs or plaintext storage.
+/// Implementations must be safe to call from the main isolate and must never
+/// throw on read/clear — returning `null` signals "no stored session".
 abstract interface class AuthTokenStore {
-  /// Returns the stored tokens, or `null` if none/incomplete.
+  /// Reads the persisted session tokens, or `null` when none exist.
   Future<AuthTokens?> read();
 
-  /// Persists [tokens], replacing any previous value.
+  /// Persists [tokens], replacing any previously stored value.
   Future<void> write(AuthTokens tokens);
 
-  /// Removes all stored tokens (sign-out).
+  /// Removes any persisted session. Idempotent.
   Future<void> clear();
 }

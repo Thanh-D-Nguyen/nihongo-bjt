@@ -175,7 +175,10 @@ func learnerLoginHandler(
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(map[string]bool{"ok": true})
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"ok":    true,
+			"token": rawToken,
+		})
 	}
 }
 

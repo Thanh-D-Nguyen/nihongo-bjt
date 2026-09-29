@@ -14,7 +14,7 @@ enum RegisterFailureCode {
   emailAlreadyRegistered,
 
   /// Self-service registration is not enabled on this server (HTTP 404/503).
-  /// The backend `POST /auth/register` endpoint or its Keycloak admin client is
+  /// The backend `POST /auth/register` endpoint is
   /// not configured. See `docs/mobile/MOBILE_AUTH_GAP_REPORT.md`.
   unavailable,
 

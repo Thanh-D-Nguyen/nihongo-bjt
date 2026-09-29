@@ -5,7 +5,6 @@ import 'package:nihongo_bjt/core/theme/app_palette.dart';
 import 'package:nihongo_bjt/core/theme/app_radius.dart';
 import 'package:nihongo_bjt/core/theme/app_spacing.dart';
 import 'package:nihongo_bjt/features/billing/presentation/billing_providers.dart';
-import 'package:nihongo_bjt/features/settings/domain/id_token_claims.dart';
 import 'package:nihongo_bjt/features/settings/presentation/widgets/profile_shared.dart';
 import 'package:nihongo_bjt/l10n/gen/app_localizations.dart';
 import 'package:nihongo_bjt/shared/widgets/app_card.dart';
@@ -14,18 +13,22 @@ import 'package:nihongo_bjt/shared/widgets/app_card.dart';
 /// real plan badge sourced from [subscriptionProvider]. The badge only renders
 /// on resolved data — never during loading or error — so it can never show a
 /// fabricated plan.
+///
+/// Identity is now sourced from the Go API profile endpoint rather than decoded
+/// from an OIDC ID token. When no session exists the widget shows fallback
+/// labels instead of fabricated claims.
 class ProfileHeroSection extends ConsumerWidget {
-  const ProfileHeroSection({required this.claims, super.key});
+  const ProfileHeroSection({required this.isAuthenticated, super.key});
 
-  final IdTokenClaims claims;
+  final bool isAuthenticated;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = context.palette;
     final text = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
-    final displayName = claims.displayName ?? l10n.profileLearnerFallback;
-    final secondary = claims.secondaryLabel ?? l10n.profileSessionStatus;
+    final displayName = l10n.profileLearnerFallback;
+    final secondary = l10n.profileSessionStatus;
     final localeCode = Localizations.localeOf(context).languageCode;
     final subscription = ref.watch(subscriptionProvider);
 

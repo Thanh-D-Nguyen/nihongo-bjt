@@ -7,11 +7,10 @@ import 'package:nihongo_bjt/features/auth/domain/register_repository.dart';
 /// [RegisterRepository] backed by the first-party backend endpoint
 /// `POST {API_BASE_URL}/auth/register`.
 ///
-/// The endpoint performs the Keycloak Admin user-creation server-side so no
-/// admin credentials ever ship in the app. When the endpoint is not deployed or
-/// its Keycloak admin client is not configured the backend returns 404/503 and
-/// this repository surfaces [RegisterFailureCode.unavailable] — it never fakes
-/// success. See `docs/mobile/MOBILE_AUTH_GAP_REPORT.md`.
+/// The endpoint performs user creation server-side so no admin credentials ever
+/// ship in the app. When the endpoint is not deployed or not configured the
+/// backend returns 404/503 and this repository surfaces
+/// [RegisterFailureCode.unavailable] — it never fakes success.
 class ApiRegisterRepository implements RegisterRepository {
   const ApiRegisterRepository({
     required this.environment,
