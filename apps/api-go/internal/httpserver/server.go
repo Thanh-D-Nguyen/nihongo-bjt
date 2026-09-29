@@ -70,9 +70,17 @@ func NewRouter(deps Dependencies) http.Handler {
 	if deps.SessionStore != nil && deps.ProfileStore != nil {
 		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
 
+		// M5: GET /api/auth/me returns full learner profile (session-guarded only).
 		r.Group(func(lr chi.Router) {
 			lr.Use(learnerGuard)
-			lr.Get("/api/auth/me", learnerMeHandler(deps.ProfileStore, deps.Logger))
+			lr.Get("/api/auth/me", learnerGetMeHandler(deps.ProfileStore, deps.Logger))
+		})
+
+		// M5: PUT /api/auth/me updates learner profile (session + CSRF).
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Use(authn.CSRFGuard(csrfCfg))
+			lr.Put("/api/auth/me", learnerUpdateMeHandler(deps.ProfileStore, deps.Logger))
 		})
 
 		r.Group(func(lr chi.Router) {

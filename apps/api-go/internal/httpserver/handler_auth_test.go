@@ -193,8 +193,7 @@ func TestLearnerMe_Success_ExactJSONShape(t *testing.T) {
 	router := buildTestRouter(t, db, []string{"https://app.example.com"})
 
 	userID := newUUID(t)
-	kcSub := "kc-subject-abc123"
-	seedActiveUser(t, db, userID, "Test Learner", "learner@example.com", kcSub)
+	seedActiveUser(t, db, userID, "Test Learner", "learner@example.com", "")
 	rawToken := createLearnerSession(t, store, userID)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/auth/me", nil)
@@ -206,77 +205,55 @@ func TestLearnerMe_Success_ExactJSONShape(t *testing.T) {
 		t.Fatalf("expected 200, got %d; body: %s", w.Code, w.Body.String())
 	}
 
+	// M5 returns a flat profile object (no "profile" wrapper, no "sub" key).
 	var resp map[string]json.RawMessage
 	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
 		t.Fatalf("decode response: %v", err)
 	}
 
-	// Verify top-level keys: profile and sub
-	if _, ok := resp["profile"]; !ok {
-		t.Fatal("response missing 'profile' key")
-	}
-	if _, ok := resp["sub"]; !ok {
-		t.Fatal("response missing 'sub' key")
-	}
-
-	// Decode profile and verify ALL expected fields are present (including nullable as null)
-	var prof map[string]json.RawMessage
-	if err := json.Unmarshal(resp["profile"], &prof); err != nil {
-		t.Fatalf("decode profile: %v", err)
-	}
-
 	expectedKeys := []string{
-		"id", "displayName", "email", "status", "keycloakSubject",
-		"avatarAssetId", "coverAssetId", "themeMode", "uiLocale",
-		"explanationLocale", "densityPreference", "fontSizePreference",
-		"sharePostcardOptIn",
+		"id", "email", "displayName", "status",
+		"themeMode", "fontSizePreference", "densityPreference",
+		"flashcardStyleSlug", "coverAssetId",
+		"adsPersonalizationOptIn", "sharePostcardOptIn",
+		"createdAt", "updatedAt",
 	}
 	for _, key := range expectedKeys {
-		if _, ok := prof[key]; !ok {
-			t.Errorf("profile missing expected key %q — omitempty may be hiding null fields", key)
+		if _, ok := resp[key]; !ok {
+			t.Errorf("response missing expected key %q", key)
 		}
 	}
 
-	// Verify specific values
+	// Verify specific values.
 	var idVal string
-	json.Unmarshal(prof["id"], &idVal)
+	json.Unmarshal(resp["id"], &idVal)
 	if idVal != userID {
-		t.Errorf("profile.id = %q, want %q", idVal, userID)
+		t.Errorf("id = %q, want %q", idVal, userID)
 	}
 	var nameVal string
-	json.Unmarshal(prof["displayName"], &nameVal)
+	json.Unmarshal(resp["displayName"], &nameVal)
 	if nameVal != "Test Learner" {
-		t.Errorf("profile.displayName = %q, want %q", nameVal, "Test Learner")
-	}
-	var subVal string
-	json.Unmarshal(resp["sub"], &subVal)
-	if subVal != kcSub {
-		t.Errorf("sub = %q, want %q", subVal, kcSub)
+		t.Errorf("displayName = %q, want %q", nameVal, "Test Learner")
 	}
 
-	// Truly nullable FK fields should serialize as JSON null when unset.
-	nullableFKFields := []string{"avatarAssetId", "coverAssetId"}
-	for _, f := range nullableFKFields {
-		raw := prof[f]
-		if string(raw) != "null" {
-			t.Errorf("profile.%s = %s, want null (omitempty may be active)", f, string(raw))
-		}
+	// Nullable FK fields should serialize as JSON null when unset.
+	if string(resp["coverAssetId"]) != "null" {
+		t.Errorf("coverAssetId = %s, want null", string(resp["coverAssetId"]))
 	}
-	// DB-defaulted NOT NULL columns must serialize with their default values,
-	// not as null. The schema defines: theme_mode DEFAULT 'system',
-	// ui_locale DEFAULT 'vi', explanation_locale DEFAULT 'vi',
-	// density_preference DEFAULT 'comfortable', font_size_preference DEFAULT 'default'.
+	if string(resp["flashcardStyleSlug"]) != "null" {
+		t.Errorf("flashcardStyleSlug = %s, want null", string(resp["flashcardStyleSlug"]))
+	}
+
+	// DB-defaulted NOT NULL columns must serialize with their default values.
 	defaultedFields := map[string]string{
 		"themeMode":          `"system"`,
-		"uiLocale":           `"vi"`,
-		"explanationLocale":  `"vi"`,
 		"densityPreference":  `"comfortable"`,
 		"fontSizePreference": `"default"`,
 	}
 	for f, want := range defaultedFields {
-		raw := prof[f]
+		raw := resp[f]
 		if string(raw) != want {
-			t.Errorf("profile.%s = %s, want %s (DB default)", f, string(raw), want)
+			t.Errorf("%s = %s, want %s (DB default)", f, string(raw), want)
 		}
 	}
 }
@@ -303,16 +280,13 @@ func TestLearnerMe_NullableFieldsPresentAsNull(t *testing.T) {
 	var resp map[string]json.RawMessage
 	json.Unmarshal(w.Body.Bytes(), &resp)
 
-	// sub should NOT be present when keycloakSubject is null
-	if _, ok := resp["sub"]; ok {
-		t.Error("sub should not be present when keycloakSubject is null")
+	// M5 returns a flat profile object — no "sub" or "profile" wrapper keys.
+	// Nullable fields (coverAssetId, flashcardStyleSlug) should serialize as JSON null.
+	if string(resp["coverAssetId"]) != "null" {
+		t.Errorf("coverAssetId = %s, want null", string(resp["coverAssetId"]))
 	}
-
-	// Profile must still have all keys
-	var prof map[string]json.RawMessage
-	json.Unmarshal(resp["profile"], &prof)
-	if string(prof["keycloakSubject"]) != "null" {
-		t.Errorf("keycloakSubject should be null, got %s", string(prof["keycloakSubject"]))
+	if string(resp["flashcardStyleSlug"]) != "null" {
+		t.Errorf("flashcardStyleSlug = %s, want null", string(resp["flashcardStyleSlug"]))
 	}
 }
 
