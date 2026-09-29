@@ -30,6 +30,7 @@ type App struct {
 	SessionStore *session.Store
 	ProfileStore *profile.Store
 	RBACStore    *authz.Store
+	RateLimiter  *authn.RateLimiter
 	Server       *httpserver.Server
 	Version      string
 }
@@ -99,6 +100,7 @@ func New(version string) (*App, error) {
 		SessionStore: sessionStore,
 		ProfileStore: profileStore,
 		RBACStore:    rbacStore,
+		RateLimiter:  rateLimiter,
 		Server:       server,
 		Version:      version,
 	}, nil
@@ -110,6 +112,9 @@ func (a *App) Shutdown(ctx context.Context) {
 
 	if err := a.Server.Shutdown(ctx); err != nil {
 		a.Logger.Error("HTTP server shutdown error", "error", err)
+	}
+	if a.RateLimiter != nil {
+		a.RateLimiter.Stop()
 	}
 	if a.Redis != nil {
 		if err := a.Redis.Close(); err != nil {

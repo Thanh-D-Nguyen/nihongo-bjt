@@ -81,8 +81,10 @@ func NewRouter(deps Dependencies) http.Handler {
 	}
 
 	// Login routes — public but CSRF-protected and rate-limited. No session guard.
-	// Both handlers require non-nil CredentialStore and RateLimiter (fail closed).
-	if deps.CredentialStore != nil && deps.ProfileStore != nil && deps.SessionStore != nil && deps.RateLimiter != nil {
+	// Routes are mounted whenever credential + profile/RBAC + session stores exist;
+	// the handler itself fails closed (503) if RateLimiter is nil. This prevents
+	// silently disabling abuse protection when a dependency is misconfigured.
+	if deps.CredentialStore != nil && deps.ProfileStore != nil && deps.SessionStore != nil {
 		r.Group(func(lr chi.Router) {
 			lr.Use(authn.CSRFGuard(csrfCfg))
 			lr.Post("/api/auth/login", learnerLoginHandler(
@@ -91,7 +93,7 @@ func NewRouter(deps Dependencies) http.Handler {
 			))
 		})
 	}
-	if deps.CredentialStore != nil && deps.RBACStore != nil && deps.SessionStore != nil && deps.RateLimiter != nil {
+	if deps.CredentialStore != nil && deps.RBACStore != nil && deps.SessionStore != nil {
 		r.Group(func(ar chi.Router) {
 			ar.Use(authn.CSRFGuard(csrfCfg))
 			ar.Post("/api/admin/login", adminLoginHandler(

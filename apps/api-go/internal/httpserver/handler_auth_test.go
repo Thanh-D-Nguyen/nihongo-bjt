@@ -68,20 +68,33 @@ func seedActiveUser(t *testing.T, db *pgxpool.Pool, userID, displayName, email, 
 	if err != nil {
 		t.Fatalf("seed active user failed: %v", err)
 	}
+	// Cleanup: delete by UUID after test to prevent UNIQUE(email) collisions on -count=2.
+	// Cascade deletes sessions and credentials via FK ON DELETE CASCADE.
+	t.Cleanup(func() {
+		cctx, ccancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer ccancel()
+		_, _ = db.Exec(cctx, `DELETE FROM profile.user_profile WHERE id = $1`, userID)
+	})
 }
 
 func seedDisabledUser(t *testing.T, db *pgxpool.Pool, userID string) {
 	t.Helper()
+	email := fmt.Sprintf("disabled-%s@example.com", userID[:8])
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	_, err := db.Exec(ctx,
 		`INSERT INTO profile.user_profile (id, display_name, email, status)
 		 VALUES ($1, 'Disabled User', $2, 'disabled')
 		 ON CONFLICT (id) DO UPDATE SET status='disabled'`,
-		userID, fmt.Sprintf("disabled-%s@example.com", userID[:8]))
+		userID, email)
 	if err != nil {
 		t.Fatalf("seed disabled user failed: %v", err)
 	}
+	t.Cleanup(func() {
+		cctx, ccancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer ccancel()
+		_, _ = db.Exec(cctx, `DELETE FROM profile.user_profile WHERE id = $1`, userID)
+	})
 }
 
 func seedActiveAdmin(t *testing.T, db *pgxpool.Pool, actorID, displayName, email string) {
@@ -96,20 +109,31 @@ func seedActiveAdmin(t *testing.T, db *pgxpool.Pool, actorID, displayName, email
 	if err != nil {
 		t.Fatalf("seed active admin failed: %v", err)
 	}
+	t.Cleanup(func() {
+		cctx, ccancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer ccancel()
+		_, _ = db.Exec(cctx, `DELETE FROM authz.admin_actor WHERE id = $1`, actorID)
+	})
 }
 
 func seedDisabledAdmin(t *testing.T, db *pgxpool.Pool, actorID string) {
 	t.Helper()
+	email := fmt.Sprintf("disabled-admin-%s@example.com", actorID[:8])
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	_, err := db.Exec(ctx,
 		`INSERT INTO authz.admin_actor (id, display_name, email, status)
 		 VALUES ($1, 'Disabled Admin', $2, 'disabled')
 		 ON CONFLICT (id) DO UPDATE SET status='disabled'`,
-		actorID, fmt.Sprintf("disabled-admin-%s@example.com", actorID[:8]))
+		actorID, email)
 	if err != nil {
 		t.Fatalf("seed disabled admin failed: %v", err)
 	}
+	t.Cleanup(func() {
+		cctx, ccancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer ccancel()
+		_, _ = db.Exec(cctx, `DELETE FROM authz.admin_actor WHERE id = $1`, actorID)
+	})
 }
 
 func nullStr(s string) *string {

@@ -131,7 +131,7 @@ func TestLearnerLogin_Success_SetsSecureCookie(t *testing.T) {
 	router := buildLoginRouter(t, []string{"https://app.example.com"})
 
 	userID := newUUID(t)
-	email := "login-success@example.com"
+	email := fmt.Sprintf("login-success-%s@example.com", userID[:8])
 	password := "correct-horse-battery-staple"
 	seedActiveUser(t, db, userID, "Login User", email, "")
 	seedLearnerCred(t, userID, password)
@@ -198,7 +198,7 @@ func TestLearnerLogin_WrongPassword_Generic401(t *testing.T) {
 	router := buildLoginRouter(t, []string{"https://app.example.com"})
 
 	userID := newUUID(t)
-	email := "wrong-pw@example.com"
+	email := fmt.Sprintf("wrong-pw-%s@example.com", userID[:8])
 	seedActiveUser(t, db, userID, "Wrong PW", email, "")
 	seedLearnerCred(t, userID, "correct-password")
 
@@ -241,7 +241,7 @@ func TestLearnerLogin_DisabledUser_Generic401(t *testing.T) {
 	router := buildLoginRouter(t, []string{"https://app.example.com"})
 
 	userID := newUUID(t)
-	email := "disabled-login@example.com"
+	email := fmt.Sprintf("disabled-login-%s@example.com", userID[:8])
 	seedDisabledUser(t, db, userID)
 	// Update email to match what we'll send.
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -266,7 +266,7 @@ func TestLearnerLogin_MissingCredential_Generic401(t *testing.T) {
 	router := buildLoginRouter(t, []string{"https://app.example.com"})
 
 	userID := newUUID(t)
-	email := "no-cred@example.com"
+	email := fmt.Sprintf("no-cred-%s@example.com", userID[:8])
 	seedActiveUser(t, db, userID, "No Cred", email, "")
 	// Do NOT seed a credential.
 
@@ -504,24 +504,29 @@ func TestLearnerLogin_ForgedXForwardedFor_Ignored(t *testing.T) {
 }
 
 func TestLearnerLogin_FullMap_429(t *testing.T) {
-	// MaxKeys=3: only 3 distinct IPs can be tracked.
-	router, _ := buildLoginRouterWithLimiter(t, []string{"https://app.example.com"}, 100, 3)
+	// Each login request consumes TWO rate-limit keys: one IP key and one
+	// account key (SHA-256 prefix of normalized email). With MaxKeys=4,
+	// two requests from distinct IPs with distinct emails consume all 4
+	// slots (2 IPs × 1 + 2 accounts × 1 = 4). The third request with a
+	// new IP AND new account key must fail closed with 429.
+	router, _ := buildLoginRouterWithLimiter(t, []string{"https://app.example.com"}, 100, 4)
 
-	// Fill the map with 3 distinct IPs.
-	for i := 1; i <= 3; i++ {
-		body := `{"email":"fill@example.com","password":"pass"}`
+	// Fill: 2 distinct IPs × 2 distinct emails = 4 keys consumed.
+	fillEmails := []string{"fill1@example.com", "fill2@example.com"}
+	for i, email := range fillEmails {
+		body := fmt.Sprintf(`{"email":"%s","password":"pass"}`, email)
 		req := httptest.NewRequest(http.MethodPost, "/api/auth/login", strings.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Origin", "https://app.example.com")
-		req.RemoteAddr = fmt.Sprintf("10.99.0.%d:12345", i)
+		req.RemoteAddr = fmt.Sprintf("10.99.0.%d:12345", i+1)
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 		if w.Code == http.StatusTooManyRequests {
-			t.Fatalf("fill request %d should succeed", i)
+			t.Fatalf("fill request %d (ip=10.99.0.%d, email=%s) should succeed", i+1, i+1, email)
 		}
 	}
 
-	// 4th distinct IP must be rejected with 429 (fail closed).
+	// 3rd request with new IP + new email must be rejected (map full).
 	body := `{"email":"overflow@example.com","password":"pass"}`
 	req := httptest.NewRequest(http.MethodPost, "/api/auth/login", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -531,7 +536,7 @@ func TestLearnerLogin_FullMap_429(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusTooManyRequests {
-		t.Errorf("expected 429 when map is full, got %d", w.Code)
+		t.Errorf("expected 429 when map is full (dual-key), got %d", w.Code)
 	}
 }
 
@@ -540,7 +545,7 @@ func TestLearnerLogin_NewTokenOnEachLogin_FixationPrevention(t *testing.T) {
 	router := buildLoginRouter(t, []string{"https://app.example.com"})
 
 	userID := newUUID(t)
-	email := "fixation@example.com"
+	email := fmt.Sprintf("fixation-%s@example.com", userID[:8])
 	password := "secure-password-123"
 	seedActiveUser(t, db, userID, "Fixation User", email, "")
 	seedLearnerCred(t, userID, password)
@@ -596,7 +601,7 @@ func TestAdminLogin_Success_SetsSecureCookie(t *testing.T) {
 	router := buildLoginRouter(t, []string{"https://admin.example.com"})
 
 	actorID := newUUID(t)
-	email := "admin-login@example.com"
+	email := fmt.Sprintf("admin-login-%s@example.com", actorID[:8])
 	password := "admin-secure-password"
 	seedActiveAdmin(t, db, actorID, "Admin Login", email)
 	seedAdminCred(t, actorID, password)
@@ -648,7 +653,7 @@ func TestAdminLogin_WrongPassword_Generic401(t *testing.T) {
 	router := buildLoginRouter(t, []string{"https://admin.example.com"})
 
 	actorID := newUUID(t)
-	email := "admin-wrong@example.com"
+	email := fmt.Sprintf("admin-wrong-%s@example.com", actorID[:8])
 	seedActiveAdmin(t, db, actorID, "Admin Wrong", email)
 	seedAdminCred(t, actorID, "correct-admin-pw")
 
@@ -686,7 +691,7 @@ func TestAdminLogin_DisabledActor_Generic401(t *testing.T) {
 	router := buildLoginRouter(t, []string{"https://admin.example.com"})
 
 	actorID := newUUID(t)
-	email := "disabled-admin-login@example.com"
+	email := fmt.Sprintf("disabled-admin-%s@example.com", actorID[:8])
 	seedDisabledAdmin(t, db, actorID)
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -745,7 +750,7 @@ func TestLogin_NamespaceIsolation_LearnerCookieNotAdmin(t *testing.T) {
 
 	// Login as learner.
 	userID := newUUID(t)
-	email := "iso-learner@example.com"
+	email := fmt.Sprintf("iso-learner-%s@example.com", userID[:8])
 	password := "learner-pass"
 	seedActiveUser(t, db, userID, "ISO Learner", email, "")
 	seedLearnerCred(t, userID, password)

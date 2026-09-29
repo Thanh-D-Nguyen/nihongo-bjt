@@ -6,9 +6,9 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"log/slog"
+	"mime"
 	"net/http"
 	"strings"
 	"time"
@@ -54,16 +54,17 @@ func learnerLoginHandler(
 			return
 		}
 
-		// Fail closed: limiter must be present.
+		// Fail closed: limiter must be present BEFORE any expensive work.
 		if rateLimiter == nil {
 			logger.Error("learner login: rate limiter nil; rejecting")
 			writeJSONError(w, "service unavailable", http.StatusServiceUnavailable)
 			return
 		}
 
-		// Content-Type enforcement.
+		// Content-Type enforcement via mime.ParseMediaType (rejects application/jsonx etc.).
 		ct := r.Header.Get("Content-Type")
-		if !strings.HasPrefix(ct, "application/json") {
+		mediaType, _, err := mime.ParseMediaType(ct)
+		if err != nil || mediaType != "application/json" {
 			writeJSONError(w, "invalid request", http.StatusBadRequest)
 			return
 		}
@@ -83,7 +84,7 @@ func learnerLoginHandler(
 			return
 		}
 
-		// Strict JSON decode: reject trailing data.
+		// Strict JSON decode: reject unknown fields and trailing data.
 		dec := json.NewDecoder(strings.NewReader(string(body)))
 		dec.DisallowUnknownFields()
 		var req loginRequest
@@ -91,26 +92,27 @@ func learnerLoginHandler(
 			writeJSONError(w, "invalid request", http.StatusBadRequest)
 			return
 		}
-		// Reject trailing JSON tokens.
-		if dec.More() {
+		// Reject trailing tokens/garbage by attempting a second decode expecting EOF.
+		var trailing json.RawMessage
+		if err := dec.Decode(&trailing); !errors.Is(err, io.EOF) {
 			writeJSONError(w, "invalid request", http.StatusBadRequest)
 			return
 		}
 
 		email := strings.ToLower(strings.TrimSpace(req.Email))
 		password := req.Password
+
+		// Cheap input validation BEFORE rate limiting or expensive crypto.
 		if email == "" || password == "" {
-			burnTime()
 			writeJSONError(w, "invalid credentials", http.StatusUnauthorized)
 			return
 		}
 		if len(password) > credential.MaxPasswordLen {
-			burnTime()
 			writeJSONError(w, "invalid credentials", http.StatusUnauthorized)
 			return
 		}
 
-		// Rate limit by normalized peer IP.
+		// Rate limit by normalized peer IP (ignores X-Forwarded-For/X-Real-IP).
 		peerIP := authn.NormalizePeerIP(r.RemoteAddr)
 		ipKey := "ip:" + peerIP
 		ok, err := rateLimiter.Allow(ipKey)
@@ -136,19 +138,21 @@ func learnerLoginHandler(
 			return
 		}
 		if p == nil || p.Status != "active" {
+			// Unknown/disabled: single bounded burn to prevent timing oracle.
 			burnTime()
 			writeJSONError(w, "invalid credentials", http.StatusUnauthorized)
 			return
 		}
 
-		// Verify credential.
+		// Verify credential. On mismatch, do NOT burn again — Verify already
+		// performed a full Argon2 hash. Double-burning creates a measurable
+		// timing difference between wrong-password and unknown-user paths.
 		if err := credStore.VerifyLearner(r.Context(), p.ID, []byte(password)); err != nil {
 			if errors.Is(err, credential.ErrMismatch) ||
 				errors.Is(err, credential.ErrCredentialNotFound) ||
 				errors.Is(err, credential.ErrMalformedRecord) ||
 				errors.Is(err, credential.ErrUnsupportedAlgo) ||
 				errors.Is(err, credential.ErrInvalidParams) {
-				burnTime()
 				writeJSONError(w, "invalid credentials", http.StatusUnauthorized)
 				return
 			}
@@ -191,16 +195,17 @@ func adminLoginHandler(
 			return
 		}
 
-		// Fail closed: limiter must be present.
+		// Fail closed: limiter must be present BEFORE any expensive work.
 		if rateLimiter == nil {
 			logger.Error("admin login: rate limiter nil; rejecting")
 			writeJSONError(w, "service unavailable", http.StatusServiceUnavailable)
 			return
 		}
 
-		// Content-Type enforcement.
+		// Content-Type enforcement via mime.ParseMediaType.
 		ct := r.Header.Get("Content-Type")
-		if !strings.HasPrefix(ct, "application/json") {
+		mediaType, _, err := mime.ParseMediaType(ct)
+		if err != nil || mediaType != "application/json" {
 			writeJSONError(w, "invalid request", http.StatusBadRequest)
 			return
 		}
@@ -220,7 +225,7 @@ func adminLoginHandler(
 			return
 		}
 
-		// Strict JSON decode: reject trailing data.
+		// Strict JSON decode: reject unknown fields and trailing data.
 		dec := json.NewDecoder(strings.NewReader(string(body)))
 		dec.DisallowUnknownFields()
 		var req loginRequest
@@ -228,20 +233,22 @@ func adminLoginHandler(
 			writeJSONError(w, "invalid request", http.StatusBadRequest)
 			return
 		}
-		if dec.More() {
+		// Reject trailing tokens/garbage by attempting a second decode expecting EOF.
+		var trailing json.RawMessage
+		if err := dec.Decode(&trailing); !errors.Is(err, io.EOF) {
 			writeJSONError(w, "invalid request", http.StatusBadRequest)
 			return
 		}
 
 		email := strings.ToLower(strings.TrimSpace(req.Email))
 		password := req.Password
+
+		// Cheap input validation BEFORE rate limiting or expensive crypto.
 		if email == "" || password == "" {
-			burnTime()
 			writeJSONError(w, "invalid credentials", http.StatusUnauthorized)
 			return
 		}
 		if len(password) > credential.MaxPasswordLen {
-			burnTime()
 			writeJSONError(w, "invalid credentials", http.StatusUnauthorized)
 			return
 		}
@@ -255,7 +262,7 @@ func adminLoginHandler(
 			return
 		}
 
-		// Rate limit by account key (SHA-256 prefix to avoid raw email in map/logs).
+		// Rate limit by account key.
 		acctKey := "acct:a:" + hashAccountKey(email)
 		ok, err = rateLimiter.Allow(acctKey)
 		if err != nil || !ok {
@@ -276,14 +283,13 @@ func adminLoginHandler(
 			return
 		}
 
-		// Verify credential.
+		// Verify credential. No additional burn on mismatch — Verify already hashed.
 		if err := credStore.VerifyAdmin(r.Context(), actorID, []byte(password)); err != nil {
 			if errors.Is(err, credential.ErrMismatch) ||
 				errors.Is(err, credential.ErrCredentialNotFound) ||
 				errors.Is(err, credential.ErrMalformedRecord) ||
 				errors.Is(err, credential.ErrUnsupportedAlgo) ||
 				errors.Is(err, credential.ErrInvalidParams) {
-				burnTime()
 				writeJSONError(w, "invalid credentials", http.StatusUnauthorized)
 				return
 			}
@@ -325,6 +331,7 @@ func setSessionCookie(w http.ResponseWriter, name, value string, expiresAt time.
 
 // burnTime performs a dummy Argon2id hash to prevent timing oracle on user existence.
 // The cost matches a real verification (~64MiB, 3 iterations, 2 parallelism).
+// Called ONLY when no real Verify was performed (unknown user / disabled / missing credential).
 func burnTime() {
 	_, _ = credential.Hash([]byte("burn"), credential.DefaultParams())
 }
@@ -336,8 +343,3 @@ func hashAccountKey(email string) string {
 	h := sha256.Sum256([]byte(email))
 	return hex.EncodeToString(h[:16])
 }
-
-// formatPeerIP is intentionally NOT defined here. Use authn.NormalizePeerIP directly.
-// This comment exists to prevent accidental reintroduction of a local normalizeIP
-// that might diverge from the production helper.
-var _ = fmt.Sprintf // ensure fmt import used (logger formatting may need it)
