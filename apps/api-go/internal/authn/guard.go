@@ -81,6 +81,11 @@ func LearnerGuard(store SessionLookup, cfg GuardConfig) func(http.Handler) http.
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			raw := extractCookie(r, cookieName)
 			if raw == "" {
+				// Fallback: accept session token via Authorization: Bearer header for
+				// non-browser clients (e.g., Flutter mobile) that cannot persist cookies.
+				raw = extractBearerToken(r)
+			}
+			if raw == "" {
 				jsonError(w, "unauthorized", http.StatusUnauthorized)
 				return
 			}
@@ -120,6 +125,11 @@ func AdminGuard(store SessionLookup, cfg GuardConfig) func(http.Handler) http.Ha
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			raw := extractCookie(r, cookieName)
+			if raw == "" {
+				// Fallback: accept session token via Authorization: Bearer header for
+				// non-browser clients (e.g., Flutter mobile) that cannot persist cookies.
+				raw = extractBearerToken(r)
+			}
 			if raw == "" {
 				jsonError(w, "unauthorized", http.StatusUnauthorized)
 				return
@@ -165,4 +175,24 @@ func extractCookie(r *http.Request, name string) string {
 		return ""
 	}
 	return strings.TrimSpace(c.Value)
+}
+
+// extractBearerToken extracts a session token from the Authorization: Bearer header.
+// Returns empty string if the header is absent or malformed. This enables non-browser
+// clients (e.g., Flutter mobile) that cannot persist cookies to authenticate using
+// the same session tokens via an explicit header.
+func extractBearerToken(r *http.Request) string {
+	auth := r.Header.Get("Authorization")
+	if auth == "" {
+		return ""
+	}
+	const prefix = "Bearer "
+	if !strings.HasPrefix(auth, prefix) {
+		return ""
+	}
+	token := strings.TrimSpace(auth[len(prefix):])
+	if token == "" {
+		return ""
+	}
+	return token
 }
