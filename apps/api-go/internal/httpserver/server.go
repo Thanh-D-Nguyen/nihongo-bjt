@@ -16,6 +16,7 @@ import (
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authz"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/config"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/credential"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/postgres"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/profile"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/redisx"
@@ -28,10 +29,12 @@ type Dependencies struct {
 	Logger       *slog.Logger
 	DB           postgres.Pinger // nil if not configured; readiness returns 503
 	Redis        redisx.Pinger   // nil if not configured; readiness reports not_configured
-	SessionStore *session.Store  // nil if DB not configured
-	ProfileStore *profile.Store  // nil if DB not configured
-	RBACStore    *authz.Store    // nil if DB not configured
-	Version      string
+	SessionStore    *session.Store     // nil if DB not configured
+	ProfileStore    *profile.Store     // nil if DB not configured
+	RBACStore       *authz.Store       // nil if DB not configured
+	CredentialStore *credential.Store  // nil if DB not configured
+	RateLimiter     *authn.RateLimiter // nil disables rate limiting (safe fallback)
+	Version         string
 }
 
 // NewRouter creates the chi router with all routes and middleware.
@@ -39,7 +42,13 @@ func NewRouter(deps Dependencies) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
-	r.Use(middleware.RealIP)
+	// NOTE: middleware.RealIP intentionally omitted. It trusts X-Forwarded-For /
+	// X-Real-IP headers, which allows unauthenticated clients to spoof the IP
+	// used for rate-limit keys unless the proxy boundary is cryptographically
+	// enforced. Until Caddy (or equivalent) is proven as the sole ingress and
+	// configured to overwrite these headers, we derive the peer IP directly
+	// from r.RemoteAddr in the login handler (host only, no ephemeral port).
+	// The account/email key dimension provides additional cardinality protection.
 	r.Use(slogMiddleware(deps.Logger))
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(30 * time.Second))
@@ -68,6 +77,26 @@ func NewRouter(deps Dependencies) http.Handler {
 			lr.Use(learnerGuard)
 			lr.Use(authn.CSRFGuard(csrfCfg))
 			lr.Post("/api/auth/logout", learnerLogoutHandler(deps.SessionStore, deps.Logger, guardCfg.LearnerCookieName))
+		})
+	}
+
+	// Login routes — public but CSRF-protected and rate-limited. No session guard.
+	if deps.CredentialStore != nil && deps.ProfileStore != nil && deps.SessionStore != nil {
+		r.Group(func(lr chi.Router) {
+			lr.Use(authn.CSRFGuard(csrfCfg))
+			lr.Post("/api/auth/login", learnerLoginHandler(
+				deps.CredentialStore, deps.ProfileStore, deps.SessionStore,
+				deps.RateLimiter, deps.Logger,
+			))
+		})
+	}
+	if deps.CredentialStore != nil && deps.RBACStore != nil && deps.SessionStore != nil {
+		r.Group(func(ar chi.Router) {
+			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Post("/api/admin/login", adminLoginHandler(
+				deps.CredentialStore, deps.RBACStore, deps.SessionStore,
+				deps.RateLimiter, deps.Logger,
+			))
 		})
 	}
 
