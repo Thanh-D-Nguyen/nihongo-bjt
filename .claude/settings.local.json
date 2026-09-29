@@ -36,7 +36,24 @@
       "Bash(pnpm --filter @nihongo-bjt/api typecheck)",
       "Bash(wait)",
       "Bash(pnpm prisma:validate)",
-      "Bash(pnpm prisma:generate)"
+      "Bash(pnpm prisma:generate)",
+      "Bash(PGPASSWORD=postgres rtk psql -h 127.0.0.1 -p 15432 -U postgres -d nihongo_bjt -c \"SELECT 1 AS ok;\")",
+      "Bash(node -e \"const net = require\\('net'\\); const c = net.createConnection\\({host:'127.0.0.1',port:15432},\\(\\)=>{console.log\\('OK'\\);c.end\\(\\);}\\); c.on\\('error',e=>console.error\\('FAIL',e.message\\)\\);\")",
+      "Bash(rtk read *)",
+      "Bash(rtk docker *)",
+      "Bash(PGPASSWORD=postgres psql -h 127.0.0.1 -p 15432 -U postgres -d nihongo_bjt -c \"SELECT schemaname, tablename FROM pg_tables WHERE schemaname NOT IN \\('pg_catalog','information_schema','_prisma'\\) ORDER BY schemaname, tablename;\" 2>&1 | head -80)",
+      "Bash(PGPASSWORD=postgres rtk psql *)",
+      "Bash(rtk ls *)",
+      "Bash(PGPASSWORD=postgres psql -h 127.0.0.1 -p 15432 -U postgres -d nihongo_bjt -c \"SELECT schemaname, tablename FROM pg_tables WHERE schemaname IN \\('gamification','learning','core','curriculum','career','daily','content','assessment','authz'\\) ORDER BY schemaname, tablename;\" 2>&1 | tail -120)",
+      "Bash(pnpm seed:bjt-lessons)",
+      "Bash(pnpm seed:daily)",
+      "Bash(pnpm seed:gamification)",
+      "Bash(node database/scripts/seeds/bjt/seed-bjt-lessons.mjs)",
+      "Bash(docker compose *)",
+      "Bash(rtk grep *)"
     ]
+  },
+  "enabledPlugins": {
+    "harness@harness-marketplace": true
   }
 }
