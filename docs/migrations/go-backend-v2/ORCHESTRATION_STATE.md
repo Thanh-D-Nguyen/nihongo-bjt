@@ -1,9 +1,11 @@
 # Go Backend Migration Orchestration State
 
-- Current phase: M11 remaining integrations accepted; next = M12 realtime migration
-- Current accepted implementation/code checkpoint: `fb5ae04` (M11 remaining integrations PASS — Stripe webhook with HMAC-SHA256 signature verification and idempotent ingest, share image generation deferred as 501 stub, search orchestration closure verified, remaining NestJS dependencies inventoried; all static gates clean; committed at fb5ae04)
-- Last completed wave: M11_REMAINING_INTEGRATIONS PASS (Stripe webhook handler, search client wiring, share image stub, dependency inventory; all static gates clean; committed at fb5ae04)
-- Next wave: M12 realtime migration (Socket.IO → WebSocket for BattleGateway and PresenceGateway, frontend socket.io-client consumer migration, connection authentication). See docs/migrations/go-backend-v2/docs/17_realtime_migration.md and docs/migrations/go-backend-v2/docs/06_execution_waves.md for exact scope. Do NOT use SSE for Battle (bidirectional realtime).
+- Current phase: M13 Keycloak disable — REVISE (active runtime dependencies remain); next actionable = M13a learner web auth migration
+- Current accepted implementation/code checkpoint: `7ff1562` (M12 realtime migration PASS — WebSocket battle/presence package with nhooyr.io/websocket, session-cookie auth, Redis-backed presence service, protocol matching NestJS Socket.IO schema; all static gates clean; full test suite -count=2 PASS; committed at 7ff1562)
+- Last completed wave: M12_REALTIME_MIGRATION PASS (battle handler, presence handler, hub, protocol, auth, routes, server; 9 new files in internal/realtime/; go.mod updated with nhooyr.io/websocket; build/vet/gofmt/ARM64/test -count=2 all PASS; committed at 7ff1562)
+- M13 audit outcome: REVISE — ~115 files across 6 components have ACTIVE_RUNTIME Keycloak dependencies (learner web ~40 files, admin ~15 files, NestJS API 37 controllers/687 refs, mobile ~5 files, shared packages 3, BFF routes 12). Zero ACTIVE_RUNTIME is required before Keycloak can be disabled. Report: docs/migrations/go-backend-v2/reports/M13_KEYCLOAK_AUDIT_REPORT.md
+- M13 sub-wave plan: M13a learner web auth migration → M13b admin auth migration → M13c mobile auth migration → M13d NestJS retirement or auth shim → M13-final Keycloak disable. Dependency ordering issue: NestJS depends on Keycloak (37 controllers), so M15 (NestJS disable) should precede or parallel M13d. Recommended sequence: M13a → M13b → M13c → M15 → M13d → M13-final.
+- Next wave: M13a learner web auth migration (replace KeycloakAuthShell, useKeycloakAuth(), RequireKeycloakAuth with Go-native session cookie auth; migrate BFF routes from Keycloak OIDC to Go API /api/auth/* endpoints)
 - Decision: `LEGACY_CREDENTIAL_MIGRATION = NOT_REQUIRED`; `IDENTITY_RESET_APPROVED = TRUE`. The user approved resetting identity/account-scoped data only. This closes the M2 production credential-format gate without obtaining Keycloak metadata.
 - Completed checkpoint commits:
   - `0fc4486f5cfd2edc4433359753be573605234006` — P0.1 plan rebase
