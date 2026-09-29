@@ -44,6 +44,32 @@ func NewStore(db *pgxpool.Pool) *Store {
 	return &Store{db: db}
 }
 
+// GetLearnerByEmail looks up an active learner by normalized email address.
+// Returns nil, nil when no matching active user exists (caller must treat as unknown).
+func (s *Store) GetLearnerByEmail(ctx context.Context, email string) (*LearnerPublicProfile, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	const q = `SELECT id, display_name, email, status, keycloak_subject,
+		avatar_asset_id, cover_asset_id, theme_mode, ui_locale, explanation_locale,
+		density_preference, font_size_preference, share_postcard_opt_in
+		FROM profile.user_profile
+		WHERE lower(email) = $1 AND status = 'active'`
+	row := s.db.QueryRow(ctx, q, email)
+	var p LearnerPublicProfile
+	if err := row.Scan(
+		&p.ID, &p.DisplayName, &p.Email, &p.Status, &p.KeycloakSubject,
+		&p.AvatarAssetID, &p.CoverAssetID, &p.ThemeMode, &p.UILocale, &p.ExplanationLocale,
+		&p.DensityPreference, &p.FontSizePreference, &p.SharePostcardOptIn,
+	); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("profile: get learner by email: %w", err)
+	}
+	return &p, nil
+}
+
 // GetLearnerPublicProfile loads the public learner profile for an active user.
 // Returns ErrProfileNotFound if the user does not exist or has status != 'active'.
 func (s *Store) GetLearnerPublicProfile(ctx context.Context, userID string) (*LearnerPublicProfile, error) {

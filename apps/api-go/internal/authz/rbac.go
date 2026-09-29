@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -50,6 +51,22 @@ type Store struct {
 // NewStore creates an RBAC store backed by the given pool.
 func NewStore(db *pgxpool.Pool) *Store {
 	return &Store{db: db}
+}
+
+// GetActiveActorIDByEmail looks up an active admin actor by normalized email address.
+// Returns ("", nil) when no matching active actor exists (caller must treat as unknown).
+func (s *Store) GetActiveActorIDByEmail(ctx context.Context, email string) (string, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	const q = `SELECT id FROM authz.admin_actor WHERE lower(email) = $1 AND status = 'active' LIMIT 1`
+	var actorID string
+	if err := s.db.QueryRow(ctx, q, email).Scan(&actorID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return "", nil
+		}
+		return "", fmt.Errorf("authz: get actor by email: %w", err)
+	}
+	return actorID, nil
 }
 
 // LoadPrincipal loads an active admin actor and expands role→permission codes.
