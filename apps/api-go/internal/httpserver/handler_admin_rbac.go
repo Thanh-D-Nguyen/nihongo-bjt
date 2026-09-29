@@ -54,36 +54,37 @@ type adminActorResponse struct {
 	Status      string           `json:"status"`
 	Roles       []adminRoleBrief `json:"roles"`
 	CreatedAt   time.Time        `json:"createdAt"`
+	UpdatedAt   *time.Time       `json:"updatedAt"`
 }
 
 // adminRoleBrief is a minimal role representation embedded in actor responses.
 type adminRoleBrief struct {
 	ID   string `json:"id"`
+	Code string `json:"code"`
 	Name string `json:"name"`
 }
 
 // adminRoleResponse represents a role with its permissions for GET /api/admin/roles.
 type adminRoleResponse struct {
 	ID          string                 `json:"id"`
+	Code        string                 `json:"code"`
 	Name        string                 `json:"name"`
 	Description *string                `json:"description"`
+	Status      string                 `json:"status"`
 	Permissions []adminPermissionBrief `json:"permissions"`
+	CreatedAt   time.Time              `json:"createdAt"`
 }
 
-// adminPermissionBrief is a minimal permission representation.
+// adminPermissionBrief is a minimal permission representation embedded in role responses.
 type adminPermissionBrief struct {
-	ID       string `json:"id"`
-	Name     string `json:"name"`
-	Resource string `json:"resource"`
-	Action   string `json:"action"`
+	ID   string `json:"id"`
+	Code string `json:"code"`
 }
 
 // adminPermissionResponse represents a permission for GET /api/admin/permissions.
 type adminPermissionResponse struct {
 	ID          string  `json:"id"`
-	Name        string  `json:"name"`
-	Resource    string  `json:"resource"`
-	Action      string  `json:"action"`
+	Code        string  `json:"code"`
 	Description *string `json:"description"`
 }
 
@@ -465,8 +466,8 @@ func queryAllActors(ctx context.Context, db *pgxpool.Pool) ([]adminActorResponse
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
-	const q = `SELECT a.id, a.email, a.display_name, a.status, a.created_at,
-		r.id AS role_id, r.name AS role_name
+	const q = `SELECT a.id, a.email, a.display_name, a.status, a.created_at, a.updated_at,
+		r.id AS role_id, r.code AS role_code, r.name AS role_name
 	FROM authz.admin_actor a
 	LEFT JOIN authz.admin_actor_role ar ON ar.actor_id = a.id
 	LEFT JOIN authz.admin_role r ON r.id = ar.role_id
@@ -482,8 +483,8 @@ func queryAllActors(ctx context.Context, db *pgxpool.Pool) ([]adminActorResponse
 	var orderedIDs []string
 	for rows.Next() {
 		var a adminActorResponse
-		var roleID, roleName *string
-		if err := rows.Scan(&a.ID, &a.Email, &a.DisplayName, &a.Status, &a.CreatedAt, &roleID, &roleName); err != nil {
+		var roleID, roleCode, roleName *string
+		if err := rows.Scan(&a.ID, &a.Email, &a.DisplayName, &a.Status, &a.CreatedAt, &a.UpdatedAt, &roleID, &roleCode, &roleName); err != nil {
 			return nil, fmt.Errorf("scan actor: %w", err)
 		}
 		if _, exists := actorMap[a.ID]; !exists {
@@ -491,8 +492,8 @@ func queryAllActors(ctx context.Context, db *pgxpool.Pool) ([]adminActorResponse
 			actorMap[a.ID] = &a
 			orderedIDs = append(orderedIDs, a.ID)
 		}
-		if roleID != nil && roleName != nil {
-			actorMap[a.ID].Roles = append(actorMap[a.ID].Roles, adminRoleBrief{ID: *roleID, Name: *roleName})
+		if roleID != nil && roleCode != nil && roleName != nil {
+			actorMap[a.ID].Roles = append(actorMap[a.ID].Roles, adminRoleBrief{ID: *roleID, Code: *roleCode, Name: *roleName})
 		}
 	}
 	if err := rows.Err(); err != nil {
@@ -510,8 +511,8 @@ func queryActorByID(ctx context.Context, db *pgxpool.Pool, actorID string) (*adm
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	const q = `SELECT a.id, a.email, a.display_name, a.status, a.created_at,
-		r.id AS role_id, r.name AS role_name
+	const q = `SELECT a.id, a.email, a.display_name, a.status, a.created_at, a.updated_at,
+		r.id AS role_id, r.code AS role_code, r.name AS role_name
 	FROM authz.admin_actor a
 	LEFT JOIN authz.admin_actor_role ar ON ar.actor_id = a.id
 	LEFT JOIN authz.admin_role r ON r.id = ar.role_id
@@ -526,16 +527,16 @@ func queryActorByID(ctx context.Context, db *pgxpool.Pool, actorID string) (*adm
 	var actor *adminActorResponse
 	for rows.Next() {
 		var a adminActorResponse
-		var roleID, roleName *string
-		if err := rows.Scan(&a.ID, &a.Email, &a.DisplayName, &a.Status, &a.CreatedAt, &roleID, &roleName); err != nil {
+		var roleID, roleCode, roleName *string
+		if err := rows.Scan(&a.ID, &a.Email, &a.DisplayName, &a.Status, &a.CreatedAt, &a.UpdatedAt, &roleID, &roleCode, &roleName); err != nil {
 			return nil, fmt.Errorf("scan actor: %w", err)
 		}
 		if actor == nil {
 			a.Roles = []adminRoleBrief{}
 			actor = &a
 		}
-		if roleID != nil && roleName != nil {
-			actor.Roles = append(actor.Roles, adminRoleBrief{ID: *roleID, Name: *roleName})
+		if roleID != nil && roleCode != nil && roleName != nil {
+			actor.Roles = append(actor.Roles, adminRoleBrief{ID: *roleID, Code: *roleCode, Name: *roleName})
 		}
 	}
 	if err := rows.Err(); err != nil {
@@ -627,12 +628,11 @@ func queryAllRoles(ctx context.Context, db *pgxpool.Pool) ([]adminRoleResponse, 
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
-	const q = `SELECT r.id, r.name, r.description,
-		p.id AS perm_id, p.code AS perm_code, p.description AS perm_desc
+	const q = `SELECT r.id, r.code, r.name, r.status, r.created_at,
+		p.id AS perm_id, p.code AS perm_code
 	FROM authz.admin_role r
 	LEFT JOIN authz.admin_role_permission rp ON rp.role_id = r.id
 	LEFT JOIN authz.admin_permission p ON p.id = rp.permission_id
-	WHERE r.status = 'active'
 	ORDER BY r.name`
 
 	rows, err := db.Query(ctx, q)
@@ -644,29 +644,27 @@ func queryAllRoles(ctx context.Context, db *pgxpool.Pool) ([]adminRoleResponse, 
 	roleMap := make(map[string]*adminRoleResponse)
 	var orderedIDs []string
 	for rows.Next() {
-		var roleID, roleName string
-		var roleDesc *string
-		var permID, permCode, permDesc *string
-		if err := rows.Scan(&roleID, &roleName, &roleDesc, &permID, &permCode, &permDesc); err != nil {
+		var roleID, roleCode, roleName, roleStatus string
+		var createdAt time.Time
+		var permID, permCode *string
+		if err := rows.Scan(&roleID, &roleCode, &roleName, &roleStatus, &createdAt, &permID, &permCode); err != nil {
 			return nil, fmt.Errorf("scan role: %w", err)
 		}
 		if _, exists := roleMap[roleID]; !exists {
 			roleMap[roleID] = &adminRoleResponse{
 				ID:          roleID,
+				Code:        roleCode,
 				Name:        roleName,
-				Description: roleDesc,
+				Status:      roleStatus,
+				CreatedAt:   createdAt,
 				Permissions: []adminPermissionBrief{},
 			}
 			orderedIDs = append(orderedIDs, roleID)
 		}
 		if permID != nil && permCode != nil {
-			// Parse resource:action from code (e.g., "users:read").
-			resource, action := parsePermissionCode(*permCode)
 			roleMap[roleID].Permissions = append(roleMap[roleID].Permissions, adminPermissionBrief{
-				ID:       *permID,
-				Name:     *permCode,
-				Resource: resource,
-				Action:   action,
+				ID:   *permID,
+				Code: *permCode,
 			})
 		}
 	}
@@ -685,7 +683,7 @@ func queryAllPermissions(ctx context.Context, db *pgxpool.Pool) ([]adminPermissi
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
-	const q = `SELECT id, code, description FROM authz.admin_permission ORDER BY code`
+	const q = `SELECT id, code FROM authz.admin_permission ORDER BY code`
 	rows, err := db.Query(ctx, q)
 	if err != nil {
 		return nil, fmt.Errorf("query permissions: %w", err)
@@ -695,17 +693,12 @@ func queryAllPermissions(ctx context.Context, db *pgxpool.Pool) ([]adminPermissi
 	var perms []adminPermissionResponse
 	for rows.Next() {
 		var id, code string
-		var desc *string
-		if err := rows.Scan(&id, &code, &desc); err != nil {
+		if err := rows.Scan(&id, &code); err != nil {
 			return nil, fmt.Errorf("scan permission: %w", err)
 		}
-		resource, action := parsePermissionCode(code)
 		perms = append(perms, adminPermissionResponse{
-			ID:          id,
-			Name:        code,
-			Resource:    resource,
-			Action:      action,
-			Description: desc,
+			ID:   id,
+			Code: code,
 		})
 	}
 	if err := rows.Err(); err != nil {
