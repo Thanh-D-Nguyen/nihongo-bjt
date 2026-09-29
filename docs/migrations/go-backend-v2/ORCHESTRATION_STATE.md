@@ -1,9 +1,9 @@
 # Go Backend Migration Orchestration State
 
-- Current phase: M6 admin RBAC accepted; next = M7 media upload & streaming
-- Current accepted implementation/code checkpoint: `15ac1ab` (M6 admin RBAC PASS + independent PG17 verification with SetAdminCredentialTx fix)
-- Last completed wave: M6_ADMIN_RBAC PASS (7 endpoints: actors list/create/status, role assign/remove, roles/permissions listing; 11 integration tests ×2 against disposable PG17 PASS; race detector PASS; static gates build/vet/gofmt/ARM64 all clean; independently verified by orchestrator at 2026-09-29)
-- Next wave: M7 media upload & streaming (POST /api/media/upload, GET /api/media/:id, GET /api/media/:id/stream). Build on M2 schema (media.asset table exists). Requires file streaming through Go, gocloud.dev/blob/fileblob storage backend at /srv/kotobawork/data/media per architecture decisions.
+- Current phase: M8 search integration accepted; next = M9 notifications & preferences sync
+- Current accepted implementation/code checkpoint: `6b0d571` (M8 search integration PASS — compile/race/vet/gofmt/arm64 all clean; 6 integration tests skip gracefully without TEST_MEILISEARCH_URL; httpserver suite -count=2 PASS)
+- Last completed wave: M8_SEARCH_INTEGRATION PASS (2 endpoints: GET /api/search learner-guarded unified search, POST /api/search/index admin-only reindex trigger; SearchClient with connection pooling, ping health check, sequential multi-index fallback; all static gates clean; committed at 6b0d571)
+- Next wave: M9 notifications & preferences sync (notification delivery, preference persistence, sync endpoints). Inspect canonical plan in docs/migrations/go-backend-v2/ for exact scope. Build on M5 profile store and M4 lifecycle patterns.
 - Decision: `LEGACY_CREDENTIAL_MIGRATION = NOT_REQUIRED`; `IDENTITY_RESET_APPROVED = TRUE`. The user approved resetting identity/account-scoped data only. This closes the M2 production credential-format gate without obtaining Keycloak metadata.
 - Completed checkpoint commits:
   - `0fc4486f5cfd2edc4433359753be573605234006` — P0.1 plan rebase
