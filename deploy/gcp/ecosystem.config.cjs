@@ -1,12 +1,7 @@
 module.exports = {
   apps: [
-    {
-      name: "nihongo-api",
-      cwd: "/home/deploy/nihongo-bjt",
-      script: "./deploy/gcp/start-app.sh",
-      args: "@nihongo-bjt/api",
-      env: { NODE_ENV: "production" },
-    },
+    // M15: NestJS API (nihongo-api) removed — Go API serves all endpoints on :4001.
+    // Preserved in apps/api/ for rollback reference only.
     {
       name: "nihongo-web",
       cwd: "/home/deploy/nihongo-bjt",

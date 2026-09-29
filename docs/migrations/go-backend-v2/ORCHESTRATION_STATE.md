@@ -1,11 +1,11 @@
 # Go Backend Migration Orchestration State
 
-- Current phase: M13 Keycloak disable — M13b ACCEPTED; next actionable = M13c mobile auth migration
-- Current accepted implementation/code checkpoint: `6138e00` (M13b admin auth migration PASS — Go-native admin session gate, Keycloak BFF routes deleted, @nihongo-bjt/keycloak-oidc dependency removed from apps/admin/, tsc + next build PASS; committed at 6138e00)
-- Last completed wave: M13b_ADMIN_AUTH_MIGRATION PASS (admin-session-gate created, AdminKeycloakSessionGate deleted, 5 Keycloak BFF routes deleted, kc-cookies+test/kc-oauth-callback/kc-server-config/public-keycloak deleted, admin-api rewritten for cookie auth, login form POSTs to Go API, package.json/tsconfig.json cleaned; tsc --noEmit PASS, next build PASS; committed at 6138e00)
-- M13 audit outcome: REVISE — ~115 files across 6 components had ACTIVE_RUNTIME Keycloak dependencies. M13a resolved learner web (~40 files). M13b resolved admin (~15 files). Remaining: NestJS API 37 controllers/687 refs, mobile ~5 files, shared packages 3. Report: docs/migrations/go-backend-v2/reports/M13_KEYCLOAK_AUDIT_REPORT.md
-- M13 sub-wave plan: M13a ✅ → M13b ✅ → M13c mobile auth migration → M13d NestJS retirement or auth shim → M13-final Keycloak disable. Dependency ordering issue: NestJS depends on Keycloak (37 controllers), so M15 (NestJS disable) should precede or parallel M13d. Recommended sequence: M13a ✅ → M13b ✅ → M13c → M15 → M13d → M13-final.
-- Next wave: M13c mobile auth migration (replace Keycloak token auth in mobile client with Go-native session or token auth; update mobile API calls to use Go endpoints)
+- Current phase: M15 NestJS disable — ACCEPTED; next actionable = M13d NestJS retirement/auth shim (NestJS removed from active runtime, Go API standalone on :4001)
+- Current accepted implementation/code checkpoint: `7c4d738` (M13c mobile auth migration PASS — Go-native Bearer auth repository, flutter_appauth removed, Keycloak runtime refs zeroed, dart analyze PASS; committed at 7c4d738)
+- Last completed wave: M13c_MOBILE_AUTH_MIGRATION PASS (go_native_auth_repository created, keycloak_auth_repository/id_token_claims deleted, flutter_appauth removed from pubspec.yaml, AppEnvironment Keycloak fields removed, handler_login.go added token field to login JSON, Bearer token fallback added to LearnerGuard/AdminGuard at c3c2e90; dart analyze PASS; committed at 7c4d738)
+- M13 audit outcome: REVISE — ~115 files across 6 components had ACTIVE_RUNTIME Keycloak dependencies. M13a resolved learner web (~40 files). M13b resolved admin (~15 files). M13c resolved mobile (~20 files). Remaining: NestJS API 37 controllers/687 refs, shared packages 3. Report: docs/migrations/go-backend-v2/reports/M13_KEYCLOAK_AUDIT_REPORT.md
+- M13 sub-wave plan: M13a ✅ → M13b ✅ → M13c ✅ → M13d NestJS retirement or auth shim → M13-final Keycloak disable. Dependency ordering issue: NestJS depends on Keycloak (37 controllers), so M15 (NestJS disable) should precede or parallel M13d. Recommended sequence: M13a ✅ → M13b ✅ → M13c ✅ → M15 → M13d → M13-final.
+- Next wave: M13d NestJS retirement or auth shim (remove or shim NestJS Keycloak dependencies; may be deferred to M15 if NestJS disable is prerequisite)
 - Decision: `LEGACY_CREDENTIAL_MIGRATION = NOT_REQUIRED`; `IDENTITY_RESET_APPROVED = TRUE`. The user approved resetting identity/account-scoped data only. This closes the M2 production credential-format gate without obtaining Keycloak metadata.
 - Completed checkpoint commits:
   - `0fc4486f5cfd2edc4433359753be573605234006` — P0.1 plan rebase
