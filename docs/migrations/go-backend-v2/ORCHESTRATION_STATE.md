@@ -1,8 +1,8 @@
 # Go Backend Migration Orchestration State
 
-- Current phase: M16 Oracle/runtime/resource optimization — next actionable after M15 ACCEPTED
-- Current accepted implementation/code checkpoint: `9cd8bbb` (M15 NestJS disable PASS — Caddy templates/CI/PM2 updated to route to Go :4001, nihongo-api PM2 process removed, apps/api/ preserved for rollback; go test/vet/gofmt PASS; committed at 9cd8bbb)
-- Last completed wave: M15_NESTJS_DISABLE PASS (Caddy GCP+OCI reverse_proxy :4000→:4001, prepare-runtime.sh API_URL→:4001, CI workflow API_PUBLIC_URL/NEXT_PUBLIC_API_URL→:4001, ecosystem.config.cjs nihongo-api entry removed; gap analysis confirms all core endpoints covered by Go; secondary features deferred; apps/api/ preserved on disk; committed at 9cd8bbb)
+- Current phase: M17 post-migration cleanup — next actionable after M16 ACCEPTED
+- Current accepted implementation/code checkpoint: `062480d` (M16 runtime/resource optimization PASS — Dockerfile pinned alpine3.21 + -trimpath, .dockerignore created, .env.example cleaned stale NestJS vars, binary 29.2MB→20.0MB (31.5% reduction), go mod tidy clean, go test/vet/gofmt PASS; committed at 062480d)
+- Last completed wave: M16_RUNTIME_OPTIMIZATION PASS (Dockerfile pinned golang:1.23.8-alpine3.21 builder + alpine:3.21.3 runtime with -trimpath and go mod verify; .dockerignore created; .env.example commented out NestJS-only API_PORT/TRUST_PROXY and updated ports to :4001; binary size reduced 31.5%; no unused dependencies found; committed at 062480d)
 - M13 audit outcome: REVISE — ~115 files across 6 components had ACTIVE_RUNTIME Keycloak dependencies. M13a resolved learner web (~40 files). M13b resolved admin (~15 files). M13c resolved mobile (~20 files). Remaining: NestJS API 37 controllers/687 refs, shared packages 3. Report: docs/migrations/go-backend-v2/reports/M13_KEYCLOAK_AUDIT_REPORT.md
 - M13 sub-wave plan: M13a ✅ → M13b ✅ → M13c ✅ → M13d NestJS retirement or auth shim → M13-final Keycloak disable. Dependency ordering issue: NestJS depends on Keycloak (37 controllers), so M15 (NestJS disable) should precede or parallel M13d. Recommended sequence: M13a ✅ → M13b ✅ → M13c ✅ → M15 → M13d → M13-final.
 - Next wave: M13d NestJS retirement or auth shim (remove or shim NestJS Keycloak dependencies; may be deferred to M15 if NestJS disable is prerequisite)
