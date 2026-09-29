@@ -1,9 +1,9 @@
 # Go Backend Migration Orchestration State
 
-- Current phase: M5 learner profile complete; next = M6 admin RBAC endpoints
-- Current accepted implementation/code checkpoint: `d64b4a37` (M5 learner profile PASS + stale test repair)
-- Last completed wave: M5_LEARNER_PROFILE PASS (2 endpoints: GET/PUT /api/auth/me; 9 integration tests ×2 against disposable PG17 PASS; full httpserver suite, race, vet, gofmt, ARM64 all PASS; 3 repairs applied during verification: LearnerGuard wiring in test server, stale M3 TestLearnerMe tests updated to M5 flat response shape, gofmt applied; independently verified by orchestrator at 2026-09-29)
-- Next wave: M6 admin RBAC endpoints (GET /api/admin/session already exists; add admin actor CRUD, role assignment, permission queries for admin panel). Build on M3 authz store and M4 lifecycle patterns.
+- Current phase: M6 admin RBAC accepted; next = M7 media upload & streaming
+- Current accepted implementation/code checkpoint: `15ac1ab` (M6 admin RBAC PASS + independent PG17 verification with SetAdminCredentialTx fix)
+- Last completed wave: M6_ADMIN_RBAC PASS (7 endpoints: actors list/create/status, role assign/remove, roles/permissions listing; 11 integration tests ×2 against disposable PG17 PASS; race detector PASS; static gates build/vet/gofmt/ARM64 all clean; independently verified by orchestrator at 2026-09-29)
+- Next wave: M7 media upload & streaming (POST /api/media/upload, GET /api/media/:id, GET /api/media/:id/stream). Build on M2 schema (media.asset table exists). Requires file streaming through Go, gocloud.dev/blob/fileblob storage backend at /srv/kotobawork/data/media per architecture decisions.
 - Decision: `LEGACY_CREDENTIAL_MIGRATION = NOT_REQUIRED`; `IDENTITY_RESET_APPROVED = TRUE`. The user approved resetting identity/account-scoped data only. This closes the M2 production credential-format gate without obtaining Keycloak metadata.
 - Completed checkpoint commits:
   - `0fc4486f5cfd2edc4433359753be573605234006` — P0.1 plan rebase
