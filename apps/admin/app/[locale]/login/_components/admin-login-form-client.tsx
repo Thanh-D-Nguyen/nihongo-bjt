@@ -26,6 +26,8 @@ export type AdminLoginFormCopy = {
 
 const ERROR_REGION_ID = "admin-login-error";
 
+const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/$/u, "");
+
 function mapErrorCode(code: string | undefined, copy: AdminLoginFormCopy): string {
   switch (code) {
     case "invalid_credentials":
@@ -93,37 +95,19 @@ export function AdminLoginFormClient({
     setClientError(null);
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/keycloak/password-login", {
-        body: JSON.stringify({ password, username }),
-        credentials: "same-origin",
+      // Go-native admin login: POST /api/admin/login with credentials.
+      // The Go API sets bjt_admin_session cookie on success.
+      const res = await fetch(`${apiBaseUrl}/api/admin/login`, {
+        body: JSON.stringify({ email: username, password }),
+        credentials: "include",
         headers: { "content-type": "application/json" },
         method: "POST"
       });
       const data = (await res.json().catch(() => ({}))) as {
-        debug?: {
-          errorDescription?: string;
-          httpStatus?: number;
-          issuer?: string;
-          keycloakError?: string;
-        };
         error?: string;
       };
       if (!res.ok) {
-        let msg = mapErrorCode(data.error, copy);
-        const d = data.debug;
-        if (d) {
-          const tail = [
-            d.keycloakError ? `Keycloak: ${d.keycloakError}` : null,
-            d.httpStatus != null ? `HTTP ${d.httpStatus}` : null,
-            d.issuer ? `issuer: ${d.issuer}` : null,
-            d.errorDescription ? d.errorDescription : null
-          ]
-            .filter(Boolean)
-            .join("\n");
-          if (tail) {
-            msg = `${msg}\n\n${tail}`;
-          }
-        }
+        const msg = mapErrorCode(data.error, copy);
         setClientError(msg);
         return;
       }
@@ -145,51 +129,51 @@ export function AdminLoginFormClient({
     return (
       <>
         <button
-          aria-describedby="admin-login-auth-unavailable"
-          className="flex min-h-11 w-full cursor-not-allowed items-center justify-center rounded-md border border-border bg-muted px-4 py-3 text-sm font-semibold text-paper opacity-80"
+          aria-disabled="true"
+          className="flex min-h-11 w-full cursor-not-allowed items-center justify-center gap-2 rounded-md bg-ink/60 px-4 py-3 text-sm font-semibold text-paper opacity-60"
           disabled
           type="button"
         >
-          {copy.primaryCta}
+          <span>{copy.primaryCta}</span>
         </button>
-        <p
-          className="mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-3 text-sm leading-relaxed text-amber-950"
-          id="admin-login-auth-unavailable"
-          role="status"
-        >
-          {copy.authDisabledHint}
-        </p>
+        <p className="mt-3 text-xs leading-5 text-muted">{copy.authDisabledHint}</p>
       </>
     );
   }
 
   return (
     <form
-      action="/api/auth/keycloak/password-login"
+      action={`${apiBaseUrl}/api/admin/login`}
+      autoComplete="on"
       className="flex flex-col gap-4"
-      method="post"
+      method="POST"
       noValidate
       onSubmit={onSubmit}
     >
-      {/* Hidden inputs preserve the no-JS form-fallback contract that Task A relies on. */}
-      <input name="returnTo" type="hidden" value={returnTo} />
+      {/* Hidden fields for no-JS form fallback round trip. */}
       <input name="locale" type="hidden" value={locale} />
+      <input name="returnTo" type="hidden" value={returnTo} />
 
       <div>
-        <label className="text-sm font-medium text-ink" htmlFor="admin-login-username">
+        <label
+          className="block text-xs font-semibold tracking-tight text-ink"
+          htmlFor="admin-login-username"
+        >
           {copy.usernameLabel}
         </label>
         <input
           aria-describedby={hasError ? ERROR_REGION_ID : undefined}
           aria-invalid={hasError || undefined}
-          autoCapitalize="off"
+          autoCapitalize="none"
           autoComplete="username"
-          autoCorrect="off"
+          autoFocus
           className={hasError ? fieldErrorClass : fieldClass}
           id="admin-login-username"
-          inputMode="email"
-          name="username"
-          onChange={(ev) => setUsername(ev.target.value)}
+          maxLength={256}
+          name="email"
+          onChange={(e) => setUsername(e.target.value)}
+          onKeyDown={handleCapsLock}
+          onKeyUp={handleCapsLock}
           placeholder={copy.usernamePlaceholder}
           required
           spellCheck={false}
@@ -199,38 +183,40 @@ export function AdminLoginFormClient({
       </div>
 
       <div>
-        <div className="flex items-center justify-between">
-          <label className="text-sm font-medium text-ink" htmlFor="admin-login-password">
-            {copy.passwordLabel}
-          </label>
+        <label
+          className="block text-xs font-semibold tracking-tight text-ink"
+          htmlFor="admin-login-password"
+        >
+          {copy.passwordLabel}
+        </label>
+        <div className="relative">
+          <input
+            aria-describedby={hasError ? ERROR_REGION_ID : undefined}
+            aria-invalid={hasError || undefined}
+            autoComplete="current-password"
+            className={hasError ? fieldErrorClass : fieldClass}
+            id="admin-login-password"
+            maxLength={4096}
+            name="password"
+            onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={handleCapsLock}
+            onKeyUp={handleCapsLock}
+            placeholder={copy.passwordPlaceholder}
+            required
+            spellCheck={false}
+            type={showPassword ? "text" : "password"}
+            value={password}
+          />
           <button
-            aria-controls="admin-login-password"
             aria-label={showPassword ? copy.passwordHide : copy.passwordShow}
-            aria-pressed={showPassword}
-            className="rounded-sm px-2 py-1 text-xs font-medium text-muted transition hover:bg-paper hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-xs font-medium text-muted transition hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             onClick={() => setShowPassword((v) => !v)}
+            tabIndex={-1}
             type="button"
           >
-            <span aria-hidden>{showPassword ? copy.passwordHide : copy.passwordShow}</span>
-            <span className="sr-only">{showPassword ? copy.passwordHide : copy.passwordShow}</span>
+            {showPassword ? copy.passwordHide : copy.passwordShow}
           </button>
         </div>
-        <input
-          aria-describedby={hasError ? ERROR_REGION_ID : undefined}
-          aria-invalid={hasError || undefined}
-          autoComplete="current-password"
-          className={hasError ? fieldErrorClass : fieldClass}
-          id="admin-login-password"
-          name="password"
-          onChange={(ev) => setPassword(ev.target.value)}
-          onKeyDown={handleCapsLock}
-          onKeyUp={handleCapsLock}
-          placeholder={copy.passwordPlaceholder}
-          required
-          spellCheck={false}
-          type={showPassword ? "text" : "password"}
-          value={password}
-        />
         {capsLock ? (
           <div
             aria-live="polite"

@@ -3,8 +3,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { userFacingAuthError } from "@/lib/auth-error-message";
-import { safeReturnToPath } from "@/lib/kc-cookies";
-import { getKcAdminConfig } from "@/lib/kc-server-config";
 
 import en from "../../../messages/en.json";
 import ja from "../../../messages/ja.json";
@@ -39,6 +37,22 @@ const LOCALE_LABEL_KEYS: Record<LoginLocale, "localeSwitchVi" | "localeSwitchJa"
   en: "localeSwitchEn"
 };
 
+/**
+ * Validates that a returnTo path is safe (same-origin relative path).
+ * Mirrors the previous safeReturnToPath from kc-cookies but without the
+ * Keycloak dependency.
+ */
+function safeReturnToPath(raw: string | null, fallback: string): string {
+  if (!raw) return fallback;
+  // Only allow relative paths starting with /
+  if (!raw.startsWith("/")) return fallback;
+  // Reject protocol-relative URLs (//evil.com)
+  if (raw.startsWith("//")) return fallback;
+  // Reject paths with encoded slashes or traversal
+  if (raw.includes("..")) return fallback;
+  return raw;
+}
+
 export default async function AdminLoginPage({
   params,
   searchParams
@@ -55,35 +69,18 @@ export default async function AdminLoginPage({
   const t = messages[loc].auth.login;
   const errorsCopy = messages[loc].auth.errors;
 
-  const cfg = getKcAdminConfig();
-  const authReady = Boolean(cfg?.clientSecret);
+  // Go-native auth is always ready (no external IdP config needed).
+  const authReady = true;
 
   const errMapped = userFacingAuthError(sp.authError, errorsCopy);
-  // When auth is not configured we surface a separate "authDisabledHint" inside
-  // the form instead of a redundant top-banner not_configured message.
-  const err = !authReady && sp.authError === "not_configured" ? null : errMapped;
+  const err = errMapped;
 
-  // Validate returnTo using the same helper that the OAuth/password-login routes
-  // rely on, so the login screen and post-login redirect agree on what is safe.
+  // Validate returnTo for safe redirect after login.
   const returnTo = safeReturnToPath(sp.returnTo ?? null, `/${locale}`);
 
-  // Username preserved across the no-JS form-fallback round trip. Only render
-  // it back when the request itself reported an error, so a successful login
-  // never echoes the value into the URL on subsequent visits.
+  // Username preserved across the no-JS form-fallback round trip.
   const defaultUsername =
     typeof sp.u === "string" && sp.u.length > 0 && sp.u.length <= 256 ? sp.u : "";
-
-  // Server-side-gated social providers: only render when the deployment has
-  // explicitly configured an IdP hint. We never expose buttons for providers
-  // that Keycloak cannot route.
-  const showGoogle = Boolean(process.env.NEXT_PUBLIC_AUTH_GOOGLE_IDP_HINT?.trim());
-  const showApple = Boolean(process.env.NEXT_PUBLIC_AUTH_APPLE_IDP_HINT?.trim());
-  const showSocialDivider = authReady && (showGoogle || showApple);
-
-  const authorizeQuery = new URLSearchParams({ locale, returnTo });
-  const baseAuthorize = `/api/auth/keycloak/authorize?${authorizeQuery.toString()}`;
-  const googleHref = `${baseAuthorize}&idp=google`;
-  const appleHref = `${baseAuthorize}&idp=apple`;
 
   // Locale switcher preserves returnTo so a deep link survives a language change.
   const localeQuery = new URLSearchParams();
@@ -116,11 +113,9 @@ export default async function AdminLoginPage({
                   className={
                     isActive
                       ? "rounded-sm bg-ink px-2.5 py-1.5 text-xs font-semibold text-paper no-underline"
-                      : "rounded-sm px-2.5 py-1.5 text-xs font-medium text-muted no-underline transition hover:bg-paper hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                      : "rounded-sm px-2.5 py-1.5 text-xs font-medium text-muted no-underline transition hover:text-ink"
                   }
                   href={href}
-                  key={code}
-                  lang={code}
                 >
                   {label}
                 </Link>
@@ -129,106 +124,54 @@ export default async function AdminLoginPage({
           </nav>
         </header>
 
-        <section className="grid flex-1 items-center gap-8 py-10 lg:grid-cols-[minmax(0,0.92fr)_minmax(380px,440px)] lg:gap-12">
-          <aside className="hidden lg:block" aria-hidden="true">
-            <div className="max-w-xl">
-              <div className="mb-8 h-px w-24 bg-accent" />
-              <p className="text-xs font-semibold uppercase text-muted">{t.eyebrow}</p>
-              <h1 className="mt-4 text-4xl font-semibold leading-tight tracking-normal text-ink">
-                {t.title}
-              </h1>
-              <p className="mt-4 max-w-md text-base leading-7 text-muted">{t.subtitle}</p>
-            </div>
-          </aside>
-
-          <section className="mx-auto w-full max-w-[440px] rounded-lg border border-border bg-surface p-6 shadow-md sm:p-7">
-            <div className="mb-6 lg:hidden">
-              <p className="text-xs font-semibold uppercase text-muted">{t.eyebrow}</p>
-              <h1 className="mt-2 text-2xl font-semibold leading-tight tracking-normal text-ink">
-                {t.title}
-              </h1>
-              <p className="mt-2 text-sm leading-6 text-muted">{t.subtitle}</p>
-            </div>
-            <div className="mb-6 hidden lg:block">
-              <h2 className="text-xl font-semibold leading-tight tracking-normal text-ink">
-                {t.primaryCta}
-              </h2>
-              <p className="mt-2 text-sm leading-6 text-muted">{t.hint}</p>
-            </div>
+        <section className="mt-auto flex w-full flex-col items-center justify-center pb-8">
+          <section className="w-full max-w-md rounded-xl border border-border bg-surface p-6 shadow-sm sm:p-8">
+            <h1 className="text-lg font-semibold tracking-tight text-ink">{t.title}</h1>
+            <p className="mt-1 text-sm text-muted">{t.subtitle}</p>
 
             {err ? (
               <div
-                aria-live="polite"
-                className="mb-5 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 whitespace-pre-wrap break-words"
-                id="admin-login-server-error"
+                className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 whitespace-pre-wrap break-words"
                 role="alert"
               >
                 {err}
               </div>
             ) : null}
 
-            <AdminLoginFormClient
-              authReady={authReady}
-              copy={{
-                authDisabledHint: t.authDisabledHint,
-                capsLockOn: t.capsLockOn,
-                errorAuthMethodNotAllowed: t.errorAuthMethodNotAllowed,
-                errorClientMisconfigured: t.errorClientMisconfigured,
-                errorInvalidScope: t.errorInvalidScope,
-                errorLoginFailed: t.errorLoginFailed,
-                errorNotConfigured: errorsCopy.configuration,
-                genericFormError: errorsCopy.generic,
-                passwordHide: t.passwordHide,
-                passwordLabel: t.passwordLabel,
-                passwordPlaceholder: t.passwordPlaceholder,
-                passwordShow: t.passwordShow,
-                primaryCta: t.primaryCta,
-                signingIn: t.signingIn,
-                submitting: t.submitting,
-                usernameLabel: t.usernameLabel,
-                usernamePlaceholder: t.usernamePlaceholder,
-                validationError: t.validationError,
-                wrongCredentials: t.wrongCredentials
-              }}
-              defaultUsername={defaultUsername}
-              // The server already rendered the mapped error above; passing it
-              // here lets the client wire aria-invalid/aria-describedby on the
-              // first paint without an extra client round trip.
-              initialServerError={err}
-              locale={locale}
-              returnTo={returnTo}
-            />
+            <div className="mt-5">
+              <AdminLoginFormClient
+                authReady={authReady}
+                copy={{
+                  authDisabledHint: t.authDisabledHint,
+                  capsLockOn: t.capsLockOn,
+                  errorAuthMethodNotAllowed: t.errorAuthMethodNotAllowed,
+                  errorClientMisconfigured: t.errorClientMisconfigured,
+                  errorInvalidScope: t.errorInvalidScope,
+                  errorLoginFailed: t.errorLoginFailed,
+                  errorNotConfigured: errorsCopy.configuration,
+                  genericFormError: errorsCopy.generic,
+                  passwordHide: t.passwordHide,
+                  passwordLabel: t.passwordLabel,
+                  passwordPlaceholder: t.passwordPlaceholder,
+                  passwordShow: t.passwordShow,
+                  primaryCta: t.primaryCta,
+                  signingIn: t.signingIn,
+                  submitting: t.submitting,
+                  usernameLabel: t.usernameLabel,
+                  usernamePlaceholder: t.usernamePlaceholder,
+                  validationError: t.validationError,
+                  wrongCredentials: t.wrongCredentials
+                }}
+                defaultUsername={defaultUsername}
+                initialServerError={err}
+                locale={locale}
+                returnTo={returnTo}
+              />
+            </div>
 
-            {showSocialDivider ? (
-              <div className="mt-5 flex flex-col gap-3">
-                <div className="relative py-1 text-center text-xs text-muted">
-                  <span className="relative z-10 bg-surface px-2">{t.divider}</span>
-                  <span aria-hidden className="absolute inset-x-0 top-1/2 z-0 h-px bg-border" />
-                </div>
-                {showGoogle ? (
-                  <a
-                    className="flex min-h-11 w-full items-center justify-center rounded-md border border-border bg-surface px-4 py-3 text-sm font-semibold text-ink no-underline transition hover:bg-paper focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-                    href={googleHref}
-                  >
-                    {t.continueGoogle}
-                  </a>
-                ) : null}
-                {showApple ? (
-                  <a
-                    className="flex min-h-11 w-full items-center justify-center rounded-md border border-border bg-surface px-4 py-3 text-sm font-semibold text-ink no-underline transition hover:bg-paper focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-                    href={appleHref}
-                  >
-                    {t.continueApple}
-                  </a>
-                ) : null}
-              </div>
-            ) : null}
-
-            {authReady ? (
-              <p className="mt-5 border-t border-border pt-4 text-xs leading-5 text-muted lg:hidden">
-                {t.hint}
-              </p>
-            ) : null}
+            <p className="mt-5 border-t border-border pt-4 text-xs leading-5 text-muted lg:hidden">
+              {t.hint}
+            </p>
           </section>
         </section>
       </div>
