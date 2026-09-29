@@ -19,7 +19,6 @@ const nextConfig = {
   },
   transpilePackages: [
     "@nihongo-bjt/config",
-    "@nihongo-bjt/keycloak-oidc",
     "@nihongo-bjt/shared",
     "@nihongo-bjt/ui"
   ],

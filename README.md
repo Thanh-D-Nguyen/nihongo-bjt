@@ -12,7 +12,7 @@ Phase 00 data profiling and canonical import is complete and archived in `archiv
 
 ## Full stack after `git clone` or `git pull`
 
-Run from the **repo root** unless noted. Use this when you need **learner + API + admin + Keycloak** locally.
+Run from the **repo root** unless noted. Use this when you need **learner + Go API + admin** locally. Keycloak is no longer required (auth is Go-native sessions since M13).
 
 ### 1. Core infrastructure (Postgres, Redis, Meilisearch, MinIO)
 
@@ -23,20 +23,7 @@ docker compose ps
 
 Wait until **postgres** is healthy. Host DB URL uses **`127.0.0.1:15432`** (see `docker-compose.yml`).
 
-### 2. Keycloak (required if admin/learner use OIDC env vars)
-
-Admin at `http://localhost:3001` expects Keycloak on **HTTP** `http://localhost:8080` when using the example env files.
-
-```bash
-cd docker/keycloak
-docker compose up -d
-docker compose logs keycloak-configure-http
-cd ../..
-```
-
-Wait until **`keycloak-configure-http`** logs `sslRequired=NONE applied` (or similar), then open Keycloak only if needed: `http://localhost:8080/admin`. Details: `docker/keycloak/README.md`.
-
-### 3. Root `.env` (API + shared)
+### 2. Root `.env` (API + shared)
 
 ```bash
 cp .env.example .env
@@ -47,29 +34,28 @@ Edit `.env`:
 - **`DATABASE_URL`**: for the default Docker Postgres, keep the example pointing at `127.0.0.1:15432` and `?schema=content`.
 - **`OAUTH_STATE_SECRET`**: must **not** be empty — use a dummy string **≥ 32 characters** if you are not using Google OAuth yet.
 - **`MEILI_MASTER_KEY`**: must match compose (`local_dev_meili_master_key`).
-- **Keycloak (API JWT)**: merge the block from [`docker/keycloak/env.api.example`](docker/keycloak/env.api.example) into `.env` (`KEYCLOAK_ISSUER_URL`, `KEYCLOAK_EXPECTED_AUDIENCE`, etc.) so the Nest API validates tokens from learner/admin clients.
+- Keycloak variables in `.env.example` are legacy/dead (auth is Go-native sessions since M13). Leave them empty unless you have a specific rollback need.
 
-### 4. Per-app env (Next.js route handlers)
+### 3. Per-app env (Next.js apps)
 
 ```bash
-cp docker/keycloak/env.admin.local.example apps/admin/.env.local
-cp docker/keycloak/env.web.local.example apps/web/.env.local
+# Create minimal .env.local files if needed for local overrides
+touch apps/admin/.env.local apps/web/.env.local
 ```
 
-Adjust if your ports differ. Client secrets must match **`docker/keycloak/realm-export.json`** (`nihongo-admin-dev-secret`, `nihongo-web-dev-secret`) unless you changed them in Keycloak.
+Adjust ports if they differ from defaults (`:3000` for web, `:3001` for admin, `:4001` for Go API).
 
 ### Login/auth contract
 
-Local login is standardized around Keycloak + Next.js BFF route handlers:
+Auth is Go-native sessions (M13a/b/c). Keycloak is no longer required for local development.
 
-- Learner (`apps/web`, `:3000`) uses the `nihongo-web` Keycloak client and stores HttpOnly cookies prefixed with `bjt_web_`.
-- Admin (`apps/admin`, `:3001`) uses the `nihongo-admin` Keycloak client and stores HttpOnly cookies prefixed with `bjt_admin_`.
-- Next.js route handlers exchange password/OAuth login for cookies, refresh sessions, and attach Bearer tokens to API calls.
-- NestJS (`apps/api`, `:4000`) is the backend auth boundary. It validates Keycloak JWTs through JWKS. Admin APIs additionally require the Keycloak admin realm/resource role and a linked active `authz.admin_actor.keycloak_subject`; RBAC permissions are loaded from PostgreSQL.
-- Keep `KEYCLOAK_EXPECTED_AUDIENCE=nihongo-web,nihongo-admin,nihongo-mobile` in the API env so learner web, admin, and mobile access tokens are accepted.
-- Do not rely on frontend-only admin checks. Admin pages may hide actions, but the API must enforce RBAC.
+- Go API (`apps/api-go`, `:4001`) is the sole backend auth boundary. It issues session tokens for learner, admin, and mobile clients.
+- Learner (`apps/web`, `:3000`) and Admin (`apps/admin`, `:3001`) authenticate through Go API session endpoints.
+- Mobile (`apps/mobile`) uses Bearer token fallback against the same Go API session guards.
+- Admin APIs enforce RBAC from PostgreSQL. Do not rely on frontend-only admin checks.
+- `apps/api` (NestJS) is disabled from runtime since M15 and preserved on disk for rollback reference only.
 
-For admin login to work locally, the Keycloak user must have the configured admin portal role (`admin` by default) and the matching `admin_actor` row must be seeded/linked. Run `pnpm seed:foundation`; if needed, use `database/scripts/link-keycloak-admin.ts` as the linking utility.
+For local admin access, seed the foundation data: `pnpm seed:foundation`.
 
 ### 5. Install, Prisma Client, migrations
 

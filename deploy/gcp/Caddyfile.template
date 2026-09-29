@@ -10,9 +10,7 @@ api.__BASE_DOMAIN__ {
   reverse_proxy 127.0.0.1:4001
 }
 
-auth.__BASE_DOMAIN__ {
-  reverse_proxy 127.0.0.1:8080
-}
+# M17: auth.__BASE_DOMAIN__ (Keycloak) removed — Go-native sessions since M13.
 
 media.__BASE_DOMAIN__ {
   reverse_proxy 127.0.0.1:9000

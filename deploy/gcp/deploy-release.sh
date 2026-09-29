@@ -26,10 +26,9 @@ pnpm exec prisma migrate deploy --schema packages/database/prisma/schema.prisma
 pnpm seed:bjt:official-mocks
 pnpm seed:bjt-lessons
 ./deploy/gcp/apply-recommendation-schema.sh
-./deploy/gcp/configure-keycloak-mobile-client.sh
-./deploy/gcp/link-keycloak-admin.sh
+# M17: Keycloak configure/link scripts removed — auth is Go-native sessions (M13).
+# Scripts preserved on disk for rollback reference only.
 pnpm build
-pnpm search:index
 
 pm2 startOrReload deploy/gcp/ecosystem.config.cjs --update-env
 pm2 save

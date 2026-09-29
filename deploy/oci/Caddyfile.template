@@ -10,14 +10,7 @@ api.__BASE_DOMAIN__ {
   reverse_proxy 127.0.0.1:4001
 }
 
-auth.__BASE_DOMAIN__ {
-  @blocked_admin {
-    path /admin*
-    not remote_ip __ADMIN_IP__/32
-  }
-  respond @blocked_admin 403
-  reverse_proxy 127.0.0.1:8080
-}
+# M17: auth.__BASE_DOMAIN__ (Keycloak) removed — Go-native sessions since M13.
 
 media.__BASE_DOMAIN__ {
   reverse_proxy 127.0.0.1:9000

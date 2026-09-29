@@ -24,7 +24,8 @@ If docs disagree, prefer this order: current code and schema, `docs/spec/index.m
 
 - `apps/web` - learner-facing Next.js app.
 - `apps/admin` - admin Next.js app for content, operations, and management workflows.
-- `apps/api` - NestJS backend API.
+- `apps/api-go` - Go backend API (primary runtime, serves all endpoints on :4001).
+- `apps/api` - NestJS backend API (disabled from runtime since M15; preserved on disk for rollback reference only).
 - `packages/database` - Prisma schema, generated client, seed/migration support.
 - `packages/shared` - shared TypeScript/Zod contracts and reusable domain types.
 - `packages/ui` - shared UI building blocks.
