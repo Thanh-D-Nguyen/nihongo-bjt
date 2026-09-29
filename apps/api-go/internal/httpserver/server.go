@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authz"
@@ -28,6 +29,7 @@ type Dependencies struct {
 	Config          *config.Config
 	Logger          *slog.Logger
 	DB              postgres.Pinger    // nil if not configured; readiness returns 503
+	DBPool          *pgxpool.Pool      // concrete pool for handlers needing BeginTx/Query; nil if DB not configured
 	Redis           redisx.Pinger      // nil if not configured; readiness reports not_configured
 	SessionStore    *session.Store     // nil if DB not configured
 	ProfileStore    *profile.Store     // nil if DB not configured
@@ -99,6 +101,32 @@ func NewRouter(deps Dependencies) http.Handler {
 			ar.Post("/api/admin/login", adminLoginHandler(
 				deps.CredentialStore, deps.RBACStore, deps.SessionStore,
 				deps.RateLimiter, deps.Logger,
+			))
+		})
+	}
+
+	// Account lifecycle routes — public (register, forgot-password, reset-password) and
+	// authenticated (change-password, disable, delete). CSRF-protected for unsafe methods.
+	if deps.CredentialStore != nil && deps.ProfileStore != nil && deps.SessionStore != nil {
+		r.Group(func(lr chi.Router) {
+			lr.Use(authn.CSRFGuard(csrfCfg))
+			lr.Post("/api/auth/register", registerHandler(
+				deps.DBPool, deps.CredentialStore, deps.RateLimiter, deps.Logger,
+			))
+			lr.Post("/api/auth/forgot-password", forgotPasswordHandler(
+				deps.DBPool, deps.RateLimiter, deps.Logger,
+			))
+			lr.Post("/api/auth/reset-password", resetPasswordHandler(
+				deps.DBPool, deps.CredentialStore, deps.SessionStore, deps.RateLimiter, deps.Logger,
+			))
+			lr.Post("/api/auth/change-password", changePasswordHandler(
+				deps.DBPool, deps.CredentialStore, deps.SessionStore, deps.RateLimiter, deps.Logger,
+			))
+			lr.Post("/api/auth/disable", disableAccountHandler(
+				deps.DBPool, deps.SessionStore, deps.RateLimiter, deps.Logger,
+			))
+			lr.Post("/api/auth/delete", deleteAccountHandler(
+				deps.DBPool, deps.SessionStore, deps.RateLimiter, deps.Logger,
 			))
 		})
 	}

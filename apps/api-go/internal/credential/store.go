@@ -96,6 +96,45 @@ func (s *Store) HasAnyAdminCredential(ctx context.Context) (bool, error) {
 	return count > 0, nil
 }
 
+// SetLearnerCredentialTx hashes and stores a learner password credential within
+// an existing transaction. This is required when the user profile row is created
+// in the same transaction and not yet visible outside it (FK constraint).
+func (s *Store) SetLearnerCredentialTx(ctx context.Context, tx pgx.Tx, userID string, password []byte) error {
+	encoded, err := Hash(password, DefaultParams())
+	if err != nil {
+		return fmt.Errorf("credential: hash learner: %w", err)
+	}
+	p, salt, hash, err := Decode(encoded)
+	if err != nil {
+		return fmt.Errorf("credential: decode learner: %w", err)
+	}
+	return s.upsertLearnerTx(ctx, tx, userID, p, salt, hash)
+}
+
+func (s *Store) upsertLearnerTx(ctx context.Context, tx pgx.Tx, userID string, p Params, salt, hash []byte) error {
+	const q = `INSERT INTO auth.password_credential
+		(user_id, algorithm, algorithm_version, hash_iterations, memory_kib, parallelism, hash_length, salt, hashed_value)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		ON CONFLICT (user_id) DO UPDATE SET
+			algorithm = EXCLUDED.algorithm,
+			algorithm_version = EXCLUDED.algorithm_version,
+			hash_iterations = EXCLUDED.hash_iterations,
+			memory_kib = EXCLUDED.memory_kib,
+			parallelism = EXCLUDED.parallelism,
+			hash_length = EXCLUDED.hash_length,
+			salt = EXCLUDED.salt,
+			hashed_value = EXCLUDED.hashed_value,
+			updated_at = now()`
+	_, err := tx.Exec(ctx, q,
+		userID, algorithmID, fmt.Sprintf("%d", argon2.Version),
+		int(p.Iterations), int(p.MemoryKiB), int(p.Parallelism), int(p.HashLen),
+		salt, hash)
+	if err != nil {
+		return fmt.Errorf("credential: upsert learner tx: %w", err)
+	}
+	return nil
+}
+
 func (s *Store) upsertLearner(ctx context.Context, userID string, p Params, salt, hash []byte) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()

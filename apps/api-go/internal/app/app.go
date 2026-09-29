@@ -75,6 +75,7 @@ func New(version string) (*App, error) {
 		Config:          cfg,
 		Logger:          logger,
 		DB:              dbPool,
+		DBPool:          dbPool,
 		SessionStore:    sessionStore,
 		ProfileStore:    profileStore,
 		RBACStore:       rbacStore,
