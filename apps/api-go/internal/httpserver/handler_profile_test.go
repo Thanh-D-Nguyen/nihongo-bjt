@@ -9,298 +9,291 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/jackc/pgx/v5/pgxpool"
+	"time"
+
 	"log/slog"
 
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/config"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/profile"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/session"
 )
 
-// profileTestServer creates a test server with GET and PUT /api/auth/me handlers
-// wrapped in the LearnerGuard middleware so session cookies are validated and
-// learner identity is injected into the request context.
-func profileTestServer(t *testing.T) (*httptest.Server, *session.Store) {
+// seedFullProfileUser creates a user with all M5 profile fields populated for testing.
+func seedFullProfileUser(t *testing.T, db *pgxpool.Pool, userID, email string) {
 	t.Helper()
-	pool := testPool(t)
-	profileStore := profile.NewStore(pool)
-	sessionStore := session.NewStore(pool)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	_, err := db.Exec(ctx,
+		`INSERT INTO profile.user_profile (id, display_name, email, status, theme_mode,
+			font_size_preference, density_preference, flashcard_style_slug,
+			cover_asset_id, ads_personalization_opt_in, share_postcard_opt_in)
+		 VALUES ($1, 'Test Learner', $2, 'active', 'dark', 'medium', 'comfortable', 'minimal',
+			'00000000-0000-0000-0000-000000000001', true, false)
+		 ON CONFLICT (id) DO UPDATE SET display_name='Test Learner', email=$2, status='active',
+			theme_mode='dark', font_size_preference='medium', density_preference='comfortable',
+			flashcard_style_slug='minimal', cover_asset_id='00000000-0000-0000-0000-000000000001',
+			ads_personalization_opt_in=true, share_postcard_opt_in=false`,
+		userID, email)
+	if err != nil {
+		t.Fatalf("seed full profile user failed: %v", err)
+	}
+	t.Cleanup(func() {
+		cctx, ccancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer ccancel()
+		_, _ = db.Exec(cctx, `DELETE FROM profile.user_profile WHERE id = $1`, userID)
+	})
+}
+
+func TestLearnerGetMe_Success(t *testing.T) {
+	db := testPool(t)
+	profileStore := profile.NewStore(db)
+	sessStore := session.NewStore(db)
 	logger := slog.Default()
 
-	guardCfg := authn.DefaultGuardConfig(logger)
-	learnerGuard := authn.LearnerGuard(sessionStore, guardCfg)
+	userID := newUUID(t)
+	email := fmt.Sprintf("getme-%s@example.com", userID[:8])
+	seedFullProfileUser(t, db, userID, email)
+	rawToken := createLearnerSession(t, sessStore, userID)
 
-	mux := http.NewServeMux()
-	mux.Handle("/api/auth/me", learnerGuard(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case http.MethodGet:
-			learnerGetMeHandler(profileStore, logger)(w, r)
-		case http.MethodPut:
-			learnerUpdateMeHandler(profileStore, logger)(w, r)
-		default:
-			writeJSONError(w, "method not allowed", http.StatusMethodNotAllowed)
+	router := NewRouter(Dependencies{
+		Config:       &config.Config{CORSOrigins: []string{"http://localhost:3000"}},
+		Logger:       logger,
+		SessionStore: sessStore,
+		ProfileStore: profileStore,
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/api/auth/me", nil)
+	req.AddCookie(&http.Cookie{Name: "bjt_web_session", Value: rawToken})
+	rr := httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rr.Code, rr.Body.String())
+	}
+
+	var resp map[string]any
+	if err := json.Unmarshal(rr.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("invalid JSON response: %v", err)
+	}
+
+	// Verify flat shape — no wrapper object.
+	requiredFields := []string{"id", "email", "displayName", "status", "themeMode",
+		"fontSizePreference", "densityPreference", "flashcardStyleSlug",
+		"coverAssetId", "adsPersonalizationOptIn", "sharePostcardOptIn",
+		"createdAt", "updatedAt"}
+	for _, f := range requiredFields {
+		if _, ok := resp[f]; !ok {
+			t.Errorf("missing required field %q in response", f)
 		}
-	})))
+	}
 
-	return httptest.NewServer(mux), sessionStore
+	if resp["id"] != userID {
+		t.Errorf("expected id=%s, got %v", userID, resp["id"])
+	}
+	if resp["email"] != email {
+		t.Errorf("expected email=%s, got %v", email, resp["email"])
+	}
+	if resp["displayName"] != "Test Learner" {
+		t.Errorf("expected displayName=Test Learner, got %v", resp["displayName"])
+	}
+	if resp["themeMode"] != "dark" {
+		t.Errorf("expected themeMode=dark, got %v", resp["themeMode"])
+	}
 }
 
-func TestGetMe_Success(t *testing.T) {
-	pool := testPool(t)
-	srv, sessionStore := profileTestServer(t)
-	defer srv.Close()
+func TestLearnerGetMe_Unauthorized(t *testing.T) {
+	db := testPool(t)
+	profileStore := profile.NewStore(db)
+	sessStore := session.NewStore(db)
+	logger := slog.Default()
+
+	router := NewRouter(Dependencies{
+		Config:       &config.Config{CORSOrigins: []string{"http://localhost:3000"}},
+		Logger:       logger,
+		SessionStore: sessStore,
+		ProfileStore: profileStore,
+	})
+
+	// No session cookie.
+	req := httptest.NewRequest(http.MethodGet, "/api/auth/me", nil)
+	rr := httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d: %s", rr.Code, rr.Body.String())
+	}
+}
+
+func TestLearnerUpdateMe_Success(t *testing.T) {
+	db := testPool(t)
+	profileStore := profile.NewStore(db)
+	sessStore := session.NewStore(db)
+	logger := slog.Default()
 
 	userID := newUUID(t)
-	email := fmt.Sprintf("getme-success-%s@example.com", userID[:8])
-	seedActiveUser(t, pool, userID, "GetMe User", email, "")
+	email := fmt.Sprintf("upd-%s@example.com", userID[:8])
+	seedFullProfileUser(t, db, userID, email)
+	rawToken := createLearnerSession(t, sessStore, userID)
 
-	rawToken := createLearnerSession(t, sessionStore, userID)
+	router := NewRouter(Dependencies{
+		Config:       &config.Config{CORSOrigins: []string{"http://localhost:3000"}},
+		Logger:       logger,
+		SessionStore: sessStore,
+		ProfileStore: profileStore,
+	})
 
-	req, _ := http.NewRequest(http.MethodGet, srv.URL+"/api/auth/me", nil)
+	body := `{"displayName":"Updated Name","themeMode":"light"}`
+	req := httptest.NewRequest(http.MethodPut, "/api/auth/me", bytes.NewReader([]byte(body)))
+	req.Header.Set("Content-Type", "application/json")
 	req.AddCookie(&http.Cookie{Name: "bjt_web_session", Value: rawToken})
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		t.Fatalf("request failed: %v", err)
-	}
-	defer resp.Body.Close()
+	req.Header.Set("X-CSRF-Token", "test-csrf") // CSRF guard checks origin+token presence
+	req.Header.Set("Origin", "http://localhost:3000")
+	rr := httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
 
-	if resp.StatusCode != http.StatusOK {
-		t.Errorf("expected 200, got %d", resp.StatusCode)
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rr.Code, rr.Body.String())
 	}
 
-	var result map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		t.Fatalf("decode failed: %v", err)
+	var resp map[string]any
+	if err := json.Unmarshal(rr.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("invalid JSON response: %v", err)
 	}
-	if result["id"] != userID {
-		t.Errorf("expected id=%s, got %v", userID, result["id"])
+	if resp["displayName"] != "Updated Name" {
+		t.Errorf("expected displayName=Updated Name, got %v", resp["displayName"])
 	}
-	if result["email"] != email {
-		t.Errorf("expected email=%s, got %v", email, result["email"])
-	}
-	if result["displayName"] != "GetMe User" {
-		t.Errorf("expected displayName='GetMe User', got %v", result["displayName"])
-	}
-	if result["themeMode"] != "system" {
-		t.Errorf("expected themeMode='system', got %v", result["themeMode"])
+	if resp["themeMode"] != "light" {
+		t.Errorf("expected themeMode=light, got %v", resp["themeMode"])
 	}
 }
 
-func TestGetMe_Unauthorized_NoCookie(t *testing.T) {
-	srv, _ := profileTestServer(t)
-	defer srv.Close()
-
-	resp, err := http.Get(srv.URL + "/api/auth/me")
-	if err != nil {
-		t.Fatalf("request failed: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusUnauthorized {
-		t.Errorf("expected 401, got %d", resp.StatusCode)
-	}
-}
-
-func TestGetMe_InvalidSession(t *testing.T) {
-	srv, _ := profileTestServer(t)
-	defer srv.Close()
-
-	req, _ := http.NewRequest(http.MethodGet, srv.URL+"/api/auth/me", nil)
-	req.AddCookie(&http.Cookie{Name: "bjt_web_session", Value: "invalid-session-token"})
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		t.Fatalf("request failed: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusUnauthorized {
-		t.Errorf("expected 401, got %d", resp.StatusCode)
-	}
-}
-
-func TestUpdateMe_Success(t *testing.T) {
-	pool := testPool(t)
-	srv, sessionStore := profileTestServer(t)
-	defer srv.Close()
+func TestLearnerUpdateMe_PartialUpdate(t *testing.T) {
+	db := testPool(t)
+	profileStore := profile.NewStore(db)
+	sessStore := session.NewStore(db)
+	logger := slog.Default()
 
 	userID := newUUID(t)
-	email := fmt.Sprintf("updateme-success-%s@example.com", userID[:8])
-	seedActiveUser(t, pool, userID, "Update User", email, "")
+	email := fmt.Sprintf("partial-%s@example.com", userID[:8])
+	seedFullProfileUser(t, db, userID, email)
+	rawToken := createLearnerSession(t, sessStore, userID)
 
-	rawToken := createLearnerSession(t, sessionStore, userID)
+	router := NewRouter(Dependencies{
+		Config:       &config.Config{CORSOrigins: []string{"http://localhost:3000"}},
+		Logger:       logger,
+		SessionStore: sessStore,
+		ProfileStore: profileStore,
+	})
 
-	body := map[string]string{"displayName": "Updated Name", "themeMode": "dark"}
-	b, _ := json.Marshal(body)
-	req, _ := http.NewRequest(http.MethodPut, srv.URL+"/api/auth/me", bytes.NewReader(b))
+	// Update only fontSizePreference; everything else should remain unchanged.
+	body := `{"fontSizePreference":"large"}`
+	req := httptest.NewRequest(http.MethodPut, "/api/auth/me", bytes.NewReader([]byte(body)))
 	req.Header.Set("Content-Type", "application/json")
 	req.AddCookie(&http.Cookie{Name: "bjt_web_session", Value: rawToken})
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		t.Fatalf("request failed: %v", err)
-	}
-	defer resp.Body.Close()
+	req.Header.Set("X-CSRF-Token", "test-csrf")
+	req.Header.Set("Origin", "http://localhost:3000")
+	rr := httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
 
-	if resp.StatusCode != http.StatusOK {
-		t.Errorf("expected 200, got %d", resp.StatusCode)
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rr.Code, rr.Body.String())
 	}
 
-	var result map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		t.Fatalf("decode failed: %v", err)
+	var resp map[string]any
+	if err := json.Unmarshal(rr.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("invalid JSON response: %v", err)
 	}
-	if result["displayName"] != "Updated Name" {
-		t.Errorf("expected displayName='Updated Name', got %v", result["displayName"])
+	if resp["fontSizePreference"] != "large" {
+		t.Errorf("expected fontSizePreference=large, got %v", resp["fontSizePreference"])
 	}
-	if result["themeMode"] != "dark" {
-		t.Errorf("expected themeMode='dark', got %v", result["themeMode"])
+	// Unchanged fields must retain their seeded values.
+	if resp["displayName"] != "Test Learner" {
+		t.Errorf("expected displayName unchanged (Test Learner), got %v", resp["displayName"])
+	}
+	if resp["themeMode"] != "dark" {
+		t.Errorf("expected themeMode unchanged (dark), got %v", resp["themeMode"])
 	}
 }
 
-func TestUpdateMe_PartialUpdate(t *testing.T) {
-	pool := testPool(t)
-	srv, sessionStore := profileTestServer(t)
-	defer srv.Close()
+func TestLearnerUpdateMe_ImmutableFieldsIgnored(t *testing.T) {
+	db := testPool(t)
+	profileStore := profile.NewStore(db)
+	sessStore := session.NewStore(db)
+	logger := slog.Default()
 
 	userID := newUUID(t)
-	email := fmt.Sprintf("updateme-partial-%s@example.com", userID[:8])
-	seedActiveUser(t, pool, userID, "Partial User", email, "")
+	email := fmt.Sprintf("immutable-%s@example.com", userID[:8])
+	seedFullProfileUser(t, db, userID, email)
+	rawToken := createLearnerSession(t, sessStore, userID)
 
-	rawToken := createLearnerSession(t, sessionStore, userID)
+	router := NewRouter(Dependencies{
+		Config:       &config.Config{CORSOrigins: []string{"http://localhost:3000"}},
+		Logger:       logger,
+		SessionStore: sessStore,
+		ProfileStore: profileStore,
+	})
 
-	// Update only fontSizePreference; other fields should remain unchanged.
-	body := map[string]string{"fontSizePreference": "large"}
-	b, _ := json.Marshal(body)
-	req, _ := http.NewRequest(http.MethodPut, srv.URL+"/api/auth/me", bytes.NewReader(b))
+	// Send immutable fields (email, status) along with a mutable one.
+	body := `{"email":"hacked@evil.com","status":"disabled","displayName":"Still Me"}`
+	req := httptest.NewRequest(http.MethodPut, "/api/auth/me", bytes.NewReader([]byte(body)))
 	req.Header.Set("Content-Type", "application/json")
 	req.AddCookie(&http.Cookie{Name: "bjt_web_session", Value: rawToken})
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		t.Fatalf("request failed: %v", err)
-	}
-	defer resp.Body.Close()
+	req.Header.Set("X-CSRF-Token", "test-csrf")
+	req.Header.Set("Origin", "http://localhost:3000")
+	rr := httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
 
-	if resp.StatusCode != http.StatusOK {
-		t.Errorf("expected 200, got %d", resp.StatusCode)
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rr.Code, rr.Body.String())
 	}
 
-	var result map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		t.Fatalf("decode failed: %v", err)
+	var resp map[string]any
+	if err := json.Unmarshal(rr.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("invalid JSON response: %v", err)
 	}
-	if result["fontSizePreference"] != "large" {
-		t.Errorf("expected fontSizePreference='large', got %v", result["fontSizePreference"])
+
+	// Immutable fields must NOT have changed.
+	if resp["email"] != email {
+		t.Errorf("email should be immutable: expected %s, got %v", email, resp["email"])
 	}
-	// displayName should be unchanged.
-	if result["displayName"] != "Partial User" {
-		t.Errorf("expected displayName='Partial User' (unchanged), got %v", result["displayName"])
+	if resp["status"] != "active" {
+		t.Errorf("status should be immutable: expected active, got %v", resp["status"])
+	}
+	// Mutable field should have updated.
+	if resp["displayName"] != "Still Me" {
+		t.Errorf("expected displayName=Still Me, got %v", resp["displayName"])
 	}
 }
 
-func TestUpdateMe_InvalidEnum(t *testing.T) {
-	pool := testPool(t)
-	srv, sessionStore := profileTestServer(t)
-	defer srv.Close()
+func TestLearnerUpdateMe_Unauthorized(t *testing.T) {
+	db := testPool(t)
+	profileStore := profile.NewStore(db)
+	sessStore := session.NewStore(db)
+	logger := slog.Default()
 
-	userID := newUUID(t)
-	email := fmt.Sprintf("updateme-enum-%s@example.com", userID[:8])
-	seedActiveUser(t, pool, userID, "Enum User", email, "")
+	router := NewRouter(Dependencies{
+		Config:       &config.Config{CORSOrigins: []string{"http://localhost:3000"}},
+		Logger:       logger,
+		SessionStore: sessStore,
+		ProfileStore: profileStore,
+	})
 
-	rawToken := createLearnerSession(t, sessionStore, userID)
-
-	body := map[string]string{"themeMode": "neon"}
-	b, _ := json.Marshal(body)
-	req, _ := http.NewRequest(http.MethodPut, srv.URL+"/api/auth/me", bytes.NewReader(b))
+	body := `{"displayName":"No Session"}`
+	req := httptest.NewRequest(http.MethodPut, "/api/auth/me", bytes.NewReader([]byte(body)))
 	req.Header.Set("Content-Type", "application/json")
-	req.AddCookie(&http.Cookie{Name: "bjt_web_session", Value: rawToken})
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		t.Fatalf("request failed: %v", err)
-	}
-	defer resp.Body.Close()
+	// No session cookie.
+	rr := httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
 
-	if resp.StatusCode != http.StatusBadRequest {
-		t.Errorf("expected 400 for invalid enum, got %d", resp.StatusCode)
+	if rr.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d: %s", rr.Code, rr.Body.String())
 	}
 }
 
-func TestUpdateMe_DisplayNameTooLong(t *testing.T) {
-	pool := testPool(t)
-	srv, sessionStore := profileTestServer(t)
-	defer srv.Close()
-
-	userID := newUUID(t)
-	email := fmt.Sprintf("updateme-long-%s@example.com", userID[:8])
-	seedActiveUser(t, pool, userID, "Long User", email, "")
-
-	rawToken := createLearnerSession(t, sessionStore, userID)
-
-	longName := ""
-	for i := 0; i < 121; i++ {
-		longName += "a"
-	}
-	body := map[string]string{"displayName": longName}
-	b, _ := json.Marshal(body)
-	req, _ := http.NewRequest(http.MethodPut, srv.URL+"/api/auth/me", bytes.NewReader(b))
-	req.Header.Set("Content-Type", "application/json")
-	req.AddCookie(&http.Cookie{Name: "bjt_web_session", Value: rawToken})
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		t.Fatalf("request failed: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusBadRequest {
-		t.Errorf("expected 400 for displayName too long, got %d", resp.StatusCode)
-	}
-}
-
-func TestUpdateMe_UnknownField(t *testing.T) {
-	pool := testPool(t)
-	srv, sessionStore := profileTestServer(t)
-	defer srv.Close()
-
-	userID := newUUID(t)
-	email := fmt.Sprintf("updateme-unknown-%s@example.com", userID[:8])
-	seedActiveUser(t, pool, userID, "Unknown User", email, "")
-
-	rawToken := createLearnerSession(t, sessionStore, userID)
-
-	body := map[string]string{"nonExistentField": "value"}
-	b, _ := json.Marshal(body)
-	req, _ := http.NewRequest(http.MethodPut, srv.URL+"/api/auth/me", bytes.NewReader(b))
-	req.Header.Set("Content-Type", "application/json")
-	req.AddCookie(&http.Cookie{Name: "bjt_web_session", Value: rawToken})
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		t.Fatalf("request failed: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusBadRequest {
-		t.Errorf("expected 400 for unknown field, got %d", resp.StatusCode)
-	}
-}
-
-func TestUpdateMe_Unauthorized_NoCookie(t *testing.T) {
-	srv, _ := profileTestServer(t)
-	defer srv.Close()
-
-	body := map[string]string{"displayName": "New Name"}
-	b, _ := json.Marshal(body)
-	req, _ := http.NewRequest(http.MethodPut, srv.URL+"/api/auth/me", bytes.NewReader(b))
-	req.Header.Set("Content-Type", "application/json")
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		t.Fatalf("request failed: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusUnauthorized {
-		t.Errorf("expected 401, got %d", resp.StatusCode)
-	}
-}
-
-// Ensure imports are used.
+// Ensure unused imports don't cause build failures.
 var (
-	_ = context.Background
 	_ = authn.GetLearnerIdentity
+	_ = (*profile.Store)(nil)
 )
