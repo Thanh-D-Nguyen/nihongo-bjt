@@ -40,6 +40,10 @@ type Config struct {
 	// MeilisearchAPIKey is the API key for Meilisearch authentication.
 	// Sourced from MEILISEARCH_API_KEY env var. Empty is valid when Meilisearch has no auth.
 	MeilisearchAPIKey string
+
+	// StripeWebhookSecret is the signing secret for Stripe webhook signature verification.
+	// Sourced from STRIPE_WEBHOOK_SECRET env var. Empty disables the webhook endpoint (503).
+	StripeWebhookSecret string
 }
 
 // Load reads configuration from environment variables and validates required fields.
@@ -118,6 +122,7 @@ func Load() (*Config, error) {
 		MediaBasePath:        mediaBasePath,
 		MeilisearchURL:       os.Getenv("MEILISEARCH_URL"),
 		MeilisearchAPIKey:    os.Getenv("MEILISEARCH_API_KEY"),
+		StripeWebhookSecret:  os.Getenv("STRIPE_WEBHOOK_SECRET"),
 	}
 	return cfg, nil
 }

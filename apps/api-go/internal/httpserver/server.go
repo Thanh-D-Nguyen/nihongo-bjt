@@ -239,6 +239,14 @@ func NewRouter(deps Dependencies) http.Handler {
 		})
 	}
 
+	// M11: Stripe webhook — public endpoint, no auth guard. Signature verification only.
+	if deps.DBPool != nil {
+		r.Post("/api/webhooks/stripe", stripeWebhookHandler(deps.DBPool, deps.Config, deps.Logger))
+	}
+
+	// M11: Share image generation stub (deferred — see handler_webhook.go for rationale).
+	r.Get("/api/share/image/{kind}", shareImageStubHandler(deps.Logger))
+
 	// M8: Search — learner session-guarded; reindex is admin-only.
 	if deps.SearchClient != nil && deps.SessionStore != nil {
 		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)

@@ -19,6 +19,7 @@ import (
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/postgres"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/profile"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/redisx"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/search"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/session"
 )
 
@@ -73,6 +74,9 @@ func New(version string) (*App, error) {
 		return nil, fmt.Errorf("app: rate limiter: %w", err)
 	}
 
+	// M11: Initialize Meilisearch client when configured.
+	searchClient := search.NewClient(cfg.MeilisearchURL, cfg.MeilisearchAPIKey)
+
 	deps := httpserver.Dependencies{
 		Config:          cfg,
 		Logger:          logger,
@@ -83,6 +87,7 @@ func New(version string) (*App, error) {
 		RBACStore:       rbacStore,
 		CredentialStore: credentialStore,
 		RateLimiter:     rateLimiter,
+		SearchClient:    searchClient,
 		Version:         version,
 	}
 	// Guard against typed-nil interface: only assign Redis if the concrete
