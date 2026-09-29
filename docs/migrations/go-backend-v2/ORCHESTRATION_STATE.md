@@ -1,9 +1,9 @@
 # Go Backend Migration Orchestration State
 
-- Current phase: M10 background jobs accepted; next = M11 remaining integrations
-- Current accepted implementation/code checkpoint: `94fbc97` (M10 background jobs PASS — robfig/cron/v3 scheduler with PG advisory locks, timezone-aware scheduling, config toggles, structured slog logging; 10 cron job stubs + 4 queue stubs; all static gates clean; committed at 94fbc97)
-- Last completed wave: M10_BACKGROUND_JOBS PASS (scheduler infrastructure, 10 cron handlers stubbed, 4 queue equivalents stubbed, advisory lock duplicate-run protection, JOBS_ENABLED/LOTO_AUTOPILOT_ENABLED config toggles; all static gates clean; committed at 94fbc97)
-- Next wave: M11 remaining integrations (Stripe/billing webhook migration, Sharp/image processing replacement or retention decision, search orchestration closure, any remaining Nest-only dependencies). Inspect canonical plan in docs/migrations/go-backend-v2/docs/06_execution_waves.md for exact scope.
+- Current phase: M11 remaining integrations accepted; next = M12 realtime migration
+- Current accepted implementation/code checkpoint: `fb5ae04` (M11 remaining integrations PASS — Stripe webhook with HMAC-SHA256 signature verification and idempotent ingest, share image generation deferred as 501 stub, search orchestration closure verified, remaining NestJS dependencies inventoried; all static gates clean; committed at fb5ae04)
+- Last completed wave: M11_REMAINING_INTEGRATIONS PASS (Stripe webhook handler, search client wiring, share image stub, dependency inventory; all static gates clean; committed at fb5ae04)
+- Next wave: M12 realtime migration (Socket.IO → WebSocket for BattleGateway and PresenceGateway, frontend socket.io-client consumer migration, connection authentication). See docs/migrations/go-backend-v2/docs/17_realtime_migration.md and docs/migrations/go-backend-v2/docs/06_execution_waves.md for exact scope. Do NOT use SSE for Battle (bidirectional realtime).
 - Decision: `LEGACY_CREDENTIAL_MIGRATION = NOT_REQUIRED`; `IDENTITY_RESET_APPROVED = TRUE`. The user approved resetting identity/account-scoped data only. This closes the M2 production credential-format gate without obtaining Keycloak metadata.
 - Completed checkpoint commits:
   - `0fc4486f5cfd2edc4433359753be573605234006` — P0.1 plan rebase
