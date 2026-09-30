@@ -38,7 +38,8 @@ The initial parity run reported **747 old / 19 PASS / 562 MISSING / 166 UNKNOWN*
 | P1_A1_1_SYSTEM_PASS | 11 | P1-A1.1 system sub-domain: health, queue-health, search-sync, release, queue-actions, pause/resume/drain, release-history/mark-known-good/prepare-rollback |
 | P1_A1_2_BROADCASTS_PASS | 7 | P1-A1.2 broadcasts sub-domain: list, get, estimate-audience, create, update, schedule, cancel |
 | P1_A1_3_IMPORT_MANIFESTS_PASS | 6 | P1-A1.3 import-manifests sub-domain: list, get, create, update, run, history |
-| P1_A1_REMAINING | 25 | Operations routes remaining: dead-letter-queue(5), import-staging(5), security(4), feature-flags(3), kill-switches(2), search-rebuild(2), notifications(1), import-batches(1), import(1), bjt(1) |
+| P1_A1_4_DEAD_LETTER_QUEUE_PASS | 5 | P1-A1.4 dead-letter-queue sub-domain: list, get, retry, resolve, bulk |
+| P1_A1_REMAINING | 20 | Operations routes remaining: import-staging(5), security(4), feature-flags(3), kill-switches(2), search-rebuild(2), notifications(1), import-batches(1), import(1), bjt(1) |
 | ADMIN_DOMAINS_ACTIVE | 34 | operations(49), assessment(35), growth(30), battle(26), monetization(26), learning(20), content(19), gamification(19), magazine(16), daily-radar(15), daily(15), flashcards(15), ads(13), nhk-news(13), legal(11), iam(10), users(9), exercises(9), cardgen(7), privacy(6), companion(5), media(5), i18n(4), announcements(4), lexemes(3), analytics(3), quiz(3), support(2), me(1), module-contracts(1), audit(1), reading-assist(1), bjt(1), autofill(1) |
 | CURRENT_BFF_ROUTES | 4 |
 | FRONTEND_CALL_SITES | 202 |
