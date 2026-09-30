@@ -22,6 +22,7 @@ import (
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/media"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/postgres"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/profile"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/realtime"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/redisx"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/search"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/session"
@@ -198,6 +199,13 @@ func NewRouter(deps Dependencies) http.Handler {
 	if deps.MediaStore != nil && deps.MediaBucket != nil {
 		r.Get("/api/media/{id}", getMediaMetadataHandler(deps.MediaStore, deps.Logger))
 		r.Get("/api/media/{id}/stream", streamMediaHandler(deps.MediaStore, deps.MediaBucket, deps.Logger))
+	}
+
+	// M12: Realtime WebSocket endpoints — battle and presence namespaces.
+	if deps.SessionStore != nil {
+		rtServer := realtime.NewServer(deps.SessionStore, deps.Logger)
+		rtServer.Start()
+		realtime.MountRoutes(r, deps.SessionStore, rtServer, csrfCfg)
 	}
 
 	// M9: Business write APIs — bookmarks, exercise sessions, quiz sessions.
