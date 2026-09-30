@@ -15,16 +15,17 @@
 		file_server
 	}
 
-	# Admin
-	handle /admin/* {
+	# Admin — strip /admin prefix before proxying to Next.js (serves at /)
+	handle_path /admin/* {
 		reverse_proxy admin:3001
 	}
 
-	# Learner Web — catch-all for /app/* and root
-	handle /app/* {
+	# Learner Web — strip /app prefix before proxying to Next.js (serves at /[locale])
+	handle_path /app/* {
 		reverse_proxy web:3000
 	}
 
+	# Root catch-all → learner web
 	handle / {
 		reverse_proxy web:3000
 	}
