@@ -26,6 +26,7 @@ import (
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/flashcardstyle"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/gamification"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/quiztemplate"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/studyplan"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/media"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/notification"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/onboarding"
@@ -65,6 +66,7 @@ type Dependencies struct {
 	FlashcardReviewStore  *flashcardreview.Store  // nil if DB not configured; flashcard review endpoints return 503
 	FlashcardDeckStore    *flashcarddeck.Store    // nil if DB not configured; flashcard deck endpoints return 503
 	QuizTemplateStore     *quiztemplate.Store     // nil if DB not configured; quiz template endpoints return 503
+	StudyPlanStore        *studyplan.Store        // nil if DB not configured; study plan endpoints return 503
 	Version               string
 }
 
@@ -489,6 +491,33 @@ func NewRouter(deps Dependencies) http.Handler {
 			lr.Use(authn.CSRFGuard(csrfCfg))
 			lr.Post("/api/quiz/revenge/answer", submitRevengeAnswerHandler(deps.QuizTemplateStore, deps.Logger))
 		})
+	}
+
+
+	// P0-L5: Study plan — learner session-guarded; CSRF for writes.
+	if deps.StudyPlanStore != nil && deps.SessionStore != nil {
+		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Get("/api/gamification/study-plan/today", getTodayStudyPlanHandler(deps.StudyPlanStore, deps.Logger))
+		})
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Use(authn.CSRFGuard(csrfCfg))
+			lr.Post("/api/gamification/study-plan/progress", recordStudyProgressHandler(deps.StudyPlanStore, deps.Logger))
+		})
+	}
+
+	// P0-L5: Daily Radar — public routes (no auth required).
+	if deps.DBPool != nil {
+		r.Get("/api/daily-radar/modules", listDailyRadarModulesHandler(deps.DBPool, deps.Logger))
+		r.Get("/api/daily-radar/cards", listDailyRadarCardsHandler(deps.DBPool, deps.Logger))
+		r.Get("/api/daily-radar/cards/{slug}", getDailyRadarCardBySlugHandler(deps.DBPool, deps.Logger))
+	}
+
+	// P0-L5: Announcements — dismiss (auth optional).
+	if deps.DBPool != nil {
+		r.Post("/api/announcements/{id}/dismiss", dismissAnnouncementHandler(deps.DBPool, deps.Logger))
 	}
 
 	return r
