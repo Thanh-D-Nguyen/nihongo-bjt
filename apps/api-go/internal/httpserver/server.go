@@ -28,6 +28,7 @@ import (
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/quiztemplate"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/studyplan"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/scenario"
+"github.com/kotobawork/nihongo-bjt/api-go/internal/career"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/media"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/notification"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/onboarding"
@@ -68,6 +69,7 @@ type Dependencies struct {
 	FlashcardDeckStore    *flashcarddeck.Store    // nil if DB not configured; flashcard deck endpoints return 503
 	QuizTemplateStore     *quiztemplate.Store     // nil if DB not configured; quiz template endpoints return 503
 	StudyPlanStore        *studyplan.Store        // nil if DB not configured; study plan endpoints return 503
+CareerStore *career.Store // nil if DB not configured; career endpoints return 503
 	ScenarioStore         *scenario.Store         // nil if DB not configured; scenario endpoints return 503
 	Version               string
 }
@@ -614,6 +616,94 @@ func NewRouter(deps Dependencies) http.Handler {
 		})
 	}
 
+
+	// P0-L5: Career RPG — learner session-guarded; CSRF for writes.
+	if deps.CareerStore != nil && deps.SessionStore != nil {
+		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Get("/api/career/me", getCareerMeHandler(deps.CareerStore, deps.Logger))
+			lr.Get("/api/career/ranks", listCareerRanksHandler(deps.CareerStore, deps.Logger))
+			lr.Get("/api/career/inbox", getCareerInboxHandler(deps.CareerStore, deps.Logger))
+		})
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Use(authn.CSRFGuard(csrfCfg))
+			lr.Patch("/api/career/me", updateCareerMeHandler(deps.CareerStore, deps.Logger))
+			lr.Post("/api/career/clock-in", clockInHandler(deps.CareerStore, deps.Logger))
+		})
+	}
+
+	// P0-L5: Story Arcs — learner session-guarded.
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Get("/api/story/arcs", listStoryArcsHandler(deps.DBPool, deps.Logger))
+			lr.Get("/api/story/arcs/{slug}", getStoryArcDetailHandler(deps.DBPool, deps.Logger))
+		})
+	}
+
+	// P0-L5: Content Lexemes & Grammar — public routes.
+	if deps.DBPool != nil {
+		r.Get("/api/content/lexemes", listLexemesHandler(deps.DBPool, deps.Logger))
+		r.Get("/api/content/lexemes/{id}", getLexemeDetailHandler(deps.DBPool, deps.Logger))
+		r.Get("/api/content/grammar", listGrammarHandler(deps.DBPool, deps.Logger))
+		r.Get("/api/content/grammar/{id}", getGrammarDetailHandler(deps.DBPool, deps.Logger))
+	}
+
+	// P0-L5: Gamification study-goal, login-bonus, mystery-box — learner session-guarded; CSRF for writes.
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Get("/api/gamification/study-goal", getStudyGoalHandler(deps.DBPool, deps.Logger))
+			lr.Get("/api/gamification/login-bonus", getLoginBonusHandler(deps.DBPool, deps.Logger))
+			lr.Get("/api/gamification/mystery-box/status", mysteryBoxStatusHandler(deps.DBPool, deps.Logger))
+		})
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Use(authn.CSRFGuard(csrfCfg))
+			lr.Post("/api/gamification/study-goal", setStudyGoalHandler(deps.DBPool, deps.Logger))
+			lr.Post("/api/gamification/login-bonus/claim", claimLoginBonusHandler(deps.DBPool, deps.Logger))
+			lr.Post("/api/gamification/mystery-box/open", openMysteryBoxHandler(deps.DBPool, deps.Logger))
+		})
+	}
+
+	// P0-L5: Share — learner session-guarded; CSRF for writes.
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Get("/api/learner/share/templates", shareTemplatesHandler(deps.DBPool, deps.Logger))
+			lr.Get("/api/learner/share/preview", sharePreviewHandler(deps.DBPool, deps.Logger))
+		})
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Use(authn.CSRFGuard(csrfCfg))
+			lr.Post("/api/learner/share", createShareHandler(deps.DBPool, deps.Logger))
+			lr.Post("/api/learner/shares/pet-evolution", createPetEvolutionShareHandler(deps.DBPool, deps.Logger))
+		})
+	}
+
+
+	// P0-L5: Magazine & Loto — mixed public/auth routes.
+	if deps.DBPool != nil {
+		r.Get("/api/magazine", listMagazineHandler(deps.DBPool, deps.Logger))
+		r.Get("/api/magazine/today", getMagazineTodayHandler(deps.DBPool, deps.Logger))
+		r.Get("/api/magazine/{slug}", getMagazineBySlugHandler(deps.DBPool, deps.Logger))
+		r.Get("/api/magazine/loto/feed", lotoFeedHandler(deps.DBPool, deps.Logger))
+		r.Get("/api/magazine/loto/next-draw", lotoNextDrawHandler(deps.DBPool, deps.Logger))
+		r.Get("/api/magazine/loto/stats", lotoStatsHandler(deps.DBPool, deps.Logger))
+	}
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Use(authn.CSRFGuard(csrfCfg))
+			lr.Post("/api/magazine/{slug}/read", markMagazineReadHandler(deps.DBPool, deps.Logger))
+		})
+	}
 	return r
 }
 
