@@ -455,6 +455,39 @@ func NewRouter(deps Dependencies) http.Handler {
 		})
 	}
 
+	// P1-A1.7: Admin Operations — Feature Flags sub-domain (3 routes).
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		adminGuard := authn.AdminGuard(deps.SessionStore, guardCfg)
+		// Read-only feature flag endpoints.
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Get("/api/admin/operations/feature-flags", adminOpsFeatureFlagsListHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/operations/feature-flags/{key}/history", adminOpsFeatureFlagsHistoryHandler(deps.DBPool, deps.Logger))
+		})
+		// Mutating feature flag endpoints (CSRF-protected).
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Patch("/api/admin/operations/feature-flags/{key}", adminOpsFeatureFlagsUpdateHandler(deps.DBPool, deps.Logger))
+		})
+	}
+
+	// P1-A1.8: Admin Operations — Kill Switches sub-domain (2 routes).
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		adminGuard := authn.AdminGuard(deps.SessionStore, guardCfg)
+		// Read-only kill switch endpoints.
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Get("/api/admin/operations/kill-switches", adminOpsKillSwitchesListHandler(deps.DBPool, deps.Logger))
+		})
+		// Mutating kill switch endpoints (CSRF-protected).
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Patch("/api/admin/operations/kill-switches/{key}", adminOpsKillSwitchesUpdateHandler(deps.DBPool, deps.Logger))
+		})
+	}
+
 	// P0-L1: Onboarding preferences — learner session-guarded; CSRF for writes.
 	if deps.OnboardingStore != nil && deps.SessionStore != nil {
 		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
