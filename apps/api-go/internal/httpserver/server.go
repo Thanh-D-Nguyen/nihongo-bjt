@@ -826,6 +826,31 @@ func NewRouter(deps Dependencies) http.Handler {
 		})
 	}
 
+	// P1-A5.4: Admin Monetization — Ads sub-domain (13 routes).
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		adminGuard := authn.AdminGuard(deps.SessionStore, guardCfg)
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Get("/api/admin/monetization/ads/overview", adminMonetizationAdsOverviewHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/monetization/ads/placements", adminMonetizationAdsPlacementsListHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/monetization/ads/campaigns", adminMonetizationAdsCampaignsListHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/monetization/ads/providers", adminMonetizationAdsProvidersListHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/monetization/ads/rules", adminMonetizationAdsRulesListHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/monetization/ads/performance", adminMonetizationAdsPerformanceHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/monetization/ads/audit", adminMonetizationAdsAuditHandler(deps.DBPool, deps.Logger))
+		})
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Post("/api/admin/monetization/ads/placements", adminMonetizationAdsPlacementsCreateHandler(deps.DBPool, deps.Logger))
+			ar.Patch("/api/admin/monetization/ads/placements/{id}", adminMonetizationAdsPlacementsPatchHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/monetization/ads/campaigns", adminMonetizationAdsCampaignsCreateHandler(deps.DBPool, deps.Logger))
+			ar.Patch("/api/admin/monetization/ads/campaigns/{id}", adminMonetizationAdsCampaignsPatchHandler(deps.DBPool, deps.Logger))
+			ar.Patch("/api/admin/monetization/ads/providers/{key}", adminMonetizationAdsProvidersPatchHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/monetization/ads/rules", adminMonetizationAdsRulesCreateHandler(deps.DBPool, deps.Logger))
+		})
+	}
+
 	// P0-L1: Onboarding preferences — learner session-guarded; CSRF for writes.
 	if deps.OnboardingStore != nil && deps.SessionStore != nil {
 		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
