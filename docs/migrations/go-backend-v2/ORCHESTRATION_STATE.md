@@ -10,10 +10,14 @@
 - OverallStatus: READY_FOR_PRODUCTION_CUTOVER
 - EngineeringMigration: COMPLETE
 - LinuxStagingValidation: PASS_WITH_PRODUCTION_GATES
+- RealtimeValidation: PASS (16/16 protocol tests)
+- LegacyBackendRemovalReady: TRUE
+- DiskRemediation: DONE (92% → 89%, 3.5GB reclaimed)
+- RebootGate: REBOOT_EXTERNAL_PRIVILEGE_GATE
 - ProductionCutover: PENDING
 - KeycloakFinalDisable: DEFERRED_TO_CUTOVER
 - LastCompletedEngineeringWave: M17_POST_MIGRATION_CLEANUP
-- RemainingHumanGate: Production cutover authorization / production-only external actions if required.
+- RemainingHumanGate: Production cutover authorization / interactive sudo reboot / ARM64 OCI verification / public DNS+TLS
 
 ## Service Retirement State
 | Service | Status |

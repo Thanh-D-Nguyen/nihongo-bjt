@@ -149,17 +149,60 @@ All 7 services running. No OOM, no pathological swapping, no runaway logs.
 | 9 | Build failure | Missing `github.com/google/uuid` in go.mod | `go get` + `go mod tidy` | `d22ede5` |
 | 10 | Build failure | Unused `uuid` import after switching to DB-generated keys | Removed import | `f5f90ef` |
 
+## Realtime (M12 WebSocket)
+
+- **Protocol:** JSON-framed `{event, data, id}` over `nhooyr.io/websocket`
+- **Endpoints:** `/ws/battle` (learner-only), `/ws/presence` (learner+admin)
+- **Test binary:** Static Go client built on Mac, executed on Linux host
+- **Results:** 16/16 PASS
+  - ✅ Unauthenticated battle/presence rejected (HTTP 401)
+  - ✅ Authenticated battle/presence connect
+  - ✅ `battle:join` → broadcast `battle:player_joined`
+  - ✅ `battle:action` → unicast `battle:action_ack` with `serverTs`
+  - ✅ Invalid payload (missing event) handled gracefully, connection survives
+  - ✅ `presence:heartbeat` accepted
+  - ✅ `presence:query` → `presence:query_result`
+  - ✅ Unknown presence event → `presence:error`
+- **Route wiring fix:** `realtime.MountRoutes` was never called in `server.go`. Added import and mount call. Commit `1809acd`.
+
+## Legacy Backend Removal Readiness
+
+**LEGACY_BACKEND_REMOVAL_READY = TRUE**
+
+Scan of all app layers confirms zero active NestJS runtime dependency:
+- **Frontend/Admin/Mobile:** All use `NEXT_PUBLIC_API_URL` env var; Caddy routes `/api/*` to Go API (`api:4001`). Port 4000 is a dev fallback only.
+- **Caddy:** Routes exclusively to `api:4001`, `web:3000`, `admin:3001`. No NestJS upstream.
+- **Docker Compose:** No NestJS container defined or depended upon.
+- **CI/Scripts:** Only `deploy/gcp/deploy-release.sh` references `pm2` — GCP-specific legacy, not active in Linux staging.
+- **Jobs/Realtime/Billing/Media:** All served by Go API. No NestJS runtime references.
+
+NestJS source code exists but has zero runtime dependency in the deployed architecture. Safe to decommission in approved cleanup wave.
+
+## Disk Remediation
+
+- **Pre-cleanup:** 92% used (86G/98G, 7.6G free)
+- **Action:** `docker builder prune -f` — reclaimed 3.566GB build cache
+- **Post-cleanup:** 89% used (83G/98G, 11G free)
+- **Safe:** No KotobaWork data volumes, images, or containers removed
+
+## Reboot
+
+- **Classification:** REBOOT_EXTERNAL_PRIVILEGE_GATE
+- **Reason:** `sudo -n true` returns "interactive authentication is required"; non-interactive reboot unavailable in SSH session
+- **Impact:** Does NOT invalidate other staging evidence. All other gates pass.
+- **Mitigation:** All services use `restart: unless-stopped`; Docker daemon enabled via systemd
+- **Remaining:** Manual reboot verification required before production cutover
+
 ## Remaining Production-Only Gates
 
-1. **Reboot persistence test** — requires interactive sudo or physical access
+1. **Reboot persistence test** — REBOOT_EXTERNAL_PRIVILEGE_GATE (requires interactive sudo)
 2. **ARM64 runtime verification** — this host is X86_64; ARM64 OCI target remains unvalidated
 3. **Public DNS / TLS** — staging uses LAN IP + HTTP only
-4. **Realtime (WebSocket/SSE)** — requires browser-based verification
-5. **Mobile flow** — not tested in this cycle
-6. **Disk cleanup** — root at 90%; needs attention before production load
-7. **Keycloak final disable** — intentionally deferred to production cutover
-8. **MinIO decommission** — deferred until media migration fully verified in production
-9. **NestJS decommission** — deferred until zero-dependency verification complete
+4. **Mobile flow** — not tested in this cycle
+5. **Disk monitoring** — root at 89%; continue monitoring before production load
+6. **Keycloak final disable** — intentionally deferred to production cutover
+7. **MinIO decommission** — deferred until media migration fully verified in production
+8. **NestJS decommission** — LEGACY_BACKEND_REMOVAL_READY=TRUE; safe to decommission in approved cleanup wave
 
 ---
 
@@ -167,4 +210,4 @@ All 7 services running. No OOM, no pathological swapping, no runaway logs.
 
 **LINUX_STAGING_PASS_WITH_PRODUCTION_GATES**
 
-All engineering waves M1–M17 validated on Linux X86_64. Core flows (auth, media, search, jobs, health) pass. Reboot test and ARM64/OCI/DNS/TLS remain as production-only gates.
+All engineering waves M1–M17 validated on Linux X86_64. Core flows (auth, media, search, jobs, health, realtime) pass. Legacy backend removal readiness confirmed. Reboot test classified as external privilege gate. ARM64/OCI/DNS/TLS remain as production-only gates.
