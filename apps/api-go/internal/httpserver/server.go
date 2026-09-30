@@ -612,6 +612,30 @@ func NewRouter(deps Dependencies) http.Handler {
 		})
 	}
 
+	// P1-A3.1: Admin Growth — Campaigns sub-domain (10 routes).
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		adminGuard := authn.AdminGuard(deps.SessionStore, guardCfg)
+		// Read-only campaign endpoints.
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Get("/api/admin/growth/campaigns", adminGrowthCampaignsListHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/growth/campaigns/audience-estimate", adminGrowthCampaignsAudienceEstimateHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/growth/campaigns/{id}", adminGrowthCampaignsDetailHandler(deps.DBPool, deps.Logger))
+		})
+		// Mutating campaign endpoints (CSRF-protected).
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Post("/api/admin/growth/campaigns", adminGrowthCampaignsCreateHandler(deps.DBPool, deps.Logger))
+			ar.Patch("/api/admin/growth/campaigns/{id}", adminGrowthCampaignsPatchHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/growth/campaigns/{id}/schedule", adminGrowthCampaignsTransitionHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/growth/campaigns/{id}/activate", adminGrowthCampaignsTransitionHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/growth/campaigns/{id}/end", adminGrowthCampaignsTransitionHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/growth/campaigns/{id}/archive", adminGrowthCampaignsTransitionHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/growth/campaigns/{id}/duplicate", adminGrowthCampaignsDuplicateHandler(deps.DBPool, deps.Logger))
+		})
+	}
+
 	// P0-L1: Onboarding preferences — learner session-guarded; CSRF for writes.
 	if deps.OnboardingStore != nil && deps.SessionStore != nil {
 		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
