@@ -80,7 +80,9 @@ The initial parity run reported **747 old / 19 PASS / 562 MISSING / 166 UNKNOWN*
 | P1_A15_ADMIN_MEDIA_COMPANION_PRIVACY_STATIC_PARITY_PASS | 15 | All 15 active admin media+companion+privacy routes implemented across media/companion/privacy @ e95c381; P1-A15 closed |
 | P1_A16_ADMIN_CARDGEN_STATIC_PARITY_PASS | 7 | All 7 active admin cardgen routes implemented across rules/jobs @ d8c3dde; P1-A16 closed |
 | P1_A17_ADMIN_QUIZ_SESSIONS_STATIC_PARITY_PASS | 8 | All 8 active admin quiz+quiz-sessions routes implemented across quiz/quiz-sessions @ aaf8f9c; P1-A17 closed (i18n already in P1-A7) |
-| ADMIN_TRUE_MISSING_ACTIVE | 3 | Active admin routes requiring implementation across remaining domains (398 − 49 P1-A1 ops − 30 P1-A2 assessment − 27 P1-A3 growth − 26 P1-A4 battle − 36 P1-A5 monetization − 40 P1-A6 analytics − 38 P1-A7 core − 20 P1-A8 learning − 23 P1-A9 gamification − 13 P1-A10 ads − 16 P1-A11 magazine − 15 P1-A12 flashcards − 11 P1-A13 legal − 22 P1-A14 daily-radar+exercises − 15 P1-A15 media+companion+privacy − 7 P1-A16 cardgen − 8 P1-A17 quiz+quiz-sessions) |
+| P1_A18_ADMIN_NHK_NEWS_STATIC_PARITY_PASS | 3 | All 3 active admin nhk-news routes implemented across config/refresh @ 530b69e; P1-A18 closed |
+| ADMIN_ACTIVE_API_STATIC_PARITY_PASS | TRUE | All 398 active admin routes implemented across 18 domains (P1-A1 through P1-A18); ADMIN_TRUE_MISSING_ACTIVE=0 |
+| ADMIN_TRUE_MISSING_ACTIVE | 0 | All active admin routes implemented across 18 domains; ADMIN_ACTIVE_API_STATIC_PARITY_PASS |
 | ADMIN_DOMAINS_ACTIVE | 34 | operations(49), assessment(35), growth(30), battle(26), monetization(26), learning(20), content(19), gamification(19), magazine(16), daily-radar(15), daily(15), flashcards(15), ads(13), nhk-news(13), legal(11), iam(10), users(9), exercises(9), cardgen(7), privacy(6), companion(5), media(5), i18n(4), announcements(4), lexemes(3), analytics(3), quiz(3), support(2), me(1), module-contracts(1), audit(1), reading-assist(1), bjt(1), autofill(1) |
 | CURRENT_BFF_ROUTES | 4 |
 | FRONTEND_CALL_SITES | 202 |
