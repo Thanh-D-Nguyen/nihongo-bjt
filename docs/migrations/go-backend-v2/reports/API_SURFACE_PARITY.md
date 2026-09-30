@@ -41,7 +41,8 @@ The initial parity run reported **747 old / 19 PASS / 562 MISSING / 166 UNKNOWN*
 | P1_A1_4_DEAD_LETTER_QUEUE_PASS | 5 | P1-A1.4 dead-letter-queue sub-domain: list, get, retry, resolve, bulk |
 | P1_A1_5_IMPORT_STAGING_PASS | 5 | P1-A1.5 import-staging sub-domain: list errors, escalate-to-dead-letter, retry, discard, bulk |
 | P1_A1_6_SECURITY_PASS | 4 | P1-A1.6 security sub-domain: overview, events list, event detail, event resolve |
-| P1_A1_REMAINING | 11 | Operations routes remaining: feature-flags(3), kill-switches(2), search-rebuild(2), notifications(1), import-batches(1), import(1), bjt(1) |
+| P1_A1_7_FEATURE_FLAGS_PASS | 3 | P1-A1.7 feature-flags sub-domain: list, update, history |
+| P1_A1_REMAINING | 8 | Operations routes remaining: kill-switches(2), search-rebuild(2), notifications(1), import-batches(1), import(1), bjt(1) |
 | ADMIN_DOMAINS_ACTIVE | 34 | operations(49), assessment(35), growth(30), battle(26), monetization(26), learning(20), content(19), gamification(19), magazine(16), daily-radar(15), daily(15), flashcards(15), ads(13), nhk-news(13), legal(11), iam(10), users(9), exercises(9), cardgen(7), privacy(6), companion(5), media(5), i18n(4), announcements(4), lexemes(3), analytics(3), quiz(3), support(2), me(1), module-contracts(1), audit(1), reading-assist(1), bjt(1), autofill(1) |
 | CURRENT_BFF_ROUTES | 4 |
 | FRONTEND_CALL_SITES | 202 |
