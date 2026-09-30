@@ -255,6 +255,16 @@ func NewRouter(deps Dependencies) http.Handler {
 	// M11: Share image generation stub (deferred — see handler_webhook.go for rationale).
 	r.Get("/api/share/image/{kind}", shareImageStubHandler(deps.Logger))
 
+	// Public content endpoints — anonymous-safe stubs restoring NestJS parity.
+	// These return empty/minimal responses so the learner home renders without
+	// error banners for unauthenticated users. Full data-layer implementations
+	// are deferred; these stubs satisfy the PUBLIC/OPTIONAL_AUTH contract.
+	r.Get("/api/nhk-news", nhkNewsListHandler(deps.Logger))
+	r.Get("/api/daily-radar/home", dailyRadarHomeHandler(deps.Logger))
+	r.Get("/api/daily/home", dailyHomeHandler(deps.Logger))
+	r.Get("/api/announcements", announcementsListHandler(deps.Logger))
+	r.Post("/api/ads/decision", adsDecisionHandler(deps.Logger))
+
 	// M8: Search — learner session-guarded; reindex is admin-only.
 	if deps.SearchClient != nil && deps.SessionStore != nil {
 		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
