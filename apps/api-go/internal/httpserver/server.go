@@ -330,6 +330,34 @@ func NewRouter(deps Dependencies) http.Handler {
 		})
 	}
 
+	// P1-A1.1: Admin Operations — System sub-domain (11 routes).
+	// All require admin session guard; mutations also require CSRF.
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		adminGuard := authn.AdminGuard(deps.SessionStore, guardCfg)
+
+		// Read-only system status endpoints.
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Get("/api/admin/operations/system/health", adminOpsSystemHealthHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/operations/system/queue-health", adminOpsQueueHealthHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/operations/system/search-sync", adminOpsSearchSyncHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/operations/system/release", adminOpsReleaseHandler(deps.Logger))
+			ar.Get("/api/admin/operations/system/queue-health/actions", adminOpsQueueActionsHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/operations/system/release/history", adminOpsReleaseHistoryHandler(deps.DBPool, deps.Logger))
+		})
+
+		// Mutating system control endpoints (CSRF-protected).
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Post("/api/admin/operations/system/queue-health/pause", adminOpsQueuePauseHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/operations/system/queue-health/resume", adminOpsQueueResumeHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/operations/system/queue-health/drain", adminOpsQueueDrainHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/operations/system/release/mark-known-good", adminOpsReleaseMarkKnownGoodHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/operations/system/release/prepare-rollback", adminOpsReleasePrepareRollbackHandler(deps.DBPool, deps.Logger))
+		})
+	}
+
 	// P0-L1: Onboarding preferences — learner session-guarded; CSRF for writes.
 	if deps.OnboardingStore != nil && deps.SessionStore != nil {
 		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
