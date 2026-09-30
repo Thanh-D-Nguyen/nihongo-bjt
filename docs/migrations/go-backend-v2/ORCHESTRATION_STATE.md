@@ -18,7 +18,8 @@
 - RealBrowserAuthenticatedParity: PASS (8/8 Playwright tests: anonymous home, login/register render, register→session→refresh→logout→relogin lifecycle, wrong-password negative, mobile viewports; auth route fixes deployed; PostgreSQL recovered from disk-full crash-loop)
 - ApiMatrixValidation: PASS (intermediate gate; 747 canonical old routes, 191 Go + 4 BFF current, 165 LEARNER_PASS, 0 LEARNER_TRUE_MISSING, 161 LEARNER_NEEDS_LIVE_VERIFICATION, 24 UNMATCHED_GO_ROUTES, 6 INTENTIONALLY_REMOVED, 0 UNKNOWN; report: docs/migrations/go-backend-v2/reports/API_SURFACE_PARITY.md)
 - LearnerApiStaticParity: PASS (LEARNER_TRUE_MISSING=0, local tests pass, 5 stub handlers audited as COMPATIBILITY_ADAPTER, 9 daily-radar write ops reclassified as ADMIN)
-- FullApiSurfaceParity: IN_PROGRESS (P0-L1 COMPLETE: 14 routes; P0-L2 PARTIAL: 3 routes; P0-L3 Gamification COMPLETE: 5 routes; P0-L4 COMPLETE: 22 routes; P0-L5 LEARNER COMPLETE: 125 routes; ALL LEARNER TRUE_MISSING DOMAINS IMPLEMENTED; P1_POST_LEARNER_PARITY NEXT: admin runtime-active classification; staging live verification BLOCKED_CURRENT_SESSION)
+- AdminRuntimeClassification: COMPLETE (398 ACTIVE_ADMIN_RUNTIME routes across 34 domains; 0 DORMANT/DEPRECATED/REPLACED; all confirmed via admin frontend caller tracing in apps/admin/)
+- FullApiSurfaceParity: IN_PROGRESS (P0-L1→L5 LEARNER COMPLETE: 165 routes; P1-A1 NEXT: admin domain-by-domain implementation starting with operations(49), assessment(35), growth(30); staging live verification BLOCKED_CURRENT_SESSION)
 - LegacyBackendRemovalReady: TRUE
 - DiskRemediation: DONE (92% → 89%, 3.5GB reclaimed)
 - RebootGate: REBOOT_EXTERNAL_PRIVILEGE_GATE

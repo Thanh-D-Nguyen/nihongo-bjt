@@ -29,6 +29,12 @@ The initial parity run reported **747 old / 19 PASS / 562 MISSING / 166 UNKNOWN*
 | UNMATCHED_GO_ROUTES | 24 | Routes registered in Go but absent from historical matrix (admin RBAC, auth, media, share-image, leaderboard-my-rank) |
 | STUB_HANDLERS_AUDITED | 5 | nhk-news=COMPATIBILITY_ADAPTER, daily-radar/home=COMPATIBILITY_ADAPTER, daily/home=COMPATIBILITY_ADAPTER, announcements=COMPATIBILITY_ADAPTER, ads/decision=COMPATIBILITY_ADAPTER |
 | LEARNER_API_STATIC_PARITY | PASS | LEARNER_TRUE_MISSING=0, local tests pass, no STUB_ONLY learner handlers remain |
+| ADMIN_ACTIVE_ROUTE_COUNT | 398 | Admin routes with ACTIVE_ADMIN_RUNTIME callers in current admin frontend |
+| ADMIN_DORMANT_ROUTE_COUNT | 0 | No dormant admin routes found; all 398 missing admin routes have active callers |
+| ADMIN_DEPRECATED_ROUTE_COUNT | 0 | No deprecated admin routes identified |
+| ADMIN_REPLACED_ROUTE_COUNT | 0 | No replaced admin routes identified |
+| ADMIN_TRUE_MISSING_ACTIVE | 398 | Active admin routes requiring implementation across 34 domains |
+| ADMIN_DOMAINS_ACTIVE | 34 | operations(49), assessment(35), growth(30), battle(26), monetization(26), learning(20), content(19), gamification(19), magazine(16), daily-radar(15), daily(15), flashcards(15), ads(13), nhk-news(13), legal(11), iam(10), users(9), exercises(9), cardgen(7), privacy(6), companion(5), media(5), i18n(4), announcements(4), lexemes(3), analytics(3), quiz(3), support(2), me(1), module-contracts(1), audit(1), reading-assist(1), bjt(1), autofill(1) |
 | CURRENT_BFF_ROUTES | 4 |
 | FRONTEND_CALL_SITES | 202 |
 
