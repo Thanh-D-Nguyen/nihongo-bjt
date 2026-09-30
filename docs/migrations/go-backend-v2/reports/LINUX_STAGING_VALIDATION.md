@@ -206,8 +206,24 @@ NestJS source code exists but has zero runtime dependency in the deployed archit
 
 ---
 
+## LAN Client Accessibility
+
+- **Classification:** LAN_CLIENT_ACCESS_PASS
+- **Mac → SSH (port 22):** ✅ Reachable (`nguyenvanthanh`)
+- **Mac → Port 80/443:** ❌ Closed (intentional — staging uses port 18080)
+- **Mac → Port 18080 (Caddy):** ✅ Reachable, HTTP 200 on `/health`
+- **Expected hostnames:** None required — path-based routing on single IP:port
+- **DNS/hosts behavior:** No DNS or `/etc/hosts` entries needed; direct IP access works
+- **TLS mode:** HTTP only (trusted LAN); no TLS configured for staging
+- **Learner access:** `http://192.168.1.8:18080/app/en` → 200 ✅
+- **Admin access:** `http://192.168.1.8:18080/admin/en` → 200 ✅
+- **API access:** `http://192.168.1.8:18080/api/admin/login` → `{"ok":true}` ✅
+- **Media stream:** `http://192.168.1.8:18080/api/media/{id}/stream` → 200 ✅
+- **WebSocket upgrade:** `/ws/battle` and `/ws/presence` → 200 ✅
+- **Repair performed:** Changed Caddyfile from `handle /admin/*` and `handle /app/*` to `handle_path` to strip prefixes before proxying to Next.js apps that serve at root. Commit `fc445d5`.
+
 ## Gate Result
 
 **LINUX_STAGING_PASS_WITH_PRODUCTION_GATES**
 
-All engineering waves M1–M17 validated on Linux X86_64. Core flows (auth, media, search, jobs, health, realtime) pass. Legacy backend removal readiness confirmed. Reboot test classified as external privilege gate. ARM64/OCI/DNS/TLS remain as production-only gates.
+All engineering waves M1–M17 validated on Linux X86_64. Core flows (auth, media, search, jobs, health, realtime) pass. LAN client accessibility verified from Mac. Legacy backend removal readiness confirmed. Reboot test classified as external privilege gate. ARM64/OCI/DNS/TLS remain as production-only gates.

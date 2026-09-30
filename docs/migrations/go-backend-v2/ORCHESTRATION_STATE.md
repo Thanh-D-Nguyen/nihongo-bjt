@@ -11,6 +11,7 @@
 - EngineeringMigration: COMPLETE
 - LinuxStagingValidation: PASS_WITH_PRODUCTION_GATES
 - RealtimeValidation: PASS (16/16 protocol tests)
+- LanClientAccess: PASS (Mac → learner/admin/API/media/WS verified on :18080)
 - LegacyBackendRemovalReady: TRUE
 - DiskRemediation: DONE (92% → 89%, 3.5GB reclaimed)
 - RebootGate: REBOOT_EXTERNAL_PRIVILEGE_GATE
