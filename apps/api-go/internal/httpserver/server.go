@@ -709,6 +709,26 @@ func NewRouter(deps Dependencies) http.Handler {
 		})
 	}
 
+	// P1-A4.2: Admin Battle — Bots sub-domain (8 routes).
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		adminGuard := authn.AdminGuard(deps.SessionStore, guardCfg)
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Get("/api/admin/battle/bots", adminBattleBotsListHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/battle/bots/{id}", adminBattleBotsDetailHandler(deps.DBPool, deps.Logger))
+		})
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Post("/api/admin/battle/bots", adminBattleBotsCreateHandler(deps.DBPool, deps.Logger))
+			ar.Patch("/api/admin/battle/bots/{id}", adminBattleBotsPatchHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/battle/bots/{id}/enable", adminBattleBotsToggleHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/battle/bots/{id}/disable", adminBattleBotsToggleHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/battle/bots/{id}/archive", adminBattleBotsArchiveHandler(deps.DBPool, deps.Logger))
+			ar.Delete("/api/admin/battle/bots/{id}", adminBattleBotsDeleteHandler(deps.DBPool, deps.Logger))
+		})
+	}
+
 	// P0-L1: Onboarding preferences — learner session-guarded; CSRF for writes.
 	if deps.OnboardingStore != nil && deps.SessionStore != nil {
 		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
