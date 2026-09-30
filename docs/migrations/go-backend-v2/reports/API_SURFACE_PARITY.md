@@ -66,7 +66,9 @@ The initial parity run reported **747 old / 19 PASS / 562 MISSING / 166 UNKNOWN*
 | P1_A5_1_MONETIZATION_CORE_PASS | 7 | P1-A5.1 monetization core sub-domain: overview/summary/analytics/audit/plans CRUD |
 | P1_A5_2_MONETIZATION_ENTITLEMENTS_QUOTAS_PASS | 11 | P1-A5.2 monetization entitlements+quotas sub-domain: catalog/CRUD/link/unlink + audit trail |
 | P1_A5_3_MONETIZATION_SUBSCRIPTIONS_COUPONS_PASS | 5 | P1-A5.3 monetization subscriptions+coupons sub-domain: list/patch/create + audit trail |
-| ADMIN_TRUE_MISSING_ACTIVE | 244 | Active admin routes requiring implementation across 30 domains (398 − 48 P1-A1 ops − 30 P1-A2 assessment − 27 P1-A3 growth − 26 P1-A4 battle − 23 P1-A5 monetization) |
+| P1_A5_4_MONETIZATION_ADS_PASS | 13 | P1-A5.4 monetization ads sub-domain: placements/campaigns/providers/rules/performance/audit |
+| P1_A5_MONETIZATION_STATIC_PARITY_PASS | 36 | All 36 active monetization routes implemented across 4 sub-waves; P1-A5 closed |
+| ADMIN_TRUE_MISSING_ACTIVE | 231 | Active admin routes requiring implementation across 29 domains (398 − 48 P1-A1 ops − 30 P1-A2 assessment − 27 P1-A3 growth − 26 P1-A4 battle − 36 P1-A5 monetization) |
 | ADMIN_DOMAINS_ACTIVE | 34 | operations(49), assessment(35), growth(30), battle(26), monetization(26), learning(20), content(19), gamification(19), magazine(16), daily-radar(15), daily(15), flashcards(15), ads(13), nhk-news(13), legal(11), iam(10), users(9), exercises(9), cardgen(7), privacy(6), companion(5), media(5), i18n(4), announcements(4), lexemes(3), analytics(3), quiz(3), support(2), me(1), module-contracts(1), audit(1), reading-assist(1), bjt(1), autofill(1) |
 | CURRENT_BFF_ROUTES | 4 |
 | FRONTEND_CALL_SITES | 202 |
