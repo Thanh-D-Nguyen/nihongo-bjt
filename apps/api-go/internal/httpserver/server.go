@@ -20,6 +20,7 @@ import (
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/config"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/credential"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authlink"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/exercisereview"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/gamification"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/media"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/notification"
@@ -52,9 +53,10 @@ type Dependencies struct {
 	OnboardingStore   *onboarding.Store   // nil if DB not configured; onboarding endpoints return 503
 	NotificationStore *notification.Store // nil if DB not configured; notification endpoints return 503
 	PrivacyStore      *privacy.Store      // nil if DB not configured; privacy endpoints return 503
-	AuthLinkStore     *authlink.Store      // nil if DB not configured; link/exchange returns 503
-	PlacementStore    *placement.Store     // nil if DB not configured; placement endpoints return 503
-	GamificationStore *gamification.Store  // nil if DB not configured; gamification endpoints return 503
+	AuthLinkStore       *authlink.Store       // nil if DB not configured; link/exchange returns 503
+	PlacementStore      *placement.Store      // nil if DB not configured; placement endpoints return 503
+	GamificationStore   *gamification.Store   // nil if DB not configured; gamification endpoints return 503
+	ExerciseReviewStore *exercisereview.Store // nil if DB not configured; exercise review endpoints return 503
 	Version           string
 }
 
@@ -387,6 +389,20 @@ func NewRouter(deps Dependencies) http.Handler {
 			lr.Use(learnerGuard)
 			lr.Use(authn.CSRFGuard(csrfCfg))
 			lr.Post("/api/gamification/streaks/record", recordStreakActivityHandler(deps.GamificationStore, deps.Logger))
+		})
+	}
+
+	// P0-L4: Exercise review — learner session-guarded; CSRF for writes.
+	if deps.ExerciseReviewStore != nil && deps.SessionStore != nil {
+		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Get("/api/exercises/review/due", getDueReviewsHandler(deps.ExerciseReviewStore, deps.Logger))
+		})
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Use(authn.CSRFGuard(csrfCfg))
+			lr.Post("/api/exercises/review/{exerciseId}", reviewExerciseHandler(deps.ExerciseReviewStore, deps.Logger))
 		})
 	}
 
