@@ -21,6 +21,7 @@ import (
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/credential"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authlink"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/exercisereview"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/flashcarddeck"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/flashcardreview"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/flashcardstyle"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/gamification"
@@ -61,6 +62,7 @@ type Dependencies struct {
 	ExerciseReviewStore   *exercisereview.Store   // nil if DB not configured; exercise review endpoints return 503
 	FlashcardStyleStore   *flashcardstyle.Store   // nil if DB not configured; flashcard style endpoints return 503
 	FlashcardReviewStore  *flashcardreview.Store  // nil if DB not configured; flashcard review endpoints return 503
+	FlashcardDeckStore    *flashcarddeck.Store    // nil if DB not configured; flashcard deck endpoints return 503
 	Version               string
 }
 
@@ -439,6 +441,30 @@ func NewRouter(deps Dependencies) http.Handler {
 			lr.Use(authn.CSRFGuard(csrfCfg))
 			lr.Post("/api/flashcards/reviews/batch", batchReviewHandler(deps.FlashcardReviewStore, deps.Logger))
 			lr.Post("/api/flashcards/reviews/{userFlashcardId}", submitReviewHandler(deps.FlashcardReviewStore, deps.Logger))
+		})
+	}
+
+	// P0-L4: Flashcard decks — learner session-guarded; CSRF for writes.
+	if deps.FlashcardDeckStore != nil && deps.SessionStore != nil {
+		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Get("/api/flashcards/decks", listDecksHandler(deps.FlashcardDeckStore, deps.Logger))
+		})
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Use(authn.CSRFGuard(csrfCfg))
+			lr.Post("/api/flashcards/decks", createDeckHandler(deps.FlashcardDeckStore, deps.Logger))
+			lr.Patch("/api/flashcards/decks/{deckId}", updateDeckHandler(deps.FlashcardDeckStore, deps.Logger))
+			lr.Delete("/api/flashcards/decks/{deckId}", archiveDeckHandler(deps.FlashcardDeckStore, deps.Logger))
+			lr.Post("/api/flashcards/decks/{deckId}/archive", archiveDeckHandler(deps.FlashcardDeckStore, deps.Logger))
+			lr.Post("/api/flashcards/decks/{deckId}/share", shareDeckHandler(deps.FlashcardDeckStore, deps.Logger))
+			lr.Delete("/api/flashcards/decks/{deckId}/share", unshareDeckHandler(deps.FlashcardDeckStore, deps.Logger))
+			lr.Post("/api/flashcards/decks/clone/{token}", cloneDeckHandler(deps.FlashcardDeckStore, deps.Logger))
+			lr.Post("/api/flashcards/decks/generate", generateDeckHandler(deps.FlashcardDeckStore, deps.Logger))
+			lr.Post("/api/flashcards/decks/generate/preview", previewGenerateCountHandler(deps.FlashcardDeckStore, deps.Logger))
+			lr.Post("/api/flashcards/cards/suggest", suggestCardsHandler(deps.FlashcardDeckStore, deps.Logger))
+			lr.Post("/api/flashcards/cards/from-content", createCardFromContentHandler(deps.FlashcardDeckStore, deps.Logger))
 		})
 	}
 
