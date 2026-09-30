@@ -1,32 +1,39 @@
 :80 {
-	# Health check (exact match first)
-	handle /health {
-		respond "OK" 200
-	}
+# Health check (exact match first)
+handle /health {
+respond "OK" 200
+}
 
-	# API — routes already include /api prefix, so do NOT strip
-	handle /api/* {
-		reverse_proxy api:4001
-	}
+# API — routes already include /api prefix, so do NOT strip
+handle /api/* {
+reverse_proxy api:4001
+}
 
-	# Public media (read-only via Caddy)
-	handle_path /media/* {
-		root * /srv/kotobawork/data/media
-		file_server
-	}
+# Public media (read-only via Caddy)
+handle_path /media/* {
+root * /srv/kotobawork/data/media
+file_server
+}
 
-	# Admin — strip /admin prefix before proxying to Next.js (serves at /)
-	handle_path /admin/* {
-		reverse_proxy admin:3001
-	}
+# Admin static assets — proxy to admin container WITHOUT stripping prefix
+# The admin app uses basePath: '/admin', so it expects /admin/_next/...
+handle /admin/_next/* {
+reverse_proxy admin:3001
+}
 
-	# Learner Web — strip /app prefix before proxying to Next.js (serves at /[locale])
-	handle_path /app/* {
-		reverse_proxy web:3000
-	}
+# Admin app routes — strip /admin prefix before proxying
+handle_path /admin/* {
+reverse_proxy admin:3001
+}
 
-	# Root catch-all → learner web
-	handle / {
-		reverse_proxy web:3000
-	}
+# Learner Web — strip /app prefix before proxying to Next.js (serves at /[locale])
+handle_path /app/* {
+reverse_proxy web:3000
+}
+
+# Catch-all for locale routes (/vi, /en, /ja, etc.) and static assets
+# No path matcher = matches everything not handled above
+handle {
+reverse_proxy web:3000
+}
 }
