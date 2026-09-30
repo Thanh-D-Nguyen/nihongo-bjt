@@ -19,7 +19,7 @@
 - ApiMatrixValidation: PASS (intermediate gate; 747 canonical old routes, 191 Go + 4 BFF current, 165 LEARNER_PASS, 0 LEARNER_TRUE_MISSING, 161 LEARNER_NEEDS_LIVE_VERIFICATION, 24 UNMATCHED_GO_ROUTES, 6 INTENTIONALLY_REMOVED, 0 UNKNOWN; report: docs/migrations/go-backend-v2/reports/API_SURFACE_PARITY.md)
 - LearnerApiStaticParity: PASS (LEARNER_TRUE_MISSING=0, local tests pass, 5 stub handlers audited as COMPATIBILITY_ADAPTER, 9 daily-radar write ops reclassified as ADMIN)
 - AdminRuntimeClassification: COMPLETE (398 ACTIVE_ADMIN_RUNTIME routes across 34 domains; 0 DORMANT/DEPRECATED/REPLACED; all confirmed via admin frontend caller tracing in apps/admin/)
-- FullApiSurfaceParity: IN_PROGRESS (P0-L1→L5 LEARNER COMPLETE: 165 routes; P1-A1.1 SYSTEM COMPLETE: 11 routes @ 6b3f6a4; P1-A1.2 BROADCASTS COMPLETE: 7 routes @ 4219f33; P1-A1.3 IMPORT-MANIFESTS NEXT; ADMIN_TRUE_MISSING_ACTIVE=380; staging live verification BLOCKED_CURRENT_SESSION)
+- FullApiSurfaceParity: IN_PROGRESS (P0-L1→L5 LEARNER COMPLETE: 165 routes; P1-A1.1 SYSTEM COMPLETE: 11 routes @ 6b3f6a4; P1-A1.2 BROADCASTS COMPLETE: 7 routes @ 4219f33; P1-A1.3 IMPORT-MANIFESTS COMPLETE: 6 routes @ 1d24522; P1-A1.4 DEAD-LETTER-QUEUE NEXT; ADMIN_TRUE_MISSING_ACTIVE=374; staging live verification BLOCKED_CURRENT_SESSION)
 - LegacyBackendRemovalReady: TRUE
 - DiskRemediation: DONE (92% → 89%, 3.5GB reclaimed)
 - RebootGate: REBOOT_EXTERNAL_PRIVILEGE_GATE
