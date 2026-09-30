@@ -55,7 +55,8 @@ The initial parity run reported **747 old / 19 PASS / 562 MISSING / 166 UNKNOWN*
 | P1_A2_ASSESSMENT_STATIC_PARITY_PASS | 30 | All 30 assessment routes implemented across 4 sub-waves; P1-A2 closed |
 | P1_A3_1_GROWTH_CAMPAIGNS_PASS | 10 | P1-A3.1 growth campaigns sub-domain: CRUD + state transitions + ethics warnings |
 | P1_A3_2_GROWTH_POSTCARDS_PASS | 6 | P1-A3.2 growth postcards sub-domain: CRUD + publish/archive + privacy guards |
-| ADMIN_TRUE_MISSING_ACTIVE | 304 | Active admin routes requiring implementation across 32 domains (398 − 48 P1-A1 ops − 30 P1-A2 assessment − 16 P1-A3 growth) |
+| P1_A3_3_GROWTH_SOCIAL_PASS | 8 | P1-A3.3 growth social templates & events sub-domain: CRUD + publish/archive + moderation |
+| ADMIN_TRUE_MISSING_ACTIVE | 296 | Active admin routes requiring implementation across 32 domains (398 − 48 P1-A1 ops − 30 P1-A2 assessment − 24 P1-A3 growth) |
 | ADMIN_DOMAINS_ACTIVE | 34 | operations(49), assessment(35), growth(30), battle(26), monetization(26), learning(20), content(19), gamification(19), magazine(16), daily-radar(15), daily(15), flashcards(15), ads(13), nhk-news(13), legal(11), iam(10), users(9), exercises(9), cardgen(7), privacy(6), companion(5), media(5), i18n(4), announcements(4), lexemes(3), analytics(3), quiz(3), support(2), me(1), module-contracts(1), audit(1), reading-assist(1), bjt(1), autofill(1) |
 | CURRENT_BFF_ROUTES | 4 |
 | FRONTEND_CALL_SITES | 202 |
