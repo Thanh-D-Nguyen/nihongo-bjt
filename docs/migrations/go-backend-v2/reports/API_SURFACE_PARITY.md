@@ -23,6 +23,12 @@ The initial parity run reported **747 old / 19 PASS / 562 MISSING / 166 UNKNOWN*
 | CANONICAL_OLD_ROUTES | 747 |
 | DUPLICATES_COLLAPSED | 74 |
 | CURRENT_GO_ROUTES | 191 |
+| LEARNER_PASS | 165 | Learner-surface routes registered in Go with matching method+path |
+| LEARNER_TRUE_MISSING | 0 | All learner TRUE_MISSING resolved (9 daily-radar write ops reclassified as ADMIN) |
+| LEARNER_NEEDS_LIVE_VERIFICATION | 161 | Learner routes in matrix but not yet in Go; require staging verification or are dormant/deprecated |
+| UNMATCHED_GO_ROUTES | 24 | Routes registered in Go but absent from historical matrix (admin RBAC, auth, media, share-image, leaderboard-my-rank) |
+| STUB_HANDLERS_AUDITED | 5 | nhk-news=COMPATIBILITY_ADAPTER, daily-radar/home=COMPATIBILITY_ADAPTER, daily/home=COMPATIBILITY_ADAPTER, announcements=COMPATIBILITY_ADAPTER, ads/decision=COMPATIBILITY_ADAPTER |
+| LEARNER_API_STATIC_PARITY | PASS | LEARNER_TRUE_MISSING=0, local tests pass, no STUB_ONLY learner handlers remain |
 | CURRENT_BFF_ROUTES | 4 |
 | FRONTEND_CALL_SITES | 202 |
 
