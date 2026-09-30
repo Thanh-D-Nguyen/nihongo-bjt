@@ -636,6 +636,26 @@ func NewRouter(deps Dependencies) http.Handler {
 		})
 	}
 
+	// P1-A3.2: Admin Growth — Postcards sub-domain (6 routes).
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		adminGuard := authn.AdminGuard(deps.SessionStore, guardCfg)
+		// Read-only postcard endpoints.
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Get("/api/admin/growth/postcards", adminGrowthPostcardsListHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/growth/postcards/{id}", adminGrowthPostcardsDetailHandler(deps.DBPool, deps.Logger))
+		})
+		// Mutating postcard endpoints (CSRF-protected).
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Post("/api/admin/growth/postcards", adminGrowthPostcardsCreateHandler(deps.DBPool, deps.Logger))
+			ar.Patch("/api/admin/growth/postcards/{id}", adminGrowthPostcardsPatchHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/growth/postcards/{id}/publish", adminGrowthPostcardsPublishHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/growth/postcards/{id}/archive", adminGrowthPostcardsArchiveHandler(deps.DBPool, deps.Logger))
+		})
+	}
+
 	// P0-L1: Onboarding preferences — learner session-guarded; CSRF for writes.
 	if deps.OnboardingStore != nil && deps.SessionStore != nil {
 		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
