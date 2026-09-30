@@ -178,8 +178,8 @@ func (s *Store) SetAdminCredentialTx(ctx context.Context, tx pgx.Tx, actorID str
 
 func (s *Store) upsertAdminTx(ctx context.Context, tx pgx.Tx, actorID string, p Params, salt, hash []byte) error {
 	const q = `INSERT INTO auth.admin_password_credential
-		(actor_id, algorithm, algorithm_version, hash_iterations, memory_kib, parallelism, hash_length, salt, hashed_value)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		(actor_id, algorithm, algorithm_version, hash_iterations, memory_kib, parallelism, hash_length, salt, hashed_value, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, now(), now())
 		ON CONFLICT (actor_id) DO UPDATE SET
 			algorithm = EXCLUDED.algorithm,
 			algorithm_version = EXCLUDED.algorithm_version,
@@ -204,8 +204,8 @@ func (s *Store) upsertAdmin(ctx context.Context, actorID string, p Params, salt,
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	const q = `INSERT INTO auth.admin_password_credential
-		(actor_id, algorithm, algorithm_version, hash_iterations, memory_kib, parallelism, hash_length, salt, hashed_value)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		(actor_id, algorithm, algorithm_version, hash_iterations, memory_kib, parallelism, hash_length, salt, hashed_value, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, now(), now())
 		ON CONFLICT (actor_id) DO UPDATE SET
 			algorithm = EXCLUDED.algorithm,
 			algorithm_version = EXCLUDED.algorithm_version,
