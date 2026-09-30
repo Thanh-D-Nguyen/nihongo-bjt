@@ -569,6 +569,28 @@ func NewRouter(deps Dependencies) http.Handler {
 		})
 	}
 
+	// P1-A2.3: Admin Assessment — Quiz Templates sub-domain (8 routes).
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		adminGuard := authn.AdminGuard(deps.SessionStore, guardCfg)
+		// Read-only quiz template endpoints.
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Get("/api/admin/assessment/quiz-templates", adminAssessmentQuizTemplatesListHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/assessment/quiz-templates/{id}", adminAssessmentQuizTemplatesDetailHandler(deps.DBPool, deps.Logger))
+		})
+		// Mutating quiz template endpoints (CSRF-protected).
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Post("/api/admin/assessment/quiz-templates", adminAssessmentQuizTemplatesCreateHandler(deps.DBPool, deps.Logger))
+			ar.Patch("/api/admin/assessment/quiz-templates/{id}", adminAssessmentQuizTemplatesPatchHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/assessment/quiz-templates/{id}/publish", adminAssessmentQuizTemplatesPublishHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/assessment/quiz-templates/{id}/archive", adminAssessmentQuizTemplatesArchiveHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/assessment/quiz-templates/{id}/duplicate", adminAssessmentQuizTemplatesDuplicateHandler(deps.DBPool, deps.Logger))
+			ar.Delete("/api/admin/assessment/quiz-templates/{id}", adminAssessmentQuizTemplatesDeleteHandler(deps.DBPool, deps.Logger))
+		})
+	}
+
 	// P0-L1: Onboarding preferences — learner session-guarded; CSRF for writes.
 	if deps.OnboardingStore != nil && deps.SessionStore != nil {
 		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
