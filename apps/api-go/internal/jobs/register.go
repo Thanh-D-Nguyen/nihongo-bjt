@@ -9,31 +9,31 @@ import "fmt"
 func RegisterAll(s *Scheduler, h *Handlers) error {
 	// --- Asia/Ho_Chi_Minh (ICT, UTC+7) jobs ---
 
-	if err := s.Register("comeback_experience", "0 10 * * *", h.ComebackExperience); err != nil {
+	if err := s.Register("comeback_experience", "0 0 10 * * *", h.ComebackExperience); err != nil {
 		return fmt.Errorf("register comeback_experience: %w", err)
 	}
 
-	if err := s.Register("magazine_generation", "30 5 * * *", h.MagazineGeneration); err != nil {
+	if err := s.Register("magazine_generation", "0 30 5 * * *", h.MagazineGeneration); err != nil {
 		return fmt.Errorf("register magazine_generation: %w", err)
 	}
 
-	if err := s.Register("push_notification_daily_kanji", "0 7 * * *", h.PushNotificationDailyKanji); err != nil {
+	if err := s.Register("push_notification_daily_kanji", "0 0 7 * * *", h.PushNotificationDailyKanji); err != nil {
 		return fmt.Errorf("register push_notification_daily_kanji: %w", err)
 	}
 
-	if err := s.Register("smart_notification_pet_care", "0 18 * * *", h.SmartNotificationPetCare); err != nil {
+	if err := s.Register("smart_notification_pet_care", "0 0 18 * * *", h.SmartNotificationPetCare); err != nil {
 		return fmt.Errorf("register smart_notification_pet_care: %w", err)
 	}
 
-	if err := s.Register("smart_notification_streak_save_early", "0 20 * * *", h.SmartNotificationStreakSave); err != nil {
+	if err := s.Register("smart_notification_streak_save_early", "0 0 20 * * *", h.SmartNotificationStreakSave); err != nil {
 		return fmt.Errorf("register smart_notification_streak_save_early: %w", err)
 	}
 
-	if err := s.Register("smart_notification_streak_save_last", "0 22 * * *", h.SmartNotificationStreakSave); err != nil {
+	if err := s.Register("smart_notification_streak_save_last", "0 0 22 * * *", h.SmartNotificationStreakSave); err != nil {
 		return fmt.Errorf("register smart_notification_streak_save_last: %w", err)
 	}
 
-	if err := s.Register("smart_notification_study_slot", "0 * * * *", h.SmartNotificationStudySlot); err != nil {
+	if err := s.Register("smart_notification_study_slot", "0 0 * * * *", h.SmartNotificationStudySlot); err != nil {
 		return fmt.Errorf("register smart_notification_study_slot: %w", err)
 	}
 
