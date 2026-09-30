@@ -20,8 +20,10 @@ import (
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/config"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/credential"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/media"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/notification"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/onboarding"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/postgres"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/privacy"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/profile"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/realtime"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/redisx"
@@ -44,8 +46,10 @@ type Dependencies struct {
 	MediaStore      *media.Store       // nil if DB not configured; media endpoints return 503
 	MediaBucket     *blob.Bucket       // nil if media storage not configured; upload/stream return 503
 	SearchClient    *search.Client     // nil if Meilisearch not configured; search endpoints return 503
-	OnboardingStore *onboarding.Store  // nil if DB not configured; onboarding endpoints return 503
-	Version         string
+	OnboardingStore   *onboarding.Store   // nil if DB not configured; onboarding endpoints return 503
+	NotificationStore *notification.Store // nil if DB not configured; notification endpoints return 503
+	PrivacyStore      *privacy.Store      // nil if DB not configured; privacy endpoints return 503
+	Version           string
 }
 
 // NewRouter creates the chi router with all routes and middleware.
@@ -297,6 +301,32 @@ func NewRouter(deps Dependencies) http.Handler {
 			lr.Use(authn.CSRFGuard(csrfCfg))
 			lr.Post("/api/recommendation/onboarding/skip", skipOnboardingHandler(deps.OnboardingStore, deps.Logger))
 			lr.Post("/api/recommendation/onboarding/preferences", saveOnboardingPreferencesHandler(deps.OnboardingStore, deps.Logger))
+		})
+	}
+	// P0-L1: Notification preferences — learner session-guarded; CSRF for writes.
+	if deps.NotificationStore != nil && deps.SessionStore != nil {
+		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Get("/api/learner/notification-preferences", getNotificationPreferencesHandler(deps.NotificationStore, deps.Logger))
+		})
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Use(authn.CSRFGuard(csrfCfg))
+			lr.Put("/api/learner/notification-preferences", putNotificationPreferencesHandler(deps.NotificationStore, deps.Logger))
+		})
+	}
+	// P0-L1: Privacy requests — learner session-guarded; CSRF for writes.
+	if deps.PrivacyStore != nil && deps.SessionStore != nil {
+		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Get("/api/learner/privacy/requests", listPrivacyRequestsHandler(deps.PrivacyStore, deps.Logger))
+		})
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Use(authn.CSRFGuard(csrfCfg))
+			lr.Post("/api/learner/privacy/requests", createPrivacyRequestHandler(deps.PrivacyStore, deps.Logger))
 		})
 	}
 
