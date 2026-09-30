@@ -379,6 +379,26 @@ func NewRouter(deps Dependencies) http.Handler {
 		})
 	}
 
+	// P1-A1.3: Admin Operations — Import Manifests sub-domain (6 routes).
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		adminGuard := authn.AdminGuard(deps.SessionStore, guardCfg)
+		// Read-only import manifest endpoints.
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Get("/api/admin/operations/import-manifests", adminOpsImportManifestsListHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/operations/import-manifests/{id}", adminOpsImportManifestsGetHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/operations/import-manifests/{id}/history", adminOpsImportManifestsHistoryHandler(deps.DBPool, deps.Logger))
+		})
+		// Mutating import manifest endpoints (CSRF-protected).
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Post("/api/admin/operations/import-manifests", adminOpsImportManifestsCreateHandler(deps.DBPool, deps.Logger))
+			ar.Patch("/api/admin/operations/import-manifests/{id}", adminOpsImportManifestsUpdateHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/operations/import-manifests/{id}/run", adminOpsImportManifestsRunHandler(deps.DBPool, deps.Logger))
+		})
+	}
+
 	// P0-L1: Onboarding preferences — learner session-guarded; CSRF for writes.
 	if deps.OnboardingStore != nil && deps.SessionStore != nil {
 		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
