@@ -59,7 +59,8 @@ The initial parity run reported **747 old / 19 PASS / 562 MISSING / 166 UNKNOWN*
 | P1_A3_4_GROWTH_REFERRALS_PASS | 3 | P1-A3.4 growth referrals sub-domain: list + detail + revoke with abuse detection |
 | P1_A3_GROWTH_STATIC_PARITY_PASS | 27 | All 27 active growth routes implemented across 4 sub-waves; P1-A3 closed (3 autofill routes classified DORMANT) |
 | P1_A4_1_BATTLE_ABUSE_PASS | 4 | P1-A4.1 battle abuse reports sub-domain: list + detail + resolve/escalate with audit trail |
-| ADMIN_TRUE_MISSING_ACTIVE | 289 | Active admin routes requiring implementation across 31 domains (398 − 48 P1-A1 ops − 30 P1-A2 assessment − 27 P1-A3 growth − 4 P1-A4.1 battle abuse) |
+| P1_A4_2_BATTLE_BOTS_PASS | 8 | P1-A4.2 battle bots sub-domain: CRUD + toggle/archive/delete with audit trail |
+| ADMIN_TRUE_MISSING_ACTIVE | 281 | Active admin routes requiring implementation across 31 domains (398 − 48 P1-A1 ops − 30 P1-A2 assessment − 27 P1-A3 growth − 12 P1-A4 battle) |
 | ADMIN_DOMAINS_ACTIVE | 34 | operations(49), assessment(35), growth(30), battle(26), monetization(26), learning(20), content(19), gamification(19), magazine(16), daily-radar(15), daily(15), flashcards(15), ads(13), nhk-news(13), legal(11), iam(10), users(9), exercises(9), cardgen(7), privacy(6), companion(5), media(5), i18n(4), announcements(4), lexemes(3), analytics(3), quiz(3), support(2), me(1), module-contracts(1), audit(1), reading-assist(1), bjt(1), autofill(1) |
 | CURRENT_BFF_ROUTES | 4 |
 | FRONTEND_CALL_SITES | 202 |
