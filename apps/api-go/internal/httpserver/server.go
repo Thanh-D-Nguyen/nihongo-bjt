@@ -678,6 +678,21 @@ func NewRouter(deps Dependencies) http.Handler {
 		})
 	}
 
+	// P1-A3.4: Admin Growth — Referrals sub-domain (3 routes).
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		adminGuard := authn.AdminGuard(deps.SessionStore, guardCfg)
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Get("/api/admin/growth/referrals", adminGrowthReferralsListHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/growth/referrals/{id}", adminGrowthReferralsDetailHandler(deps.DBPool, deps.Logger))
+		})
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Post("/api/admin/growth/referrals/{id}/revoke", adminGrowthReferralsRevokeHandler(deps.DBPool, deps.Logger))
+		})
+	}
+
 	// P0-L1: Onboarding preferences — learner session-guarded; CSRF for writes.
 	if deps.OnboardingStore != nil && deps.SessionStore != nil {
 		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
