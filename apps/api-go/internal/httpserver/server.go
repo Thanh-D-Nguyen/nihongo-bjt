@@ -287,6 +287,13 @@ func NewRouter(deps Dependencies) http.Handler {
 	r.Get("/api/daily/home", dailyHomeHandler(deps.Logger))
 	r.Get("/api/announcements", announcementsListHandler(deps.Logger))
 	r.Post("/api/ads/decision", adsDecisionHandler(deps.Logger))
+	// P0-L2: Announcement dismiss + ads impression/click — optional auth; CSRF for writes.
+	r.Group(func(pr chi.Router) {
+		pr.Use(authn.CSRFGuard(csrfCfg))
+		pr.Post("/api/announcements/{id}/dismiss", announcementDismissHandler(deps.Logger))
+		pr.Post("/api/ads/impression", adsImpressionHandler(deps.Logger))
+		pr.Post("/api/ads/click", adsClickHandler(deps.Logger))
+	})
 
 	// M8: Search — learner session-guarded; reindex is admin-only.
 	if deps.SearchClient != nil && deps.SessionStore != nil {
