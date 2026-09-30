@@ -871,6 +871,130 @@ func NewRouter(deps Dependencies) http.Handler {
 		}
 	}
 
+	// P1-A7: Admin Core — IAM + Users + Content + Support + Audit + I18n + ReadingAssist (38 routes).
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		adminGuard := authn.AdminGuard(deps.SessionStore, guardCfg)
+
+		// Session / Me / Module Contracts (3 routes)
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Get("/api/admin/session", adminSessionHandler(deps.RBACStore, deps.Logger))
+			ar.Get("/api/admin/me", adminMeHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/module-contracts", adminModuleContractsHandler(deps.DBPool, deps.Logger))
+		})
+
+		// IAM: Roles (2 routes)
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Get("/api/admin/iam/roles", adminIamRolesListHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/iam/roles/{code}", adminIamRoleDetailHandler(deps.DBPool, deps.Logger))
+		})
+
+		// IAM: Permissions (2 routes)
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Get("/api/admin/iam/permissions", adminIamPermissionsListHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/iam/permissions/{code}", adminIamPermissionDetailHandler(deps.DBPool, deps.Logger))
+		})
+
+		// IAM: Admins (4 read + 3 write = 7 routes)
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Get("/api/admin/iam/admins", adminIamAdminsListHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/iam/admins/{id}", adminIamAdminDetailHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/iam/role-audit", adminIamRoleAuditHandler(deps.DBPool, deps.Logger))
+		})
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Post("/api/admin/iam/admins/{id}/roles", adminIamAdminAssignRoleHandler(deps.DBPool, deps.Logger))
+			ar.Delete("/api/admin/iam/admins/{id}/roles/{roleCode}", adminIamAdminRevokeRoleHandler(deps.DBPool, deps.Logger))
+			ar.Patch("/api/admin/iam/admins/{id}", adminIamAdminPatchHandler(deps.DBPool, deps.Logger))
+		})
+
+		// Content: Summary + Lexeme Examples (4 routes)
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Get("/api/admin/content/summary", adminContentSummaryHandler(deps.DBPool, deps.Logger))
+		})
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Post("/api/admin/lexemes/{id}/examples", adminLexemeExamplesCreateHandler(deps.DBPool, deps.Logger))
+			ar.Patch("/api/admin/lexemes/{id}/examples/{linkId}", adminLexemeExamplePatchHandler(deps.DBPool, deps.Logger))
+			ar.Delete("/api/admin/lexemes/{id}/examples/{linkId}", adminLexemeExampleDeleteHandler(deps.DBPool, deps.Logger))
+		})
+
+		// Content: CRUD (4 routes)
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Get("/api/admin/content", adminContentListHandler(deps.DBPool, deps.Logger))
+		})
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Post("/api/admin/content", adminContentCreateHandler(deps.DBPool, deps.Logger))
+			ar.Patch("/api/admin/content/{type}/{id}/status", adminContentStatusPatchHandler(deps.DBPool, deps.Logger))
+			ar.Patch("/api/admin/content/{type}/{id}", adminContentPatchHandler(deps.DBPool, deps.Logger))
+		})
+
+		// Users: KPIs + List + Detail + Audit (4 read routes)
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Get("/api/admin/users/kpis", adminUsersKpisHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/users", adminUsersListHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/users/{id}", adminUserDetailHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/users/{id}/audit", adminUserAuditHandler(deps.DBPool, deps.Logger))
+		})
+
+		// Users: Write operations (5 routes)
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Patch("/api/admin/users/{id}/status", adminUserStatusPatchHandler(deps.DBPool, deps.Logger))
+			ar.Patch("/api/admin/users/{id}/plan", adminUserPlanPatchHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/users/{id}/support-notes", adminUserSupportNoteHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/users/invite", adminUserInviteHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/users", adminUserCreateHandler(deps.DBPool, deps.Logger))
+		})
+
+		// Audit (1 route)
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Get("/api/admin/audit", adminAuditHandler(deps.DBPool, deps.Logger))
+		})
+
+		// Support Notes (2 routes)
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Get("/api/admin/support/notes", adminSupportNotesListHandler(deps.DBPool, deps.Logger))
+		})
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Post("/api/admin/support/notes", adminSupportNotesCreateHandler(deps.DBPool, deps.Logger))
+		})
+
+		// Reading Assist Reports (1 route)
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Get("/api/admin/reading-assist/reports", adminReadingAssistReportsHandler(deps.DBPool, deps.Logger))
+		})
+
+		// I18n Admin (4 routes)
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Get("/api/admin/i18n/keys", adminI18nKeysListHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/i18n/pending", adminI18nPendingHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/i18n/keys/{id}", adminI18nKeyDetailHandler(deps.DBPool, deps.Logger))
+		})
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Patch("/api/admin/i18n/keys/{id}/translation", adminI18nTranslationPatchHandler(deps.DBPool, deps.Logger))
+		})
+	}
+
 	// P0-L1: Onboarding preferences — learner session-guarded; CSRF for writes.
 	if deps.OnboardingStore != nil && deps.SessionStore != nil {
 		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
