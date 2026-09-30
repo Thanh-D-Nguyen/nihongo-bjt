@@ -21,6 +21,7 @@ import (
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/credential"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authlink"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/exercisereview"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/flashcardstyle"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/gamification"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/media"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/notification"
@@ -56,8 +57,9 @@ type Dependencies struct {
 	AuthLinkStore       *authlink.Store       // nil if DB not configured; link/exchange returns 503
 	PlacementStore      *placement.Store      // nil if DB not configured; placement endpoints return 503
 	GamificationStore   *gamification.Store   // nil if DB not configured; gamification endpoints return 503
-	ExerciseReviewStore *exercisereview.Store // nil if DB not configured; exercise review endpoints return 503
-	Version           string
+	ExerciseReviewStore   *exercisereview.Store   // nil if DB not configured; exercise review endpoints return 503
+	FlashcardStyleStore   *flashcardstyle.Store   // nil if DB not configured; flashcard style endpoints return 503
+	Version               string
 }
 
 // NewRouter creates the chi router with all routes and middleware.
@@ -403,6 +405,21 @@ func NewRouter(deps Dependencies) http.Handler {
 			lr.Use(learnerGuard)
 			lr.Use(authn.CSRFGuard(csrfCfg))
 			lr.Post("/api/exercises/review/{exerciseId}", reviewExerciseHandler(deps.ExerciseReviewStore, deps.Logger))
+		})
+	}
+
+	// P0-L4: Flashcard styles — learner session-guarded; CSRF for writes.
+	if deps.FlashcardStyleStore != nil && deps.SessionStore != nil {
+		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Get("/api/flashcards/styles", listFlashcardStylesHandler(deps.FlashcardStyleStore, deps.Logger))
+			lr.Get("/api/flashcards/styles/active", getActiveFlashcardStyleHandler(deps.FlashcardStyleStore, deps.Logger))
+		})
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Use(authn.CSRFGuard(csrfCfg))
+			lr.Put("/api/flashcards/styles/active", setActiveFlashcardStyleHandler(deps.FlashcardStyleStore, deps.Logger))
 		})
 	}
 
