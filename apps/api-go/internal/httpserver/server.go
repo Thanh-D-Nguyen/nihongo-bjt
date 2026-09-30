@@ -786,6 +786,29 @@ func NewRouter(deps Dependencies) http.Handler {
 		})
 	}
 
+	// P1-A5.2: Admin Monetization — Entitlements + Quotas sub-domain (11 routes).
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		adminGuard := authn.AdminGuard(deps.SessionStore, guardCfg)
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Get("/api/admin/monetization/entitlements", adminMonetizationEntitlementsListHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/monetization/quotas", adminMonetizationQuotasListHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/monetization/quota-overrides", adminMonetizationQuotaOverridesListHandler(deps.DBPool, deps.Logger))
+		})
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Post("/api/admin/monetization/entitlements", adminMonetizationEntitlementsCreateHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/monetization/plans/{planId}/entitlements", adminMonetizationPlanEntitlementLinkHandler(deps.DBPool, deps.Logger))
+			ar.Delete("/api/admin/monetization/plans/{planId}/entitlements/{entitlementId}", adminMonetizationPlanEntitlementUnlinkHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/monetization/quotas/policies", adminMonetizationQuotaPoliciesCreateHandler(deps.DBPool, deps.Logger))
+			ar.Patch("/api/admin/monetization/quotas/policies/{id}", adminMonetizationQuotaPoliciesPatchHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/monetization/quotas/plan-links", adminMonetizationQuotaPlanLinksCreateHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/monetization/quota-overrides", adminMonetizationQuotaOverridesCreateHandler(deps.DBPool, deps.Logger))
+			ar.Delete("/api/admin/monetization/quota-overrides/{id}", adminMonetizationQuotaOverridesDeleteHandler(deps.DBPool, deps.Logger))
+		})
+	}
+
 	// P0-L1: Onboarding preferences — learner session-guarded; CSRF for writes.
 	if deps.OnboardingStore != nil && deps.SessionStore != nil {
 		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
