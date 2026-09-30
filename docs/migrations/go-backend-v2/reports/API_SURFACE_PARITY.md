@@ -22,7 +22,7 @@ The initial parity run reported **747 old / 19 PASS / 562 MISSING / 166 UNKNOWN*
 | RAW_OLD_ROUTES | 821 |
 | CANONICAL_OLD_ROUTES | 747 |
 | DUPLICATES_COLLAPSED | 74 |
-| CURRENT_GO_ROUTES | 50 |
+| CURRENT_GO_ROUTES | 56 |
 | CURRENT_BFF_ROUTES | 4 |
 | FRONTEND_CALL_SITES | 202 |
 
@@ -30,8 +30,8 @@ The initial parity run reported **747 old / 19 PASS / 562 MISSING / 166 UNKNOWN*
 
 | Status | Count | Notes |
 |---|---|---|
-| PASS | 27 | Route exists in Go/BFF with matching method+path (includes 4 P0-L1 Onboarding + 4 P0-L1 Notification/Privacy) |
-| TRUE_MISSING | 434 | Route absent in Go AND has active frontend caller OR is webhook |
+| PASS | 33 | Route exists in Go/BFF with matching method+path (includes 14 P0-L1 routes: onboarding, notification, privacy, auth/profile, link/exchange, placement) |
+| TRUE_MISSING | 428 | Route absent in Go AND has active frontend caller OR is webhook |
 | NEEDS_LIVE_VERIFICATION | 280 | No frontend caller found; may be dead, mobile-only, or internal |
 | INTENTIONALLY_REMOVED | 6 | Test-only or deprecated routes |
 | REPLACED | 0 | To be identified during repair phase |

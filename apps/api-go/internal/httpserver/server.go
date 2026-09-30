@@ -19,9 +19,11 @@ import (
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authz"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/config"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/credential"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/authlink"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/media"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/notification"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/onboarding"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/placement"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/postgres"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/privacy"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/profile"
@@ -49,6 +51,8 @@ type Dependencies struct {
 	OnboardingStore   *onboarding.Store   // nil if DB not configured; onboarding endpoints return 503
 	NotificationStore *notification.Store // nil if DB not configured; notification endpoints return 503
 	PrivacyStore      *privacy.Store      // nil if DB not configured; privacy endpoints return 503
+	AuthLinkStore     *authlink.Store     // nil if DB not configured; link/exchange returns 503
+	PlacementStore    *placement.Store    // nil if DB not configured; placement endpoints return 503
 	Version           string
 }
 
@@ -100,6 +104,19 @@ func NewRouter(deps Dependencies) http.Handler {
 			lr.Use(learnerGuard)
 			lr.Use(authn.CSRFGuard(csrfCfg))
 			lr.Post("/api/auth/logout", learnerLogoutHandler(deps.SessionStore, deps.Logger, guardCfg.LearnerCookieName))
+		})
+
+		// P0-L1: /api/auth/profile aliases — contract-compatible envelope wrappers around profile store.
+		// GET/POST return { profile: ... }; PUT validates and updates, returns envelope.
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Get("/api/auth/profile", getAuthProfileHandler(deps.ProfileStore, deps.Logger))
+			lr.Post("/api/auth/profile", syncAuthProfileHandler(deps.ProfileStore, deps.Logger))
+		})
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Use(authn.CSRFGuard(csrfCfg))
+			lr.Put("/api/auth/profile", putAuthProfileHandler(deps.ProfileStore, deps.Logger))
 		})
 	}
 
@@ -327,6 +344,23 @@ func NewRouter(deps Dependencies) http.Handler {
 			lr.Use(learnerGuard)
 			lr.Use(authn.CSRFGuard(csrfCfg))
 			lr.Post("/api/learner/privacy/requests", createPrivacyRequestHandler(deps.PrivacyStore, deps.Logger))
+		})
+	}
+	// P0-L1: Auth link exchange — public (no session guard); CSRF-protected.
+	if deps.AuthLinkStore != nil {
+		r.Group(func(pr chi.Router) {
+			pr.Use(authn.CSRFGuard(csrfCfg))
+			pr.Post("/api/auth/link/exchange", exchangeLinkCodeHandler(deps.AuthLinkStore, deps.Logger))
+		})
+	}
+	// P0-L1: Placement test — learner session-guarded; CSRF for writes.
+	if deps.PlacementStore != nil && deps.SessionStore != nil {
+		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Use(authn.CSRFGuard(csrfCfg))
+			lr.Post("/api/learner/placement/start", startPlacementHandler(deps.PlacementStore, deps.Logger))
+			lr.Post("/api/learner/placement/submit", submitPlacementHandler(deps.PlacementStore, deps.Logger))
 		})
 	}
 

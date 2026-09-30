@@ -18,9 +18,11 @@ import (
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/credential"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/jobs"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/authlink"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/media"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/notification"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/onboarding"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/placement"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/postgres"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/privacy"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/profile"
@@ -75,6 +77,8 @@ func New(version string) (*App, error) {
 	onboardingStore := onboarding.NewStore(dbPool)
 	notificationStore := notification.NewStore(dbPool)
 	privacyStore := privacy.NewStore(dbPool)
+	authLinkStore := authlink.NewStore(dbPool)
+	placementStore := placement.NewStore(dbPool)
 	rbacStore := authz.NewStore(dbPool)
 	credentialStore := credential.NewStore(dbPool)
 	rateLimiter, err := authn.NewRateLimiter(authn.DefaultRateLimiterConfig())
@@ -116,6 +120,8 @@ func New(version string) (*App, error) {
 		OnboardingStore:   onboardingStore,
 		NotificationStore: notificationStore,
 		PrivacyStore:      privacyStore,
+		AuthLinkStore:     authLinkStore,
+		PlacementStore:    placementStore,
 		Version:           version,
 	}
 	// Guard against typed-nil interface: only assign Redis if the concrete
