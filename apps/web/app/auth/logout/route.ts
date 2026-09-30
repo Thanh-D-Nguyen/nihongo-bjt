@@ -7,6 +7,6 @@ export async function GET(request: Request) {
   const locale = isSupportedLocale(localeParam) ? localeParam : "vi";
   const publicBase = (process.env.WEB_PUBLIC_URL ?? "http://localhost:3000").replace(/\/$/u, "");
   return NextResponse.redirect(
-    new URL(`/api/auth/keycloak/logout?locale=${encodeURIComponent(locale)}`, publicBase)
+    new URL(`/api/auth/logout?locale=${encodeURIComponent(locale)}`, publicBase)
   );
 }

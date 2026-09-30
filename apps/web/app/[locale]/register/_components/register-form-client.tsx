@@ -134,7 +134,7 @@ export function RegisterFormClient({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const authorizeBase = `/api/auth/keycloak/authorize?${new URLSearchParams({ intent: "register", locale, returnTo }).toString()}`;
+  const authorizeBase = `/api/auth/authorize?${new URLSearchParams({ intent: "register", locale, returnTo }).toString()}`;
 
   const socialProviders: SocialProvider[] = [];
   if (showGoogle) socialProviders.push({ href: `${authorizeBase}&idp=google`, icon: GoogleIcon, label: copy.continueGoogle });
@@ -167,7 +167,7 @@ export function RegisterFormClient({
     }
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/keycloak/register", {
+      const res = await fetch("/api/auth/register", {
         body: JSON.stringify({ email: normalizedEmail, password, username: normalizedUsername }),
         credentials: "same-origin",
         headers: { "content-type": "application/json" },

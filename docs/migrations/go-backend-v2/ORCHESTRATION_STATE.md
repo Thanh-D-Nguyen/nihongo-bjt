@@ -15,6 +15,7 @@
 - LanBrowserRender: LEARNER_PASS / ADMIN_HUMAN_ACTION_REQUIRED
 - AnonymousBehaviorParity: PASS (5 public/OPTIONAL_AUTH stubs; hydration crash fixed; /api/auth/me 401 preserved)
 - BrowserAuthOriginParity: PASS (registration/session/logout/login via Caddy; forged/near-match origins rejected; COOKIE_SECURE env-gated; production security not weakened)
+- RealBrowserAuthenticatedParity: PASS (8/8 Playwright tests: anonymous home, login/register render, register→session→refresh→logout→relogin lifecycle, wrong-password negative, mobile viewports; auth route fixes deployed; PostgreSQL recovered from disk-full crash-loop)
 - LegacyBackendRemovalReady: TRUE
 - DiskRemediation: DONE (92% → 89%, 3.5GB reclaimed)
 - RebootGate: REBOOT_EXTERNAL_PRIVILEGE_GATE

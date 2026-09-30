@@ -120,7 +120,7 @@ export function LoginFormClient({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const authorizeBase = `/api/auth/keycloak/authorize?${new URLSearchParams({ locale, returnTo }).toString()}`;
+  const authorizeBase = `/api/auth/authorize?${new URLSearchParams({ locale, returnTo }).toString()}`;
 
   const socialProviders: SocialProvider[] = [];
   if (showGoogle) socialProviders.push({ href: `${authorizeBase}&idp=google`, icon: GoogleIcon, label: copy.continueGoogle });
@@ -135,7 +135,7 @@ export function LoginFormClient({
     setError(null);
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/keycloak/password-login", {
+      const res = await fetch("/api/auth/login", {
         body: JSON.stringify({ password, username }),
         credentials: "same-origin",
         headers: { "content-type": "application/json" },

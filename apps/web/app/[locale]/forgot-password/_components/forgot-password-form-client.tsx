@@ -32,7 +32,7 @@ export function ForgotPasswordFormClient({
     setError(null);
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/keycloak/forgot-password", {
+      const res = await fetch("/api/auth/forgot-password", {
         body: JSON.stringify({ email }),
         credentials: "same-origin",
         headers: { "content-type": "application/json" },

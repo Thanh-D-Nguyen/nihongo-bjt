@@ -281,4 +281,21 @@ NestJS source code exists but has zero runtime dependency in the deployed archit
 
 **LINUX_STAGING_PASS_WITH_PRODUCTION_GATES**
 
-All engineering waves M1–M17 validated on Linux X86_64. Core flows (auth, media, search, jobs, health, realtime) pass. LAN browser rendering validated: **LEARNER_BROWSER_PASS**, **ADMIN_BROWSER_RENDER_HUMAN_ACTION_REQUIRED**. Anonymous behavior parity validated: **ANONYMOUS_BEHAVIOR_PARITY_PASS**. Browser auth origin parity validated: **BROWSER_AUTH_ORIGIN_PARITY_PASS** (registration, session, logout, login round-trip all work through Caddy; forged/near-match origins rejected; production security not weakened). Legacy backend removal readiness confirmed. Reboot test classified as external privilege gate. ARM64/OCI/DNS/TLS remain as production-only gates.
+All engineering waves M1–M17 validated on Linux X86_64. Core flows (auth, media, search, jobs, health, realtime) pass. LAN browser rendering validated: **LEARNER_BROWSER_PASS**, **ADMIN_BROWSER_RENDER_HUMAN_ACTION_REQUIRED**. Anonymous behavior parity validated: **ANONYMOUS_BEHAVIOR_PARITY_PASS**. Browser auth origin parity validated: **BROWSER_AUTH_ORIGIN_PARITY_PASS** (registration, session, logout, login round-trip all work through Caddy; forged/near-match origins rejected; production security not weakened). Real browser authenticated parity validated: **REAL_BROWSER_AUTHENTICATED_PARITY_PASS** (8/8 Playwright tests pass: anonymous home, login/register render, full register→session→refresh→logout→relogin lifecycle, wrong-password negative, mobile viewports; 5 stale keycloak auth routes fixed; PostgreSQL recovered from disk-full crash-loop). Legacy backend removal readiness confirmed. Reboot test classified as external privilege gate. ARM64/OCI/DNS/TLS remain as production-only gates.
+
+## Real Browser Authenticated Parity
+
+| Check | Evidence | Result |
+|---|---|---|
+| Test suite | `e2e/staging-auth-parity.spec.ts` — 8 tests, parameterized by `PLAYWRIGHT_BASE_URL` | ✅ 8/8 PASS |
+| Anonymous home | `/vi` renders Vietnamese hero, nav, daily plan; no critical console errors | ✅ PASS |
+| Login UI | Email/password form renders on desktop + mobile (390×844) | ✅ PASS |
+| Register UI | Display name/email/password fields render on desktop + mobile | ✅ PASS |
+| Registration flow | Real account created via browser UI; `bjt_web_session` cookie set; `/api/auth/me` → 200 | ✅ PASS |
+| Session persistence | `/api/auth/me` → 200 after full page reload | ✅ PASS |
+| Logout | `POST /api/auth/logout` via browser fetch clears cookie; `/api/auth/me` → 401 | ✅ PASS |
+| Relogin | Previously registered credentials accepted; session restored; `/api/auth/me` → 200 | ✅ PASS |
+| Wrong password | Error message displayed; no silent failure | ✅ PASS |
+| Auth route fixes | 5 stale `/api/auth/keycloak/*` paths updated to BFF proxies (`login`, `register`, `logout`, `forgot-password`, `authorize`) | ✅ Deployed |
+| Infrastructure recovery | PostgreSQL crash-loop (disk-full WAL corruption) resolved via Docker prune (~27GB reclaimed) + restart | ✅ Resolved |
+- **Classification:** **REAL_BROWSER_AUTHENTICATED_PARITY_PASS**
