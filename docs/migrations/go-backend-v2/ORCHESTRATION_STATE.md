@@ -1,8 +1,8 @@
 # Go Backend Migration Orchestration State
 
 ## Git Truth
-- ImplementationAcceptedHEAD: `59969b58` (LAN client access gate + final staging closure)
-- CurrentRepositoryHEAD: `59969b58` (matches ImplementationAcceptedHEAD)
+- ImplementationAcceptedHEAD: `924b365` (LAN browser render fix + admin assetPrefix)
+- CurrentRepositoryHEAD: `924b365` (matches ImplementationAcceptedHEAD)
 - Branch: main
 - Working tree: clean (untracked staging Dockerfiles and compose expected)
 
@@ -12,13 +12,14 @@
 - LinuxStagingValidation: PASS_WITH_PRODUCTION_GATES
 - RealtimeValidation: PASS (16/16 protocol tests)
 - LanClientAccess: PASS (Mac → learner/admin/API/media/WS verified on :18080)
+- LanBrowserRender: LEARNER_PASS / ADMIN_HUMAN_ACTION_REQUIRED
 - LegacyBackendRemovalReady: TRUE
 - DiskRemediation: DONE (92% → 89%, 3.5GB reclaimed)
 - RebootGate: REBOOT_EXTERNAL_PRIVILEGE_GATE
 - ProductionCutover: PENDING
 - KeycloakFinalDisable: DEFERRED_TO_CUTOVER
 - LastCompletedEngineeringWave: M17_POST_MIGRATION_CLEANUP
-- RemainingHumanGate: Production cutover authorization / interactive sudo reboot / ARM64 OCI verification / public DNS+TLS
+- RemainingHumanGate: Admin static asset routing via Caddy (assetPrefix not baking in Turbopack monorepo build; workaround: direct container port :13001) / Production cutover authorization / interactive sudo reboot / ARM64 OCI verification / public DNS+TLS
 
 ## Service Retirement State
 | Service | Status |

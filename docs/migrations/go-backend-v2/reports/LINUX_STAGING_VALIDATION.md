@@ -222,8 +222,29 @@ NestJS source code exists but has zero runtime dependency in the deployed archit
 - **WebSocket upgrade:** `/ws/battle` and `/ws/presence` → 200 ✅
 - **Repair performed:** Changed Caddyfile from `handle /admin/*` and `handle /app/*` to `handle_path` to strip prefixes before proxying to Next.js apps that serve at root. Commit `fc445d5`.
 
+## Browser Rendering Validation
+
+- **Learner URL:** `http://192.168.1.8:18080/vi`
+- **Learner document status:** 200 ✅
+- **Learner body:** non-empty (500+ chars), shell element `[lang="vi"]` present ✅
+- **Learner title:** "Trang chủ học tập — KotobaWorks" ✅
+- **Learner Next.js assets:** all `/_next/static/chunks/*.js` and `*.css` return 200 via Caddy ✅
+- **Learner console errors:** 401 on unauthenticated API calls (expected); no hydration or render-blocking errors ✅
+- **Learner failed network requests:** RSC prefetch requests for stale build IDs from Playwright cache (non-blocking; page renders correctly) ⚠️
+- **Learner screenshot:** `/tmp/learner-vi-screenshot.png` — full UI rendered with navigation, locale selector, dashboard sections ✅
+- **Learner classification:** **LEARNER_BROWSER_PASS**
+- **Root cause (white screen):** Caddy `handle / { reverse_proxy web:3000 }` matched only exact `/`, not `/vi`. Changed to bare `handle` catch-all so locale routes reach the learner container. Commit `924b365`.
+- **Admin URL:** `http://192.168.1.8:18080/admin/en`
+- **Admin document status:** 200 ✅
+- **Admin body:** non-empty ("Verifying admin session…"), shell element present ✅
+- **Admin static assets:** `/_next/static/chunks/*` return 404 through Caddy ❌
+- **Admin root cause:** Both Next.js apps serve static assets at root-relative `/_next/static/...` with different chunk hashes. Caddy catch-all routes unmatched `/_next/*` to learner web container, which 404s admin-specific chunks. `assetPrefix: '/admin'` added to `apps/admin/next.config.mjs` but not baked into Docker build (Turbopack/monorepo config evaluation timing issue). `basePath: '/admin'` also tested but broke route matching.
+- **Admin workaround:** Direct container access at `http://192.168.1.8:13001/en` works correctly.
+- **Admin classification:** **ADMIN_BROWSER_RENDER_HUMAN_ACTION_REQUIRED**
+- **Repair performed:** Caddyfile bare `handle` catch-all (commit `924b365`); `NEXT_PUBLIC_API_URL` updated to port 18080 in Dockerfiles/compose; `assetPrefix` added to admin config (not yet effective in build).
+
 ## Gate Result
 
 **LINUX_STAGING_PASS_WITH_PRODUCTION_GATES**
 
-All engineering waves M1–M17 validated on Linux X86_64. Core flows (auth, media, search, jobs, health, realtime) pass. LAN client accessibility verified from Mac. Legacy backend removal readiness confirmed. Reboot test classified as external privilege gate. ARM64/OCI/DNS/TLS remain as production-only gates.
+All engineering waves M1–M17 validated on Linux X86_64. Core flows (auth, media, search, jobs, health, realtime) pass. LAN browser rendering validated: **LEARNER_BROWSER_PASS**, **ADMIN_BROWSER_RENDER_HUMAN_ACTION_REQUIRED** (admin static asset routing requires Next.js build config resolution or direct container port access). Legacy backend removal readiness confirmed. Reboot test classified as external privilege gate. ARM64/OCI/DNS/TLS remain as production-only gates.
