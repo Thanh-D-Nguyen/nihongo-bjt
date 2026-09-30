@@ -1148,6 +1148,11 @@ ar.Get("/api/admin/legal/retention", adminLegalRetentionHandler())
 		ar.Get("/api/admin/assessment/quiz-sessions/{id}", adminAssessmentQuizSessionDetailHandler(deps.DBPool, deps.Logger))
 		ar.Post("/api/admin/assessment/quiz-sessions/{id}/abort", adminAssessmentQuizSessionAbortHandler(deps.DBPool, deps.Logger))
 		ar.Post("/api/admin/assessment/quiz-sessions/{id}/extend-time", adminAssessmentQuizSessionExtendTimeHandler(deps.DBPool, deps.Logger))
+
+// P1-A18: Admin NHK News — Config + Refresh (3 routes; FINAL ADMIN DOMAIN)
+ar.Get("/api/admin/nhk-news/config", adminNhkNewsConfigHandler(deps.DBPool, deps.Logger))
+ar.Patch("/api/admin/nhk-news/config", adminNhkNewsConfigPatchHandler(deps.DBPool, deps.Logger))
+ar.Post("/api/admin/nhk-news/refresh", adminNhkNewsRefreshHandler(deps.DBPool, deps.Logger))
 		})
 
 		// I18n Admin (4 routes)
