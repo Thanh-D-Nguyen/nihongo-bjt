@@ -1,0 +1,31 @@
+:80 {
+	# Health check (exact match first)
+	handle /health {
+		respond "OK" 200
+	}
+
+	# API — routes already include /api prefix, so do NOT strip
+	handle /api/* {
+		reverse_proxy api:4001
+	}
+
+	# Public media (read-only via Caddy)
+	handle_path /media/* {
+		root * /srv/kotobawork/data/media
+		file_server
+	}
+
+	# Admin
+	handle /admin/* {
+		reverse_proxy admin:3001
+	}
+
+	# Learner Web — catch-all for /app/* and root
+	handle /app/* {
+		reverse_proxy web:3000
+	}
+
+	handle / {
+		reverse_proxy web:3000
+	}
+}

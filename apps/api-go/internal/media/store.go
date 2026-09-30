@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -36,10 +37,10 @@ func NewStore(db *pgxpool.Pool) *Store {
 func (s *Store) CreateAsset(ctx context.Context, contentType string, sizeBytes int64, storageKey string) (string, error) {
 	var id string
 	err := s.db.QueryRow(ctx,
-		`INSERT INTO media.asset (object_key, mime_type, content_type, size_bytes, storage_path)
-		 VALUES (gen_random_uuid()::text, $1, $1, $2, $3)
+		`INSERT INTO media.asset (object_key, mime_type, byte_size, updated_at)
+		 VALUES ($1, $2, $3, now())
 		 RETURNING id`,
-		contentType, sizeBytes, storageKey,
+		storageKey, contentType, sizeBytes,
 	).Scan(&id)
 	if err != nil {
 		return "", fmt.Errorf("media: insert asset: %w", err)
@@ -57,19 +58,15 @@ func (s *Store) CreateAssetWithMetadata(ctx context.Context, contentType string,
 	if uploadedBy != "" {
 		uploadedByVal = &uploadedBy
 	}
+	objectKey := uuid.New().String()
 	err := s.db.QueryRow(ctx,
-		`INSERT INTO media.asset (object_key, mime_type, content_type, size_bytes, storage_path, original_filename, uploaded_by)
-		 VALUES (gen_random_uuid()::text, $1, $1, $2, '', $3, $4)
+		`INSERT INTO media.asset (object_key, mime_type, byte_size, owner_user_id, updated_at)
+		 VALUES ($1, $2, $3, $4, now())
 		 RETURNING id`,
-		contentType, sizeBytes, originalFilename, uploadedByVal,
+		objectKey, contentType, sizeBytes, uploadedByVal,
 	).Scan(&id)
 	if err != nil {
 		return "", fmt.Errorf("media: insert asset with metadata: %w", err)
-	}
-	// Set storage_path to the asset ID after creation.
-	_, err = s.db.Exec(ctx, `UPDATE media.asset SET storage_path = $1 WHERE id = $2`, id, id)
-	if err != nil {
-		return "", fmt.Errorf("media: update storage path: %w", err)
 	}
 	return id, nil
 }
@@ -81,7 +78,7 @@ func (s *Store) GetAsset(ctx context.Context, id string) (*Asset, error) {
 
 	a := &Asset{}
 	err := s.db.QueryRow(ctx,
-		`SELECT id, content_type, size_bytes, storage_path, original_filename, uploaded_by, created_at
+		`SELECT id, mime_type, byte_size, object_key, original_filename, owner_user_id, created_at
 		 FROM media.asset
 		 WHERE id = $1`,
 		id,
@@ -100,7 +97,7 @@ func (s *Store) UpdateAssetSize(ctx context.Context, id string, sizeBytes int64)
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	_, err := s.db.Exec(ctx, `UPDATE media.asset SET size_bytes = $1 WHERE id = $2`, sizeBytes, id)
+	_, err := s.db.Exec(ctx, `UPDATE media.asset SET byte_size = $1, updated_at = now() WHERE id = $2`, sizeBytes, id)
 	if err != nil {
 		return fmt.Errorf("media: update asset size: %w", err)
 	}

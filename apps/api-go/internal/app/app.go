@@ -10,12 +10,15 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 
+	"gocloud.dev/blob"
+
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authz"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/config"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/credential"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/jobs"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/media"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/postgres"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/profile"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/redisx"
@@ -77,6 +80,20 @@ func New(version string) (*App, error) {
 	// M11: Initialize Meilisearch client when configured.
 	searchClient := search.NewClient(cfg.MeilisearchURL, cfg.MeilisearchAPIKey)
 
+	// M7: Initialize LocalFS media store and bucket when MediaBasePath is set.
+	var mediaStore *media.Store
+	var mediaBucket *blob.Bucket
+	if cfg.MediaBasePath != "" {
+		bucket, err := media.OpenBucket(cfg.MediaBasePath)
+		if err != nil {
+			logger.Warn("media: failed to open bucket; media endpoints disabled", "path", cfg.MediaBasePath, "error", err)
+		} else {
+			mediaBucket = bucket
+			mediaStore = media.NewStore(dbPool)
+			logger.Info("media: localfs bucket initialized", "path", cfg.MediaBasePath)
+		}
+	}
+
 	deps := httpserver.Dependencies{
 		Config:          cfg,
 		Logger:          logger,
@@ -88,6 +105,8 @@ func New(version string) (*App, error) {
 		CredentialStore: credentialStore,
 		RateLimiter:     rateLimiter,
 		SearchClient:    searchClient,
+		MediaStore:      mediaStore,
+		MediaBucket:     mediaBucket,
 		Version:         version,
 	}
 	// Guard against typed-nil interface: only assign Redis if the concrete
