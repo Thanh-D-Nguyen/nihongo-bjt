@@ -526,6 +526,28 @@ func NewRouter(deps Dependencies) http.Handler {
 		})
 	}
 
+	// P1-A2.1: Admin Assessment — Mock Exams sub-domain (8 routes).
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		adminGuard := authn.AdminGuard(deps.SessionStore, guardCfg)
+		// Read-only mock exam endpoints.
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Get("/api/admin/assessment/mock-exams", adminAssessmentMockExamsListHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/assessment/mock-exams/{id}", adminAssessmentMockExamsDetailHandler(deps.DBPool, deps.Logger))
+		})
+		// Mutating mock exam endpoints (CSRF-protected).
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Post("/api/admin/assessment/mock-exams", adminAssessmentMockExamsCreateHandler(deps.DBPool, deps.Logger))
+			ar.Patch("/api/admin/assessment/mock-exams/{id}", adminAssessmentMockExamsPatchHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/assessment/mock-exams/{id}/publish", adminAssessmentMockExamsPublishHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/assessment/mock-exams/{id}/archive", adminAssessmentMockExamsArchiveHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/assessment/mock-exams/{id}/duplicate", adminAssessmentMockExamsDuplicateHandler(deps.DBPool, deps.Logger))
+			ar.Delete("/api/admin/assessment/mock-exams/{id}", adminAssessmentMockExamsDeleteHandler(deps.DBPool, deps.Logger))
+		})
+	}
+
 	// P0-L1: Onboarding preferences — learner session-guarded; CSRF for writes.
 	if deps.OnboardingStore != nil && deps.SessionStore != nil {
 		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
