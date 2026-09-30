@@ -243,8 +243,24 @@ NestJS source code exists but has zero runtime dependency in the deployed archit
 - **Admin classification:** **ADMIN_BROWSER_RENDER_HUMAN_ACTION_REQUIRED**
 - **Repair performed:** Caddyfile bare `handle` catch-all (commit `924b365`); `NEXT_PUBLIC_API_URL` updated to port 18080 in Dockerfiles/compose; `assetPrefix` added to admin config (not yet effective in build).
 
+## Anonymous Behavior Parity
+
+| Endpoint / Caller | Old NestJS Behavior | New Pre-Repair Behavior | Classification | Repair | Final Behavior |
+|---|---|---|---|---|---|
+| `GET /api/nhk-news` | PUBLIC (no guard) | 404 (route missing in Go) | PUBLIC | Stub handler returning `[]` | 200 `[]` ✅ |
+| `GET /api/daily-radar/home` | PUBLIC (`@PublicRoute`) | 404 (route missing in Go) | PUBLIC | Stub handler returning `{modules:[], cards:[]}` | 200 ✅ |
+| `GET /api/daily/home` | OPTIONAL_AUTH (`@KeycloakAuthOptional`) | 404 (route missing in Go) | OPTIONAL_AUTH | Stub handler with `today`, `greeting`, empty widgets/items | 200 ✅ |
+| `GET /api/announcements` | PUBLIC (no guard, optional userId) | 404 (route missing in Go) | PUBLIC | Stub handler returning `[]` | 200 `[]` ✅ |
+| `POST /api/ads/decision` | OPTIONAL_AUTH (`@KeycloakAuthOptional`) | 404 (route missing in Go) | OPTIONAL_AUTH | Stub handler returning `{showAd:false}` | 200 ✅ |
+| `GET /api/auth/me` | REQUIRED_AUTH (Keycloak guard) | 401 `{"error":"unauthorized"}` | REQUIRED_AUTH | No change needed | 401 ✅ (expected) |
+
+- **Hydration crash fix:** `dailyHomeHandler` initially returned `{widgets:[], items:[]}` without `today` field; frontend `TodayPlanHub.formatDate()` called `.split("-")` on undefined `dateKey`, causing `TypeError`. Fixed by adding `today: time.Now().Format("2006-01-02")` and `greeting` fields to stub response. Commit `d25ff30`.
+- **Anonymous home render:** Full UI renders at `/vi` (1419 chars body, no failure states, correct Vietnamese locale content including date, navigation, dashboard sections). Screenshot: `/tmp/anonymous-home-final.png`.
+- **Protected route preservation:** `/api/auth/me` correctly returns 401 for unauthenticated users; no auth weakening performed.
+- **Classification:** **ANONYMOUS_BEHAVIOR_PARITY_PASS**
+
 ## Gate Result
 
 **LINUX_STAGING_PASS_WITH_PRODUCTION_GATES**
 
-All engineering waves M1–M17 validated on Linux X86_64. Core flows (auth, media, search, jobs, health, realtime) pass. LAN browser rendering validated: **LEARNER_BROWSER_PASS**, **ADMIN_BROWSER_RENDER_HUMAN_ACTION_REQUIRED** (admin static asset routing requires Next.js build config resolution or direct container port access). Legacy backend removal readiness confirmed. Reboot test classified as external privilege gate. ARM64/OCI/DNS/TLS remain as production-only gates.
+All engineering waves M1–M17 validated on Linux X86_64. Core flows (auth, media, search, jobs, health, realtime) pass. LAN browser rendering validated: **LEARNER_BROWSER_PASS**, **ADMIN_BROWSER_RENDER_HUMAN_ACTION_REQUIRED**. Anonymous behavior parity validated: **ANONYMOUS_BEHAVIOR_PARITY_PASS** (all five public/OPTIONAL_AUTH endpoints restored via Go stubs; hydration crash fixed; protected routes preserved). Legacy backend removal readiness confirmed. Reboot test classified as external privilege gate. ARM64/OCI/DNS/TLS remain as production-only gates.

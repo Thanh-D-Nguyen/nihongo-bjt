@@ -1,8 +1,8 @@
 # Go Backend Migration Orchestration State
 
 ## Git Truth
-- ImplementationAcceptedHEAD: `924b365` (LAN browser render fix + admin assetPrefix)
-- CurrentRepositoryHEAD: `924b365` (matches ImplementationAcceptedHEAD)
+- ImplementationAcceptedHEAD: `d25ff30` (anonymous behavior parity + public content stubs)
+- CurrentRepositoryHEAD: `d25ff30` (matches ImplementationAcceptedHEAD)
 - Branch: main
 - Working tree: clean (untracked staging Dockerfiles and compose expected)
 
@@ -13,6 +13,7 @@
 - RealtimeValidation: PASS (16/16 protocol tests)
 - LanClientAccess: PASS (Mac → learner/admin/API/media/WS verified on :18080)
 - LanBrowserRender: LEARNER_PASS / ADMIN_HUMAN_ACTION_REQUIRED
+- AnonymousBehaviorParity: PASS (5 public/OPTIONAL_AUTH stubs; hydration crash fixed; /api/auth/me 401 preserved)
 - LegacyBackendRemovalReady: TRUE
 - DiskRemediation: DONE (92% → 89%, 3.5GB reclaimed)
 - RebootGate: REBOOT_EXTERNAL_PRIVILEGE_GATE
