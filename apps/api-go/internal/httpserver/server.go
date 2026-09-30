@@ -729,6 +729,26 @@ func NewRouter(deps Dependencies) http.Handler {
 		})
 	}
 
+	// P1-A4.3: Admin Battle — Configs sub-domain (8 routes).
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		adminGuard := authn.AdminGuard(deps.SessionStore, guardCfg)
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Get("/api/admin/battle/configs", adminBattleConfigsListHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/battle/configs/{id}", adminBattleConfigsDetailHandler(deps.DBPool, deps.Logger))
+		})
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Post("/api/admin/battle/configs", adminBattleConfigsCreateHandler(deps.DBPool, deps.Logger))
+			ar.Patch("/api/admin/battle/configs/{id}", adminBattleConfigsPatchHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/battle/configs/{id}/publish", adminBattleConfigsPublishHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/battle/configs/{id}/archive", adminBattleConfigsArchiveHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/battle/configs/{id}/duplicate", adminBattleConfigsDuplicateHandler(deps.DBPool, deps.Logger))
+			ar.Delete("/api/admin/battle/configs/{id}", adminBattleConfigsDeleteHandler(deps.DBPool, deps.Logger))
+		})
+	}
+
 	// P0-L1: Onboarding preferences — learner session-guarded; CSRF for writes.
 	if deps.OnboardingStore != nil && deps.SessionStore != nil {
 		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
