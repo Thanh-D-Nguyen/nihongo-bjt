@@ -16,6 +16,8 @@
 - AnonymousBehaviorParity: PASS (5 public/OPTIONAL_AUTH stubs; hydration crash fixed; /api/auth/me 401 preserved)
 - BrowserAuthOriginParity: PASS (registration/session/logout/login via Caddy; forged/near-match origins rejected; COOKIE_SECURE env-gated; production security not weakened)
 - RealBrowserAuthenticatedParity: PASS (8/8 Playwright tests: anonymous home, login/register render, register→session→refresh→logout→relogin lifecycle, wrong-password negative, mobile viewports; auth route fixes deployed; PostgreSQL recovered from disk-full crash-loop)
+- ApiMatrixValidation: PASS (intermediate gate; 747 canonical old routes, 46 Go + 4 BFF current, 23 PASS, 438 TRUE_MISSING, 280 NEEDS_LIVE_VERIFICATION, 6 INTENTIONALLY_REMOVED, 0 UNKNOWN; report: docs/migrations/go-backend-v2/reports/API_SURFACE_PARITY.md)
+- FullApiSurfaceParity: IN_PROGRESS (P0-L1 Onboarding domain COMPLETE: 4 routes implemented with contract tests; staging live verification BLOCKED_CURRENT_SESSION)
 - LegacyBackendRemovalReady: TRUE
 - DiskRemediation: DONE (92% → 89%, 3.5GB reclaimed)
 - RebootGate: REBOOT_EXTERNAL_PRIVILEGE_GATE

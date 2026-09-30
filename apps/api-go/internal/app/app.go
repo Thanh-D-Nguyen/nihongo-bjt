@@ -19,6 +19,7 @@ import (
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/jobs"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/media"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/onboarding"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/postgres"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/profile"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/redisx"
@@ -69,6 +70,7 @@ func New(version string) (*App, error) {
 
 	sessionStore := session.NewStore(dbPool)
 	profileStore := profile.NewStore(dbPool)
+	onboardingStore := onboarding.NewStore(dbPool)
 	rbacStore := authz.NewStore(dbPool)
 	credentialStore := credential.NewStore(dbPool)
 	rateLimiter, err := authn.NewRateLimiter(authn.DefaultRateLimiterConfig())
@@ -107,6 +109,7 @@ func New(version string) (*App, error) {
 		SearchClient:    searchClient,
 		MediaStore:      mediaStore,
 		MediaBucket:     mediaBucket,
+		OnboardingStore: onboardingStore,
 		Version:         version,
 	}
 	// Guard against typed-nil interface: only assign Redis if the concrete

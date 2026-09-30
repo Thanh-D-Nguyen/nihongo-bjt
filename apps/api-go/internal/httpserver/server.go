@@ -20,6 +20,7 @@ import (
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/config"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/credential"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/media"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/onboarding"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/postgres"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/profile"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/realtime"
@@ -43,6 +44,7 @@ type Dependencies struct {
 	MediaStore      *media.Store       // nil if DB not configured; media endpoints return 503
 	MediaBucket     *blob.Bucket       // nil if media storage not configured; upload/stream return 503
 	SearchClient    *search.Client     // nil if Meilisearch not configured; search endpoints return 503
+	OnboardingStore *onboarding.Store  // nil if DB not configured; onboarding endpoints return 503
 	Version         string
 }
 
@@ -279,6 +281,22 @@ func NewRouter(deps Dependencies) http.Handler {
 			ar.Use(adminGuard)
 			ar.Use(authn.CSRFGuard(csrfCfg))
 			ar.Post("/api/search/index", reindexHandler(deps.SearchClient, deps.Logger))
+		})
+	}
+
+	// P0-L1: Onboarding preferences — learner session-guarded; CSRF for writes.
+	if deps.OnboardingStore != nil && deps.SessionStore != nil {
+		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Get("/api/recommendation/onboarding/preferences", getOnboardingPreferencesHandler(deps.OnboardingStore, deps.Logger))
+			lr.Get("/api/recommendation/onboarding/status", getOnboardingStatusHandler(deps.OnboardingStore, deps.Logger))
+		})
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Use(authn.CSRFGuard(csrfCfg))
+			lr.Post("/api/recommendation/onboarding/skip", skipOnboardingHandler(deps.OnboardingStore, deps.Logger))
+			lr.Post("/api/recommendation/onboarding/preferences", saveOnboardingPreferencesHandler(deps.OnboardingStore, deps.Logger))
 		})
 	}
 
