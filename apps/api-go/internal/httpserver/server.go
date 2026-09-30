@@ -749,6 +749,24 @@ func NewRouter(deps Dependencies) http.Handler {
 		})
 	}
 
+	// P1-A4.4: Admin Battle — Leaderboard + Matches + System Parameters (6 routes).
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		adminGuard := authn.AdminGuard(deps.SessionStore, guardCfg)
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Get("/api/admin/battle/leaderboard", adminBattleLeaderboardListHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/battle/system-parameters", adminBattleSystemParametersHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/battle/matches", adminBattleMatchesListHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/battle/matches/{id}", adminBattleMatchesDetailHandler(deps.DBPool, deps.Logger))
+		})
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Post("/api/admin/battle/matches/{id}/abort", adminBattleMatchesAbortHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/battle/matches/{id}/rerun", adminBattleMatchesRerunHandler(deps.DBPool, deps.Logger))
+		})
+	}
+
 	// P0-L1: Onboarding preferences — learner session-guarded; CSRF for writes.
 	if deps.OnboardingStore != nil && deps.SessionStore != nil {
 		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
