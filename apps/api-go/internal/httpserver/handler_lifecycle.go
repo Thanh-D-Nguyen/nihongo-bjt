@@ -713,7 +713,7 @@ func lookupUserIDByEmail(ctx context.Context, db *pgxpool.Pool, email string) (s
 }
 
 func createLearnerProfile(ctx context.Context, tx pgx.Tx, email, displayName string) (string, error) {
-	const q = `INSERT INTO profile.user_profile (email, display_name, status) VALUES ($1, $2, 'active') RETURNING id`
+	const q = `INSERT INTO profile.user_profile (email, display_name, status, created_at, updated_at) VALUES ($1, $2, 'active', now(), now()) RETURNING id`
 	var id string
 	err := tx.QueryRow(ctx, q, email, displayName).Scan(&id)
 	if err != nil {
