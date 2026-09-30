@@ -358,6 +358,27 @@ func NewRouter(deps Dependencies) http.Handler {
 		})
 	}
 
+	// P1-A1.2: Admin Operations — Broadcasts sub-domain (7 routes).
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		adminGuard := authn.AdminGuard(deps.SessionStore, guardCfg)
+		// Read-only broadcast endpoints.
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Get("/api/admin/operations/broadcasts", adminOpsBroadcastsListHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/operations/broadcasts/{id}", adminOpsBroadcastsGetHandler(deps.DBPool, deps.Logger))
+		})
+		// Mutating broadcast endpoints (CSRF-protected).
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Patch("/api/admin/operations/broadcasts/audience/estimate", adminOpsBroadcastsEstimateHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/operations/broadcasts", adminOpsBroadcastsCreateHandler(deps.DBPool, deps.Logger))
+			ar.Patch("/api/admin/operations/broadcasts/{id}", adminOpsBroadcastsUpdateHandler(deps.DBPool, deps.Logger))
+			ar.Patch("/api/admin/operations/broadcasts/{id}/schedule", adminOpsBroadcastsScheduleHandler(deps.DBPool, deps.Logger))
+			ar.Patch("/api/admin/operations/broadcasts/{id}/cancel", adminOpsBroadcastsCancelHandler(deps.DBPool, deps.Logger))
+		})
+	}
+
 	// P0-L1: Onboarding preferences — learner session-guarded; CSRF for writes.
 	if deps.OnboardingStore != nil && deps.SessionStore != nil {
 		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
