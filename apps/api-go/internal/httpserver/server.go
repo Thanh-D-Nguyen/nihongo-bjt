@@ -851,6 +851,26 @@ func NewRouter(deps Dependencies) http.Handler {
 		})
 	}
 
+	// P1-A6: Admin Analytics — 8 domains × 5 endpoints = 40 routes.
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		adminGuard := authn.AdminGuard(deps.SessionStore, guardCfg)
+		for _, domain := range analyticsDomains {
+			domain := domain // capture loop variable
+			r.Group(func(ar chi.Router) {
+				ar.Use(adminGuard)
+				ar.Get("/api/admin/analytics/"+domain+"/summary", adminAnalyticsSummaryHandler(deps.DBPool, deps.Logger))
+				ar.Get("/api/admin/analytics/"+domain+"/timeseries", adminAnalyticsTimeseriesHandler(deps.DBPool, deps.Logger))
+				ar.Get("/api/admin/analytics/"+domain+"/breakdown", adminAnalyticsBreakdownHandler(deps.DBPool, deps.Logger))
+			})
+			r.Group(func(ar chi.Router) {
+				ar.Use(adminGuard)
+				ar.Use(authn.CSRFGuard(csrfCfg))
+				ar.Post("/api/admin/analytics/"+domain+"/export", adminAnalyticsExportHandler(deps.DBPool, deps.Logger))
+				ar.Post("/api/admin/analytics/"+domain+"/refresh", adminAnalyticsRefreshHandler(deps.DBPool, deps.Logger))
+			})
+		}
+	}
+
 	// P0-L1: Onboarding preferences — learner session-guarded; CSRF for writes.
 	if deps.OnboardingStore != nil && deps.SessionStore != nil {
 		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
