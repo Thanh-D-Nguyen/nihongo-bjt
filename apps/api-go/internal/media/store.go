@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -58,13 +57,22 @@ func (s *Store) CreateAssetWithMetadata(ctx context.Context, contentType string,
 	if uploadedBy != "" {
 		uploadedByVal = &uploadedBy
 	}
-	objectKey := uuid.New().String()
+	// Insert with a placeholder object_key; after getting the DB-generated id,
+	// update object_key to match id so blob storage key == asset id.
 	err := s.db.QueryRow(ctx,
 		`INSERT INTO media.asset (object_key, mime_type, byte_size, owner_user_id, updated_at)
-		 VALUES ($1, $2, $3, $4, now())
+		 VALUES (gen_random_uuid()::text, $1, $2, $3, now())
 		 RETURNING id`,
-		objectKey, contentType, sizeBytes, uploadedByVal,
+		contentType, sizeBytes, uploadedByVal,
 	).Scan(&id)
+	if err != nil {
+		return "", fmt.Errorf("media: insert asset with metadata: %w", err)
+	}
+	// Set object_key = id so the blob writer key matches GetAsset lookup.
+	_, err = s.db.Exec(ctx, `UPDATE media.asset SET object_key = $1 WHERE id = $1`, id)
+	if err != nil {
+		return "", fmt.Errorf("media: set object_key to id: %w", err)
+	}
 	if err != nil {
 		return "", fmt.Errorf("media: insert asset with metadata: %w", err)
 	}
@@ -78,11 +86,11 @@ func (s *Store) GetAsset(ctx context.Context, id string) (*Asset, error) {
 
 	a := &Asset{}
 	err := s.db.QueryRow(ctx,
-		`SELECT id, mime_type, byte_size, object_key, original_filename, owner_user_id, created_at
+		`SELECT id, mime_type, byte_size, object_key, owner_user_id, created_at
 		 FROM media.asset
 		 WHERE id = $1`,
 		id,
-	).Scan(&a.ID, &a.ContentType, &a.SizeBytes, &a.StorageKey, &a.OriginalFilename, &a.UploadedBy, &a.CreatedAt)
+	).Scan(&a.ID, &a.ContentType, &a.SizeBytes, &a.StorageKey, &a.UploadedBy, &a.CreatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
