@@ -656,6 +656,28 @@ func NewRouter(deps Dependencies) http.Handler {
 		})
 	}
 
+	// P1-A3.3: Admin Growth — Social Templates & Events sub-domain (8 routes).
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		adminGuard := authn.AdminGuard(deps.SessionStore, guardCfg)
+		// Read-only social template endpoints.
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Get("/api/admin/growth/social/templates", adminGrowthSocialTemplatesListHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/growth/social/templates/{id}", adminGrowthSocialTemplatesDetailHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/growth/social/events", adminGrowthSocialEventsListHandler(deps.DBPool, deps.Logger))
+		})
+		// Mutating social template endpoints (CSRF-protected).
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Post("/api/admin/growth/social/templates", adminGrowthSocialTemplatesCreateHandler(deps.DBPool, deps.Logger))
+			ar.Patch("/api/admin/growth/social/templates/{id}", adminGrowthSocialTemplatesPatchHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/growth/social/templates/{id}/publish", adminGrowthSocialTemplatesPublishHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/growth/social/templates/{id}/archive", adminGrowthSocialTemplatesArchiveHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/growth/social/events/{id}/moderate", adminGrowthSocialEventsModerateHandler(deps.DBPool, deps.Logger))
+		})
+	}
+
 	// P0-L1: Onboarding preferences — learner session-guarded; CSRF for writes.
 	if deps.OnboardingStore != nil && deps.SessionStore != nil {
 		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
