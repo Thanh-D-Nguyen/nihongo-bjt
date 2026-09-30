@@ -704,6 +704,125 @@ func NewRouter(deps Dependencies) http.Handler {
 			lr.Post("/api/magazine/{slug}/read", markMagazineReadHandler(deps.DBPool, deps.Logger))
 		})
 	}
+
+	// P0-L5 Final Batch: Analytics — public ingest, auth for reads.
+	if deps.DBPool != nil {
+		r.Post("/api/analytics/events", postAnalyticsEventsHandler(deps.DBPool, deps.Logger))
+	}
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Get("/api/analytics/learner", getAnalyticsLearnerHandler(deps.DBPool, deps.Logger))
+			lr.Get("/api/analytics", getAnalyticsHandler(deps.DBPool, deps.Logger))
+			lr.Get("/api/analytics/heatmap", getAnalyticsHeatmapHandler(deps.DBPool, deps.Logger))
+		})
+	}
+
+	// P0-L5 Final Batch: Battle — mixed public/auth.
+	if deps.DBPool != nil {
+		r.Get("/api/battle/bots", getBattleBotsHandler(deps.DBPool, deps.Logger))
+		r.Get("/api/battle/configs/available", getBattleConfigsAvailableHandler(deps.DBPool, deps.Logger))
+	}
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Get("/api/battle/chat/recent", getBattleChatRecentHandler(deps.DBPool, deps.Logger))
+		})
+	}
+
+	// P0-L5 Final Batch: CardGen — learner session-guarded; CSRF for writes.
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Use(authn.CSRFGuard(csrfCfg))
+			lr.Post("/api/cardgen/generate", postCardgenGenerateHandler(deps.DBPool, deps.Logger))
+			lr.Post("/api/cardgen/preview", postCardgenPreviewHandler(deps.DBPool, deps.Logger))
+		})
+	}
+
+	// P0-L5 Final Batch: Companion — learner session-guarded.
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Get("/api/companion/hint", getCompanionHintHandler(deps.DBPool, deps.Logger))
+		})
+	}
+
+	// P0-L5 Final Batch: Exercises sessions/daily-progress — learner session-guarded.
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Get("/api/exercises/sessions/history", getExerciseSessionsHistoryHandler(deps.DBPool, deps.Logger))
+			lr.Get("/api/exercises/daily-progress", getExercisesDailyProgressHandler(deps.DBPool, deps.Logger))
+		})
+	}
+
+	// P0-L5 Final Batch: Review (generic) — learner session-guarded; CSRF for writes.
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Get("/api/review", listReviewHandler(deps.DBPool, deps.Logger))
+			lr.Get("/api/review/next", getReviewNextHandler(deps.DBPool, deps.Logger))
+			lr.Get("/api/review/{id}", getReviewDetailHandler(deps.DBPool, deps.Logger))
+		})
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Use(authn.CSRFGuard(csrfCfg))
+			lr.Post("/api/review", createReviewHandler(deps.DBPool, deps.Logger))
+			lr.Patch("/api/review/{id}", updateReviewHandler(deps.DBPool, deps.Logger))
+			lr.Delete("/api/review/{id}", deleteReviewHandler(deps.DBPool, deps.Logger))
+		})
+	}
+
+	// P0-L5 Final Batch: Public shares/decks — no auth required.
+	if deps.DBPool != nil {
+		r.Get("/api/public/shares/{token}", getPublicShareHandler(deps.DBPool, deps.Logger))
+		r.Get("/api/public/decks/{token}", getPublicDeckHandler(deps.DBPool, deps.Logger))
+	}
+
+	// P0-L5 Final Batch: Media search/proxy/presign/complete — learner session-guarded; CSRF for writes.
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Use(authn.CSRFGuard(csrfCfg))
+			lr.Post("/api/media/search-images", postMediaSearchImagesHandler(deps.DBPool, deps.Logger))
+			lr.Post("/api/media/proxy-image", postMediaProxyImageHandler(deps.DBPool, deps.Logger))
+			lr.Post("/api/media/presign-upload", postMediaPresignUploadHandler(deps.DBPool, deps.Logger))
+			lr.Post("/api/media/complete-upload", postMediaCompleteUploadHandler(deps.DBPool, deps.Logger))
+		})
+	}
+
+	// P0-L5 Final Batch: Push notifications — learner session-guarded; CSRF for writes.
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Use(authn.CSRFGuard(csrfCfg))
+			lr.Post("/api/notifications/push/subscribe", postPushSubscribeHandler(deps.DBPool, deps.Logger))
+			lr.Delete("/api/notifications/push/subscribe", deletePushSubscribeHandler(deps.DBPool, deps.Logger))
+		})
+	}
+
+	// P0-L5 Final Batch: Recommendation study-feed — learner session-guarded.
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Get("/api/recommendation/study-feed", getStudyFeedHandler(deps.DBPool, deps.Logger))
+		})
+	}
+
+	// P0-L5 Final Batch: Search suggest — public route.
+	if deps.DBPool != nil {
+		r.Get("/api/search/suggest", getSearchSuggestHandler(deps.DBPool, deps.Logger))
+	}
 	return r
 }
 
