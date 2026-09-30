@@ -72,7 +72,8 @@ The initial parity run reported **747 old / 19 PASS / 562 MISSING / 166 UNKNOWN*
 | P1_A7_ADMIN_CORE_STATIC_PARITY_PASS | 38 | All 38 active admin core routes implemented across IAM/users/content/support/audit/i18n/reading-assist @ 149a4e0; P1-A7 closed |
 | P1_A8_ADMIN_LEARNING_STATIC_PARITY_PASS | 20 | All 20 active admin learning routes implemented across paths/competencies/review @ 9e4e437; P1-A8 closed |
 | P1_A9_ADMIN_GAMIFICATION_STATIC_PARITY_PASS | 23 | All 23 active admin gamification routes implemented across streaks/achievements/tiers/leaderboards/pets @ 8a1c188; P1-A9 closed |
-| ADMIN_TRUE_MISSING_ACTIVE | 110 | Active admin routes requiring implementation across remaining domains (398 − 49 P1-A1 ops − 30 P1-A2 assessment − 27 P1-A3 growth − 26 P1-A4 battle − 36 P1-A5 monetization − 40 P1-A6 analytics − 38 P1-A7 core − 20 P1-A8 learning − 23 P1-A9 gamification) |
+| P1_A10_ADMIN_ADS_STATIC_PARITY_PASS | 13 | All 13 active admin ads routes implemented across overview/placements/campaigns/providers/rules/performance/audit @ ed02722; P1-A10 closed |
+| ADMIN_TRUE_MISSING_ACTIVE | 97 | Active admin routes requiring implementation across remaining domains (398 − 49 P1-A1 ops − 30 P1-A2 assessment − 27 P1-A3 growth − 26 P1-A4 battle − 36 P1-A5 monetization − 40 P1-A6 analytics − 38 P1-A7 core − 20 P1-A8 learning − 23 P1-A9 gamification − 13 P1-A10 ads) |
 | ADMIN_DOMAINS_ACTIVE | 34 | operations(49), assessment(35), growth(30), battle(26), monetization(26), learning(20), content(19), gamification(19), magazine(16), daily-radar(15), daily(15), flashcards(15), ads(13), nhk-news(13), legal(11), iam(10), users(9), exercises(9), cardgen(7), privacy(6), companion(5), media(5), i18n(4), announcements(4), lexemes(3), analytics(3), quiz(3), support(2), me(1), module-contracts(1), audit(1), reading-assist(1), bjt(1), autofill(1) |
 | CURRENT_BFF_ROUTES | 4 |
 | FRONTEND_CALL_SITES | 202 |
