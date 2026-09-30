@@ -25,6 +25,7 @@ import (
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/flashcardreview"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/flashcardstyle"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/gamification"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/quiztemplate"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/media"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/notification"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/onboarding"
@@ -63,6 +64,7 @@ type Dependencies struct {
 	FlashcardStyleStore   *flashcardstyle.Store   // nil if DB not configured; flashcard style endpoints return 503
 	FlashcardReviewStore  *flashcardreview.Store  // nil if DB not configured; flashcard review endpoints return 503
 	FlashcardDeckStore    *flashcarddeck.Store    // nil if DB not configured; flashcard deck endpoints return 503
+	QuizTemplateStore     *quiztemplate.Store     // nil if DB not configured; quiz template endpoints return 503
 	Version               string
 }
 
@@ -465,6 +467,27 @@ func NewRouter(deps Dependencies) http.Handler {
 			lr.Post("/api/flashcards/decks/generate/preview", previewGenerateCountHandler(deps.FlashcardDeckStore, deps.Logger))
 			lr.Post("/api/flashcards/cards/suggest", suggestCardsHandler(deps.FlashcardDeckStore, deps.Logger))
 			lr.Post("/api/flashcards/cards/from-content", createCardFromContentHandler(deps.FlashcardDeckStore, deps.Logger))
+		})
+	}
+
+	// P0-L5: Quiz templates — public routes (no auth required).
+	if deps.QuizTemplateStore != nil {
+		r.Get("/api/quiz/templates", listTemplatesHandler(deps.QuizTemplateStore, deps.Logger))
+		r.Get("/api/quiz/templates/{id}", getTemplateHandler(deps.QuizTemplateStore, deps.Logger))
+		r.Get("/api/quiz/templates/{id}/printable", getPrintableTemplateHandler(deps.QuizTemplateStore, deps.Logger))
+	}
+
+	// P0-L5: Revenge mode — learner session-guarded; CSRF for writes.
+	if deps.QuizTemplateStore != nil && deps.SessionStore != nil {
+		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Get("/api/quiz/revenge/queue", getRevengeQueueHandler(deps.QuizTemplateStore, deps.Logger))
+		})
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Use(authn.CSRFGuard(csrfCfg))
+			lr.Post("/api/quiz/revenge/answer", submitRevengeAnswerHandler(deps.QuizTemplateStore, deps.Logger))
 		})
 	}
 

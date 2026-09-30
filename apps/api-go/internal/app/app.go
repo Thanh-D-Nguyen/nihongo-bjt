@@ -23,6 +23,7 @@ import (
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/flashcarddeck"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/flashcardreview"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/flashcardstyle"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/quiztemplate"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/gamification"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/media"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/notification"
@@ -89,6 +90,7 @@ func New(version string) (*App, error) {
 	flashcardStyleStore := flashcardstyle.NewStore(dbPool)
 	flashcardReviewStore := flashcardreview.NewStore(dbPool)
 	flashcardDeckStore := flashcarddeck.NewStore(dbPool)
+	quizTemplateStore := quiztemplate.NewStore(dbPool)
 	rbacStore := authz.NewStore(dbPool)
 	credentialStore := credential.NewStore(dbPool)
 	rateLimiter, err := authn.NewRateLimiter(authn.DefaultRateLimiterConfig())
@@ -137,6 +139,7 @@ func New(version string) (*App, error) {
 		FlashcardStyleStore:    flashcardStyleStore,
 		FlashcardReviewStore:   flashcardReviewStore,
 		FlashcardDeckStore:     flashcardDeckStore,
+		QuizTemplateStore:      quizTemplateStore,
 		Version:                version,
 	}
 	// Guard against typed-nil interface: only assign Redis if the concrete

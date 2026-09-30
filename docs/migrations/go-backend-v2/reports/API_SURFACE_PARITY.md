@@ -22,7 +22,7 @@ The initial parity run reported **747 old / 19 PASS / 562 MISSING / 166 UNKNOWN*
 | RAW_OLD_ROUTES | 821 |
 | CANONICAL_OLD_ROUTES | 747 |
 | DUPLICATES_COLLAPSED | 74 |
-| CURRENT_GO_ROUTES | 86 |
+| CURRENT_GO_ROUTES | 91 |
 | CURRENT_BFF_ROUTES | 4 |
 | FRONTEND_CALL_SITES | 202 |
 
@@ -30,8 +30,8 @@ The initial parity run reported **747 old / 19 PASS / 562 MISSING / 166 UNKNOWN*
 
 | Status | Count | Notes |
 |---|---|---|
-| PASS | 63 | Route exists in Go/BFF with matching method+path (includes 14 P0-L1 + 3 P0-L2 + 5 P0-L3 + 2 P0-L4 exercise review + 3 P0-L4 flashcard styles + 5 P0-L4 flashcard reviews + 12 P0-L4 flashcard decks) |
-| TRUE_MISSING | 398 | Route absent in Go AND has active frontend caller OR is webhook |
+| PASS | 68 | Route exists in Go/BFF with matching method+path (includes 14 P0-L1 + 3 P0-L2 + 5 P0-L3 + 2 P0-L4 exercise review + 3 P0-L4 flashcard styles + 5 P0-L4 flashcard reviews + 12 P0-L4 flashcard decks + 5 P0-L5 quiz/revenge) |
+| TRUE_MISSING | 393 | Route absent in Go AND has active frontend caller OR is webhook |
 | NEEDS_LIVE_VERIFICATION | 280 | No frontend caller found; may be dead, mobile-only, or internal |
 | INTENTIONALLY_REMOVED | 6 | Test-only or deprecated routes |
 | REPLACED | 0 | To be identified during repair phase |
