@@ -47,6 +47,7 @@ func learnerLoginHandler(
 	sessionStore *session.Store,
 	rateLimiter *authn.RateLimiter,
 	logger *slog.Logger,
+	cookieSecure bool,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
@@ -171,7 +172,7 @@ func learnerLoginHandler(
 			return
 		}
 
-		setSessionCookie(w, learnerCookieName, rawToken, expiresAt)
+		setSessionCookie(w, learnerCookieName, rawToken, expiresAt, cookieSecure)
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -191,6 +192,7 @@ func adminLoginHandler(
 	sessionStore *session.Store,
 	rateLimiter *authn.RateLimiter,
 	logger *slog.Logger,
+	cookieSecure bool,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
@@ -310,7 +312,7 @@ func adminLoginHandler(
 			return
 		}
 
-		setSessionCookie(w, adminCookieName, rawToken, expiresAt)
+		setSessionCookie(w, adminCookieName, rawToken, expiresAt, cookieSecure)
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -318,8 +320,10 @@ func adminLoginHandler(
 	}
 }
 
-// setSessionCookie sets a Secure HttpOnly SameSite=Lax cookie with expiry aligned to DB.
-func setSessionCookie(w http.ResponseWriter, name, value string, expiresAt time.Time) {
+// setSessionCookie sets an HttpOnly SameSite=Lax cookie with expiry aligned to DB.
+// The Secure flag is controlled by cfg.CookieSecure (env COOKIE_SECURE); defaults
+// to true for production HTTPS. Set COOKIE_SECURE=false for HTTP-only staging.
+func setSessionCookie(w http.ResponseWriter, name, value string, expiresAt time.Time, secure bool) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     name,
 		Value:    value,
@@ -327,7 +331,7 @@ func setSessionCookie(w http.ResponseWriter, name, value string, expiresAt time.
 		Expires:  expiresAt,
 		MaxAge:   int(time.Until(expiresAt).Seconds()),
 		HttpOnly: true,
-		Secure:   true, // Production default; local dev should use HTTPS or override via config.
+		Secure:   secure,
 		SameSite: http.SameSiteLaxMode,
 	})
 }

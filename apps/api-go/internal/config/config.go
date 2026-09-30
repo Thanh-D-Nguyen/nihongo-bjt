@@ -44,6 +44,11 @@ type Config struct {
 	// StripeWebhookSecret is the signing secret for Stripe webhook signature verification.
 	// Sourced from STRIPE_WEBHOOK_SECRET env var. Empty disables the webhook endpoint (503).
 	StripeWebhookSecret string
+
+	// CookieSecure controls whether session cookies are marked Secure.
+	// Sourced from COOKIE_SECURE env var. Defaults to true (production HTTPS).
+	// Set to "false" for HTTP-only staging environments (e.g., LAN testing).
+	CookieSecure bool
 }
 
 // Load reads configuration from environment variables and validates required fields.
@@ -123,6 +128,7 @@ func Load() (*Config, error) {
 		MeilisearchURL:       os.Getenv("MEILISEARCH_URL"),
 		MeilisearchAPIKey:    os.Getenv("MEILISEARCH_API_KEY"),
 		StripeWebhookSecret:  os.Getenv("STRIPE_WEBHOOK_SECRET"),
+		CookieSecure:         strings.ToLower(os.Getenv("COOKIE_SECURE")) != "false",
 	}
 	return cfg, nil
 }

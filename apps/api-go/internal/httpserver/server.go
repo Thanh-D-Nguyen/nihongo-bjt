@@ -106,7 +106,7 @@ func NewRouter(deps Dependencies) http.Handler {
 			lr.Use(authn.CSRFGuard(csrfCfg))
 			lr.Post("/api/auth/login", learnerLoginHandler(
 				deps.CredentialStore, deps.ProfileStore, deps.SessionStore,
-				deps.RateLimiter, deps.Logger,
+				deps.RateLimiter, deps.Logger, deps.Config.CookieSecure,
 			))
 		})
 	}
@@ -115,7 +115,7 @@ func NewRouter(deps Dependencies) http.Handler {
 			ar.Use(authn.CSRFGuard(csrfCfg))
 			ar.Post("/api/admin/login", adminLoginHandler(
 				deps.CredentialStore, deps.RBACStore, deps.SessionStore,
-				deps.RateLimiter, deps.Logger,
+				deps.RateLimiter, deps.Logger, deps.Config.CookieSecure,
 			))
 		})
 	}

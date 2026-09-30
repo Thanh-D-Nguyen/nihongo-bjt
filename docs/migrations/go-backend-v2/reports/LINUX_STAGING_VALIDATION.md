@@ -259,8 +259,26 @@ NestJS source code exists but has zero runtime dependency in the deployed archit
 - **Protected route preservation:** `/api/auth/me` correctly returns 401 for unauthenticated users; no auth weakening performed.
 - **Classification:** **ANONYMOUS_BEHAVIOR_PARITY_PASS**
 
+## Browser Auth / Origin Validation
+
+| Check | Evidence | Result |
+|---|---|---|
+| Root cause | `CORS_ORIGINS` in staging compose missing `http://192.168.1.8:18080`; CSRF middleware rejected browser Origin | Config defect |
+| Rejected Origin | `Origin: http://192.168.1.8:18080` → `forbidden: untrusted origin` (403) | Pre-repair |
+| Configured trusted Origin | `CORS_ORIGINS` updated to include `http://192.168.1.8:18080` | docker-compose.yml |
+| Cookie Secure fix | Session cookies had hardcoded `Secure: true`; browsers on HTTP refuse to store them. Added `COOKIE_SECURE` env var (default `true`); staging set to `false` | config.go + handler_login.go |
+| Registration (browser) | POST `/api/auth/register` → 201 `{"userId":"..."}` via Playwright from Mac | ✅ PASS |
+| Authenticated session (browser) | `/api/auth/me` → 200 with full profile after register+auto-login | ✅ PASS |
+| Logout (browser) | POST `/api/auth/logout` → 200; subsequent `/api/auth/me` → 401 | ✅ PASS |
+| Login round-trip (browser) | POST `/api/auth/login` → 200; `/api/auth/me` → 200 | ✅ PASS |
+| Forged origin (negative) | `Origin: http://evil.example` → 403 `forbidden: untrusted origin` | ✅ REJECTED |
+| Near-match wrong port (negative) | `Origin: http://192.168.1.8:18081` → 403 | ✅ REJECTED |
+| Near-match no port (negative) | `Origin: http://192.168.1.8` → 403 | ✅ REJECTED |
+| Production security impact | `COOKIE_SECURE` defaults to `true`; `CORS_ORIGINS` is explicit allowlist (no wildcards); origin validation uses exact scheme+host matching | No weakening |
+- **Classification:** **BROWSER_AUTH_ORIGIN_PARITY_PASS**
+
 ## Gate Result
 
 **LINUX_STAGING_PASS_WITH_PRODUCTION_GATES**
 
-All engineering waves M1–M17 validated on Linux X86_64. Core flows (auth, media, search, jobs, health, realtime) pass. LAN browser rendering validated: **LEARNER_BROWSER_PASS**, **ADMIN_BROWSER_RENDER_HUMAN_ACTION_REQUIRED**. Anonymous behavior parity validated: **ANONYMOUS_BEHAVIOR_PARITY_PASS** (all five public/OPTIONAL_AUTH endpoints restored via Go stubs; hydration crash fixed; protected routes preserved). Legacy backend removal readiness confirmed. Reboot test classified as external privilege gate. ARM64/OCI/DNS/TLS remain as production-only gates.
+All engineering waves M1–M17 validated on Linux X86_64. Core flows (auth, media, search, jobs, health, realtime) pass. LAN browser rendering validated: **LEARNER_BROWSER_PASS**, **ADMIN_BROWSER_RENDER_HUMAN_ACTION_REQUIRED**. Anonymous behavior parity validated: **ANONYMOUS_BEHAVIOR_PARITY_PASS**. Browser auth origin parity validated: **BROWSER_AUTH_ORIGIN_PARITY_PASS** (registration, session, logout, login round-trip all work through Caddy; forged/near-match origins rejected; production security not weakened). Legacy backend removal readiness confirmed. Reboot test classified as external privilege gate. ARM64/OCI/DNS/TLS remain as production-only gates.
