@@ -548,6 +548,27 @@ func NewRouter(deps Dependencies) http.Handler {
 		})
 	}
 
+	// P1-A2.2: Admin Assessment — Question Bank sub-domain (7 routes).
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		adminGuard := authn.AdminGuard(deps.SessionStore, guardCfg)
+		// Read-only question bank endpoints.
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Get("/api/admin/assessment/question-bank", adminAssessmentQuestionBankListHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/assessment/question-bank/{id}", adminAssessmentQuestionBankDetailHandler(deps.DBPool, deps.Logger))
+		})
+		// Mutating question bank endpoints (CSRF-protected).
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Post("/api/admin/assessment/question-bank", adminAssessmentQuestionBankCreateHandler(deps.DBPool, deps.Logger))
+			ar.Patch("/api/admin/assessment/question-bank/{id}", adminAssessmentQuestionBankPatchHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/assessment/question-bank/bulk", adminAssessmentQuestionBankBulkHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/assessment/question-bank/{id}/suggest-edit", adminAssessmentQuestionBankSuggestEditHandler(deps.DBPool, deps.Logger))
+			ar.Delete("/api/admin/assessment/question-bank/{id}", adminAssessmentQuestionBankDeleteHandler(deps.DBPool, deps.Logger))
+		})
+	}
+
 	// P0-L1: Onboarding preferences — learner session-guarded; CSRF for writes.
 	if deps.OnboardingStore != nil && deps.SessionStore != nil {
 		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
