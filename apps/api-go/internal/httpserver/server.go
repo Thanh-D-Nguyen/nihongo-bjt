@@ -398,7 +398,34 @@ func NewRouter(deps Dependencies) http.Handler {
 		r.Group(func(lr chi.Router) {
 			lr.Use(learnerGuard)
 			lr.Use(authn.CSRFGuard(csrfCfg))
-			lr.Post("/api/gamification/streaks/record", recordStreakActivityHandler(deps.GamificationStore, deps.Logger))
+			lr.Post("/api/gamification/streaks/record", recordActivityHandler(deps.GamificationStore, deps.Logger))
+		})
+	}
+
+	// P0-L5: Gamification achievements, focus, pet, events — learner session-guarded; CSRF for writes.
+	if deps.GamificationStore != nil && deps.SessionStore != nil {
+		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Get("/api/gamification/achievements", getAchievementDefinitionsHandler(deps.GamificationStore, deps.Logger))
+			lr.Get("/api/gamification/achievements/browse", browseAchievementsHandler(deps.GamificationStore, deps.Logger))
+			lr.Get("/api/gamification/achievements/me", getMyAchievementsHandler(deps.GamificationStore, deps.Logger))
+			lr.Get("/api/gamification/achievements/me/pending", getPendingAchievementsHandler(deps.GamificationStore, deps.Logger))
+			lr.Get("/api/gamification/focus/today", focusTodayHandler(deps.GamificationStore, deps.Logger))
+			lr.Get("/api/gamification/pet", getPetHandler(deps.GamificationStore, deps.Logger))
+			lr.Get("/api/gamification/pet/costumes", getPetCostumesHandler(deps.GamificationStore, deps.Logger))
+			lr.Get("/api/gamification/events", getActiveEventsHandler(deps.GamificationStore, deps.Logger))
+			lr.Get("/api/gamification/events/{eventId}", getEventHandler(deps.GamificationStore, deps.Logger))
+		})
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Use(authn.CSRFGuard(csrfCfg))
+			lr.Post("/api/gamification/achievements/me/acknowledge", acknowledgeAchievementsHandler(deps.GamificationStore, deps.Logger))
+			lr.Post("/api/gamification/focus/start", startFocusHandler(deps.GamificationStore, deps.Logger))
+			lr.Post("/api/gamification/focus/end", endFocusHandler(deps.GamificationStore, deps.Logger))
+			lr.Post("/api/gamification/pet/feed", feedPetHandler(deps.GamificationStore, deps.Logger))
+			lr.Post("/api/gamification/pet/rename", renamePetHandler(deps.GamificationStore, deps.Logger))
+			lr.Post("/api/gamification/events/{eventId}/join", joinEventHandler(deps.GamificationStore, deps.Logger))
 		})
 	}
 
