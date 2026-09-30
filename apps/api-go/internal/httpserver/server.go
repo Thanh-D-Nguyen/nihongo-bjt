@@ -809,6 +809,23 @@ func NewRouter(deps Dependencies) http.Handler {
 		})
 	}
 
+	// P1-A5.3: Admin Monetization — Subscriptions + Coupons sub-domain (5 routes).
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		adminGuard := authn.AdminGuard(deps.SessionStore, guardCfg)
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Get("/api/admin/monetization/subscriptions", adminMonetizationSubscriptionsListHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/monetization/coupons", adminMonetizationCouponsListHandler(deps.DBPool, deps.Logger))
+		})
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Patch("/api/admin/monetization/subscriptions/{id}", adminMonetizationSubscriptionsPatchHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/monetization/coupons", adminMonetizationCouponsCreateHandler(deps.DBPool, deps.Logger))
+			ar.Patch("/api/admin/monetization/coupons/{id}", adminMonetizationCouponsPatchHandler(deps.DBPool, deps.Logger))
+		})
+	}
+
 	// P0-L1: Onboarding preferences — learner session-guarded; CSRF for writes.
 	if deps.OnboardingStore != nil && deps.SessionStore != nil {
 		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
