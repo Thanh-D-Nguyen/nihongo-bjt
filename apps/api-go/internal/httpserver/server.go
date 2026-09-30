@@ -27,6 +27,7 @@ import (
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/gamification"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/quiztemplate"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/studyplan"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/scenario"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/media"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/notification"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/onboarding"
@@ -67,6 +68,7 @@ type Dependencies struct {
 	FlashcardDeckStore    *flashcarddeck.Store    // nil if DB not configured; flashcard deck endpoints return 503
 	QuizTemplateStore     *quiztemplate.Store     // nil if DB not configured; quiz template endpoints return 503
 	StudyPlanStore        *studyplan.Store        // nil if DB not configured; study plan endpoints return 503
+	ScenarioStore         *scenario.Store         // nil if DB not configured; scenario endpoints return 503
 	Version               string
 }
 
@@ -545,6 +547,71 @@ func NewRouter(deps Dependencies) http.Handler {
 	// P0-L5: Announcements — dismiss (auth optional).
 	if deps.DBPool != nil {
 		r.Post("/api/announcements/{id}/dismiss", dismissAnnouncementHandler(deps.DBPool, deps.Logger))
+	}
+
+
+	// P0-L5: Scenarios — learner session-guarded; CSRF for writes.
+	if deps.ScenarioStore != nil && deps.SessionStore != nil {
+		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Get("/api/scenarios", listScenariosHandler(deps.ScenarioStore, deps.Logger))
+			lr.Get("/api/scenarios/{scenarioId}", getScenarioHandler(deps.ScenarioStore, deps.Logger))
+			lr.Get("/api/scenarios/{scenarioId}/attempts", getScenarioAttemptsHandler(deps.ScenarioStore, deps.Logger))
+		})
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Use(authn.CSRFGuard(csrfCfg))
+			lr.Post("/api/scenarios/steps/{stepId}/answer", submitStepAnswerHandler(deps.ScenarioStore, deps.Logger))
+			lr.Post("/api/scenarios/{scenarioId}/complete", completeScenarioHandler(deps.ScenarioStore, deps.Logger))
+		})
+	}
+
+	// P0-L5: Kanji — public routes (no auth required).
+	if deps.DBPool != nil {
+		r.Get("/api/kanji", listKanjiHandler(deps.DBPool, deps.Logger))
+		r.Get("/api/kanji/search", searchKanjiHandler(deps.DBPool, deps.Logger))
+		r.Get("/api/kanji/{id}", getKanjiDetailHandler(deps.DBPool, deps.Logger))
+		r.Get("/api/kanji/{id}/stroke", getKanjiStrokeHandler(deps.DBPool, deps.Logger))
+		r.Get("/api/kanji/words/{id}", getKanjiWordsHandler(deps.DBPool, deps.Logger))
+		r.Get("/api/kanji/by-word/{wordId}", getKanjiByWordHandler(deps.DBPool, deps.Logger))
+		r.Get("/api/content/kanji", listContentKanjiHandler(deps.DBPool, deps.Logger))
+		r.Get("/api/content/kanji/{id}", getContentKanjiDetailHandler(deps.DBPool, deps.Logger))
+	}
+
+	// P0-L5: Monetization — mixed public/auth routes.
+	if deps.DBPool != nil {
+		r.Get("/api/learner/monetization/plans", listMonetizationPlansHandler(deps.DBPool, deps.Logger))
+	}
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Get("/api/learner/monetization/subscription", getSubscriptionHandler(deps.DBPool, deps.Logger))
+		})
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Use(authn.CSRFGuard(csrfCfg))
+			lr.Post("/api/learner/monetization/checkout", checkoutMonetizationHandler(deps.DBPool, deps.Logger))
+			lr.Post("/api/learner/monetization/subscription/cancel", cancelSubscriptionHandler(deps.DBPool, deps.Logger))
+		})
+	}
+
+	// P0-L5: Reading Assist — learner session-guarded; CSRF for writes.
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Get("/api/reading-assist/preferences", getReadingAssistPreferencesHandler(deps.DBPool, deps.Logger))
+		})
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Use(authn.CSRFGuard(csrfCfg))
+			lr.Put("/api/reading-assist/preferences", putReadingAssistPreferencesHandler(deps.DBPool, deps.Logger))
+			lr.Post("/api/reading-assist/analyze", analyzeReadingAssistHandler(deps.DBPool, deps.Logger))
+			lr.Post("/api/reading-assist/analytics", postReadingAssistAnalyticsHandler(deps.DBPool, deps.Logger))
+			lr.Post("/api/reading-assist/readings", postReadingAssistReadingsHandler(deps.DBPool, deps.Logger))
+		})
 	}
 
 	return r
