@@ -399,6 +399,25 @@ func NewRouter(deps Dependencies) http.Handler {
 		})
 	}
 
+	// P1-A1.4: Admin Operations — Dead Letter Queue sub-domain (5 routes).
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		adminGuard := authn.AdminGuard(deps.SessionStore, guardCfg)
+		// Read-only dead letter endpoints.
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Get("/api/admin/operations/dead-letter-queue", adminOpsDeadLetterListHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/operations/dead-letter-queue/{id}", adminOpsDeadLetterGetHandler(deps.DBPool, deps.Logger))
+		})
+		// Mutating dead letter endpoints (CSRF-protected).
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Patch("/api/admin/operations/dead-letter-queue/{id}/retry", adminOpsDeadLetterRetryHandler(deps.DBPool, deps.Logger))
+			ar.Patch("/api/admin/operations/dead-letter-queue/{id}", adminOpsDeadLetterResolveHandler(deps.DBPool, deps.Logger))
+			ar.Patch("/api/admin/operations/dead-letter-queue/bulk", adminOpsDeadLetterBulkHandler(deps.DBPool, deps.Logger))
+		})
+	}
+
 	// P0-L1: Onboarding preferences — learner session-guarded; CSRF for writes.
 	if deps.OnboardingStore != nil && deps.SessionStore != nil {
 		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
