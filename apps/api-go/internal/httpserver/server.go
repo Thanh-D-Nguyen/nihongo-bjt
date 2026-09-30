@@ -437,6 +437,24 @@ func NewRouter(deps Dependencies) http.Handler {
 		})
 	}
 
+	// P1-A1.6: Admin Operations — Security sub-domain (4 routes).
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		adminGuard := authn.AdminGuard(deps.SessionStore, guardCfg)
+		// Read-only security endpoints.
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Get("/api/admin/operations/security", adminOpsSecurityOverviewHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/operations/security/events", adminOpsSecurityEventsListHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/operations/security/events/{id}", adminOpsSecurityEventGetHandler(deps.DBPool, deps.Logger))
+		})
+		// Mutating security endpoints (CSRF-protected).
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Patch("/api/admin/operations/security/events/{id}/resolve", adminOpsSecurityEventResolveHandler(deps.DBPool, deps.Logger))
+		})
+	}
+
 	// P0-L1: Onboarding preferences — learner session-guarded; CSRF for writes.
 	if deps.OnboardingStore != nil && deps.SessionStore != nil {
 		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
