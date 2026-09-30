@@ -517,6 +517,15 @@ func NewRouter(deps Dependencies) http.Handler {
 		})
 	}
 
+	// P1-A1.12: Admin Operations — BJT Dashboard sub-domain (1 route).
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		adminGuard := authn.AdminGuard(deps.SessionStore, guardCfg)
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Get("/api/admin/operations/bjt/dashboard", adminOpsBJTDashboardHandler(deps.DBPool, deps.Logger))
+		})
+	}
+
 	// P0-L1: Onboarding preferences — learner session-guarded; CSRF for writes.
 	if deps.OnboardingStore != nil && deps.SessionStore != nil {
 		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
