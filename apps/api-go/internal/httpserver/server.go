@@ -767,6 +767,25 @@ func NewRouter(deps Dependencies) http.Handler {
 		})
 	}
 
+	// P1-A5.1: Admin Monetization — Core sub-domain (7 routes).
+	if deps.DBPool != nil && deps.SessionStore != nil {
+		adminGuard := authn.AdminGuard(deps.SessionStore, guardCfg)
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Get("/api/admin/monetization/overview", adminMonetizationOverviewHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/monetization/summary", adminMonetizationSummaryHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/monetization/analytics", adminMonetizationAnalyticsHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/monetization/audit", adminMonetizationAuditHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/monetization/plans", adminMonetizationPlansListHandler(deps.DBPool, deps.Logger))
+		})
+		r.Group(func(ar chi.Router) {
+			ar.Use(adminGuard)
+			ar.Use(authn.CSRFGuard(csrfCfg))
+			ar.Post("/api/admin/monetization/plans", adminMonetizationPlansCreateHandler(deps.DBPool, deps.Logger))
+			ar.Patch("/api/admin/monetization/plans/{id}", adminMonetizationPlansPatchHandler(deps.DBPool, deps.Logger))
+		})
+	}
+
 	// P0-L1: Onboarding preferences — learner session-guarded; CSRF for writes.
 	if deps.OnboardingStore != nil && deps.SessionStore != nil {
 		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
