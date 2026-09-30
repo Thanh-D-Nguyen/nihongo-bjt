@@ -21,6 +21,7 @@ import (
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/credential"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authlink"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/exercisereview"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/flashcardreview"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/flashcardstyle"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/gamification"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/media"
@@ -59,6 +60,7 @@ type Dependencies struct {
 	GamificationStore   *gamification.Store   // nil if DB not configured; gamification endpoints return 503
 	ExerciseReviewStore   *exercisereview.Store   // nil if DB not configured; exercise review endpoints return 503
 	FlashcardStyleStore   *flashcardstyle.Store   // nil if DB not configured; flashcard style endpoints return 503
+	FlashcardReviewStore  *flashcardreview.Store  // nil if DB not configured; flashcard review endpoints return 503
 	Version               string
 }
 
@@ -420,6 +422,23 @@ func NewRouter(deps Dependencies) http.Handler {
 			lr.Use(learnerGuard)
 			lr.Use(authn.CSRFGuard(csrfCfg))
 			lr.Put("/api/flashcards/styles/active", setActiveFlashcardStyleHandler(deps.FlashcardStyleStore, deps.Logger))
+		})
+	}
+
+	// P0-L4: Flashcard reviews — learner session-guarded; CSRF for writes.
+	if deps.FlashcardReviewStore != nil && deps.SessionStore != nil {
+		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Get("/api/flashcards/reviews/due", getDueFlashcardsHandler(deps.FlashcardReviewStore, deps.Logger))
+			lr.Get("/api/flashcards/reviews/comeback-summary", getComebackSummaryHandler(deps.FlashcardReviewStore, deps.Logger))
+			lr.Get("/api/flashcards/reviews/{userFlashcardId}/distractors", getDistractorsHandler(deps.FlashcardReviewStore, deps.Logger))
+		})
+		r.Group(func(lr chi.Router) {
+			lr.Use(learnerGuard)
+			lr.Use(authn.CSRFGuard(csrfCfg))
+			lr.Post("/api/flashcards/reviews/batch", batchReviewHandler(deps.FlashcardReviewStore, deps.Logger))
+			lr.Post("/api/flashcards/reviews/{userFlashcardId}", submitReviewHandler(deps.FlashcardReviewStore, deps.Logger))
 		})
 	}
 

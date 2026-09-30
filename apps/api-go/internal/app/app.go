@@ -20,6 +20,7 @@ import (
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/jobs"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authlink"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/exercisereview"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/flashcardreview"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/flashcardstyle"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/gamification"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/media"
@@ -85,6 +86,7 @@ func New(version string) (*App, error) {
 	gamificationStore := gamification.NewStore(dbPool)
 	exerciseReviewStore := exercisereview.NewStore(dbPool)
 	flashcardStyleStore := flashcardstyle.NewStore(dbPool)
+	flashcardReviewStore := flashcardreview.NewStore(dbPool)
 	rbacStore := authz.NewStore(dbPool)
 	credentialStore := credential.NewStore(dbPool)
 	rateLimiter, err := authn.NewRateLimiter(authn.DefaultRateLimiterConfig())
@@ -130,8 +132,9 @@ func New(version string) (*App, error) {
 		PlacementStore:      placementStore,
 		GamificationStore:     gamificationStore,
 		ExerciseReviewStore:   exerciseReviewStore,
-		FlashcardStyleStore:   flashcardStyleStore,
-		Version:               version,
+		FlashcardStyleStore:    flashcardStyleStore,
+		FlashcardReviewStore:   flashcardReviewStore,
+		Version:                version,
 	}
 	// Guard against typed-nil interface: only assign Redis if the concrete
 	// client is non-nil. A typed-nil *redis.Client assigned to a
