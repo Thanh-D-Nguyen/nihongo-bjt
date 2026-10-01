@@ -822,7 +822,7 @@ func adminAdsRuleUpsertHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handl
 
 		ctx := r.Context()
 		var id string
-		err := db.QueryRow(ctx, `INSERT INTO monetization.ad_safety_rule (rule_key, enabled, config, created_at, updated_at)
+		err := db.QueryRow(ctx, `INSERT INTO monetization.ad_safety_rule (rule_key, enabled, config, updated_at)
 			VALUES ($1,$2,$3,NOW(),NOW())
 			ON CONFLICT (rule_key) DO UPDATE SET enabled=$2, config=$3, updated_at=NOW()
 			RETURNING id`, req.RuleKey, enabled, config).Scan(&id)

@@ -412,7 +412,7 @@ func adminLegalPolicyArchiveHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 			return
 		}
 
-		_, err = db.Exec(r.Context(), "UPDATE legal.legal_policy SET status='archived', updated_at=NOW() WHERE id=$1", id)
+		_, err = db.Exec(r.Context(), "UPDATE legal.legal_policy SET status='archived' WHERE id=$1", id)
 		if err != nil {
 			logger.Error("archive legal policy", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)

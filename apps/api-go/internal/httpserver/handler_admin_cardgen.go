@@ -20,7 +20,7 @@ import (
 // adminCardgenRulesListHandler implements GET /api/admin/cardgen/rules.
 func adminCardgenRulesListHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		rows, err := db.Query(r.Context(), `SELECT id, name, description, filter_level, filter_tags,
+		rows, err := db.Query(r.Context(), `SELECT id, name, filter_level, filter_tags,
 			card_template, enabled, created_at, updated_at
 			FROM learning.flashcard_gen_rule ORDER BY created_at DESC`)
 		if err != nil {
@@ -87,7 +87,7 @@ func adminCardgenRuleDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 		}
 		var rl Rule
 		var ca, ua time.Time
-		err := db.QueryRow(r.Context(), `SELECT id, name, description, filter_level, filter_tags,
+		err := db.QueryRow(r.Context(), `SELECT id, name, filter_level, filter_tags,
 			card_template, enabled, created_at, updated_at
 			FROM learning.flashcard_gen_rule WHERE id=$1`, id).
 			Scan(&rl.ID, &rl.Name, &rl.Description, &rl.FilterLevel,
