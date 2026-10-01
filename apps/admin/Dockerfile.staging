@@ -15,7 +15,8 @@ COPY packages/ packages/
 COPY tsconfig.json ./
 # Build with assetPrefix passed as ARG
 ARG ADMIN_ASSET_PREFIX=/admin
-ENV NEXT_PUBLIC_API_URL=http://192.168.1.8:18080
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 ENV API_URL=http://api:4001
 ENV NODE_ENV=production
 RUN cd apps/admin && ADMIN_ASSET_PREFIX=$ADMIN_ASSET_PREFIX pnpm build
