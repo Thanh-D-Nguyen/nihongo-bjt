@@ -183,7 +183,7 @@ func postAuthLinkExchangeHandler(db *pgxpool.Pool, logger *slog.Logger) http.Han
 // Public route — returns available battle bots.
 func getBattleBotsHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		const q = `SELECT id, name, avatar_url, difficulty, description FROM battle.bot WHERE active = true ORDER BY display_order ASC`
+		const q = `SELECT id, name, avatar_url, difficulty, description FROM learning.battle_bot WHERE active = true ORDER BY display_order ASC`
 		rows, err := db.Query(r.Context(), q)
 		if err != nil {
 			logger.Error("list battle bots", "error", err)
@@ -260,7 +260,7 @@ func getBattleChatRecentHandler(db *pgxpool.Pool, logger *slog.Logger) http.Hand
 // Public route.
 func getBattleConfigsAvailableHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		const q = `SELECT id, name, description, min_players, max_players, time_limit_seconds FROM battle.config WHERE active = true ORDER BY display_order ASC`
+		const q = `SELECT id, name, description, min_players, max_players, time_limit_seconds FROM learning.battle_config WHERE active = true ORDER BY display_order ASC`
 		rows, err := db.Query(r.Context(), q)
 		if err != nil {
 			logger.Error("battle configs", "error", err)

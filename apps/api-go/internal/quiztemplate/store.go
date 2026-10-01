@@ -133,7 +133,7 @@ func (s *Store) ListTemplates(ctx context.Context) ([]TemplateSummary, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	const q = `SELECT t.id, t.title, t.type, t.status, t.created_at,
+	const q = `SELECT t.id, t.title_vi AS title, t.type, t.status, t.created_at,
 		(SELECT COUNT(*) FROM assessment.bjt_test_section s WHERE s.test_id = t.id) as section_count,
 		(SELECT COUNT(*) FROM assessment.quiz_session qs WHERE qs.test_id = t.id) as session_count
 	FROM assessment.bjt_mock_test t
@@ -170,7 +170,7 @@ func (s *Store) GetTemplate(ctx context.Context, id string) (*TemplateDetail, er
 	defer cancel()
 
 	// Check access and type
-	const metaQ = `SELECT id, title, type, status, description, created_at FROM assessment.bjt_mock_test WHERE id = $1 AND status = 'published'`
+	const metaQ = `SELECT id, title_vi AS title, type, status, description, created_at FROM assessment.bjt_mock_test WHERE id = $1 AND status = 'published'`
 	var t TemplateDetail
 	if err := s.db.QueryRow(ctx, metaQ, id).Scan(&t.ID, &t.Title, &t.Type, &t.Status, &t.Description, &t.CreatedAt); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -216,7 +216,7 @@ func (s *Store) GetPrintableTemplate(ctx context.Context, id string) (*Printable
 	defer cancel()
 
 	// Check access and type
-	const metaQ = `SELECT id, title, type FROM assessment.bjt_mock_test WHERE id = $1 AND status = 'published'`
+	const metaQ = `SELECT id, title_vi AS title, type FROM assessment.bjt_mock_test WHERE id = $1 AND status = 'published'`
 	var testID, title, testType string
 	if err := s.db.QueryRow(ctx, metaQ, id).Scan(&testID, &title, &testType); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {

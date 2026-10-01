@@ -205,9 +205,9 @@ func getKanjiWordsHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFun
 		}
 
 		const q = `SELECT DISTINCT w.id, w.text, w.reading, w.meaning_vi
-			FROM content.word w
-			JOIN content.word_kanji wk ON wk.word_id = w.id
-			WHERE wk.kanji_id = $1 AND w.status = 'active'
+			FROM content.lexeme w
+			JOIN content.lexeme_sense ls ON ls.lexeme_id = w.id
+			WHERE ls.kanji_id = $1 AND w.status = 'active'
 			ORDER BY w.text ASC LIMIT 50`
 		rows, err := db.Query(r.Context(), q, id)
 		if err != nil {
@@ -259,8 +259,8 @@ func getKanjiByWordHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFu
 
 		const q = `SELECT k.id, k.character, k.meaning_vi
 			FROM content.kanji k
-			JOIN content.word_kanji wk ON wk.kanji_id = k.id
-			WHERE wk.word_id = $1 AND k.status = 'active'
+			JOIN content.lexeme_sense ls ON ls.kanji_id = k.id
+			WHERE ls.lexeme_id = $1 AND k.status = 'active'
 			ORDER BY k.character ASC`
 		rows, err := db.Query(r.Context(), q, wordID)
 		if err != nil {
