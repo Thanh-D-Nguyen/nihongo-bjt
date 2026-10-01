@@ -26,7 +26,10 @@ export type AdminLoginFormCopy = {
 
 const ERROR_REGION_ID = "admin-login-error";
 
-const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/$/u, "");
+// Use relative paths so the form works regardless of whether the browser
+// is on a .test domain, raw IP, or production hostname. The Caddy reverse
+// proxy routes /api/* to the Go API on all hostnames.
+const apiBaseUrl = "";
 
 function mapErrorCode(code: string | undefined, copy: AdminLoginFormCopy): string {
   switch (code) {
