@@ -731,7 +731,7 @@ func adminFlashcardStylesAdoptionHandler(db *pgxpool.Pool, logger *slog.Logger) 
 	return func(w http.ResponseWriter, r *http.Request) {
 		rows, err := db.Query(r.Context(), `SELECT fs.id, fs.slug, fs.name_key, COUNT(DISTINCT up.user_id) as user_count
 FROM learning.flashcard_style fs
-LEFT JOIN learner.user_preference up ON up.flashcard_style_id = fs.id
+LEFT JOIN profile.reading_user_preference up ON up.flashcard_style_id = fs.id
 GROUP BY fs.id, fs.slug, fs.name_key
 ORDER BY user_count DESC`)
 		if err != nil {

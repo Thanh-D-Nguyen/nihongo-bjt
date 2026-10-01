@@ -48,10 +48,10 @@ func adminQuizTestsListHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handl
 		}
 
 		var total int
-		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM assessment.bjt_test "+whereClause, args...).Scan(&total)
+		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM assessment.bjt_mock_test "+whereClause, args...).Scan(&total)
 
 		dataQ := fmt.Sprintf(`SELECT id, title, type, status, duration_minutes, question_count, created_at, updated_at
-			FROM assessment.bjt_test %s ORDER BY created_at DESC LIMIT $%d OFFSET $%d`,
+			FROM assessment.bjt_mock_test %s ORDER BY created_at DESC LIMIT $%d OFFSET $%d`,
 			whereClause, argIdx, argIdx+1)
 		args = append(args, limit, offset)
 
@@ -100,7 +100,7 @@ func adminQuizRemediationListHandler(db *pgxpool.Pool, logger *slog.Logger) http
 
 		rows, err := db.Query(r.Context(), `SELECT id, prompt, skill_tag, difficulty, remediation_card_id,
 			explanation_vi, status, created_at,
-			(SELECT COUNT(*) FROM assessment.bjt_option WHERE question_id = assessment.bjt_question.id) as option_count
+			(SELECT COUNT(*) FROM assessment.quiz_answer WHERE question_id = assessment.bjt_question.id) as option_count
 			FROM assessment.bjt_question ORDER BY created_at DESC LIMIT $1`, limit)
 		if err != nil {
 			logger.Error("list quiz remediation", "error", err)
@@ -171,7 +171,7 @@ func adminQuizQuestionsListHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM assessment.bjt_question "+whereClause, args...).Scan(&total)
 
 		dataQ := fmt.Sprintf(`SELECT id, prompt, skill_tag, difficulty, status, created_at,
-			(SELECT COUNT(*) FROM assessment.bjt_option WHERE question_id = assessment.bjt_question.id) as option_count
+			(SELECT COUNT(*) FROM assessment.quiz_answer WHERE question_id = assessment.bjt_question.id) as option_count
 			FROM assessment.bjt_question %s ORDER BY created_at DESC LIMIT $%d OFFSET $%d`,
 			whereClause, argIdx, argIdx+1)
 		args = append(args, limit, offset)

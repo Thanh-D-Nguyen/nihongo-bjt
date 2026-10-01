@@ -76,14 +76,14 @@ var domainConfigs = map[string]domainSourceConfig{
 		FreshnessTable: "gamification.xp_event",
 	},
 	"content": {
-		SessionTable:   "content.daily_radar_card",
+		SessionTable:   "daily.daily_radar_card",
 		ScoreColumn:    "",
 		PassThreshold:  0,
 		DurationAvail:  false,
 		BreakdownDim:   "by_category",
 		Metrics:        []string{"publications", "views"},
 		KPIIDs:         []string{"cardsPublished", "activeModules", "totalViews", "avgReadTime", "engagementRate"},
-		FreshnessTable: "content.daily_radar_card",
+		FreshnessTable: "daily.daily_radar_card",
 	},
 	"flashcards": {
 		SessionTable:   "learning.flashcard_review_session",

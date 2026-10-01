@@ -71,7 +71,7 @@ func adminAssessmentRemediationRulesListHandler(db *pgxpool.Pool, logger *slog.L
 			whereClause = "WHERE " + strings.Join(whereParts, " AND ")
 		}
 
-		countQuery := "SELECT COUNT(*) FROM assessment.remediation_rule " + whereClause
+		countQuery := "SELECT COUNT(*) FROM assessment.assessment_remediation_rule " + whereClause
 		var total int
 		if err := db.QueryRow(ctx, countQuery, args...).Scan(&total); err != nil {
 			logger.Error("count remediation rules", "error", err)
@@ -84,7 +84,7 @@ func adminAssessmentRemediationRulesListHandler(db *pgxpool.Pool, logger *slog.L
 				threshold_failed_count, threshold_window_questions,
 				recommended_content_type, recommended_content_id,
 				active, created_by_id, updated_by_id, created_at, updated_at
-			FROM assessment.remediation_rule %s
+			FROM assessment.assessment_remediation_rule %s
 			ORDER BY updated_at DESC LIMIT $%d OFFSET $%d`,
 			whereClause, argIdx, argIdx+1)
 		args = append(args, pageSize, offset)
@@ -194,7 +194,7 @@ func adminAssessmentRemediationRulesDetailHandler(db *pgxpool.Pool, logger *slog
 				threshold_failed_count, threshold_window_questions,
 				recommended_content_type, recommended_content_id,
 				active, created_by_id, updated_by_id, created_at, updated_at
-			FROM assessment.remediation_rule WHERE id = $1`, id).Scan(
+			FROM assessment.assessment_remediation_rule WHERE id = $1`, id).Scan(
 			&rd.ID, &rd.Name, &rd.Description, &rd.TopicSkillTag, &rd.Level,
 			&rd.ThresholdFailedCount, &rd.ThresholdWindowQuestions,
 			&rd.RecommendedContentType, &rd.RecommendedContentID,
@@ -213,7 +213,7 @@ func adminAssessmentRemediationRulesDetailHandler(db *pgxpool.Pool, logger *slog
 				a.reason, a.after, a.before, a.created_at
 			FROM ops.admin_audit_log a
 			LEFT JOIN authz.admin_actor act ON act.id = a.actor_id
-			WHERE a.target_id = $1 AND a.target_type = 'assessment.remediation_rule'
+			WHERE a.target_id = $1 AND a.target_type = 'assessment.assessment_remediation_rule'
 			ORDER BY a.created_at DESC LIMIT 30`, id)
 		if err == nil {
 			for aRows.Next() {
@@ -288,7 +288,7 @@ func adminAssessmentRemediationRulesCreateHandler(db *pgxpool.Pool, logger *slog
 		ctx := r.Context()
 		var createdID string
 		err := db.QueryRow(ctx, `
-			INSERT INTO assessment.remediation_rule (name, description, topic_skill_tag, level,
+			INSERT INTO assessment.assessment_remediation_rule (name, description, topic_skill_tag, level,
 				threshold_failed_count, threshold_window_questions,
 				recommended_content_type, recommended_content_id,
 				active, created_by_id, updated_by_id, created_at, updated_at)
@@ -315,7 +315,7 @@ func adminAssessmentRemediationRulesCreateHandler(db *pgxpool.Pool, logger *slog
 			"active": true,
 		})
 		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
-			VALUES ('admin.assessment.remediation_rule.created', $1, $2, 'assessment.remediation_rule', $3, $4, NOW())`,
+			VALUES ('admin.assessment.remediation_rule.created', $1, $2, 'assessment.assessment_remediation_rule', $3, $4, NOW())`,
 			identity.ActorID, createdID, req.Reason, afterJSON)
 
 		// Return detail view
@@ -373,7 +373,7 @@ func adminAssessmentRemediationRulesPatchHandler(db *pgxpool.Pool, logger *slog.
 			SELECT name, description, topic_skill_tag, level,
 				threshold_failed_count, threshold_window_questions,
 				recommended_content_type, recommended_content_id, active
-			FROM assessment.remediation_rule WHERE id = $1`, id).Scan(
+			FROM assessment.assessment_remediation_rule WHERE id = $1`, id).Scan(
 			&before.Name, &before.Description, &before.TopicSkillTag, &before.Level,
 			&before.ThresholdFailedCount, &before.ThresholdWindowQuestions,
 			&before.RecommendedContentType, &before.RecommendedContentID, &before.Active)
@@ -438,7 +438,7 @@ func adminAssessmentRemediationRulesPatchHandler(db *pgxpool.Pool, logger *slog.
 		argIdx++
 		setClauses = append(setClauses, "updated_at = NOW()")
 
-		query := "UPDATE assessment.remediation_rule SET " + joinStrings(setClauses, ", ") +
+		query := "UPDATE assessment.assessment_remediation_rule SET " + joinStrings(setClauses, ", ") +
 			" WHERE id = $" + itoa(argIdx)
 		args = append(args, id)
 
@@ -452,7 +452,7 @@ func adminAssessmentRemediationRulesPatchHandler(db *pgxpool.Pool, logger *slog.
 		beforeJSON, _ := json.Marshal(before)
 		afterJSON, _ := json.Marshal(map[string]any{"updated": true, "fields": setClauses})
 		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
-			VALUES ('admin.assessment.remediation_rule.updated', $1, $2, 'assessment.remediation_rule', $3, $4, $5, NOW())`,
+			VALUES ('admin.assessment.remediation_rule.updated', $1, $2, 'assessment.assessment_remediation_rule', $3, $4, $5, NOW())`,
 			identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
 
 		// Return detail view
@@ -481,7 +481,7 @@ func adminAssessmentRemediationRulesEnableHandler(db *pgxpool.Pool, logger *slog
 
 		ctx := r.Context()
 		var currentActive bool
-		err := db.QueryRow(ctx, "SELECT active FROM assessment.remediation_rule WHERE id = $1", id).Scan(&currentActive)
+		err := db.QueryRow(ctx, "SELECT active FROM assessment.assessment_remediation_rule WHERE id = $1", id).Scan(&currentActive)
 		if err != nil {
 			writeJSONError(w, "remediation rule not found", http.StatusNotFound)
 			return
@@ -493,14 +493,14 @@ func adminAssessmentRemediationRulesEnableHandler(db *pgxpool.Pool, logger *slog
 			action = "admin.assessment.remediation_rule.enable_noop"
 			noop = true
 		} else {
-			db.Exec(ctx, "UPDATE assessment.remediation_rule SET active = true, updated_by_id = $1, updated_at = NOW() WHERE id = $2",
+			db.Exec(ctx, "UPDATE assessment.assessment_remediation_rule SET active = true, updated_by_id = $1, updated_at = NOW() WHERE id = $2",
 				identity.ActorID, id)
 		}
 
 		afterJSON, _ := json.Marshal(map[string]any{"active": true, "noop": noop})
 		beforeJSON, _ := json.Marshal(map[string]any{"active": currentActive})
 		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
-			VALUES ($1, $2, $3, 'assessment.remediation_rule', $4, $5, $6, NOW())`,
+			VALUES ($1, $2, $3, 'assessment.assessment_remediation_rule', $4, $5, $6, NOW())`,
 			action, identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
 
 		detailHandler := adminAssessmentRemediationRulesDetailHandler(db, logger)
@@ -528,7 +528,7 @@ func adminAssessmentRemediationRulesDisableHandler(db *pgxpool.Pool, logger *slo
 
 		ctx := r.Context()
 		var currentActive bool
-		err := db.QueryRow(ctx, "SELECT active FROM assessment.remediation_rule WHERE id = $1", id).Scan(&currentActive)
+		err := db.QueryRow(ctx, "SELECT active FROM assessment.assessment_remediation_rule WHERE id = $1", id).Scan(&currentActive)
 		if err != nil {
 			writeJSONError(w, "remediation rule not found", http.StatusNotFound)
 			return
@@ -540,14 +540,14 @@ func adminAssessmentRemediationRulesDisableHandler(db *pgxpool.Pool, logger *slo
 			action = "admin.assessment.remediation_rule.disable_noop"
 			noop = true
 		} else {
-			db.Exec(ctx, "UPDATE assessment.remediation_rule SET active = false, updated_by_id = $1, updated_at = NOW() WHERE id = $2",
+			db.Exec(ctx, "UPDATE assessment.assessment_remediation_rule SET active = false, updated_by_id = $1, updated_at = NOW() WHERE id = $2",
 				identity.ActorID, id)
 		}
 
 		afterJSON, _ := json.Marshal(map[string]any{"active": false, "noop": noop})
 		beforeJSON, _ := json.Marshal(map[string]any{"active": currentActive})
 		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
-			VALUES ($1, $2, $3, 'assessment.remediation_rule', $4, $5, $6, NOW())`,
+			VALUES ($1, $2, $3, 'assessment.assessment_remediation_rule', $4, $5, $6, NOW())`,
 			action, identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
 
 		detailHandler := adminAssessmentRemediationRulesDetailHandler(db, logger)
@@ -600,7 +600,7 @@ func adminAssessmentRemediationRulesDeleteHandler(db *pgxpool.Pool, logger *slog
 			SELECT name, description, topic_skill_tag, level,
 				threshold_failed_count, threshold_window_questions,
 				recommended_content_type, recommended_content_id, active
-			FROM assessment.remediation_rule WHERE id = $1`, id).Scan(
+			FROM assessment.assessment_remediation_rule WHERE id = $1`, id).Scan(
 			&before.Name, &before.Description, &before.TopicSkillTag, &before.Level,
 			&before.ThresholdFailedCount, &before.ThresholdWindowQuestions,
 			&before.RecommendedContentType, &before.RecommendedContentID, &before.Active)
@@ -609,11 +609,11 @@ func adminAssessmentRemediationRulesDeleteHandler(db *pgxpool.Pool, logger *slog
 			return
 		}
 
-		db.Exec(ctx, "DELETE FROM assessment.remediation_rule WHERE id = $1", id)
+		db.Exec(ctx, "DELETE FROM assessment.assessment_remediation_rule WHERE id = $1", id)
 
 		beforeJSON, _ := json.Marshal(before)
 		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, created_at)
-			VALUES ('admin.assessment.remediation_rule.deleted', $1, $2, 'assessment.remediation_rule', $3, $4, NOW())`,
+			VALUES ('admin.assessment.remediation_rule.deleted', $1, $2, 'assessment.assessment_remediation_rule', $3, $4, NOW())`,
 			identity.ActorID, id, req.Reason, beforeJSON)
 
 		writeJSON(w, http.StatusOK, map[string]any{"deleted": true, "id": id})

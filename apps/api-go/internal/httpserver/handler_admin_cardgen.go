@@ -13,7 +13,7 @@ import (
 
 // ── P1-A16: Admin Cardgen — Rules + Jobs (7 routes) ────────────────────────
 // Contracts derived from NestJS cardgen-admin.controller.ts, cardgen.repository.ts.
-// DB tables: content.flashcard_gen_rule, content.flashcard_gen_job, ops.admin_audit_log.
+// DB tables: learning.flashcard_gen_rule, learning.flashcard_gen_job, ops.admin_audit_log.
 
 // ── Rules ───────────────────────────────────────────────────────────────────
 
@@ -22,7 +22,7 @@ func adminCardgenRulesListHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 	return func(w http.ResponseWriter, r *http.Request) {
 		rows, err := db.Query(r.Context(), `SELECT id, name, description, filter_level, filter_tags,
 			card_template, enabled, created_at, updated_at
-			FROM content.flashcard_gen_rule ORDER BY created_at DESC`)
+			FROM learning.flashcard_gen_rule ORDER BY created_at DESC`)
 		if err != nil {
 			logger.Error("list cardgen rules", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
@@ -89,7 +89,7 @@ func adminCardgenRuleDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 		var ca, ua time.Time
 		err := db.QueryRow(r.Context(), `SELECT id, name, description, filter_level, filter_tags,
 			card_template, enabled, created_at, updated_at
-			FROM content.flashcard_gen_rule WHERE id=$1`, id).
+			FROM learning.flashcard_gen_rule WHERE id=$1`, id).
 			Scan(&rl.ID, &rl.Name, &rl.Description, &rl.FilterLevel,
 				&rl.FilterTags, &rl.CardTemplate, &rl.Enabled, &ca, &ua)
 		if err != nil {
@@ -145,7 +145,7 @@ func adminCardgenRuleCreateHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 		}
 
 		var id string
-		err := db.QueryRow(r.Context(), `INSERT INTO content.flashcard_gen_rule
+		err := db.QueryRow(r.Context(), `INSERT INTO learning.flashcard_gen_rule
 			(name, description, filter_level, filter_tags, card_template, enabled, created_at, updated_at)
 			VALUES ($1,$2,$3,$4,$5,$6,NOW(),NOW()) RETURNING id`,
 			req.Name, req.Description, req.FilterLevel, req.FilterTags, req.CardTemplate, enabled).Scan(&id)
@@ -231,7 +231,7 @@ func adminCardgenRuleUpdateHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 		}
 		setClauses = append(setClauses, "updated_at = NOW()")
 
-		query := "UPDATE content.flashcard_gen_rule SET " + joinStrings(setClauses, ", ") + " WHERE id = $" + itoa(argIdx)
+		query := "UPDATE learning.flashcard_gen_rule SET " + joinStrings(setClauses, ", ") + " WHERE id = $" + itoa(argIdx)
 		args = append(args, id)
 		if _, err := db.Exec(r.Context(), query, args...); err != nil {
 			logger.Error("update cardgen rule", "error", err)
@@ -263,7 +263,7 @@ func adminCardgenRuleDeleteHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 			return
 		}
 
-		db.Exec(r.Context(), "DELETE FROM content.flashcard_gen_rule WHERE id=$1", id)
+		db.Exec(r.Context(), "DELETE FROM learning.flashcard_gen_rule WHERE id=$1", id)
 
 		beforeJSON, _ := json.Marshal(map[string]any{"id": id})
 		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, created_at)
@@ -286,7 +286,7 @@ func adminCardgenJobsListHandler(db *pgxpool.Pool, logger *slog.Logger) http.Han
 
 		rows, err := db.Query(r.Context(), `SELECT id, rule_id, user_id, status, cards_generated,
 			error_message, created_at, completed_at
-			FROM content.flashcard_gen_job ORDER BY created_at DESC LIMIT $1`, limit)
+			FROM learning.flashcard_gen_job ORDER BY created_at DESC LIMIT $1`, limit)
 		if err != nil {
 			logger.Error("list cardgen jobs", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
@@ -351,7 +351,7 @@ func adminCardgenJobDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 		var cat *time.Time
 		err := db.QueryRow(r.Context(), `SELECT id, rule_id, user_id, status, cards_generated,
 			error_message, result_payload, created_at, completed_at
-			FROM content.flashcard_gen_job WHERE id=$1`, id).
+			FROM learning.flashcard_gen_job WHERE id=$1`, id).
 			Scan(&j.ID, &j.RuleID, &j.UserID, &j.Status, &j.CardsGenerated,
 				&j.ErrorMessage, &j.ResultPayload, &ca, &cat)
 		if err != nil {

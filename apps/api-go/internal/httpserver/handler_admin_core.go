@@ -47,7 +47,7 @@ func adminMeHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 func adminModuleContractsHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rows, err := db.Query(r.Context(),
-			"SELECT module_key, status, implemented_routes, total_routes, last_updated FROM content.module_contract ORDER BY module_key ASC")
+			"SELECT module_key, status, implemented_routes, total_routes, last_updated FROM ops.admin_audit_log ORDER BY module_key ASC")
 		if err != nil {
 			logger.Error("list module contracts", "error", err)
 			writeJSON(w, http.StatusOK, []any{})
@@ -86,7 +86,7 @@ func adminModuleContractsHandler(db *pgxpool.Pool, logger *slog.Logger) http.Han
 func adminIamRolesListHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rows, err := db.Query(r.Context(),
-			"SELECT code, name, description, is_system, created_at FROM authz.role ORDER BY code ASC")
+			"SELECT code, name, description, is_system, created_at FROM authz.admin_role ORDER BY code ASC")
 		if err != nil {
 			logger.Error("list iam roles", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
@@ -172,8 +172,8 @@ func adminIamPermissionsListHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 	return func(w http.ResponseWriter, r *http.Request) {
 		rows, err := db.Query(r.Context(),
 			`SELECT p.code, p.description, p.category,
-			 (SELECT COUNT(*) FROM authz.role_permission rp WHERE rp.permission_code = p.code) as roles_count
-			 FROM authz.permission p ORDER BY p.category, p.code`)
+			 (SELECT COUNT(*) FROM authz.admin_role_permission rp WHERE rp.permission_code = p.code) as roles_count
+			 FROM authz.admin_permission p ORDER BY p.category, p.code`)
 		if err != nil {
 			logger.Error("list iam permissions", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
@@ -218,14 +218,14 @@ func adminIamPermissionDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http
 		}
 		var pd PermDetail
 		err := db.QueryRow(r.Context(),
-			"SELECT code, description, category FROM authz.permission WHERE code = $1", code).
+			"SELECT code, description, category FROM authz.admin_permission WHERE code = $1", code).
 			Scan(&pd.Code, &pd.Description, &pd.Category)
 		if err != nil {
 			writeJSONError(w, "permission not found", http.StatusNotFound)
 			return
 		}
 		roleRows, _ := db.Query(r.Context(),
-			"SELECT role_code FROM authz.role_permission WHERE permission_code = $1 ORDER BY role_code", code)
+			"SELECT role_code FROM authz.admin_role_permission WHERE permission_code = $1 ORDER BY role_code", code)
 		if roleRows != nil {
 			defer roleRows.Close()
 			for roleRows.Next() {
@@ -240,7 +240,7 @@ func adminIamPermissionDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http
 		}
 		db.QueryRow(r.Context(),
 			`SELECT COUNT(DISTINCT ar.admin_actor_id) FROM authz.admin_role ar
-			 JOIN authz.role_permission rp ON rp.role_code = ar.role_code
+			 JOIN authz.admin_role_permission rp ON rp.role_code = ar.role_code
 			 WHERE rp.permission_code = $1`, code).Scan(&pd.AdminsCount)
 		writeJSON(w, http.StatusOK, pd)
 	}

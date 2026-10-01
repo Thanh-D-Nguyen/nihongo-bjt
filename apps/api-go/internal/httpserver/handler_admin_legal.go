@@ -17,7 +17,7 @@ import (
 // Contracts derived from NestJS legal-policy-admin.controller.ts,
 // legal-cookie-category-admin.controller.ts, legal-retention-admin.controller.ts,
 // legal-policy-admin.service.ts.
-// DB tables: legal.policy_version, ops.admin_audit_log.
+// DB tables: legal.legal_policy, ops.admin_audit_log.
 // Cookie categories and retention domains are code-owned curated lists
 // (partial_schema_pending: no cookie_category or retention_policy table yet).
 
@@ -56,10 +56,10 @@ func adminLegalPoliciesListHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 		}
 
 		var total int
-		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM legal.policy_version "+whereClause, args...).Scan(&total)
+		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM legal.legal_policy "+whereClause, args...).Scan(&total)
 
 		dataQ := fmt.Sprintf(`SELECT id, policy_key, version, title, status, effective_at, published_at, created_at, updated_at
-FROM legal.policy_version %s ORDER BY created_at DESC LIMIT $%d OFFSET $%d`,
+FROM legal.legal_policy %s ORDER BY created_at DESC LIMIT $%d OFFSET $%d`,
 			whereClause, argIdx, argIdx+1)
 		args = append(args, limit, offset)
 
@@ -138,7 +138,7 @@ func adminLegalPolicyDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 		var ca, ua time.Time
 		var ea, pa *time.Time
 		err := db.QueryRow(r.Context(), `SELECT id, policy_key, version, title, status, body_markdown, body_html, checksum, effective_at, published_at, created_at, updated_at
-FROM legal.policy_version WHERE id=$1`, id).
+FROM legal.legal_policy WHERE id=$1`, id).
 			Scan(&pd.ID, &pd.PolicyKey, &pd.Version, &pd.Title, &pd.Status, &pd.BodyMarkdown, &pd.BodyHTML, &pd.Checksum, &ea, &pa, &ca, &ua)
 		if err != nil {
 			writeJSONError(w, "policy not found", http.StatusNotFound)
@@ -158,7 +158,7 @@ FROM legal.policy_version WHERE id=$1`, id).
 		// Audit trail
 		pd.Audit = []json.RawMessage{}
 		auditRows, _ := db.Query(r.Context(), `SELECT id, action, actor_id, reason, before, after, created_at
-FROM ops.admin_audit_log WHERE target_id=$1 AND target_type='legal.policy_version'
+FROM ops.admin_audit_log WHERE target_id=$1 AND target_type='legal.legal_policy'
 ORDER BY created_at DESC LIMIT 30`, id)
 		if auditRows != nil {
 			for auditRows.Next() {
@@ -209,7 +209,7 @@ func adminLegalPolicyDiffHandler(db *pgxpool.Pool, logger *slog.Logger) http.Han
 			var v Version
 			var ca time.Time
 			err := db.QueryRow(r.Context(), `SELECT id, policy_key, version, title, status, body_markdown, checksum, created_at
-FROM legal.policy_version WHERE id=$1`, vid).
+FROM legal.legal_policy WHERE id=$1`, vid).
 				Scan(&v.ID, &v.PolicyKey, &v.Version, &v.Title, &v.Status, &v.BodyMarkdown, &v.Checksum, &ca)
 			if err != nil {
 				return nil, err
@@ -263,7 +263,7 @@ func adminLegalPolicyCreateHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 		}
 
 		var id string
-		err := db.QueryRow(r.Context(), `INSERT INTO legal.policy_version
+		err := db.QueryRow(r.Context(), `INSERT INTO legal.legal_policy
 (policy_key, version, title, body_markdown, body_html, status, created_at, updated_at)
 VALUES ($1,$2,$3,$4,$5,'draft',NOW(),NOW()) RETURNING id`,
 			req.PolicyKey, req.Version, req.Title, req.BodyMarkdown, req.BodyHTML).Scan(&id)
@@ -275,7 +275,7 @@ VALUES ($1,$2,$3,$4,$5,'draft',NOW(),NOW()) RETURNING id`,
 
 		afterJSON, _ := json.Marshal(map[string]any{"id": id, "policyKey": req.PolicyKey, "version": req.Version})
 		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
-VALUES ('legal.policy.created',$1,$2,'legal.policy_version','initial_draft',$3,NOW())`,
+VALUES ('legal.policy.created',$1,$2,'legal.legal_policy','initial_draft',$3,NOW())`,
 			identity.ActorID, id, afterJSON)
 
 		writeJSON(w, http.StatusCreated, map[string]any{"id": id, "status": "draft"})
@@ -298,7 +298,7 @@ func adminLegalPolicyPatchHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 
 		// Verify draft status
 		var currentStatus string
-		err := db.QueryRow(r.Context(), "SELECT status FROM legal.policy_version WHERE id=$1", id).Scan(&currentStatus)
+		err := db.QueryRow(r.Context(), "SELECT status FROM legal.legal_policy WHERE id=$1", id).Scan(&currentStatus)
 		if err != nil {
 			writeJSONError(w, "policy not found", http.StatusNotFound)
 			return
@@ -333,7 +333,7 @@ func adminLegalPolicyPatchHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 			return
 		}
 		setClauses = append(setClauses, "updated_at = NOW()")
-		query := "UPDATE legal.policy_version SET " + joinStrings(setClauses, ", ") + " WHERE id = $" + itoa(argIdx)
+		query := "UPDATE legal.legal_policy SET " + joinStrings(setClauses, ", ") + " WHERE id = $" + itoa(argIdx)
 		args = append(args, id)
 
 		if _, err := db.Exec(r.Context(), query, args...); err != nil {
@@ -344,7 +344,7 @@ func adminLegalPolicyPatchHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 
 		afterJSON, _ := json.Marshal(req)
 		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
-VALUES ('legal.policy.updated',$1,$2,'legal.policy_version','draft_edit',$3,NOW())`,
+VALUES ('legal.policy.updated',$1,$2,'legal.legal_policy','draft_edit',$3,NOW())`,
 			identity.ActorID, id, afterJSON)
 
 		writeJSON(w, http.StatusOK, map[string]any{"id": id, "updated": true})
@@ -366,13 +366,13 @@ func adminLegalPolicyPublishHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 		}
 
 		var beforeStatus string
-		err := db.QueryRow(r.Context(), "SELECT status FROM legal.policy_version WHERE id=$1", id).Scan(&beforeStatus)
+		err := db.QueryRow(r.Context(), "SELECT status FROM legal.legal_policy WHERE id=$1", id).Scan(&beforeStatus)
 		if err != nil {
 			writeJSONError(w, "policy not found", http.StatusNotFound)
 			return
 		}
 
-		_, err = db.Exec(r.Context(), `UPDATE legal.policy_version SET
+		_, err = db.Exec(r.Context(), `UPDATE legal.legal_policy SET
 status='published', published_at=NOW(), effective_at=COALESCE(effective_at,NOW()), updated_at=NOW()
 WHERE id=$1`, id)
 		if err != nil {
@@ -384,7 +384,7 @@ WHERE id=$1`, id)
 		beforeJSON, _ := json.Marshal(map[string]any{"status": beforeStatus})
 		afterJSON, _ := json.Marshal(map[string]any{"status": "published"})
 		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, after, created_at)
-VALUES ('legal.policy.published',$1,$2,'legal.policy_version','publish',$3,$4,NOW())`,
+VALUES ('legal.policy.published',$1,$2,'legal.legal_policy','publish',$3,$4,NOW())`,
 			identity.ActorID, id, beforeJSON, afterJSON)
 
 		writeJSON(w, http.StatusOK, map[string]any{"id": id, "status": "published"})
@@ -406,13 +406,13 @@ func adminLegalPolicyArchiveHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 		}
 
 		var beforeStatus string
-		err := db.QueryRow(r.Context(), "SELECT status FROM legal.policy_version WHERE id=$1", id).Scan(&beforeStatus)
+		err := db.QueryRow(r.Context(), "SELECT status FROM legal.legal_policy WHERE id=$1", id).Scan(&beforeStatus)
 		if err != nil {
 			writeJSONError(w, "policy not found", http.StatusNotFound)
 			return
 		}
 
-		_, err = db.Exec(r.Context(), "UPDATE legal.policy_version SET status='archived', updated_at=NOW() WHERE id=$1", id)
+		_, err = db.Exec(r.Context(), "UPDATE legal.legal_policy SET status='archived', updated_at=NOW() WHERE id=$1", id)
 		if err != nil {
 			logger.Error("archive legal policy", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
@@ -422,7 +422,7 @@ func adminLegalPolicyArchiveHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 		beforeJSON, _ := json.Marshal(map[string]any{"status": beforeStatus})
 		afterJSON, _ := json.Marshal(map[string]any{"status": "archived"})
 		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, after, created_at)
-VALUES ('legal.policy.archived',$1,$2,'legal.policy_version','archive',$3,$4,NOW())`,
+VALUES ('legal.policy.archived',$1,$2,'legal.legal_policy','archive',$3,$4,NOW())`,
 			identity.ActorID, id, beforeJSON, afterJSON)
 
 		writeJSON(w, http.StatusOK, map[string]any{"id": id, "status": "archived"})
@@ -445,7 +445,7 @@ func adminLegalPolicyDuplicateHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 
 		var policyKey, version, title, bodyMarkdown, bodyHTML string
 		err := db.QueryRow(r.Context(), `SELECT policy_key, version, title, COALESCE(body_markdown,''), COALESCE(body_html,'')
-FROM legal.policy_version WHERE id=$1`, id).
+FROM legal.legal_policy WHERE id=$1`, id).
 			Scan(&policyKey, &version, &title, &bodyMarkdown, &bodyHTML)
 		if err != nil {
 			writeJSONError(w, "source policy not found", http.StatusNotFound)
@@ -454,7 +454,7 @@ FROM legal.policy_version WHERE id=$1`, id).
 
 		newVersion := version + "-draft"
 		var newID string
-		err = db.QueryRow(r.Context(), `INSERT INTO legal.policy_version
+		err = db.QueryRow(r.Context(), `INSERT INTO legal.legal_policy
 (policy_key, version, title, body_markdown, body_html, status, created_at, updated_at)
 VALUES ($1,$2,$3,$4,$5,'draft',NOW(),NOW()) RETURNING id`,
 			policyKey, newVersion, title, bodyMarkdown, bodyHTML).Scan(&newID)
@@ -466,7 +466,7 @@ VALUES ($1,$2,$3,$4,$5,'draft',NOW(),NOW()) RETURNING id`,
 
 		afterJSON, _ := json.Marshal(map[string]any{"id": newID, "duplicatedFrom": id})
 		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
-VALUES ('legal.policy.duplicated',$1,$2,'legal.policy_version','duplicate_from_'+$3,$4,NOW())`,
+VALUES ('legal.policy.duplicated',$1,$2,'legal.legal_policy','duplicate_from_'+$3,$4,NOW())`,
 			identity.ActorID, newID, id, afterJSON)
 
 		writeJSON(w, http.StatusCreated, map[string]any{"id": newID, "status": "draft", "duplicatedFrom": id})
@@ -488,7 +488,7 @@ func adminLegalPolicyDeleteHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 		}
 
 		var status string
-		err := db.QueryRow(r.Context(), "SELECT status FROM legal.policy_version WHERE id=$1", id).Scan(&status)
+		err := db.QueryRow(r.Context(), "SELECT status FROM legal.legal_policy WHERE id=$1", id).Scan(&status)
 		if err != nil {
 			writeJSONError(w, "policy not found", http.StatusNotFound)
 			return
@@ -498,11 +498,11 @@ func adminLegalPolicyDeleteHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 			return
 		}
 
-		db.Exec(r.Context(), "DELETE FROM legal.policy_version WHERE id=$1", id)
+		db.Exec(r.Context(), "DELETE FROM legal.legal_policy WHERE id=$1", id)
 
 		beforeJSON, _ := json.Marshal(map[string]any{"status": status})
 		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, created_at)
-VALUES ('legal.policy.deleted',$1,$2,'legal.policy_version','delete_draft',$3,NOW())`,
+VALUES ('legal.policy.deleted',$1,$2,'legal.legal_policy','delete_draft',$3,NOW())`,
 			identity.ActorID, id, beforeJSON)
 
 		writeJSON(w, http.StatusOK, map[string]any{"deleted": true})

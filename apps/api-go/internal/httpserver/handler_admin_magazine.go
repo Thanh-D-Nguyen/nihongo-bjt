@@ -19,7 +19,7 @@ import (
 // Contracts derived from NestJS magazine-admin.controller.ts,
 // loto-hub-admin.controller.ts, loto-lab-admin.controller.ts,
 // magazine.repository.ts, loto-hub-admin.service.ts, loto-lab.service.ts.
-// DB tables: content.magazine_article, content.magazine_user_read,
+// DB tables: daily.magazine_article, content.magazine_user_read,
 // content.loto_draw, content.loto_generation_run, content.loto_generated_set.
 
 // ── Magazine Articles ───────────────────────────────────────────────────────
@@ -67,12 +67,12 @@ func adminMagazineListHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handle
 		whereClause := "WHERE " + strings.Join(whereParts, " AND ")
 
 		var total int
-		countQ := "SELECT COUNT(*) FROM content.magazine_article " + whereClause
+		countQ := "SELECT COUNT(*) FROM daily.magazine_article " + whereClause
 		db.QueryRow(r.Context(), countQ, args...).Scan(&total)
 
 		dataQ := fmt.Sprintf(`SELECT id, slug, widget_kind, content_date, locale, title_jp, title_vi,
 			summary_jp, summary_vi, cover_image_url, status, approval_status, published_at, created_at, updated_at
-			FROM content.magazine_article %s ORDER BY content_date DESC LIMIT $%d OFFSET $%d`,
+			FROM daily.magazine_article %s ORDER BY content_date DESC LIMIT $%d OFFSET $%d`,
 			whereClause, argIdx, argIdx+1)
 		args = append(args, limit, offset)
 
@@ -160,7 +160,7 @@ func adminMagazineGenerateHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 		}
 		// Check if article already exists for this widget_kind + content_date + locale
 		var existingID string
-		err = db.QueryRow(r.Context(), `SELECT id FROM content.magazine_article
+		err = db.QueryRow(r.Context(), `SELECT id FROM daily.magazine_article
 			WHERE widget_kind=$1 AND content_date=$2 AND locale=$3`,
 			req.WidgetKind, contentDate, locale).Scan(&existingID)
 		if err == nil {
@@ -170,7 +170,7 @@ func adminMagazineGenerateHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 		// Create placeholder article (real AI generation would be async)
 		slug := fmt.Sprintf("%s-%s", req.WidgetKind, req.Date[:10])
 		var id string
-		err = db.QueryRow(r.Context(), `INSERT INTO content.magazine_article
+		err = db.QueryRow(r.Context(), `INSERT INTO daily.magazine_article
 			(slug, widget_kind, content_date, locale, title_jp, title_vi, content_json, status, created_at, updated_at)
 			VALUES ($1,$2,$3,$4,'Generated','Generated','{}','draft',NOW(),NOW()) RETURNING id`,
 			slug, req.WidgetKind, contentDate, locale).Scan(&id)
@@ -200,18 +200,18 @@ func adminMagazineRegenerateHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 		var widgetKind, locale string
 		var contentDate time.Time
 		err := db.QueryRow(r.Context(), `SELECT widget_kind, content_date, locale
-			FROM content.magazine_article WHERE id=$1 OR slug=$1`, id).
+			FROM daily.magazine_article WHERE id=$1 OR slug=$1`, id).
 			Scan(&widgetKind, &contentDate, &locale)
 		if err != nil {
 			writeJSONError(w, "article not found", http.StatusNotFound)
 			return
 		}
 		// Delete old article
-		db.Exec(r.Context(), "DELETE FROM content.magazine_article WHERE id=$1 OR slug=$1", id)
+		db.Exec(r.Context(), "DELETE FROM daily.magazine_article WHERE id=$1 OR slug=$1", id)
 		// Create new placeholder
 		slug := fmt.Sprintf("%s-%s", widgetKind, contentDate.UTC().Format("2006-01-02"))
 		var newID string
-		err = db.QueryRow(r.Context(), `INSERT INTO content.magazine_article
+		err = db.QueryRow(r.Context(), `INSERT INTO daily.magazine_article
 			(slug, widget_kind, content_date, locale, title_jp, title_vi, content_json, status, created_at, updated_at)
 			VALUES ($1,$2,$3,$4,'Regenerated','Regenerated','{}','draft',NOW(),NOW()) RETURNING id`,
 			slug, widgetKind, contentDate, locale).Scan(&newID)
@@ -237,7 +237,7 @@ func adminMagazineDeleteHandler(db *pgxpool.Pool, logger *slog.Logger) http.Hand
 			writeJSONError(w, "article id required", http.StatusBadRequest)
 			return
 		}
-		db.Exec(r.Context(), "DELETE FROM content.magazine_article WHERE id=$1", id)
+		db.Exec(r.Context(), "DELETE FROM daily.magazine_article WHERE id=$1", id)
 		writeJSON(w, http.StatusOK, map[string]any{"deleted": true})
 	}
 }
@@ -279,11 +279,11 @@ func adminLotoPredictionsListHandler(db *pgxpool.Pool, logger *slog.Logger) http
 		whereClause := "WHERE " + strings.Join(whereParts, " AND ")
 
 		var total int
-		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM content.magazine_article "+whereClause, args...).Scan(&total)
+		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM daily.magazine_article "+whereClause, args...).Scan(&total)
 
 		dataQ := fmt.Sprintf(`SELECT id, slug, widget_kind, content_date, status, approval_status,
 			approved_by, approved_at, content_json, created_at
-			FROM content.magazine_article %s ORDER BY content_date DESC LIMIT $%d OFFSET $%d`,
+			FROM daily.magazine_article %s ORDER BY content_date DESC LIMIT $%d OFFSET $%d`,
 			whereClause, argIdx, argIdx+1)
 		args = append(args, limit, offset)
 
@@ -347,7 +347,7 @@ func adminLotoPredictionApproveHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 		}
 		// Verify it's a loto article
 		var widgetKind string
-		err := db.QueryRow(r.Context(), "SELECT widget_kind FROM content.magazine_article WHERE id=$1", id).Scan(&widgetKind)
+		err := db.QueryRow(r.Context(), "SELECT widget_kind FROM daily.magazine_article WHERE id=$1", id).Scan(&widgetKind)
 		if err != nil {
 			writeJSONError(w, "prediction not found", http.StatusNotFound)
 			return
@@ -356,7 +356,7 @@ func adminLotoPredictionApproveHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 			writeJSONError(w, "not a loto reference-combination article", http.StatusBadRequest)
 			return
 		}
-		_, err = db.Exec(r.Context(), `UPDATE content.magazine_article SET
+		_, err = db.Exec(r.Context(), `UPDATE daily.magazine_article SET
 			approval_status='approved', approved_by=$1, approved_at=NOW(),
 			status='published', published_at=COALESCE(published_at,NOW()), updated_at=NOW()
 			WHERE id=$2`, identity.ActorID, id)
@@ -383,7 +383,7 @@ func adminLotoPredictionRejectHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 			return
 		}
 		var widgetKind string
-		err := db.QueryRow(r.Context(), "SELECT widget_kind FROM content.magazine_article WHERE id=$1", id).Scan(&widgetKind)
+		err := db.QueryRow(r.Context(), "SELECT widget_kind FROM daily.magazine_article WHERE id=$1", id).Scan(&widgetKind)
 		if err != nil {
 			writeJSONError(w, "prediction not found", http.StatusNotFound)
 			return
@@ -392,7 +392,7 @@ func adminLotoPredictionRejectHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 			writeJSONError(w, "not a loto reference-combination article", http.StatusBadRequest)
 			return
 		}
-		_, err = db.Exec(r.Context(), `UPDATE content.magazine_article SET
+		_, err = db.Exec(r.Context(), `UPDATE daily.magazine_article SET
 			approval_status='rejected', status='draft', updated_at=NOW() WHERE id=$1`, id)
 		if err != nil {
 			logger.Error("reject loto prediction", "error", err)
@@ -477,7 +477,7 @@ func adminLotoAnalyticsHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handl
 		widgetKind := "magazine_" + game
 		// Get published articles
 		rows, err := db.Query(r.Context(), `SELECT id, content_date, content_json
-			FROM content.magazine_article WHERE widget_kind=$1 AND status='published'
+			FROM daily.magazine_article WHERE widget_kind=$1 AND status='published'
 			ORDER BY content_date DESC LIMIT 200`, widgetKind)
 		if err != nil {
 			logger.Error("loto analytics", "error", err)
@@ -933,7 +933,7 @@ func adminLotoPublishHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handler
 		db.Exec(r.Context(), "UPDATE content.loto_generation_run SET status='published', updated_at=NOW() WHERE id=$1", req.RunID)
 		// Upsert magazine article
 		var articleID string
-		err = db.QueryRow(r.Context(), `INSERT INTO content.magazine_article
+		err = db.QueryRow(r.Context(), `INSERT INTO daily.magazine_article
 			(slug, widget_kind, content_date, locale, title_jp, title_vi, content_json, status,
 			approval_status, approved_by, approved_at, published_at, created_at, updated_at)
 			VALUES ($1,$2,$3,'vi',$4,$5,'{}','published','approved',$6,NOW(),NOW(),NOW(),NOW())

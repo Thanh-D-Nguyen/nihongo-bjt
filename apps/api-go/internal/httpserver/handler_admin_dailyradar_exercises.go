@@ -16,8 +16,8 @@ import (
 // ── P1-A14: Admin Daily Radar + Exercises — Modules/Cards + Config/CRUD/Analytics (22 routes) ──
 // Contracts derived from NestJS daily-radar.controller.ts (admin section lines 125-220),
 // exercise-admin.controller.ts, daily-radar.repository.ts, exercise.repository.ts.
-// DB tables: content.daily_radar_module, content.daily_radar_card,
-// learning.exercise, learning.exercise_config, ops.admin_audit_log.
+// DB tables: daily.daily_radar_module_config, daily.daily_radar_card,
+// exercise.exercise, exercise.exercise_config, ops.admin_audit_log.
 
 // ── Daily Radar Admin ───────────────────────────────────────────────────────
 
@@ -25,10 +25,10 @@ import (
 func adminDailyRadarSummaryHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var totalModules, publishedModules, totalCards, publishedCards int
-		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM content.daily_radar_module").Scan(&totalModules)
-		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM content.daily_radar_module WHERE status='published'").Scan(&publishedModules)
-		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM content.daily_radar_card").Scan(&totalCards)
-		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM content.daily_radar_card WHERE status='published'").Scan(&publishedCards)
+		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM daily.daily_radar_module_config").Scan(&totalModules)
+		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM daily.daily_radar_module_config WHERE status='published'").Scan(&publishedModules)
+		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM daily.daily_radar_card").Scan(&totalCards)
+		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM daily.daily_radar_card WHERE status='published'").Scan(&publishedCards)
 		writeJSON(w, http.StatusOK, map[string]any{
 			"totalModules": totalModules, "publishedModules": publishedModules,
 			"totalCards": totalCards, "publishedCards": publishedCards,
@@ -69,9 +69,9 @@ func adminDailyRadarModulesListHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 			whereClause = "WHERE " + strings.Join(whereParts, " AND ")
 		}
 		var total int
-		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM content.daily_radar_module "+whereClause, args...).Scan(&total)
+		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM daily.daily_radar_module_config "+whereClause, args...).Scan(&total)
 		dataQ := fmt.Sprintf(`SELECT id, key, title, description, icon, sort_order, status, created_at, updated_at
-FROM content.daily_radar_module %s ORDER BY sort_order ASC, created_at ASC LIMIT $%d OFFSET $%d`,
+FROM daily.daily_radar_module_config %s ORDER BY sort_order ASC, created_at ASC LIMIT $%d OFFSET $%d`,
 			whereClause, argIdx, argIdx+1)
 		args = append(args, pageSize, offset)
 		rows, err := db.Query(r.Context(), dataQ, args...)
@@ -144,7 +144,7 @@ func adminDailyRadarModuleCreateHandler(db *pgxpool.Pool, logger *slog.Logger) h
 			status = *req.Status
 		}
 		var id string
-		err := db.QueryRow(r.Context(), `INSERT INTO content.daily_radar_module
+		err := db.QueryRow(r.Context(), `INSERT INTO daily.daily_radar_module_config
 (key, title, description, icon, sort_order, status, created_at, updated_at)
 VALUES ($1,$2,$3,$4,$5,$6,NOW(),NOW()) RETURNING id`,
 			req.Key, req.Title, req.Description, req.Icon, sortOrder, status).Scan(&id)
@@ -183,7 +183,7 @@ func adminDailyRadarModuleDetailHandler(db *pgxpool.Pool, logger *slog.Logger) h
 		var m Module
 		var ca, ua time.Time
 		err := db.QueryRow(r.Context(), `SELECT id, key, title, description, icon, sort_order, status, created_at, updated_at
-FROM content.daily_radar_module WHERE id=$1`, id).
+FROM daily.daily_radar_module_config WHERE id=$1`, id).
 			Scan(&m.ID, &m.Key, &m.Title, &m.Description, &m.Icon, &m.SortOrder, &m.Status, &ca, &ua)
 		if err != nil {
 			writeJSONError(w, "module not found", http.StatusNotFound)
@@ -232,7 +232,7 @@ func adminDailyRadarModulePatchHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 			return
 		}
 		setClauses = append(setClauses, "updated_at = NOW()")
-		query := "UPDATE content.daily_radar_module SET " + joinStrings(setClauses, ", ") + " WHERE id = $" + itoa(argIdx)
+		query := "UPDATE daily.daily_radar_module_config SET " + joinStrings(setClauses, ", ") + " WHERE id = $" + itoa(argIdx)
 		args = append(args, id)
 		if _, err := db.Exec(r.Context(), query, args...); err != nil {
 			logger.Error("patch daily radar module", "error", err)
@@ -261,12 +261,12 @@ func adminDailyRadarModuleArchiveHandler(db *pgxpool.Pool, logger *slog.Logger) 
 			return
 		}
 		var beforeStatus string
-		err := db.QueryRow(r.Context(), "SELECT status FROM content.daily_radar_module WHERE id=$1", id).Scan(&beforeStatus)
+		err := db.QueryRow(r.Context(), "SELECT status FROM daily.daily_radar_module_config WHERE id=$1", id).Scan(&beforeStatus)
 		if err != nil {
 			writeJSONError(w, "module not found", http.StatusNotFound)
 			return
 		}
-		_, err = db.Exec(r.Context(), "UPDATE content.daily_radar_module SET status='archived', updated_at=NOW() WHERE id=$1", id)
+		_, err = db.Exec(r.Context(), "UPDATE daily.daily_radar_module_config SET status='archived', updated_at=NOW() WHERE id=$1", id)
 		if err != nil {
 			logger.Error("archive daily radar module", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
@@ -326,9 +326,9 @@ func adminDailyRadarCardsListHandler(db *pgxpool.Pool, logger *slog.Logger) http
 			whereClause = "WHERE " + strings.Join(whereParts, " AND ")
 		}
 		var total int
-		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM content.daily_radar_card "+whereClause, args...).Scan(&total)
+		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM daily.daily_radar_card "+whereClause, args...).Scan(&total)
 		dataQ := fmt.Sprintf(`SELECT id, slug, title, summary, category, module_key, image_url, status, published_at, created_at, updated_at
-FROM content.daily_radar_card %s ORDER BY created_at DESC LIMIT $%d OFFSET $%d`,
+FROM daily.daily_radar_card %s ORDER BY created_at DESC LIMIT $%d OFFSET $%d`,
 			whereClause, argIdx, argIdx+1)
 		args = append(args, pageSize, offset)
 		rows, err := db.Query(r.Context(), dataQ, args...)
@@ -406,7 +406,7 @@ func adminDailyRadarCardCreateHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 			status = *req.Status
 		}
 		var id string
-		err := db.QueryRow(r.Context(), `INSERT INTO content.daily_radar_card
+		err := db.QueryRow(r.Context(), `INSERT INTO daily.daily_radar_card
 (slug, title, summary, body, category, module_key, image_url, status, created_at, updated_at)
 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW(),NOW()) RETURNING id`,
 			req.Slug, req.Title, req.Summary, req.Body, req.Category, req.ModuleKey, req.ImageURL, status).Scan(&id)
@@ -449,7 +449,7 @@ func adminDailyRadarCardDetailHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 		var ca, ua time.Time
 		var pa *time.Time
 		err := db.QueryRow(r.Context(), `SELECT id, slug, title, summary, body, category, module_key, image_url, status, published_at, created_at, updated_at
-FROM content.daily_radar_card WHERE id=$1`, id).
+FROM daily.daily_radar_card WHERE id=$1`, id).
 			Scan(&c.ID, &c.Slug, &c.Title, &c.Summary, &c.Body, &c.Category, &c.ModuleKey, &c.ImageURL, &c.Status, &pa, &ca, &ua)
 		if err != nil {
 			writeJSONError(w, "card not found", http.StatusNotFound)
@@ -502,7 +502,7 @@ func adminDailyRadarCardPatchHandler(db *pgxpool.Pool, logger *slog.Logger) http
 			return
 		}
 		setClauses = append(setClauses, "updated_at = NOW()")
-		query := "UPDATE content.daily_radar_card SET " + joinStrings(setClauses, ", ") + " WHERE id = $" + itoa(argIdx)
+		query := "UPDATE daily.daily_radar_card SET " + joinStrings(setClauses, ", ") + " WHERE id = $" + itoa(argIdx)
 		args = append(args, id)
 		if _, err := db.Exec(r.Context(), query, args...); err != nil {
 			logger.Error("patch daily radar card", "error", err)
@@ -531,12 +531,12 @@ func adminDailyRadarCardPublishHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 			return
 		}
 		var beforeStatus string
-		err := db.QueryRow(r.Context(), "SELECT status FROM content.daily_radar_card WHERE id=$1", id).Scan(&beforeStatus)
+		err := db.QueryRow(r.Context(), "SELECT status FROM daily.daily_radar_card WHERE id=$1", id).Scan(&beforeStatus)
 		if err != nil {
 			writeJSONError(w, "card not found", http.StatusNotFound)
 			return
 		}
-		_, err = db.Exec(r.Context(), `UPDATE content.daily_radar_card SET
+		_, err = db.Exec(r.Context(), `UPDATE daily.daily_radar_card SET
 status='published', published_at=COALESCE(published_at,NOW()), updated_at=NOW() WHERE id=$1`, id)
 		if err != nil {
 			logger.Error("publish daily radar card", "error", err)
@@ -566,12 +566,12 @@ func adminDailyRadarCardArchiveHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 			return
 		}
 		var beforeStatus string
-		err := db.QueryRow(r.Context(), "SELECT status FROM content.daily_radar_card WHERE id=$1", id).Scan(&beforeStatus)
+		err := db.QueryRow(r.Context(), "SELECT status FROM daily.daily_radar_card WHERE id=$1", id).Scan(&beforeStatus)
 		if err != nil {
 			writeJSONError(w, "card not found", http.StatusNotFound)
 			return
 		}
-		_, err = db.Exec(r.Context(), "UPDATE content.daily_radar_card SET status='archived', updated_at=NOW() WHERE id=$1", id)
+		_, err = db.Exec(r.Context(), "UPDATE daily.daily_radar_card SET status='archived', updated_at=NOW() WHERE id=$1", id)
 		if err != nil {
 			logger.Error("archive daily radar card", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
@@ -602,7 +602,7 @@ func adminDailyRadarCardDuplicateHandler(db *pgxpool.Pool, logger *slog.Logger) 
 		var slug, title, category string
 		var summary, body, moduleKey, imageURL *string
 		err := db.QueryRow(r.Context(), `SELECT slug, title, summary, body, category, module_key, image_url
-FROM content.daily_radar_card WHERE id=$1`, id).
+FROM daily.daily_radar_card WHERE id=$1`, id).
 			Scan(&slug, &title, &summary, &body, &category, &moduleKey, &imageURL)
 		if err != nil {
 			writeJSONError(w, "source card not found", http.StatusNotFound)
@@ -610,7 +610,7 @@ FROM content.daily_radar_card WHERE id=$1`, id).
 		}
 		newSlug := slug + "-copy-" + time.Now().UTC().Format("20060102150405")
 		var newID string
-		err = db.QueryRow(r.Context(), `INSERT INTO content.daily_radar_card
+		err = db.QueryRow(r.Context(), `INSERT INTO daily.daily_radar_card
 (slug, title, summary, body, category, module_key, image_url, status, created_at, updated_at)
 VALUES ($1,$2,$3,$4,$5,$6,$7,'draft',NOW(),NOW()) RETURNING id`,
 			newSlug, title, summary, body, category, moduleKey, imageURL).Scan(&newID)
@@ -774,10 +774,10 @@ func adminExercisesListHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handl
 			whereClause = "WHERE " + strings.Join(whereParts, " AND ")
 		}
 		var total int
-		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM learning.exercise "+whereClause, args...).Scan(&total)
+		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM exercise.exercise "+whereClause, args...).Scan(&total)
 		dataQ := fmt.Sprintf(`SELECT id, exercise_type, source_type, source_id, level, prompt, correct_answer,
 difficulty, created_at, updated_at
-FROM learning.exercise %s ORDER BY created_at DESC LIMIT $%d OFFSET $%d`,
+FROM exercise.exercise %s ORDER BY created_at DESC LIMIT $%d OFFSET $%d`,
 			whereClause, argIdx, argIdx+1)
 		args = append(args, pageSize, offset)
 		rows, err := db.Query(r.Context(), dataQ, args...)
@@ -846,7 +846,7 @@ func adminExerciseDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.Hand
 		var ca, ua time.Time
 		err := db.QueryRow(r.Context(), `SELECT id, exercise_type, source_type, source_id, level, prompt, choices,
 correct_answer, explanation, difficulty, tags, created_at, updated_at
-FROM learning.exercise WHERE id=$1`, id).
+FROM exercise.exercise WHERE id=$1`, id).
 			Scan(&e.ID, &e.ExerciseType, &e.SourceType, &e.SourceID, &e.Level, &e.Prompt, &e.Choices,
 				&e.CorrectAnswer, &e.Explanation, &e.Difficulty, &e.Tags, &ca, &ua)
 		if err != nil {
@@ -975,7 +975,7 @@ func adminExerciseUpdateHandler(db *pgxpool.Pool, logger *slog.Logger) http.Hand
 			return
 		}
 		setClauses = append(setClauses, "updated_at = NOW()")
-		query := "UPDATE learning.exercise SET " + joinStrings(setClauses, ", ") + " WHERE id = $" + itoa(argIdx)
+		query := "UPDATE exercise.exercise SET " + joinStrings(setClauses, ", ") + " WHERE id = $" + itoa(argIdx)
 		args = append(args, id)
 		if _, err := db.Exec(r.Context(), query, args...); err != nil {
 			logger.Error("update exercise", "error", err)
@@ -1003,7 +1003,7 @@ func adminExerciseDeleteHandler(db *pgxpool.Pool, logger *slog.Logger) http.Hand
 			writeJSONError(w, "exercise id required", http.StatusBadRequest)
 			return
 		}
-		db.Exec(r.Context(), "DELETE FROM learning.exercise WHERE id=$1", id)
+		db.Exec(r.Context(), "DELETE FROM exercise.exercise WHERE id=$1", id)
 		beforeJSON, _ := json.Marshal(map[string]any{"id": id})
 		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, created_at)
 VALUES ('exercise.deleted',$1,$2,'exercise','delete',$3,NOW())`,
@@ -1039,7 +1039,7 @@ COUNT(*) as total_attempts,
 SUM(CASE WHEN ea.correct THEN 1 ELSE 0 END) as correct_count,
 AVG(CASE WHEN ea.duration_ms > 0 THEN ea.duration_ms ELSE NULL END) as avg_duration_ms
 FROM learning.exercise_attempt ea
-JOIN learning.exercise e ON e.id = ea.exercise_id
+JOIN exercise.exercise e ON e.id = ea.exercise_id
 %s GROUP BY e.exercise_type, e.level ORDER BY e.exercise_type, e.level`, whereClause), args...)
 		if err != nil {
 			logger.Error("exercise performance analytics", "error", err)
