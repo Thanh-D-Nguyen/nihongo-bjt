@@ -15,10 +15,10 @@ import (
 // Public route — no authentication required.
 func listDailyRadarModulesHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		const q = `SELECT id, key, title, description, icon, sort_order, status
-FROM content.daily_radar_module
-WHERE status = 'published'
-ORDER BY sort_order ASC, created_at ASC`
+		const q = `SELECT id, module_key, title_vi, description_vi, icon_key, default_priority, status
+FROM daily.daily_radar_module_config
+WHERE status = 'published' AND is_enabled = true
+ORDER BY default_priority DESC, created_at ASC`
 		rows, err := db.Query(r.Context(), q)
 		if err != nil {
 			logger.Error("list daily radar modules", "error", err)
@@ -77,22 +77,25 @@ func listDailyRadarCardsHandler(db *pgxpool.Pool, logger *slog.Logger) http.Hand
 		var q string
 		var args []interface{}
 		if moduleKey != "" {
-			q = `SELECT id, slug, title, summary, category, module_key, image_url, published_at
-FROM content.daily_radar_card
-WHERE status = 'published' AND module_key = $1
-ORDER BY published_at DESC LIMIT $2`
+			q = `SELECT c.id, c.slug, c.title_vi, c.description_vi, c.category, m.module_key, c.image_url, c.created_at
+FROM daily.daily_radar_card c
+JOIN daily.daily_radar_module_config m ON m.id = c.module_config_id
+WHERE c.status = 'published' AND m.module_key = $1
+ORDER BY c.priority DESC, c.updated_at DESC LIMIT $2`
 			args = []interface{}{moduleKey, limit}
 		} else if category != "" {
-			q = `SELECT id, slug, title, summary, category, module_key, image_url, published_at
-FROM content.daily_radar_card
-WHERE status = 'published' AND category = $1
-ORDER BY published_at DESC LIMIT $2`
+			q = `SELECT c.id, c.slug, c.title_vi, c.description_vi, c.category, m.module_key, c.image_url, c.created_at
+FROM daily.daily_radar_card c
+JOIN daily.daily_radar_module_config m ON m.id = c.module_config_id
+WHERE c.status = 'published' AND c.category = $1
+ORDER BY c.priority DESC, c.updated_at DESC LIMIT $2`
 			args = []interface{}{category, limit}
 		} else {
-			q = `SELECT id, slug, title, summary, category, module_key, image_url, published_at
-FROM content.daily_radar_card
-WHERE status = 'published'
-ORDER BY published_at DESC LIMIT $1`
+			q = `SELECT c.id, c.slug, c.title_vi, c.description_vi, c.category, m.module_key, c.image_url, c.created_at
+FROM daily.daily_radar_card c
+JOIN daily.daily_radar_module_config m ON m.id = c.module_config_id
+WHERE c.status = 'published'
+ORDER BY c.is_pinned DESC, c.priority DESC, c.updated_at DESC LIMIT $1`
 			args = []interface{}{limit}
 		}
 
@@ -153,9 +156,10 @@ func getDailyRadarCardBySlugHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 			PublishedAt *string `json:"publishedAt,omitempty"`
 		}
 
-		const q = `SELECT id, slug, title, summary, body, category, module_key, image_url, published_at
-FROM content.daily_radar_card
-WHERE slug = $1 AND status = 'published'`
+		const q = `SELECT c.id, c.slug, c.title_vi, c.description_vi, c.metadata->>'body', c.category, m.module_key, c.image_url, c.created_at
+FROM daily.daily_radar_card c
+JOIN daily.daily_radar_module_config m ON m.id = c.module_config_id
+WHERE c.slug = $1 AND c.status = 'published'`
 		var c Card
 		err := db.QueryRow(r.Context(), q, slug).Scan(&c.ID, &c.Slug, &c.Title, &c.Summary, &c.Body, &c.Category, &c.ModuleKey, &c.ImageURL, &c.PublishedAt)
 		if err != nil {
