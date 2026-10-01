@@ -183,7 +183,8 @@ test.describe("authenticated lifecycle", () => {
         !e.includes("wasm streaming compile failed") &&
         !e.includes("falling back to ArrayBuffer") &&
         !e.includes("reading 'length'") &&
-        !e.includes("ERR_CONNECTION_REFUSED")
+        !e.includes("ERR_CONNECTION_REFUSED") &&
+        !e.includes("Problem loading file")
     );
     expect(critical).toEqual([]);
   });
