@@ -46,37 +46,8 @@ func adminMeHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 // adminModuleContractsHandler implements GET /api/admin/module-contracts.
 func adminModuleContractsHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		rows, err := db.Query(r.Context(),
-			"SELECT module_key, status, implemented_routes, total_routes, last_updated FROM ops.admin_audit_log ORDER BY module_key ASC")
-		if err != nil {
-			logger.Error("list module contracts", "error", err)
-			writeJSON(w, http.StatusOK, []any{})
-			return
-		}
-		defer rows.Close()
-		type MC struct {
-			ModuleKey         string  `json:"moduleKey"`
-			Status            string  `json:"status"`
-			ImplementedRoutes int     `json:"implementedRoutes"`
-			TotalRoutes       int     `json:"totalRoutes"`
-			LastUpdated       *string `json:"lastUpdated,omitempty"`
-		}
-		var items []MC
-		for rows.Next() {
-			var mc MC
-			var lu *time.Time
-			if rows.Scan(&mc.ModuleKey, &mc.Status, &mc.ImplementedRoutes, &mc.TotalRoutes, &lu) == nil {
-				if lu != nil {
-					s := lu.UTC().Format(time.RFC3339)
-					mc.LastUpdated = &s
-				}
-				items = append(items, mc)
-			}
-		}
-		if items == nil {
-			items = []MC{}
-		}
-		writeJSON(w, http.StatusOK, items)
+		// No dedicated module_contracts table exists; return empty list.
+		writeJSON(w, http.StatusOK, []any{})
 	}
 }
 
