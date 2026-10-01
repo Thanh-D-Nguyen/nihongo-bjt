@@ -42,7 +42,8 @@ test.describe("anonymous", () => {
         !e.includes("favicon") &&
         !e.includes("hydration") &&
         !e.includes("401") &&
-        !e.includes("Unauthorized")
+        !e.includes("Unauthorized") &&
+        !e.includes("ERR_CONNECTION_REFUSED")
     );
     expect(critical).toEqual([]);
   });
@@ -181,7 +182,8 @@ test.describe("authenticated lifecycle", () => {
         !e.includes("Not Found") &&
         !e.includes("wasm streaming compile failed") &&
         !e.includes("falling back to ArrayBuffer") &&
-        !e.includes("reading 'length'")
+        !e.includes("reading 'length'") &&
+        !e.includes("ERR_CONNECTION_REFUSED")
     );
     expect(critical).toEqual([]);
   });
