@@ -66,7 +66,7 @@ func adminMonetizationAdsPlacementsListHandler(db *pgxpool.Pool, logger *slog.Lo
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		rows, err := db.Query(ctx, `
-			SELECT id, code, name, active, config, created_at, updated_at
+			SELECT id, code, label_key, active, config, created_at, updated_at
 			FROM monetization.ad_placement
 			ORDER BY code ASC`)
 		if err != nil {
@@ -475,7 +475,7 @@ func adminMonetizationAdsProvidersListHandler(db *pgxpool.Pool, logger *slog.Log
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		rows, err := db.Query(ctx, `
-			SELECT key, name, enabled, config, created_at, updated_at
+			SELECT key, type, enabled, config, created_at, updated_at
 			FROM monetization.ad_provider_config
 			ORDER BY key ASC`)
 		if err != nil {
