@@ -146,10 +146,8 @@ export function AdminLoginFormClient({
 
   return (
     <form
-      action={`${apiBaseUrl}/api/admin/login`}
       autoComplete="on"
       className="flex flex-col gap-4"
-      method="POST"
       noValidate
       onSubmit={onSubmit}
     >
