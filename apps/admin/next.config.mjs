@@ -18,7 +18,14 @@ const nextConfig = {
   // This matches the learner app's configuration and ensures Turbopack
   // emits only root-relative /_next/ paths for consistent hydration.
   async rewrites() {
-    return [{ destination: "/pwa-icon.svg", source: "/favicon.ico" }];
+    return [
+      { destination: "/pwa-icon.svg", source: "/favicon.ico" },
+      // Without basePath, Caddy strips /admin prefix before proxying.
+      // Next.js must internally map root-relative locale paths back to
+      // /admin/* so the app router resolves them and middleware can intercept.
+      { source: "/:locale(en|ja|vi)/:path*", destination: "/admin/:locale/:path*" },
+      { source: "/:locale(en|ja|vi)", destination: "/admin/:locale" },
+    ];
   },
   turbopack: {
     root: monorepoRoot
