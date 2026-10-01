@@ -16,6 +16,8 @@
 | FULL_API_SURFACE_PARITY_PASS | ✅ PASS | Live manifest executed with zero failures |
 | REAL_BROWSER_AUTHENTICATED_PARITY_PASS | ✅ PASS | 8/8 Playwright tests pass on build a6a55b2e |
 | LEGACY_BACKEND_REMOVAL_READY | ✅ TRUE | All gates closed |
+| LEGACY_NESTJS_REMOVAL_PASS | ✅ PASS | 76c42ef2, 8/8 Playwright, zero NestJS refs, no NestJS container |
+| LEGACY_NESTJS_REMOVAL_PASS | ✅ PASS | 76c42ef2, 8/8 Playwright, zero NestJS refs, no NestJS container |
 
 ## Live Verification Summary
 

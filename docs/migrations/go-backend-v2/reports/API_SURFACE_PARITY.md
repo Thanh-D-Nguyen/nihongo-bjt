@@ -86,6 +86,7 @@ The initial parity run reported **747 old / 19 PASS / 562 MISSING / 166 UNKNOWN*
 | P1_A17_ADMIN_QUIZ_SESSIONS_STATIC_PARITY_PASS | 8 | All 8 active admin quiz+quiz-sessions routes implemented across quiz/quiz-sessions @ aaf8f9c; P1-A17 closed (i18n already in P1-A7) |
 | P1_A18_ADMIN_NHK_NEWS_STATIC_PARITY_PASS | 3 | All 3 active admin nhk-news routes implemented across config/refresh @ 530b69e; P1-A18 closed |
 | ADMIN_ACTIVE_API_STATIC_PARITY_PASS | TRUE | All 398 active admin routes implemented across 18 domains (P1-A1 through P1-A18); ADMIN_TRUE_MISSING_ACTIVE=0 |
+| LEGACY_NESTJS_REMOVAL_PASS | TRUE | 76c42ef2, 8/8 Playwright, zero NestJS refs, no NestJS container |
 | ADMIN_TRUE_MISSING_ACTIVE | 0 | All active admin routes implemented across 18 domains; ADMIN_ACTIVE_API_STATIC_PARITY_PASS |
 | ADMIN_DOMAINS_ACTIVE | 34 | operations(49), assessment(35), growth(30), battle(26), monetization(26), learning(20), content(19), gamification(19), magazine(16), daily-radar(15), daily(15), flashcards(15), ads(13), nhk-news(13), legal(11), iam(10), users(9), exercises(9), cardgen(7), privacy(6), companion(5), media(5), i18n(4), announcements(4), lexemes(3), analytics(3), quiz(3), support(2), me(1), module-contracts(1), audit(1), reading-assist(1), bjt(1), autofill(1) |
 | CURRENT_BFF_ROUTES | 4 |

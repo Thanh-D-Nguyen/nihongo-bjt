@@ -3,8 +3,8 @@
 **Date:** 2026-10-01
 **Staging:** http://192.168.1.8:18080/vi
 **Branch:** main
-**HEAD:** a6a55b2e (fix(e2e+api): close REAL_BROWSER_AUTHENTICATED_PARITY_PASS gate)
-**Container Created:** 2026-10-01T04:00:26Z (API), 2026-10-01T03:50:54Z (Web)
+**HEAD:** 76c42ef2 (chore(api): remove legacy NestJS backend)
+**Container Created:** 2026-10-01T04:10:00Z (API), 2026-10-01T04:10:00Z (Web) — post-NestJS rebuild
 
 ---
 
@@ -12,7 +12,11 @@
 
 **REAL_BROWSER_AUTHENTICATED_PARITY_PASS**
 
-All 8 Playwright tests passed against Linux staging via Caddy reverse proxy on build `a6a55b2e`.
+All 8 Playwright tests passed against Linux staging via Caddy reverse proxy on build `76c42ef2`.
+
+**LEGACY_NESTJS_REMOVAL_PASS**
+
+NestJS source removed, zero active references, no NestJS container running. Browser regression confirms zero regressions from removal.
 
 ## Test Suite
 

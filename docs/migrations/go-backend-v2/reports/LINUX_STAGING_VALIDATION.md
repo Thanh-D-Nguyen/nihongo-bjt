@@ -5,9 +5,10 @@
 **Architecture:** X86_64 (ARM64 production verification remains a separate OCI gate)
 **Branch:** main
 **Implementation HEAD at validation start:** 2c874550
-**Final HEAD after staging fixes:** a6a55b2e (fix(e2e+api): close REAL_BROWSER_AUTHENTICATED_PARITY_PASS gate)
-**API Container Created:** 2026-10-01T04:00:26Z
-**Web Container Created:** 2026-10-01T03:50:54Z
+**Final HEAD after staging fixes:** 76c42ef2 (chore(api): remove legacy NestJS backend)
+**API Container Created:** 2026-10-01T04:10:00Z (post-NestJS rebuild)
+**Web Container Created:** 2026-10-01T04:10:00Z (post-NestJS rebuild)
+**LEGACY_NESTJS_REMOVAL_PASS:** ✅ 8/8 Playwright, zero NestJS refs, no NestJS container
 
 ---
 
