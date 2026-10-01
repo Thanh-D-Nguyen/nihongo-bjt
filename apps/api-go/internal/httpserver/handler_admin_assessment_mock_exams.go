@@ -113,7 +113,7 @@ func adminAssessmentMockExamsListHandler(db *pgxpool.Pool, logger *slog.Logger) 
 			SELECT m.id, m.slug, m.title_vi, m.title_ja, m.type, m.status, m.level,
 			       m.time_limit_seconds, m.description, m.blueprint_meta,
 			       m.created_at, m.updated_at,
-			       (SELECT COUNT(*) FROM assessment.bjt_mock_test_section s WHERE s.test_id = m.id) as section_count,
+			       (SELECT COUNT(*) FROM assessment.bjt_test_section s WHERE s.test_id = m.id) as section_count,
 			       (SELECT COUNT(*) FROM assessment.quiz_session qs WHERE qs.test_id = m.id) as session_count
 			FROM assessment.bjt_mock_test m %s
 			ORDER BY m.updated_at DESC LIMIT $%d OFFSET $%d`,
@@ -237,7 +237,7 @@ func adminAssessmentMockExamsDetailHandler(db *pgxpool.Pool, logger *slog.Logger
 		sRows, err := db.Query(ctx, `
 			SELECT id, code, title_vi, title_ja, display_order,
 			       (SELECT COUNT(*) FROM assessment.bjt_mock_test_question q WHERE q.section_id = s.id)
-			FROM assessment.bjt_mock_test_section s WHERE s.test_id = $1 ORDER BY s.display_order ASC`, id)
+			FROM assessment.bjt_test_section s WHERE s.test_id = $1 ORDER BY s.display_order ASC`, id)
 		if err == nil {
 			for sRows.Next() {
 				var sec Section

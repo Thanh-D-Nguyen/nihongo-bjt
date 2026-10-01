@@ -634,7 +634,7 @@ func adminExercisesConfigListHandler(db *pgxpool.Pool, logger *slog.Logger) http
 	return func(w http.ResponseWriter, r *http.Request) {
 		rows, err := db.Query(r.Context(), `SELECT id, exercise_type, placement, display_order, enabled,
 min_level, max_level, time_limit_sec, points_per_correct, created_at, updated_at
-FROM learning.exercise_config ORDER BY placement ASC, display_order ASC`)
+FROM exercise.exercise_config ORDER BY placement ASC, display_order ASC`)
 		if err != nil {
 			logger.Error("list exercise configs", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
@@ -699,7 +699,7 @@ func adminExercisesConfigUpsertHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 			return
 		}
 		var id string
-		err := db.QueryRow(r.Context(), `INSERT INTO learning.exercise_config
+		err := db.QueryRow(r.Context(), `INSERT INTO exercise.exercise_config
 (exercise_type, placement, display_order, enabled, min_level, max_level, time_limit_sec, points_per_correct, created_at, updated_at)
 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW(),NOW())
 ON CONFLICT (exercise_type, placement) DO UPDATE SET
@@ -733,7 +733,7 @@ func adminExercisesConfigDeleteHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 			writeJSONError(w, "config id required", http.StatusBadRequest)
 			return
 		}
-		db.Exec(r.Context(), "DELETE FROM learning.exercise_config WHERE id=$1", id)
+		db.Exec(r.Context(), "DELETE FROM exercise.exercise_config WHERE id=$1", id)
 		beforeJSON, _ := json.Marshal(map[string]any{"id": id})
 		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, created_at)
 VALUES ('exercise.config.deleted',$1,$2,'exercise_config','delete',$3,NOW())`,
@@ -1038,7 +1038,7 @@ func adminExercisesPerformanceAnalyticsHandler(db *pgxpool.Pool, logger *slog.Lo
 COUNT(*) as total_attempts,
 SUM(CASE WHEN ea.correct THEN 1 ELSE 0 END) as correct_count,
 AVG(CASE WHEN ea.duration_ms > 0 THEN ea.duration_ms ELSE NULL END) as avg_duration_ms
-FROM learning.exercise_attempt ea
+FROM exercise.exercise_answer ea
 JOIN exercise.exercise e ON e.id = ea.exercise_id
 %s GROUP BY e.exercise_type, e.level ORDER BY e.exercise_type, e.level`, whereClause), args...)
 		if err != nil {

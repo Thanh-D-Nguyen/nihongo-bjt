@@ -86,7 +86,7 @@ func adminModuleContractsHandler(db *pgxpool.Pool, logger *slog.Logger) http.Han
 func adminIamRolesListHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rows, err := db.Query(r.Context(),
-			"SELECT code, name, description, is_system, created_at FROM authz.admin_role ORDER BY code ASC")
+			"SELECT code, name, description, created_at FROM authz.admin_role ORDER BY code ASC")
 		if err != nil {
 			logger.Error("list iam roles", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
@@ -171,9 +171,9 @@ func adminIamRoleDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handl
 func adminIamPermissionsListHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rows, err := db.Query(r.Context(),
-			`SELECT p.code, p.description, p.category,
+			`SELECT p.code, p.description,
 			 (SELECT COUNT(*) FROM authz.admin_role_permission rp WHERE rp.permission_code = p.code) as roles_count
-			 FROM authz.admin_permission p ORDER BY p.category, p.code`)
+			 FROM authz.admin_permission p ORDER BY p.code`)
 		if err != nil {
 			logger.Error("list iam permissions", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
