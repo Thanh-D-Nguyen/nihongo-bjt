@@ -26,13 +26,13 @@ func adminOpsBJTDashboardHandler(db *pgxpool.Pool, logger *slog.Logger) http.Han
 		if err := db.QueryRow(ctx, "SELECT COUNT(*) FROM assessment.bjt_mock_test WHERE status = 'active'").Scan(&testsActive); err != nil {
 			logger.Error("count active bjt tests", "error", err)
 		}
-		if err := db.QueryRow(ctx, "SELECT COUNT(*) FROM study.quiz_session").Scan(&sessionsTotal); err != nil {
+		if err := db.QueryRow(ctx, "SELECT COUNT(*) FROM assessment.quiz_session").Scan(&sessionsTotal); err != nil {
 			logger.Error("count quiz sessions", "error", err)
 		}
-		if err := db.QueryRow(ctx, "SELECT COUNT(*) FROM study.quiz_session WHERE started_at >= NOW() - INTERVAL '30 days'").Scan(&attempts30d); err != nil {
+		if err := db.QueryRow(ctx, "SELECT COUNT(*) FROM assessment.quiz_session WHERE started_at >= NOW() - INTERVAL '30 days'").Scan(&attempts30d); err != nil {
 			logger.Error("count recent quiz attempts", "error", err)
 		}
-		if err := db.QueryRow(ctx, "SELECT COUNT(*) FROM study.quiz_session WHERE status = 'submitted'").Scan(&completedAttempts); err != nil {
+		if err := db.QueryRow(ctx, "SELECT COUNT(*) FROM assessment.quiz_session WHERE status = 'submitted'").Scan(&completedAttempts); err != nil {
 			logger.Error("count completed quiz attempts", "error", err)
 		}
 

@@ -83,7 +83,7 @@ func adminAssessmentQuestionBankListHandler(db *pgxpool.Pool, logger *slog.Logge
 		}
 
 		countQuery := `SELECT COUNT(*) FROM assessment.bjt_question q
-LEFT JOIN assessment.bjt_mock_test_section s ON s.id = q.section_id
+LEFT JOIN assessment.bjt_test_section s ON s.id = q.section_id
 LEFT JOIN assessment.bjt_mock_test t ON t.id = s.test_id ` + whereClause
 		var total int
 		if err := db.QueryRow(ctx, countQuery, args...).Scan(&total); err != nil {
@@ -98,9 +98,9 @@ SELECT q.id, q.section_id, q.prompt, q.scenario, q.skill_tag, q.difficulty,
        s.code as section_code, s.title_vi as section_title_vi,
        t.id as test_id, t.slug as test_slug, t.title_vi as test_title_vi, t.level as test_level, t.type as test_type,
        (SELECT COUNT(*) FROM assessment.bjt_question_option o WHERE o.question_id = q.id) as option_count,
-       (SELECT COUNT(*) FROM study.quiz_answer a WHERE a.question_id = q.id) as answer_count
+       (SELECT COUNT(*) FROM assessment.quiz_answer a WHERE a.question_id = q.id) as answer_count
 FROM assessment.bjt_question q
-LEFT JOIN assessment.bjt_mock_test_section s ON s.id = q.section_id
+LEFT JOIN assessment.bjt_test_section s ON s.id = q.section_id
 LEFT JOIN assessment.bjt_mock_test t ON t.id = s.test_id
 %s ORDER BY q.updated_at DESC LIMIT $%d OFFSET $%d`,
 			whereClause, argIdx, argIdx+1)
@@ -304,7 +304,7 @@ WHERE question_id = $1 ORDER BY option_key ASC`, id)
 		}
 
 		// Answer count
-		db.QueryRow(ctx, "SELECT COUNT(*) FROM study.quiz_answer WHERE question_id = $1", id).Scan(&qd.AnswerCount)
+		db.QueryRow(ctx, "SELECT COUNT(*) FROM assessment.quiz_answer WHERE question_id = $1", id).Scan(&qd.AnswerCount)
 
 		// Audit trail
 		aRows, err := db.Query(ctx, `
@@ -779,7 +779,7 @@ func adminAssessmentQuestionBankDeleteHandler(db *pgxpool.Pool, logger *slog.Log
 		}
 
 		var answerCount int
-		db.QueryRow(ctx, "SELECT COUNT(*) FROM study.quiz_answer WHERE question_id = $1", id).Scan(&answerCount)
+		db.QueryRow(ctx, "SELECT COUNT(*) FROM assessment.quiz_answer WHERE question_id = $1", id).Scan(&answerCount)
 		if answerCount > 0 {
 			writeJSONError(w, "question has answers; cannot delete", http.StatusBadRequest)
 			return

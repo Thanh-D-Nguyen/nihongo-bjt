@@ -607,7 +607,7 @@ func adminAssessmentQuizTemplatesDeleteHandler(db *pgxpool.Pool, logger *slog.Lo
 		}
 
 		var sessionCount int
-		db.QueryRow(ctx, "SELECT COUNT(*) FROM study.quiz_session WHERE test_id = $1", id).Scan(&sessionCount)
+		db.QueryRow(ctx, "SELECT COUNT(*) FROM assessment.quiz_session WHERE test_id = $1", id).Scan(&sessionCount)
 		if sessionCount > 0 {
 			writeJSONError(w, "quiz template has sessions; cannot delete", http.StatusBadRequest)
 			return
