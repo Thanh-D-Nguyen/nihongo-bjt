@@ -71,7 +71,7 @@ func adminDailyRadarModulesListHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 		var total int
 		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM daily.daily_radar_module_config "+whereClause, args...).Scan(&total)
 		dataQ := fmt.Sprintf(`SELECT id, module_key, title_vi, description_vi, icon_key, default_priority, status, created_at, updated_at
-FROM daily.daily_radar_module_config %s ORDER BY sort_order ASC, created_at ASC LIMIT $%d OFFSET $%d`,
+FROM daily.daily_radar_module_config %s ORDER BY default_priority ASC, created_at ASC LIMIT $%d OFFSET $%d`,
 			whereClause, argIdx, argIdx+1)
 		args = append(args, pageSize, offset)
 		rows, err := db.Query(r.Context(), dataQ, args...)
@@ -218,7 +218,7 @@ func adminDailyRadarModulePatchHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 		argIdx := 1
 		fieldMap := map[string]string{
 			"title": "title", "description": "description", "icon": "icon",
-			"sortOrder": "sort_order", "status": "status",
+			"sortOrder": "default_priority", "status": "status",
 		}
 		for k, col := range fieldMap {
 			if v, ok := req[k]; ok {
@@ -328,7 +328,7 @@ func adminDailyRadarCardsListHandler(db *pgxpool.Pool, logger *slog.Logger) http
 		var total int
 		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM daily.daily_radar_card "+whereClause, args...).Scan(&total)
 		dataQ := fmt.Sprintf(`SELECT id, slug, title_vi, description_vi, category, m.module_key, image_url, status, created_at, updated_at
-FROM daily.daily_radar_card %s ORDER BY created_at DESC LIMIT $%d OFFSET $%d`,
+FROM daily.daily_radar_card c JOIN daily.daily_radar_module_config m ON m.id = c.module_config_id %s ORDER BY c.created_at DESC LIMIT $%d OFFSET $%d`,
 			whereClause, argIdx, argIdx+1)
 		args = append(args, pageSize, offset)
 		rows, err := db.Query(r.Context(), dataQ, args...)
@@ -449,7 +449,7 @@ func adminDailyRadarCardDetailHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 		var ca, ua time.Time
 		var pa *time.Time
 		err := db.QueryRow(r.Context(), `SELECT id, slug, title_vi, description_vi, metadata->>'body', category, m.module_key, image_url, status, created_at, updated_at
-FROM daily.daily_radar_card WHERE id=$1`, id).
+FROM daily.daily_radar_card c JOIN daily.daily_radar_module_config m ON m.id = c.module_config_id WHERE c.id=$1`, id).
 			Scan(&c.ID, &c.Slug, &c.Title, &c.Summary, &c.Body, &c.Category, &c.ModuleKey, &c.ImageURL, &c.Status, &pa, &ca, &ua)
 		if err != nil {
 			writeJSONError(w, "card not found", http.StatusNotFound)
@@ -531,7 +531,7 @@ func adminDailyRadarCardPublishHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 			return
 		}
 		var beforeStatus string
-		err := db.QueryRow(r.Context(), "SELECT status FROM daily.daily_radar_card WHERE id=$1", id).Scan(&beforeStatus)
+		err := db.QueryRow(r.Context(), "SELECT status FROM daily.daily_radar_card c JOIN daily.daily_radar_module_config m ON m.id = c.module_config_id WHERE c.id=$1", id).Scan(&beforeStatus)
 		if err != nil {
 			writeJSONError(w, "card not found", http.StatusNotFound)
 			return
@@ -566,7 +566,7 @@ func adminDailyRadarCardArchiveHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 			return
 		}
 		var beforeStatus string
-		err := db.QueryRow(r.Context(), "SELECT status FROM daily.daily_radar_card WHERE id=$1", id).Scan(&beforeStatus)
+		err := db.QueryRow(r.Context(), "SELECT status FROM daily.daily_radar_card c JOIN daily.daily_radar_module_config m ON m.id = c.module_config_id WHERE c.id=$1", id).Scan(&beforeStatus)
 		if err != nil {
 			writeJSONError(w, "card not found", http.StatusNotFound)
 			return
@@ -602,7 +602,7 @@ func adminDailyRadarCardDuplicateHandler(db *pgxpool.Pool, logger *slog.Logger) 
 		var slug, title, category string
 		var summary, body, moduleKey, imageURL *string
 		err := db.QueryRow(r.Context(), `SELECT slug, title_vi, description_vi, metadata->>'body', category, m.module_key, image_url
-FROM daily.daily_radar_card WHERE id=$1`, id).
+FROM daily.daily_radar_card c JOIN daily.daily_radar_module_config m ON m.id = c.module_config_id WHERE c.id=$1`, id).
 			Scan(&slug, &title, &summary, &body, &category, &moduleKey, &imageURL)
 		if err != nil {
 			writeJSONError(w, "source card not found", http.StatusNotFound)
@@ -776,7 +776,7 @@ func adminExercisesListHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handl
 		var total int
 		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM exercise.exercise "+whereClause, args...).Scan(&total)
 		dataQ := fmt.Sprintf(`SELECT id, exercise_type, source_type, source_id, level, prompt, correct_answer,
-difficulty, created_at, updated_at
+difficulty, created_at
 FROM exercise.exercise %s ORDER BY created_at DESC LIMIT $%d OFFSET $%d`,
 			whereClause, argIdx, argIdx+1)
 		args = append(args, pageSize, offset)
@@ -797,16 +797,14 @@ FROM exercise.exercise %s ORDER BY created_at DESC LIMIT $%d OFFSET $%d`,
 			CorrectAnswer string  `json:"correctAnswer"`
 			Difficulty    string  `json:"difficulty"`
 			CreatedAt     string  `json:"createdAt"`
-			UpdatedAt     string  `json:"updatedAt"`
 		}
 		var items []Exercise
 		for rows.Next() {
 			var e Exercise
-			var ca, ua time.Time
+			var ca time.Time
 			if rows.Scan(&e.ID, &e.ExerciseType, &e.SourceType, &e.SourceID, &e.Level, &e.Prompt,
-				&e.CorrectAnswer, &e.Difficulty, &ca, &ua) == nil {
+				&e.CorrectAnswer, &e.Difficulty, &ca) == nil {
 				e.CreatedAt = ca.UTC().Format(time.RFC3339)
-				e.UpdatedAt = ua.UTC().Format(time.RFC3339)
 				items = append(items, e)
 			}
 		}
@@ -854,7 +852,6 @@ FROM exercise.exercise WHERE id=$1`, id).
 			return
 		}
 		e.CreatedAt = ca.UTC().Format(time.RFC3339)
-		e.UpdatedAt = ua.UTC().Format(time.RFC3339)
 		writeJSON(w, http.StatusOK, e)
 	}
 }

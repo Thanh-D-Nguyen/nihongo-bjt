@@ -754,7 +754,7 @@ func adminAdsProviderPatchHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 // adminAdsRulesListHandler implements GET /api/admin/ads/rules.
 func adminAdsRulesListHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		rows, err := db.Query(r.Context(), `SELECT id, rule_key, enabled, config, created_at, updated_at
+		rows, err := db.Query(r.Context(), `SELECT id, rule_key, enabled, config, updated_at
 			FROM monetization.ad_safety_rule ORDER BY rule_key ASC`)
 		if err != nil {
 			logger.Error("list ad safety rules", "error", err)
@@ -774,9 +774,9 @@ func adminAdsRulesListHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handle
 		var items []Rule
 		for rows.Next() {
 			var rl Rule
-			var ca, ua time.Time
-			if rows.Scan(&rl.ID, &rl.RuleKey, &rl.Enabled, &rl.Config, &ca, &ua) == nil {
-				rl.CreatedAt = ca.UTC().Format(time.RFC3339)
+			var ua time.Time
+			if rows.Scan(&rl.ID, &rl.RuleKey, &rl.Enabled, &rl.Config, &ua) == nil {
+				
 				rl.UpdatedAt = ua.UTC().Format(time.RFC3339)
 				items = append(items, rl)
 			}
