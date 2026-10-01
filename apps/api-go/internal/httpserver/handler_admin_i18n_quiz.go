@@ -50,7 +50,7 @@ func adminQuizTestsListHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handl
 		var total int
 		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM assessment.bjt_mock_test "+whereClause, args...).Scan(&total)
 
-		dataQ := fmt.Sprintf(`SELECT id, title, type, status, duration_minutes, question_count, created_at, updated_at
+		dataQ := fmt.Sprintf(`SELECT id, title_vi, type, status, time_limit_seconds, created_at, updated_at
 			FROM assessment.bjt_mock_test %s ORDER BY created_at DESC LIMIT $%d OFFSET $%d`,
 			whereClause, argIdx, argIdx+1)
 		args = append(args, limit, offset)

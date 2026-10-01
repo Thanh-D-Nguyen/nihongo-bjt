@@ -264,7 +264,7 @@ func adminLegalPolicyCreateHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 
 		var id string
 		err := db.QueryRow(r.Context(), `INSERT INTO legal.legal_policy
-(policy_key, version, title, body_markdown, body_html, status, created_at, updated_at)
+(policy_key, version, effective_at, content_md, status, created_at)
 VALUES ($1,$2,$3,$4,$5,'draft',NOW(),NOW()) RETURNING id`,
 			req.PolicyKey, req.Version, req.Title, req.BodyMarkdown, req.BodyHTML).Scan(&id)
 		if err != nil {
@@ -443,10 +443,10 @@ func adminLegalPolicyDuplicateHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 			return
 		}
 
-		var policyKey, version, title, bodyMarkdown, bodyHTML string
-		err := db.QueryRow(r.Context(), `SELECT policy_key, version, title, COALESCE(body_markdown,''), COALESCE(body_html,'')
+		var policyKey, version, bodyMarkdown string
+		err := db.QueryRow(r.Context(), `SELECT policy_key, version, content_md
 FROM legal.legal_policy WHERE id=$1`, id).
-			Scan(&policyKey, &version, &title, &bodyMarkdown, &bodyHTML)
+			Scan(&policyKey, &version, &bodyMarkdown)
 		if err != nil {
 			writeJSONError(w, "source policy not found", http.StatusNotFound)
 			return
@@ -455,9 +455,9 @@ FROM legal.legal_policy WHERE id=$1`, id).
 		newVersion := version + "-draft"
 		var newID string
 		err = db.QueryRow(r.Context(), `INSERT INTO legal.legal_policy
-(policy_key, version, title, body_markdown, body_html, status, created_at, updated_at)
+(policy_key, version, effective_at, content_md, status, created_at)
 VALUES ($1,$2,$3,$4,$5,'draft',NOW(),NOW()) RETURNING id`,
-			policyKey, newVersion, title, bodyMarkdown, bodyHTML).Scan(&newID)
+			policyKey, newVersion, bodyMarkdown).Scan(&newID)
 		if err != nil {
 			logger.Error("duplicate legal policy", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)

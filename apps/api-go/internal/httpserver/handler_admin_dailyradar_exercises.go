@@ -327,7 +327,7 @@ func adminDailyRadarCardsListHandler(db *pgxpool.Pool, logger *slog.Logger) http
 		}
 		var total int
 		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM daily.daily_radar_card "+whereClause, args...).Scan(&total)
-		dataQ := fmt.Sprintf(`SELECT id, slug, title_vi, description_vi, category, m.module_key, image_url, status, created_at, updated_at
+		dataQ := fmt.Sprintf(`SELECT c.id, c.slug, c.title_vi, c.description_vi, c.category, m.module_key, c.image_url, c.status, c.created_at, c.updated_at
 FROM daily.daily_radar_card c JOIN daily.daily_radar_module_config m ON m.id = c.module_config_id %s ORDER BY c.created_at DESC LIMIT $%d OFFSET $%d`,
 			whereClause, argIdx, argIdx+1)
 		args = append(args, pageSize, offset)

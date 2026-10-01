@@ -588,7 +588,7 @@ func adminMonetizationAdsRulesListHandler(db *pgxpool.Pool, logger *slog.Logger)
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		rows, err := db.Query(ctx, `
-			SELECT id, name, rule_type, condition, action, priority, active, created_at, updated_at
+			SELECT id, rule_key, enabled, config, updated_at
 			FROM monetization.ad_safety_rule
 			ORDER BY priority ASC, created_at ASC`)
 		if err != nil {
