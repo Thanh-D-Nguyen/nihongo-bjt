@@ -222,7 +222,7 @@ func adminOpsImportStagingEscalateHandler(db *pgxpool.Pool, logger *slog.Logger)
 		beforeJSON, _ := json.Marshal(map[string]any{"importErrorId": ie.ID})
 		db.Exec(ctx, `
 			INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
-			VALUES ('ops.import_error.dead_letter.create', $1, $2, 'content.import_error', $3, $4, $5, NOW())`,
+			VALUES ('ops.import_error.dead_letter.create', $1, $2, 'content.content_import_error', $3, $4, $5, NOW())`,
 			identity.ActorID, ie.ID, req.Reason, afterJSON, beforeJSON)
 
 		writeJSON(w, http.StatusOK, map[string]any{"id": dlID, "status": "open"})
@@ -267,7 +267,7 @@ func adminOpsImportStagingRetryHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 		beforeJSON, _ := json.Marshal(map[string]any{"id": id})
 		_, err := db.Exec(ctx, `
 			INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
-			VALUES ('ops.import_error.retry', $1, $2, 'content.import_error', $3, $4, $5, NOW())`,
+			VALUES ('ops.import_error.retry', $1, $2, 'content.content_import_error', $3, $4, $5, NOW())`,
 			identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
 		if err != nil {
 			logger.Error("audit import error retry", "error", err)
@@ -314,7 +314,7 @@ func adminOpsImportStagingDiscardHandler(db *pgxpool.Pool, logger *slog.Logger) 
 		beforeJSON, _ := json.Marshal(map[string]any{"id": id})
 		_, err := db.Exec(ctx, `
 			INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
-			VALUES ('ops.import_error.discard', $1, $2, 'content.import_error', $3, $4, $5, NOW())`,
+			VALUES ('ops.import_error.discard', $1, $2, 'content.content_import_error', $3, $4, $5, NOW())`,
 			identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
 		if err != nil {
 			logger.Error("audit import error discard", "error", err)
@@ -396,7 +396,7 @@ func adminOpsImportStagingBulkHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 			beforeJSON, _ := json.Marshal(map[string]any{"id": eid})
 			db.Exec(ctx, `
 				INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
-				VALUES ($1, $2, $3, 'content.import_error', $4, $5, $6, NOW())`,
+				VALUES ($1, $2, $3, 'content.content_import_error', $4, $5, $6, NOW())`,
 				"ops.import_error."+actionSuffix, identity.ActorID, eid, req.Reason, afterJSON, beforeJSON)
 		}
 

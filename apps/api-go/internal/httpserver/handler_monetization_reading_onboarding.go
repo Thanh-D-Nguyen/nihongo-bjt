@@ -180,7 +180,7 @@ func analyzeReadingAssistHandler(db *pgxpool.Pool, logger *slog.Logger) http.Han
 			return
 		}
 		// Store analysis record
-		const insertQ = `INSERT INTO study.reading_assist_analysis (user_id, text_hash, exam_context, quiz_session_id, created_at)
+		const insertQ = `INSERT INTO learning.reading_assist_report (user_id, text_hash, exam_context, quiz_session_id, created_at)
 			VALUES ($1, md5($2), $3, $4, NOW())
 			ON CONFLICT DO NOTHING`
 		if _, err := db.Exec(r.Context(), insertQ, identity.UserID, req.Text, req.ExamContext, req.QuizSessionID); err != nil {

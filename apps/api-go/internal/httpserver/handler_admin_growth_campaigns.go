@@ -63,7 +63,7 @@ func adminGrowthCampaignsListHandler(db *pgxpool.Pool, logger *slog.Logger) http
 			whereClause = "WHERE " + strings.Join(whereParts, " AND ")
 		}
 
-		countQuery := "SELECT COUNT(*) FROM growth.campaign " + whereClause
+		countQuery := "SELECT COUNT(*) FROM growth.growth_campaign " + whereClause
 		var total int
 		if err := db.QueryRow(ctx, countQuery, args...).Scan(&total); err != nil {
 			logger.Error("count growth campaigns", "error", err)
@@ -73,7 +73,7 @@ func adminGrowthCampaignsListHandler(db *pgxpool.Pool, logger *slog.Logger) http
 
 		dataQuery := fmt.Sprintf(`
 			SELECT id, name, status, channel, schedule_start, schedule_end, created_at, updated_at
-			FROM growth.campaign %s
+			FROM growth.growth_campaign %s
 			ORDER BY updated_at DESC LIMIT $%d OFFSET $%d`,
 			whereClause, argIdx, argIdx+1)
 		args = append(args, pageSize, offset)
@@ -176,7 +176,7 @@ func adminGrowthCampaignsDetailHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 			SELECT id, name, description, status, channel, audience, content_body,
 			       cta, tracking_utm, schedule_start, schedule_end,
 			       created_by_id, updated_by_id, created_at, updated_at
-			FROM growth.campaign WHERE id = $1`, id).Scan(
+			FROM growth.growth_campaign WHERE id = $1`, id).Scan(
 			&cd.ID, &cd.Name, &cd.Description, &cd.Status, &cd.Channel,
 			&audienceBytes, &cd.ContentBody, &ctaBytes, &utmBytes,
 			&schedStart, &schedEnd, &cd.CreatedByID, &cd.UpdatedByID,
@@ -227,7 +227,7 @@ func adminGrowthCampaignsDetailHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 			       a.reason, a.after, a.before, a.created_at
 			FROM ops.admin_audit_log a
 			LEFT JOIN authz.admin_actor act ON act.id = a.actor_id
-			WHERE a.target_id = $1 AND a.target_type = 'growth.campaign'
+			WHERE a.target_id = $1 AND a.target_type = 'growth.growth_campaign'
 			ORDER BY a.created_at DESC LIMIT 20`, id)
 		if err == nil {
 			for aRows.Next() {
@@ -334,7 +334,7 @@ func adminGrowthCampaignsCreateHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 
 		var createdID string
 		err := db.QueryRow(ctx, `
-			INSERT INTO growth.campaign (name, description, channel, audience, content_body,
+			INSERT INTO growth.growth_campaign (name, description, channel, audience, content_body,
 			                             cta, tracking_utm, schedule_start, schedule_end,
 			                             status, created_by_id, updated_by_id, created_at, updated_at)
 			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'draft', $10, $10, NOW(), NOW())
@@ -357,7 +357,7 @@ func adminGrowthCampaignsCreateHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 			"status": "draft",
 		})
 		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
-			VALUES ('admin.growth.campaign.created', $1, $2, 'growth.campaign', $3, $4, NOW())`,
+			VALUES ('admin.growth.campaign.created', $1, $2, 'growth.growth_campaign', $3, $4, NOW())`,
 			identity.ActorID, createdID, req.Reason, afterJSON)
 
 		// Return detail view
@@ -400,7 +400,7 @@ func adminGrowthCampaignsPatchHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 
 		// Fetch before state
 		var exists bool
-		db.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM growth.campaign WHERE id = $1)", id).Scan(&exists)
+		db.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM growth.growth_campaign WHERE id = $1)", id).Scan(&exists)
 		if !exists {
 			writeJSONError(w, "campaign not found", http.StatusNotFound)
 			return
@@ -464,7 +464,7 @@ func adminGrowthCampaignsPatchHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 		argIdx++
 		setClauses = append(setClauses, "updated_at = NOW()")
 
-		query := "UPDATE growth.campaign SET " + joinStrings(setClauses, ", ") +
+		query := "UPDATE growth.growth_campaign SET " + joinStrings(setClauses, ", ") +
 			" WHERE id = $" + itoa(argIdx)
 		args = append(args, id)
 		if _, err := db.Exec(ctx, query, args...); err != nil {
@@ -477,7 +477,7 @@ func adminGrowthCampaignsPatchHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 		afterJSON, _ := json.Marshal(map[string]any{"updated": true, "fields": setClauses})
 		beforeJSON, _ := json.Marshal(map[string]any{"id": id})
 		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
-			VALUES ('admin.growth.campaign.updated', $1, $2, 'growth.campaign', $3, $4, $5, NOW())`,
+			VALUES ('admin.growth.campaign.updated', $1, $2, 'growth.growth_campaign', $3, $4, $5, NOW())`,
 			identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
 
 		// Return detail view
@@ -532,7 +532,7 @@ func adminGrowthCampaignsTransitionHandler(db *pgxpool.Pool, logger *slog.Logger
 		ctx := r.Context()
 
 		var currentStatus string
-		err := db.QueryRow(ctx, "SELECT status FROM growth.campaign WHERE id = $1", id).Scan(&currentStatus)
+		err := db.QueryRow(ctx, "SELECT status FROM growth.growth_campaign WHERE id = $1", id).Scan(&currentStatus)
 		if err != nil {
 			writeJSONError(w, "campaign not found", http.StatusNotFound)
 			return
@@ -540,7 +540,7 @@ func adminGrowthCampaignsTransitionHandler(db *pgxpool.Pool, logger *slog.Logger
 
 		noop := currentStatus == nextStatus
 		if !noop {
-			db.Exec(ctx, "UPDATE growth.campaign SET status = $1, updated_by_id = $2, updated_at = NOW() WHERE id = $3",
+			db.Exec(ctx, "UPDATE growth.growth_campaign SET status = $1, updated_by_id = $2, updated_at = NOW() WHERE id = $3",
 				nextStatus, identity.ActorID, id)
 		}
 
@@ -548,7 +548,7 @@ func adminGrowthCampaignsTransitionHandler(db *pgxpool.Pool, logger *slog.Logger
 		beforeJSON, _ := json.Marshal(map[string]any{"status": currentStatus})
 		auditAction := "admin.growth.campaign." + nextStatus
 		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
-			VALUES ($1, $2, $3, 'growth.campaign', $4, $5, $6, NOW())`,
+			VALUES ($1, $2, $3, 'growth.growth_campaign', $4, $5, $6, NOW())`,
 			auditAction, identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
 
 		// Return detail view
@@ -589,7 +589,7 @@ func adminGrowthCampaignsDuplicateHandler(db *pgxpool.Pool, logger *slog.Logger)
 		var audienceBytes, ctaBytes, utmBytes []byte
 		err := db.QueryRow(ctx, `
 			SELECT name, description, channel, audience, content_body, cta, tracking_utm
-			FROM growth.campaign WHERE id = $1`, id).Scan(
+			FROM growth.growth_campaign WHERE id = $1`, id).Scan(
 			&src.Name, &src.Description, &src.Channel, &audienceBytes,
 			&src.ContentBody, &ctaBytes, &utmBytes)
 		if err != nil {
@@ -615,7 +615,7 @@ func adminGrowthCampaignsDuplicateHandler(db *pgxpool.Pool, logger *slog.Logger)
 		newName := suffixCopy(src.Name, " (copy)", 200)
 		var newID string
 		err = db.QueryRow(ctx, `
-			INSERT INTO growth.campaign (name, description, channel, audience, content_body,
+			INSERT INTO growth.growth_campaign (name, description, channel, audience, content_body,
 			                             cta, tracking_utm, status, created_by_id, updated_by_id, created_at, updated_at)
 			VALUES ($1, $2, $3, $4, $5, $6, $7, 'draft', $8, $8, NOW(), NOW())
 			RETURNING id`,
@@ -629,7 +629,7 @@ func adminGrowthCampaignsDuplicateHandler(db *pgxpool.Pool, logger *slog.Logger)
 
 		afterJSON, _ := json.Marshal(map[string]any{"name": newName, "newId": newID, "sourceId": id})
 		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
-			VALUES ('admin.growth.campaign.duplicated', $1, $2, 'growth.campaign', $3, $4, NOW())`,
+			VALUES ('admin.growth.campaign.duplicated', $1, $2, 'growth.growth_campaign', $3, $4, NOW())`,
 			identity.ActorID, newID, req.Reason, afterJSON)
 
 		// Return detail view of new campaign

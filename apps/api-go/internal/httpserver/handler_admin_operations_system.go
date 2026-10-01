@@ -52,7 +52,7 @@ func adminOpsSystemHealthHandler(db *pgxpool.Pool, logger *slog.Logger) http.Han
 		if err := db.QueryRow(ctx, "SELECT COUNT(*) FROM ops.dead_letter_entry WHERE status IN ('open', 'failed')").Scan(&deadLettersOpen); err != nil {
 			logger.Error("count dead letters", "error", err)
 		}
-		if err := db.QueryRow(ctx, "SELECT COUNT(*) FROM content.import_error WHERE created_at >= NOW() - INTERVAL '24 hours'").Scan(&importErrors24h); err != nil {
+		if err := db.QueryRow(ctx, "SELECT COUNT(*) FROM content.content_import_error WHERE created_at >= NOW() - INTERVAL '24 hours'").Scan(&importErrors24h); err != nil {
 			logger.Error("count import errors", "error", err)
 		}
 
@@ -120,7 +120,7 @@ func adminOpsQueueHealthHandler(db *pgxpool.Pool, logger *slog.Logger) http.Hand
 		}
 
 		var importErrorsOpen int
-		if err := db.QueryRow(ctx, "SELECT COUNT(*) FROM content.import_error WHERE created_at >= NOW() - INTERVAL '24 hours' AND severity IN ('critical', 'high')").Scan(&importErrorsOpen); err != nil {
+		if err := db.QueryRow(ctx, "SELECT COUNT(*) FROM content.content_import_error WHERE created_at >= NOW() - INTERVAL '24 hours' AND severity IN ('critical', 'high')").Scan(&importErrorsOpen); err != nil {
 			logger.Error("count import errors open", "error", err)
 		}
 

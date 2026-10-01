@@ -100,7 +100,7 @@ func adminAssessmentMockExamsListHandler(db *pgxpool.Pool, logger *slog.Logger) 
 		}
 
 		// Count total
-		countQuery := "SELECT COUNT(*) FROM bjt.mock_test " + whereClause
+		countQuery := "SELECT COUNT(*) FROM assessment.bjt_mock_test " + whereClause
 		var total int
 		if err := db.QueryRow(ctx, countQuery, args...).Scan(&total); err != nil {
 			logger.Error("count mock exams", "error", err)
@@ -113,9 +113,9 @@ func adminAssessmentMockExamsListHandler(db *pgxpool.Pool, logger *slog.Logger) 
 			SELECT m.id, m.slug, m.title_vi, m.title_ja, m.type, m.status, m.level,
 			       m.time_limit_seconds, m.description, m.blueprint_meta,
 			       m.created_at, m.updated_at,
-			       (SELECT COUNT(*) FROM bjt.mock_test_section s WHERE s.test_id = m.id) as section_count,
+			       (SELECT COUNT(*) FROM assessment.bjt_mock_test_section s WHERE s.test_id = m.id) as section_count,
 			       (SELECT COUNT(*) FROM study.quiz_session qs WHERE qs.test_id = m.id) as session_count
-			FROM bjt.mock_test m %s
+			FROM assessment.bjt_mock_test m %s
 			ORDER BY m.updated_at DESC LIMIT $%d OFFSET $%d`,
 			whereClause, argIdx, argIdx+1)
 		args = append(args, pageSize, offset)
@@ -222,7 +222,7 @@ func adminAssessmentMockExamsDetailHandler(db *pgxpool.Pool, logger *slog.Logger
 		err := db.QueryRow(ctx, `
 			SELECT id, slug, title_vi, title_ja, type, status, level,
 			       time_limit_seconds, description, blueprint_meta, created_at, updated_at
-			FROM bjt.mock_test WHERE id = $1 AND type = ANY($2)`,
+			FROM assessment.bjt_mock_test WHERE id = $1 AND type = ANY($2)`,
 			id, examTypes).Scan(&m.ID, &m.Slug, &m.TitleVi, &m.TitleJa, &m.Type, &m.Status,
 			&m.Level, &m.TimeLimitSeconds, &m.Description, &m.BlueprintMeta,
 			&createdAt, &updatedAt)
@@ -236,8 +236,8 @@ func adminAssessmentMockExamsDetailHandler(db *pgxpool.Pool, logger *slog.Logger
 		// Sections
 		sRows, err := db.Query(ctx, `
 			SELECT id, code, title_vi, title_ja, display_order,
-			       (SELECT COUNT(*) FROM bjt.mock_test_question q WHERE q.section_id = s.id)
-			FROM bjt.mock_test_section s WHERE s.test_id = $1 ORDER BY s.display_order ASC`, id)
+			       (SELECT COUNT(*) FROM assessment.bjt_mock_test_question q WHERE q.section_id = s.id)
+			FROM assessment.bjt_mock_test_section s WHERE s.test_id = $1 ORDER BY s.display_order ASC`, id)
 		if err == nil {
 			for sRows.Next() {
 				var sec Section
@@ -332,7 +332,7 @@ func adminAssessmentMockExamsCreateHandler(db *pgxpool.Pool, logger *slog.Logger
 		ctx := r.Context()
 		// Check slug uniqueness
 		var slugExists bool
-		db.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM bjt.mock_test WHERE slug = $1)", req.Slug).Scan(&slugExists)
+		db.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM assessment.bjt_mock_test WHERE slug = $1)", req.Slug).Scan(&slugExists)
 		if slugExists {
 			writeJSONError(w, "slug already in use", http.StatusConflict)
 			return
@@ -340,7 +340,7 @@ func adminAssessmentMockExamsCreateHandler(db *pgxpool.Pool, logger *slog.Logger
 
 		var createdID string
 		err := db.QueryRow(ctx, `
-			INSERT INTO bjt.mock_test (slug, title_vi, title_ja, description, type, status, level, time_limit_seconds, blueprint_meta, created_at, updated_at)
+			INSERT INTO assessment.bjt_mock_test (slug, title_vi, title_ja, description, type, status, level, time_limit_seconds, blueprint_meta, created_at, updated_at)
 			VALUES ($1, $2, $3, $4, $5, 'draft', $6, $7, $8, NOW(), NOW())
 			RETURNING id`,
 			req.Slug, req.TitleVi, req.TitleJa, req.Description, examType, req.Level,
@@ -414,7 +414,7 @@ func adminAssessmentMockExamsPatchHandler(db *pgxpool.Pool, logger *slog.Logger)
 		var before Existing
 		err := db.QueryRow(ctx, `
 			SELECT slug, title_vi, title_ja, description, type, status, level, time_limit_seconds, blueprint_meta
-			FROM bjt.mock_test WHERE id = $1 AND type = ANY($2)`, id, examTypes).Scan(
+			FROM assessment.bjt_mock_test WHERE id = $1 AND type = ANY($2)`, id, examTypes).Scan(
 			&before.Slug, &before.TitleVi, &before.TitleJa, &before.Description,
 			&before.Type, &before.Status, &before.Level, &before.TimeLimitSeconds, &before.BlueprintMeta)
 		if err != nil {
@@ -425,7 +425,7 @@ func adminAssessmentMockExamsPatchHandler(db *pgxpool.Pool, logger *slog.Logger)
 		// Check slug uniqueness if changing
 		if req.Slug != nil && *req.Slug != before.Slug {
 			var slugExists bool
-			db.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM bjt.mock_test WHERE slug = $1 AND id != $2)", *req.Slug, id).Scan(&slugExists)
+			db.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM assessment.bjt_mock_test WHERE slug = $1 AND id != $2)", *req.Slug, id).Scan(&slugExists)
 			if slugExists {
 				writeJSONError(w, "slug already in use", http.StatusConflict)
 				return
@@ -481,7 +481,7 @@ func adminAssessmentMockExamsPatchHandler(db *pgxpool.Pool, logger *slog.Logger)
 			return
 		}
 		setClauses = append(setClauses, "updated_at = NOW()")
-		query := "UPDATE bjt.mock_test SET " + joinStrings(setClauses, ", ") +
+		query := "UPDATE assessment.bjt_mock_test SET " + joinStrings(setClauses, ", ") +
 			" WHERE id = $" + itoa(argIdx)
 		args = append(args, id)
 		if _, err := db.Exec(ctx, query, args...); err != nil {
@@ -523,7 +523,7 @@ func adminAssessmentMockExamsPublishHandler(db *pgxpool.Pool, logger *slog.Logge
 
 		ctx := r.Context()
 		var currentStatus string
-		err := db.QueryRow(ctx, "SELECT status FROM bjt.mock_test WHERE id = $1 AND type = ANY($2)",
+		err := db.QueryRow(ctx, "SELECT status FROM assessment.bjt_mock_test WHERE id = $1 AND type = ANY($2)",
 			id, examTypes).Scan(&currentStatus)
 		if err != nil {
 			writeJSONError(w, "mock exam not found", http.StatusNotFound)
@@ -534,7 +534,7 @@ func adminAssessmentMockExamsPublishHandler(db *pgxpool.Pool, logger *slog.Logge
 			return
 		}
 		if currentStatus != "published" {
-			db.Exec(ctx, "UPDATE bjt.mock_test SET status = 'published', updated_at = NOW() WHERE id = $1", id)
+			db.Exec(ctx, "UPDATE assessment.bjt_mock_test SET status = 'published', updated_at = NOW() WHERE id = $1", id)
 		}
 		// Audit
 		afterJSON, _ := json.Marshal(map[string]any{"status": "published", "noop": currentStatus == "published"})
@@ -568,14 +568,14 @@ func adminAssessmentMockExamsArchiveHandler(db *pgxpool.Pool, logger *slog.Logge
 
 		ctx := r.Context()
 		var currentStatus string
-		err := db.QueryRow(ctx, "SELECT status FROM bjt.mock_test WHERE id = $1 AND type = ANY($2)",
+		err := db.QueryRow(ctx, "SELECT status FROM assessment.bjt_mock_test WHERE id = $1 AND type = ANY($2)",
 			id, examTypes).Scan(&currentStatus)
 		if err != nil {
 			writeJSONError(w, "mock exam not found", http.StatusNotFound)
 			return
 		}
 		if currentStatus != "archived" {
-			db.Exec(ctx, "UPDATE bjt.mock_test SET status = 'archived', updated_at = NOW() WHERE id = $1", id)
+			db.Exec(ctx, "UPDATE assessment.bjt_mock_test SET status = 'archived', updated_at = NOW() WHERE id = $1", id)
 		}
 		afterJSON, _ := json.Marshal(map[string]any{"status": "archived"})
 		beforeJSON, _ := json.Marshal(map[string]any{"status": currentStatus})
@@ -620,7 +620,7 @@ func adminAssessmentMockExamsDuplicateHandler(db *pgxpool.Pool, logger *slog.Log
 		var src Source
 		err := db.QueryRow(ctx, `
 			SELECT slug, title_vi, title_ja, description, type, level, time_limit_seconds, blueprint_meta
-			FROM bjt.mock_test WHERE id = $1 AND type = ANY($2)`, id, examTypes).Scan(
+			FROM assessment.bjt_mock_test WHERE id = $1 AND type = ANY($2)`, id, examTypes).Scan(
 			&src.Slug, &src.TitleVi, &src.TitleJa, &src.Description,
 			&src.Type, &src.Level, &src.TimeLimitSeconds, &src.BlueprintMeta)
 		if err != nil {
@@ -633,7 +633,7 @@ func adminAssessmentMockExamsDuplicateHandler(db *pgxpool.Pool, logger *slog.Log
 
 		var newID string
 		err = db.QueryRow(ctx, `
-			INSERT INTO bjt.mock_test (slug, title_vi, title_ja, description, type, status, level, time_limit_seconds, blueprint_meta, created_at, updated_at)
+			INSERT INTO assessment.bjt_mock_test (slug, title_vi, title_ja, description, type, status, level, time_limit_seconds, blueprint_meta, created_at, updated_at)
 			VALUES ($1, $2, $3, $4, $5, 'draft', $6, $7, $8, NOW(), NOW())
 			RETURNING id`,
 			newSlug, newTitleVi, src.TitleJa, src.Description, src.Type, src.Level,
@@ -676,7 +676,7 @@ func adminAssessmentMockExamsDeleteHandler(db *pgxpool.Pool, logger *slog.Logger
 
 		ctx := r.Context()
 		var currentStatus string
-		err := db.QueryRow(ctx, "SELECT status FROM bjt.mock_test WHERE id = $1 AND type = ANY($2)",
+		err := db.QueryRow(ctx, "SELECT status FROM assessment.bjt_mock_test WHERE id = $1 AND type = ANY($2)",
 			id, examTypes).Scan(&currentStatus)
 		if err != nil {
 			writeJSONError(w, "mock exam not found", http.StatusNotFound)
@@ -706,10 +706,10 @@ func adminAssessmentMockExamsDeleteHandler(db *pgxpool.Pool, logger *slog.Logger
 		}
 		var before Before
 		db.QueryRow(ctx, `SELECT slug, title_vi, title_ja, description, level, time_limit_seconds, blueprint_meta, status
-			FROM bjt.mock_test WHERE id = $1`, id).Scan(&before.Slug, &before.TitleVi, &before.TitleJa,
+			FROM assessment.bjt_mock_test WHERE id = $1`, id).Scan(&before.Slug, &before.TitleVi, &before.TitleJa,
 			&before.Description, &before.Level, &before.TimeLimitSeconds, &before.BlueprintMeta, &before.Status)
 
-		db.Exec(ctx, "DELETE FROM bjt.mock_test WHERE id = $1", id)
+		db.Exec(ctx, "DELETE FROM assessment.bjt_mock_test WHERE id = $1", id)
 
 		beforeJSON, _ := json.Marshal(before)
 		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, created_at)
@@ -753,7 +753,7 @@ func uniqueCopySlugSync(ctx context.Context, db *pgxpool.Pool, base string) stri
 	candidate := base + "-copy"
 	for n := 1; n <= 50; n++ {
 		var exists bool
-		db.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM bjt.mock_test WHERE slug = $1)", candidate).Scan(&exists)
+		db.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM assessment.bjt_mock_test WHERE slug = $1)", candidate).Scan(&exists)
 		if !exists {
 			return candidate
 		}

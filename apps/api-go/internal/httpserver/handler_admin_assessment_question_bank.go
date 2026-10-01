@@ -82,9 +82,9 @@ func adminAssessmentQuestionBankListHandler(db *pgxpool.Pool, logger *slog.Logge
 			whereClause = "WHERE " + strings.Join(whereParts, " AND ")
 		}
 
-		countQuery := `SELECT COUNT(*) FROM bjt.question q
-LEFT JOIN bjt.mock_test_section s ON s.id = q.section_id
-LEFT JOIN bjt.mock_test t ON t.id = s.test_id ` + whereClause
+		countQuery := `SELECT COUNT(*) FROM assessment.bjt_question q
+LEFT JOIN assessment.bjt_mock_test_section s ON s.id = q.section_id
+LEFT JOIN assessment.bjt_mock_test t ON t.id = s.test_id ` + whereClause
 		var total int
 		if err := db.QueryRow(ctx, countQuery, args...).Scan(&total); err != nil {
 			logger.Error("count questions", "error", err)
@@ -97,11 +97,11 @@ SELECT q.id, q.section_id, q.prompt, q.scenario, q.skill_tag, q.difficulty,
        q.tags, q.status, q.remediation_card_id, q.created_at, q.updated_at,
        s.code as section_code, s.title_vi as section_title_vi,
        t.id as test_id, t.slug as test_slug, t.title_vi as test_title_vi, t.level as test_level, t.type as test_type,
-       (SELECT COUNT(*) FROM bjt.question_option o WHERE o.question_id = q.id) as option_count,
+       (SELECT COUNT(*) FROM assessment.bjt_question_option o WHERE o.question_id = q.id) as option_count,
        (SELECT COUNT(*) FROM study.quiz_answer a WHERE a.question_id = q.id) as answer_count
-FROM bjt.question q
-LEFT JOIN bjt.mock_test_section s ON s.id = q.section_id
-LEFT JOIN bjt.mock_test t ON t.id = s.test_id
+FROM assessment.bjt_question q
+LEFT JOIN assessment.bjt_mock_test_section s ON s.id = q.section_id
+LEFT JOIN assessment.bjt_mock_test t ON t.id = s.test_id
 %s ORDER BY q.updated_at DESC LIMIT $%d OFFSET $%d`,
 			whereClause, argIdx, argIdx+1)
 		args = append(args, pageSize, offset)
@@ -268,7 +268,7 @@ func adminAssessmentQuestionBankDetailHandler(db *pgxpool.Pool, logger *slog.Log
 SELECT id, section_id, prompt, scenario, explanation_vi, skill_tag, difficulty,
        tags, status, source_type, source_id, image_url, image_alt, image_prompt,
        audio_url, audio_script, remediation_card_id, created_at, updated_at
-FROM bjt.question WHERE id = $1`, id).Scan(
+FROM assessment.bjt_question WHERE id = $1`, id).Scan(
 			&qd.ID, &qd.SectionID, &qd.Prompt, &qd.Scenario, &qd.ExplanationVi,
 			&qd.SkillTag, &qd.Difficulty, &tagsBytes, &qd.Status,
 			&qd.SourceType, &qd.SourceID, &qd.ImageURL, &qd.ImageAlt, &qd.ImagePrompt,
@@ -288,7 +288,7 @@ FROM bjt.question WHERE id = $1`, id).Scan(
 
 		// Options
 		oRows, err := db.Query(ctx, `
-SELECT id, option_key, text, is_correct FROM bjt.question_option
+SELECT id, option_key, text, is_correct FROM assessment.bjt_question_option
 WHERE question_id = $1 ORDER BY option_key ASC`, id)
 		if err == nil {
 			for oRows.Next() {
@@ -382,7 +382,7 @@ func adminAssessmentQuestionBankCreateHandler(db *pgxpool.Pool, logger *slog.Log
 
 		var createdID string
 		err := db.QueryRow(ctx, `
-INSERT INTO bjt.question (section_id, prompt, scenario, explanation_vi, skill_tag, difficulty,
+INSERT INTO assessment.bjt_question (section_id, prompt, scenario, explanation_vi, skill_tag, difficulty,
        tags, status, source_type, source_id, image_url, image_alt, image_prompt,
        audio_url, audio_script, created_at, updated_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7, 'draft', $8, $9, $10, $11, $12, $13, $14, NOW(), NOW())
@@ -399,7 +399,7 @@ RETURNING id`,
 
 		// Create options
 		for _, o := range req.Options {
-			db.Exec(ctx, `INSERT INTO bjt.question_option (question_id, option_key, text, is_correct)
+			db.Exec(ctx, `INSERT INTO assessment.bjt_question_option (question_id, option_key, text, is_correct)
 VALUES ($1, $2, $3, $4)`, createdID, o.OptionKey, o.Text, o.IsCorrect)
 		}
 
@@ -477,7 +477,7 @@ func adminAssessmentQuestionBankPatchHandler(db *pgxpool.Pool, logger *slog.Logg
 		var tagsBytes []byte
 		err := db.QueryRow(ctx, `
 SELECT section_id, prompt, scenario, explanation_vi, skill_tag, difficulty, tags, status
-FROM bjt.question WHERE id = $1`, id).Scan(
+FROM assessment.bjt_question WHERE id = $1`, id).Scan(
 			&before.SectionID, &before.Prompt, &before.Scenario, &before.ExplanationVi,
 			&before.SkillTag, &before.Difficulty, &tagsBytes, &before.Status)
 		if err != nil {
@@ -571,7 +571,7 @@ FROM bjt.question WHERE id = $1`, id).Scan(
 
 		if len(setClauses) > 0 {
 			setClauses = append(setClauses, "updated_at = NOW()")
-			query := "UPDATE bjt.question SET " + joinStrings(setClauses, ", ") +
+			query := "UPDATE assessment.bjt_question SET " + joinStrings(setClauses, ", ") +
 				" WHERE id = $" + itoa(argIdx)
 			args = append(args, id)
 			if _, err := db.Exec(ctx, query, args...); err != nil {
@@ -583,9 +583,9 @@ FROM bjt.question WHERE id = $1`, id).Scan(
 
 		// Replace options if provided
 		if len(req.Options) > 0 {
-			db.Exec(ctx, "DELETE FROM bjt.question_option WHERE question_id = $1", id)
+			db.Exec(ctx, "DELETE FROM assessment.bjt_question_option WHERE question_id = $1", id)
 			for _, o := range req.Options {
-				db.Exec(ctx, `INSERT INTO bjt.question_option (question_id, option_key, text, is_correct)
+				db.Exec(ctx, `INSERT INTO assessment.bjt_question_option (question_id, option_key, text, is_correct)
 VALUES ($1, $2, $3, $4)`, id, o.OptionKey, o.Text, o.IsCorrect)
 			}
 		}
@@ -632,7 +632,7 @@ func adminAssessmentQuestionBankBulkHandler(db *pgxpool.Pool, logger *slog.Logge
 		for _, qid := range req.IDs {
 			var currentStatus string
 			var currentTags []byte
-			err := db.QueryRow(ctx, "SELECT status, tags FROM bjt.question WHERE id = $1", qid).Scan(&currentStatus, &currentTags)
+			err := db.QueryRow(ctx, "SELECT status, tags FROM assessment.bjt_question WHERE id = $1", qid).Scan(&currentStatus, &currentTags)
 			if err != nil {
 				continue
 			}
@@ -645,14 +645,14 @@ func adminAssessmentQuestionBankBulkHandler(db *pgxpool.Pool, logger *slog.Logge
 				if currentStatus == "archived" {
 					continue
 				}
-				db.Exec(ctx, "UPDATE bjt.question SET status = 'published', updated_at = NOW() WHERE id = $1", qid)
+				db.Exec(ctx, "UPDATE assessment.bjt_question SET status = 'published', updated_at = NOW() WHERE id = $1", qid)
 				after = map[string]any{"status": "published"}
 				action = "admin.assessment.question.published"
 			case "archive":
 				if currentStatus == "archived" {
 					continue
 				}
-				db.Exec(ctx, "UPDATE bjt.question SET status = 'archived', updated_at = NOW() WHERE id = $1", qid)
+				db.Exec(ctx, "UPDATE assessment.bjt_question SET status = 'archived', updated_at = NOW() WHERE id = $1", qid)
 				after = map[string]any{"status": "archived"}
 				action = "admin.assessment.question.archived"
 			case "tag":
@@ -660,7 +660,7 @@ func adminAssessmentQuestionBankBulkHandler(db *pgxpool.Pool, logger *slog.Logge
 					continue
 				}
 				// Merge tags using PostgreSQL array operations
-				db.Exec(ctx, `UPDATE bjt.question SET tags = (
+				db.Exec(ctx, `UPDATE assessment.bjt_question SET tags = (
 					SELECT jsonb_agg(DISTINCT elem) FROM (
 						SELECT jsonb_array_elements_text(COALESCE(tags, '[]'::jsonb)) as elem
 						UNION
@@ -673,7 +673,7 @@ func adminAssessmentQuestionBankBulkHandler(db *pgxpool.Pool, logger *slog.Logge
 				if len(req.Tags) == 0 {
 					continue
 				}
-				db.Exec(ctx, `UPDATE bjt.question SET tags = (
+				db.Exec(ctx, `UPDATE assessment.bjt_question SET tags = (
 					SELECT COALESCE(jsonb_agg(elem), '[]'::jsonb) FROM (
 						SELECT jsonb_array_elements_text(COALESCE(tags, '[]'::jsonb)) as elem
 						WHERE jsonb_array_elements_text(COALESCE(tags, '[]'::jsonb)) != ALL($2::text[])
@@ -727,7 +727,7 @@ func adminAssessmentQuestionBankSuggestEditHandler(db *pgxpool.Pool, logger *slo
 
 		ctx := r.Context()
 		var exists bool
-		db.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM bjt.question WHERE id = $1)", id).Scan(&exists)
+		db.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM assessment.bjt_question WHERE id = $1)", id).Scan(&exists)
 		if !exists {
 			writeJSONError(w, "question not found", http.StatusNotFound)
 			return
@@ -768,7 +768,7 @@ func adminAssessmentQuestionBankDeleteHandler(db *pgxpool.Pool, logger *slog.Log
 
 		ctx := r.Context()
 		var currentStatus string
-		err := db.QueryRow(ctx, "SELECT status FROM bjt.question WHERE id = $1", id).Scan(&currentStatus)
+		err := db.QueryRow(ctx, "SELECT status FROM assessment.bjt_question WHERE id = $1", id).Scan(&currentStatus)
 		if err != nil {
 			writeJSONError(w, "question not found", http.StatusNotFound)
 			return
@@ -799,7 +799,7 @@ func adminAssessmentQuestionBankDeleteHandler(db *pgxpool.Pool, logger *slog.Log
 		var before Before
 		var tagsBytes []byte
 		db.QueryRow(ctx, `SELECT section_id, prompt, scenario, explanation_vi, skill_tag, difficulty, tags, status
-FROM bjt.question WHERE id = $1`, id).Scan(&before.SectionID, &before.Prompt, &before.Scenario,
+FROM assessment.bjt_question WHERE id = $1`, id).Scan(&before.SectionID, &before.Prompt, &before.Scenario,
 			&before.ExplanationVi, &before.SkillTag, &before.Difficulty, &tagsBytes, &before.Status)
 		if tagsBytes != nil {
 			before.Tags = tagsBytes
@@ -807,7 +807,7 @@ FROM bjt.question WHERE id = $1`, id).Scan(&before.SectionID, &before.Prompt, &b
 			before.Tags = json.RawMessage("[]")
 		}
 
-		db.Exec(ctx, "DELETE FROM bjt.question WHERE id = $1", id)
+		db.Exec(ctx, "DELETE FROM assessment.bjt_question WHERE id = $1", id)
 
 		beforeJSON, _ := json.Marshal(before)
 		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, created_at)

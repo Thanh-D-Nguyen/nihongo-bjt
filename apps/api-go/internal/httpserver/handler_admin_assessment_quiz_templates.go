@@ -19,7 +19,7 @@ import (
 // All routes require admin session + appropriate permissions.
 // Contracts derived from NestJS apps/api/src/assessment/quiz-templates-admin.repository.ts
 // list, detail, create, patch, publish, archive, duplicate, remove.
-// Quiz templates share the bjt.mock_test table with mock exams but are
+// Quiz templates share the assessment.bjt_mock_test table with mock exams but are
 // distinguished by type IN ('practice','daily','weekly','topic_mastery','diagnostic').
 
 var quizTemplateTypes = []string{"practice", "daily", "weekly", "topic_mastery", "diagnostic"}
@@ -71,7 +71,7 @@ func adminAssessmentQuizTemplatesListHandler(db *pgxpool.Pool, logger *slog.Logg
 
 		whereClause := "WHERE " + strings.Join(whereParts, " AND ")
 
-		countQuery := "SELECT COUNT(*) FROM bjt.mock_test " + whereClause
+		countQuery := "SELECT COUNT(*) FROM assessment.bjt_mock_test " + whereClause
 		var total int
 		if err := db.QueryRow(ctx, countQuery, args...).Scan(&total); err != nil {
 			logger.Error("count quiz templates", "error", err)
@@ -82,7 +82,7 @@ func adminAssessmentQuizTemplatesListHandler(db *pgxpool.Pool, logger *slog.Logg
 		dataQuery := fmt.Sprintf(`
 			SELECT id, slug, title_vi, title_ja, type, status, level,
 			       time_limit_seconds, description, blueprint_meta, created_at, updated_at
-			FROM bjt.mock_test %s
+			FROM assessment.bjt_mock_test %s
 			ORDER BY updated_at DESC LIMIT $%d OFFSET $%d`,
 			whereClause, argIdx, argIdx+1)
 		args = append(args, pageSize, offset)
@@ -176,7 +176,7 @@ func adminAssessmentQuizTemplatesDetailHandler(db *pgxpool.Pool, logger *slog.Lo
 		err := db.QueryRow(ctx, `
 			SELECT id, slug, title_vi, title_ja, type, status, level,
 			       time_limit_seconds, description, blueprint_meta, created_at, updated_at
-			FROM bjt.mock_test WHERE id = $1 AND type = ANY($2)`,
+			FROM assessment.bjt_mock_test WHERE id = $1 AND type = ANY($2)`,
 			id, quizTemplateTypes).Scan(&td.ID, &td.Slug, &td.TitleVi, &td.TitleJa, &td.Type, &td.Status,
 			&td.Level, &td.TimeLimitSeconds, &td.Description, &td.BlueprintMeta,
 			&createdAt, &updatedAt)
@@ -247,7 +247,7 @@ func adminAssessmentQuizTemplatesCreateHandler(db *pgxpool.Pool, logger *slog.Lo
 
 		// Check slug uniqueness
 		var slugExists bool
-		db.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM bjt.mock_test WHERE slug = $1)", req.Slug).Scan(&slugExists)
+		db.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM assessment.bjt_mock_test WHERE slug = $1)", req.Slug).Scan(&slugExists)
 		if slugExists {
 			writeJSONError(w, "slug already in use", http.StatusConflict)
 			return
@@ -259,7 +259,7 @@ func adminAssessmentQuizTemplatesCreateHandler(db *pgxpool.Pool, logger *slog.Lo
 
 		var createdID string
 		err := db.QueryRow(ctx, `
-			INSERT INTO bjt.mock_test (slug, title_vi, title_ja, description, type, status, level,
+			INSERT INTO assessment.bjt_mock_test (slug, title_vi, title_ja, description, type, status, level,
 			                           time_limit_seconds, blueprint_meta, created_at, updated_at)
 			VALUES ($1, $2, $3, $4, $5, 'draft', $6, $7, $8, NOW(), NOW())
 			RETURNING id`,
@@ -332,7 +332,7 @@ func adminAssessmentQuizTemplatesPatchHandler(db *pgxpool.Pool, logger *slog.Log
 		var before Existing
 		err := db.QueryRow(ctx, `
 			SELECT slug, title_vi, title_ja, description, type, status, level, time_limit_seconds, blueprint_meta
-			FROM bjt.mock_test WHERE id = $1 AND type = ANY($2)`, id, quizTemplateTypes).Scan(
+			FROM assessment.bjt_mock_test WHERE id = $1 AND type = ANY($2)`, id, quizTemplateTypes).Scan(
 			&before.Slug, &before.TitleVi, &before.TitleJa, &before.Description,
 			&before.Type, &before.Status, &before.Level, &before.TimeLimitSeconds, &before.BlueprintMeta)
 		if err != nil {
@@ -343,7 +343,7 @@ func adminAssessmentQuizTemplatesPatchHandler(db *pgxpool.Pool, logger *slog.Log
 		// Check slug uniqueness if changing
 		if req.Slug != nil && *req.Slug != before.Slug {
 			var slugExists bool
-			db.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM bjt.mock_test WHERE slug = $1 AND id != $2)", *req.Slug, id).Scan(&slugExists)
+			db.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM assessment.bjt_mock_test WHERE slug = $1 AND id != $2)", *req.Slug, id).Scan(&slugExists)
 			if slugExists {
 				writeJSONError(w, "slug already in use", http.StatusConflict)
 				return
@@ -399,7 +399,7 @@ func adminAssessmentQuizTemplatesPatchHandler(db *pgxpool.Pool, logger *slog.Log
 			return
 		}
 		setClauses = append(setClauses, "updated_at = NOW()")
-		query := "UPDATE bjt.mock_test SET " + joinStrings(setClauses, ", ") +
+		query := "UPDATE assessment.bjt_mock_test SET " + joinStrings(setClauses, ", ") +
 			" WHERE id = $" + itoa(argIdx)
 		args = append(args, id)
 		if _, err := db.Exec(ctx, query, args...); err != nil {
@@ -441,7 +441,7 @@ func adminAssessmentQuizTemplatesPublishHandler(db *pgxpool.Pool, logger *slog.L
 		ctx := r.Context()
 
 		var currentStatus string
-		err := db.QueryRow(ctx, "SELECT status FROM bjt.mock_test WHERE id = $1 AND type = ANY($2)",
+		err := db.QueryRow(ctx, "SELECT status FROM assessment.bjt_mock_test WHERE id = $1 AND type = ANY($2)",
 			id, quizTemplateTypes).Scan(&currentStatus)
 		if err != nil {
 			writeJSONError(w, "quiz template not found", http.StatusNotFound)
@@ -452,7 +452,7 @@ func adminAssessmentQuizTemplatesPublishHandler(db *pgxpool.Pool, logger *slog.L
 			return
 		}
 		if currentStatus != "published" {
-			db.Exec(ctx, "UPDATE bjt.mock_test SET status = 'published', updated_at = NOW() WHERE id = $1", id)
+			db.Exec(ctx, "UPDATE assessment.bjt_mock_test SET status = 'published', updated_at = NOW() WHERE id = $1", id)
 		}
 
 		afterJSON, _ := json.Marshal(map[string]any{"status": "published", "noop": currentStatus == "published"})
@@ -486,14 +486,14 @@ func adminAssessmentQuizTemplatesArchiveHandler(db *pgxpool.Pool, logger *slog.L
 		ctx := r.Context()
 
 		var currentStatus string
-		err := db.QueryRow(ctx, "SELECT status FROM bjt.mock_test WHERE id = $1 AND type = ANY($2)",
+		err := db.QueryRow(ctx, "SELECT status FROM assessment.bjt_mock_test WHERE id = $1 AND type = ANY($2)",
 			id, quizTemplateTypes).Scan(&currentStatus)
 		if err != nil {
 			writeJSONError(w, "quiz template not found", http.StatusNotFound)
 			return
 		}
 		if currentStatus != "archived" {
-			db.Exec(ctx, "UPDATE bjt.mock_test SET status = 'archived', updated_at = NOW() WHERE id = $1", id)
+			db.Exec(ctx, "UPDATE assessment.bjt_mock_test SET status = 'archived', updated_at = NOW() WHERE id = $1", id)
 		}
 
 		afterJSON, _ := json.Marshal(map[string]any{"status": "archived"})
@@ -539,7 +539,7 @@ func adminAssessmentQuizTemplatesDuplicateHandler(db *pgxpool.Pool, logger *slog
 		var src Source
 		err := db.QueryRow(ctx, `
 			SELECT slug, title_vi, title_ja, description, type, level, time_limit_seconds, blueprint_meta
-			FROM bjt.mock_test WHERE id = $1 AND type = ANY($2)`, id, quizTemplateTypes).Scan(
+			FROM assessment.bjt_mock_test WHERE id = $1 AND type = ANY($2)`, id, quizTemplateTypes).Scan(
 			&src.Slug, &src.TitleVi, &src.TitleJa, &src.Description,
 			&src.Type, &src.Level, &src.TimeLimitSeconds, &src.BlueprintMeta)
 		if err != nil {
@@ -552,7 +552,7 @@ func adminAssessmentQuizTemplatesDuplicateHandler(db *pgxpool.Pool, logger *slog
 
 		var newID string
 		err = db.QueryRow(ctx, `
-			INSERT INTO bjt.mock_test (slug, title_vi, title_ja, description, type, status, level,
+			INSERT INTO assessment.bjt_mock_test (slug, title_vi, title_ja, description, type, status, level,
 			                           time_limit_seconds, blueprint_meta, created_at, updated_at)
 			VALUES ($1, $2, $3, $4, $5, 'draft', $6, $7, $8, NOW(), NOW())
 			RETURNING id`,
@@ -595,7 +595,7 @@ func adminAssessmentQuizTemplatesDeleteHandler(db *pgxpool.Pool, logger *slog.Lo
 		ctx := r.Context()
 
 		var currentStatus string
-		err := db.QueryRow(ctx, "SELECT status FROM bjt.mock_test WHERE id = $1 AND type = ANY($2)",
+		err := db.QueryRow(ctx, "SELECT status FROM assessment.bjt_mock_test WHERE id = $1 AND type = ANY($2)",
 			id, quizTemplateTypes).Scan(&currentStatus)
 		if err != nil {
 			writeJSONError(w, "quiz template not found", http.StatusNotFound)
@@ -627,10 +627,10 @@ func adminAssessmentQuizTemplatesDeleteHandler(db *pgxpool.Pool, logger *slog.Lo
 		}
 		var before Before
 		db.QueryRow(ctx, `SELECT slug, title_vi, title_ja, description, level, type, status, time_limit_seconds, blueprint_meta
-			FROM bjt.mock_test WHERE id = $1`, id).Scan(&before.Slug, &before.TitleVi, &before.TitleJa,
+			FROM assessment.bjt_mock_test WHERE id = $1`, id).Scan(&before.Slug, &before.TitleVi, &before.TitleJa,
 			&before.Description, &before.Level, &before.Type, &before.Status, &before.TimeLimitSeconds, &before.BlueprintMeta)
 
-		db.Exec(ctx, "DELETE FROM bjt.mock_test WHERE id = $1", id)
+		db.Exec(ctx, "DELETE FROM assessment.bjt_mock_test WHERE id = $1", id)
 
 		beforeJSON, _ := json.Marshal(before)
 		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, created_at)

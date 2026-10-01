@@ -20,10 +20,10 @@ func adminOpsBJTDashboardHandler(db *pgxpool.Pool, logger *slog.Logger) http.Han
 
 		var testsTotal, testsActive, sessionsTotal, attempts30d, completedAttempts int
 
-		if err := db.QueryRow(ctx, "SELECT COUNT(*) FROM bjt.mock_test").Scan(&testsTotal); err != nil {
+		if err := db.QueryRow(ctx, "SELECT COUNT(*) FROM assessment.bjt_mock_test").Scan(&testsTotal); err != nil {
 			logger.Error("count bjt tests", "error", err)
 		}
-		if err := db.QueryRow(ctx, "SELECT COUNT(*) FROM bjt.mock_test WHERE status = 'active'").Scan(&testsActive); err != nil {
+		if err := db.QueryRow(ctx, "SELECT COUNT(*) FROM assessment.bjt_mock_test WHERE status = 'active'").Scan(&testsActive); err != nil {
 			logger.Error("count active bjt tests", "error", err)
 		}
 		if err := db.QueryRow(ctx, "SELECT COUNT(*) FROM study.quiz_session").Scan(&sessionsTotal); err != nil {
@@ -43,7 +43,7 @@ func adminOpsBJTDashboardHandler(db *pgxpool.Pool, logger *slog.Logger) http.Han
 		}
 
 		// byLevel aggregation
-		rows, err := db.Query(ctx, `SELECT level, COUNT(*) FROM bjt.mock_test GROUP BY level ORDER BY level ASC`)
+		rows, err := db.Query(ctx, `SELECT level, COUNT(*) FROM assessment.bjt_mock_test GROUP BY level ORDER BY level ASC`)
 		type LevelCount struct {
 			Level string `json:"level"`
 			Count int    `json:"count"`

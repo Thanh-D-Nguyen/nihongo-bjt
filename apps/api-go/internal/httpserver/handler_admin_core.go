@@ -47,7 +47,7 @@ func adminMeHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 func adminModuleContractsHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rows, err := db.Query(r.Context(),
-			"SELECT module_key, status, implemented_routes, total_routes, last_updated FROM admin.module_contract ORDER BY module_key ASC")
+			"SELECT module_key, status, implemented_routes, total_routes, last_updated FROM content.module_contract ORDER BY module_key ASC")
 		if err != nil {
 			logger.Error("list module contracts", "error", err)
 			writeJSON(w, http.StatusOK, []any{})
@@ -1440,7 +1440,7 @@ func adminReadingAssistReportsHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 		}
 		rows, err := db.Query(r.Context(), `
 			SELECT id, user_id, text_hash, exam_context, quiz_session_id, created_at
-			FROM study.reading_assist_analysis
+			FROM learning.reading_assist_report
 			ORDER BY created_at DESC LIMIT $1`, limit)
 		if err != nil {
 			logger.Error("list reading assist reports", "error", err)
