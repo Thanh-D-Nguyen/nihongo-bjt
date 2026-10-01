@@ -70,7 +70,7 @@ func adminDailyRadarModulesListHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 		}
 		var total int
 		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM daily.daily_radar_module_config "+whereClause, args...).Scan(&total)
-		dataQ := fmt.Sprintf(`SELECT id, key, title, description, icon, sort_order, status, created_at, updated_at
+		dataQ := fmt.Sprintf(`SELECT id, module_key, title_vi, description_vi, icon_key, default_priority, status, created_at, updated_at
 FROM daily.daily_radar_module_config %s ORDER BY sort_order ASC, created_at ASC LIMIT $%d OFFSET $%d`,
 			whereClause, argIdx, argIdx+1)
 		args = append(args, pageSize, offset)
@@ -145,7 +145,7 @@ func adminDailyRadarModuleCreateHandler(db *pgxpool.Pool, logger *slog.Logger) h
 		}
 		var id string
 		err := db.QueryRow(r.Context(), `INSERT INTO daily.daily_radar_module_config
-(key, title, description, icon, sort_order, status, created_at, updated_at)
+(module_key, title_vi, description_vi, icon_key, default_priority, status, created_at, updated_at)
 VALUES ($1,$2,$3,$4,$5,$6,NOW(),NOW()) RETURNING id`,
 			req.Key, req.Title, req.Description, req.Icon, sortOrder, status).Scan(&id)
 		if err != nil {
@@ -182,7 +182,7 @@ func adminDailyRadarModuleDetailHandler(db *pgxpool.Pool, logger *slog.Logger) h
 		}
 		var m Module
 		var ca, ua time.Time
-		err := db.QueryRow(r.Context(), `SELECT id, key, title, description, icon, sort_order, status, created_at, updated_at
+		err := db.QueryRow(r.Context(), `SELECT id, module_key, title_vi, description_vi, icon_key, default_priority, status, created_at, updated_at
 FROM daily.daily_radar_module_config WHERE id=$1`, id).
 			Scan(&m.ID, &m.Key, &m.Title, &m.Description, &m.Icon, &m.SortOrder, &m.Status, &ca, &ua)
 		if err != nil {
@@ -327,7 +327,7 @@ func adminDailyRadarCardsListHandler(db *pgxpool.Pool, logger *slog.Logger) http
 		}
 		var total int
 		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM daily.daily_radar_card "+whereClause, args...).Scan(&total)
-		dataQ := fmt.Sprintf(`SELECT id, slug, title, summary, category, module_key, image_url, status, published_at, created_at, updated_at
+		dataQ := fmt.Sprintf(`SELECT id, slug, title_vi, description_vi, category, m.module_key, image_url, status, created_at, updated_at
 FROM daily.daily_radar_card %s ORDER BY created_at DESC LIMIT $%d OFFSET $%d`,
 			whereClause, argIdx, argIdx+1)
 		args = append(args, pageSize, offset)
@@ -448,7 +448,7 @@ func adminDailyRadarCardDetailHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 		var c Card
 		var ca, ua time.Time
 		var pa *time.Time
-		err := db.QueryRow(r.Context(), `SELECT id, slug, title, summary, body, category, module_key, image_url, status, published_at, created_at, updated_at
+		err := db.QueryRow(r.Context(), `SELECT id, slug, title_vi, description_vi, metadata->>'body', category, m.module_key, image_url, status, created_at, updated_at
 FROM daily.daily_radar_card WHERE id=$1`, id).
 			Scan(&c.ID, &c.Slug, &c.Title, &c.Summary, &c.Body, &c.Category, &c.ModuleKey, &c.ImageURL, &c.Status, &pa, &ca, &ua)
 		if err != nil {
@@ -601,7 +601,7 @@ func adminDailyRadarCardDuplicateHandler(db *pgxpool.Pool, logger *slog.Logger) 
 		}
 		var slug, title, category string
 		var summary, body, moduleKey, imageURL *string
-		err := db.QueryRow(r.Context(), `SELECT slug, title, summary, body, category, module_key, image_url
+		err := db.QueryRow(r.Context(), `SELECT slug, title_vi, description_vi, metadata->>'body', category, m.module_key, image_url
 FROM daily.daily_radar_card WHERE id=$1`, id).
 			Scan(&slug, &title, &summary, &body, &category, &moduleKey, &imageURL)
 		if err != nil {
@@ -1037,7 +1037,7 @@ func adminExercisesPerformanceAnalyticsHandler(db *pgxpool.Pool, logger *slog.Lo
 		rows, err := db.Query(r.Context(), fmt.Sprintf(`SELECT e.exercise_type, COALESCE(e.level,'unknown') as level,
 COUNT(*) as total_attempts,
 SUM(CASE WHEN ea.is_correct THEN 1 ELSE 0 END) as correct_count,
-AVG(CASE WHEN ea.duration_ms > 0 THEN ea.duration_ms ELSE NULL END) as avg_duration_ms
+AVG(CASE WHEN ea.time_spent_ms > 0 THEN ea.time_spent_ms ELSE NULL END) as avg_duration_ms
 FROM exercise.exercise_answer ea
 JOIN exercise.exercise e ON e.id = ea.exercise_id
 %s GROUP BY e.exercise_type, e.level ORDER BY e.exercise_type, e.level`, whereClause), args...)
