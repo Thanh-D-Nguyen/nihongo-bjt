@@ -148,6 +148,7 @@ export function AdminLoginFormClient({
     <form
       autoComplete="on"
       className="flex flex-col gap-4"
+      method="POST"
       noValidate
       onSubmit={onSubmit}
     >
