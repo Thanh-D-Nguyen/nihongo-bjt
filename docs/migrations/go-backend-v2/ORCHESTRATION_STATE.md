@@ -23,6 +23,8 @@
 - LegacyBackendRemovalReady: TRUE
 - LegacyNestjsRemovalPass: TRUE (Wave 1 — apps/api source retired, NestJS container removed, zero ACTIVE_REFERENCE)
 - KeycloakRuntimeRemovalPass: TRUE (Wave 2 — commit b971d553 + e11de9dd; 8/8 Playwright pass)
+- MinioRuntimeRemovalPass: TRUE (Wave 3 — commit f56187a7 + 502772a1; zero active SDK imports, zero config consumers, no staging container, Go API uses fileblob; packages/config MINIO_* removed, docker-compose.yml minio service removed, minio npm dep removed, .env.example MINIO_* removed, stale TS comments updated; config/web typecheck PASS; 8/8 Playwright auth parity tests pass on staging build 502772a1)
+- LegacyStackRemovalPass: TRUE (all 3 waves complete: NestJS REMOVED_WAVE1, Keycloak REMOVED_WAVE2, MinIO REMOVED_WAVE3; runtime contains Go API + PostgreSQL + Redis + Meilisearch + Next learner + Admin + Caddy + filesystem media; ACTIVE_RUNTIME_REFERENCE=0 for all three; remaining refs classified as: Prisma generated client (235 keycloak_subject schema compat), GCP/OCI rollback deploy configs (preserved per task §11), admin UI dead response-shape code + help text, operational scripts; none execute at runtime)
 - DiskRemediation: DONE (92% → 89%, 3.5GB reclaimed)
 - RebootGate: REBOOT_EXTERNAL_PRIVILEGE_GATE
 - ProductionCutover: PENDING
@@ -48,6 +50,7 @@
 | MinIO | DISABLED_ROLLBACK_AVAILABLE |
 | NestJS | REMOVED_WAVE1 |
 | Keycloak Runtime | REMOVED_WAVE2 |
+| MinIO Runtime | REMOVED_WAVE3 |
 
 ## Wave Summary
 - Current accepted implementation/code checkpoint: `94512f0` (M17 post-migration cleanup PASS — 17 files changed +33/-293, dead NestJS scripts/deps/configs removed, README/AI_CONTEXT updated, Caddy Keycloak proxy retired, go test/vet/gofmt PASS, web/admin typecheck PASS; committed at 94512f0)
