@@ -134,14 +134,17 @@ func adminIamRoleDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handl
 		}
 		var rd RoleDetail
 		err := db.QueryRow(r.Context(),
-			"SELECT code, name, description, is_system FROM authz.role WHERE code = $1", code).
-			Scan(&rd.Code, &rd.Name, &rd.Description, &rd.IsSystem)
+			"SELECT code, name, description FROM authz.admin_role WHERE code = $1", code).
+			Scan(&rd.Code, &rd.Name, &rd.Description)
 		if err != nil {
 			writeJSONError(w, "role not found", http.StatusNotFound)
 			return
 		}
 		permRows, _ := db.Query(r.Context(),
-			"SELECT permission_code FROM authz.role_permission WHERE role_code = $1 ORDER BY permission_code", code)
+			`SELECT ap.code FROM authz.admin_role_permission arp
+			 JOIN authz.admin_permission ap ON ap.id = arp.permission_id
+			 JOIN authz.admin_role ar ON ar.id = arp.role_id
+			 WHERE ar.code = $1 ORDER BY ap.code`, code)
 		if permRows != nil {
 			defer permRows.Close()
 			for permRows.Next() {
@@ -155,7 +158,9 @@ func adminIamRoleDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handl
 			rd.Permissions = []string{}
 		}
 		db.QueryRow(r.Context(),
-			"SELECT COUNT(*) FROM authz.admin_role WHERE role_code = $1", code).Scan(&rd.AdminsCount)
+			`SELECT COUNT(*) FROM authz.admin_actor_role aar
+			 JOIN authz.admin_role ar ON ar.id = aar.role_id
+			 WHERE ar.code = $1`, code).Scan(&rd.AdminsCount)
 		writeJSON(w, http.StatusOK, rd)
 	}
 }
@@ -304,7 +309,10 @@ func adminIamAdminsListHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handl
 			if rows.Scan(&a.ID, &a.DisplayName, &a.Email, &a.Status, &ca, &ua) == nil {
 				a.CreatedAt = ca.UTC().Format(time.RFC3339)
 				a.UpdatedAt = ua.UTC().Format(time.RFC3339)
-				rRows, _ := db.Query(r.Context(), "SELECT role_code FROM authz.admin_role WHERE admin_actor_id = $1", a.ID)
+				rRows, _ := db.Query(r.Context(),
+					`SELECT ar.code FROM authz.admin_actor_role aar
+					JOIN authz.admin_role ar ON ar.id = aar.role_id
+					WHERE aar.actor_id = $1`, a.ID)
 				if rRows != nil {
 					for rRows.Next() {
 						var rc string
@@ -353,7 +361,10 @@ func adminIamAdminDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.Hand
 			return
 		}
 		d.CreatedAt = ca.UTC().Format(time.RFC3339)
-		rRows, _ := db.Query(r.Context(), "SELECT role_code FROM authz.admin_role WHERE admin_actor_id = $1", id)
+		rRows, _ := db.Query(r.Context(),
+			`SELECT ar.code FROM authz.admin_actor_role aar
+			JOIN authz.admin_role ar ON ar.id = aar.role_id
+			WHERE aar.actor_id = $1`, id)
 		if rRows != nil {
 			defer rRows.Close()
 			for rRows.Next() {
@@ -396,9 +407,15 @@ func adminIamAdminAssignRoleHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 			return
 		}
 		ctx := r.Context()
+		// Resolve role_id from code, then insert into junction table
+		var roleID string
+		if err := db.QueryRow(ctx, "SELECT id FROM authz.admin_role WHERE code = $1", req.RoleCode).Scan(&roleID); err != nil {
+			writeJSONError(w, "role not found", http.StatusBadRequest)
+			return
+		}
 		_, err := db.Exec(ctx,
-			"INSERT INTO authz.admin_role (admin_actor_id, role_code, assigned_by, reason, created_at) VALUES ($1, $2, $3, $4, NOW()) ON CONFLICT DO NOTHING",
-			adminID, req.RoleCode, identity.ActorID, req.Reason)
+			"INSERT INTO authz.admin_actor_role (actor_id, role_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+			adminID, roleID)
 		if err != nil {
 			logger.Error("assign admin role", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
@@ -406,7 +423,7 @@ func adminIamAdminAssignRoleHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 		}
 		afterJSON, _ := json.Marshal(map[string]any{"adminId": adminID, "roleCode": req.RoleCode})
 		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
-			VALUES ('admin.iam.role.assigned', $1, $2, 'authz.admin_role', $3, $4, NOW())`,
+			VALUES ('admin.iam.role.assigned', $1, $2, 'authz.admin_actor_role', $3, $4, NOW())`,
 			identity.ActorID, adminID, req.Reason, afterJSON)
 		writeJSON(w, http.StatusOK, map[string]any{"assigned": true, "adminId": adminID, "roleCode": req.RoleCode})
 	}
@@ -441,10 +458,16 @@ func adminIamAdminRevokeRoleHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 		json.NewDecoder(r.Body).Decode(&body)
 		reason = body.Reason
 		ctx := r.Context()
-		db.Exec(ctx, "DELETE FROM authz.admin_role WHERE admin_actor_id = $1 AND role_code = $2", adminID, roleCode)
+		// Resolve role_id from code, then delete from junction table
+		var roleID string
+		if err := db.QueryRow(ctx, "SELECT id FROM authz.admin_role WHERE code = $1", roleCode).Scan(&roleID); err != nil {
+			writeJSONError(w, "role not found", http.StatusBadRequest)
+			return
+		}
+		db.Exec(ctx, "DELETE FROM authz.admin_actor_role WHERE actor_id = $1 AND role_id = $2", adminID, roleID)
 		beforeJSON, _ := json.Marshal(map[string]any{"adminId": adminID, "roleCode": roleCode})
 		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, created_at)
-			VALUES ('admin.iam.role.revoked', $1, $2, 'authz.admin_role', $3, $4, NOW())`,
+			VALUES ('admin.iam.role.revoked', $1, $2, 'authz.admin_actor_role', $3, $4, NOW())`,
 			identity.ActorID, adminID, reason, beforeJSON)
 		writeJSON(w, http.StatusOK, map[string]any{"revoked": true, "adminId": adminID, "roleCode": roleCode})
 	}
@@ -511,7 +534,10 @@ func adminIamAdminPatchHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handl
 func adminIamRoleAuditHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rows, err := db.Query(r.Context(),
-			"SELECT id, admin_actor_id, role_code, assigned_by, reason, created_at FROM authz.admin_role ORDER BY created_at DESC LIMIT 200")
+			`SELECT aar.id, aar.actor_id, ar.code, aar.granted_at
+			 FROM authz.admin_actor_role aar
+			 JOIN authz.admin_role ar ON ar.id = aar.role_id
+			 ORDER BY aar.granted_at DESC LIMIT 200`)
 		if err != nil {
 			logger.Error("list role audit", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
@@ -530,8 +556,7 @@ func adminIamRoleAuditHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handle
 		for rows.Next() {
 			var a Audit
 			var ca time.Time
-			var assignedBy *string
-			if rows.Scan(&a.ID, &a.AdminActorID, &a.RoleCode, &assignedBy, &a.Reason, &ca) == nil {
+			if rows.Scan(&a.ID, &a.AdminActorID, &a.RoleCode, &ca) == nil {
 				a.CreatedAt = ca.UTC().Format(time.RFC3339)
 				items = append(items, a)
 			}
