@@ -65,8 +65,10 @@ func adminFlashcardDecksListHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 		var total int
 		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM learning.deck "+whereClause, args...).Scan(&total)
 
-		dataQ := fmt.Sprintf(`SELECT id, title_vi, title_ja, status, visibility, card_count, created_at, updated_at
-FROM learning.deck %s ORDER BY updated_at DESC LIMIT $%d OFFSET $%d`,
+		dataQ := fmt.Sprintf(`SELECT d.id, d.title_vi, d.title_ja, d.status, d.visibility,
+  (SELECT COUNT(*) FROM learning.deck_card dc WHERE dc.deck_id = d.id) as card_count,
+  d.created_at, d.updated_at
+FROM learning.deck d %s ORDER BY d.updated_at DESC LIMIT $%d OFFSET $%d`,
 			whereClause, argIdx, argIdx+1)
 		args = append(args, pageSize, offset)
 
@@ -175,8 +177,10 @@ func adminFlashcardDeckDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http
 		}
 		var d DeckDetail
 		var ca, ua time.Time
-		err := db.QueryRow(r.Context(), `SELECT id, title_vi, title_ja, status, visibility, card_count, created_at, updated_at
-FROM learning.deck WHERE id=$1`, id).Scan(&d.ID, &d.TitleVi, &d.TitleJa, &d.Status, &d.Visibility, &d.CardCount, &ca, &ua)
+		err := db.QueryRow(r.Context(), `SELECT d.id, d.title_vi, d.title_ja, d.status, d.visibility,
+(SELECT COUNT(*) FROM learning.deck_card dc WHERE dc.deck_id = d.id) as card_count,
+d.created_at, d.updated_at
+FROM learning.deck d WHERE d.id=$1`, id).Scan(&d.ID, &d.TitleVi, &d.TitleJa, &d.Status, &d.Visibility, &d.CardCount, &ca, &ua)
 		if err != nil {
 			writeJSONError(w, "deck not found", http.StatusNotFound)
 			return
