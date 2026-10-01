@@ -585,7 +585,7 @@ func adminLexemeExamplesCreateHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 		ctx := r.Context()
 		var createdID string
 		err := db.QueryRow(ctx,
-			"INSERT INTO content.lexeme_example (lexeme_id, sentence_ja, sentence_vi) VALUES ($1, $2, $3) RETURNING id",
+			"INSERT INTO content.lexeme_sense_example (lexeme_id, sentence_ja, sentence_vi) VALUES ($1, $2, $3) RETURNING id",
 			lexemeID, req.SentenceJa, req.SentenceVi).Scan(&createdID)
 		if err != nil {
 			logger.Error("create lexeme example", "error", err)
@@ -644,7 +644,7 @@ func adminLexemeExamplePatchHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 			writeJSONError(w, "at least one field to update is required", http.StatusBadRequest)
 			return
 		}
-		query := "UPDATE content.lexeme_example SET " + joinStrings(setClauses, ", ") + " WHERE id = $" + itoa(argIdx) + " AND lexeme_id = $" + itoa(argIdx+1)
+		query := "UPDATE content.lexeme_sense_example SET " + joinStrings(setClauses, ", ") + " WHERE id = $" + itoa(argIdx) + " AND lexeme_id = $" + itoa(argIdx+1)
 		args = append(args, linkID, lexemeID)
 		if _, err := db.Exec(ctx, query, args...); err != nil {
 			logger.Error("patch lexeme example", "error", err)
@@ -682,7 +682,7 @@ func adminLexemeExampleDeleteHandler(db *pgxpool.Pool, logger *slog.Logger) http
 		}
 		json.NewDecoder(r.Body).Decode(&req)
 		ctx := r.Context()
-		db.Exec(ctx, "DELETE FROM content.lexeme_example WHERE id = $1 AND lexeme_id = $2", linkID, lexemeID)
+		db.Exec(ctx, "DELETE FROM content.lexeme_sense_example WHERE id = $1 AND lexeme_id = $2", linkID, lexemeID)
 		beforeJSON, _ := json.Marshal(map[string]any{"id": linkID})
 		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, created_at)
 			VALUES ('admin.content.example.deleted', $1, $2, 'content.lexeme_example', $3, $4, NOW())`,
@@ -1473,7 +1473,7 @@ func adminReadingAssistReportsHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 // adminI18nKeysListHandler implements GET /api/admin/i18n/keys.
 func adminI18nKeysListHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		rows, err := db.Query(r.Context(), "SELECT key, value, locale FROM i18n.translation ORDER BY key ASC")
+		rows, err := db.Query(r.Context(), "SELECT key, value, locale FROM l10n.translation_value ORDER BY key ASC")
 		if err != nil {
 			logger.Error("list i18n keys", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
@@ -1502,7 +1502,7 @@ func adminI18nKeysListHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handle
 // adminI18nPendingHandler implements GET /api/admin/i18n/pending.
 func adminI18nPendingHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		rows, err := db.Query(r.Context(), "SELECT key, locale FROM i18n.translation WHERE value IS NULL ORDER BY key ASC")
+		rows, err := db.Query(r.Context(), "SELECT key, locale FROM l10n.translation_value WHERE value IS NULL ORDER BY key ASC")
 		if err != nil {
 			logger.Error("list pending i18n", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
@@ -1539,7 +1539,7 @@ func adminI18nKeyDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handl
 			Key          string            `json:"key"`
 			Translations map[string]string `json:"translations"`
 		}
-		rows, err := db.Query(r.Context(), "SELECT locale, value FROM i18n.translation WHERE key = $1", id)
+		rows, err := db.Query(r.Context(), "SELECT locale, value FROM l10n.translation_value WHERE key = $1", id)
 		if err != nil {
 			logger.Error("get i18n key detail", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
@@ -1580,7 +1580,7 @@ func adminI18nTranslationPatchHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 		}
 		ctx := r.Context()
 		_, err := db.Exec(ctx, `
-			INSERT INTO i18n.translation (key, locale, value, updated_at)
+			INSERT INTO l10n.translation_value (key, locale, value, updated_at)
 			VALUES ($1, $2, $3, NOW())
 			ON CONFLICT (key, locale) DO UPDATE SET value = $3, updated_at = NOW()`,
 			id, req.Locale, req.Value)

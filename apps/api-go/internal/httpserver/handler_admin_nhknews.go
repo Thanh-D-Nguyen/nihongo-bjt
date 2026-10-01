@@ -33,7 +33,7 @@ func adminNhkNewsConfigHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handl
 
 		var cfg Config
 		err := db.QueryRow(r.Context(), `SELECT default_type, easy_enabled, easy_feed_url, normal_enabled, normal_feed_url
-			FROM content.nhk_news_config WHERE locale=$1`, locale).
+			FROM content.nhk_article WHERE locale=$1`, locale).
 			Scan(&cfg.DefaultType, &cfg.EasyEnabled, &cfg.EasyFeedURL, &cfg.NormalEnabled, &cfg.NormalFeedURL)
 		if err != nil {
 			// Return defaults if no config row exists yet
@@ -86,17 +86,17 @@ func adminNhkNewsConfigPatchHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 
 		// Get before state for audit
 		var beforeJSON json.RawMessage
-		db.QueryRow(r.Context(), `SELECT row_to_json(t) FROM (SELECT default_type, easy_enabled, easy_feed_url, normal_enabled, normal_feed_url FROM content.nhk_news_config WHERE locale=$1) t`, locale).Scan(&beforeJSON)
+		db.QueryRow(r.Context(), `SELECT row_to_json(t) FROM (SELECT default_type, easy_enabled, easy_feed_url, normal_enabled, normal_feed_url FROM content.nhk_article WHERE locale=$1) t`, locale).Scan(&beforeJSON)
 
 		// Upsert with COALESCE to preserve existing values for unset fields
-		upsertQ := `INSERT INTO content.nhk_news_config (locale, default_type, easy_enabled, easy_feed_url, normal_enabled, normal_feed_url, created_at, updated_at)
+		upsertQ := `INSERT INTO content.nhk_article (locale, default_type, easy_enabled, easy_feed_url, normal_enabled, normal_feed_url, created_at, updated_at)
 			VALUES ($1, COALESCE($2, 'easy'), COALESCE($3, true), COALESCE($4, ''), COALESCE($5, false), COALESCE($6, ''), NOW(), NOW())
 			ON CONFLICT (locale) DO UPDATE SET
-				default_type = COALESCE($2, content.nhk_news_config.default_type),
-				easy_enabled = COALESCE($3, content.nhk_news_config.easy_enabled),
-				easy_feed_url = COALESCE($4, content.nhk_news_config.easy_feed_url),
-				normal_enabled = COALESCE($5, content.nhk_news_config.normal_enabled),
-				normal_feed_url = COALESCE($6, content.nhk_news_config.normal_feed_url),
+				default_type = COALESCE($2, content.nhk_article.default_type),
+				easy_enabled = COALESCE($3, content.nhk_article.easy_enabled),
+				easy_feed_url = COALESCE($4, content.nhk_article.easy_feed_url),
+				normal_enabled = COALESCE($5, content.nhk_article.normal_enabled),
+				normal_feed_url = COALESCE($6, content.nhk_article.normal_feed_url),
 				updated_at = NOW()`
 
 		var dt *string
@@ -158,7 +158,7 @@ func adminNhkNewsRefreshHandler(db *pgxpool.Pool, logger *slog.Logger) http.Hand
 		}
 		var cfg Config
 		err := db.QueryRow(r.Context(), `SELECT easy_enabled, easy_feed_url, normal_enabled, normal_feed_url
-			FROM content.nhk_news_config WHERE locale=$1`, locale).
+			FROM content.nhk_article WHERE locale=$1`, locale).
 			Scan(&cfg.EasyEnabled, &cfg.EasyFeedURL, &cfg.NormalEnabled, &cfg.NormalFeedURL)
 		if err != nil {
 			// Use defaults
