@@ -24,27 +24,6 @@ export const serverEnvSchema = z.object({
   MEILI_HOST: z.string().url().default("http://localhost:7700"),
   MEILI_MASTER_KEY: z.string().min(1).default("local_dev_meili_master_key"),
   NEXT_PUBLIC_API_URL: z.string().url().default("http://localhost:4000"),
-  MINIO_ENDPOINT: z.string().min(1).default("localhost"),
-  MINIO_PORT: z.coerce.number().int().min(1).max(65535).default(9000),
-  MINIO_ACCESS_KEY: z.string().min(1).default("minioadmin"),
-  MINIO_SECRET_KEY: z.string().min(1).default("minioadmin"),
-  MINIO_BUCKET: z.string().min(1).default("nihongo-bjt-media"),
-  MINIO_USE_SSL: z
-    .string()
-    .default("false")
-    .transform((value) => value === "true"),
-  /**
-   * Browser-facing MinIO/S3 endpoint used only to sign presigned URLs that the
-   * client hits directly. In production the internal MINIO_ENDPOINT is not
-   * reachable from the browser, so set these to the public host (e.g. a reverse
-   * proxy / CDN domain). When unset, the internal MINIO_* values are reused.
-   */
-  MINIO_PUBLIC_ENDPOINT: z.string().min(1).optional(),
-  MINIO_PUBLIC_PORT: z.coerce.number().int().min(1).max(65535).optional(),
-  MINIO_PUBLIC_USE_SSL: z
-    .string()
-    .optional()
-    .transform((value) => (value == null ? undefined : value === "true")),
   OAUTH_STATE_SECRET: z.string().min(32).optional(),
   /** HMAC secret for short-lived managed-ad decision tokens. Required when ads are enabled in production. */
   ADS_DECISION_SIGNING_SECRET: z.string().min(32).optional(),

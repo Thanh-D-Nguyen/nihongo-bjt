@@ -61,7 +61,6 @@
     "dotenv": "^17.4.2",
     "ioredis": "^5.10.1",
     "meilisearch": "^0.57.0",
-    "minio": "^8.0.7",
     "next": "^16.2.4",
     "next-intl": "^4.9.1",
     "openai": "^6.35.0",

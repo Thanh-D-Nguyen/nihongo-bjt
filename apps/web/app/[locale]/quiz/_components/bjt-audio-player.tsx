@@ -13,7 +13,7 @@ import {
 /* ------------------------------------------------------------------ */
 
 interface BjtAudioPlayerProps {
-  /** Pre-recorded audio file URL (MinIO/CDN) */
+  /** Pre-recorded audio file URL (media storage) */
   audioUrl?: string | null;
   /** Japanese text script for TTS fallback */
   audioScript?: string | null;

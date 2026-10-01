@@ -32,7 +32,7 @@ export function useProfileImageUpload() {
       }
       const { assetId, uploadUrl } = await presignRes.json();
 
-      // 2. Upload file directly to storage (MinIO presigned PUT)
+      // 2. Upload file directly to storage (Go API presigned upload)
       const putRes = await fetch(uploadUrl, {
         method: "PUT",
         headers: { "Content-Type": file.type },
