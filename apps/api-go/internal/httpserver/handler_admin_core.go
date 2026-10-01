@@ -1464,7 +1464,7 @@ func adminReadingAssistReportsHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 			limit = 50
 		}
 		rows, err := db.Query(r.Context(), `
-			SELECT id, user_id, text_hash, exam_context, quiz_session_id, created_at
+			SELECT id, user_id, text_hash, kind, context, created_at
 			FROM learning.reading_assist_report
 			ORDER BY created_at DESC LIMIT $1`, limit)
 		if err != nil {
@@ -1474,18 +1474,18 @@ func adminReadingAssistReportsHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 		}
 		defer rows.Close()
 		type Report struct {
-			ID            string  `json:"id"`
-			UserID        string  `json:"userId"`
-			TextHash      string  `json:"textHash"`
-			ExamContext   bool    `json:"examContext"`
-			QuizSessionID *string `json:"quizSessionId,omitempty"`
-			CreatedAt     string  `json:"createdAt"`
+			ID        string  `json:"id"`
+			UserID    string  `json:"userId"`
+			TextHash  string  `json:"textHash"`
+			Kind      string  `json:"kind"`
+			Context   *string `json:"context,omitempty"`
+			CreatedAt string  `json:"createdAt"`
 		}
 		var items []Report
 		for rows.Next() {
 			var rp Report
 			var ca time.Time
-			if rows.Scan(&rp.ID, &rp.UserID, &rp.TextHash, &rp.ExamContext, &rp.QuizSessionID, &ca) == nil {
+			if rows.Scan(&rp.ID, &rp.UserID, &rp.TextHash, &rp.Kind, &rp.Context, &ca) == nil {
 				rp.CreatedAt = ca.UTC().Format(time.RFC3339)
 				items = append(items, rp)
 			}
