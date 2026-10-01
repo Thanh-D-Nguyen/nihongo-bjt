@@ -27,7 +27,9 @@
 - LegacyStackRemovalPass: TRUE (all 3 waves complete: NestJS REMOVED_WAVE1, Keycloak REMOVED_WAVE2, MinIO REMOVED_WAVE3; runtime contains Go API + PostgreSQL + Redis + Meilisearch + Next learner + Admin + Caddy + filesystem media; ACTIVE_RUNTIME_REFERENCE=0 for all three; remaining refs classified as: Prisma generated client (235 keycloak_subject schema compat), GCP/OCI rollback deploy configs (preserved per task §11), admin UI dead response-shape code + help text, operational scripts; none execute at runtime)
 - DiskRemediation: DONE (92% → 89%, 3.5GB reclaimed)
 - RebootGate: REBOOT_EXTERNAL_PRIVILEGE_GATE
-- ProductionCutover: PENDING
+- OciArm64RuntimePass: TRUE (OCI ARM64 host kotobawork-prod 161.33.172.129 verified aarch64; 7/7 containers arm64; API health ok; auth lifecycle pass; persistence restart pass; report: docs/migrations/go-backend-v2/reports/OCI_ARM64_VALIDATION.md)
+- OciPreDnsProductionReady: TRUE (all pre-DNS smoke tests pass; PG/Redis/Meili/media persist across restart; Caddy :80 serving learner+admin+API; COOKIE_SECURE=false until HTTPS; CORS=http://161.33.172.129; production secrets on-host 600 perms; backup procedures documented)
+- ProductionCutover: PENDING (awaiting DNS/TLS external inputs: production domain(s), DNS provider, A records, Caddy hostname config, rollback target)
 - KeycloakFinalDisable: DEFERRED_TO_CUTOVER
 - KeycloakRuntimeRemovalPass: TRUE (Wave 2 — packages/keycloak-oidc deleted, docker/keycloak/ deleted, dead runtime files removed, 75 RequireKeycloakAuth→RequireAuth renames, useKeycloakAuth backward-compat alias retained, DB schema keycloak_subject preserved for data compat; staging build b971d553 verified; 8/8 Playwright auth parity tests pass at e11de9dd)
 - LastCompletedEngineeringWave: M17_POST_MIGRATION_CLEANUP
