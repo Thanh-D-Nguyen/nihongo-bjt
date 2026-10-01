@@ -160,7 +160,7 @@ func adminOpsSearchSyncHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handl
 
 		err := db.QueryRow(ctx, `
 			SELECT created_at, actor_id, after
-			FROM admin.admin_audit_log
+			FROM ops.admin_audit_log
 			WHERE action = 'ops.search.rebuild'
 			ORDER BY created_at DESC LIMIT 1
 		`).Scan(&rebuildCreatedAt, &actorID, &afterJSON)
@@ -243,7 +243,7 @@ func adminOpsQueueActionsHandler(db *pgxpool.Pool, logger *slog.Logger) http.Han
 		query := `
 			SELECT a.id, a.action, a.actor_id, a.target_id, a.reason, a.created_at,
 			       COALESCE(act.display_name, '') as actor_name, COALESCE(act.email, '') as actor_email
-			FROM admin.admin_audit_log a
+			FROM ops.admin_audit_log a
 			LEFT JOIN admin.admin_actor act ON act.id = a.actor_id
 			WHERE a.target_type = 'ops.queue'`
 		args := []any{}
@@ -324,7 +324,7 @@ func adminOpsReleaseHistoryHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 		rows, err := db.Query(ctx, `
 			SELECT a.id, a.action, a.actor_id, a.target_id, a.reason, a.after, a.created_at,
 			       COALESCE(act.display_name, '') as actor_name, COALESCE(act.email, '') as actor_email
-			FROM admin.admin_audit_log a
+			FROM ops.admin_audit_log a
 			LEFT JOIN admin.admin_actor act ON act.id = a.actor_id
 			WHERE a.target_type = 'ops.release'
 			ORDER BY a.created_at DESC LIMIT $1
@@ -395,7 +395,7 @@ func adminOpsReleaseMarkKnownGoodHandler(db *pgxpool.Pool, logger *slog.Logger) 
 			"knownGood": true,
 		})
 		_, err := db.Exec(r.Context(), `
-			INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+			INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('ops.release.mark_known_good', $1, $2, 'ops.release', $3, $4, NOW())
 		`, identity.ActorID, req.Version, req.Reason, afterJSON)
 		if err != nil {
@@ -441,7 +441,7 @@ func adminOpsReleasePrepareRollbackHandler(db *pgxpool.Pool, logger *slog.Logger
 			"targetVersion":  req.TargetVersion,
 		})
 		_, err := db.Exec(r.Context(), `
-			INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+			INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('ops.release.prepare_rollback', $1, $2, 'ops.release', $3, $4, NOW())
 		`, identity.ActorID, req.TargetVersion, req.Reason, afterJSON)
 		if err != nil {
@@ -503,7 +503,7 @@ func handleQueueTransition(db *pgxpool.Pool, logger *slog.Logger, w http.Respons
 		// Record audit
 		afterJSON, _ := json.Marshal(map[string]any{"key": flagKey, "enabled": enabled})
 		_, err = db.Exec(r.Context(), `
-			INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+			INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ($1, $2, $3, 'ops.queue', $4, $5, NOW())
 		`, "ops.queue."+action, identity.ActorID, req.QueueName, req.Reason, afterJSON)
 		if err != nil {
@@ -514,7 +514,7 @@ func handleQueueTransition(db *pgxpool.Pool, logger *slog.Logger, w http.Respons
 		// Drain: audit only
 		afterJSON, _ := json.Marshal(map[string]any{"status": "drain_requested"})
 		_, err := db.Exec(r.Context(), `
-			INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+			INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('ops.queue.drain', $1, $2, 'ops.queue', $3, $4, NOW())
 		`, identity.ActorID, req.QueueName, req.Reason, afterJSON)
 		if err != nil {

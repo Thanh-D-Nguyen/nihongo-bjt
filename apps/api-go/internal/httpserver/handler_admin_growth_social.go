@@ -257,7 +257,7 @@ func adminGrowthSocialTemplatesDetailHandler(db *pgxpool.Pool, logger *slog.Logg
 		aRows, err := db.Query(ctx, `
 			SELECT a.id, a.action, a.actor_id, act.display_name, act.email,
 			       a.reason, a.after, a.before, a.created_at
-			FROM admin.admin_audit_log a
+			FROM ops.admin_audit_log a
 			LEFT JOIN admin.admin_actor act ON act.id = a.actor_id
 			WHERE a.target_id = $1 AND a.target_type = 'growth.social_template'
 			ORDER BY a.created_at DESC LIMIT 20`, id)
@@ -330,7 +330,7 @@ func adminGrowthSocialTemplatesCreateHandler(db *pgxpool.Pool, logger *slog.Logg
 		afterJSON, _ := json.Marshal(map[string]any{
 			"config": req.Config, "kind": req.Kind, "slug": req.Slug,
 		})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.growth.social_template.created', $1, $2, 'growth.social_template', $3, $4, NOW())`,
 			identity.ActorID, createdID, req.Reason, afterJSON)
 
@@ -430,7 +430,7 @@ func adminGrowthSocialTemplatesPatchHandler(db *pgxpool.Pool, logger *slog.Logge
 			"slug": beforeSlug, "version": beforeVersion,
 		})
 		afterJSON, _ := json.Marshal(map[string]any{"updated": true, "fields": setClauses})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ('admin.growth.social_template.updated', $1, $2, 'growth.social_template', $3, $4, $5, NOW())`,
 			identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
 
@@ -488,7 +488,7 @@ func adminGrowthSocialTemplatesPublishHandler(db *pgxpool.Pool, logger *slog.Log
 		}
 		afterJSON, _ := json.Marshal(map[string]any{"active": true, "privacyClass": privClass})
 		beforeJSON, _ := json.Marshal(map[string]any{"active": beforeActive})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ('admin.growth.social_template.published', $1, $2, 'growth.social_template', $3, $4, $5, NOW())`,
 			identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
 
@@ -531,7 +531,7 @@ func adminGrowthSocialTemplatesArchiveHandler(db *pgxpool.Pool, logger *slog.Log
 
 		afterJSON, _ := json.Marshal(map[string]any{"active": false})
 		beforeJSON, _ := json.Marshal(map[string]any{"active": beforeActive})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ('admin.growth.social_template.archived', $1, $2, 'growth.social_template', $3, $4, $5, NOW())`,
 			identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
 
@@ -667,7 +667,7 @@ func adminGrowthSocialEventsModerateHandler(db *pgxpool.Pool, logger *slog.Logge
 		beforeJSON, _ := json.Marshal(map[string]any{"expiresAt": beforeExpiresStr})
 
 		auditAction := "admin.growth.share_item." + req.Action
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ($1, $2, $3, 'growth.share_item', $4, $5, $6, NOW())`,
 			auditAction, identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
 

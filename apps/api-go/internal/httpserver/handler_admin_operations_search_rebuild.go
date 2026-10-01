@@ -61,7 +61,7 @@ func adminOpsSearchRebuildHandler(db *pgxpool.Pool, searchClient *search.Client,
 		// Record audit
 		afterJSON, _ := json.Marshal(summary)
 		_, auditErr := db.Exec(ctx, `
-			INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+			INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('ops.search.rebuild', $1, 'content_search', 'ops.search_index', $2, $3, NOW())`,
 			identity.ActorID, req.Reason, afterJSON)
 		if auditErr != nil {
@@ -126,7 +126,7 @@ func adminOpsSearchRebuildPartialHandler(db *pgxpool.Pool, searchClient *search.
 		afterJSON, _ := json.Marshal(resp)
 		targetID := "content_search:" + req.ContentType
 		_, auditErr := db.Exec(ctx, `
-			INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+			INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('ops.search.rebuild.partial', $1, $2, 'ops.search_index', $3, $4, NOW())`,
 			identity.ActorID, targetID, req.Reason, afterJSON)
 		if auditErr != nil {

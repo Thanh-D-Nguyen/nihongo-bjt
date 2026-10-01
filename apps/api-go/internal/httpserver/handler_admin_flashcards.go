@@ -18,7 +18,7 @@ import (
 // flashcard-styles-admin.controller.ts, flashcards-admin.repository.ts,
 // flashcard-styles.service.ts.
 // DB tables: learning.deck, learning.flashcard_variant, learning.flashcard_style,
-// admin.admin_audit_log.
+// ops.admin_audit_log.
 
 // ── Decks ───────────────────────────────────────────────────────────────────
 
@@ -146,7 +146,7 @@ VALUES ($1,$2,'draft','private',$3,$4,$5,NOW(),NOW()) RETURNING id`,
 		}
 
 		afterJSON, _ := json.Marshal(map[string]any{"id": id, "titleVi": req.TitleVi})
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 VALUES ('admin.flashcards.deck.generated',$1,$2,'learning.deck','auto_generate',$3,NOW())`,
 			identity.ActorID, id, afterJSON)
 
@@ -185,7 +185,7 @@ FROM learning.deck WHERE id=$1`, id).Scan(&d.ID, &d.TitleVi, &d.TitleJa, &d.Stat
 		d.UpdatedAt = ua.UTC().Format(time.RFC3339)
 
 		auditRows, _ := db.Query(r.Context(), `SELECT id, action, actor_id, reason, before, after, created_at
-FROM admin.admin_audit_log WHERE target_id=$1 AND target_type='learning.deck'
+FROM ops.admin_audit_log WHERE target_id=$1 AND target_type='learning.deck'
 ORDER BY created_at DESC LIMIT 30`, id)
 		d.Audit = []json.RawMessage{}
 		if auditRows != nil {
@@ -262,7 +262,7 @@ func adminFlashcardDeckTransitionHandler(db *pgxpool.Pool, logger *slog.Logger) 
 
 		beforeJSON, _ := json.Marshal(map[string]any{"status": beforeStatus})
 		afterJSON, _ := json.Marshal(map[string]any{"status": req.Next})
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, before, after, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, after, created_at)
 VALUES ($1,$2,$3,'learning.deck',$4,$5,$6,NOW())`,
 			"admin.flashcards.deck."+actionSuffix, identity.ActorID, id, req.Reason, beforeJSON, afterJSON)
 
@@ -394,7 +394,7 @@ FROM learning.flashcard_variant WHERE id=$1`, id).
 
 		// Audit log
 		auditRows, _ := db.Query(r.Context(), `SELECT id, action, actor_id, reason, before, after, created_at
-FROM admin.admin_audit_log WHERE target_id=$1 AND target_type='learning.flashcard_variant'
+FROM ops.admin_audit_log WHERE target_id=$1 AND target_type='learning.flashcard_variant'
 ORDER BY created_at DESC LIMIT 30`, id)
 		vd.Audit = []json.RawMessage{}
 		if auditRows != nil {
@@ -509,7 +509,7 @@ func adminFlashcardVariantPatchHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 
 		beforeJSON, _ := json.Marshal(map[string]any{"frontText": beforeFront, "backText": beforeBack, "reading": beforeReading})
 		afterJSON, _ := json.Marshal(map[string]any{"frontText": req.FrontText, "backText": req.BackText, "reading": req.Reading})
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, before, after, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, after, created_at)
 VALUES ('admin.flashcards.variant.updated',$1,$2,'learning.flashcard_variant',$3,$4,$5,NOW())`,
 			identity.ActorID, id, req.Reason, beforeJSON, afterJSON)
 
@@ -570,7 +570,7 @@ func adminFlashcardVariantTransitionHandler(db *pgxpool.Pool, logger *slog.Logge
 
 		beforeJSON, _ := json.Marshal(map[string]any{"status": beforeStatus})
 		afterJSON, _ := json.Marshal(map[string]any{"status": req.Next})
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, before, after, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, after, created_at)
 VALUES ($1,$2,$3,'learning.flashcard_variant',$4,$5,$6,NOW())`,
 			"admin.flashcards.variant."+actionSuffix, identity.ActorID, id, req.Reason, beforeJSON, afterJSON)
 
@@ -642,7 +642,7 @@ func adminFlashcardVariantSourcePatchHandler(db *pgxpool.Pool, logger *slog.Logg
 
 		beforeJSON, _ := json.Marshal(map[string]any{"sourceId": beforeSourceID, "sourceType": beforeSourceType})
 		afterJSON, _ := json.Marshal(map[string]any{"sourceId": req.SourceID, "sourceType": req.SourceType})
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, before, after, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, after, created_at)
 VALUES ('admin.flashcards.variant.source_remapped',$1,$2,'learning.flashcard_variant',$3,$4,$5,NOW())`,
 			identity.ActorID, id, req.Reason, beforeJSON, afterJSON)
 
@@ -844,7 +844,7 @@ VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW(),NOW()) RETURNING id`,
 		}
 
 		afterJSON, _ := json.Marshal(map[string]any{"id": id, "slug": req.Slug})
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 VALUES ('flashcard_style.create',$1,$2,'flashcard_style',NULL,$3,NOW())`,
 			identity.ActorID, id, afterJSON)
 
@@ -913,7 +913,7 @@ func adminFlashcardStylePatchHandler(db *pgxpool.Pool, logger *slog.Logger) http
 		}
 
 		afterJSON, _ := json.Marshal(req)
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, before, after, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, after, created_at)
 VALUES ('flashcard_style.update',$1,$2,'flashcard_style',NULL,$3,$4,NOW())`,
 			identity.ActorID, id, beforeJSON, afterJSON)
 
@@ -963,7 +963,7 @@ func adminFlashcardStyleTransitionHandler(db *pgxpool.Pool, logger *slog.Logger)
 
 		beforeJSON, _ := json.Marshal(map[string]any{"status": beforeStatus})
 		afterJSON, _ := json.Marshal(map[string]any{"status": req.Status})
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, before, after, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, after, created_at)
 VALUES ('flashcard_style.transition',$1,$2,'flashcard_style',$3,$4,$5,NOW())`,
 			identity.ActorID, id, req.Reason, beforeJSON, afterJSON)
 

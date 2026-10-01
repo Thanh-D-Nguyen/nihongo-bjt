@@ -17,7 +17,7 @@ import (
 // Contracts derived from NestJS legal-policy-admin.controller.ts,
 // legal-cookie-category-admin.controller.ts, legal-retention-admin.controller.ts,
 // legal-policy-admin.service.ts.
-// DB tables: legal.policy_version, admin.admin_audit_log.
+// DB tables: legal.policy_version, ops.admin_audit_log.
 // Cookie categories and retention domains are code-owned curated lists
 // (partial_schema_pending: no cookie_category or retention_policy table yet).
 
@@ -158,7 +158,7 @@ FROM legal.policy_version WHERE id=$1`, id).
 		// Audit trail
 		pd.Audit = []json.RawMessage{}
 		auditRows, _ := db.Query(r.Context(), `SELECT id, action, actor_id, reason, before, after, created_at
-FROM admin.admin_audit_log WHERE target_id=$1 AND target_type='legal.policy_version'
+FROM ops.admin_audit_log WHERE target_id=$1 AND target_type='legal.policy_version'
 ORDER BY created_at DESC LIMIT 30`, id)
 		if auditRows != nil {
 			for auditRows.Next() {
@@ -274,7 +274,7 @@ VALUES ($1,$2,$3,$4,$5,'draft',NOW(),NOW()) RETURNING id`,
 		}
 
 		afterJSON, _ := json.Marshal(map[string]any{"id": id, "policyKey": req.PolicyKey, "version": req.Version})
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 VALUES ('legal.policy.created',$1,$2,'legal.policy_version','initial_draft',$3,NOW())`,
 			identity.ActorID, id, afterJSON)
 
@@ -343,7 +343,7 @@ func adminLegalPolicyPatchHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 		}
 
 		afterJSON, _ := json.Marshal(req)
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 VALUES ('legal.policy.updated',$1,$2,'legal.policy_version','draft_edit',$3,NOW())`,
 			identity.ActorID, id, afterJSON)
 
@@ -383,7 +383,7 @@ WHERE id=$1`, id)
 
 		beforeJSON, _ := json.Marshal(map[string]any{"status": beforeStatus})
 		afterJSON, _ := json.Marshal(map[string]any{"status": "published"})
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, before, after, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, after, created_at)
 VALUES ('legal.policy.published',$1,$2,'legal.policy_version','publish',$3,$4,NOW())`,
 			identity.ActorID, id, beforeJSON, afterJSON)
 
@@ -421,7 +421,7 @@ func adminLegalPolicyArchiveHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 
 		beforeJSON, _ := json.Marshal(map[string]any{"status": beforeStatus})
 		afterJSON, _ := json.Marshal(map[string]any{"status": "archived"})
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, before, after, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, after, created_at)
 VALUES ('legal.policy.archived',$1,$2,'legal.policy_version','archive',$3,$4,NOW())`,
 			identity.ActorID, id, beforeJSON, afterJSON)
 
@@ -465,7 +465,7 @@ VALUES ($1,$2,$3,$4,$5,'draft',NOW(),NOW()) RETURNING id`,
 		}
 
 		afterJSON, _ := json.Marshal(map[string]any{"id": newID, "duplicatedFrom": id})
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 VALUES ('legal.policy.duplicated',$1,$2,'legal.policy_version','duplicate_from_'+$3,$4,NOW())`,
 			identity.ActorID, newID, id, afterJSON)
 
@@ -501,7 +501,7 @@ func adminLegalPolicyDeleteHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 		db.Exec(r.Context(), "DELETE FROM legal.policy_version WHERE id=$1", id)
 
 		beforeJSON, _ := json.Marshal(map[string]any{"status": status})
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, before, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, created_at)
 VALUES ('legal.policy.deleted',$1,$2,'legal.policy_version','delete_draft',$3,NOW())`,
 			identity.ActorID, id, beforeJSON)
 

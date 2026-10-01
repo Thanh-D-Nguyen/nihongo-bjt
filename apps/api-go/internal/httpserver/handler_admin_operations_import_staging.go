@@ -221,7 +221,7 @@ func adminOpsImportStagingEscalateHandler(db *pgxpool.Pool, logger *slog.Logger)
 		afterJSON, _ := json.Marshal(map[string]any{"deadLetterId": dlID})
 		beforeJSON, _ := json.Marshal(map[string]any{"importErrorId": ie.ID})
 		db.Exec(ctx, `
-			INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+			INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ('ops.import_error.dead_letter.create', $1, $2, 'content.import_error', $3, $4, $5, NOW())`,
 			identity.ActorID, ie.ID, req.Reason, afterJSON, beforeJSON)
 
@@ -266,7 +266,7 @@ func adminOpsImportStagingRetryHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 		afterJSON, _ := json.Marshal(map[string]any{"id": id, "status": "retry_requested"})
 		beforeJSON, _ := json.Marshal(map[string]any{"id": id})
 		_, err := db.Exec(ctx, `
-			INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+			INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ('ops.import_error.retry', $1, $2, 'content.import_error', $3, $4, $5, NOW())`,
 			identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
 		if err != nil {
@@ -313,7 +313,7 @@ func adminOpsImportStagingDiscardHandler(db *pgxpool.Pool, logger *slog.Logger) 
 		afterJSON, _ := json.Marshal(map[string]any{"id": id, "status": "discarded"})
 		beforeJSON, _ := json.Marshal(map[string]any{"id": id})
 		_, err := db.Exec(ctx, `
-			INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+			INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ('ops.import_error.discard', $1, $2, 'content.import_error', $3, $4, $5, NOW())`,
 			identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
 		if err != nil {
@@ -395,7 +395,7 @@ func adminOpsImportStagingBulkHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 			afterJSON, _ := json.Marshal(map[string]any{"id": eid, "status": statusVal})
 			beforeJSON, _ := json.Marshal(map[string]any{"id": eid})
 			db.Exec(ctx, `
-				INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+				INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 				VALUES ($1, $2, $3, 'content.import_error', $4, $5, $6, NOW())`,
 				"ops.import_error."+actionSuffix, identity.ActorID, eid, req.Reason, afterJSON, beforeJSON)
 		}

@@ -32,7 +32,7 @@ func adminOpsBroadcastsListHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 		// Find unique broadcast IDs from audit log
 		rows, err := db.Query(ctx, `
 			SELECT DISTINCT target_id, MIN(created_at) as first_event
-			FROM admin.admin_audit_log
+			FROM ops.admin_audit_log
 			WHERE target_type = 'ops.broadcast'
 			GROUP BY target_id
 			ORDER BY first_event DESC
@@ -230,7 +230,7 @@ func adminOpsBroadcastsCreateHandler(db *pgxpool.Pool, logger *slog.Logger) http
 		})
 
 		_, err := db.Exec(r.Context(), `
-			INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+			INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('ops.broadcast.created', $1, $2, 'ops.broadcast', $3, $4, NOW())
 		`, identity.ActorID, targetID, req.Reason, afterJSON)
 		if err != nil {
@@ -310,7 +310,7 @@ func adminOpsBroadcastsUpdateHandler(db *pgxpool.Pool, logger *slog.Logger) http
 		beforeJSON, _ := json.Marshal(map[string]any{"snapshot": snap})
 
 		_, err = db.Exec(r.Context(), `
-			INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+			INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ('ops.broadcast.updated', $1, $2, 'ops.broadcast', $3, $4, $5, NOW())
 		`, identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
 		if err != nil {
@@ -354,7 +354,7 @@ type broadcastSnapshot struct {
 func loadBroadcastSnapshot(ctx context.Context, db *pgxpool.Pool, targetID string) (*broadcastSnapshot, error) {
 	rows, err := db.Query(ctx, `
 		SELECT action, after, created_at
-		FROM admin.admin_audit_log
+		FROM ops.admin_audit_log
 		WHERE target_id = $1 AND target_type = 'ops.broadcast'
 		ORDER BY created_at ASC
 	`, targetID)
@@ -478,7 +478,7 @@ func handleBroadcastTransition(db *pgxpool.Pool, logger *slog.Logger, w http.Res
 	beforeJSON, _ := json.Marshal(map[string]any{"status": snap.Status})
 
 	_, err = db.Exec(r.Context(), `
-		INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 		VALUES ($1, $2, $3, 'ops.broadcast', $4, $5, $6, NOW())
 	`, "ops.broadcast."+to, identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
 	if err != nil {

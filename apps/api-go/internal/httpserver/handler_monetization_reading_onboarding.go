@@ -16,9 +16,9 @@ import (
 // Public route — returns available subscription plans.
 func listMonetizationPlansHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		const q = `SELECT id, name, price_monthly, currency, features, tier
-			FROM monetization.subscription_plan
-			WHERE active = true
+		const q = `SELECT id, slug, name_key, status, sort_order, config
+			FROM monetization.plan
+			WHERE status = 'active'
 			ORDER BY sort_order ASC, created_at ASC`
 		rows, err := db.Query(r.Context(), q)
 		if err != nil {
@@ -29,26 +29,19 @@ func listMonetizationPlansHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 		defer rows.Close()
 
 		type Plan struct {
-			ID           string   `json:"id"`
-			Name         string   `json:"name"`
-			PriceMonthly int      `json:"priceMonthly"`
-			Currency     string   `json:"currency"`
-			Features     []string `json:"features"`
-			Tier         string   `json:"tier"`
+			ID        string          `json:"id"`
+			Slug      string          `json:"slug"`
+			NameKey   string          `json:"nameKey"`
+			Status    string          `json:"status"`
+			SortOrder int             `json:"sortOrder"`
+			Config    json.RawMessage `json:"config"`
 		}
 		var plans []Plan
 		for rows.Next() {
 			var p Plan
-			var featuresJSON []byte
-			if err := rows.Scan(&p.ID, &p.Name, &p.PriceMonthly, &p.Currency, &featuresJSON, &p.Tier); err != nil {
+			if err := rows.Scan(&p.ID, &p.Slug, &p.NameKey, &p.Status, &p.SortOrder, &p.Config); err != nil {
 				logger.Error("scan monetization plan", "error", err)
 				continue
-			}
-			if len(featuresJSON) > 0 {
-				_ = json.Unmarshal(featuresJSON, &p.Features)
-			}
-			if p.Features == nil {
-				p.Features = []string{}
 			}
 			plans = append(plans, p)
 		}
@@ -81,20 +74,20 @@ func checkoutMonetizationHandler(db *pgxpool.Pool, logger *slog.Logger) http.Han
 			writeJSONError(w, "planId required", http.StatusBadRequest)
 			return
 		}
-		// Create pending checkout session
-		const insertQ = `INSERT INTO monetization.checkout_session (user_id, plan_id, status, created_at)
-			VALUES ($1, $2, 'pending', NOW())
+		// Record checkout intent as subscription event (no dedicated checkout_session table)
+		const insertQ = `INSERT INTO monetization.subscription_event (user_id, plan_id, event_type, metadata, created_at)
+			VALUES ($1, $2, 'checkout_started', '{}'::jsonb, NOW())
 			RETURNING id`
-		var sessionID string
-		if err := db.QueryRow(r.Context(), insertQ, identity.UserID, req.PlanID).Scan(&sessionID); err != nil {
-			logger.Error("create checkout session", "error", err, "user_id", identity.UserID)
+		var eventID string
+		if err := db.QueryRow(r.Context(), insertQ, identity.UserID, req.PlanID).Scan(&eventID); err != nil {
+			logger.Error("create checkout event", "error", err, "user_id", identity.UserID)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		_ = json.NewEncoder(w).Encode(map[string]string{
-			"sessionId": sessionID,
+			"sessionId": eventID,
 			"status":    "pending",
 		})
 	}

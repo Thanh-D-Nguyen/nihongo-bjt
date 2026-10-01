@@ -194,7 +194,7 @@ func adminAssessmentQuizTemplatesDetailHandler(db *pgxpool.Pool, logger *slog.Lo
 		aRows, err := db.Query(ctx, `
 			SELECT a.id, a.action, a.actor_id, act.display_name, act.email,
 			       a.reason, a.after, a.before, a.created_at
-			FROM admin.admin_audit_log a
+			FROM ops.admin_audit_log a
 			LEFT JOIN admin.admin_actor act ON act.id = a.actor_id
 			WHERE a.target_id = $1 AND a.target_type = 'assessment.quiz_template'
 			ORDER BY a.created_at DESC LIMIT 20`, id)
@@ -277,7 +277,7 @@ func adminAssessmentQuizTemplatesCreateHandler(db *pgxpool.Pool, logger *slog.Lo
 			"description": req.Description, "level": req.Level, "type": req.Type,
 			"timeLimitSeconds": timeLimitSec, "blueprintMeta": blueprint, "status": "draft",
 		})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.assessment.quiz_template.created', $1, $2, 'assessment.quiz_template', $3, $4, NOW())`,
 			identity.ActorID, createdID, req.Reason, afterJSON)
 
@@ -411,7 +411,7 @@ func adminAssessmentQuizTemplatesPatchHandler(db *pgxpool.Pool, logger *slog.Log
 		// Write audit
 		beforeJSON, _ := json.Marshal(before)
 		afterJSON, _ := json.Marshal(map[string]any{"updated": true, "fields": setClauses})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ('admin.assessment.quiz_template.updated', $1, $2, 'assessment.quiz_template', $3, $4, $5, NOW())`,
 			identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
 
@@ -457,7 +457,7 @@ func adminAssessmentQuizTemplatesPublishHandler(db *pgxpool.Pool, logger *slog.L
 
 		afterJSON, _ := json.Marshal(map[string]any{"status": "published", "noop": currentStatus == "published"})
 		beforeJSON, _ := json.Marshal(map[string]any{"status": currentStatus})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ('admin.assessment.quiz_template.published', $1, $2, 'assessment.quiz_template', $3, $4, $5, NOW())`,
 			identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
 
@@ -498,7 +498,7 @@ func adminAssessmentQuizTemplatesArchiveHandler(db *pgxpool.Pool, logger *slog.L
 
 		afterJSON, _ := json.Marshal(map[string]any{"status": "archived"})
 		beforeJSON, _ := json.Marshal(map[string]any{"status": currentStatus})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ('admin.assessment.quiz_template.archived', $1, $2, 'assessment.quiz_template', $3, $4, $5, NOW())`,
 			identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
 
@@ -565,7 +565,7 @@ func adminAssessmentQuizTemplatesDuplicateHandler(db *pgxpool.Pool, logger *slog
 		}
 
 		afterJSON, _ := json.Marshal(map[string]any{"newId": newID, "slug": newSlug, "sourceId": id})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.assessment.quiz_template.duplicated', $1, $2, 'assessment.quiz_template', $3, $4, NOW())`,
 			identity.ActorID, newID, req.Reason, afterJSON)
 
@@ -633,7 +633,7 @@ func adminAssessmentQuizTemplatesDeleteHandler(db *pgxpool.Pool, logger *slog.Lo
 		db.Exec(ctx, "DELETE FROM bjt.mock_test WHERE id = $1", id)
 
 		beforeJSON, _ := json.Marshal(before)
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, created_at)
 			VALUES ('admin.assessment.quiz_template.deleted', $1, $2, 'assessment.quiz_template', $3, $4, NOW())`,
 			identity.ActorID, id, req.Reason, beforeJSON)
 

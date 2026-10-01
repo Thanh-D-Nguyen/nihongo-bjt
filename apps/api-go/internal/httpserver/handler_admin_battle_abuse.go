@@ -257,7 +257,7 @@ func adminBattleAbuseDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 		aRows, err := db.Query(ctx, `
 			SELECT a.id, a.action, a.actor_id, act.display_name, act.email,
 			       a.reason, a.after, a.before, a.created_at
-			FROM admin.admin_audit_log a
+			FROM ops.admin_audit_log a
 			LEFT JOIN admin.admin_actor act ON act.id = a.actor_id
 			WHERE a.target_id = $1 AND a.target_type = 'learning.battle_abuse_report'
 			ORDER BY a.created_at DESC LIMIT 20`, id)
@@ -335,7 +335,7 @@ func adminBattleAbuseResolveHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 
 		afterJSON, _ := json.Marshal(map[string]any{"actionTaken": req.Action, "status": newStatus})
 		beforeJSON, _ := json.Marshal(map[string]any{"actionTaken": beforeActionTaken, "status": beforeStatus})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ('admin.battle.abuse.resolved', $1, $2, 'learning.battle_abuse_report', $3, $4, $5, NOW())`,
 			identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
 
@@ -383,7 +383,7 @@ func adminBattleAbuseEscalateHandler(db *pgxpool.Pool, logger *slog.Logger) http
 
 		afterJSON, _ := json.Marshal(map[string]any{"status": "escalated"})
 		beforeJSON, _ := json.Marshal(map[string]any{"status": beforeStatus})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ('admin.battle.abuse.escalated', $1, $2, 'learning.battle_abuse_report', $3, $4, $5, NOW())`,
 			identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
 

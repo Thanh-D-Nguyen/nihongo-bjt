@@ -123,7 +123,7 @@ FROM content.content_import_mapping WHERE id = $1`, id).Scan(
 		auditRows, err := db.Query(r.Context(), `
 SELECT a.id, a.action, a.actor_id, a.reason, a.after, a.before, a.created_at,
        COALESCE(act.display_name, '') as actor_name, COALESCE(act.email, '') as actor_email
-FROM admin.admin_audit_log a
+FROM ops.admin_audit_log a
 LEFT JOIN admin.admin_actor act ON act.id = a.actor_id
 WHERE a.target_id = $1 AND a.target_type = 'content.import_mapping'
 ORDER BY a.created_at DESC LIMIT 100`, id)
@@ -218,7 +218,7 @@ RETURNING id`, req.SourceType, req.TargetType, version, req.Mapping, req.Notes).
 			"version": version, "status": "draft",
 		})
 		_, err = db.Exec(r.Context(), `
-INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 VALUES ('ops.import_manifest.create', $1, $2, 'content.import_mapping', $3, $4, NOW())`,
 			identity.ActorID, createdID, req.Reason, afterJSON)
 		if err != nil {
@@ -320,7 +320,7 @@ func adminOpsImportManifestsUpdateHandler(db *pgxpool.Pool, logger *slog.Logger)
 		// Record audit
 		afterJSON, _ := json.Marshal(u)
 		_, err = db.Exec(r.Context(), `
-INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 VALUES ('ops.import_manifest.update', $1, $2, 'content.import_mapping', $3, $4, NOW())`,
 			identity.ActorID, id, req.Reason, afterJSON)
 		if err != nil {
@@ -374,7 +374,7 @@ func adminOpsImportManifestsRunHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 		// Record audit (actual execution is async/partial_schema_pending)
 		afterJSON, _ := json.Marshal(map[string]any{"manifestId": id, "status": "run_requested"})
 		_, err = db.Exec(r.Context(), `
-INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 VALUES ('ops.import_manifest.run', $1, $2, 'content.import_mapping', $3, $4, NOW())`,
 			identity.ActorID, id, req.Reason, afterJSON)
 		if err != nil {
@@ -405,7 +405,7 @@ func adminOpsImportManifestsHistoryHandler(db *pgxpool.Pool, logger *slog.Logger
 		rows, err := db.Query(r.Context(), `
 SELECT a.id, a.action, a.actor_id, a.reason, a.after, a.before, a.created_at,
        COALESCE(act.display_name, '') as actor_name, COALESCE(act.email, '') as actor_email
-FROM admin.admin_audit_log a
+FROM ops.admin_audit_log a
 LEFT JOIN admin.admin_actor act ON act.id = a.actor_id
 WHERE a.target_id = $1 AND a.target_type = 'content.import_mapping' AND a.action = 'ops.import_manifest.run'
 ORDER BY a.created_at DESC LIMIT $2`, id, limit)

@@ -15,7 +15,7 @@ import (
 // ── P1-A10: Admin Ads — Overview + Placements + Campaigns + Providers + Rules + Performance + Audit (13 routes) ──
 // Contracts derived from NestJS ads-admin.controller.ts and ads-admin.service.ts.
 // DB tables: monetization.ad_placement, monetization.ad_campaign, monetization.ad_provider_config,
-// monetization.ad_safety_rule, monetization.ad_impression, admin.admin_audit_log.
+// monetization.ad_safety_rule, monetization.ad_impression, ops.admin_audit_log.
 
 // ── Overview ────────────────────────────────────────────────────────────────
 
@@ -285,7 +285,7 @@ func adminAdsPlacementCreateHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 		}
 
 		afterJSON, _ := json.Marshal(map[string]any{"id": id, "code": req.Code})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('ads.placement.create',$1,$2,'ad_placement',$3,$4,NOW())`,
 			identity.ActorID, id, req.Reason, afterJSON)
 
@@ -347,7 +347,7 @@ func adminAdsPlacementPatchHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 
 		reason, _ := req["reason"].(string)
 		afterJSON, _ := json.Marshal(req)
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('ads.placement.update',$1,$2,'ad_placement',$3,$4,NOW())`,
 			identity.ActorID, id, reason, afterJSON)
 
@@ -500,7 +500,7 @@ func adminAdsCampaignCreateHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 		}
 
 		afterJSON, _ := json.Marshal(map[string]any{"id": id, "name": req.Name})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('ads.campaign.create',$1,$2,'ad_campaign',$3,$4,NOW())`,
 			identity.ActorID, id, req.Reason, afterJSON)
 
@@ -590,7 +590,7 @@ func adminAdsCampaignPatchHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 
 		reason, _ := req["reason"].(string)
 		afterJSON, _ := json.Marshal(req)
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('ads.campaign.update',$1,$2,'ad_campaign',$3,$4,NOW())`,
 			identity.ActorID, id, reason, afterJSON)
 
@@ -741,7 +741,7 @@ func adminAdsProviderPatchHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 
 		reason, _ := req["reason"].(string)
 		afterJSON, _ := json.Marshal(req)
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('ads.provider.update',$1,$2,'ad_provider_config',$3,$4,NOW())`,
 			identity.ActorID, id, reason, afterJSON)
 
@@ -833,7 +833,7 @@ func adminAdsRuleUpsertHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handl
 		}
 
 		afterJSON, _ := json.Marshal(map[string]any{"id": id, "ruleKey": req.RuleKey, "enabled": enabled})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('ads.safety_rule.upsert',$1,$2,'ad_safety_rule',$3,$4,NOW())`,
 			identity.ActorID, id, req.Reason, afterJSON)
 
@@ -1016,7 +1016,7 @@ func adminAdsAuditHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFun
 		}
 
 		rows, err := db.Query(r.Context(), `SELECT id, action, actor_id, target_id, target_type, reason, before, after, created_at
-			FROM admin.admin_audit_log
+			FROM ops.admin_audit_log
 			WHERE target_type IN ('ad_placement','ad_campaign','ad_provider_config','ad_safety_rule')
 			ORDER BY created_at DESC LIMIT $1`, limit)
 		if err != nil {

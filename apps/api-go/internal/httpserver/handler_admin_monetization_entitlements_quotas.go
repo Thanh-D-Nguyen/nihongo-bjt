@@ -89,7 +89,7 @@ func adminMonetizationEntitlementsCreateHandler(db *pgxpool.Pool, logger *slog.L
 			return
 		}
 		afterJSON, _ := json.Marshal(map[string]any{"key": req.Key})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.monetization.entitlement.created', $1, $2, 'monetization.entitlement_definition', $3, $4, NOW())`,
 			identity.ActorID, createdID, "entitlement created", afterJSON)
 		writeJSON(w, http.StatusCreated, map[string]any{"id": createdID, "key": req.Key})
@@ -130,7 +130,7 @@ func adminMonetizationPlanEntitlementLinkHandler(db *pgxpool.Pool, logger *slog.
 			return
 		}
 		afterJSON, _ := json.Marshal(map[string]any{"planId": planID, "entitlementId": req.EntitlementID})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.monetization.plan_entitlement.linked', $1, $2, 'monetization.plan_entitlement', $3, $4, NOW())`,
 			identity.ActorID, planID, "plan entitlement linked", afterJSON)
 		writeJSON(w, http.StatusOK, map[string]any{"linked": true, "planId": planID, "entitlementId": req.EntitlementID})
@@ -163,7 +163,7 @@ func adminMonetizationPlanEntitlementUnlinkHandler(db *pgxpool.Pool, logger *slo
 		ctx := r.Context()
 		db.Exec(ctx, `DELETE FROM monetization.plan_entitlement WHERE plan_id = $1 AND entitlement_id = $2`, planID, entitlementID)
 		afterJSON, _ := json.Marshal(map[string]any{"planId": planID, "entitlementId": entitlementID})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.monetization.plan_entitlement.unlinked', $1, $2, 'monetization.plan_entitlement', $3, $4, NOW())`,
 			identity.ActorID, planID, "plan entitlement unlinked", afterJSON)
 		writeJSON(w, http.StatusOK, map[string]any{"unlinked": true, "planId": planID, "entitlementId": entitlementID})
@@ -264,7 +264,7 @@ func adminMonetizationQuotaPoliciesCreateHandler(db *pgxpool.Pool, logger *slog.
 			return
 		}
 		afterJSON, _ := json.Marshal(map[string]any{"key": req.Key, "windowCode": req.WindowCode})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.monetization.quota_policy.created', $1, $2, 'monetization.quota_policy', $3, $4, NOW())`,
 			identity.ActorID, createdID, "quota policy created", afterJSON)
 		writeJSON(w, http.StatusCreated, map[string]any{"id": createdID, "key": req.Key})
@@ -332,7 +332,7 @@ func adminMonetizationQuotaPoliciesPatchHandler(db *pgxpool.Pool, logger *slog.L
 		}
 		afterJSON, _ := json.Marshal(map[string]any{"updated": true})
 		beforeJSON, _ := json.Marshal(map[string]any{"id": id})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ('admin.monetization.quota_policy.updated', $1, $2, 'monetization.quota_policy', $3, $4, $5, NOW())`,
 			identity.ActorID, id, "quota policy updated", afterJSON, beforeJSON)
 		writeJSON(w, http.StatusOK, map[string]any{"id": id, "updated": true})
@@ -372,7 +372,7 @@ func adminMonetizationQuotaPlanLinksCreateHandler(db *pgxpool.Pool, logger *slog
 			return
 		}
 		afterJSON, _ := json.Marshal(map[string]any{"planId": req.PlanID, "quotaPolicyId": req.QuotaPolicyID, "limitValue": req.LimitValue})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.monetization.plan_quota.created', $1, $2, 'monetization.plan_quota', $3, $4, NOW())`,
 			identity.ActorID, createdID, "plan quota linked", afterJSON)
 		writeJSON(w, http.StatusCreated, map[string]any{"id": createdID, "planId": req.PlanID, "quotaPolicyId": req.QuotaPolicyID})
@@ -466,7 +466,7 @@ func adminMonetizationQuotaOverridesCreateHandler(db *pgxpool.Pool, logger *slog
 			return
 		}
 		afterJSON, _ := json.Marshal(map[string]any{"userId": req.UserID, "quotaKey": req.QuotaKey, "limitValue": req.LimitValue})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.monetization.quota_override.created', $1, $2, 'monetization.quota_user_override', $3, $4, NOW())`,
 			identity.ActorID, createdID, req.Reason, afterJSON)
 		writeJSON(w, http.StatusCreated, map[string]any{"id": createdID, "userId": req.UserID, "quotaKey": req.QuotaKey})
@@ -491,7 +491,7 @@ func adminMonetizationQuotaOverridesDeleteHandler(db *pgxpool.Pool, logger *slog
 		db.QueryRow(ctx, "SELECT reason FROM monetization.quota_user_override WHERE id = $1", id).Scan(&reason)
 		db.Exec(ctx, "DELETE FROM monetization.quota_user_override WHERE id = $1", id)
 		beforeJSON, _ := json.Marshal(map[string]any{"id": id, "reason": reason})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ('admin.monetization.quota_override.deleted', $1, $2, 'monetization.quota_user_override', $3, NULL, $4, NOW())`,
 			identity.ActorID, id, "quota override deleted", beforeJSON)
 		writeJSON(w, http.StatusOK, map[string]any{"deleted": true, "id": id})

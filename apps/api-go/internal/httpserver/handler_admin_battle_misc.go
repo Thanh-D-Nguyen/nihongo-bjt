@@ -391,7 +391,7 @@ FROM learning.battle_session WHERE id = $1`, id).Scan(
 		aRows, err := db.Query(ctx, `
 SELECT a.id, a.action, a.actor_id, act.display_name, act.email,
        a.reason, a.after, a.before, a.created_at
-FROM admin.admin_audit_log a
+FROM ops.admin_audit_log a
 LEFT JOIN admin.admin_actor act ON act.id = a.actor_id
 WHERE a.target_id = $1 AND a.target_type = 'learning.battle_session'
 ORDER BY a.created_at DESC LIMIT 20`, id)
@@ -451,7 +451,7 @@ WHERE id = $1`, id)
 
 		afterJSON, _ := json.Marshal(map[string]any{"status": "abandoned", "abandonedReason": "admin_abort"})
 		beforeJSON, _ := json.Marshal(map[string]any{"status": beforeStatus, "abandonedReason": beforeAbandonedReason})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 VALUES ('admin.battle.match.aborted', $1, $2, 'learning.battle_session', $3, $4, $5, NOW())`,
 			identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
 
@@ -521,7 +521,7 @@ VALUES ($1, $2, $3, $4, $5, $6, 'in_progress', NOW(), NOW()) RETURNING id`,
 		}
 
 		afterJSON, _ := json.Marshal(map[string]any{"newId": createdID, "roomCode": newRoomCode, "sourceId": id})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 VALUES ('admin.battle.match.rerun', $1, $2, 'learning.battle_session', $3, $4, NOW())`,
 			identity.ActorID, id, req.Reason, afterJSON)
 

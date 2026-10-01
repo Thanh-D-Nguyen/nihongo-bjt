@@ -225,7 +225,7 @@ func adminGrowthCampaignsDetailHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 		aRows, err := db.Query(ctx, `
 			SELECT a.id, a.action, a.actor_id, act.display_name, act.email,
 			       a.reason, a.after, a.before, a.created_at
-			FROM admin.admin_audit_log a
+			FROM ops.admin_audit_log a
 			LEFT JOIN admin.admin_actor act ON act.id = a.actor_id
 			WHERE a.target_id = $1 AND a.target_type = 'growth.campaign'
 			ORDER BY a.created_at DESC LIMIT 20`, id)
@@ -356,7 +356,7 @@ func adminGrowthCampaignsCreateHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 			"scheduleStart": req.ScheduleStart, "scheduleEnd": req.ScheduleEnd,
 			"status": "draft",
 		})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.growth.campaign.created', $1, $2, 'growth.campaign', $3, $4, NOW())`,
 			identity.ActorID, createdID, req.Reason, afterJSON)
 
@@ -476,7 +476,7 @@ func adminGrowthCampaignsPatchHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 		// Write audit
 		afterJSON, _ := json.Marshal(map[string]any{"updated": true, "fields": setClauses})
 		beforeJSON, _ := json.Marshal(map[string]any{"id": id})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ('admin.growth.campaign.updated', $1, $2, 'growth.campaign', $3, $4, $5, NOW())`,
 			identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
 
@@ -547,7 +547,7 @@ func adminGrowthCampaignsTransitionHandler(db *pgxpool.Pool, logger *slog.Logger
 		afterJSON, _ := json.Marshal(map[string]any{"status": nextStatus, "noop": noop})
 		beforeJSON, _ := json.Marshal(map[string]any{"status": currentStatus})
 		auditAction := "admin.growth.campaign." + nextStatus
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ($1, $2, $3, 'growth.campaign', $4, $5, $6, NOW())`,
 			auditAction, identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
 
@@ -628,7 +628,7 @@ func adminGrowthCampaignsDuplicateHandler(db *pgxpool.Pool, logger *slog.Logger)
 		}
 
 		afterJSON, _ := json.Marshal(map[string]any{"name": newName, "newId": newID, "sourceId": id})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.growth.campaign.duplicated', $1, $2, 'growth.campaign', $3, $4, NOW())`,
 			identity.ActorID, newID, req.Reason, afterJSON)
 

@@ -17,7 +17,7 @@ import (
 // Contracts derived from NestJS media-admin.controller.ts,
 // companion-admin.controller.ts, privacy-admin.controller.ts.
 // DB tables: media.asset, content.companion_tip, privacy.request,
-// admin.admin_audit_log.
+// ops.admin_audit_log.
 
 // ── Media Admin ─────────────────────────────────────────────────────────────
 
@@ -166,7 +166,7 @@ func adminMediaDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handler
 
 		a.Audit = []json.RawMessage{}
 		auditRows, _ := db.Query(r.Context(), `SELECT id, action, actor_id, reason, before, after, created_at
-			FROM admin.admin_audit_log WHERE target_id=$1 AND target_type='media.asset'
+			FROM ops.admin_audit_log WHERE target_id=$1 AND target_type='media.asset'
 			ORDER BY created_at DESC LIMIT 30`, id)
 		if auditRows != nil {
 			for auditRows.Next() {
@@ -276,7 +276,7 @@ func adminMediaMetadataPatchHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 		}
 
 		afterJSON, _ := json.Marshal(req)
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, before, after, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, after, created_at)
 			VALUES ('media.metadata.updated',$1,$2,'media.asset',$3,$4,$5,NOW())`,
 			identity.ActorID, id, req.Reason, beforeJSON, afterJSON)
 
@@ -327,7 +327,7 @@ func adminMediaSoftDeleteHandler(db *pgxpool.Pool, logger *slog.Logger) http.Han
 
 		beforeJSON, _ := json.Marshal(map[string]any{"status": beforeStatus})
 		afterJSON, _ := json.Marshal(map[string]any{"status": "deleted"})
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, before, after, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, after, created_at)
 			VALUES ('media.soft_deleted',$1,$2,'media.asset',$3,$4,$5,NOW())`,
 			identity.ActorID, id, req.Reason, beforeJSON, afterJSON)
 
@@ -476,7 +476,7 @@ func adminCompanionTipCreateHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 		}
 
 		afterJSON, _ := json.Marshal(map[string]any{"id": id, "category": req.Category})
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('companion.tip.created',$1,$2,'companion_tip','create',$3,NOW())`,
 			identity.ActorID, id, afterJSON)
 
@@ -547,7 +547,7 @@ func adminCompanionTipPatchHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 		}
 
 		afterJSON, _ := json.Marshal(req)
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('companion.tip.updated',$1,$2,'companion_tip','patch',$3,NOW())`,
 			identity.ActorID, id, afterJSON)
 
@@ -580,7 +580,7 @@ func adminCompanionTipDeleteHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 		db.Exec(r.Context(), "DELETE FROM content.companion_tip WHERE id=$1", id)
 
 		beforeJSON, _ := json.Marshal(map[string]any{"id": id})
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, before, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, created_at)
 			VALUES ('companion.tip.deleted',$1,$2,'companion_tip','delete',$3,NOW())`,
 			identity.ActorID, id, beforeJSON)
 
@@ -724,7 +724,7 @@ func adminPrivacyRequestDetailHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 
 		pr.Audit = []json.RawMessage{}
 		auditRows, _ := db.Query(r.Context(), `SELECT id, action, actor_id, reason, before, after, created_at
-			FROM admin.admin_audit_log WHERE target_id=$1 AND target_type='privacy.request'
+			FROM ops.admin_audit_log WHERE target_id=$1 AND target_type='privacy.request'
 			ORDER BY created_at DESC LIMIT 30`, id)
 		if auditRows != nil {
 			for auditRows.Next() {
@@ -795,7 +795,7 @@ func adminPrivacyRequestAcknowledgeHandler(db *pgxpool.Pool, logger *slog.Logger
 
 		beforeJSON, _ := json.Marshal(map[string]any{"status": beforeStatus})
 		afterJSON, _ := json.Marshal(map[string]any{"status": "processing"})
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, before, after, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, after, created_at)
 			VALUES ('privacy.request.acknowledged',$1,$2,'privacy.request',$3,$4,$5,NOW())`,
 			identity.ActorID, id, req.Reason, beforeJSON, afterJSON)
 
@@ -846,7 +846,7 @@ func adminPrivacyRequestFulfillHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 		}
 
 		afterJSON, _ := json.Marshal(map[string]any{"status": "completed", "reason": req.Reason})
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('privacy.request.fulfilled',$1,$2,'privacy.request',$3,$4,NOW())`,
 			identity.ActorID, id, req.Reason, afterJSON)
 
@@ -891,7 +891,7 @@ func adminPrivacyRequestRejectHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 		}
 
 		afterJSON, _ := json.Marshal(map[string]any{"status": "failed", "reason": req.Reason})
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('privacy.request.rejected',$1,$2,'privacy.request',$3,$4,NOW())`,
 			identity.ActorID, id, req.Reason, afterJSON)
 
@@ -952,7 +952,7 @@ func adminPrivacyErasureConfirmHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 		}
 
 		afterJSON, _ := json.Marshal(map[string]any{"status": "completed", "kind": "delete", "irreversible": true})
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('privacy.erasure.confirmed',$1,$2,'privacy.request',$3,$4,NOW())`,
 			identity.ActorID, id, req.Reason, afterJSON)
 

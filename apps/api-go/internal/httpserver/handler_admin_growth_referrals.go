@@ -240,7 +240,7 @@ func adminGrowthReferralsDetailHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 		aRows, err := db.Query(ctx, `
 			SELECT a.id, a.action, a.actor_id, act.display_name, act.email,
 				a.reason, a.after, a.before, a.created_at
-			FROM admin.admin_audit_log a
+			FROM ops.admin_audit_log a
 			LEFT JOIN admin.admin_actor act ON act.id = a.actor_id
 			WHERE a.target_id = $1 AND a.target_type = 'growth.referral_code'
 			ORDER BY a.created_at DESC LIMIT 20`, id)
@@ -302,7 +302,7 @@ func adminGrowthReferralsRevokeHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 
 		// Write audit
 		beforeJSON, _ := json.Marshal(map[string]any{"code": beforeCode, "userId": beforeUserID})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ('admin.growth.referral_code.revoked', $1, $2, 'growth.referral_code', $3, NULL, $4, NOW())`,
 			identity.ActorID, id, req.Reason, beforeJSON)
 

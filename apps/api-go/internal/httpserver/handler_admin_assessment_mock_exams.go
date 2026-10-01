@@ -273,7 +273,7 @@ func adminAssessmentMockExamsDetailHandler(db *pgxpool.Pool, logger *slog.Logger
 		aRows, err := db.Query(ctx, `
 			SELECT a.id, a.action, a.actor_id, act.display_name, act.email,
 			       a.reason, a.after, a.before, a.created_at
-			FROM admin.admin_audit_log a
+			FROM ops.admin_audit_log a
 			LEFT JOIN admin.admin_actor act ON act.id = a.actor_id
 			WHERE a.target_id = $1 AND a.target_type = 'assessment.mock_exam'
 			ORDER BY a.created_at DESC LIMIT 20`, id)
@@ -358,7 +358,7 @@ func adminAssessmentMockExamsCreateHandler(db *pgxpool.Pool, logger *slog.Logger
 			"timeLimitSeconds": req.TimeLimitSeconds, "blueprintMeta": req.BlueprintMeta,
 			"status": "draft",
 		})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.assessment.mock_exam.created', $1, $2, 'assessment.mock_exam', $3, $4, NOW())`,
 			identity.ActorID, createdID, req.Reason, afterJSON)
 
@@ -493,7 +493,7 @@ func adminAssessmentMockExamsPatchHandler(db *pgxpool.Pool, logger *slog.Logger)
 		// Write audit
 		beforeJSON, _ := json.Marshal(before)
 		afterJSON, _ := json.Marshal(map[string]any{"updated": true, "fields": setClauses})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ('admin.assessment.mock_exam.updated', $1, $2, 'assessment.mock_exam', $3, $4, $5, NOW())`,
 			identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
 
@@ -539,7 +539,7 @@ func adminAssessmentMockExamsPublishHandler(db *pgxpool.Pool, logger *slog.Logge
 		// Audit
 		afterJSON, _ := json.Marshal(map[string]any{"status": "published", "noop": currentStatus == "published"})
 		beforeJSON, _ := json.Marshal(map[string]any{"status": currentStatus})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ('admin.assessment.mock_exam.published', $1, $2, 'assessment.mock_exam', $3, $4, $5, NOW())`,
 			identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
 
@@ -579,7 +579,7 @@ func adminAssessmentMockExamsArchiveHandler(db *pgxpool.Pool, logger *slog.Logge
 		}
 		afterJSON, _ := json.Marshal(map[string]any{"status": "archived"})
 		beforeJSON, _ := json.Marshal(map[string]any{"status": currentStatus})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ('admin.assessment.mock_exam.archived', $1, $2, 'assessment.mock_exam', $3, $4, $5, NOW())`,
 			identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
 
@@ -645,7 +645,7 @@ func adminAssessmentMockExamsDuplicateHandler(db *pgxpool.Pool, logger *slog.Log
 		}
 
 		afterJSON, _ := json.Marshal(map[string]any{"newId": newID, "slug": newSlug, "sourceId": id})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.assessment.mock_exam.duplicated', $1, $2, 'assessment.mock_exam', $3, $4, NOW())`,
 			identity.ActorID, newID, req.Reason, afterJSON)
 
@@ -712,7 +712,7 @@ func adminAssessmentMockExamsDeleteHandler(db *pgxpool.Pool, logger *slog.Logger
 		db.Exec(ctx, "DELETE FROM bjt.mock_test WHERE id = $1", id)
 
 		beforeJSON, _ := json.Marshal(before)
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, created_at)
 			VALUES ('admin.assessment.mock_exam.deleted', $1, $2, 'assessment.mock_exam', $3, $4, NOW())`,
 			identity.ActorID, id, req.Reason, beforeJSON)
 

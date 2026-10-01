@@ -310,7 +310,7 @@ WHERE question_id = $1 ORDER BY option_key ASC`, id)
 		aRows, err := db.Query(ctx, `
 SELECT a.id, a.action, a.actor_id, act.display_name, act.email,
        a.reason, a.after, a.before, a.created_at
-FROM admin.admin_audit_log a
+FROM ops.admin_audit_log a
 LEFT JOIN admin.admin_actor act ON act.id = a.actor_id
 WHERE a.target_id = $1 AND a.target_type = 'assessment.question'
 ORDER BY a.created_at DESC LIMIT 30`, id)
@@ -409,7 +409,7 @@ VALUES ($1, $2, $3, $4)`, createdID, o.OptionKey, o.Text, o.IsCorrect)
 			"explanationVi": req.ExplanationVi, "skillTag": req.SkillTag,
 			"difficulty": req.Difficulty, "tags": req.Tags, "status": "draft",
 		})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 VALUES ('admin.assessment.question.created', $1, $2, 'assessment.question', $3, $4, NOW())`,
 			identity.ActorID, createdID, req.Reason, afterJSON)
 
@@ -593,7 +593,7 @@ VALUES ($1, $2, $3, $4)`, id, o.OptionKey, o.Text, o.IsCorrect)
 		// Write audit
 		beforeJSON, _ := json.Marshal(before)
 		afterJSON, _ := json.Marshal(map[string]any{"updated": true})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 VALUES ('admin.assessment.question.updated', $1, $2, 'assessment.question', $3, $4, $5, NOW())`,
 			identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
 
@@ -687,7 +687,7 @@ func adminAssessmentQuestionBankBulkHandler(db *pgxpool.Pool, logger *slog.Logge
 
 			afterJSON, _ := json.Marshal(after)
 			beforeJSON, _ := json.Marshal(map[string]any{"status": currentStatus})
-			db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+			db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 VALUES ($1, $2, $3, 'assessment.question', $4, $5, $6, NOW())`,
 				action, identity.ActorID, qid, req.Reason, afterJSON, beforeJSON)
 			processed++
@@ -736,7 +736,7 @@ func adminAssessmentQuestionBankSuggestEditHandler(db *pgxpool.Pool, logger *slo
 		afterJSON, _ := json.Marshal(map[string]any{
 			"field": req.Field, "proposedValue": req.ProposedValue, "rationale": req.Rationale,
 		})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 VALUES ('admin.assessment.question.suggested_edit', $1, $2, 'assessment.question', $3, $4, NOW())`,
 			identity.ActorID, id, req.Reason, afterJSON)
 
@@ -810,7 +810,7 @@ FROM bjt.question WHERE id = $1`, id).Scan(&before.SectionID, &before.Prompt, &b
 		db.Exec(ctx, "DELETE FROM bjt.question WHERE id = $1", id)
 
 		beforeJSON, _ := json.Marshal(before)
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, created_at)
 VALUES ('admin.assessment.question.deleted', $1, $2, 'assessment.question', $3, $4, NOW())`,
 			identity.ActorID, id, req.Reason, beforeJSON)
 

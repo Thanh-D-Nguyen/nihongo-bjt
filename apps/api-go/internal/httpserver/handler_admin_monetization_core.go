@@ -279,7 +279,7 @@ func adminMonetizationAuditHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 			       NULL::text as user_id, NULL::text as actor_kind,
 			       a.target_id, a.target_type, NULL::jsonb as payload,
 			       a.created_at
-			FROM admin.admin_audit_log a
+			FROM ops.admin_audit_log a
 			%s AND (a.target_type ILIKE '%%monetization%%' OR a.action ILIKE '%%monetization%%' OR a.action ILIKE '%%billing%%')
 			ORDER BY a.created_at DESC LIMIT $%d`,
 			strings.Replace(whereClause, "WHERE", "WHERE", 1), argIdx)
@@ -289,7 +289,7 @@ func adminMonetizationAuditHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 				       NULL::text as user_id, NULL::text as actor_kind,
 				       a.target_id, a.target_type, NULL::jsonb as payload,
 				       a.created_at
-				FROM admin.admin_audit_log a
+				FROM ops.admin_audit_log a
 				WHERE (a.target_type ILIKE '%%monetization%%' OR a.action ILIKE '%%monetization%%' OR a.action ILIKE '%%billing%%')
 				ORDER BY a.created_at DESC LIMIT $1`)
 			args = []any{take}
@@ -517,7 +517,7 @@ func adminMonetizationPlansCreateHandler(db *pgxpool.Pool, logger *slog.Logger) 
 		}
 
 		afterJSON, _ := json.Marshal(map[string]any{"slug": req.Slug, "nameKey": req.NameKey, "status": req.Status})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.monetization.plan.created', $1, $2, 'monetization.plan', $3, $4, NOW())`,
 			identity.ActorID, createdID, "plan created via admin console", afterJSON)
 
@@ -602,7 +602,7 @@ func adminMonetizationPlansPatchHandler(db *pgxpool.Pool, logger *slog.Logger) h
 
 		afterJSON, _ := json.Marshal(map[string]any{"updated": true, "fields": setClauses})
 		beforeJSON, _ := json.Marshal(map[string]any{"id": id})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ('admin.monetization.plan.updated', $1, $2, 'monetization.plan', $3, $4, $5, NOW())`,
 			identity.ActorID, id, "plan updated via admin console", afterJSON, beforeJSON)
 

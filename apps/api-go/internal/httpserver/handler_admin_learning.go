@@ -17,7 +17,7 @@ import (
 // Contracts derived from NestJS learning-paths-admin.controller.ts,
 // learning-competencies-admin.controller.ts, learning-review-admin.controller.ts.
 // DB tables: learning.learning_path, learning.competency, learning.user_flashcard,
-// learning.review_event, admin.admin_audit_log.
+// learning.review_event, ops.admin_audit_log.
 
 // ── Learning Paths ──────────────────────────────────────────────────────────
 
@@ -171,7 +171,7 @@ func adminLearningPathDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 		pd.UpdatedAt = ua.UTC().Format(time.RFC3339)
 
 		auditRows, _ := db.Query(r.Context(), `SELECT id, action, actor_id, reason, before, after, created_at
-			FROM admin.admin_audit_log WHERE target_id = $1 AND target_type = 'learning.learning_path'
+			FROM ops.admin_audit_log WHERE target_id = $1 AND target_type = 'learning.learning_path'
 			ORDER BY created_at DESC LIMIT 25`, id)
 		auditItems := []map[string]any{}
 		if auditRows != nil {
@@ -246,7 +246,7 @@ func adminLearningPathCreateHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 			return
 		}
 		afterJSON, _ := json.Marshal(map[string]any{"id": createdID, "slug": req.Slug})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.learning.path.created', $1, $2, 'learning.learning_path', $3, $4, NOW())`,
 			identity.ActorID, createdID, req.Reason, afterJSON)
 		writeJSON(w, http.StatusCreated, map[string]any{"id": createdID, "slug": req.Slug, "status": "draft"})
@@ -301,7 +301,7 @@ func adminLearningPathPatchHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 		}
 		reason, _ := req["reason"].(string)
 		afterJSON, _ := json.Marshal(req)
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.learning.path.updated', $1, $2, 'learning.learning_path', $3, $4, NOW())`,
 			identity.ActorID, id, reason, afterJSON)
 		writeJSON(w, http.StatusOK, map[string]any{"id": id, "updated": true})
@@ -339,7 +339,7 @@ func adminLearningPathPublishHandler(db *pgxpool.Pool, logger *slog.Logger) http
 			db.Exec(ctx, "UPDATE learning.learning_path SET status = 'published', updated_at = NOW() WHERE id = $1", id)
 		}
 		afterJSON, _ := json.Marshal(map[string]any{"status": "published"})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.learning.path.published', $1, $2, 'learning.learning_path', $3, $4, NOW())`,
 			identity.ActorID, id, body.Reason, afterJSON)
 		writeJSON(w, http.StatusOK, map[string]any{"id": id, "status": "published"})
@@ -366,7 +366,7 @@ func adminLearningPathArchiveHandler(db *pgxpool.Pool, logger *slog.Logger) http
 		ctx := r.Context()
 		db.Exec(ctx, "UPDATE learning.learning_path SET status = 'archived', updated_at = NOW() WHERE id = $1", id)
 		afterJSON, _ := json.Marshal(map[string]any{"status": "archived"})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.learning.path.archived', $1, $2, 'learning.learning_path', $3, $4, NOW())`,
 			identity.ActorID, id, body.Reason, afterJSON)
 		writeJSON(w, http.StatusOK, map[string]any{"id": id, "status": "archived"})
@@ -420,7 +420,7 @@ func adminLearningPathDuplicateHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 			return
 		}
 		afterJSON, _ := json.Marshal(map[string]any{"newId": newID, "slug": newSlug, "sourceId": id})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.learning.path.duplicated', $1, $2, 'learning.learning_path', $3, $4, NOW())`,
 			identity.ActorID, newID, body.Reason, afterJSON)
 		writeJSON(w, http.StatusCreated, map[string]any{"id": newID, "slug": newSlug, "status": "draft"})
@@ -456,7 +456,7 @@ func adminLearningPathDeleteHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 		}
 		db.Exec(ctx, "DELETE FROM learning.learning_path WHERE id = $1", id)
 		beforeJSON, _ := json.Marshal(map[string]any{"id": id, "status": currentStatus})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, created_at)
 			VALUES ('admin.learning.path.deleted', $1, $2, 'learning.learning_path', $3, $4, NOW())`,
 			identity.ActorID, id, body.Reason, beforeJSON)
 		writeJSON(w, http.StatusOK, map[string]any{"deleted": true, "id": id})
@@ -602,7 +602,7 @@ func adminCompetencyDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 		d.UpdatedAt = ua.UTC().Format(time.RFC3339)
 
 		auditRows, _ := db.Query(r.Context(), `SELECT id, action, actor_id, reason, before, after, created_at
-			FROM admin.admin_audit_log WHERE target_id = $1 AND target_type = 'learning.competency'
+			FROM ops.admin_audit_log WHERE target_id = $1 AND target_type = 'learning.competency'
 			ORDER BY created_at DESC LIMIT 25`, id)
 		auditItems := []map[string]any{}
 		if auditRows != nil {
@@ -674,7 +674,7 @@ func adminCompetencyCreateHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 			return
 		}
 		afterJSON, _ := json.Marshal(map[string]any{"id": createdID, "code": req.Code})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.learning.competency.created', $1, $2, 'learning.competency', $3, $4, NOW())`,
 			identity.ActorID, createdID, req.Reason, afterJSON)
 		writeJSON(w, http.StatusCreated, map[string]any{"id": createdID, "code": req.Code, "status": "draft"})
@@ -728,7 +728,7 @@ func adminCompetencyPatchHandler(db *pgxpool.Pool, logger *slog.Logger) http.Han
 		}
 		reason, _ := req["reason"].(string)
 		afterJSON, _ := json.Marshal(req)
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.learning.competency.updated', $1, $2, 'learning.competency', $3, $4, NOW())`,
 			identity.ActorID, id, reason, afterJSON)
 		writeJSON(w, http.StatusOK, map[string]any{"id": id, "updated": true})
@@ -766,7 +766,7 @@ func adminCompetencyPublishHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 			db.Exec(ctx, "UPDATE learning.competency SET status = 'published', updated_at = NOW() WHERE id = $1", id)
 		}
 		afterJSON, _ := json.Marshal(map[string]any{"status": "published"})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.learning.competency.published', $1, $2, 'learning.competency', $3, $4, NOW())`,
 			identity.ActorID, id, body.Reason, afterJSON)
 		writeJSON(w, http.StatusOK, map[string]any{"id": id, "status": "published"})
@@ -793,7 +793,7 @@ func adminCompetencyArchiveHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 		ctx := r.Context()
 		db.Exec(ctx, "UPDATE learning.competency SET status = 'archived', updated_at = NOW() WHERE id = $1", id)
 		afterJSON, _ := json.Marshal(map[string]any{"status": "archived"})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.learning.competency.archived', $1, $2, 'learning.competency', $3, $4, NOW())`,
 			identity.ActorID, id, body.Reason, afterJSON)
 		writeJSON(w, http.StatusOK, map[string]any{"id": id, "status": "archived"})
@@ -829,7 +829,7 @@ func adminCompetencyDeleteHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 		}
 		db.Exec(ctx, "DELETE FROM learning.competency WHERE id = $1", id)
 		beforeJSON, _ := json.Marshal(map[string]any{"id": id, "status": currentStatus})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, created_at)
 			VALUES ('admin.learning.competency.deleted', $1, $2, 'learning.competency', $3, $4, NOW())`,
 			identity.ActorID, id, body.Reason, beforeJSON)
 		writeJSON(w, http.StatusOK, map[string]any{"deleted": true, "id": id})
@@ -1091,7 +1091,7 @@ func adminLearningReviewCardDetailHandler(db *pgxpool.Pool, logger *slog.Logger)
 
 		// Audit
 		auditRows, _ := db.Query(r.Context(), `SELECT id, action, actor_id, reason, before, after, created_at
-			FROM admin.admin_audit_log WHERE target_id = $1 AND target_type = 'learning.user_flashcard'
+			FROM ops.admin_audit_log WHERE target_id = $1 AND target_type = 'learning.user_flashcard'
 			ORDER BY created_at DESC LIMIT 25`, id)
 		auditItems := []map[string]any{}
 		if auditRows != nil {
@@ -1157,7 +1157,7 @@ func adminLearningReviewForceReintroduceHandler(db *pgxpool.Pool, logger *slog.L
 		}
 
 		afterJSON, _ := json.Marshal(map[string]any{"state": "relearning", "intervalDays": 0, "dueAt": "now"})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.learning.review.force_reintroduce', $1, $2, 'learning.user_flashcard', $3, $4, NOW())`,
 			identity.ActorID, id, body.Reason, afterJSON)
 		writeJSON(w, http.StatusOK, map[string]any{"id": id, "reintroduced": true})

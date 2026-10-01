@@ -162,7 +162,7 @@ func adminOpsDeadLetterGetHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 		auditRows, aErr := db.Query(r.Context(), `
 			SELECT a.id, a.action, a.actor_id, a.reason, a.after, a.before, a.created_at,
 			       COALESCE(act.display_name, '') as actor_name, COALESCE(act.email, '') as actor_email
-			FROM admin.admin_audit_log a
+			FROM ops.admin_audit_log a
 			LEFT JOIN admin.admin_actor act ON act.id = a.actor_id
 			WHERE a.target_id = $1 AND a.target_type = 'ops.dead_letter_entry'
 			ORDER BY a.created_at DESC LIMIT 100`, id)
@@ -254,7 +254,7 @@ func adminOpsDeadLetterRetryHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 		// Record audit
 		afterJSON, _ := json.Marshal(map[string]any{"status": "open"})
 		_, err = db.Exec(r.Context(), `
-			INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+			INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('ops.dead_letter.retry', $1, $2, 'ops.dead_letter_entry', $3, $4, NOW())`,
 			identity.ActorID, id, req.Reason, afterJSON)
 		if err != nil {
@@ -321,7 +321,7 @@ func adminOpsDeadLetterResolveHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 		action := "ops.dead_letter." + req.Status
 		afterJSON, _ := json.Marshal(map[string]any{"status": req.Status})
 		_, err = db.Exec(r.Context(), `
-			INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+			INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ($1, $2, $3, 'ops.dead_letter_entry', $4, $5, NOW())`,
 			action, identity.ActorID, id, req.Reason, afterJSON)
 		if err != nil {
@@ -387,7 +387,7 @@ func adminOpsDeadLetterBulkHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 			for _, id := range req.IDs {
 				afterJSON, _ := json.Marshal(map[string]any{"bulk": true})
 				db.Exec(ctx, `
-					INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+					INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 					VALUES ('ops.dead_letter.retry', $1, $2, 'ops.dead_letter_entry', $3, $4, NOW())`,
 					identity.ActorID, id, req.Reason, afterJSON)
 			}
@@ -413,7 +413,7 @@ func adminOpsDeadLetterBulkHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 			for _, id := range req.IDs {
 				afterJSON, _ := json.Marshal(map[string]any{"bulk": true, "status": "discarded"})
 				db.Exec(ctx, `
-					INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+					INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 					VALUES ('ops.dead_letter.discarded', $1, $2, 'ops.dead_letter_entry', $3, $4, NOW())`,
 					identity.ActorID, id, req.Reason, afterJSON)
 			}

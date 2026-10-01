@@ -168,7 +168,7 @@ func adminOpsFeatureFlagsUpdateHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 
 		// Record admin_audit_log
 		db.Exec(ctx, `
-			INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+			INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ('ops.feature_flag.update', $1, $2, 'ops.feature_flag', $3, $4, $5, NOW())`,
 			identity.ActorID, key, req.Reason, afterJSON, beforeJSON)
 

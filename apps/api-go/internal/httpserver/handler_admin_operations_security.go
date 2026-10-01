@@ -108,11 +108,11 @@ func adminOpsSecurityOverviewHandler(db *pgxpool.Pool, logger *slog.Logger) http
 
 		// Count total security events
 		var total int
-		db.QueryRow(ctx, "SELECT COUNT(*) FROM admin.admin_audit_log WHERE "+baseWhere).Scan(&total)
+		db.QueryRow(ctx, "SELECT COUNT(*) FROM ops.admin_audit_log WHERE "+baseWhere).Scan(&total)
 
 		// Count by inferred severity
 		rows, err := db.Query(ctx, `
-			SELECT action, after FROM admin.admin_audit_log WHERE `+baseWhere)
+			SELECT action, after FROM ops.admin_audit_log WHERE `+baseWhere)
 		if err != nil {
 			logger.Error("security overview query", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
@@ -191,7 +191,7 @@ func adminOpsSecurityEventsListHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 		whereSQL := strings.Join(whereParts, " ")
 
 		// Count
-		countQuery := "SELECT COUNT(*) FROM admin.admin_audit_log a WHERE " + whereSQL
+		countQuery := "SELECT COUNT(*) FROM ops.admin_audit_log a WHERE " + whereSQL
 		var rawTotal int
 		if err := db.QueryRow(ctx, countQuery, args...).Scan(&rawTotal); err != nil {
 			logger.Error("count security events", "error", err)
@@ -201,7 +201,7 @@ func adminOpsSecurityEventsListHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 		dataQuery := `SELECT a.id, a.action, a.actor_id, a.target_id, a.target_type, a.reason,
 			a.after, a.before, a.created_at,
 			COALESCE(act.display_name, '') as actor_name, COALESCE(act.email, '') as actor_email
-			FROM admin.admin_audit_log a
+			FROM ops.admin_audit_log a
 			LEFT JOIN admin.admin_actor act ON act.id = a.actor_id
 			WHERE ` + whereSQL + ` ORDER BY a.created_at DESC LIMIT $` + itoa(argIdx) + ` OFFSET $` + itoa(argIdx+1)
 		args = append(args, limit, offset)
@@ -309,7 +309,7 @@ func adminOpsSecurityEventGetHandler(db *pgxpool.Pool, logger *slog.Logger) http
 			SELECT a.id, a.action, a.actor_id, a.target_id, a.target_type, a.reason,
 				a.after, a.before, a.created_at,
 				COALESCE(act.display_name, ''), COALESCE(act.email, '')
-			FROM admin.admin_audit_log a
+			FROM ops.admin_audit_log a
 			LEFT JOIN admin.admin_actor act ON act.id = a.actor_id
 			WHERE a.id = $1`, id).Scan(
 			&e.ID, &e.Action, &e.ActorID, &e.TargetID, &e.TargetType,
@@ -335,7 +335,7 @@ func adminOpsSecurityEventGetHandler(db *pgxpool.Pool, logger *slog.Logger) http
 		auditRows, aErr := db.Query(r.Context(), `
 			SELECT a.id, a.action, a.actor_id, a.reason, a.after, a.created_at,
 				COALESCE(act.display_name, '') as actor_name, COALESCE(act.email, '') as actor_email
-			FROM admin.admin_audit_log a
+			FROM ops.admin_audit_log a
 			LEFT JOIN admin.admin_actor act ON act.id = a.actor_id
 			WHERE a.target_id = $1 AND a.target_type = 'ops.security_event'
 			ORDER BY a.created_at DESC LIMIT 50`, id)
@@ -422,7 +422,7 @@ func adminOpsSecurityEventResolveHandler(db *pgxpool.Pool, logger *slog.Logger) 
 
 		// Verify original event exists
 		var originalAction string
-		err := db.QueryRow(r.Context(), "SELECT action FROM admin.admin_audit_log WHERE id = $1", id).Scan(&originalAction)
+		err := db.QueryRow(r.Context(), "SELECT action FROM ops.admin_audit_log WHERE id = $1", id).Scan(&originalAction)
 		if err != nil {
 			writeJSONError(w, "security event not found", http.StatusNotFound)
 			return
@@ -433,7 +433,7 @@ func adminOpsSecurityEventResolveHandler(db *pgxpool.Pool, logger *slog.Logger) 
 		beforeJSON, _ := json.Marshal(map[string]any{"originalAction": originalAction})
 
 		_, err = db.Exec(r.Context(), `
-			INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+			INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ($1, $2, $3, 'ops.security_event', $4, $5, $6, NOW())`,
 			"ops.security."+req.Resolution, identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
 		if err != nil {

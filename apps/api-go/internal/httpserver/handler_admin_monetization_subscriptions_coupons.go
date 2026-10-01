@@ -193,7 +193,7 @@ func adminMonetizationSubscriptionsPatchHandler(db *pgxpool.Pool, logger *slog.L
 
 		afterJSON, _ := json.Marshal(map[string]any{"updated": true, "fields": setClauses})
 		beforeJSON, _ := json.Marshal(map[string]any{"id": id})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ('admin.monetization.subscription.updated', $1, $2, 'monetization.user_subscription', $3, $4, $5, NOW())`,
 			identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
 
@@ -353,7 +353,7 @@ func adminMonetizationCouponsCreateHandler(db *pgxpool.Pool, logger *slog.Logger
 			return
 		}
 		afterJSON, _ := json.Marshal(map[string]any{"code": req.Code, "discountType": req.DiscountType, "status": req.Status})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.monetization.coupon.created', $1, $2, 'monetization.promotion_coupon', $3, $4, NOW())`,
 			identity.ActorID, createdID, "coupon created via admin console", afterJSON)
 
@@ -449,7 +449,7 @@ func adminMonetizationCouponsPatchHandler(db *pgxpool.Pool, logger *slog.Logger)
 
 		afterJSON, _ := json.Marshal(map[string]any{"updated": true, "fields": setClauses})
 		beforeJSON, _ := json.Marshal(map[string]any{"id": id})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ('admin.monetization.coupon.updated', $1, $2, 'monetization.promotion_coupon', $3, $4, $5, NOW())`,
 			identity.ActorID, id, "coupon updated via admin console", afterJSON, beforeJSON)
 

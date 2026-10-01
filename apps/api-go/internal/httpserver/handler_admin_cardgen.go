@@ -13,7 +13,7 @@ import (
 
 // ── P1-A16: Admin Cardgen — Rules + Jobs (7 routes) ────────────────────────
 // Contracts derived from NestJS cardgen-admin.controller.ts, cardgen.repository.ts.
-// DB tables: content.flashcard_gen_rule, content.flashcard_gen_job, admin.admin_audit_log.
+// DB tables: content.flashcard_gen_rule, content.flashcard_gen_job, ops.admin_audit_log.
 
 // ── Rules ───────────────────────────────────────────────────────────────────
 
@@ -156,7 +156,7 @@ func adminCardgenRuleCreateHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 		}
 
 		afterJSON, _ := json.Marshal(map[string]any{"id": id, "name": req.Name})
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('cardgen.rule.created',$1,$2,'flashcard_gen_rule','create',$3,NOW())`,
 			identity.ActorID, id, afterJSON)
 
@@ -240,7 +240,7 @@ func adminCardgenRuleUpdateHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 		}
 
 		afterJSON, _ := json.Marshal(req)
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('cardgen.rule.updated',$1,$2,'flashcard_gen_rule','update',$3,NOW())`,
 			identity.ActorID, id, afterJSON)
 
@@ -266,7 +266,7 @@ func adminCardgenRuleDeleteHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 		db.Exec(r.Context(), "DELETE FROM content.flashcard_gen_rule WHERE id=$1", id)
 
 		beforeJSON, _ := json.Marshal(map[string]any{"id": id})
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, before, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, created_at)
 			VALUES ('cardgen.rule.deleted',$1,$2,'flashcard_gen_rule','delete',$3,NOW())`,
 			identity.ActorID, id, beforeJSON)
 

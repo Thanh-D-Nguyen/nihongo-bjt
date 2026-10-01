@@ -211,7 +211,7 @@ func adminAssessmentRemediationRulesDetailHandler(db *pgxpool.Pool, logger *slog
 		aRows, err := db.Query(ctx, `
 			SELECT a.id, a.action, a.actor_id, act.display_name, act.email,
 				a.reason, a.after, a.before, a.created_at
-			FROM admin.admin_audit_log a
+			FROM ops.admin_audit_log a
 			LEFT JOIN admin.admin_actor act ON act.id = a.actor_id
 			WHERE a.target_id = $1 AND a.target_type = 'assessment.remediation_rule'
 			ORDER BY a.created_at DESC LIMIT 30`, id)
@@ -314,7 +314,7 @@ func adminAssessmentRemediationRulesCreateHandler(db *pgxpool.Pool, logger *slog
 			"recommendedContentId": req.RecommendedContentID,
 			"active": true,
 		})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.assessment.remediation_rule.created', $1, $2, 'assessment.remediation_rule', $3, $4, NOW())`,
 			identity.ActorID, createdID, req.Reason, afterJSON)
 
@@ -451,7 +451,7 @@ func adminAssessmentRemediationRulesPatchHandler(db *pgxpool.Pool, logger *slog.
 		// Write audit
 		beforeJSON, _ := json.Marshal(before)
 		afterJSON, _ := json.Marshal(map[string]any{"updated": true, "fields": setClauses})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ('admin.assessment.remediation_rule.updated', $1, $2, 'assessment.remediation_rule', $3, $4, $5, NOW())`,
 			identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
 
@@ -499,7 +499,7 @@ func adminAssessmentRemediationRulesEnableHandler(db *pgxpool.Pool, logger *slog
 
 		afterJSON, _ := json.Marshal(map[string]any{"active": true, "noop": noop})
 		beforeJSON, _ := json.Marshal(map[string]any{"active": currentActive})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ($1, $2, $3, 'assessment.remediation_rule', $4, $5, $6, NOW())`,
 			action, identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
 
@@ -546,7 +546,7 @@ func adminAssessmentRemediationRulesDisableHandler(db *pgxpool.Pool, logger *slo
 
 		afterJSON, _ := json.Marshal(map[string]any{"active": false, "noop": noop})
 		beforeJSON, _ := json.Marshal(map[string]any{"active": currentActive})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ($1, $2, $3, 'assessment.remediation_rule', $4, $5, $6, NOW())`,
 			action, identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
 
@@ -612,7 +612,7 @@ func adminAssessmentRemediationRulesDeleteHandler(db *pgxpool.Pool, logger *slog
 		db.Exec(ctx, "DELETE FROM assessment.remediation_rule WHERE id = $1", id)
 
 		beforeJSON, _ := json.Marshal(before)
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, created_at)
 			VALUES ('admin.assessment.remediation_rule.deleted', $1, $2, 'assessment.remediation_rule', $3, $4, NOW())`,
 			identity.ActorID, id, req.Reason, beforeJSON)
 

@@ -405,7 +405,7 @@ func adminIamAdminAssignRoleHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 			return
 		}
 		afterJSON, _ := json.Marshal(map[string]any{"adminId": adminID, "roleCode": req.RoleCode})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.iam.role.assigned', $1, $2, 'authz.admin_role', $3, $4, NOW())`,
 			identity.ActorID, adminID, req.Reason, afterJSON)
 		writeJSON(w, http.StatusOK, map[string]any{"assigned": true, "adminId": adminID, "roleCode": req.RoleCode})
@@ -443,7 +443,7 @@ func adminIamAdminRevokeRoleHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 		ctx := r.Context()
 		db.Exec(ctx, "DELETE FROM authz.admin_role WHERE admin_actor_id = $1 AND role_code = $2", adminID, roleCode)
 		beforeJSON, _ := json.Marshal(map[string]any{"adminId": adminID, "roleCode": roleCode})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, created_at)
 			VALUES ('admin.iam.role.revoked', $1, $2, 'authz.admin_role', $3, $4, NOW())`,
 			identity.ActorID, adminID, reason, beforeJSON)
 		writeJSON(w, http.StatusOK, map[string]any{"revoked": true, "adminId": adminID, "roleCode": roleCode})
@@ -498,7 +498,7 @@ func adminIamAdminPatchHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handl
 			return
 		}
 		afterJSON, _ := json.Marshal(map[string]any{"updated": true})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.iam.admin.updated', $1, $2, 'admin.admin_actor', $3, $4, NOW())`,
 			identity.ActorID, id, "admin updated", afterJSON)
 		writeJSON(w, http.StatusOK, map[string]any{"id": id, "updated": true})
@@ -688,7 +688,7 @@ func adminLexemeExampleDeleteHandler(db *pgxpool.Pool, logger *slog.Logger) http
 		ctx := r.Context()
 		db.Exec(ctx, "DELETE FROM content.lexeme_example WHERE id = $1 AND lexeme_id = $2", linkID, lexemeID)
 		beforeJSON, _ := json.Marshal(map[string]any{"id": linkID})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, created_at)
 			VALUES ('admin.content.example.deleted', $1, $2, 'content.lexeme_example', $3, $4, NOW())`,
 			identity.ActorID, linkID, req.Reason, beforeJSON)
 		writeJSON(w, http.StatusOK, map[string]any{"deleted": true, "id": linkID})
@@ -834,7 +834,7 @@ func adminContentStatusPatchHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 			return
 		}
 		afterJSON, _ := json.Marshal(map[string]any{"status": req.Status})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.content.status.updated', $1, $2, $3, $4, $5, NOW())`,
 			identity.ActorID, cID, cType, req.Reason, afterJSON)
 		writeJSON(w, http.StatusOK, map[string]any{"id": cID, "status": req.Status})
@@ -1005,7 +1005,7 @@ func adminUserAuditHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFu
 			limit = 50
 		}
 		rows, err := db.Query(r.Context(),
-			"SELECT id, action, target_id, target_type, reason, created_at FROM admin.admin_audit_log WHERE target_id = $1 ORDER BY created_at DESC LIMIT $2",
+			"SELECT id, action, target_id, target_type, reason, created_at FROM ops.admin_audit_log WHERE target_id = $1 ORDER BY created_at DESC LIMIT $2",
 			id, limit)
 		if err != nil {
 			logger.Error("list user audit", "error", err)
@@ -1066,7 +1066,7 @@ func adminUserStatusPatchHandler(db *pgxpool.Pool, logger *slog.Logger) http.Han
 			return
 		}
 		afterJSON, _ := json.Marshal(map[string]any{"status": req.Status})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.user.status.updated', $1, $2, $3, $4, $5, NOW())`,
 			identity.ActorID, id, "profile.user_profile", req.Reason, afterJSON)
 		writeJSON(w, http.StatusOK, map[string]any{"id": id, "status": req.Status})
@@ -1106,7 +1106,7 @@ func adminUserPlanPatchHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handl
 			return
 		}
 		afterJSON, _ := json.Marshal(map[string]any{"planId": req.PlanID})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.user.plan.updated', $1, $2, $3, $4, $5, NOW())`,
 			identity.ActorID, id, "monetization.user_subscription", req.Reason, afterJSON)
 		writeJSON(w, http.StatusOK, map[string]any{"id": id, "planId": req.PlanID})
@@ -1271,9 +1271,9 @@ func adminAuditHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 			whereClause = "WHERE " + strings.Join(whereParts, " AND ")
 		}
 		var total int
-		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM admin.admin_audit_log "+whereClause, args...).Scan(&total)
+		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM ops.admin_audit_log "+whereClause, args...).Scan(&total)
 		dataQ := fmt.Sprintf(`SELECT id, action, actor_id, target_id, target_type, reason, created_at
-			FROM admin.admin_audit_log %s ORDER BY created_at DESC LIMIT $%d OFFSET $%d`,
+			FROM ops.admin_audit_log %s ORDER BY created_at DESC LIMIT $%d OFFSET $%d`,
 			whereClause, argIdx, argIdx+1)
 		args = append(args, limit, offset)
 		rows, err := db.Query(r.Context(), dataQ, args...)

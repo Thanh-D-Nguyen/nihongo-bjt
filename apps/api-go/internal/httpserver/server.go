@@ -1470,14 +1470,10 @@ ar.Post("/api/admin/nhk-news/refresh", adminNhkNewsRefreshHandler(deps.DBPool, d
 		})
 	}
 
-	// P0-L5: Story Arcs — learner session-guarded.
-	if deps.DBPool != nil && deps.SessionStore != nil {
-		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
-		r.Group(func(lr chi.Router) {
-			lr.Use(learnerGuard)
-			lr.Get("/api/story/arcs", listStoryArcsHandler(deps.DBPool, deps.Logger))
-			lr.Get("/api/story/arcs/{slug}", getStoryArcDetailHandler(deps.DBPool, deps.Logger))
-		})
+	// P0-L5: Story Arcs — public routes (content discovery).
+	if deps.DBPool != nil {
+		r.Get("/api/story/arcs", listStoryArcsHandler(deps.DBPool, deps.Logger))
+		r.Get("/api/story/arcs/{slug}", getStoryArcDetailHandler(deps.DBPool, deps.Logger))
 	}
 
 	// P0-L5: Content Lexemes & Grammar — public routes.

@@ -12,7 +12,7 @@ import (
 
 // ── P1-A18: Admin NHK News — Config + Refresh (3 routes) ───────────────────
 // Contracts derived from NestJS nhk-news.controller.ts (NhkNewsAdminController).
-// DB tables: content.nhk_news_config, admin.admin_audit_log.
+// DB tables: content.nhk_news_config, ops.admin_audit_log.
 
 // adminNhkNewsConfigHandler implements GET /api/admin/nhk-news/config.
 func adminNhkNewsConfigHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
@@ -127,7 +127,7 @@ func adminNhkNewsConfigPatchHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 		}
 
 		afterJSON, _ := json.Marshal(req)
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, before, after, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, after, created_at)
 			VALUES ('nhk_news.config.updated',$1,$2,'nhk_news_config','config patch',$3,$4,NOW())`,
 			identity.ActorID, locale, beforeJSON, afterJSON)
 

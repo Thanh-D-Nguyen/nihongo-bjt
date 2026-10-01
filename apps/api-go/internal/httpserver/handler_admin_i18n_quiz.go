@@ -462,7 +462,7 @@ func adminAssessmentQuizSessionDetailHandler(db *pgxpool.Pool, logger *slog.Logg
 		// Load audit
 		d.Audit = []json.RawMessage{}
 		auditRows, _ := db.Query(r.Context(), `SELECT id, action, actor_id, reason, before, after, created_at
-			FROM admin.admin_audit_log WHERE target_id=$1 AND target_type='quiz_session'
+			FROM ops.admin_audit_log WHERE target_id=$1 AND target_type='quiz_session'
 			ORDER BY created_at DESC LIMIT 50`, id)
 		if auditRows != nil {
 			for auditRows.Next() {
@@ -523,7 +523,7 @@ func adminAssessmentQuizSessionAbortHandler(db *pgxpool.Pool, logger *slog.Logge
 		if beforeStatus != "in_progress" {
 			beforeJSON, _ := json.Marshal(map[string]any{"status": beforeStatus})
 			afterJSON, _ := json.Marshal(map[string]any{"status": beforeStatus, "noop": true})
-			db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, before, after, created_at)
+			db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, after, created_at)
 				VALUES ('quiz_session.abort.noop',$1,$2,'quiz_session',$3,$4,$5,NOW())`,
 				identity.ActorID, id, req.Reason, beforeJSON, afterJSON)
 			writeJSON(w, http.StatusOK, map[string]any{"id": id, "status": beforeStatus, "noop": true})
@@ -539,7 +539,7 @@ func adminAssessmentQuizSessionAbortHandler(db *pgxpool.Pool, logger *slog.Logge
 
 		beforeJSON, _ := json.Marshal(map[string]any{"status": beforeStatus})
 		afterJSON, _ := json.Marshal(map[string]any{"status": "abandoned"})
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, before, after, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, after, created_at)
 			VALUES ('quiz_session.aborted',$1,$2,'quiz_session',$3,$4,$5,NOW())`,
 			identity.ActorID, id, req.Reason, beforeJSON, afterJSON)
 
@@ -602,7 +602,7 @@ func adminAssessmentQuizSessionExtendTimeHandler(db *pgxpool.Pool, logger *slog.
 		}
 
 		afterJSON, _ := json.Marshal(map[string]any{"addSeconds": req.AddSeconds, "newStartedAt": beforeStartedAt.Add(-time.Duration(req.AddSeconds) * time.Second).UTC().Format(time.RFC3339)})
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('quiz_session.time_extended',$1,$2,'quiz_session',$3,$4,NOW())`,
 			identity.ActorID, id, req.Reason, afterJSON)
 

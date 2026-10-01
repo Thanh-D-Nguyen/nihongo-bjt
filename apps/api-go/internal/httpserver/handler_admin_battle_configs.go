@@ -233,7 +233,7 @@ func adminBattleConfigsDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http
 		aRows, err := db.Query(ctx, `
 			SELECT a.id, a.action, a.actor_id, act.display_name, act.email,
 			       a.reason, a.after, a.before, a.created_at
-			FROM admin.admin_audit_log a
+			FROM ops.admin_audit_log a
 			LEFT JOIN admin.admin_actor act ON act.id = a.actor_id
 			WHERE a.target_id = $1 AND a.target_type = 'learning.battle_config'
 			ORDER BY a.created_at DESC LIMIT 20`, id)
@@ -313,7 +313,7 @@ func adminBattleConfigsCreateHandler(db *pgxpool.Pool, logger *slog.Logger) http
 		afterJSON, _ := json.Marshal(map[string]any{
 			"name": req.Name, "level": req.Level, "status": "draft",
 		})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.battle.config.created', $1, $2, 'learning.battle_config', $3, $4, NOW())`,
 			identity.ActorID, createdID, req.Reason, afterJSON)
 
@@ -441,7 +441,7 @@ func adminBattleConfigsPatchHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 		}
 		afterJSON, _ := json.Marshal(map[string]any{"updated": true, "fields": setClauses})
 		beforeJSON, _ := json.Marshal(map[string]any{"id": id})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ('admin.battle.config.updated', $1, $2, 'learning.battle_config', $3, $4, $5, NOW())`,
 			identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
 
@@ -485,7 +485,7 @@ func adminBattleConfigsPublishHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 		}
 		afterJSON, _ := json.Marshal(map[string]any{"status": "published"})
 		beforeJSON, _ := json.Marshal(map[string]any{"status": beforeStatus})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ('admin.battle.config.published', $1, $2, 'learning.battle_config', $3, $4, $5, NOW())`,
 			identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
 
@@ -526,7 +526,7 @@ func adminBattleConfigsArchiveHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 		}
 		afterJSON, _ := json.Marshal(map[string]any{"status": "archived", "noop": noop})
 		beforeJSON, _ := json.Marshal(map[string]any{"status": beforeStatus})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ('admin.battle.config.archived', $1, $2, 'learning.battle_config', $3, $4, $5, NOW())`,
 			identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
 
@@ -612,7 +612,7 @@ func adminBattleConfigsDuplicateHandler(db *pgxpool.Pool, logger *slog.Logger) h
 			return
 		}
 		afterJSON, _ := json.Marshal(map[string]any{"newId": createdID, "name": newName, "sourceId": id})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.battle.config.duplicated', $1, $2, 'learning.battle_config', $3, $4, NOW())`,
 			identity.ActorID, createdID, req.Reason, afterJSON)
 
@@ -653,7 +653,7 @@ func adminBattleConfigsDeleteHandler(db *pgxpool.Pool, logger *slog.Logger) http
 		}
 		db.Exec(ctx, "DELETE FROM learning.battle_config WHERE id = $1", id)
 		beforeJSON, _ := json.Marshal(map[string]any{"id": id, "status": beforeStatus})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ('admin.battle.config.deleted', $1, $2, 'learning.battle_config', $3, NULL, $4, NOW())`,
 			identity.ActorID, id, req.Reason, beforeJSON)
 

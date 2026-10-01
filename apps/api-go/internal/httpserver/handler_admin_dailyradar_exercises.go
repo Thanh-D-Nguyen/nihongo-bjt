@@ -17,7 +17,7 @@ import (
 // Contracts derived from NestJS daily-radar.controller.ts (admin section lines 125-220),
 // exercise-admin.controller.ts, daily-radar.repository.ts, exercise.repository.ts.
 // DB tables: content.daily_radar_module, content.daily_radar_card,
-// learning.exercise, learning.exercise_config, admin.admin_audit_log.
+// learning.exercise, learning.exercise_config, ops.admin_audit_log.
 
 // ── Daily Radar Admin ───────────────────────────────────────────────────────
 
@@ -154,7 +154,7 @@ VALUES ($1,$2,$3,$4,$5,$6,NOW(),NOW()) RETURNING id`,
 			return
 		}
 		afterJSON, _ := json.Marshal(map[string]any{"id": id, "key": req.Key})
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 VALUES ('daily_radar.module.created',$1,$2,'daily_radar_module','create',$3,NOW())`,
 			identity.ActorID, id, afterJSON)
 		writeJSON(w, http.StatusCreated, map[string]any{"id": id, "status": status})
@@ -240,7 +240,7 @@ func adminDailyRadarModulePatchHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 			return
 		}
 		afterJSON, _ := json.Marshal(req)
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 VALUES ('daily_radar.module.updated',$1,$2,'daily_radar_module','patch',$3,NOW())`,
 			identity.ActorID, id, afterJSON)
 		writeJSON(w, http.StatusOK, map[string]any{"id": id, "updated": true})
@@ -274,7 +274,7 @@ func adminDailyRadarModuleArchiveHandler(db *pgxpool.Pool, logger *slog.Logger) 
 		}
 		beforeJSON, _ := json.Marshal(map[string]any{"status": beforeStatus})
 		afterJSON, _ := json.Marshal(map[string]any{"status": "archived"})
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, before, after, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, after, created_at)
 VALUES ('daily_radar.module.archived',$1,$2,'daily_radar_module','archive',$3,$4,NOW())`,
 			identity.ActorID, id, beforeJSON, afterJSON)
 		writeJSON(w, http.StatusOK, map[string]any{"id": id, "status": "archived"})
@@ -416,7 +416,7 @@ VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW(),NOW()) RETURNING id`,
 			return
 		}
 		afterJSON, _ := json.Marshal(map[string]any{"id": id, "slug": req.Slug})
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 VALUES ('daily_radar.card.created',$1,$2,'daily_radar_card','create',$3,NOW())`,
 			identity.ActorID, id, afterJSON)
 		writeJSON(w, http.StatusCreated, map[string]any{"id": id, "status": status})
@@ -510,7 +510,7 @@ func adminDailyRadarCardPatchHandler(db *pgxpool.Pool, logger *slog.Logger) http
 			return
 		}
 		afterJSON, _ := json.Marshal(req)
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 VALUES ('daily_radar.card.updated',$1,$2,'daily_radar_card','patch',$3,NOW())`,
 			identity.ActorID, id, afterJSON)
 		writeJSON(w, http.StatusOK, map[string]any{"id": id, "updated": true})
@@ -545,7 +545,7 @@ status='published', published_at=COALESCE(published_at,NOW()), updated_at=NOW() 
 		}
 		beforeJSON, _ := json.Marshal(map[string]any{"status": beforeStatus})
 		afterJSON, _ := json.Marshal(map[string]any{"status": "published"})
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, before, after, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, after, created_at)
 VALUES ('daily_radar.card.published',$1,$2,'daily_radar_card','publish',$3,$4,NOW())`,
 			identity.ActorID, id, beforeJSON, afterJSON)
 		writeJSON(w, http.StatusOK, map[string]any{"id": id, "status": "published"})
@@ -579,7 +579,7 @@ func adminDailyRadarCardArchiveHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 		}
 		beforeJSON, _ := json.Marshal(map[string]any{"status": beforeStatus})
 		afterJSON, _ := json.Marshal(map[string]any{"status": "archived"})
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, before, after, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, after, created_at)
 VALUES ('daily_radar.card.archived',$1,$2,'daily_radar_card','archive',$3,$4,NOW())`,
 			identity.ActorID, id, beforeJSON, afterJSON)
 		writeJSON(w, http.StatusOK, map[string]any{"id": id, "status": "archived"})
@@ -620,7 +620,7 @@ VALUES ($1,$2,$3,$4,$5,$6,$7,'draft',NOW(),NOW()) RETURNING id`,
 			return
 		}
 		afterJSON, _ := json.Marshal(map[string]any{"id": newID, "duplicatedFrom": id})
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 VALUES ('daily_radar.card.duplicated',$1,$2,'daily_radar_card','duplicate_from_'+$3,$4,NOW())`,
 			identity.ActorID, newID, id, afterJSON)
 		writeJSON(w, http.StatusCreated, map[string]any{"id": newID, "status": "draft", "duplicatedFrom": id})
@@ -713,7 +713,7 @@ RETURNING id`,
 			return
 		}
 		afterJSON, _ := json.Marshal(req)
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 VALUES ('exercise.config.upserted',$1,$2,'exercise_config','upsert',$3,NOW())`,
 			identity.ActorID, id, afterJSON)
 		writeJSON(w, http.StatusOK, map[string]any{"id": id, "exerciseType": req.ExerciseType, "placement": req.Placement})
@@ -735,7 +735,7 @@ func adminExercisesConfigDeleteHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 		}
 		db.Exec(r.Context(), "DELETE FROM learning.exercise_config WHERE id=$1", id)
 		beforeJSON, _ := json.Marshal(map[string]any{"id": id})
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, before, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, created_at)
 VALUES ('exercise.config.deleted',$1,$2,'exercise_config','delete',$3,NOW())`,
 			identity.ActorID, id, beforeJSON)
 		writeJSON(w, http.StatusOK, map[string]any{"deleted": true})
@@ -919,7 +919,7 @@ VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,NOW(),NOW()) RETURNING id`,
 			return
 		}
 		afterJSON, _ := json.Marshal(map[string]any{"id": id, "exerciseType": req.ExerciseType})
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 VALUES ('exercise.created',$1,$2,'exercise','create',$3,NOW())`,
 			identity.ActorID, id, afterJSON)
 		writeJSON(w, http.StatusCreated, map[string]any{"id": id})
@@ -983,7 +983,7 @@ func adminExerciseUpdateHandler(db *pgxpool.Pool, logger *slog.Logger) http.Hand
 			return
 		}
 		afterJSON, _ := json.Marshal(req)
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 VALUES ('exercise.updated',$1,$2,'exercise','update',$3,NOW())`,
 			identity.ActorID, id, afterJSON)
 		writeJSON(w, http.StatusOK, map[string]any{"id": id, "updated": true})
@@ -1005,7 +1005,7 @@ func adminExerciseDeleteHandler(db *pgxpool.Pool, logger *slog.Logger) http.Hand
 		}
 		db.Exec(r.Context(), "DELETE FROM learning.exercise WHERE id=$1", id)
 		beforeJSON, _ := json.Marshal(map[string]any{"id": id})
-		db.Exec(r.Context(), `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, before, created_at)
+		db.Exec(r.Context(), `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, before, created_at)
 VALUES ('exercise.deleted',$1,$2,'exercise','delete',$3,NOW())`,
 			identity.ActorID, id, beforeJSON)
 		writeJSON(w, http.StatusOK, map[string]any{"deleted": true})

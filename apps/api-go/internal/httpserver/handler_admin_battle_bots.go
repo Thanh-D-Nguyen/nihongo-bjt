@@ -211,7 +211,7 @@ func adminBattleBotsDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 		aRows, err := db.Query(ctx, `
 			SELECT a.id, a.action, a.actor_id, act.display_name, act.email,
 			       a.reason, a.after, a.before, a.created_at
-			FROM admin.admin_audit_log a
+			FROM ops.admin_audit_log a
 			LEFT JOIN admin.admin_actor act ON act.id = a.actor_id
 			WHERE a.target_id = $1 AND a.target_type = 'learning.battle_bot'
 			ORDER BY a.created_at DESC LIMIT 20`, id)
@@ -301,7 +301,7 @@ func adminBattleBotsCreateHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 			"botKey": req.BotKey, "name": req.Name, "difficulty": req.Difficulty,
 			"status": "active",
 		})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.battle.bot.created', $1, $2, 'learning.battle_bot', $3, $4, NOW())`,
 			identity.ActorID, createdID, req.Reason, afterJSON)
 
@@ -460,7 +460,7 @@ func adminBattleBotsPatchHandler(db *pgxpool.Pool, logger *slog.Logger) http.Han
 
 		afterJSON, _ := json.Marshal(map[string]any{"updated": true, "fields": setClauses})
 		beforeJSON, _ := json.Marshal(map[string]any{"id": id})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ('admin.battle.bot.updated', $1, $2, 'learning.battle_bot', $3, $4, $5, NOW())`,
 			identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
 
@@ -530,7 +530,7 @@ func adminBattleBotsToggleHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 
 		afterJSON, _ := json.Marshal(map[string]any{"status": targetStatus, "noop": noop})
 		beforeJSON, _ := json.Marshal(map[string]any{"status": currentStatus})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ('admin.battle.bot.toggled', $1, $2, 'learning.battle_bot', $3, $4, $5, NOW())`,
 			identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
 
@@ -576,7 +576,7 @@ func adminBattleBotsArchiveHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 
 		afterJSON, _ := json.Marshal(map[string]any{"status": "archived", "noop": noop})
 		beforeJSON, _ := json.Marshal(map[string]any{"status": currentStatus})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ('admin.battle.bot.archived', $1, $2, 'learning.battle_bot', $3, $4, $5, NOW())`,
 			identity.ActorID, id, req.Reason, afterJSON, beforeJSON)
 
@@ -622,7 +622,7 @@ func adminBattleBotsDeleteHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 		db.Exec(ctx, "DELETE FROM learning.battle_bot WHERE id = $1", id)
 
 		beforeJSON, _ := json.Marshal(map[string]any{"id": id, "status": currentStatus})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ('admin.battle.bot.deleted', $1, $2, 'learning.battle_bot', $3, NULL, $4, NOW())`,
 			identity.ActorID, id, req.Reason, beforeJSON)
 

@@ -148,7 +148,7 @@ func adminMonetizationAdsPlacementsCreateHandler(db *pgxpool.Pool, logger *slog.
 			return
 		}
 		afterJSON, _ := json.Marshal(map[string]any{"code": req.Code, "active": active})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.ads.placement.created', $1, $2, 'monetization.ad_placement', $3, $4, NOW())`,
 			identity.ActorID, createdID, "ad placement created", afterJSON)
 		writeJSON(w, http.StatusCreated, map[string]any{"id": createdID, "code": req.Code})
@@ -217,7 +217,7 @@ func adminMonetizationAdsPlacementsPatchHandler(db *pgxpool.Pool, logger *slog.L
 		}
 		afterJSON, _ := json.Marshal(map[string]any{"updated": true})
 		beforeJSON, _ := json.Marshal(map[string]any{"id": id})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ('admin.ads.placement.updated', $1, $2, 'monetization.ad_placement', $3, $4, $5, NOW())`,
 			identity.ActorID, id, "ad placement updated", afterJSON, beforeJSON)
 		writeJSON(w, http.StatusOK, map[string]any{"id": id, "updated": true})
@@ -371,7 +371,7 @@ func adminMonetizationAdsCampaignsCreateHandler(db *pgxpool.Pool, logger *slog.L
 			return
 		}
 		afterJSON, _ := json.Marshal(map[string]any{"name": req.Name, "status": "active"})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.ads.campaign.created', $1, $2, 'monetization.ad_campaign', $3, $4, NOW())`,
 			identity.ActorID, createdID, "ad campaign created", afterJSON)
 		writeJSON(w, http.StatusCreated, map[string]any{"id": createdID, "name": req.Name})
@@ -458,7 +458,7 @@ func adminMonetizationAdsCampaignsPatchHandler(db *pgxpool.Pool, logger *slog.Lo
 		}
 		afterJSON, _ := json.Marshal(map[string]any{"updated": true})
 		beforeJSON, _ := json.Marshal(map[string]any{"id": id})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ('admin.ads.campaign.updated', $1, $2, 'monetization.ad_campaign', $3, $4, $5, NOW())`,
 			identity.ActorID, id, "ad campaign updated", afterJSON, beforeJSON)
 		writeJSON(w, http.StatusOK, map[string]any{"id": id, "updated": true})
@@ -571,7 +571,7 @@ func adminMonetizationAdsProvidersPatchHandler(db *pgxpool.Pool, logger *slog.Lo
 		}
 		afterJSON, _ := json.Marshal(map[string]any{"updated": true})
 		beforeJSON, _ := json.Marshal(map[string]any{"key": key})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, before, created_at)
 			VALUES ('admin.ads.provider.updated', $1, $2, 'monetization.ad_provider_config', $3, $4, $5, NOW())`,
 			identity.ActorID, key, "ad provider updated", afterJSON, beforeJSON)
 		writeJSON(w, http.StatusOK, map[string]any{"key": key, "updated": true})
@@ -661,7 +661,7 @@ func adminMonetizationAdsRulesCreateHandler(db *pgxpool.Pool, logger *slog.Logge
 			return
 		}
 		afterJSON, _ := json.Marshal(map[string]any{"name": req.Name, "ruleType": req.RuleType})
-		db.Exec(ctx, `INSERT INTO admin.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
+		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.ads.rule.created', $1, $2, 'monetization.ad_safety_rule', $3, $4, NOW())`,
 			identity.ActorID, createdID, "ad safety rule created", afterJSON)
 		writeJSON(w, http.StatusCreated, map[string]any{"id": createdID, "name": req.Name})
@@ -722,7 +722,7 @@ func adminMonetizationAdsAuditHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 
 		rows, err := db.Query(ctx, `
 			SELECT id, action, actor_id, target_id, target_type, created_at
-			FROM admin.admin_audit_log
+			FROM ops.admin_audit_log
 			WHERE action ILIKE 'admin.ads.%'
 			ORDER BY created_at DESC LIMIT $1`, take)
 		if err != nil {
