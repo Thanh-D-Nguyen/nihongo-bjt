@@ -21,10 +21,13 @@
 - AdminRuntimeClassification: COMPLETE (398 ACTIVE_ADMIN_RUNTIME routes across 34 domains; 0 DORMANT/DEPRECATED/REPLACED; all confirmed via admin frontend caller tracing in apps/admin/)
 - FullApiSurfaceParity: IN_PROGRESS (P0-L1→L5 LEARNER COMPLETE: 165 routes; P1-A1 ADMIN OPERATIONS STATIC PARITY PASS: 49 routes across 12 sub-waves @ dcb61bf; P1-A2 ASSESSMENT STATIC PARITY PASS: 30 routes across 4 sub-waves @ 805a6e7; P1-A3 GROWTH STATIC PARITY PASS: 27 routes across 4 sub-waves @ aac40c8; P1-A4 BATTLE STATIC PARITY PASS: 26 routes across 4 sub-waves @ c682405; P1-A5 MONETIZATION STATIC PARITY PASS: 36 routes across 4 sub-waves @ 05fdb07; P1-A6 ANALYTICS STATIC PARITY PASS: 40 routes across 8 sub-domains @ 32c2bd7; P1-A7 ADMIN CORE STATIC PARITY PASS: 38 routes across IAM/users/content/support/audit/i18n/reading-assist @ 149a4e0; P1-A8 ADMIN LEARNING STATIC PARITY PASS: 20 routes across paths/competencies/review @ 9e4e437; P1-A9 ADMIN GAMIFICATION STATIC PARITY PASS: 23 routes across streaks/achievements/tiers/leaderboards/pets @ 8a1c188; P1-A10 ADMIN ADS STATIC PARITY PASS: 13 routes across overview/placements/campaigns/providers/rules/performance/audit @ ed02722; P1-A11 ADMIN MAGAZINE+LOTO STATIC PARITY PASS: 16 routes across articles/predictions/lab @ 11b1393; P1-A12 ADMIN FLASHCARDS STATIC PARITY PASS: 15 routes across decks/variants/styles @ e969bc6; P1-A13 ADMIN LEGAL STATIC PARITY PASS: 11 routes across policies/cookie-categories/retention @ 5182f50; P1-A14 ADMIN DAILY-RADAR+EXERCISES STATIC PARITY PASS: 22 routes across modules/cards/config/crud/analytics @ f1e8721; P1-A15 ADMIN MEDIA+COMPANION+PRIVACY STATIC PARITY PASS: 15 routes across media/companion/privacy @ e95c381; P1-A16 ADMIN CARDGEN STATIC PARITY PASS: 7 routes across rules/jobs @ d8c3dde; P1-A17 ADMIN QUIZ+QUIZ-SESSIONS STATIC PARITY PASS: 8 routes across quiz/quiz-sessions @ aaf8f9c; P1-A18 ADMIN NHK-NEWS STATIC PARITY PASS: 3 routes across config/refresh @ 530b69e; ADMIN_ACTIVE_API_STATIC_PARITY_PASS; ADMIN_TRUE_MISSING_ACTIVE=0; staging live verification BLOCKED_CURRENT_SESSION)
 - LegacyBackendRemovalReady: TRUE
+- LegacyNestjsRemovalPass: TRUE (Wave 1 — apps/api source retired, NestJS container removed, zero ACTIVE_REFERENCE)
+- KeycloakRuntimeRemovalPass: TRUE (Wave 2 — commit b971d553 + e11de9dd; 8/8 Playwright pass)
 - DiskRemediation: DONE (92% → 89%, 3.5GB reclaimed)
 - RebootGate: REBOOT_EXTERNAL_PRIVILEGE_GATE
 - ProductionCutover: PENDING
 - KeycloakFinalDisable: DEFERRED_TO_CUTOVER
+- KeycloakRuntimeRemovalPass: TRUE (Wave 2 — packages/keycloak-oidc deleted, docker/keycloak/ deleted, dead runtime files removed, 75 RequireKeycloakAuth→RequireAuth renames, useKeycloakAuth backward-compat alias retained, DB schema keycloak_subject preserved for data compat; staging build b971d553 verified; 8/8 Playwright auth parity tests pass at e11de9dd)
 - LastCompletedEngineeringWave: M17_POST_MIGRATION_CLEANUP
 - RemainingHumanGate: Admin static asset routing via Caddy (assetPrefix not baking in Turbopack monorepo build; workaround: direct container port :13001) / Production cutover authorization / interactive sudo reboot / ARM64 OCI verification / public DNS+TLS
 
@@ -43,7 +46,8 @@
 | Keycloak | CUTOVER_PENDING |
 | Keycloak DB | CUTOVER_PENDING |
 | MinIO | DISABLED_ROLLBACK_AVAILABLE |
-| NestJS | DISABLED_ROLLBACK_AVAILABLE |
+| NestJS | REMOVED_WAVE1 |
+| Keycloak Runtime | REMOVED_WAVE2 |
 
 ## Wave Summary
 - Current accepted implementation/code checkpoint: `94512f0` (M17 post-migration cleanup PASS — 17 files changed +33/-293, dead NestJS scripts/deps/configs removed, README/AI_CONTEXT updated, Caddy Keycloak proxy retired, go test/vet/gofmt PASS, web/admin typecheck PASS; committed at 94512f0)
