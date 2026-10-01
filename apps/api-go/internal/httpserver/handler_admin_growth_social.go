@@ -258,7 +258,7 @@ func adminGrowthSocialTemplatesDetailHandler(db *pgxpool.Pool, logger *slog.Logg
 			SELECT a.id, a.action, a.actor_id, act.display_name, act.email,
 			       a.reason, a.after, a.before, a.created_at
 			FROM ops.admin_audit_log a
-			LEFT JOIN admin.admin_actor act ON act.id = a.actor_id
+			LEFT JOIN authz.admin_actor act ON act.id = a.actor_id
 			WHERE a.target_id = $1 AND a.target_type = 'growth.social_template'
 			ORDER BY a.created_at DESC LIMIT 20`, id)
 		if err == nil {

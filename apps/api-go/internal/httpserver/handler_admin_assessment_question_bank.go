@@ -311,7 +311,7 @@ WHERE question_id = $1 ORDER BY option_key ASC`, id)
 SELECT a.id, a.action, a.actor_id, act.display_name, act.email,
        a.reason, a.after, a.before, a.created_at
 FROM ops.admin_audit_log a
-LEFT JOIN admin.admin_actor act ON act.id = a.actor_id
+LEFT JOIN authz.admin_actor act ON act.id = a.actor_id
 WHERE a.target_id = $1 AND a.target_type = 'assessment.question'
 ORDER BY a.created_at DESC LIMIT 30`, id)
 		if err == nil {

@@ -202,7 +202,7 @@ func adminOpsSecurityEventsListHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 			a.after, a.before, a.created_at,
 			COALESCE(act.display_name, '') as actor_name, COALESCE(act.email, '') as actor_email
 			FROM ops.admin_audit_log a
-			LEFT JOIN admin.admin_actor act ON act.id = a.actor_id
+			LEFT JOIN authz.admin_actor act ON act.id = a.actor_id
 			WHERE ` + whereSQL + ` ORDER BY a.created_at DESC LIMIT $` + itoa(argIdx) + ` OFFSET $` + itoa(argIdx+1)
 		args = append(args, limit, offset)
 
@@ -310,7 +310,7 @@ func adminOpsSecurityEventGetHandler(db *pgxpool.Pool, logger *slog.Logger) http
 				a.after, a.before, a.created_at,
 				COALESCE(act.display_name, ''), COALESCE(act.email, '')
 			FROM ops.admin_audit_log a
-			LEFT JOIN admin.admin_actor act ON act.id = a.actor_id
+			LEFT JOIN authz.admin_actor act ON act.id = a.actor_id
 			WHERE a.id = $1`, id).Scan(
 			&e.ID, &e.Action, &e.ActorID, &e.TargetID, &e.TargetType,
 			&e.Reason, &e.After, &e.Before, &ts, &e.ActorName, &e.ActorEmail)
@@ -336,7 +336,7 @@ func adminOpsSecurityEventGetHandler(db *pgxpool.Pool, logger *slog.Logger) http
 			SELECT a.id, a.action, a.actor_id, a.reason, a.after, a.created_at,
 				COALESCE(act.display_name, '') as actor_name, COALESCE(act.email, '') as actor_email
 			FROM ops.admin_audit_log a
-			LEFT JOIN admin.admin_actor act ON act.id = a.actor_id
+			LEFT JOIN authz.admin_actor act ON act.id = a.actor_id
 			WHERE a.target_id = $1 AND a.target_type = 'ops.security_event'
 			ORDER BY a.created_at DESC LIMIT 50`, id)
 

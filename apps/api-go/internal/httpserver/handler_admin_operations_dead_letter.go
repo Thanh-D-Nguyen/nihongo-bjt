@@ -163,7 +163,7 @@ func adminOpsDeadLetterGetHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 			SELECT a.id, a.action, a.actor_id, a.reason, a.after, a.before, a.created_at,
 			       COALESCE(act.display_name, '') as actor_name, COALESCE(act.email, '') as actor_email
 			FROM ops.admin_audit_log a
-			LEFT JOIN admin.admin_actor act ON act.id = a.actor_id
+			LEFT JOIN authz.admin_actor act ON act.id = a.actor_id
 			WHERE a.target_id = $1 AND a.target_type = 'ops.dead_letter_entry'
 			ORDER BY a.created_at DESC LIMIT 100`, id)
 		type AuditEntry struct {

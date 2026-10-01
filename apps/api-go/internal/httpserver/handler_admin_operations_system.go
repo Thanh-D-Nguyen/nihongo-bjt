@@ -244,7 +244,7 @@ func adminOpsQueueActionsHandler(db *pgxpool.Pool, logger *slog.Logger) http.Han
 			SELECT a.id, a.action, a.actor_id, a.target_id, a.reason, a.created_at,
 			       COALESCE(act.display_name, '') as actor_name, COALESCE(act.email, '') as actor_email
 			FROM ops.admin_audit_log a
-			LEFT JOIN admin.admin_actor act ON act.id = a.actor_id
+			LEFT JOIN authz.admin_actor act ON act.id = a.actor_id
 			WHERE a.target_type = 'ops.queue'`
 		args := []any{}
 		argIdx := 1
@@ -325,7 +325,7 @@ func adminOpsReleaseHistoryHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 			SELECT a.id, a.action, a.actor_id, a.target_id, a.reason, a.after, a.created_at,
 			       COALESCE(act.display_name, '') as actor_name, COALESCE(act.email, '') as actor_email
 			FROM ops.admin_audit_log a
-			LEFT JOIN admin.admin_actor act ON act.id = a.actor_id
+			LEFT JOIN authz.admin_actor act ON act.id = a.actor_id
 			WHERE a.target_type = 'ops.release'
 			ORDER BY a.created_at DESC LIMIT $1
 		`, limit)

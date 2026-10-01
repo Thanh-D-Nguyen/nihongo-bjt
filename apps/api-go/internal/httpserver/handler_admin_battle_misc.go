@@ -392,7 +392,7 @@ FROM learning.battle_session WHERE id = $1`, id).Scan(
 SELECT a.id, a.action, a.actor_id, act.display_name, act.email,
        a.reason, a.after, a.before, a.created_at
 FROM ops.admin_audit_log a
-LEFT JOIN admin.admin_actor act ON act.id = a.actor_id
+LEFT JOIN authz.admin_actor act ON act.id = a.actor_id
 WHERE a.target_id = $1 AND a.target_type = 'learning.battle_session'
 ORDER BY a.created_at DESC LIMIT 20`, id)
 		if err == nil {

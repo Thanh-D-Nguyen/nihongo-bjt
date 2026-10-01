@@ -37,7 +37,7 @@ func adminMeHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 		ad.ActorID = identity.ActorID
 		ad.Permissions = []string{}
 		db.QueryRow(r.Context(),
-			"SELECT display_name, email FROM admin.admin_actor WHERE id = $1",
+			"SELECT display_name, email FROM authz.admin_actor WHERE id = $1",
 			identity.ActorID).Scan(&ad.DisplayName, &ad.Email)
 		writeJSON(w, http.StatusOK, ad)
 	}
@@ -276,9 +276,9 @@ func adminIamAdminsListHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handl
 			whereClause = "WHERE " + strings.Join(whereParts, " AND ")
 		}
 		var total int
-		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM admin.admin_actor aa "+whereClause, args...).Scan(&total)
+		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM authz.admin_actor aa "+whereClause, args...).Scan(&total)
 		dataQ := fmt.Sprintf(`SELECT aa.id, aa.display_name, aa.email, aa.status, aa.created_at, aa.updated_at
-			FROM admin.admin_actor aa %s ORDER BY aa.created_at DESC LIMIT $%d OFFSET $%d`,
+			FROM authz.admin_actor aa %s ORDER BY aa.created_at DESC LIMIT $%d OFFSET $%d`,
 			whereClause, argIdx, argIdx+1)
 		args = append(args, pageSize, offset)
 		rows, err := db.Query(r.Context(), dataQ, args...)
@@ -346,7 +346,7 @@ func adminIamAdminDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.Hand
 		var d Detail
 		var ca time.Time
 		err := db.QueryRow(r.Context(),
-			"SELECT id, display_name, email, status, created_at FROM admin.admin_actor WHERE id = $1", id).
+			"SELECT id, display_name, email, status, created_at FROM authz.admin_actor WHERE id = $1", id).
 			Scan(&d.ID, &d.DisplayName, &d.Email, &d.Status, &ca)
 		if err != nil {
 			writeJSONError(w, "admin not found", http.StatusNotFound)
@@ -490,7 +490,7 @@ func adminIamAdminPatchHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handl
 			return
 		}
 		setClauses = append(setClauses, "updated_at = NOW()")
-		query := "UPDATE admin.admin_actor SET " + joinStrings(setClauses, ", ") + " WHERE id = $" + itoa(argIdx)
+		query := "UPDATE authz.admin_actor SET " + joinStrings(setClauses, ", ") + " WHERE id = $" + itoa(argIdx)
 		args = append(args, id)
 		if _, err := db.Exec(ctx, query, args...); err != nil {
 			logger.Error("patch admin", "error", err)
@@ -499,7 +499,7 @@ func adminIamAdminPatchHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handl
 		}
 		afterJSON, _ := json.Marshal(map[string]any{"updated": true})
 		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
-			VALUES ('admin.iam.admin.updated', $1, $2, 'admin.admin_actor', $3, $4, NOW())`,
+			VALUES ('admin.iam.admin.updated', $1, $2, 'authz.admin_actor', $3, $4, NOW())`,
 			identity.ActorID, id, "admin updated", afterJSON)
 		writeJSON(w, http.StatusOK, map[string]any{"id": id, "updated": true})
 	}
