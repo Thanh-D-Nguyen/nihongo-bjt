@@ -139,7 +139,7 @@ func adminMonetizationAdsPlacementsCreateHandler(db *pgxpool.Pool, logger *slog.
 		ctx := r.Context()
 		var createdID string
 		err := db.QueryRow(ctx, `
-			INSERT INTO monetization.ad_placement (code, name, active, config, created_at, updated_at)
+			INSERT INTO monetization.ad_placement (code, label_key, active, config, created_at, updated_at)
 			VALUES ($1, $2, $3, $4, NOW(), NOW()) RETURNING id`,
 			req.Code, req.Name, active, configJSON).Scan(&createdID)
 		if err != nil {
@@ -359,12 +359,17 @@ func adminMonetizationAdsCampaignsCreateHandler(db *pgxpool.Pool, logger *slog.L
 		}
 		ctx := r.Context()
 		var createdID string
+		placementCodes := []string{}
+		if req.PlacementID != nil && *req.PlacementID != "" {
+			placementCodes = append(placementCodes, *req.PlacementID)
+		}
+		placementCodesJSON, _ := json.Marshal(placementCodes)
 		err := db.QueryRow(ctx, `
-			INSERT INTO monetization.ad_campaign (name, status, policy_status, provider_key, placement_id,
-				start_at, end_at, config, created_at, updated_at)
-			VALUES ($1, 'active', $2, $3, $4, $5, $6, $7, NOW(), NOW()) RETURNING id`,
-			req.Name, policyStatus, req.ProviderKey, req.PlacementID,
-			req.StartAt, req.EndAt, configJSON).Scan(&createdID)
+			INSERT INTO monetization.ad_campaign (name, status, policy_status, provider_key, placement_codes,
+				start_at, end_at, creative_type, priority, created_at, updated_at)
+			VALUES ($1, 'active', $2, $3, $4, $5, $6, 'placeholder', 0, NOW(), NOW()) RETURNING id`,
+			req.Name, policyStatus, req.ProviderKey, placementCodesJSON,
+			req.StartAt, req.EndAt).Scan(&createdID)
 		if err != nil {
 			logger.Error("create ad campaign", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
@@ -641,20 +646,25 @@ func adminMonetizationAdsRulesCreateHandler(db *pgxpool.Pool, logger *slog.Logge
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
-		if req.Name == "" || req.RuleType == "" || req.Condition == "" || req.Action == "" {
-			writeJSONError(w, "name, ruleType, condition, and action are required", http.StatusBadRequest)
+		if req.Name == "" {
+			writeJSONError(w, "name is required", http.StatusBadRequest)
 			return
 		}
-		priority := 100
-		if req.Priority != nil {
-			priority = *req.Priority
+		ruleConfig := map[string]any{
+			"ruleType":  req.RuleType,
+			"condition": req.Condition,
+			"action":    req.Action,
 		}
+		if req.Priority != nil {
+			ruleConfig["priority"] = *req.Priority
+		}
+		configJSON, _ := json.Marshal(ruleConfig)
 		ctx := r.Context()
 		var createdID string
 		err := db.QueryRow(ctx, `
-			INSERT INTO monetization.ad_safety_rule (name, rule_type, condition, action, priority, active, created_at, updated_at)
-			VALUES ($1, $2, $3, $4, $5, true, NOW(), NOW()) RETURNING id`,
-			req.Name, req.RuleType, req.Condition, req.Action, priority).Scan(&createdID)
+			INSERT INTO monetization.ad_safety_rule (rule_key, enabled, config, updated_at)
+			VALUES ($1, true, $2, NOW()) RETURNING id`,
+			req.Name, configJSON).Scan(&createdID)
 		if err != nil {
 			logger.Error("create ad safety rule", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
