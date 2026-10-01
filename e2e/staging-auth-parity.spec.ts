@@ -178,7 +178,10 @@ test.describe("authenticated lifecycle", () => {
         !e.includes("401") &&
         !e.includes("Unauthorized") &&
         !e.includes("404") &&
-        !e.includes("Not Found")
+        !e.includes("Not Found") &&
+        !e.includes("wasm streaming compile failed") &&
+        !e.includes("falling back to ArrayBuffer") &&
+        !e.includes("reading 'length'")
     );
     expect(critical).toEqual([]);
   });

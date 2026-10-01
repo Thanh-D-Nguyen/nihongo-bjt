@@ -36,7 +36,7 @@ type SaveInput struct {
 	Style        string
 }
 
-// Store provides read/write access to recommendation.onboarding_preferences.
+// Store provides read/write access to profile.learner_onboarding.
 type Store struct {
 	db *pgxpool.Pool
 }
@@ -53,7 +53,7 @@ func (s *Store) GetPreferences(ctx context.Context, userID string) (*Preferences
 	defer cancel()
 
 	const q = `SELECT user_id, current_level, goal, topics, daily_minutes, style, completed, created_at, updated_at
-		FROM recommendation.onboarding_preferences WHERE user_id = $1`
+		FROM profile.learner_onboarding WHERE user_id = $1`
 
 	var p Preferences
 	err := s.db.QueryRow(ctx, q, userID).Scan(
@@ -78,7 +78,7 @@ func (s *Store) HasCompleted(ctx context.Context, userID string) (bool, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	const q = `SELECT completed FROM recommendation.onboarding_preferences WHERE user_id = $1`
+	const q = `SELECT (onboarded_at IS NOT NULL) AS completed FROM profile.learner_onboarding WHERE user_id = $1`
 
 	var completed bool
 	err := s.db.QueryRow(ctx, q, userID).Scan(&completed)
@@ -97,7 +97,7 @@ func (s *Store) MarkSkipped(ctx context.Context, userID string) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	const q = `INSERT INTO recommendation.onboarding_preferences (user_id, completed)
+	const q = `INSERT INTO profile.learner_onboarding (user_id, completed)
 		VALUES ($1, true)
 		ON CONFLICT (user_id) DO UPDATE SET completed = true, updated_at = NOW()`
 
@@ -113,7 +113,7 @@ func (s *Store) SavePreferences(ctx context.Context, userID string, input SaveIn
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	const q = `INSERT INTO recommendation.onboarding_preferences
+	const q = `INSERT INTO profile.learner_onboarding
 		(user_id, current_level, goal, topics, daily_minutes, style, completed)
 		VALUES ($1, $2, $3, $4, $5, $6, true)
 		ON CONFLICT (user_id) DO UPDATE SET

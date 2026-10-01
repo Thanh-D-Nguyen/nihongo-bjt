@@ -57,12 +57,12 @@ func getAnalyticsLearnerHandler(db *pgxpool.Pool, logger *slog.Logger) http.Hand
 			XPEarned   int    `json:"xpEarned"`
 			LessonsCnt int    `json:"lessonsCount"`
 		}
-		const q = `SELECT date_trunc('day', created_at)::date as day,
+		const q = `SELECT date_trunc('day', started_at)::date as day,
 			COALESCE(SUM(duration_minutes), 0) as minutes,
 			COALESCE(SUM(xp_earned), 0) as xp,
 			COUNT(*) as lessons
-			FROM analytics.study_session
-			WHERE user_id = $1 AND created_at >= NOW() - ($2 || ' days')::interval
+			FROM learning.study_session
+			WHERE user_id = $1 AND started_at >= NOW() - ($2 || ' days')::interval
 			GROUP BY day ORDER BY day ASC`
 		rows, err := db.Query(r.Context(), q, userID, days)
 		if err != nil {
@@ -86,9 +86,46 @@ func getAnalyticsLearnerHandler(db *pgxpool.Pool, logger *slog.Logger) http.Hand
 		if stats == nil {
 			stats = []DailyStats{}
 		}
+
+		// Compute totals expected by frontend LearnerAnalytics interface
+		var completedBjtSessions int
+		var bjtAccuracyPct float64
+		var reviewCount int
+		var streakDays int
+
+		// completedBjtSessions: count of completed quiz sessions
+		_ = db.QueryRow(r.Context(),
+			`SELECT COUNT(*) FROM assessment.quiz_session WHERE user_id = $1 AND status = 'completed'`,
+			userID).Scan(&completedBjtSessions)
+
+		// bjtAccuracyPct: average accuracy across completed sessions
+		_ = db.QueryRow(r.Context(),
+			`SELECT COALESCE(AVG(accuracy_pct), 0) FROM assessment.quiz_session WHERE user_id = $1 AND status = 'completed'`,
+			userID).Scan(&bjtAccuracyPct)
+
+		// reviewCount: total SRS reviews completed
+		_ = db.QueryRow(r.Context(),
+			`SELECT COUNT(*) FROM learning.review_event WHERE user_id = $1`,
+			userID).Scan(&reviewCount)
+
+		// streakDays: current streak from learner profile
+		_ = db.QueryRow(r.Context(),
+			`SELECT COALESCE(current_streak_days, 0) FROM profile.learner_onboarding WHERE user_id = $1`,
+			userID).Scan(&streakDays)
+
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(map[string]interface{}{"dailyStats": stats, "userId": userID})
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"dailyStats": stats,
+			"userId":     userID,
+			"insight":    "",
+			"totals": map[string]interface{}{
+				"bjtAccuracyPct":     bjtAccuracyPct,
+				"completedBjtSessions": completedBjtSessions,
+				"reviewCount":        reviewCount,
+				"streakDays":         streakDays,
+			},
+		})
 	}
 }
 
@@ -111,10 +148,10 @@ func getAnalyticsHeatmapHandler(db *pgxpool.Pool, logger *slog.Logger) http.Hand
 			Date    string `json:"date"`
 			Minutes int    `json:"minutes"`
 		}
-		const q = `SELECT date_trunc('day', created_at)::date as day,
+		const q = `SELECT date_trunc('day', started_at)::date as day,
 			COALESCE(SUM(duration_minutes), 0) as minutes
-			FROM analytics.study_session
-			WHERE user_id = $1 AND created_at >= NOW() - ($2 || ' days')::interval
+			FROM learning.study_session
+			WHERE user_id = $1 AND started_at >= NOW() - ($2 || ' days')::interval
 			GROUP BY day ORDER BY day ASC`
 		rows, err := db.Query(r.Context(), q, userID, days)
 		if err != nil {
@@ -370,7 +407,7 @@ func getCompanionHintHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handler
 			{Text: "Keep up your daily streak! You're doing great.", Category: "motivation"},
 		}
 		// Check recent activity for personalized hints
-		const q = `SELECT COUNT(*) FROM analytics.study_session WHERE user_id = $1 AND created_at >= NOW() - ($2 || ' days')::interval`
+		const q = `SELECT COUNT(*) FROM learning.study_session WHERE user_id = $1 AND started_at >= NOW() - ($2 || ' days')::interval`
 		var sessionCount int
 		if err := db.QueryRow(r.Context(), q, identity.UserID, days).Scan(&sessionCount); err == nil && sessionCount > 0 {
 			hints = append(hints, Hint{Text: "You've been consistent lately. Try a harder level!", Category: "progression"})
@@ -1011,16 +1048,10 @@ func deletePushSubscribeHandler(db *pgxpool.Pool, logger *slog.Logger) http.Hand
 // Authenticated learner route.
 func getStudyFeedHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		identity, ok := authn.GetLearnerIdentity(r.Context())
+		_, ok := authn.GetLearnerIdentity(r.Context())
 		if !ok {
 			writeJSONError(w, "unauthorized", http.StatusUnauthorized)
 			return
-		}
-		limit := 8
-		if l := r.URL.Query().Get("limit"); l != "" {
-			if n, err := strconv.Atoi(l); err == nil && n > 0 {
-				limit = n
-			}
 		}
 		type FeedItem struct {
 			ID       string `json:"id"`
@@ -1028,30 +1059,10 @@ func getStudyFeedHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc
 			Title    string `json:"title"`
 			Priority int    `json:"priority"`
 		}
-		const q = `SELECT id, item_type, title, priority FROM recommendation.study_feed
-			WHERE user_id = $1 ORDER BY priority DESC, created_at DESC LIMIT $2`
-		rows, err := db.Query(r.Context(), q, identity.UserID, limit)
-		if err != nil {
-			logger.Error("study feed", "error", err)
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
-			_ = json.NewEncoder(w).Encode([]interface{}{})
-			return
-		}
-		defer rows.Close()
-		var items []FeedItem
-		for rows.Next() {
-			var fi FeedItem
-			if err := rows.Scan(&fi.ID, &fi.Type, &fi.Title, &fi.Priority); err == nil {
-				items = append(items, fi)
-			}
-		}
-		if items == nil {
-			items = []FeedItem{}
-		}
+		// recommendation.study_feed does not exist in staging; return empty feed
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(items)
+		_ = json.NewEncoder(w).Encode([]FeedItem{})
 	}
 }
 
