@@ -1,9 +1,10 @@
 # Browser UI E2E Validation Report
 
-**Date:** 2026-09-30
+**Date:** 2026-10-01
 **Staging:** http://192.168.1.8:18080/vi
 **Branch:** main
-**HEAD:** bdbc090a (auth route fixes + E2E test added on top)
+**HEAD:** a6a55b2e (fix(e2e+api): close REAL_BROWSER_AUTHENTICATED_PARITY_PASS gate)
+**Container Created:** 2026-10-01T04:00:26Z (API), 2026-10-01T03:50:54Z (Web)
 
 ---
 
@@ -11,7 +12,7 @@
 
 **REAL_BROWSER_AUTHENTICATED_PARITY_PASS**
 
-All 8 Playwright tests passed against Linux staging via Caddy reverse proxy.
+All 8 Playwright tests passed against Linux staging via Caddy reverse proxy on build `a6a55b2e`.
 
 ## Test Suite
 

@@ -1,11 +1,13 @@
 # Linux Staging Validation Report
 
-**Date:** 2026-09-30
+**Date:** 2026-10-01
 **Host:** thanhnv@192.168.1.8
 **Architecture:** X86_64 (ARM64 production verification remains a separate OCI gate)
 **Branch:** main
 **Implementation HEAD at validation start:** 2c874550
-**Final HEAD after staging fixes:** f5f90ef
+**Final HEAD after staging fixes:** a6a55b2e (fix(e2e+api): close REAL_BROWSER_AUTHENTICATED_PARITY_PASS gate)
+**API Container Created:** 2026-10-01T04:00:26Z
+**Web Container Created:** 2026-10-01T03:50:54Z
 
 ---
 
