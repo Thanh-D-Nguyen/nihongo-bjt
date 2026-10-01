@@ -58,7 +58,7 @@ func adminLegalPoliciesListHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 		var total int
 		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM legal.legal_policy "+whereClause, args...).Scan(&total)
 
-		dataQ := fmt.Sprintf(`SELECT id, policy_key, version, title, status, effective_at, published_at, created_at, updated_at
+		dataQ := fmt.Sprintf(`SELECT id, policy_key, version, status, effective_at, created_at
 FROM legal.legal_policy %s ORDER BY created_at DESC LIMIT $%d OFFSET $%d`,
 			whereClause, argIdx, argIdx+1)
 		args = append(args, limit, offset)

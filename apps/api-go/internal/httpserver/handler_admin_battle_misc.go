@@ -257,7 +257,7 @@ func adminBattleMatchesListHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 		dataQuery := fmt.Sprintf(`
 SELECT id, user_id, opponent_user_id, bot_key, mode, status, room_code,
        max_rounds, fairness_seed, user_score, opponent_score,
-       abandoned_reason, started_at, completed_at, created_at, updated_at
+       abandoned_reason, started_at, completed_at
 FROM learning.battle_session %s
 ORDER BY created_at DESC LIMIT $%d OFFSET $%d`,
 			whereClause, argIdx, argIdx+1)
@@ -366,7 +366,7 @@ func adminBattleMatchesDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http
 		err := db.QueryRow(ctx, `
 SELECT id, user_id, opponent_user_id, bot_key, mode, status, room_code,
        max_rounds, fairness_seed, user_score, opponent_score,
-       abandoned_reason, started_at, completed_at, created_at, updated_at
+       abandoned_reason, started_at, completed_at
 FROM learning.battle_session WHERE id = $1`, id).Scan(
 			&md.ID, &md.UserID, &md.OpponentUserID, &md.BotKey,
 			&md.Mode, &md.Status, &md.RoomCode, &md.MaxRounds, &md.FairnessSeed,

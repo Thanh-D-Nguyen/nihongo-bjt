@@ -626,11 +626,11 @@ func adminPrivacyRequestsListHandler(db *pgxpool.Pool, logger *slog.Logger) http
 		}
 
 		var total int
-		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM privacy.request "+whereClause, args...).Scan(&total)
+		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM profile.privacy_request "+whereClause, args...).Scan(&total)
 
-		dataQ := fmt.Sprintf(`SELECT id, user_id, kind, status, reason, result_payload, last_error,
-			created_at, updated_at, completed_at
-			FROM privacy.request %s ORDER BY created_at DESC LIMIT $%d OFFSET $%d`,
+		dataQ := fmt.Sprintf(`SELECT id, user_id, kind, status, result_payload, last_error,
+			created_at, completed_at
+			FROM profile.privacy_request %s ORDER BY created_at DESC LIMIT $%d OFFSET $%d`,
 			whereClause, argIdx, argIdx+1)
 		args = append(args, limit, offset)
 
@@ -706,9 +706,9 @@ func adminPrivacyRequestDetailHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 		var pr Request
 		var ca, ua time.Time
 		var cat *time.Time
-		err := db.QueryRow(r.Context(), `SELECT id, user_id, kind, status, reason, result_payload, last_error,
-			created_at, updated_at, completed_at
-			FROM privacy.request WHERE id=$1`, id).
+		err := db.QueryRow(r.Context(), `SELECT id, user_id, kind, status, result_payload, last_error,
+			created_at, completed_at
+			FROM profile.privacy_request WHERE id=$1`, id).
 			Scan(&pr.ID, &pr.UserID, &pr.Kind, &pr.Status, &pr.Reason, &pr.ResultPayload,
 				&pr.LastError, &ca, &ua, &cat)
 		if err != nil {
@@ -776,7 +776,7 @@ func adminPrivacyRequestAcknowledgeHandler(db *pgxpool.Pool, logger *slog.Logger
 		}
 
 		var beforeStatus string
-		err := db.QueryRow(r.Context(), "SELECT status FROM privacy.request WHERE id=$1", id).Scan(&beforeStatus)
+		err := db.QueryRow(r.Context(), "SELECT status FROM profile.privacy_request WHERE id=$1", id).Scan(&beforeStatus)
 		if err != nil {
 			writeJSONError(w, "privacy request not found", http.StatusNotFound)
 			return
@@ -932,7 +932,7 @@ func adminPrivacyErasureConfirmHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 		}
 
 		var kind, status string
-		err := db.QueryRow(r.Context(), "SELECT kind, status FROM privacy.request WHERE id=$1", id).
+		err := db.QueryRow(r.Context(), "SELECT kind, status FROM profile.privacy_request WHERE id=$1", id).
 			Scan(&kind, &status)
 		if err != nil {
 			writeJSONError(w, "privacy request not found", http.StatusNotFound)

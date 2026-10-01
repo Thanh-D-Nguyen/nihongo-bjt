@@ -262,7 +262,7 @@ func adminMonetizationAdsCampaignsListHandler(db *pgxpool.Pool, logger *slog.Log
 
 		dataQuery := fmt.Sprintf(`
 			SELECT id, name, status, policy_status, provider_key, placement_codes,
-				start_at, end_at, config, created_at, updated_at
+				start_at, end_at, priority, creative_type, destination_url, target_locale, target_plan_slug, max_impressions, policy_status, created_at, updated_at
 			FROM monetization.ad_campaign %s
 			ORDER BY created_at DESC LIMIT $%d OFFSET $%d`,
 			whereClause, argIdx, argIdx+1)
@@ -590,7 +590,7 @@ func adminMonetizationAdsRulesListHandler(db *pgxpool.Pool, logger *slog.Logger)
 		rows, err := db.Query(ctx, `
 			SELECT id, rule_key, enabled, config, updated_at
 			FROM monetization.ad_safety_rule
-			ORDER BY priority ASC, created_at ASC`)
+			ORDER BY updated_at DESC`)
 		if err != nil {
 			logger.Error("list ad safety rules", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
