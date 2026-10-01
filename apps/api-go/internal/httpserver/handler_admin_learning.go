@@ -970,7 +970,7 @@ func adminLearningReviewProblemCardsHandler(db *pgxpool.Pool, logger *slog.Logge
 		}
 		if q != "" {
 			pattern := "%" + q + "%"
-			whereParts = append(whereParts, fmt.Sprintf("(c.front_text ILIKE $%[1]d OR c.back_text ILIKE $%[1]d)", argIdx))
+			whereParts = append(whereParts, fmt.Sprintf("(fv.front_text ILIKE $%[1]d OR fv.back_text ILIKE $%[1]d)", argIdx))
 			args = append(args, pattern)
 			argIdx++
 		}
@@ -981,7 +981,7 @@ func adminLearningReviewProblemCardsHandler(db *pgxpool.Pool, logger *slog.Logge
 		db.QueryRow(r.Context(), countQ, args...).Scan(&total)
 
 		dataQ := fmt.Sprintf(`SELECT uf.id, uf.card_id, uf.lapses, uf.leeched, uf.state, uf.ease_factor, uf.interval_days,
-			c.front_text, c.back_text, c.reading
+			fv.front_text, fv.back_text, fv.reading
 			FROM learning.user_flashcard uf LEFT JOIN learning.deck_card c ON c.id = uf.card_id
 			%s ORDER BY uf.lapses DESC, uf.updated_at DESC LIMIT $%d OFFSET $%d`,
 			whereClause, argIdx, argIdx+1)
@@ -1053,7 +1053,7 @@ func adminLearningReviewCardDetailHandler(db *pgxpool.Pool, logger *slog.Logger)
 		var dueAt *time.Time
 		err := db.QueryRow(r.Context(), `SELECT uf.id, uf.card_id, uf.user_id, uf.state, uf.lapses, uf.leeched,
 			uf.ease_factor, uf.interval_days, uf.repetitions, uf.due_at,
-			c.front_text, c.back_text, c.reading
+			fv.front_text, fv.back_text, fv.reading
 			FROM learning.user_flashcard uf LEFT JOIN learning.deck_card c ON c.id = uf.card_id
 			WHERE uf.id = $1`, id).
 			Scan(&cd.ID, &cd.CardID, &cd.UserID, &cd.State, &cd.Lapses, &cd.Leeched,

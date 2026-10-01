@@ -172,7 +172,7 @@ func adminIamPermissionsListHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 	return func(w http.ResponseWriter, r *http.Request) {
 		rows, err := db.Query(r.Context(),
 			`SELECT p.code, p.description,
-			 (SELECT COUNT(*) FROM authz.admin_role_permission rp WHERE rp.permission_code = p.code) as roles_count
+			 (SELECT COUNT(*) FROM authz.admin_role_permission rp WHERE rp.permission_id = p.id) as roles_count
 			 FROM authz.admin_permission p ORDER BY p.code`)
 		if err != nil {
 			logger.Error("list iam permissions", "error", err)
@@ -225,7 +225,7 @@ func adminIamPermissionDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http
 			return
 		}
 		roleRows, _ := db.Query(r.Context(),
-			"SELECT role_code FROM authz.admin_role_permission WHERE permission_code = $1 ORDER BY role_code", code)
+			"SELECT role_code FROM authz.admin_role_permission WHERE permission_id = $1 ORDER BY role_code", code)
 		if roleRows != nil {
 			defer roleRows.Close()
 			for roleRows.Next() {
@@ -241,7 +241,7 @@ func adminIamPermissionDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http
 		db.QueryRow(r.Context(),
 			`SELECT COUNT(DISTINCT ar.admin_actor_id) FROM authz.admin_role ar
 			 JOIN authz.admin_role_permission rp ON rp.role_code = ar.role_code
-			 WHERE rp.permission_code = $1`, code).Scan(&pd.AdminsCount)
+			 WHERE rp.permission_id = $1`, code).Scan(&pd.AdminsCount)
 		writeJSON(w, http.StatusOK, pd)
 	}
 }

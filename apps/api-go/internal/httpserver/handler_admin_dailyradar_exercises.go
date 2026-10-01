@@ -1036,7 +1036,7 @@ func adminExercisesPerformanceAnalyticsHandler(db *pgxpool.Pool, logger *slog.Lo
 		}
 		rows, err := db.Query(r.Context(), fmt.Sprintf(`SELECT e.exercise_type, COALESCE(e.level,'unknown') as level,
 COUNT(*) as total_attempts,
-SUM(CASE WHEN ea.correct THEN 1 ELSE 0 END) as correct_count,
+SUM(CASE WHEN ea.is_correct THEN 1 ELSE 0 END) as correct_count,
 AVG(CASE WHEN ea.duration_ms > 0 THEN ea.duration_ms ELSE NULL END) as avg_duration_ms
 FROM exercise.exercise_answer ea
 JOIN exercise.exercise e ON e.id = ea.exercise_id

@@ -261,7 +261,7 @@ func adminMonetizationAdsCampaignsListHandler(db *pgxpool.Pool, logger *slog.Log
 		}
 
 		dataQuery := fmt.Sprintf(`
-			SELECT id, name, status, policy_status, provider_key, placement_id,
+			SELECT id, name, status, policy_status, provider_key, placement_codes,
 				start_at, end_at, config, created_at, updated_at
 			FROM monetization.ad_campaign %s
 			ORDER BY created_at DESC LIMIT $%d OFFSET $%d`,

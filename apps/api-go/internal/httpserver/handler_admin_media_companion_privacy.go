@@ -59,7 +59,7 @@ func adminMediaListHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFu
 		}
 		if q != "" {
 			pattern := "%" + q + "%"
-			whereParts = append(whereParts, fmt.Sprintf("(original_name ILIKE $%[1]d OR object_key ILIKE $%[1]d)", argIdx))
+			whereParts = append(whereParts, fmt.Sprintf("(source_url ILIKE $%[1]d OR object_key ILIKE $%[1]d)", argIdx))
 			args = append(args, pattern)
 			argIdx++
 		}
@@ -72,7 +72,7 @@ func adminMediaListHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFu
 		var total int
 		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM media.asset "+whereClause, args...).Scan(&total)
 
-		dataQ := fmt.Sprintf(`SELECT id, object_key, original_name, mime_type, size_bytes, rights_status, license,
+		dataQ := fmt.Sprintf(`SELECT id, object_key, source_url, mime_type, byte_size, rights_status, license,
 			source_url, provenance, accessibility, status, created_at, updated_at
 			FROM media.asset %s ORDER BY created_at DESC LIMIT $%d OFFSET $%d`,
 			whereClause, argIdx, argIdx+1)
@@ -151,7 +151,7 @@ func adminMediaDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handler
 
 		var a Asset
 		var ca, ua time.Time
-		err := db.QueryRow(r.Context(), `SELECT id, object_key, original_name, mime_type, size_bytes, rights_status, license,
+		err := db.QueryRow(r.Context(), `SELECT id, object_key, source_url, mime_type, byte_size, rights_status, license,
 			source_url, provenance, accessibility, status, created_at, updated_at
 			FROM media.asset WHERE id=$1`, id).
 			Scan(&a.ID, &a.ObjectKey, &a.OriginalName, &a.MimeType, &a.SizeBytes,
