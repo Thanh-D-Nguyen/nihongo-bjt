@@ -8,12 +8,12 @@ const { act } = React;
 
 const fetchMock = vi.fn();
 
-vi.mock("../../../../../components/auth/require-keycloak-auth", () => ({
-  RequireKeycloakAuth: ({ children }: { children: React.ReactNode }) => children
+vi.mock("../../../../../components/auth/require-auth", () => ({
+  RequireAuth: ({ children }: { children: React.ReactNode }) => children
 }));
 
-vi.mock("../../../../../components/auth/keycloak-auth-provider", () => ({
-  useKeycloakAuth: () => ({ accessToken: "test-access-token" })
+vi.mock("../../../../../lib/go-auth-provider", () => ({
+  useGoAuth: () => ({ accessToken: "test-access-token" })
 }));
 
 vi.mock("./loto-game-toggle", () => ({

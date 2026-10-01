@@ -3,7 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
-import { useKeycloakAuth } from "../../../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../../../lib/learner-api";
 
 const apiBase = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/$/, "");
@@ -35,7 +35,7 @@ export function AccountsSettingsClient({
   locale: string;
 }) {
   const searchParams = useSearchParams();
-  const { userId } = useKeycloakAuth();
+  const { userId } = useGoAuth();
   const [identities, setIdentities] = useState<IdentityRow[] | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);

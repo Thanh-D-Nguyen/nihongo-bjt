@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import en from "../../../messages/en.json";
 import ja from "../../../messages/ja.json";
 import vi from "../../../messages/vi.json";
-import { RequireKeycloakAuth } from "../../../components/auth/require-keycloak-auth";
+import { RequireAuth } from "../../../components/auth/require-auth";
 import { MePageClient } from "./_components/me-page-client";
 
 const messages: Record<string, typeof vi> = { ja, vi, en };
@@ -28,7 +28,7 @@ export default async function MePage({
   const t = messages[locale] ?? messages.vi;
 
   return (
-    <RequireKeycloakAuth locale={locale}>
+    <RequireAuth locale={locale}>
       <Suspense
         fallback={
           <div aria-busy="true" className="mx-auto w-full max-w-5xl space-y-4 px-4 py-8">
@@ -50,6 +50,6 @@ export default async function MePage({
           locale={locale}
         />
       </Suspense>
-    </RequireKeycloakAuth>
+    </RequireAuth>
   );
 }

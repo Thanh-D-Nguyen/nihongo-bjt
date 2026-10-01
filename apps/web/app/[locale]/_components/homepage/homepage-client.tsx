@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { learnerApiFetchOptional } from "../../../../lib/learner-api";
 import { AdSlot, type AdSlotLabels } from "../ads/ad-slot";
 import type { HomepageLabels, LearnerAnalytics, NhkArticle } from "./types";
@@ -28,7 +28,7 @@ export function HomepageClient({
   locale: string;
   pushBannerLabels: PushBannerLabels;
 }) {
-  const auth = useKeycloakAuth();
+  const auth = useGoAuth();
   const userId = auth.userId ?? "";
   const isLoggedIn = Boolean(userId);
 

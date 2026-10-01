@@ -27,7 +27,7 @@ import {
   IconSpark
 } from "../../../_components/app-icons";
 import { AdSlot, type AdSlotLabels } from "../../_components/ads/ad-slot";
-import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { queueSizeForUser } from "../../../../lib/offline-review-queue";
 import { learnerApiFetch } from "../../../../lib/learner-api";
 import { DeckBrowser, type DeckLabels, type LibraryDeckFilter } from "./deck-browser";
@@ -61,7 +61,7 @@ export function FlashcardsPageClient({
   locale: string;
   reviewSessionLabels: ReviewSessionLabels;
 }) {
-  const { userId } = useKeycloakAuth();
+  const { userId } = useGoAuth();
   const tabListId = useId();
   const router = useRouter();
   const pathname = usePathname();

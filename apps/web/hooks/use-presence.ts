@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { io, type Socket } from "socket.io-client";
 
-import { useKeycloakAuth } from "../lib/go-auth-provider";
+import { useGoAuth } from "../lib/go-auth-provider";
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/$/u, "");
 const HEARTBEAT_INTERVAL_MS = 60_000; // 60s (server TTL is 90s)
@@ -28,7 +28,7 @@ type PresenceOptions = {
  * Cookies are sent automatically on the WebSocket upgrade request.
  */
 export function usePresence(options?: PresenceOptions) {
-  const { isAuthenticated, userId } = useKeycloakAuth();
+  const { isAuthenticated, userId } = useGoAuth();
   const socketRef = useRef<Socket | null>(null);
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const onChallengeRef = useRef(options?.onChallengeReceived);

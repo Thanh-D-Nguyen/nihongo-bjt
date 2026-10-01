@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 
-import { useKeycloakAuth } from "../../lib/go-auth-provider";
+import { useGoAuth } from "../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../lib/learner-api";
 
 interface ActiveSession {
@@ -52,7 +52,7 @@ export function useFocusTimer() {
 }
 
 export function FocusTimerProvider({ children }: { children: ReactNode }) {
-  const { userId } = useKeycloakAuth();
+  const { userId } = useGoAuth();
   const [loading, setLoading] = useState(true);
   const [todayMinutes, setTodayMinutes] = useState(0);
   const [todaySessions, setTodaySessions] = useState(0);

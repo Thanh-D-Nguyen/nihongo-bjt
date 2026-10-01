@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { learnerApiFetchOptional } from "../../../../lib/learner-api";
 
 export interface AdSlotLabels {
@@ -59,7 +59,7 @@ export function AdSlot({
   locale: string;
   placementCode: string;
 }) {
-  const { userId = null } = useKeycloakAuth();
+  const { userId = null } = useGoAuth();
   const sessionKind = learningContext?.sessionKind;
   const [ad, setAd] = useState<AdDecision | null>(null);
   const slotRef = useRef<HTMLDivElement>(null);

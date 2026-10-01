@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
-import { useKeycloakAuth } from "../../../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../../../lib/learner-api";
 import { toIntlLocale } from "@/lib/locale-utils";
 
@@ -81,7 +81,7 @@ const WINDOW_LABELS: Record<string, Record<string, string>> = {
 };
 
 export function SubscriptionSettingsClient({ labels, locale }: { labels: Labels; locale: string }) {
-  const { userId } = useKeycloakAuth();
+  const { userId } = useGoAuth();
   const [data, setData] = useState<SubscriptionData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);

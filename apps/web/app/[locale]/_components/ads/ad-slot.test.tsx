@@ -10,8 +10,8 @@ const learnerApiFetchOptionalMock = vi.fn();
 const authState: { userId: string | null } = { userId: null };
 const decisionToken = "signed-decision-token-".padEnd(64, "x");
 
-vi.mock("../../../../components/auth/keycloak-auth-provider", () => ({
-  useKeycloakAuth: () => authState
+vi.mock("../../../../lib/go-auth-provider", () => ({
+  useGoAuth: () => authState
 }));
 
 vi.mock("../../../../lib/learner-api", () => ({

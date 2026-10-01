@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import en from "../../../messages/en.json";
 import ja from "../../../messages/ja.json";
 import vi from "../../../messages/vi.json";
-import { RequireKeycloakAuth } from "../../../components/auth/require-keycloak-auth";
+import { RequireAuth } from "../../../components/auth/require-auth";
 import { CardgenPageClient } from "./_components/cardgen-page-client";
 
 const messages: Record<string, typeof vi> = { ja, vi, en };
@@ -23,7 +23,7 @@ export default async function CardgenPage({
   const t = messages[locale] ?? messages.vi;
 
   return (
-    <RequireKeycloakAuth locale={locale}>
+    <RequireAuth locale={locale}>
       <Suspense
         fallback={
           <div
@@ -34,6 +34,6 @@ export default async function CardgenPage({
       >
         <CardgenPageClient labels={t.cardgen} locale={locale} />
       </Suspense>
-    </RequireKeycloakAuth>
+    </RequireAuth>
   );
 }

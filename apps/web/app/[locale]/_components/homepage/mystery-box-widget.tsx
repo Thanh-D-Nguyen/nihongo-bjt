@@ -2,7 +2,7 @@
 
 import { cn } from "@nihongo-bjt/ui";
 import { useCallback, useEffect, useState } from "react";
-import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../../lib/learner-api";
 
 interface Reward {
@@ -23,7 +23,7 @@ const RARITY_STYLES: Record<string, { border: string; bg: string; text: string; 
 };
 
 export function MysteryBoxWidget({ locale: _locale }: { locale: string }) {
-  const { userId } = useKeycloakAuth();
+  const { userId } = useGoAuth();
   const [loading, setLoading] = useState(true);
   const [, setCanOpen] = useState(false);
   const [goalComplete, setGoalComplete] = useState(false);

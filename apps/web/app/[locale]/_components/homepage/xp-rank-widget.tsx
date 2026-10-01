@@ -3,7 +3,7 @@
 import { cn } from "@nihongo-bjt/ui";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../../lib/learner-api";
  
 interface RankState {
@@ -28,7 +28,7 @@ const RANK_DISPLAY: Record<string, { label: string; emoji: string }> = {
 };
  
 export function XpRankWidget({ locale }: { locale: string }) {
-  const { userId } = useKeycloakAuth();
+  const { userId } = useGoAuth();
   const [data, setData] = useState<RankData | null>(null);
   const [loading, setLoading] = useState(true);
  

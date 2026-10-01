@@ -4,7 +4,7 @@ import { cn } from "@nihongo-bjt/ui";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../../lib/learner-api";
 import { normalizeKanjiDetailDto } from "../../search/_components/kanji-detail-dto";
 import { toIntlLocale } from "@/lib/locale-utils";
@@ -99,7 +99,7 @@ async function resolveBookmarkTitle(targetType: string, targetId: string): Promi
 }
 
 export function SavedPageClient({ labels, locale }: { labels: SavedPageLabels; locale: string }) {
-  const { userId } = useKeycloakAuth();
+  const { userId } = useGoAuth();
   const [tab, setTab] = useState<SavedTab>("words");
   const [rows, setRows] = useState<BookmarkRow[]>([]);
   const [loading, setLoading] = useState(false);

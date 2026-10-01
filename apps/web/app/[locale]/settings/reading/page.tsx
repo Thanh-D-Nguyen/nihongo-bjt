@@ -3,7 +3,7 @@ import Link from "next/link";
 import en from "../../../../messages/en.json";
 import ja from "../../../../messages/ja.json";
 import vi from "../../../../messages/vi.json";
-import { RequireKeycloakAuth } from "../../../../components/auth/require-keycloak-auth";
+import { RequireAuth } from "../../../../components/auth/require-auth";
 import { ReadingAssistSettingsClient } from "./_components/reading-assist-settings-client";
 
 const messages = { ja, vi, en };
@@ -17,7 +17,7 @@ export default async function ReadingAssistSettingsPage({
   const t = messages[locale] ?? messages.vi;
 
   return (
-    <RequireKeycloakAuth locale={locale}>
+    <RequireAuth locale={locale}>
       <ReadingAssistSettingsClient labels={t.readingPage} />
       <Link
         className="text-sm font-medium text-muted underline-offset-4 hover:text-ink hover:underline"
@@ -25,6 +25,6 @@ export default async function ReadingAssistSettingsPage({
       >
         ← {t.settings.title}
       </Link>
-    </RequireKeycloakAuth>
+    </RequireAuth>
   );
 }

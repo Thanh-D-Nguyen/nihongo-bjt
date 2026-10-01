@@ -1,0 +1,33 @@
+FROM node:20-alpine AS base
+RUN corepack enable && corepack prepare pnpm@latest --activate
+WORKDIR /app
+
+# Install dependencies
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+COPY apps/web/package.json apps/web/
+COPY packages/database/package.json packages/database/
+COPY packages/shared/package.json packages/shared/
+COPY packages/config/package.json packages/config/
+COPY packages/ui/package.json packages/ui/
+RUN pnpm install --frozen-lockfile
+
+# Copy source
+COPY apps/web/ apps/web/
+COPY packages/ packages/
+COPY tsconfig.json ./
+
+# Build
+ENV NEXT_PUBLIC_API_URL=http://192.168.1.8:14001
+ENV API_URL=http://api:4001
+ENV NODE_ENV=production
+RUN cd apps/web && pnpm build
+
+# Production stage
+FROM node:20-alpine
+WORKDIR /app
+COPY --from=base /app/apps/web/.next ./.next
+COPY --from=base /app/apps/web/public ./public
+COPY --from=base /app/apps/web/package.json ./
+COPY --from=base /app/node_modules ./node_modules
+EXPOSE 3000
+CMD ["npx", "next", "start", "-p", "3000"]

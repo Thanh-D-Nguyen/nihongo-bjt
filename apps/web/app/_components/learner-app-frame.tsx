@@ -15,7 +15,7 @@ import {
   useState
 } from "react";
 
-import { useKeycloakAuth } from "../../lib/go-auth-provider";
+import { useGoAuth } from "../../lib/go-auth-provider";
 import { learnerApiFetchOptional } from "../../lib/learner-api";
 import { AnnouncementStrip } from "./announcement-strip";
 import { BrandFull } from "./brand-logo";
@@ -141,7 +141,7 @@ export function LearnerAppFrame({
     email,
     loading: authLoading,
     logout
-  } = useKeycloakAuth();
+  } = useGoAuth();
   const [mounted, setMounted] = useState(false);
   const [globalSearchQuery, setGlobalSearchQuery] = useState("");
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);

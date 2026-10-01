@@ -3,7 +3,7 @@
 import { cn } from "@nihongo-bjt/ui";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../../lib/learner-api";
 
 interface Scenario {
@@ -31,7 +31,7 @@ const DIFFICULTY_LABELS: Record<string, string> = {
 };
 
 export function ScenarioListClient({ locale }: { locale: string }) {
-  const { userId } = useKeycloakAuth();
+  const { userId } = useGoAuth();
   const router = useRouter();
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [loading, setLoading] = useState(true);

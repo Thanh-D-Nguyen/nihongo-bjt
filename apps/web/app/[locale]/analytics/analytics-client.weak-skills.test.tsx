@@ -9,8 +9,8 @@ const { act } = React;
 const learnerApiFetchMock = vi.fn();
 const authState: { userId: string | null } = { userId: "11111111-1111-4111-8111-111111111111" };
 
-vi.mock("../../../components/auth/keycloak-auth-provider", () => ({
-  useKeycloakAuth: () => authState
+vi.mock("../../../lib/go-auth-provider", () => ({
+  useGoAuth: () => authState
 }));
 
 vi.mock("../../../lib/learner-api", () => ({

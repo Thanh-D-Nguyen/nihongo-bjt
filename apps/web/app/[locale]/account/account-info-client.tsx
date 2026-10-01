@@ -12,7 +12,7 @@ import {
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { useKeycloakAuth } from "../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../lib/go-auth-provider";
 import { learnerApiFetchOptional } from "../../../lib/learner-api";
 
 type AccountInfoLabels = {
@@ -59,7 +59,7 @@ export function AccountInfoClient({
   labels: AccountInfoLabels;
   locale: string;
 }) {
-  const auth = useKeycloakAuth();
+  const auth = useGoAuth();
   const [analytics, setAnalytics] = useState<AnalyticsPayload | null>(null);
   const [dailyHome, setDailyHome] = useState<DailyHomePayload | null>(null);
 

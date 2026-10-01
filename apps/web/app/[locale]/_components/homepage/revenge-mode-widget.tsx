@@ -2,7 +2,7 @@
 
 import { cn } from "@nihongo-bjt/ui";
 import { useCallback, useEffect, useState } from "react";
-import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../../lib/learner-api";
 
 interface RevengeQuestion {
@@ -15,7 +15,7 @@ interface RevengeQuestion {
 }
 
 export function RevengeModeWidget({ locale: _locale }: { locale: string }) {
-  const { userId } = useKeycloakAuth();
+  const { userId } = useGoAuth();
   const [questions, setQuestions] = useState<RevengeQuestion[]>([]);
   const [totalPending, setTotalPending] = useState(0);
   const [loading, setLoading] = useState(true);

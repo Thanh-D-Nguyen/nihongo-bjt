@@ -7,7 +7,7 @@ import {
 } from "@nihongo-bjt/ui";
 import Link from "next/link";
 
-import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../../lib/go-auth-provider";
 
 /* ── Types ── */
 
@@ -93,7 +93,7 @@ export function SettingsHubClient({
   };
   locale: string;
 }) {
-  const auth = useKeycloakAuth();
+  const auth = useGoAuth();
 
   const s = labels.settings;
   const a = labels.accountInfo;

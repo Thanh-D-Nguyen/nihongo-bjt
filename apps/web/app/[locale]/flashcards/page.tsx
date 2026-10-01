@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import en from "../../../messages/en.json";
 import ja from "../../../messages/ja.json";
 import vi from "../../../messages/vi.json";
-import { RequireKeycloakAuth } from "../../../components/auth/require-keycloak-auth";
+import { RequireAuth } from "../../../components/auth/require-auth";
 import { FlashcardsPageClient } from "./_components/flashcards-page-client";
 
 const messages: Record<string, typeof vi> = { ja, vi, en };
@@ -34,7 +34,7 @@ export default async function FlashcardsPage({
   const initialMain = sp.tab === "review" || deckIdOk ? ("review" as const) : ("library" as const);
 
   return (
-    <RequireKeycloakAuth locale={locale}>
+    <RequireAuth locale={locale}>
       <Suspense
         fallback={
           <div
@@ -53,6 +53,6 @@ export default async function FlashcardsPage({
           reviewSessionLabels={t.reviewSession}
         />
       </Suspense>
-    </RequireKeycloakAuth>
+    </RequireAuth>
   );
 }

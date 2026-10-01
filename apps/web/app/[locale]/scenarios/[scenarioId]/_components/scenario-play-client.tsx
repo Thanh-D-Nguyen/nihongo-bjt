@@ -3,7 +3,7 @@
 import { cn } from "@nihongo-bjt/ui";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useKeycloakAuth } from "../../../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../../../lib/learner-api";
 
 interface Choice {
@@ -45,7 +45,7 @@ export function ScenarioPlayClient({
   locale: string;
   scenarioId: string;
 }) {
-  const { userId } = useKeycloakAuth();
+  const { userId } = useGoAuth();
   const router = useRouter();
   const [scenario, setScenario] = useState<ScenarioData | null>(null);
   const [loading, setLoading] = useState(true);

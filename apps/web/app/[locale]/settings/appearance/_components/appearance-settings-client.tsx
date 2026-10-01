@@ -4,7 +4,7 @@ import { Card, CardContent, PageHeader } from "@nihongo-bjt/ui";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { useKeycloakAuth } from "../../../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../../../lib/go-auth-provider";
 import {
   DEFAULT_APPEARANCE,
   type AppearanceState,
@@ -47,7 +47,7 @@ export function AppearanceSettingsClient({
   labels: AppearanceLabels;
   locale: string;
 }) {
-  const auth = useKeycloakAuth();
+  const auth = useGoAuth();
   const [state, setState] = useState<AppearanceState>(DEFAULT_APPEARANCE);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);

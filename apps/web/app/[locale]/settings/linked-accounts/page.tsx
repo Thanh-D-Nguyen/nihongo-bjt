@@ -5,7 +5,7 @@ import { Suspense } from "react";
 import en from "../../../../messages/en.json";
 import ja from "../../../../messages/ja.json";
 import vi from "../../../../messages/vi.json";
-import { RequireKeycloakAuth } from "../../../../components/auth/require-keycloak-auth";
+import { RequireAuth } from "../../../../components/auth/require-auth";
 import { AccountsSettingsClient } from "./_components/accounts-settings-client";
 
 const messages = { ja, vi, en };
@@ -20,7 +20,7 @@ export default async function AccountsSettingsPage({
   const loc = locale;
 
   return (
-    <RequireKeycloakAuth locale={locale}>
+    <RequireAuth locale={locale}>
       <main className="w-full space-y-6 pb-12">
         <PageHeader description={t.accounts.subtitle} title={t.accounts.title} />
         <Card className="border-ink/10 shadow-sm">
@@ -37,6 +37,6 @@ export default async function AccountsSettingsPage({
           ← {t.settings.title}
         </Link>
       </main>
-    </RequireKeycloakAuth>
+    </RequireAuth>
   );
 }

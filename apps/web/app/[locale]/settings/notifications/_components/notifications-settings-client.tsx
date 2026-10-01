@@ -3,7 +3,7 @@
 import { Card, CardContent, PageHeader, SectionHeader, Toggle } from "@nihongo-bjt/ui";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 
-import { useKeycloakAuth } from "../../../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../../../lib/learner-api";
 import { usePushSubscription } from "../../../../_hooks/use-push-subscription";
 
@@ -46,7 +46,7 @@ type Feed = {
 };
 
 export function NotificationsSettingsClient({ labels }: { labels: NotificationsLabels }) {
-  const { userId } = useKeycloakAuth();
+  const { userId } = useGoAuth();
   const [prefs, setPrefs] = useState<Prefs | null>(null);
   const [feed, setFeed] = useState<Feed[]>([]);
   const [error, setError] = useState<string | null>(null);

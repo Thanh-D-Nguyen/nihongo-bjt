@@ -2,7 +2,7 @@
 
 import { cn } from "@nihongo-bjt/ui";
 import { useCallback, useEffect, useState } from "react";
-import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../../lib/learner-api";
 
 interface WeeklyReport {
@@ -30,7 +30,7 @@ function TrendArrow({ current, previous }: { current: number; previous: number |
 }
 
 export function WeeklyReportCard({ locale: _locale }: { locale: string }) {
-  const { userId } = useKeycloakAuth();
+  const { userId } = useGoAuth();
   const [report, setReport] = useState<WeeklyReport | null>(null);
   const [loading, setLoading] = useState(true);
 

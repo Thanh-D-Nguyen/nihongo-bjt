@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 
-import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../../lib/learner-api";
 
 type PlanData = {
@@ -37,7 +37,7 @@ type Labels = {
 };
 
 export function PricingClient({ labels, locale }: { labels: Labels; locale: string }) {
-  const { userId } = useKeycloakAuth();
+  const { userId } = useGoAuth();
   const [plans, setPlans] = useState<PlanData[]>([]);
   const [currentSlug, setCurrentSlug] = useState<string | null>(null);
   const [enforcementEnabled, setEnforcementEnabled] = useState(true);

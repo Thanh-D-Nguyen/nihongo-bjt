@@ -2,7 +2,7 @@
 
 import { cn } from "@nihongo-bjt/ui";
 import { useCallback, useEffect, useState } from "react";
-import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../../lib/learner-api";
 
 interface StudyTask {
@@ -36,7 +36,7 @@ const TASK_LABELS: Record<string, { label: string; emoji: string; href: string }
 };
 
 export function StudyGoalWidget({ locale }: { locale: string }) {
-  const { userId } = useKeycloakAuth();
+  const { userId } = useGoAuth();
   const [plan, setPlan] = useState<StudyPlan | null>(null);
   const [goalSet, setGoalSet] = useState<boolean | null>(null); // null = loading
   const [loading, setLoading] = useState(true);

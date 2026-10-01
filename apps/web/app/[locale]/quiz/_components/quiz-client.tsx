@@ -15,7 +15,7 @@ import {
   AnnotatedJapaneseText,
   type ReadingAssistDisplayMode
 } from "../../../../components/reading-assist/annotated-japanese-text";
-import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../../lib/learner-api";
 import { recordStudyProgress } from "../../../_hooks/use-study-progress";
 import { ShareDrawer } from "../../_components/share-drawer";
@@ -409,7 +409,7 @@ export function QuizClient({ labels, locale = "vi" }: { labels: QuizLabels; loca
   const [readingAssistMode, setReadingAssistMode] = useState<ReadingAssistDisplayMode | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const answeringRef = useRef(false);
-  const { userId } = useKeycloakAuth();
+  const { userId } = useGoAuth();
 
   const inQuestion = Boolean(question?.question);
   const showHub = !inQuestion && !results && !resuming;

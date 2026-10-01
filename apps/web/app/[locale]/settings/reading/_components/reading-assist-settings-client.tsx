@@ -4,7 +4,7 @@ import { Card, CardContent, PageHeader, Toggle } from "@nihongo-bjt/ui";
 import { useCallback, useEffect, useState } from "react";
 
 import { AnnotatedJapaneseText, type ReadingAssistDisplayMode } from "../../../../../components/reading-assist/annotated-japanese-text";
-import { useKeycloakAuth } from "../../../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../../../lib/learner-api";
 
 type Messages = {
@@ -47,7 +47,7 @@ type Props = {
 };
 
 export function ReadingAssistSettingsClient({ labels }: Props) {
-  const { userId } = useKeycloakAuth();
+  const { userId } = useGoAuth();
   const [displayMode, setDisplayMode] = useState<ReadingAssistDisplayMode>("hover");
   const [examTimed, setExamTimed] = useState(false);
   const [prefsMessage, setPrefsMessage] = useState<string | null>(null);

@@ -4,7 +4,7 @@ import type { BookmarkTargetType } from "@nihongo-bjt/shared";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { learnerApiFetch } from "../../../lib/learner-api";
-import { useKeycloakAuth } from "../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../lib/go-auth-provider";
 
 /* ── Icons ──────────────────────────────────── */
 
@@ -89,7 +89,7 @@ function DeckPicker({
   onClose: () => void;
   onSelect: (deckId: string) => void;
 }) {
-  const auth = useKeycloakAuth();
+  const auth = useGoAuth();
   const userId = auth.userId ?? "";
   const [decks, setDecks] = useState<DeckItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -237,7 +237,7 @@ export function ContentActions({
   labels: ContentActionLabels;
   targetType: BookmarkTargetType;
 }) {
-  const auth = useKeycloakAuth();
+  const auth = useGoAuth();
   const userId = auth.userId ?? "";
   const isLoggedIn = Boolean(userId);
 

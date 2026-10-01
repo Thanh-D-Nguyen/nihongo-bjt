@@ -15,7 +15,7 @@ import {
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { useKeycloakAuth } from "../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../lib/learner-api";
 import { ActivityBarChart } from "./_components/activity-bar-chart";
 import { ActivityHeatmap } from "./_components/activity-heatmap";
@@ -242,7 +242,7 @@ export function LearnerAnalyticsClient({
   const [days, setDays] = useState<(typeof PERIOD_OPTIONS)[number]>(7);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { userId } = useKeycloakAuth();
+  const { userId } = useGoAuth();
 
   const loadAnalytics = useCallback(async () => {
     const uid = userId;

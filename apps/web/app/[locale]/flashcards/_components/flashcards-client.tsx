@@ -5,7 +5,7 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Button, EmptyState, ErrorState, LoadingSkeleton } from "@nihongo-bjt/ui";
 import Link from "next/link";
 
-import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../../lib/go-auth-provider";
 import {
   drainForUser,
   enqueueReview,
@@ -214,7 +214,7 @@ export function FlashcardsClient({
   const [sessionReviewed, setSessionReviewed] = useState(0);
   const [sessionInitialTotal, setSessionInitialTotal] = useState(0);
   const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const { userId } = useKeycloakAuth();
+  const { userId } = useGoAuth();
 
   const clearFeedbackTimer = () => {
     if (feedbackTimerRef.current) {

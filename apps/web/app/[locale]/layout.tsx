@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import en from "../../messages/en.json";
 import ja from "../../messages/ja.json";
 import vi from "../../messages/vi.json";
-import { KeycloakAuthShell } from "./_components/keycloak-auth-shell";
+import { AuthShell } from "./_components/auth-shell";
 import { PwaRegister } from "../_components/pwa-register";
 import { AmbientProvider } from "../_hooks/use-ambient-mode";
 import { AmbientOverlay } from "../_components/ambient-overlay";
@@ -48,7 +48,7 @@ export default async function LearnerLayout({
       <AmbientProvider>
         <AmbientOverlay />
         <AmbientMiniPlayer labels={t.ambient} />
-        <KeycloakAuthShell
+        <AuthShell
           companionLabels={t.nav.companion}
           focusTimerLabels={t.focusTimer}
           locale={locale}
@@ -59,7 +59,7 @@ export default async function LearnerLayout({
           <div className="site-root" id="main" tabIndex={-1}>
             {children}
           </div>
-        </KeycloakAuthShell>
+        </AuthShell>
       </AmbientProvider>
     </div>
   );

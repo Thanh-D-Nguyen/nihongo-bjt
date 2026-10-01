@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
-import { useKeycloakAuth } from "../../../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../../../lib/go-auth-provider";
 import { AnnotatedJapaneseText } from "../../../../../components/reading-assist/annotated-japanese-text";
 import { learnerApiFetchOptional } from "../../../../../lib/learner-api";
 import { ContentActions, type ContentActionLabels } from "../../../_components/content-actions";
@@ -75,7 +75,7 @@ export function LexemeDetailClient({
   locale: string;
   readingAssistLabels: ReadingAssistLabels;
 }) {
-  const auth = useKeycloakAuth();
+  const auth = useGoAuth();
   const userId = auth.userId ?? "";
   const [item, setItem] = useState<LexemeDetail | null>(null);
   const [loading, setLoading] = useState(true);

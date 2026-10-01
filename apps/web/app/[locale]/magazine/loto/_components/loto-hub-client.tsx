@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { RequireKeycloakAuth } from "../../../../../components/auth/require-keycloak-auth";
-import { useKeycloakAuth } from "../../../../../lib/go-auth-provider";
+import { RequireAuth } from "../../../../../components/auth/require-auth";
+import { useGoAuth } from "../../../../../lib/go-auth-provider";
 import { LotoGameToggle } from "./loto-game-toggle";
 import { LotoHeroPrediction } from "./loto-hero-prediction";
 import { LotoHistoryCard } from "./loto-history-card";
@@ -96,14 +96,14 @@ function isAbortError(error: unknown) {
 
 export function LotoHubClient({ labels, locale }: { labels: LotoLabels; locale: string }) {
   return (
-    <RequireKeycloakAuth locale={locale}>
+    <RequireAuth locale={locale}>
       <LotoHubInner labels={labels} locale={locale} />
-    </RequireKeycloakAuth>
+    </RequireAuth>
   );
 }
 
 function LotoHubInner({ labels }: { labels: LotoLabels; locale: string }) {
-  const { isAuthenticated } = useKeycloakAuth();
+  const { isAuthenticated } = useGoAuth();
   const [game, setGame] = useState<LotoGame>("loto6");
   const [nextDraw, setNextDraw] = useState<NextDrawData | null>(null);
   const [feed, setFeed] = useState<FeedItem[]>([]);

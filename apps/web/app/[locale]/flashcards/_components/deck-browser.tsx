@@ -11,7 +11,7 @@ import {
 import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
-import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../../lib/learner-api";
 import { DeckComposerPanel, type DeckComposerLabels } from "./deck-composer-panel";
 import { DeckCard } from "./deck-card";
@@ -160,7 +160,7 @@ export function DeckBrowser({
   onDecksChanged?: () => void | Promise<void>;
   searchQuery: string;
 }) {
-  const { userId } = useKeycloakAuth();
+  const { userId } = useGoAuth();
   const searchParams = useSearchParams();
   const cloneToken = searchParams.get("cloneToken");
   const [decks, setDecks] = useState<DeckApiRow[]>([]);

@@ -3,7 +3,7 @@
 import type { FlashcardThemeConfig } from "@nihongo-bjt/shared";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { enqueueReview } from "../../../../lib/offline-review-queue";
 import { learnerApiFetch } from "../../../../lib/learner-api";
 import { speakJapanese } from "../../../../lib/japanese-speech";
@@ -970,7 +970,7 @@ export function ReviewSession({
   styleConfig?: FlashcardThemeConfig | null;
   onExit: () => void;
 }) {
-  const { userId } = useKeycloakAuth();
+  const { userId } = useGoAuth();
 
   const [phase, setPhase] = useState<Phase>("loading");
   const [error, setError] = useState<string | null>(null);

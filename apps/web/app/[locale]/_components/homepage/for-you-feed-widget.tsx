@@ -3,7 +3,7 @@
 import { cn } from "@nihongo-bjt/ui";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { learnerApiFetchOptional } from "../../../../lib/learner-api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -91,7 +91,7 @@ export function ForYouFeedWidget({ locale, refreshKey = 0 }: { locale: string; r
   const prefersReducedMotion =
     typeof window !== "undefined" &&
     window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-  const { userId } = useKeycloakAuth();
+  const { userId } = useGoAuth();
   const [feed, setFeed] = useState<FeedResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [showInfo, setShowInfo] = useState(false);

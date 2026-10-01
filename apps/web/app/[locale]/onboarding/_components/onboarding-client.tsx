@@ -3,7 +3,7 @@
 import { Card, CardContent, PageHeader } from "@nihongo-bjt/ui";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 
-import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../../lib/learner-api";
 
 type Q = {
@@ -30,7 +30,7 @@ export type OnboardingLabels = {
 };
 
 export function OnboardingClient({ labels }: { labels: OnboardingLabels }) {
-  const { userId } = useKeycloakAuth();
+  const { userId } = useGoAuth();
   const [step, setStep] = useState<"form" | "placement" | "result">("form");
   const [error, setError] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);

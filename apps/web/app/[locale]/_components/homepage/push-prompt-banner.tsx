@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { usePushSubscription } from "../../../_hooks/use-push-subscription";
 
 export interface PushBannerLabels {
@@ -14,7 +14,7 @@ export interface PushBannerLabels {
 const DISMISS_KEY = "push_prompt_dismissed";
 
 export function PushPromptBanner({ labels }: { labels: PushBannerLabels }) {
-  const { userId } = useKeycloakAuth();
+  const { userId } = useGoAuth();
   const { isSubscribed, isSupported, loading, subscribe } = usePushSubscription(userId);
   const [dismissed, setDismissed] = useState(true); // start hidden
   const [error, setError] = useState(false);

@@ -90,7 +90,7 @@ function PresenceConnector({
  * instead of Keycloak OIDC. The name is retained for backward compatibility
  * with existing imports; will be renamed in a follow-up cleanup.
  */
-export function KeycloakAuthShell({
+export function AuthShell({
   children,
   companionLabels,
   focusTimerLabels,

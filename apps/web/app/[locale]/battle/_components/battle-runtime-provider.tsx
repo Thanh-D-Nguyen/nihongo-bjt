@@ -14,7 +14,7 @@ import {
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { io, type Socket } from "socket.io-client";
 
-import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../../lib/learner-api";
 import { recordStudyProgress } from "../../../_hooks/use-study-progress";
 import {
@@ -153,7 +153,7 @@ export function BattleRuntimeProvider({
   const handledUrlIntentsRef = useRef<Set<string>>(new Set());
   const lobbyJoinedRef = useRef(false);
   const pendingLobbyActionsRef = useRef<Array<(socket: Socket) => void>>([]);
-  const { displayName, email, isAuthenticated, userId } = useKeycloakAuth();
+  const { displayName, email, isAuthenticated, userId } = useGoAuth();
   const [answerPending, setAnswerPending] = useState(false);
   const [answerResult, setAnswerResult] = useState<AnswerResultEvent | null>(null);
   const [botChoices, setBotChoices] = useState<BattleBotStageProfile[]>(fallbackBotChoices);

@@ -11,7 +11,7 @@ import {
   ProgressBar,
 } from "@nihongo-bjt/ui";
 
-import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../../lib/learner-api";
 import { useProfileImageUpload } from "../../profile/_components/use-profile-image-upload";
 import { MeTabProgress } from "./me-tab-progress";
@@ -114,7 +114,7 @@ export function MePageClient({
   settingsLabels: unknown;
   locale: string;
 }) {
-  const auth = useKeycloakAuth();
+  const auth = useGoAuth();
   const uploader = useProfileImageUpload();
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
   const coverInputRef = useRef<HTMLInputElement | null>(null);

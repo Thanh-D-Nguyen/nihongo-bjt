@@ -3,7 +3,7 @@
 import { cn } from "@nihongo-bjt/ui";
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../../lib/learner-api";
 
 interface HeatmapDay {
@@ -50,7 +50,7 @@ function heatmapTooltipPosition(rect: DOMRect) {
 }
 
 export function LearningHeatmap() {
-  const { userId } = useKeycloakAuth();
+  const { userId } = useGoAuth();
   const [data, setData] = useState<HeatmapData | null>(null);
   const [loading, setLoading] = useState(true);
   const [tooltip, setTooltip] = useState<{ day: HeatmapDay; x: number; y: number } | null>(null);

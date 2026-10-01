@@ -2,7 +2,7 @@
 
 import { cn } from "@nihongo-bjt/ui";
 import { useCallback, useEffect, useState } from "react";
-import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../../lib/learner-api";
 import { useSharePostcard } from "../../../_hooks/use-share-postcard";
 
@@ -30,7 +30,7 @@ interface ClaimResult {
 }
 
 export function LoginBonusWidget() {
-  const { userId } = useKeycloakAuth();
+  const { userId } = useGoAuth();
   const [status, setStatus] = useState<BonusStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [claiming, setClaiming] = useState(false);

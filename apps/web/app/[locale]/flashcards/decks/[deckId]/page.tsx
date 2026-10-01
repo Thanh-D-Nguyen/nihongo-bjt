@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import en from "../../../../../messages/en.json";
 import ja from "../../../../../messages/ja.json";
 import vi from "../../../../../messages/vi.json";
-import { RequireKeycloakAuth } from "../../../../../components/auth/require-keycloak-auth";
+import { RequireAuth } from "../../../../../components/auth/require-auth";
 import { DeckDetailClient } from "../../_components/deck-detail-client";
 
 const messages: Record<string, typeof vi> = { ja, vi, en };
@@ -26,8 +26,8 @@ export default async function DeckDetailPage({
   const t = messages[locale] ?? messages.vi;
 
   return (
-    <RequireKeycloakAuth locale={locale}>
+    <RequireAuth locale={locale}>
       <DeckDetailClient deckId={deckId} labels={t.decks} locale={locale} />
-    </RequireKeycloakAuth>
+    </RequireAuth>
   );
 }

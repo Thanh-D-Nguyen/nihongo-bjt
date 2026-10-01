@@ -10,7 +10,7 @@ import { useGoAuth } from "../../lib/go-auth-provider";
  * Replaces Keycloak-based auth check with Go-native session cookie auth.
  * Name retained for backward compatibility; will be renamed in follow-up cleanup.
  */
-export function RequireKeycloakAuth({ locale, children }: { locale: string; children: ReactNode }) {
+export function RequireAuth({ locale, children }: { locale: string; children: ReactNode }) {
   const { loading, isAuthenticated } = useGoAuth();
   const router = useRouter();
 

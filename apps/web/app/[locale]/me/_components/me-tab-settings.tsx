@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../../lib/go-auth-provider";
 
 /* ─── Types ─── */
 
@@ -48,7 +48,7 @@ export function MeTabSettings({
   settingsLabels: unknown;
   locale: string;
 }) {
-  const auth = useKeycloakAuth();
+  const auth = useGoAuth();
   const t = labels as unknown as SettingsTabLabels;
   const base = `/${locale}`;
 

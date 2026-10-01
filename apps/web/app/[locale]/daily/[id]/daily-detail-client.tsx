@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { ShareDrawer } from "../../_components/share-drawer";
 import { AnnotatedJapaneseText } from "../../../../components/reading-assist/annotated-japanese-text";
 import { learnerApiFetch, learnerApiFetchOptional } from "../../../../lib/learner-api";
@@ -104,7 +104,7 @@ export function DailyDetailClient({
   readingAssistLabels: AnnotatedLabels;
 }) {
   const t = useCallback((k: string) => detailLabels[k] ?? k, [detailLabels]);
-  const auth = useKeycloakAuth();
+  const auth = useGoAuth();
   const userId = auth.userId ?? "";
 
   const [item, setItem] = useState<DailyItemDetail | null>(null);

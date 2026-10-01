@@ -2,7 +2,7 @@
 
 import { cn } from "@nihongo-bjt/ui";
 import { useCallback, useEffect, useState } from "react";
-import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../../lib/learner-api";
 
 interface Challenge {
@@ -29,7 +29,7 @@ interface SeasonalEvent {
 }
 
 export function SeasonalEventBanner() {
-  const { userId } = useKeycloakAuth();
+  const { userId } = useGoAuth();
   const [event, setEvent] = useState<SeasonalEvent | null>(null);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(false);

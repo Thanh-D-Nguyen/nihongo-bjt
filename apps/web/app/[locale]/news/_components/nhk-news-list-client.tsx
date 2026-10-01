@@ -4,7 +4,7 @@ import { Badge, EmptyState, ErrorState, LoadingSkeleton, TabButton, TabsList } f
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
-import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { learnerApiFetchOptional } from "../../../../lib/learner-api";
 
 interface NhkArticle {
@@ -60,7 +60,7 @@ export function NhkNewsListClient({
   homepageLabels: HomepageLabels;
   locale: string;
 }) {
-  const auth = useKeycloakAuth();
+  const auth = useGoAuth();
   const PAGE_SIZE = 12;
   const [activeType, setActiveType] = useState<"easy" | "normal">("easy");
   const [articles, setArticles] = useState<NhkArticle[]>([]);

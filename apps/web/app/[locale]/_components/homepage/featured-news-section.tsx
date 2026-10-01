@@ -4,7 +4,7 @@ import { Badge, Button, ErrorState, SectionHeader, TabButton, TabsList } from "@
 import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 
-import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../../lib/learner-api";
 import { IconBookmark, IconDocument } from "../../../_components/app-icons";
 import { NhkCreateDeckDialog } from "../nhk-create-deck-dialog";
@@ -246,7 +246,7 @@ export function FeaturedNewsSection({
   onRetry: () => void;
   onTabChange?: (type: NewsType) => void;
 }) {
-  const auth = useKeycloakAuth();
+  const auth = useGoAuth();
   const [activeType, setActiveType] = useState<NewsType>("easy");
   const [flashcardMsg, setFlashcardMsg] = useState<string | null>(null);
   const [createError, setCreateError] = useState<string | null>(null);

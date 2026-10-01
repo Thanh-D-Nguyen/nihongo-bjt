@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../../lib/go-auth-provider";
 
 interface LotoTeaser {
   drawNumber: number | null;
@@ -15,7 +15,7 @@ interface LotoTeaser {
 const API = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/$/u, "");
 
 export function LotoTeaserWidget({ locale }: { locale: string }) {
-  const { isAuthenticated } = useKeycloakAuth();
+  const { isAuthenticated } = useGoAuth();
   const [teaser, setTeaser] = useState<LotoTeaser | null>(null);
   const [loading, setLoading] = useState(true);
 

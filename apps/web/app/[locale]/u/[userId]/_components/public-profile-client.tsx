@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { useKeycloakAuth } from "../../../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../../../lib/go-auth-provider";
 import { learnerApiFetchOptional } from "../../../../../lib/learner-api";
 import { OnlineIndicator } from "./online-indicator";
 import { ProfileStats } from "./profile-stats";
@@ -94,7 +94,7 @@ interface Props {
 }
 
 export function PublicProfileClient({ achievementNames, userId, labels, locale }: Props) {
-  const { isAuthenticated } = useKeycloakAuth();
+  const { isAuthenticated } = useGoAuth();
   const [profile, setProfile] = useState<PublicProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

@@ -4,7 +4,7 @@ import DOMPurify from "isomorphic-dompurify";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { useKeycloakAuth } from "../../../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../../../lib/go-auth-provider";
 import { learnerApiFetch, learnerApiFetchOptional } from "../../../../../lib/learner-api";
 import { NhkCreateDeckDialog } from "../../../_components/nhk-create-deck-dialog";
 import { toIntlLocale } from "@/lib/locale-utils";
@@ -88,7 +88,7 @@ export function NhkArticleDetailClient({
   labels: Labels;
   locale: string;
 }) {
-  const auth = useKeycloakAuth();
+  const auth = useGoAuth();
   const [article, setArticle] = useState<NhkArticleDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

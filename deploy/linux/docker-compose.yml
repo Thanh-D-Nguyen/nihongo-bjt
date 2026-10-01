@@ -1,0 +1,132 @@
+# KotobaWorks Linux Staging Deployment
+# Non-conflicting ports: existing AI stack uses 5432, 6379, 3000, 6333
+# This stack uses: 15432 (pg), 16379 (redis), 17700 (meili), 14001 (api), 13000 (web), 13001 (admin), 18080 (caddy)
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    mem_limit: 1g
+    environment:
+      POSTGRES_DB: nihongo_bjt
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "127.0.0.1:15432:5432"
+    volumes:
+      - /srv/kotobawork/data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d nihongo_bjt"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    mem_limit: 896m
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --requirepass
+      - ${REDIS_PASSWORD}
+      - --maxmemory
+      - 768mb
+      - --maxmemory-policy
+      - allkeys-lru
+    ports:
+      - "127.0.0.1:16379:6379"
+    volumes:
+      - /srv/kotobawork/data/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.13
+    restart: unless-stopped
+    mem_limit: 1g
+    environment:
+      MEILI_ENV: production
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY}
+    ports:
+      - "127.0.0.1:17700:7700"
+    volumes:
+      - /srv/kotobawork/data/meilisearch:/meili_data
+
+  api:
+    build:
+      context: /srv/kotobawork/apps/api-go
+      dockerfile: Dockerfile
+      args:
+        TARGETOS: linux
+        TARGETARCH: amd64
+    restart: unless-stopped
+    mem_limit: 512m
+    ports:
+      - "127.0.0.1:14001:4001"
+    environment:
+      PORT: "4001"
+      DATABASE_URL: "postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/nihongo_bjt?sslmode=disable"
+      REDIS_URL: "redis://:${REDIS_PASSWORD}@redis:6379"
+      MEILI_HOST: "http://meilisearch:7700"
+      MEILI_MASTER_KEY: "${MEILI_MASTER_KEY}"
+      CORS_ORIGINS: "http://localhost:13000,http://localhost:13001,http://192.168.1.8:13000,http://192.168.1.8:13001"
+      MEDIA_ROOT: "/srv/kotobawork/data/media"
+      SESSION_SECRET: "${SESSION_SECRET}"
+      OAUTH_STATE_SECRET: "${OAUTH_STATE_SECRET}"
+    volumes:
+      - /srv/kotobawork/data/media:/srv/kotobawork/data/media
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  web:
+    build:
+      context: /srv/kotobawork
+      dockerfile: apps/web/Dockerfile.staging
+    restart: unless-stopped
+    mem_limit: 1g
+    ports:
+      - "127.0.0.1:13000:3000"
+    environment:
+      NODE_ENV: production
+      API_URL: "http://api:4001"
+      NEXT_PUBLIC_API_URL: "http://192.168.1.8:14001"
+    depends_on:
+      - api
+
+  admin:
+    build:
+      context: /srv/kotobawork
+      dockerfile: apps/admin/Dockerfile.staging
+    restart: unless-stopped
+    mem_limit: 512m
+    ports:
+      - "127.0.0.1:13001:3001"
+    environment:
+      NODE_ENV: production
+      API_URL: "http://api:4001"
+      NEXT_PUBLIC_API_URL: "http://192.168.1.8:14001"
+    depends_on:
+      - api
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    mem_limit: 256m
+    ports:
+      - "18080:80"
+    volumes:
+      - /srv/kotobawork/deploy/linux/Caddyfile:/etc/caddy/Caddyfile:ro
+      - /srv/kotobawork/data/media:/srv/kotobawork/data/media:ro
+    depends_on:
+      - api
+      - web
+      - admin
+
+volumes: {}

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { useKeycloakAuth } from "../../lib/go-auth-provider";
+import { useGoAuth } from "../../lib/go-auth-provider";
 import {
   APPEARANCE_CHANGE_EVENT,
   APPEARANCE_STORAGE_KEY,
@@ -16,7 +16,7 @@ import {
 import { learnerApiFetch } from "../../lib/learner-api";
 
 export function AppearanceSync() {
-  const auth = useKeycloakAuth();
+  const auth = useGoAuth();
   const [activeTheme, setActiveTheme] = useState(() => loadCachedAppearance().theme);
 
   useEffect(() => {

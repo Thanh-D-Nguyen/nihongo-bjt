@@ -3,7 +3,7 @@
 import type { BattleBotAnimationState, CompanionEventKind, CompanionHintResponse, CompanionReasonCode } from "@nihongo-bjt/shared";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { useKeycloakAuth } from "../../lib/go-auth-provider";
+import { useGoAuth } from "../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../lib/learner-api";
 import { useCompanionEngine } from "../_hooks/use-companion-engine";
 import { BattleBotAvatar } from "./battle-bot-avatar";
@@ -84,7 +84,7 @@ const MASCOT_SIZE = 80;
 /* ── Main component ── */
 
 export function CompanionBot({ base, labels, locale }: { base: string; labels: CompanionBotLabels; locale: string }) {
-  const { isAuthenticated } = useKeycloakAuth();
+  const { isAuthenticated } = useGoAuth();
   const isLoggedIn = isAuthenticated;
   const [open, setOpen] = useState(false);
   const [hint, setHint] = useState<CompanionHintResponse | null>(null);

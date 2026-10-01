@@ -4,7 +4,7 @@ import { Button, Card, CardContent, CardHeader, CardTitle, ProgressBar } from "@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type ChangeEvent } from "react";
 
-import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { learnerApiFetch } from "../../../../lib/learner-api";
 import { useProfileImageUpload } from "./use-profile-image-upload";
 
@@ -77,7 +77,7 @@ export function ProfilePageClient({
   gamificationLabels: unknown;
   locale: string;
 }) {
-  const auth = useKeycloakAuth();
+  const auth = useGoAuth();
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
   const coverInputRef = useRef<HTMLInputElement | null>(null);
   const uploader = useProfileImageUpload();

@@ -149,7 +149,7 @@ export function GoAuthProvider({
 
 /**
  * Hook to access Go-native learner auth state.
- * Drop-in replacement for useKeycloakAuth() — same field names.
+ * Drop-in replacement for useGoAuth() — same field names.
  */
 export function useGoAuth(): GoAuthState {
   const v = useContext(Ctx);

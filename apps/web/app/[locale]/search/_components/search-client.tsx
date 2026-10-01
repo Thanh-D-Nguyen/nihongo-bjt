@@ -16,7 +16,7 @@ import {
 
 import { VoiceSearchButton } from "../../../_components/search-advanced-inputs";
 import { IconSearch } from "../../../_components/nav-icons";
-import { useKeycloakAuth } from "../../../../lib/go-auth-provider";
+import { useGoAuth } from "../../../../lib/go-auth-provider";
 import { useRecentSearches } from "../../../../lib/use-recent-searches";
 import {
   SearchDropdown,
@@ -159,7 +159,7 @@ export function SearchClient({
   /** Always-current snapshot so the bootstrap effect can read params without depending on their identity */
   const searchParamsRef = useRef(searchParams);
   searchParamsRef.current = searchParams;
-  const { userId } = useKeycloakAuth();
+  const { userId } = useGoAuth();
   const sheetTitleId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const sheetPanelRef = useRef<HTMLDivElement>(null);
