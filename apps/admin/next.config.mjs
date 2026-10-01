@@ -13,12 +13,13 @@ loadDotenv({ path: path.join(monorepoRoot, ".env.local"), override: true });
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   outputFileTracingRoot: monorepoRoot,
-  // basePath + assetPrefix both required for consistent /admin/_next/ paths.
-  // basePath ensures routing/middleware preserves /admin prefix; assetPrefix
-  // ensures Turbopack emits /admin/_next/ in BOTH HTML script tags AND RSC
-  // flight data, eliminating the path mismatch that broke hydration.
+  // basePath required for routing/middleware to preserve /admin prefix.
+  // NO assetPrefix: Next.js with basePath serves chunks at root-relative
+  // /_next/* internally (not /admin/_next/*). Caddy proxies /_next/* on
+  // the admin host directly to the container without rewriting, ensuring
+  // HTML script tags, RSC flight data, and Turbopack runtime all use
+  // consistent root-relative paths for correct hydration.
   basePath: "/admin",
-  assetPrefix: "/admin",
   async rewrites() {
     return [{ destination: "/pwa-icon.svg", source: "/favicon.ico" }];
   },
