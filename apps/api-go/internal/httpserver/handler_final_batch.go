@@ -183,7 +183,7 @@ func postAuthLinkExchangeHandler(db *pgxpool.Pool, logger *slog.Logger) http.Han
 // Public route — returns available battle bots.
 func getBattleBotsHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		const q = `SELECT id, name, avatar_url, difficulty, description FROM learning.battle_bot WHERE active = true ORDER BY display_order ASC`
+		const q = `SELECT id, name, avatar_fallback, difficulty, persona FROM learning.battle_bot WHERE active = true ORDER BY display_order ASC`
 		rows, err := db.Query(r.Context(), q)
 		if err != nil {
 			logger.Error("list battle bots", "error", err)
@@ -198,7 +198,7 @@ func getBattleBotsHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFun
 			Name        string  `json:"name"`
 			AvatarURL   *string `json:"avatarUrl,omitempty"`
 			Difficulty  string  `json:"difficulty"`
-			Description *string `json:"description,omitempty"`
+			Description *string `json:"persona,omitempty"`
 		}
 		var bots []Bot
 		for rows.Next() {
@@ -260,7 +260,7 @@ func getBattleChatRecentHandler(db *pgxpool.Pool, logger *slog.Logger) http.Hand
 // Public route.
 func getBattleConfigsAvailableHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		const q = `SELECT id, name, description, min_players, max_players, time_limit_seconds FROM learning.battle_config WHERE active = true ORDER BY display_order ASC`
+		const q = `SELECT id, name, persona, max_participants, time_per_question_sec FROM learning.battle_config WHERE active = true ORDER BY display_order ASC`
 		rows, err := db.Query(r.Context(), q)
 		if err != nil {
 			logger.Error("battle configs", "error", err)
@@ -273,7 +273,7 @@ func getBattleConfigsAvailableHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 		type Config struct {
 			ID             string  `json:"id"`
 			Name           string  `json:"name"`
-			Description    *string `json:"description,omitempty"`
+			Description    *string `json:"persona,omitempty"`
 			MinPlayers     int     `json:"minPlayers"`
 			MaxPlayers     int     `json:"maxPlayers"`
 			TimeLimitSecs  int     `json:"timeLimitSeconds"`
@@ -788,12 +788,12 @@ func getPublicDeckHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFun
 			ID          string          `json:"id"`
 			PublicToken string          `json:"publicToken"`
 			Title       string          `json:"title"`
-			Description *string         `json:"description,omitempty"`
+			Description *string         `json:"persona,omitempty"`
 			CardCount   int             `json:"cardCount"`
 			Metadata    json.RawMessage `json:"metadata,omitempty"`
 		}
 		var d Deck
-		const q = `SELECT id, public_token, title, description, card_count, metadata FROM study.public_deck WHERE public_token = $1`
+		const q = `SELECT id, public_token, title, persona, card_count, metadata FROM study.public_deck WHERE public_token = $1`
 		if err := db.QueryRow(r.Context(), q, token).Scan(&d.ID, &d.PublicToken, &d.Title, &d.Description, &d.CardCount, &d.Metadata); err != nil {
 			writeJSONError(w, "deck not found", http.StatusNotFound)
 			return
