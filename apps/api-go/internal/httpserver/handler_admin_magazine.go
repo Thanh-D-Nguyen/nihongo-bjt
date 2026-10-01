@@ -513,7 +513,7 @@ func adminLotoAnalyticsHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handl
 			for _, a := range articles {
 				dateKey := a.ContentDate.UTC().Format("2006-01-02")
 				var mainNumbers json.RawMessage
-				err := db.QueryRow(r.Context(), `SELECT main_numbers FROM content.loto_draw
+				err := db.QueryRow(r.Context(), `SELECT main_numbers FROM daily.loto_draw
 					WHERE game=$1 AND draw_date=$2`, game, dateKey).Scan(&mainNumbers)
 				if err != nil {
 					continue
@@ -549,7 +549,7 @@ func adminLotoAnalyticsHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handl
 				if hits > bestHit {
 					bestHit = hits
 					var dn int
-					db.QueryRow(r.Context(), `SELECT draw_number FROM content.loto_draw
+					db.QueryRow(r.Context(), `SELECT draw_number FROM daily.loto_draw
 						WHERE game=$1 AND draw_date=$2`, game, dateKey).Scan(&dn)
 					bestDrawNumber = &dn
 				}
@@ -568,7 +568,7 @@ func adminLotoAnalyticsHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handl
 				placeholders[i] = fmt.Sprintf("$%d", i+1)
 				viewArgs[i] = id
 			}
-			db.QueryRow(r.Context(), "SELECT COUNT(*) FROM content.magazine_user_read WHERE article_id IN ("+
+			db.QueryRow(r.Context(), "SELECT COUNT(*) FROM daily.magazine_user_read WHERE article_id IN ("+
 				strings.Join(placeholders, ",")+")", viewArgs...).Scan(&totalViews)
 		}
 		writeJSON(w, http.StatusOK, map[string]any{
@@ -590,13 +590,13 @@ func adminLotoSummaryHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handler
 			return
 		}
 		var totalDraws int
-		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM content.loto_draw WHERE game=$1", game).Scan(&totalDraws)
+		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM daily.loto_draw WHERE game=$1", game).Scan(&totalDraws)
 		var latestDrawDate *time.Time
-		db.QueryRow(r.Context(), "SELECT MAX(draw_date) FROM content.loto_draw WHERE game=$1", game).Scan(&latestDrawDate)
+		db.QueryRow(r.Context(), "SELECT MAX(draw_date) FROM daily.loto_draw WHERE game=$1", game).Scan(&latestDrawDate)
 		var totalRuns int
-		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM content.loto_generation_run WHERE game=$1", game).Scan(&totalRuns)
+		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM daily.loto_generation_run WHERE game=$1", game).Scan(&totalRuns)
 		var publishedRuns int
-		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM content.loto_generation_run WHERE game=$1 AND status='published'", game).Scan(&publishedRuns)
+		db.QueryRow(r.Context(), "SELECT COUNT(*) FROM daily.loto_generation_run WHERE game=$1 AND status='published'", game).Scan(&publishedRuns)
 		ld := ""
 		if latestDrawDate != nil {
 			ld = latestDrawDate.UTC().Format("2006-01-02")
@@ -622,7 +622,7 @@ func adminLotoDrawsHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFu
 		}
 		rows, err := db.Query(r.Context(), `SELECT id, game, draw_number, draw_date, main_numbers,
 			bonus_numbers, carryover_amount, sales_amount, source_url, source_provider
-			FROM content.loto_draw WHERE game=$1 ORDER BY draw_number DESC LIMIT $2`, game, limit)
+			FROM daily.loto_draw WHERE game=$1 ORDER BY draw_number DESC LIMIT $2`, game, limit)
 		if err != nil {
 			logger.Error("list loto draws", "error", err)
 			writeJSONError(w, "internal error", http.StatusInternalServerError)
@@ -729,7 +729,7 @@ func adminLotoImportCSVHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handl
 			mnJSON, _ := json.Marshal(mainNums)
 			bnJSON, _ := json.Marshal(bonusNums)
 			var exists bool
-			db.QueryRow(r.Context(), "SELECT EXISTS(SELECT 1 FROM content.loto_draw WHERE game=$1 AND draw_number=$2)",
+			db.QueryRow(r.Context(), "SELECT EXISTS(SELECT 1 FROM daily.loto_draw WHERE game=$1 AND draw_number=$2)",
 				game, drawNum).Scan(&exists)
 			db.Exec(r.Context(), `INSERT INTO content.loto_draw (game, draw_number, draw_date, main_numbers, bonus_numbers, source_provider, created_at, updated_at)
 				VALUES ($1,$2,$3,$4,$5,'csv_import',NOW(),NOW())
@@ -794,7 +794,7 @@ func adminLotoAutopilotHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handl
 		todayKey := time.Now().UTC().Format("2006-01-02")
 		// Check latest draw
 		var latestDrawDate *time.Time
-		db.QueryRow(r.Context(), "SELECT MAX(draw_date) FROM content.loto_draw WHERE game=$1", req.Game).Scan(&latestDrawDate)
+		db.QueryRow(r.Context(), "SELECT MAX(draw_date) FROM daily.loto_draw WHERE game=$1", req.Game).Scan(&latestDrawDate)
 		if latestDrawDate == nil {
 			writeJSON(w, http.StatusOK, map[string]any{"status": "waiting_result", "game": req.Game, "todayDate": todayKey})
 			return
@@ -916,7 +916,7 @@ func adminLotoPublishHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handler
 		// Get run details
 		var game string
 		var targetDate time.Time
-		err := db.QueryRow(r.Context(), "SELECT game, target_draw_date FROM content.loto_generation_run WHERE id=$1", req.RunID).
+		err := db.QueryRow(r.Context(), "SELECT game, target_draw_date FROM daily.loto_generation_run WHERE id=$1", req.RunID).
 			Scan(&game, &targetDate)
 		if err != nil {
 			writeJSONError(w, "generation run not found", http.StatusNotFound)
