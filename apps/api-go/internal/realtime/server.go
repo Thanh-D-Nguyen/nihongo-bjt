@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/url"
+	"strings"
 	"time"
 
 	"nhooyr.io/websocket"
@@ -30,6 +32,13 @@ type Server struct {
 	battle    *BattleHandler
 	presence  *PresenceHandler
 	logger    *slog.Logger
+
+	// originPatterns are the hosts (from the CSRF trusted origins) allowed to
+	// open cross-origin WebSockets. Same-host and Origin-less (non-browser)
+	// upgrades are always allowed by websocket.Accept; any other browser
+	// Origin is rejected with 403 to prevent cross-site WebSocket hijacking
+	// with the user's session cookie.
+	originPatterns []string
 }
 
 // NewServer creates a new realtime WebSocket server.
@@ -52,11 +61,9 @@ func (s *Server) HandleBattleUpgrade(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{
-		InsecureSkipVerify: true, // Origin checked via session auth, not header
-	})
+	conn, err := websocket.Accept(w, r, s.acceptOptions())
 	if err != nil {
-		s.logger.Error("battle ws accept failed", "error", err)
+		s.logger.Warn("battle ws accept failed", "error", err, "origin", extractOrigin(r))
 		return
 	}
 
@@ -82,11 +89,9 @@ func (s *Server) HandlePresenceUpgrade(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{
-		InsecureSkipVerify: true,
-	})
+	conn, err := websocket.Accept(w, r, s.acceptOptions())
 	if err != nil {
-		s.logger.Error("presence ws accept failed", "error", err)
+		s.logger.Warn("presence ws accept failed", "error", err, "origin", extractOrigin(r))
 		return
 	}
 
@@ -103,6 +108,29 @@ func (s *Server) HandlePresenceUpgrade(w http.ResponseWriter, r *http.Request) {
 	go s.readLoop(c, conn, s.presence.HandleMessage)
 	go s.writeLoop(c, conn)
 }
+
+func (s *Server) acceptOptions() *websocket.AcceptOptions {
+	return &websocket.AcceptOptions{OriginPatterns: s.originPatterns}
+}
+
+// setTrustedOrigins derives Accept origin patterns from scheme+host trusted
+// origins (already validated by authn.ValidateCSRFConfig at startup).
+func (s *Server) setTrustedOrigins(origins []string) {
+	patterns := make([]string, 0, len(origins))
+	for _, o := range origins {
+		u, err := url.Parse(strings.TrimSpace(o))
+		if err != nil || u.Host == "" {
+			s.logger.Warn("realtime: ignoring malformed trusted origin", "origin", o)
+			continue
+		}
+		// websocket.Accept matches patterns with filepath.Match; escape
+		// metacharacters so a host like "[::1]:3000" is matched literally.
+		patterns = append(patterns, globEscaper.Replace(strings.ToLower(u.Host)))
+	}
+	s.originPatterns = patterns
+}
+
+var globEscaper = strings.NewReplacer(`\`, `\\`, `*`, `\*`, `?`, `\?`, `[`, `\[`)
 
 // readLoop reads messages from the WebSocket connection and dispatches to handler.
 func (s *Server) readLoop(c *Conn, ws *websocket.Conn, handler func(*Conn, *Message)) {
@@ -153,16 +181,19 @@ func (s *Server) writeLoop(c *Conn, ws *websocket.Conn) {
 	}
 }
 
-// closeConn unregisters the connection and closes the WebSocket.
+// closeConn unregisters the connection and closes the WebSocket. Both readLoop
+// and writeLoop defer it, so teardown must run exactly once per connection.
 func (s *Server) closeConn(c *Conn, ws *websocket.Conn) {
-	userID, lastForUser := s.hub.Unregister(c.ID)
-	close(c.done)
-	_ = ws.Close(websocket.StatusNormalClosure, "")
+	c.closeOnce.Do(func() {
+		userID, lastForUser := s.hub.Unregister(c.ID)
+		close(c.done)
+		_ = ws.Close(websocket.StatusNormalClosure, "")
 
-	// Notify presence handler if this was the last connection for the user.
-	if lastForUser {
-		s.presence.OnDisconnect(c, userID, true)
-	}
+		// Notify presence handler if this was the last connection for the user.
+		if lastForUser {
+			s.presence.OnDisconnect(c, userID, true)
+		}
+	})
 }
 
 // Start begins the hub's run loop in a background goroutine.
