@@ -16,13 +16,23 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    # Only deploy when CI succeeded (workflow_run) or when triggered manually.
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    # Only deploy when CI succeeded for a push to main (not a PR whose head
+    # branch happens to be named "main"), or when triggered manually.
+    if: >-
+      ${{ github.event_name == 'workflow_dispatch' ||
+          (github.event.workflow_run.conclusion == 'success' &&
+           github.event.workflow_run.event == 'push' &&
+           github.event.workflow_run.head_branch == 'main') }}
     environment:
       name: production
       url: https://app.34-87-55-1.sslip.io/vi
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Deploy exactly the commit CI validated. Without this, a workflow_run
+          # job checks out main's *current* HEAD, which may be a newer commit
+          # whose CI failed or is still running.
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
       - name: Configure SSH
         env:
           SSH_KNOWN_HOSTS: ${{ secrets.GCP_VM_SSH_KNOWN_HOSTS }}
