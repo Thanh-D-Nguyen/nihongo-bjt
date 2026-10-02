@@ -6,9 +6,17 @@ on:
     branches:
       - main
 
+# Every gate below runs the canonical scripts in scripts/quality/ so that the
+# local verification commands and CI cannot drift apart. Production deploy
+# (deploy-gcp.yml) only runs when this whole workflow succeeds.
+defaults:
+  run:
+    shell: bash
+
 jobs:
   checks:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     services:
       postgres:
         image: postgres:17
@@ -42,24 +50,47 @@ jobs:
       - run: pnpm prisma:validate
       - run: pnpm exec prisma migrate deploy --schema packages/database/prisma/schema.prisma
       - run: pnpm prisma:migrate:check
-      - run: pnpm lint
-      - run: pnpm typecheck
-      - run: pnpm test
-      - run: pnpm build
+      # typecheck · lint + unit-test debt ratchet · build.
+      # The ratchet runs `pnpm lint` / `pnpm test` itself, keeps their exit codes,
+      # fails on NEW debt or tool failure, and never writes the baseline.
+      - run: bash scripts/quality/verify-frontend.sh
 
   go-checks:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: apps/api-go
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: nihongo_bjt
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 15432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d nihongo_bjt"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      # Without this, ~150 auth/session/RBAC/realtime/SQL-conformance tests t.Skip
+      # and `go test` still passes; check-go-test-report.mjs fails any such skip.
+      TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:15432/nihongo_bjt
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.26.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       - uses: actions/setup-go@v5
         with:
           go-version: '1.23'
-      - run: go mod download
-      - run: gofmt -l . | tee /dev/stderr | (! read)
-      - run: go vet ./...
-      - run: go test ./...
-      - run: go test -race ./...
-      - run: GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -o /dev/null ./cmd/api
+          cache-dependency-path: apps/api-go/go.sum
+      - name: Provision canonical schema (Prisma migrations + Go SQL migrations)
+        run: bash scripts/quality/provision-test-schema.sh "$TEST_DATABASE_URL"
+      # gofmt · vet · go test with PostgreSQL integration + skip audit · race · ARM64 build
+      - run: bash scripts/quality/verify-go.sh
