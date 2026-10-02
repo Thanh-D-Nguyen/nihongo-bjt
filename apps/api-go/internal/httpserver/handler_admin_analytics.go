@@ -34,14 +34,14 @@ var analyticsDomains = []string{
 
 // domainSourceConfig maps each analytics domain to its DB source tables and metrics.
 type domainSourceConfig struct {
-	SessionTable    string // primary session/attempts table
-	ScoreColumn     string // nullable score column (empty = no score metric)
-	PassThreshold   int    // score threshold for pass_rate
-	DurationAvail   bool   // whether duration_ms metric is available
-	BreakdownDim    string // default breakdown dimension
-	Metrics         []string
-	KPIIDs          []string
-	FreshnessTable  string
+	SessionTable   string // primary session/attempts table
+	ScoreColumn    string // nullable score column (empty = no score metric)
+	PassThreshold  int    // score threshold for pass_rate
+	DurationAvail  bool   // whether duration_ms metric is available
+	BreakdownDim   string // default breakdown dimension
+	Metrics        []string
+	KPIIDs         []string
+	FreshnessTable string
 }
 
 var domainConfigs = map[string]domainSourceConfig{
@@ -295,11 +295,11 @@ func adminAnalyticsSummaryHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 		db.QueryRow(ctx, "SELECT completed_at, status FROM analytics.analytics_rollup_run ORDER BY started_at DESC LIMIT 1").Scan(&lastRollupAt, &freshnessStatus)
 
 		writeJSON(w, http.StatusOK, map[string]any{
-			"domain":           domain,
-			"range":            map[string]any{"from": from.Format(time.RFC3339), "to": to.Format(time.RFC3339), "days": days},
-			"filtersApplied":   map[string]bool{"level": level != ""},
-			"kpis":             kpis,
-			"freshness":        map[string]any{"lastRollupAt": lastRollupAt, "status": freshnessStatus, "sourceTable": cfg.FreshnessTable},
+			"domain":         domain,
+			"range":          map[string]any{"from": from.Format(time.RFC3339), "to": to.Format(time.RFC3339), "days": days},
+			"filtersApplied": map[string]bool{"level": level != ""},
+			"kpis":           kpis,
+			"freshness":      map[string]any{"lastRollupAt": lastRollupAt, "status": freshnessStatus, "sourceTable": cfg.FreshnessTable},
 		})
 	}
 }

@@ -129,20 +129,20 @@ func adminAssessmentMockExamsListHandler(db *pgxpool.Pool, logger *slog.Logger) 
 		defer rows.Close()
 
 		type MockExamSummary struct {
-			ID                string          `json:"id"`
-			Slug              string          `json:"slug"`
-			TitleVi           string          `json:"titleVi"`
-			TitleJa           *string         `json:"titleJa,omitempty"`
-			Type              string          `json:"type"`
-			Status            string          `json:"status"`
-			Level             *string         `json:"level,omitempty"`
-			TimeLimitSeconds  *int            `json:"timeLimitSeconds,omitempty"`
-			Description       *string         `json:"description,omitempty"`
-			BlueprintMeta     json.RawMessage `json:"blueprintMeta,omitempty"`
-			CreatedAt         string          `json:"createdAt"`
-			UpdatedAt         string          `json:"updatedAt"`
-			SectionCount      int             `json:"sectionCount"`
-			SessionCount      int             `json:"sessionCount"`
+			ID               string          `json:"id"`
+			Slug             string          `json:"slug"`
+			TitleVi          string          `json:"titleVi"`
+			TitleJa          *string         `json:"titleJa,omitempty"`
+			Type             string          `json:"type"`
+			Status           string          `json:"status"`
+			Level            *string         `json:"level,omitempty"`
+			TimeLimitSeconds *int            `json:"timeLimitSeconds,omitempty"`
+			Description      *string         `json:"description,omitempty"`
+			BlueprintMeta    json.RawMessage `json:"blueprintMeta,omitempty"`
+			CreatedAt        string          `json:"createdAt"`
+			UpdatedAt        string          `json:"updatedAt"`
+			SectionCount     int             `json:"sectionCount"`
+			SessionCount     int             `json:"sessionCount"`
 		}
 
 		var items []MockExamSummary
@@ -180,23 +180,23 @@ func adminAssessmentMockExamsDetailHandler(db *pgxpool.Pool, logger *slog.Logger
 		ctx := r.Context()
 
 		type Section struct {
-			ID           string `json:"id"`
-			Code         string `json:"code"`
-			TitleVi      string `json:"titleVi"`
-			TitleJa      *string `json:"titleJa,omitempty"`
-			DisplayOrder int    `json:"displayOrder"`
-			QuestionCount int   `json:"questionCount"`
+			ID            string  `json:"id"`
+			Code          string  `json:"code"`
+			TitleVi       string  `json:"titleVi"`
+			TitleJa       *string `json:"titleJa,omitempty"`
+			DisplayOrder  int     `json:"displayOrder"`
+			QuestionCount int     `json:"questionCount"`
 		}
 		type AuditEntry struct {
-			ID        string          `json:"id"`
-			Action    string          `json:"action"`
-			ActorID   string          `json:"actorId"`
-			ActorName *string         `json:"actorName,omitempty"`
-			ActorEmail *string        `json:"actorEmail,omitempty"`
-			Reason    string          `json:"reason"`
-			After     json.RawMessage `json:"after,omitempty"`
-			Before    json.RawMessage `json:"before,omitempty"`
-			CreatedAt string          `json:"createdAt"`
+			ID         string          `json:"id"`
+			Action     string          `json:"action"`
+			ActorID    string          `json:"actorId"`
+			ActorName  *string         `json:"actorName,omitempty"`
+			ActorEmail *string         `json:"actorEmail,omitempty"`
+			Reason     string          `json:"reason"`
+			After      json.RawMessage `json:"after,omitempty"`
+			Before     json.RawMessage `json:"before,omitempty"`
+			CreatedAt  string          `json:"createdAt"`
 		}
 		type MockExamDetail struct {
 			ID               string          `json:"id"`

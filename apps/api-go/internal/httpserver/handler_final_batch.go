@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
-	"strings"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -120,10 +120,10 @@ func getAnalyticsLearnerHandler(db *pgxpool.Pool, logger *slog.Logger) http.Hand
 			"userId":     userID,
 			"insight":    "",
 			"totals": map[string]interface{}{
-				"bjtAccuracyPct":     bjtAccuracyPct,
+				"bjtAccuracyPct":       bjtAccuracyPct,
 				"completedBjtSessions": completedBjtSessions,
-				"reviewCount":        reviewCount,
-				"streakDays":         streakDays,
+				"reviewCount":          reviewCount,
+				"streakDays":           streakDays,
 			},
 		})
 	}
@@ -308,12 +308,12 @@ func getBattleConfigsAvailableHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 		}
 		defer rows.Close()
 		type Config struct {
-			ID             string  `json:"id"`
-			Name           string  `json:"name"`
-			Description    *string `json:"persona,omitempty"`
-			MinPlayers     int     `json:"minPlayers"`
-			MaxPlayers     int     `json:"maxPlayers"`
-			TimeLimitSecs  int     `json:"timeLimitSeconds"`
+			ID            string  `json:"id"`
+			Name          string  `json:"name"`
+			Description   *string `json:"persona,omitempty"`
+			MinPlayers    int     `json:"minPlayers"`
+			MaxPlayers    int     `json:"maxPlayers"`
+			TimeLimitSecs int     `json:"timeLimitSeconds"`
 		}
 		var configs []Config
 		for rows.Next() {
@@ -792,11 +792,11 @@ func getPublicShareHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFu
 			return
 		}
 		type Share struct {
-			ID            string          `json:"id"`
-			PublicToken   string          `json:"publicToken"`
-			Kind          string          `json:"kind"`
+			ID             string          `json:"id"`
+			PublicToken    string          `json:"publicToken"`
+			Kind           string          `json:"kind"`
 			SummaryPayload json.RawMessage `json:"summaryPayload"`
-			CreatedAt     string          `json:"createdAt"`
+			CreatedAt      string          `json:"createdAt"`
 		}
 		var s Share
 		var createdAt time.Time
@@ -914,9 +914,9 @@ func postMediaPresignUploadHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		_ = json.NewEncoder(w).Encode(map[string]string{
-			"uploadId": uploadID,
+			"uploadId":     uploadID,
 			"presignedUrl": "https://storage.example.com/upload/" + uploadID,
-			"expiresIn": "3600",
+			"expiresIn":    "3600",
 		})
 	}
 }

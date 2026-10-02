@@ -41,8 +41,8 @@ func getDueFlashcardsHandler(store *flashcardreview.Store, logger *slog.Logger) 
 
 // submitReviewRequest is the JSON body for POST /api/flashcards/reviews/{userFlashcardId}.
 type submitReviewRequest struct {
-	Rating    string     `json:"rating"`
-	ElapsedMs *int       `json:"elapsedMs,omitempty"`
+	Rating     string     `json:"rating"`
+	ElapsedMs  *int       `json:"elapsedMs,omitempty"`
 	ReviewedAt *time.Time `json:"reviewedAt,omitempty"`
 }
 

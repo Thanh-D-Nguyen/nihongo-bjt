@@ -84,19 +84,19 @@ func adminOpsImportStagingErrorsListHandler(db *pgxpool.Pool, logger *slog.Logge
 			SourceDir  string `json:"sourceDir"`
 		}
 		type Error struct {
-			ID            string     `json:"id"`
-			ImportBatchID string     `json:"importBatchId"`
-			RawItemID     *string    `json:"rawItemId,omitempty"`
-			Code          *string    `json:"code,omitempty"`
-			Message       string     `json:"message"`
-			Phase         *string    `json:"phase,omitempty"`
-			Severity      string     `json:"severity"`
-			Sample        *string    `json:"sample,omitempty"`
-			SourceFile    *string    `json:"sourceFile,omitempty"`
-			SourceKey     *string    `json:"sourceKey,omitempty"`
-			CreatedAt     string     `json:"createdAt"`
-			Batch         *Batch     `json:"batch,omitempty"`
-			RawItem       *RawItem   `json:"rawItem,omitempty"`
+			ID            string   `json:"id"`
+			ImportBatchID string   `json:"importBatchId"`
+			RawItemID     *string  `json:"rawItemId,omitempty"`
+			Code          *string  `json:"code,omitempty"`
+			Message       string   `json:"message"`
+			Phase         *string  `json:"phase,omitempty"`
+			Severity      string   `json:"severity"`
+			Sample        *string  `json:"sample,omitempty"`
+			SourceFile    *string  `json:"sourceFile,omitempty"`
+			SourceKey     *string  `json:"sourceKey,omitempty"`
+			CreatedAt     string   `json:"createdAt"`
+			Batch         *Batch   `json:"batch,omitempty"`
+			RawItem       *RawItem `json:"rawItem,omitempty"`
 		}
 		var items []Error
 		for rows.Next() {
@@ -154,16 +154,16 @@ func adminOpsImportStagingEscalateHandler(db *pgxpool.Pool, logger *slog.Logger)
 		ctx := r.Context()
 		// Fetch import error with batch details
 		type ImportError struct {
-			ID            string
-			ImportBatchID string
-			RawItemID     *string
-			Code          *string
-			Message       string
-			Phase         *string
-			Severity      string
-			Sample        *string
-			SourceFile    *string
-			SourceKey     *string
+			ID              string
+			ImportBatchID   string
+			RawItemID       *string
+			Code            *string
+			Message         string
+			Phase           *string
+			Severity        string
+			Sample          *string
+			SourceFile      *string
+			SourceKey       *string
 			BatchSourceType string
 			BatchSourceDir  string
 		}

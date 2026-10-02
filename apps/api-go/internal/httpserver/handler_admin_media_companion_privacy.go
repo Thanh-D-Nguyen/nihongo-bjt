@@ -87,19 +87,19 @@ func adminMediaListHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerFu
 		defer rows.Close()
 
 		type Asset struct {
-			ID           string          `json:"id"`
-			ObjectKey    string          `json:"objectKey"`
-			OriginalName string          `json:"originalName"`
-			MimeType     string          `json:"mimeType"`
-			SizeBytes    int64           `json:"sizeBytes"`
-			RightsStatus *string         `json:"rightsStatus,omitempty"`
-			License      *string         `json:"license,omitempty"`
-			SourceURL    *string         `json:"sourceUrl,omitempty"`
-			Provenance   json.RawMessage `json:"provenance,omitempty"`
+			ID            string          `json:"id"`
+			ObjectKey     string          `json:"objectKey"`
+			OriginalName  string          `json:"originalName"`
+			MimeType      string          `json:"mimeType"`
+			SizeBytes     int64           `json:"sizeBytes"`
+			RightsStatus  *string         `json:"rightsStatus,omitempty"`
+			License       *string         `json:"license,omitempty"`
+			SourceURL     *string         `json:"sourceUrl,omitempty"`
+			Provenance    json.RawMessage `json:"provenance,omitempty"`
 			Accessibility json.RawMessage `json:"accessibility,omitempty"`
-			Status       string          `json:"status"`
-			CreatedAt    string          `json:"createdAt"`
-			UpdatedAt    string          `json:"updatedAt"`
+			Status        string          `json:"status"`
+			CreatedAt     string          `json:"createdAt"`
+			UpdatedAt     string          `json:"updatedAt"`
 		}
 
 		var items []Asset
@@ -133,19 +133,19 @@ func adminMediaDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handler
 		}
 
 		type Asset struct {
-			ID            string          `json:"id"`
-			ObjectKey     string          `json:"objectKey"`
-			OriginalName  string          `json:"originalName"`
-			MimeType      string          `json:"mimeType"`
-			SizeBytes     int64           `json:"sizeBytes"`
-			RightsStatus  *string         `json:"rightsStatus,omitempty"`
-			License       *string         `json:"license,omitempty"`
-			SourceURL     *string         `json:"sourceUrl,omitempty"`
-			Provenance    json.RawMessage `json:"provenance,omitempty"`
-			Accessibility json.RawMessage `json:"accessibility,omitempty"`
-			Status        string          `json:"status"`
-			CreatedAt     string          `json:"createdAt"`
-			UpdatedAt     string          `json:"updatedAt"`
+			ID            string            `json:"id"`
+			ObjectKey     string            `json:"objectKey"`
+			OriginalName  string            `json:"originalName"`
+			MimeType      string            `json:"mimeType"`
+			SizeBytes     int64             `json:"sizeBytes"`
+			RightsStatus  *string           `json:"rightsStatus,omitempty"`
+			License       *string           `json:"license,omitempty"`
+			SourceURL     *string           `json:"sourceUrl,omitempty"`
+			Provenance    json.RawMessage   `json:"provenance,omitempty"`
+			Accessibility json.RawMessage   `json:"accessibility,omitempty"`
+			Status        string            `json:"status"`
+			CreatedAt     string            `json:"createdAt"`
+			UpdatedAt     string            `json:"updatedAt"`
 			Audit         []json.RawMessage `json:"audit"`
 		}
 
@@ -369,12 +369,12 @@ func adminCompanionConfigHandler(db *pgxpool.Pool, logger *slog.Logger) http.Han
 		}
 
 		writeJSON(w, http.StatusOK, map[string]any{
-			"currentRiveAsset":     "18912-35694-lil-guy.riv",
-			"availableRiveAssets":  riveAssets,
+			"currentRiveAsset":       "18912-35694-lil-guy.riv",
+			"availableRiveAssets":    riveAssets,
 			"proactiveTipIntervalMs": 45000,
-			"sleepTimeoutMs":       120000,
-			"tipCount":             tipCount,
-			"tipCategories":        categories,
+			"sleepTimeoutMs":         120000,
+			"tipCount":               tipCount,
+			"tipCategories":          categories,
 		})
 	}
 }

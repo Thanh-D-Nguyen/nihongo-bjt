@@ -71,14 +71,14 @@ func getStoryArcDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handle
 			TitleVi string `json:"titleVi"`
 		}
 		type ArcDetail struct {
-			ID            string    `json:"id"`
-			Slug          string    `json:"slug"`
-			TitleJa       string    `json:"titleJa"`
-			TitleVi       string    `json:"titleVi"`
-			RankCodeEntry string    `json:"rankCodeEntry"`
+			ID            string          `json:"id"`
+			Slug          string          `json:"slug"`
+			TitleJa       string          `json:"titleJa"`
+			TitleVi       string          `json:"titleVi"`
+			RankCodeEntry string          `json:"rankCodeEntry"`
 			StoryPayload  json.RawMessage `json:"storyPayload"`
-			Status        string    `json:"status"`
-			Chapters      []Chapter `json:"chapters"`
+			Status        string          `json:"status"`
+			Chapters      []Chapter       `json:"chapters"`
 		}
 
 		var ad ArcDetail
@@ -190,19 +190,19 @@ func getLexemeDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.HandlerF
 		}
 
 		type Sense struct {
-			GlossVi   string  `json:"glossVi"`
-			PosTag    *string `json:"posTag,omitempty"`
-			Note      *string `json:"note,omitempty"`
+			GlossVi string  `json:"glossVi"`
+			PosTag  *string `json:"posTag,omitempty"`
+			Note    *string `json:"note,omitempty"`
 		}
 		type LexemeDetail struct {
-			ID             string  `json:"id"`
-			Headword       string  `json:"headword"`
-			Reading        *string `json:"reading,omitempty"`
-			KanjiMeaningVi *string `json:"kanjiMeaningVi,omitempty"`
-			JLPTLevel      *string `json:"jlptLevel,omitempty"`
-			ShortMeaningVi *string `json:"shortMeaningVi,omitempty"`
+			ID             string          `json:"id"`
+			Headword       string          `json:"headword"`
+			Reading        *string         `json:"reading,omitempty"`
+			KanjiMeaningVi *string         `json:"kanjiMeaningVi,omitempty"`
+			JLPTLevel      *string         `json:"jlptLevel,omitempty"`
+			ShortMeaningVi *string         `json:"shortMeaningVi,omitempty"`
 			Pronunciation  json.RawMessage `json:"pronunciation,omitempty"`
-			Senses         []Sense `json:"senses"`
+			Senses         []Sense         `json:"senses"`
 		}
 
 		var ld LexemeDetail

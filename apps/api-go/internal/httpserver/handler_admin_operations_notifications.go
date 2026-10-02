@@ -37,11 +37,11 @@ func adminOpsNotificationsHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 		}
 
 		writeJSON(w, http.StatusOK, map[string]any{
-			"openDeadLetters":         openDeadLetters,
-			"failedDeadLetters":       failedDeadLetters,
+			"openDeadLetters":          openDeadLetters,
+			"failedDeadLetters":        failedDeadLetters,
 			"importErrorsHighSeverity": importErrorsHighSeverity,
-			"status":                  status,
-			"generatedAt":             time.Now().UTC().Format(time.RFC3339),
+			"status":                   status,
+			"generatedAt":              time.Now().UTC().Format(time.RFC3339),
 		})
 	}
 }

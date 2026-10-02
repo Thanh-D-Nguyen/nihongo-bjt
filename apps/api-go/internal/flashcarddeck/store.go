@@ -20,15 +20,15 @@ var ErrNotOwner = errors.New("flashcarddeck: not owner")
 
 // Deck represents a flashcard deck with metadata.
 type Deck struct {
-	ID          string          `json:"id"`
-	UserID      string          `json:"userId"`
-	Name        string          `json:"name"`
-	Description *string         `json:"description,omitempty"`
-	Status      string          `json:"status"`
-	CardCount   int             `json:"cardCount"`
-	ShareToken  *string         `json:"shareToken,omitempty"`
-	CreatedAt   time.Time       `json:"createdAt"`
-	UpdatedAt   time.Time       `json:"updatedAt"`
+	ID          string    `json:"id"`
+	UserID      string    `json:"userId"`
+	Name        string    `json:"name"`
+	Description *string   `json:"description,omitempty"`
+	Status      string    `json:"status"`
+	CardCount   int       `json:"cardCount"`
+	ShareToken  *string   `json:"shareToken,omitempty"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
 // CreateDeckInput contains validated fields for creating a new deck.
@@ -46,11 +46,11 @@ type UpdateDeckInput struct {
 
 // GenerateDeckInput contains filters for auto-generating a deck from dictionary content.
 type GenerateDeckInput struct {
-	UserID     string   `json:"userId"`
-	Name       string   `json:"name"`
+	UserID      string   `json:"userId"`
+	Name        string   `json:"name"`
 	SourceTypes []string `json:"sourceTypes"`
-	Levels     []string `json:"levels"`
-	Limit      int      `json:"limit"`
+	Levels      []string `json:"levels"`
+	Limit       int      `json:"limit"`
 }
 
 // PreviewCountResult is the response for POST /api/flashcards/decks/generate/preview.
@@ -68,12 +68,12 @@ type SuggestCardsInput struct {
 
 // SuggestedCard is one card suggestion result.
 type SuggestedCard struct {
-	VariantID   string `json:"variantId"`
-	SourceType  string `json:"sourceType"`
-	SourceID    string `json:"sourceId"`
-	FrontText   string `json:"frontText"`
-	BackText    string `json:"backText"`
-	Reading     *string `json:"reading,omitempty"`
+	VariantID  string  `json:"variantId"`
+	SourceType string  `json:"sourceType"`
+	SourceID   string  `json:"sourceId"`
+	FrontText  string  `json:"frontText"`
+	BackText   string  `json:"backText"`
+	Reading    *string `json:"reading,omitempty"`
 }
 
 // CreateCardFromContentInput creates a single card from a dictionary/content entry.

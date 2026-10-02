@@ -140,10 +140,10 @@ func adminOpsSecurityOverviewHandler(db *pgxpool.Pool, logger *slog.Logger) http
 		}
 
 		resp := map[string]any{
-			"generatedAt":    time.Now().UTC().Format(time.RFC3339),
-			"total":          total,
-			"bySeverity":     severityCounts,
-			"byType":         typeCounts,
+			"generatedAt": time.Now().UTC().Format(time.RFC3339),
+			"total":       total,
+			"bySeverity":  severityCounts,
+			"byType":      typeCounts,
 		}
 		writeJSON(w, http.StatusOK, resp)
 	}
@@ -215,20 +215,20 @@ func adminOpsSecurityEventsListHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 		defer rows.Close()
 
 		type Event struct {
-			ID          string          `json:"id"`
-			Action      string          `json:"action"`
-			ActorID     string          `json:"actorId"`
-			ActorName   string          `json:"actorName"`
-			ActorEmail  string          `json:"actorEmail"`
-			TargetID    *string         `json:"targetId,omitempty"`
-			TargetType  *string         `json:"targetType,omitempty"`
-			Reason      *string         `json:"reason,omitempty"`
-			After       json.RawMessage `json:"after,omitempty"`
-			Before      json.RawMessage `json:"before,omitempty"`
-			CreatedAt   string          `json:"createdAt"`
-			EventType   string          `json:"eventType"`
-			Severity    string          `json:"severity"`
-			Resolution  *string         `json:"resolution,omitempty"`
+			ID         string          `json:"id"`
+			Action     string          `json:"action"`
+			ActorID    string          `json:"actorId"`
+			ActorName  string          `json:"actorName"`
+			ActorEmail string          `json:"actorEmail"`
+			TargetID   *string         `json:"targetId,omitempty"`
+			TargetType *string         `json:"targetType,omitempty"`
+			Reason     *string         `json:"reason,omitempty"`
+			After      json.RawMessage `json:"after,omitempty"`
+			Before     json.RawMessage `json:"before,omitempty"`
+			CreatedAt  string          `json:"createdAt"`
+			EventType  string          `json:"eventType"`
+			Severity   string          `json:"severity"`
+			Resolution *string         `json:"resolution,omitempty"`
 		}
 
 		var allItems []Event

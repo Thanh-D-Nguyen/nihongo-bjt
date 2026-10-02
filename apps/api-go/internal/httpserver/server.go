@@ -15,20 +15,17 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"gocloud.dev/blob"
 
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/authlink"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authz"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/career"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/config"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/credential"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/authlink"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/exercisereview"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/flashcarddeck"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/flashcardreview"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/flashcardstyle"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/gamification"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/quiztemplate"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/studyplan"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/scenario"
-"github.com/kotobawork/nihongo-bjt/api-go/internal/career"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/media"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/notification"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/onboarding"
@@ -36,42 +33,45 @@ import (
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/postgres"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/privacy"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/profile"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/quiztemplate"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/realtime"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/redisx"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/scenario"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/search"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/session"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/studyplan"
 )
 
 // Dependencies holds external dependencies required by the HTTP server.
 type Dependencies struct {
-	Config          *config.Config
-	Logger          *slog.Logger
-	DB              postgres.Pinger    // nil if not configured; readiness returns 503
-	DBPool          *pgxpool.Pool      // concrete pool for handlers needing BeginTx/Query; nil if DB not configured
-	Redis           redisx.Pinger      // nil if not configured; readiness reports not_configured
-	SessionStore    *session.Store     // nil if DB not configured
-	ProfileStore    *profile.Store     // nil if DB not configured
-	RBACStore       *authz.Store       // nil if DB not configured
-	CredentialStore *credential.Store  // nil if DB not configured
-	RateLimiter     *authn.RateLimiter // nil disables login (fail closed in handler)
-	MediaStore      *media.Store       // nil if DB not configured; media endpoints return 503
-	MediaBucket     *blob.Bucket       // nil if media storage not configured; upload/stream return 503
-	SearchClient    *search.Client     // nil if Meilisearch not configured; search endpoints return 503
-	OnboardingStore   *onboarding.Store   // nil if DB not configured; onboarding endpoints return 503
-	NotificationStore *notification.Store // nil if DB not configured; notification endpoints return 503
-	PrivacyStore      *privacy.Store      // nil if DB not configured; privacy endpoints return 503
-	AuthLinkStore       *authlink.Store       // nil if DB not configured; link/exchange returns 503
-	PlacementStore      *placement.Store      // nil if DB not configured; placement endpoints return 503
-	GamificationStore   *gamification.Store   // nil if DB not configured; gamification endpoints return 503
-	ExerciseReviewStore   *exercisereview.Store   // nil if DB not configured; exercise review endpoints return 503
-	FlashcardStyleStore   *flashcardstyle.Store   // nil if DB not configured; flashcard style endpoints return 503
-	FlashcardReviewStore  *flashcardreview.Store  // nil if DB not configured; flashcard review endpoints return 503
-	FlashcardDeckStore    *flashcarddeck.Store    // nil if DB not configured; flashcard deck endpoints return 503
-	QuizTemplateStore     *quiztemplate.Store     // nil if DB not configured; quiz template endpoints return 503
-	StudyPlanStore        *studyplan.Store        // nil if DB not configured; study plan endpoints return 503
-CareerStore *career.Store // nil if DB not configured; career endpoints return 503
-	ScenarioStore         *scenario.Store         // nil if DB not configured; scenario endpoints return 503
-	Version               string
+	Config               *config.Config
+	Logger               *slog.Logger
+	DB                   postgres.Pinger        // nil if not configured; readiness returns 503
+	DBPool               *pgxpool.Pool          // concrete pool for handlers needing BeginTx/Query; nil if DB not configured
+	Redis                redisx.Pinger          // nil if not configured; readiness reports not_configured
+	SessionStore         *session.Store         // nil if DB not configured
+	ProfileStore         *profile.Store         // nil if DB not configured
+	RBACStore            *authz.Store           // nil if DB not configured
+	CredentialStore      *credential.Store      // nil if DB not configured
+	RateLimiter          *authn.RateLimiter     // nil disables login (fail closed in handler)
+	MediaStore           *media.Store           // nil if DB not configured; media endpoints return 503
+	MediaBucket          *blob.Bucket           // nil if media storage not configured; upload/stream return 503
+	SearchClient         *search.Client         // nil if Meilisearch not configured; search endpoints return 503
+	OnboardingStore      *onboarding.Store      // nil if DB not configured; onboarding endpoints return 503
+	NotificationStore    *notification.Store    // nil if DB not configured; notification endpoints return 503
+	PrivacyStore         *privacy.Store         // nil if DB not configured; privacy endpoints return 503
+	AuthLinkStore        *authlink.Store        // nil if DB not configured; link/exchange returns 503
+	PlacementStore       *placement.Store       // nil if DB not configured; placement endpoints return 503
+	GamificationStore    *gamification.Store    // nil if DB not configured; gamification endpoints return 503
+	ExerciseReviewStore  *exercisereview.Store  // nil if DB not configured; exercise review endpoints return 503
+	FlashcardStyleStore  *flashcardstyle.Store  // nil if DB not configured; flashcard style endpoints return 503
+	FlashcardReviewStore *flashcardreview.Store // nil if DB not configured; flashcard review endpoints return 503
+	FlashcardDeckStore   *flashcarddeck.Store   // nil if DB not configured; flashcard deck endpoints return 503
+	QuizTemplateStore    *quiztemplate.Store    // nil if DB not configured; quiz template endpoints return 503
+	StudyPlanStore       *studyplan.Store       // nil if DB not configured; study plan endpoints return 503
+	CareerStore          *career.Store          // nil if DB not configured; career endpoints return 503
+	ScenarioStore        *scenario.Store        // nil if DB not configured; scenario endpoints return 503
+	Version              string
 }
 
 // NewRouter creates the chi router with all routes and middleware.
@@ -980,27 +980,27 @@ func NewRouter(deps Dependencies) http.Handler {
 			ar.Use(adminGuard)
 			ar.Get("/api/admin/reading-assist/reports", adminReadingAssistReportsHandler(deps.DBPool, deps.Logger))
 
-		// P1-A8: Admin Learning — Paths + Competencies + Review (20 routes)
-		ar.Get("/api/admin/learning/paths", adminLearningPathsListHandler(deps.DBPool, deps.Logger))
-		ar.Post("/api/admin/learning/paths", adminLearningPathCreateHandler(deps.DBPool, deps.Logger))
-		ar.Get("/api/admin/learning/paths/{id}", adminLearningPathDetailHandler(deps.DBPool, deps.Logger))
-		ar.Patch("/api/admin/learning/paths/{id}", adminLearningPathPatchHandler(deps.DBPool, deps.Logger))
-		ar.Post("/api/admin/learning/paths/{id}/publish", adminLearningPathPublishHandler(deps.DBPool, deps.Logger))
-		ar.Post("/api/admin/learning/paths/{id}/archive", adminLearningPathArchiveHandler(deps.DBPool, deps.Logger))
-		ar.Post("/api/admin/learning/paths/{id}/duplicate", adminLearningPathDuplicateHandler(deps.DBPool, deps.Logger))
-		ar.Delete("/api/admin/learning/paths/{id}", adminLearningPathDeleteHandler(deps.DBPool, deps.Logger))
-		ar.Get("/api/admin/learning/competencies", adminCompetenciesListHandler(deps.DBPool, deps.Logger))
-		ar.Post("/api/admin/learning/competencies", adminCompetencyCreateHandler(deps.DBPool, deps.Logger))
-		ar.Get("/api/admin/learning/competencies/{id}", adminCompetencyDetailHandler(deps.DBPool, deps.Logger))
-		ar.Patch("/api/admin/learning/competencies/{id}", adminCompetencyPatchHandler(deps.DBPool, deps.Logger))
-		ar.Post("/api/admin/learning/competencies/{id}/publish", adminCompetencyPublishHandler(deps.DBPool, deps.Logger))
-		ar.Post("/api/admin/learning/competencies/{id}/archive", adminCompetencyArchiveHandler(deps.DBPool, deps.Logger))
-		ar.Delete("/api/admin/learning/competencies/{id}", adminCompetencyDeleteHandler(deps.DBPool, deps.Logger))
-		ar.Get("/api/admin/learning/review/summary", adminLearningReviewSummaryHandler(deps.DBPool, deps.Logger))
-		ar.Get("/api/admin/learning/review/retention-curve", adminLearningReviewRetentionCurveHandler(deps.DBPool, deps.Logger))
-		ar.Get("/api/admin/learning/review/problem-cards", adminLearningReviewProblemCardsHandler(deps.DBPool, deps.Logger))
-		ar.Get("/api/admin/learning/review/cards/{id}", adminLearningReviewCardDetailHandler(deps.DBPool, deps.Logger))
-		ar.Post("/api/admin/learning/review/cards/{id}/force-reintroduce", adminLearningReviewForceReintroduceHandler(deps.DBPool, deps.Logger))
+			// P1-A8: Admin Learning — Paths + Competencies + Review (20 routes)
+			ar.Get("/api/admin/learning/paths", adminLearningPathsListHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/learning/paths", adminLearningPathCreateHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/learning/paths/{id}", adminLearningPathDetailHandler(deps.DBPool, deps.Logger))
+			ar.Patch("/api/admin/learning/paths/{id}", adminLearningPathPatchHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/learning/paths/{id}/publish", adminLearningPathPublishHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/learning/paths/{id}/archive", adminLearningPathArchiveHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/learning/paths/{id}/duplicate", adminLearningPathDuplicateHandler(deps.DBPool, deps.Logger))
+			ar.Delete("/api/admin/learning/paths/{id}", adminLearningPathDeleteHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/learning/competencies", adminCompetenciesListHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/learning/competencies", adminCompetencyCreateHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/learning/competencies/{id}", adminCompetencyDetailHandler(deps.DBPool, deps.Logger))
+			ar.Patch("/api/admin/learning/competencies/{id}", adminCompetencyPatchHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/learning/competencies/{id}/publish", adminCompetencyPublishHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/learning/competencies/{id}/archive", adminCompetencyArchiveHandler(deps.DBPool, deps.Logger))
+			ar.Delete("/api/admin/learning/competencies/{id}", adminCompetencyDeleteHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/learning/review/summary", adminLearningReviewSummaryHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/learning/review/retention-curve", adminLearningReviewRetentionCurveHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/learning/review/problem-cards", adminLearningReviewProblemCardsHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/learning/review/cards/{id}", adminLearningReviewCardDetailHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/learning/review/cards/{id}/force-reintroduce", adminLearningReviewForceReintroduceHandler(deps.DBPool, deps.Logger))
 
 			// P1-A9: Admin Gamification — Streaks + Achievements + Tiers + Leaderboards + Pets (23 routes)
 			ar.Get("/api/admin/gamification/streaks", adminStreakConfigsListHandler(deps.DBPool, deps.Logger))
@@ -1026,38 +1026,38 @@ func NewRouter(deps Dependencies) http.Handler {
 			ar.Put("/api/admin/gamification/pets/{id}", adminPetUpdateHandler(deps.DBPool, deps.Logger))
 			ar.Post("/api/admin/gamification/pets/{id}/reset", adminPetResetHandler(deps.DBPool, deps.Logger))
 
-// P1-A10: Admin Ads — Overview + Placements + Campaigns + Providers + Rules + Performance + Audit (13 routes)
-ar.Get("/api/admin/ads/overview", adminAdsOverviewHandler(deps.DBPool, deps.Logger))
-ar.Get("/api/admin/ads/placements", adminAdsPlacementsListHandler(deps.DBPool, deps.Logger))
-ar.Post("/api/admin/ads/placements", adminAdsPlacementCreateHandler(deps.DBPool, deps.Logger))
-ar.Patch("/api/admin/ads/placements/{id}", adminAdsPlacementPatchHandler(deps.DBPool, deps.Logger))
-ar.Get("/api/admin/ads/campaigns", adminAdsCampaignsListHandler(deps.DBPool, deps.Logger))
-ar.Post("/api/admin/ads/campaigns", adminAdsCampaignCreateHandler(deps.DBPool, deps.Logger))
-ar.Patch("/api/admin/ads/campaigns/{id}", adminAdsCampaignPatchHandler(deps.DBPool, deps.Logger))
-ar.Get("/api/admin/ads/providers", adminAdsProvidersListHandler(deps.DBPool, deps.Logger))
-ar.Patch("/api/admin/ads/providers/{key}", adminAdsProviderPatchHandler(deps.DBPool, deps.Logger))
-ar.Get("/api/admin/ads/rules", adminAdsRulesListHandler(deps.DBPool, deps.Logger))
-ar.Post("/api/admin/ads/rules", adminAdsRuleUpsertHandler(deps.DBPool, deps.Logger))
-ar.Get("/api/admin/ads/performance", adminAdsPerformanceHandler(deps.DBPool, deps.Logger))
-ar.Get("/api/admin/ads/audit", adminAdsAuditHandler(deps.DBPool, deps.Logger))
+			// P1-A10: Admin Ads — Overview + Placements + Campaigns + Providers + Rules + Performance + Audit (13 routes)
+			ar.Get("/api/admin/ads/overview", adminAdsOverviewHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/ads/placements", adminAdsPlacementsListHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/ads/placements", adminAdsPlacementCreateHandler(deps.DBPool, deps.Logger))
+			ar.Patch("/api/admin/ads/placements/{id}", adminAdsPlacementPatchHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/ads/campaigns", adminAdsCampaignsListHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/ads/campaigns", adminAdsCampaignCreateHandler(deps.DBPool, deps.Logger))
+			ar.Patch("/api/admin/ads/campaigns/{id}", adminAdsCampaignPatchHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/ads/providers", adminAdsProvidersListHandler(deps.DBPool, deps.Logger))
+			ar.Patch("/api/admin/ads/providers/{key}", adminAdsProviderPatchHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/ads/rules", adminAdsRulesListHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/ads/rules", adminAdsRuleUpsertHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/ads/performance", adminAdsPerformanceHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/ads/audit", adminAdsAuditHandler(deps.DBPool, deps.Logger))
 
-		// P1-A11: Admin Magazine + Loto — Articles + Predictions + Lab (16 routes)
-		ar.Get("/api/admin/magazine", adminMagazineListHandler(deps.DBPool, deps.Logger))
-		ar.Post("/api/admin/magazine/generate", adminMagazineGenerateHandler(deps.DBPool, deps.Logger))
-		ar.Post("/api/admin/magazine/{id}/regenerate", adminMagazineRegenerateHandler(deps.DBPool, deps.Logger))
-		ar.Delete("/api/admin/magazine/{id}", adminMagazineDeleteHandler(deps.DBPool, deps.Logger))
-		ar.Get("/api/admin/magazine/loto/predictions", adminLotoPredictionsListHandler(deps.DBPool, deps.Logger))
-		ar.Put("/api/admin/magazine/loto/predictions/{id}/approve", adminLotoPredictionApproveHandler(deps.DBPool, deps.Logger))
-		ar.Put("/api/admin/magazine/loto/predictions/{id}/reject", adminLotoPredictionRejectHandler(deps.DBPool, deps.Logger))
-		ar.Post("/api/admin/magazine/loto/predictions/results", adminLotoResultsInputHandler(deps.DBPool, deps.Logger))
-		ar.Get("/api/admin/magazine/loto/predictions/analytics", adminLotoAnalyticsHandler(deps.DBPool, deps.Logger))
-		ar.Get("/api/admin/magazine/loto/summary", adminLotoSummaryHandler(deps.DBPool, deps.Logger))
-		ar.Get("/api/admin/magazine/loto/draws", adminLotoDrawsHandler(deps.DBPool, deps.Logger))
-		ar.Post("/api/admin/magazine/loto/import-csv", adminLotoImportCSVHandler(deps.DBPool, deps.Logger))
-		ar.Post("/api/admin/magazine/loto/sync", adminLotoSyncHandler(deps.DBPool, deps.Logger))
-		ar.Post("/api/admin/magazine/loto/autopilot", adminLotoAutopilotHandler(deps.DBPool, deps.Logger))
-		ar.Post("/api/admin/magazine/loto/generate", adminLotoGenerateHandler(deps.DBPool, deps.Logger))
-		ar.Post("/api/admin/magazine/loto/publish", adminLotoPublishHandler(deps.DBPool, deps.Logger))
+			// P1-A11: Admin Magazine + Loto — Articles + Predictions + Lab (16 routes)
+			ar.Get("/api/admin/magazine", adminMagazineListHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/magazine/generate", adminMagazineGenerateHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/magazine/{id}/regenerate", adminMagazineRegenerateHandler(deps.DBPool, deps.Logger))
+			ar.Delete("/api/admin/magazine/{id}", adminMagazineDeleteHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/magazine/loto/predictions", adminLotoPredictionsListHandler(deps.DBPool, deps.Logger))
+			ar.Put("/api/admin/magazine/loto/predictions/{id}/approve", adminLotoPredictionApproveHandler(deps.DBPool, deps.Logger))
+			ar.Put("/api/admin/magazine/loto/predictions/{id}/reject", adminLotoPredictionRejectHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/magazine/loto/predictions/results", adminLotoResultsInputHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/magazine/loto/predictions/analytics", adminLotoAnalyticsHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/magazine/loto/summary", adminLotoSummaryHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/magazine/loto/draws", adminLotoDrawsHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/magazine/loto/import-csv", adminLotoImportCSVHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/magazine/loto/sync", adminLotoSyncHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/magazine/loto/autopilot", adminLotoAutopilotHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/magazine/loto/generate", adminLotoGenerateHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/magazine/loto/publish", adminLotoPublishHandler(deps.DBPool, deps.Logger))
 
 			// P1-A12: Admin Flashcards — Decks + Variants + Styles (15 routes)
 			ar.Get("/api/admin/flashcards/decks", adminFlashcardDecksListHandler(deps.DBPool, deps.Logger))
@@ -1076,89 +1076,89 @@ ar.Get("/api/admin/ads/audit", adminAdsAuditHandler(deps.DBPool, deps.Logger))
 			ar.Patch("/api/admin/flashcards/styles/{id}", adminFlashcardStylePatchHandler(deps.DBPool, deps.Logger))
 			ar.Post("/api/admin/flashcards/styles/{id}/transition", adminFlashcardStyleTransitionHandler(deps.DBPool, deps.Logger))
 
-// P1-A13: Admin Legal — Policies + Cookie Categories + Retention (11 routes)
-ar.Get("/api/admin/legal/policies", adminLegalPoliciesListHandler(deps.DBPool, deps.Logger))
-ar.Get("/api/admin/legal/policies/{id}", adminLegalPolicyDetailHandler(deps.DBPool, deps.Logger))
-ar.Get("/api/admin/legal/policies/{id}/diff", adminLegalPolicyDiffHandler(deps.DBPool, deps.Logger))
-ar.Post("/api/admin/legal/policies", adminLegalPolicyCreateHandler(deps.DBPool, deps.Logger))
-ar.Patch("/api/admin/legal/policies/{id}", adminLegalPolicyPatchHandler(deps.DBPool, deps.Logger))
-ar.Patch("/api/admin/legal/policies/{id}/publish", adminLegalPolicyPublishHandler(deps.DBPool, deps.Logger))
-ar.Patch("/api/admin/legal/policies/{id}/archive", adminLegalPolicyArchiveHandler(deps.DBPool, deps.Logger))
-ar.Post("/api/admin/legal/policies/{id}/duplicate", adminLegalPolicyDuplicateHandler(deps.DBPool, deps.Logger))
-ar.Delete("/api/admin/legal/policies/{id}", adminLegalPolicyDeleteHandler(deps.DBPool, deps.Logger))
-ar.Get("/api/admin/legal/cookie-categories", adminLegalCookieCategoriesHandler())
-ar.Get("/api/admin/legal/retention", adminLegalRetentionHandler())
+			// P1-A13: Admin Legal — Policies + Cookie Categories + Retention (11 routes)
+			ar.Get("/api/admin/legal/policies", adminLegalPoliciesListHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/legal/policies/{id}", adminLegalPolicyDetailHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/legal/policies/{id}/diff", adminLegalPolicyDiffHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/legal/policies", adminLegalPolicyCreateHandler(deps.DBPool, deps.Logger))
+			ar.Patch("/api/admin/legal/policies/{id}", adminLegalPolicyPatchHandler(deps.DBPool, deps.Logger))
+			ar.Patch("/api/admin/legal/policies/{id}/publish", adminLegalPolicyPublishHandler(deps.DBPool, deps.Logger))
+			ar.Patch("/api/admin/legal/policies/{id}/archive", adminLegalPolicyArchiveHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/legal/policies/{id}/duplicate", adminLegalPolicyDuplicateHandler(deps.DBPool, deps.Logger))
+			ar.Delete("/api/admin/legal/policies/{id}", adminLegalPolicyDeleteHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/legal/cookie-categories", adminLegalCookieCategoriesHandler())
+			ar.Get("/api/admin/legal/retention", adminLegalRetentionHandler())
 
-		// P1-A14: Admin Daily Radar + Exercises — Modules/Cards + Config/CRUD/Analytics (22 routes)
-		ar.Get("/api/admin/daily-radar/summary", adminDailyRadarSummaryHandler(deps.DBPool, deps.Logger))
-		ar.Get("/api/admin/daily-radar/modules", adminDailyRadarModulesListHandler(deps.DBPool, deps.Logger))
-		ar.Post("/api/admin/daily-radar/modules", adminDailyRadarModuleCreateHandler(deps.DBPool, deps.Logger))
-		ar.Get("/api/admin/daily-radar/modules/{id}", adminDailyRadarModuleDetailHandler(deps.DBPool, deps.Logger))
-		ar.Patch("/api/admin/daily-radar/modules/{id}", adminDailyRadarModulePatchHandler(deps.DBPool, deps.Logger))
-		ar.Post("/api/admin/daily-radar/modules/{id}/archive", adminDailyRadarModuleArchiveHandler(deps.DBPool, deps.Logger))
-		ar.Get("/api/admin/daily-radar/cards", adminDailyRadarCardsListHandler(deps.DBPool, deps.Logger))
-		ar.Post("/api/admin/daily-radar/cards", adminDailyRadarCardCreateHandler(deps.DBPool, deps.Logger))
-		ar.Get("/api/admin/daily-radar/cards/{id}", adminDailyRadarCardDetailHandler(deps.DBPool, deps.Logger))
-		ar.Patch("/api/admin/daily-radar/cards/{id}", adminDailyRadarCardPatchHandler(deps.DBPool, deps.Logger))
-		ar.Post("/api/admin/daily-radar/cards/{id}/publish", adminDailyRadarCardPublishHandler(deps.DBPool, deps.Logger))
-		ar.Post("/api/admin/daily-radar/cards/{id}/archive", adminDailyRadarCardArchiveHandler(deps.DBPool, deps.Logger))
-		ar.Post("/api/admin/daily-radar/cards/{id}/duplicate", adminDailyRadarCardDuplicateHandler(deps.DBPool, deps.Logger))
-		ar.Get("/api/admin/exercises/config", adminExercisesConfigListHandler(deps.DBPool, deps.Logger))
-		ar.Put("/api/admin/exercises/config", adminExercisesConfigUpsertHandler(deps.DBPool, deps.Logger))
-		ar.Delete("/api/admin/exercises/config/{id}", adminExercisesConfigDeleteHandler(deps.DBPool, deps.Logger))
-		ar.Get("/api/admin/exercises", adminExercisesListHandler(deps.DBPool, deps.Logger))
-		ar.Get("/api/admin/exercises/{id}", adminExerciseDetailHandler(deps.DBPool, deps.Logger))
-		ar.Post("/api/admin/exercises", adminExerciseCreateHandler(deps.DBPool, deps.Logger))
-		ar.Put("/api/admin/exercises/{id}", adminExerciseUpdateHandler(deps.DBPool, deps.Logger))
-		ar.Delete("/api/admin/exercises/{id}", adminExerciseDeleteHandler(deps.DBPool, deps.Logger))
-		ar.Get("/api/admin/exercises/analytics/performance", adminExercisesPerformanceAnalyticsHandler(deps.DBPool, deps.Logger))
+			// P1-A14: Admin Daily Radar + Exercises — Modules/Cards + Config/CRUD/Analytics (22 routes)
+			ar.Get("/api/admin/daily-radar/summary", adminDailyRadarSummaryHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/daily-radar/modules", adminDailyRadarModulesListHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/daily-radar/modules", adminDailyRadarModuleCreateHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/daily-radar/modules/{id}", adminDailyRadarModuleDetailHandler(deps.DBPool, deps.Logger))
+			ar.Patch("/api/admin/daily-radar/modules/{id}", adminDailyRadarModulePatchHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/daily-radar/modules/{id}/archive", adminDailyRadarModuleArchiveHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/daily-radar/cards", adminDailyRadarCardsListHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/daily-radar/cards", adminDailyRadarCardCreateHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/daily-radar/cards/{id}", adminDailyRadarCardDetailHandler(deps.DBPool, deps.Logger))
+			ar.Patch("/api/admin/daily-radar/cards/{id}", adminDailyRadarCardPatchHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/daily-radar/cards/{id}/publish", adminDailyRadarCardPublishHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/daily-radar/cards/{id}/archive", adminDailyRadarCardArchiveHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/daily-radar/cards/{id}/duplicate", adminDailyRadarCardDuplicateHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/exercises/config", adminExercisesConfigListHandler(deps.DBPool, deps.Logger))
+			ar.Put("/api/admin/exercises/config", adminExercisesConfigUpsertHandler(deps.DBPool, deps.Logger))
+			ar.Delete("/api/admin/exercises/config/{id}", adminExercisesConfigDeleteHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/exercises", adminExercisesListHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/exercises/{id}", adminExerciseDetailHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/exercises", adminExerciseCreateHandler(deps.DBPool, deps.Logger))
+			ar.Put("/api/admin/exercises/{id}", adminExerciseUpdateHandler(deps.DBPool, deps.Logger))
+			ar.Delete("/api/admin/exercises/{id}", adminExerciseDeleteHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/exercises/analytics/performance", adminExercisesPerformanceAnalyticsHandler(deps.DBPool, deps.Logger))
 
-		// P1-A15: Admin Media + Companion + Privacy (16 routes)
-		ar.Get("/api/admin/media", adminMediaListHandler(deps.DBPool, deps.Logger))
-		ar.Get("/api/admin/media/{id}", adminMediaDetailHandler(deps.DBPool, deps.Logger))
-		ar.Patch("/api/admin/media/{id}/metadata", adminMediaMetadataPatchHandler(deps.DBPool, deps.Logger))
-		ar.Delete("/api/admin/media/{id}", adminMediaSoftDeleteHandler(deps.DBPool, deps.Logger))
-		ar.Get("/api/admin/companion/config", adminCompanionConfigHandler(deps.DBPool, deps.Logger))
-		ar.Get("/api/admin/companion/tips", adminCompanionTipsListHandler(deps.DBPool, deps.Logger))
-		ar.Post("/api/admin/companion/tips", adminCompanionTipCreateHandler(deps.DBPool, deps.Logger))
-		ar.Patch("/api/admin/companion/tips/{id}", adminCompanionTipPatchHandler(deps.DBPool, deps.Logger))
-		ar.Delete("/api/admin/companion/tips/{id}", adminCompanionTipDeleteHandler(deps.DBPool, deps.Logger))
-		ar.Get("/api/admin/privacy/requests", adminPrivacyRequestsListHandler(deps.DBPool, deps.Logger))
-		ar.Get("/api/admin/privacy/requests/{id}", adminPrivacyRequestDetailHandler(deps.DBPool, deps.Logger))
-		ar.Patch("/api/admin/privacy/requests/{id}/acknowledge", adminPrivacyRequestAcknowledgeHandler(deps.DBPool, deps.Logger))
-		ar.Post("/api/admin/privacy/requests/{id}/fulfill", adminPrivacyRequestFulfillHandler(deps.DBPool, deps.Logger))
-		ar.Post("/api/admin/privacy/requests/{id}/reject", adminPrivacyRequestRejectHandler(deps.DBPool, deps.Logger))
-		ar.Post("/api/admin/privacy/requests/{id}/erasure-confirm", adminPrivacyErasureConfirmHandler(deps.DBPool, deps.Logger))
+			// P1-A15: Admin Media + Companion + Privacy (16 routes)
+			ar.Get("/api/admin/media", adminMediaListHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/media/{id}", adminMediaDetailHandler(deps.DBPool, deps.Logger))
+			ar.Patch("/api/admin/media/{id}/metadata", adminMediaMetadataPatchHandler(deps.DBPool, deps.Logger))
+			ar.Delete("/api/admin/media/{id}", adminMediaSoftDeleteHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/companion/config", adminCompanionConfigHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/companion/tips", adminCompanionTipsListHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/companion/tips", adminCompanionTipCreateHandler(deps.DBPool, deps.Logger))
+			ar.Patch("/api/admin/companion/tips/{id}", adminCompanionTipPatchHandler(deps.DBPool, deps.Logger))
+			ar.Delete("/api/admin/companion/tips/{id}", adminCompanionTipDeleteHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/privacy/requests", adminPrivacyRequestsListHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/privacy/requests/{id}", adminPrivacyRequestDetailHandler(deps.DBPool, deps.Logger))
+			ar.Patch("/api/admin/privacy/requests/{id}/acknowledge", adminPrivacyRequestAcknowledgeHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/privacy/requests/{id}/fulfill", adminPrivacyRequestFulfillHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/privacy/requests/{id}/reject", adminPrivacyRequestRejectHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/privacy/requests/{id}/erasure-confirm", adminPrivacyErasureConfirmHandler(deps.DBPool, deps.Logger))
 
-		// P1-A16: Admin Cardgen — Rules + Jobs (7 routes)
-		ar.Get("/api/admin/cardgen/rules", adminCardgenRulesListHandler(deps.DBPool, deps.Logger))
-		ar.Get("/api/admin/cardgen/rules/{id}", adminCardgenRuleDetailHandler(deps.DBPool, deps.Logger))
-		ar.Post("/api/admin/cardgen/rules", adminCardgenRuleCreateHandler(deps.DBPool, deps.Logger))
-		ar.Put("/api/admin/cardgen/rules/{id}", adminCardgenRuleUpdateHandler(deps.DBPool, deps.Logger))
-		ar.Delete("/api/admin/cardgen/rules/{id}", adminCardgenRuleDeleteHandler(deps.DBPool, deps.Logger))
-		ar.Get("/api/admin/cardgen/jobs", adminCardgenJobsListHandler(deps.DBPool, deps.Logger))
-		ar.Get("/api/admin/cardgen/jobs/{id}", adminCardgenJobDetailHandler(deps.DBPool, deps.Logger))
+			// P1-A16: Admin Cardgen — Rules + Jobs (7 routes)
+			ar.Get("/api/admin/cardgen/rules", adminCardgenRulesListHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/cardgen/rules/{id}", adminCardgenRuleDetailHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/cardgen/rules", adminCardgenRuleCreateHandler(deps.DBPool, deps.Logger))
+			ar.Put("/api/admin/cardgen/rules/{id}", adminCardgenRuleUpdateHandler(deps.DBPool, deps.Logger))
+			ar.Delete("/api/admin/cardgen/rules/{id}", adminCardgenRuleDeleteHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/cardgen/jobs", adminCardgenJobsListHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/cardgen/jobs/{id}", adminCardgenJobDetailHandler(deps.DBPool, deps.Logger))
 
-		// P1-A17: Admin Quiz + Quiz Sessions (8 routes; i18n already in P1-A7)
-										ar.Get("/api/admin/quiz/tests", adminQuizTestsListHandler(deps.DBPool, deps.Logger))
-		ar.Get("/api/admin/quiz/remediation", adminQuizRemediationListHandler(deps.DBPool, deps.Logger))
-		ar.Get("/api/admin/quiz/questions", adminQuizQuestionsListHandler(deps.DBPool, deps.Logger))
-		ar.Get("/api/admin/quiz/sessions", adminQuizSessionsListHandler(deps.DBPool, deps.Logger))
-		ar.Get("/api/admin/assessment/quiz-sessions", adminAssessmentQuizSessionsListHandler(deps.DBPool, deps.Logger))
-		ar.Get("/api/admin/assessment/quiz-sessions/{id}", adminAssessmentQuizSessionDetailHandler(deps.DBPool, deps.Logger))
-		ar.Post("/api/admin/assessment/quiz-sessions/{id}/abort", adminAssessmentQuizSessionAbortHandler(deps.DBPool, deps.Logger))
-		ar.Post("/api/admin/assessment/quiz-sessions/{id}/extend-time", adminAssessmentQuizSessionExtendTimeHandler(deps.DBPool, deps.Logger))
+			// P1-A17: Admin Quiz + Quiz Sessions (8 routes; i18n already in P1-A7)
+			ar.Get("/api/admin/quiz/tests", adminQuizTestsListHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/quiz/remediation", adminQuizRemediationListHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/quiz/questions", adminQuizQuestionsListHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/quiz/sessions", adminQuizSessionsListHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/assessment/quiz-sessions", adminAssessmentQuizSessionsListHandler(deps.DBPool, deps.Logger))
+			ar.Get("/api/admin/assessment/quiz-sessions/{id}", adminAssessmentQuizSessionDetailHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/assessment/quiz-sessions/{id}/abort", adminAssessmentQuizSessionAbortHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/assessment/quiz-sessions/{id}/extend-time", adminAssessmentQuizSessionExtendTimeHandler(deps.DBPool, deps.Logger))
 
-// P1-A18: Admin NHK News — Config + Refresh (3 routes; FINAL ADMIN DOMAIN)
-ar.Get("/api/admin/nhk-news/config", adminNhkNewsConfigHandler(deps.DBPool, deps.Logger))
-ar.Patch("/api/admin/nhk-news/config", adminNhkNewsConfigPatchHandler(deps.DBPool, deps.Logger))
-ar.Post("/api/admin/nhk-news/refresh", adminNhkNewsRefreshHandler(deps.DBPool, deps.Logger))
+			// P1-A18: Admin NHK News — Config + Refresh (3 routes; FINAL ADMIN DOMAIN)
+			ar.Get("/api/admin/nhk-news/config", adminNhkNewsConfigHandler(deps.DBPool, deps.Logger))
+			ar.Patch("/api/admin/nhk-news/config", adminNhkNewsConfigPatchHandler(deps.DBPool, deps.Logger))
+			ar.Post("/api/admin/nhk-news/refresh", adminNhkNewsRefreshHandler(deps.DBPool, deps.Logger))
 		})
 
 		// I18n Admin (4 routes)
 		r.Group(func(ar chi.Router) {
 			ar.Use(adminGuard)
-											})
+		})
 		r.Group(func(ar chi.Router) {
 			ar.Use(adminGuard)
 			ar.Use(authn.CSRFGuard(csrfCfg))
@@ -1360,7 +1360,6 @@ ar.Post("/api/admin/nhk-news/refresh", adminNhkNewsRefreshHandler(deps.DBPool, d
 		})
 	}
 
-
 	// P0-L5: Study plan — learner session-guarded; CSRF for writes.
 	if deps.StudyPlanStore != nil && deps.SessionStore != nil {
 		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
@@ -1386,7 +1385,6 @@ ar.Post("/api/admin/nhk-news/refresh", adminNhkNewsRefreshHandler(deps.DBPool, d
 	if deps.DBPool != nil {
 		r.Post("/api/announcements/{id}/dismiss", dismissAnnouncementHandler(deps.DBPool, deps.Logger))
 	}
-
 
 	// P0-L5: Scenarios — learner session-guarded; CSRF for writes.
 	if deps.ScenarioStore != nil && deps.SessionStore != nil {
@@ -1452,7 +1450,6 @@ ar.Post("/api/admin/nhk-news/refresh", adminNhkNewsRefreshHandler(deps.DBPool, d
 		})
 	}
 
-
 	// P0-L5: Career RPG — learner session-guarded; CSRF for writes.
 	if deps.CareerStore != nil && deps.SessionStore != nil {
 		learnerGuard := authn.LearnerGuard(deps.SessionStore, guardCfg)
@@ -1517,7 +1514,6 @@ ar.Post("/api/admin/nhk-news/refresh", adminNhkNewsRefreshHandler(deps.DBPool, d
 			lr.Post("/api/learner/shares/pet-evolution", createPetEvolutionShareHandler(deps.DBPool, deps.Logger))
 		})
 	}
-
 
 	// P0-L5: Magazine & Loto — mixed public/auth routes.
 	if deps.DBPool != nil {

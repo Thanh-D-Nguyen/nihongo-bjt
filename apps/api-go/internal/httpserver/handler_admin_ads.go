@@ -170,18 +170,18 @@ func adminAdsOverviewHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handler
 
 		writeJSON(w, http.StatusOK, map[string]any{
 			"overview": map[string]any{
-				"enabledPlacements":    enabledPlacements,
-				"activeCampaigns":      activeCampaigns,
-				"providersEnabled":     providersEnabled,
-				"policyWarnings":       policyWarnings,
-				"impressions7d":        impressions7d,
-				"clicks7d":             clicks7d,
-				"blocked7d":            blocked7d,
-				"ctr":                  ctr,
-				"chartTrend":           chartTrend,
-				"chartCtrByPlacement":  chartCtrByPlacement,
-				"blockedByReason":      bbr,
-				"revenue":              map[string]any{"available": false, "messageKey": "revenue_provider_not_connected"},
+				"enabledPlacements":   enabledPlacements,
+				"activeCampaigns":     activeCampaigns,
+				"providersEnabled":    providersEnabled,
+				"policyWarnings":      policyWarnings,
+				"impressions7d":       impressions7d,
+				"clicks7d":            clicks7d,
+				"blocked7d":           blocked7d,
+				"ctr":                 ctr,
+				"chartTrend":          chartTrend,
+				"chartCtrByPlacement": chartCtrByPlacement,
+				"blockedByReason":     bbr,
+				"revenue":             map[string]any{"available": false, "messageKey": "revenue_provider_not_connected"},
 			},
 			"tasks": map[string]any{
 				"disabledProviders":         disabledProviders,
@@ -372,22 +372,22 @@ func adminAdsCampaignsListHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 		defer rows.Close()
 
 		type Campaign struct {
-			ID              string          `json:"id"`
-			Name            string          `json:"name"`
-			Status          string          `json:"status"`
-			ProviderKey     string          `json:"providerKey"`
-			PlacementCodes  json.RawMessage `json:"placementCodes"`
-			StartAt         *string         `json:"startAt,omitempty"`
-			EndAt           *string         `json:"endAt,omitempty"`
-			Priority        int             `json:"priority"`
-			CreativeType    *string         `json:"creativeType,omitempty"`
-			DestinationURL  *string         `json:"destinationUrl,omitempty"`
-			TargetLocale    *string         `json:"targetLocale,omitempty"`
-			TargetPlanSlug  *string         `json:"targetPlanSlug,omitempty"`
-			MaxImpressions  *int            `json:"maxImpressions,omitempty"`
-			PolicyStatus    *string         `json:"policyStatus,omitempty"`
-			CreatedAt       string          `json:"createdAt"`
-			UpdatedAt       string          `json:"updatedAt"`
+			ID             string          `json:"id"`
+			Name           string          `json:"name"`
+			Status         string          `json:"status"`
+			ProviderKey    string          `json:"providerKey"`
+			PlacementCodes json.RawMessage `json:"placementCodes"`
+			StartAt        *string         `json:"startAt,omitempty"`
+			EndAt          *string         `json:"endAt,omitempty"`
+			Priority       int             `json:"priority"`
+			CreativeType   *string         `json:"creativeType,omitempty"`
+			DestinationURL *string         `json:"destinationUrl,omitempty"`
+			TargetLocale   *string         `json:"targetLocale,omitempty"`
+			TargetPlanSlug *string         `json:"targetPlanSlug,omitempty"`
+			MaxImpressions *int            `json:"maxImpressions,omitempty"`
+			PolicyStatus   *string         `json:"policyStatus,omitempty"`
+			CreatedAt      string          `json:"createdAt"`
+			UpdatedAt      string          `json:"updatedAt"`
 		}
 		var items []Campaign
 		for rows.Next() {
@@ -426,20 +426,20 @@ func adminAdsCampaignCreateHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 			return
 		}
 		var req struct {
-			Name            string   `json:"name"`
-			Status          *string  `json:"status"`
-			ProviderKey     string   `json:"providerKey"`
-			PlacementCodes  []string `json:"placementCodes"`
-			StartAt         *string  `json:"startAt"`
-			EndAt           *string  `json:"endAt"`
-			Priority        *int     `json:"priority"`
-			CreativeType    *string  `json:"creativeType"`
-			DestinationURL  *string  `json:"destinationUrl"`
-			TargetLocale    *string  `json:"targetLocale"`
-			TargetPlanSlug  *string  `json:"targetPlanSlug"`
-			MaxImpressions  *int     `json:"maxImpressions"`
-			PolicyStatus    *string  `json:"policyStatus"`
-			Reason          string   `json:"reason"`
+			Name           string   `json:"name"`
+			Status         *string  `json:"status"`
+			ProviderKey    string   `json:"providerKey"`
+			PlacementCodes []string `json:"placementCodes"`
+			StartAt        *string  `json:"startAt"`
+			EndAt          *string  `json:"endAt"`
+			Priority       *int     `json:"priority"`
+			CreativeType   *string  `json:"creativeType"`
+			DestinationURL *string  `json:"destinationUrl"`
+			TargetLocale   *string  `json:"targetLocale"`
+			TargetPlanSlug *string  `json:"targetPlanSlug"`
+			MaxImpressions *int     `json:"maxImpressions"`
+			PolicyStatus   *string  `json:"policyStatus"`
+			Reason         string   `json:"reason"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
@@ -776,7 +776,7 @@ func adminAdsRulesListHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handle
 			var rl Rule
 			var ua time.Time
 			if rows.Scan(&rl.ID, &rl.RuleKey, &rl.Enabled, &rl.Config, &ua) == nil {
-				
+
 				rl.UpdatedAt = ua.UTC().Format(time.RFC3339)
 				items = append(items, rl)
 			}

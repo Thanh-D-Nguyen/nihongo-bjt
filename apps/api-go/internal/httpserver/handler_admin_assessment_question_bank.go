@@ -115,29 +115,29 @@ LEFT JOIN assessment.bjt_mock_test t ON t.id = s.test_id
 		defer rows.Close()
 
 		type QuestionSummary struct {
-			ID              string          `json:"id"`
-			SectionID       string          `json:"sectionId"`
-			Prompt          string          `json:"prompt"`
-			Scenario        *string         `json:"scenario,omitempty"`
-			SkillTag        string          `json:"skillTag"`
-			Difficulty      string          `json:"difficulty"`
-			Tags            json.RawMessage `json:"tags"`
-			Status          string          `json:"status"`
-			RemediationCardID *string       `json:"remediationCardId,omitempty"`
-			CreatedAt       string          `json:"createdAt"`
-			UpdatedAt       string          `json:"updatedAt"`
-			OptionCount     int             `json:"optionCount"`
-			AnswerCount     int             `json:"answerCount"`
-			Section         *struct {
-				ID     string `json:"id"`
-				Code   string `json:"code"`
+			ID                string          `json:"id"`
+			SectionID         string          `json:"sectionId"`
+			Prompt            string          `json:"prompt"`
+			Scenario          *string         `json:"scenario,omitempty"`
+			SkillTag          string          `json:"skillTag"`
+			Difficulty        string          `json:"difficulty"`
+			Tags              json.RawMessage `json:"tags"`
+			Status            string          `json:"status"`
+			RemediationCardID *string         `json:"remediationCardId,omitempty"`
+			CreatedAt         string          `json:"createdAt"`
+			UpdatedAt         string          `json:"updatedAt"`
+			OptionCount       int             `json:"optionCount"`
+			AnswerCount       int             `json:"answerCount"`
+			Section           *struct {
+				ID      string `json:"id"`
+				Code    string `json:"code"`
 				TitleVi string `json:"titleVi"`
-				Test   *struct {
-					ID    string `json:"id"`
-					Slug  string `json:"slug"`
+				Test    *struct {
+					ID      string `json:"id"`
+					Slug    string `json:"slug"`
 					TitleVi string `json:"titleVi"`
-					Level string `json:"level"`
-					Type  string `json:"type"`
+					Level   string `json:"level"`
+					Type    string `json:"type"`
 				} `json:"test"`
 			} `json:"section,omitempty"`
 		}
@@ -163,15 +163,15 @@ LEFT JOIN assessment.bjt_mock_test t ON t.id = s.test_id
 				}
 				if sectionCode != nil {
 					qs.Section = &struct {
-						ID     string `json:"id"`
-						Code   string `json:"code"`
+						ID      string `json:"id"`
+						Code    string `json:"code"`
 						TitleVi string `json:"titleVi"`
-						Test   *struct {
-							ID    string `json:"id"`
-							Slug  string `json:"slug"`
+						Test    *struct {
+							ID      string `json:"id"`
+							Slug    string `json:"slug"`
 							TitleVi string `json:"titleVi"`
-							Level string `json:"level"`
-							Type  string `json:"type"`
+							Level   string `json:"level"`
+							Type    string `json:"type"`
 						} `json:"test"`
 					}{
 						ID:      qs.SectionID,
@@ -180,11 +180,11 @@ LEFT JOIN assessment.bjt_mock_test t ON t.id = s.test_id
 					}
 					if testID != nil {
 						qs.Section.Test = &struct {
-							ID    string `json:"id"`
-							Slug  string `json:"slug"`
+							ID      string `json:"id"`
+							Slug    string `json:"slug"`
 							TitleVi string `json:"titleVi"`
-							Level string `json:"level"`
-							Type  string `json:"type"`
+							Level   string `json:"level"`
+							Type    string `json:"type"`
 						}{
 							ID:      *testID,
 							Slug:    derefString(testSlug),
@@ -226,15 +226,15 @@ func adminAssessmentQuestionBankDetailHandler(db *pgxpool.Pool, logger *slog.Log
 			IsCorrect bool   `json:"isCorrect"`
 		}
 		type AuditEntry struct {
-			ID        string          `json:"id"`
-			Action    string          `json:"action"`
-			ActorID   string          `json:"actorId"`
-			ActorName *string         `json:"actorName,omitempty"`
-			ActorEmail *string        `json:"actorEmail,omitempty"`
-			Reason    string          `json:"reason"`
-			After     json.RawMessage `json:"after,omitempty"`
-			Before    json.RawMessage `json:"before,omitempty"`
-			CreatedAt string          `json:"createdAt"`
+			ID         string          `json:"id"`
+			Action     string          `json:"action"`
+			ActorID    string          `json:"actorId"`
+			ActorName  *string         `json:"actorName,omitempty"`
+			ActorEmail *string         `json:"actorEmail,omitempty"`
+			Reason     string          `json:"reason"`
+			After      json.RawMessage `json:"after,omitempty"`
+			Before     json.RawMessage `json:"before,omitempty"`
+			CreatedAt  string          `json:"createdAt"`
 		}
 		type QuestionDetail struct {
 			ID                string          `json:"id"`
@@ -343,20 +343,20 @@ func adminAssessmentQuestionBankCreateHandler(db *pgxpool.Pool, logger *slog.Log
 			return
 		}
 		var req struct {
-			SectionID     string `json:"sectionId"`
-			Prompt        string `json:"prompt"`
-			Scenario      *string `json:"scenario,omitempty"`
-			ExplanationVi string `json:"explanationVi"`
-			SkillTag      string `json:"skillTag"`
-			Difficulty    string `json:"difficulty"`
+			SectionID     string          `json:"sectionId"`
+			Prompt        string          `json:"prompt"`
+			Scenario      *string         `json:"scenario,omitempty"`
+			ExplanationVi string          `json:"explanationVi"`
+			SkillTag      string          `json:"skillTag"`
+			Difficulty    string          `json:"difficulty"`
 			Tags          json.RawMessage `json:"tags"`
-			SourceType    *string `json:"sourceType,omitempty"`
-			SourceID      *string `json:"sourceId,omitempty"`
-			ImageURL      *string `json:"imageUrl,omitempty"`
-			ImageAlt      *string `json:"imageAlt,omitempty"`
-			ImagePrompt   *string `json:"imagePrompt,omitempty"`
-			AudioURL      *string `json:"audioUrl,omitempty"`
-			AudioScript   *string `json:"audioScript,omitempty"`
+			SourceType    *string         `json:"sourceType,omitempty"`
+			SourceID      *string         `json:"sourceId,omitempty"`
+			ImageURL      *string         `json:"imageUrl,omitempty"`
+			ImageAlt      *string         `json:"imageAlt,omitempty"`
+			ImagePrompt   *string         `json:"imagePrompt,omitempty"`
+			AudioURL      *string         `json:"audioUrl,omitempty"`
+			AudioScript   *string         `json:"audioScript,omitempty"`
 			Options       []struct {
 				OptionKey string `json:"optionKey"`
 				Text      string `json:"text"`
@@ -434,20 +434,20 @@ func adminAssessmentQuestionBankPatchHandler(db *pgxpool.Pool, logger *slog.Logg
 			return
 		}
 		var req struct {
-			SectionID     *string `json:"sectionId,omitempty"`
-			Prompt        *string `json:"prompt,omitempty"`
-			Scenario      *string `json:"scenario,omitempty"`
-			ExplanationVi *string `json:"explanationVi,omitempty"`
-			SkillTag      *string `json:"skillTag,omitempty"`
-			Difficulty    *string `json:"difficulty,omitempty"`
+			SectionID     *string         `json:"sectionId,omitempty"`
+			Prompt        *string         `json:"prompt,omitempty"`
+			Scenario      *string         `json:"scenario,omitempty"`
+			ExplanationVi *string         `json:"explanationVi,omitempty"`
+			SkillTag      *string         `json:"skillTag,omitempty"`
+			Difficulty    *string         `json:"difficulty,omitempty"`
 			Tags          json.RawMessage `json:"tags,omitempty"`
-			SourceType    *string `json:"sourceType,omitempty"`
-			SourceID      *string `json:"sourceId,omitempty"`
-			ImageURL      *string `json:"imageUrl,omitempty"`
-			ImageAlt      *string `json:"imageAlt,omitempty"`
-			ImagePrompt   *string `json:"imagePrompt,omitempty"`
-			AudioURL      *string `json:"audioUrl,omitempty"`
-			AudioScript   *string `json:"audioScript,omitempty"`
+			SourceType    *string         `json:"sourceType,omitempty"`
+			SourceID      *string         `json:"sourceId,omitempty"`
+			ImageURL      *string         `json:"imageUrl,omitempty"`
+			ImageAlt      *string         `json:"imageAlt,omitempty"`
+			ImagePrompt   *string         `json:"imagePrompt,omitempty"`
+			AudioURL      *string         `json:"audioUrl,omitempty"`
+			AudioScript   *string         `json:"audioScript,omitempty"`
 			Options       []struct {
 				OptionKey string `json:"optionKey"`
 				Text      string `json:"text"`
@@ -612,10 +612,10 @@ func adminAssessmentQuestionBankBulkHandler(db *pgxpool.Pool, logger *slog.Logge
 			return
 		}
 		var req struct {
-			IDs    []string        `json:"ids"`
-			Action string          `json:"action"`
-			Tags   []string        `json:"tags,omitempty"`
-			Reason string          `json:"reason"`
+			IDs    []string `json:"ids"`
+			Action string   `json:"action"`
+			Tags   []string `json:"tags,omitempty"`
+			Reason string   `json:"reason"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
@@ -694,9 +694,9 @@ VALUES ($1, $2, $3, 'assessment.question', $4, $5, $6, NOW())`,
 		}
 
 		writeJSON(w, http.StatusOK, map[string]any{
-			"processed":     processed,
+			"processed":      processed,
 			"totalRequested": len(req.IDs),
-			"action":        req.Action,
+			"action":         req.Action,
 		})
 	}
 }

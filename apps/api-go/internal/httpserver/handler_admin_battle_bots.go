@@ -155,28 +155,28 @@ func adminBattleBotsDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 		}
 
 		type BotDetail struct {
-			ID              string          `json:"id"`
-			BotKey          string          `json:"botKey"`
-			Name            string          `json:"name"`
-			Persona         *string         `json:"persona,omitempty"`
-			Difficulty      string          `json:"difficulty"`
-			Status          string          `json:"status"`
-			AccuracyPct     float64         `json:"accuracyPct"`
-			MinDelayMs      int             `json:"minDelayMs"`
-			MaxDelayMs      int             `json:"maxDelayMs"`
-			VocabularyLevel string          `json:"vocabularyLevel"`
-			AvatarFallback  string          `json:"avatarFallback"`
-			StyleToken      string          `json:"styleToken"`
-			RiveSrc         *string         `json:"riveSrc,omitempty"`
-			RiveArtboard    string          `json:"riveArtboard"`
-			RiveStateMachine string         `json:"riveStateMachine"`
-			RiveLicense     *string         `json:"riveLicense,omitempty"`
-			RiveProvenance  json.RawMessage `json:"riveProvenance,omitempty"`
-			CreatedByID     *string         `json:"createdById,omitempty"`
-			UpdatedByID     *string         `json:"updatedById,omitempty"`
-			CreatedAt       string          `json:"createdAt"`
-			UpdatedAt       string          `json:"updatedAt"`
-			Audit           []AuditEntry    `json:"audit"`
+			ID               string          `json:"id"`
+			BotKey           string          `json:"botKey"`
+			Name             string          `json:"name"`
+			Persona          *string         `json:"persona,omitempty"`
+			Difficulty       string          `json:"difficulty"`
+			Status           string          `json:"status"`
+			AccuracyPct      float64         `json:"accuracyPct"`
+			MinDelayMs       int             `json:"minDelayMs"`
+			MaxDelayMs       int             `json:"maxDelayMs"`
+			VocabularyLevel  string          `json:"vocabularyLevel"`
+			AvatarFallback   string          `json:"avatarFallback"`
+			StyleToken       string          `json:"styleToken"`
+			RiveSrc          *string         `json:"riveSrc,omitempty"`
+			RiveArtboard     string          `json:"riveArtboard"`
+			RiveStateMachine string          `json:"riveStateMachine"`
+			RiveLicense      *string         `json:"riveLicense,omitempty"`
+			RiveProvenance   json.RawMessage `json:"riveProvenance,omitempty"`
+			CreatedByID      *string         `json:"createdById,omitempty"`
+			UpdatedByID      *string         `json:"updatedById,omitempty"`
+			CreatedAt        string          `json:"createdAt"`
+			UpdatedAt        string          `json:"updatedAt"`
+			Audit            []AuditEntry    `json:"audit"`
 		}
 
 		var bd BotDetail
@@ -245,22 +245,22 @@ func adminBattleBotsCreateHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 		}
 
 		var req struct {
-			BotKey          string          `json:"botKey"`
-			Name            string          `json:"name"`
-			Persona         *string         `json:"persona,omitempty"`
-			Difficulty      string          `json:"difficulty"`
-			AccuracyPct     float64         `json:"accuracyPct"`
-			MinDelayMs      int             `json:"minDelayMs"`
-			MaxDelayMs      int             `json:"maxDelayMs"`
-			VocabularyLevel string          `json:"vocabularyLevel"`
-			AvatarFallback  string          `json:"avatarFallback"`
-			StyleToken      string          `json:"styleToken"`
-			RiveSrc         *string         `json:"riveSrc,omitempty"`
-			RiveArtboard    string          `json:"riveArtboard"`
-			RiveStateMachine string         `json:"riveStateMachine"`
-			RiveLicense     *string         `json:"riveLicense,omitempty"`
-			RiveProvenance  json.RawMessage `json:"riveProvenance,omitempty"`
-			Reason          string          `json:"reason"`
+			BotKey           string          `json:"botKey"`
+			Name             string          `json:"name"`
+			Persona          *string         `json:"persona,omitempty"`
+			Difficulty       string          `json:"difficulty"`
+			AccuracyPct      float64         `json:"accuracyPct"`
+			MinDelayMs       int             `json:"minDelayMs"`
+			MaxDelayMs       int             `json:"maxDelayMs"`
+			VocabularyLevel  string          `json:"vocabularyLevel"`
+			AvatarFallback   string          `json:"avatarFallback"`
+			StyleToken       string          `json:"styleToken"`
+			RiveSrc          *string         `json:"riveSrc,omitempty"`
+			RiveArtboard     string          `json:"riveArtboard"`
+			RiveStateMachine string          `json:"riveStateMachine"`
+			RiveLicense      *string         `json:"riveLicense,omitempty"`
+			RiveProvenance   json.RawMessage `json:"riveProvenance,omitempty"`
+			Reason           string          `json:"reason"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
@@ -327,22 +327,22 @@ func adminBattleBotsPatchHandler(db *pgxpool.Pool, logger *slog.Logger) http.Han
 		}
 
 		var req struct {
-			BotKey          *string         `json:"botKey,omitempty"`
-			Name            *string         `json:"name,omitempty"`
-			Persona         *string         `json:"persona,omitempty"`
-			Difficulty      *string         `json:"difficulty,omitempty"`
-			AccuracyPct     *float64        `json:"accuracyPct,omitempty"`
-			MinDelayMs      *int            `json:"minDelayMs,omitempty"`
-			MaxDelayMs      *int            `json:"maxDelayMs,omitempty"`
-			VocabularyLevel *string         `json:"vocabularyLevel,omitempty"`
-			AvatarFallback  *string         `json:"avatarFallback,omitempty"`
-			StyleToken      *string         `json:"styleToken,omitempty"`
-			RiveSrc         *string         `json:"riveSrc,omitempty"`
-			RiveArtboard    *string         `json:"riveArtboard,omitempty"`
-			RiveStateMachine *string        `json:"riveStateMachine,omitempty"`
-			RiveLicense     *string         `json:"riveLicense,omitempty"`
-			RiveProvenance  json.RawMessage `json:"riveProvenance,omitempty"`
-			Reason          string          `json:"reason"`
+			BotKey           *string         `json:"botKey,omitempty"`
+			Name             *string         `json:"name,omitempty"`
+			Persona          *string         `json:"persona,omitempty"`
+			Difficulty       *string         `json:"difficulty,omitempty"`
+			AccuracyPct      *float64        `json:"accuracyPct,omitempty"`
+			MinDelayMs       *int            `json:"minDelayMs,omitempty"`
+			MaxDelayMs       *int            `json:"maxDelayMs,omitempty"`
+			VocabularyLevel  *string         `json:"vocabularyLevel,omitempty"`
+			AvatarFallback   *string         `json:"avatarFallback,omitempty"`
+			StyleToken       *string         `json:"styleToken,omitempty"`
+			RiveSrc          *string         `json:"riveSrc,omitempty"`
+			RiveArtboard     *string         `json:"riveArtboard,omitempty"`
+			RiveStateMachine *string         `json:"riveStateMachine,omitempty"`
+			RiveLicense      *string         `json:"riveLicense,omitempty"`
+			RiveProvenance   json.RawMessage `json:"riveProvenance,omitempty"`
+			Reason           string          `json:"reason"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)

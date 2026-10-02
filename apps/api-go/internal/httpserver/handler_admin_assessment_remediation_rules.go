@@ -98,20 +98,20 @@ func adminAssessmentRemediationRulesListHandler(db *pgxpool.Pool, logger *slog.L
 		defer rows.Close()
 
 		type RuleSummary struct {
-			ID                       string    `json:"id"`
-			Name                     string    `json:"name"`
-			Description              *string   `json:"description,omitempty"`
-			TopicSkillTag            string    `json:"topicSkillTag"`
-			Level                    string    `json:"level"`
-			ThresholdFailedCount     int       `json:"thresholdFailedCount"`
-			ThresholdWindowQuestions int       `json:"thresholdWindowQuestions"`
-			RecommendedContentType   string    `json:"recommendedContentType"`
-			RecommendedContentID     string    `json:"recommendedContentId"`
-			Active                   bool      `json:"active"`
-			CreatedByID              *string   `json:"createdById,omitempty"`
-			UpdatedByID              *string   `json:"updatedById,omitempty"`
-			CreatedAt                string    `json:"createdAt"`
-			UpdatedAt                string    `json:"updatedAt"`
+			ID                       string  `json:"id"`
+			Name                     string  `json:"name"`
+			Description              *string `json:"description,omitempty"`
+			TopicSkillTag            string  `json:"topicSkillTag"`
+			Level                    string  `json:"level"`
+			ThresholdFailedCount     int     `json:"thresholdFailedCount"`
+			ThresholdWindowQuestions int     `json:"thresholdWindowQuestions"`
+			RecommendedContentType   string  `json:"recommendedContentType"`
+			RecommendedContentID     string  `json:"recommendedContentId"`
+			Active                   bool    `json:"active"`
+			CreatedByID              *string `json:"createdById,omitempty"`
+			UpdatedByID              *string `json:"updatedById,omitempty"`
+			CreatedAt                string  `json:"createdAt"`
+			UpdatedAt                string  `json:"updatedAt"`
 		}
 
 		var items []RuleSummary
@@ -265,15 +265,15 @@ func adminAssessmentRemediationRulesCreateHandler(db *pgxpool.Pool, logger *slog
 			return
 		}
 		var req struct {
-			Name                     string `json:"name"`
+			Name                     string  `json:"name"`
 			Description              *string `json:"description,omitempty"`
-			TopicSkillTag            string `json:"topicSkillTag"`
-			Level                    string `json:"level"`
-			ThresholdFailedCount     int    `json:"thresholdFailedCount"`
-			ThresholdWindowQuestions int    `json:"thresholdWindowQuestions"`
-			RecommendedContentType   string `json:"recommendedContentType"`
-			RecommendedContentID     string `json:"recommendedContentId"`
-			Reason                   string `json:"reason"`
+			TopicSkillTag            string  `json:"topicSkillTag"`
+			Level                    string  `json:"level"`
+			ThresholdFailedCount     int     `json:"thresholdFailedCount"`
+			ThresholdWindowQuestions int     `json:"thresholdWindowQuestions"`
+			RecommendedContentType   string  `json:"recommendedContentType"`
+			RecommendedContentID     string  `json:"recommendedContentId"`
+			Reason                   string  `json:"reason"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
@@ -308,11 +308,11 @@ func adminAssessmentRemediationRulesCreateHandler(db *pgxpool.Pool, logger *slog
 		afterJSON, _ := json.Marshal(map[string]any{
 			"name": req.Name, "description": req.Description,
 			"topicSkillTag": req.TopicSkillTag, "level": req.Level,
-			"thresholdFailedCount": req.ThresholdFailedCount,
+			"thresholdFailedCount":     req.ThresholdFailedCount,
 			"thresholdWindowQuestions": req.ThresholdWindowQuestions,
-			"recommendedContentType": req.RecommendedContentType,
-			"recommendedContentId": req.RecommendedContentID,
-			"active": true,
+			"recommendedContentType":   req.RecommendedContentType,
+			"recommendedContentId":     req.RecommendedContentID,
+			"active":                   true,
 		})
 		db.Exec(ctx, `INSERT INTO ops.admin_audit_log (action, actor_id, target_id, target_type, reason, after, created_at)
 			VALUES ('admin.assessment.remediation_rule.created', $1, $2, 'assessment.assessment_remediation_rule', $3, $4, NOW())`,

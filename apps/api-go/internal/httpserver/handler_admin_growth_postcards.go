@@ -98,18 +98,18 @@ func adminGrowthPostcardsListHandler(db *pgxpool.Pool, logger *slog.Logger) http
 		defer rows.Close()
 
 		type PostcardSummary struct {
-			ID           string          `json:"id"`
-			Slug         string          `json:"slug"`
-			Name         string          `json:"name"`
-			Kind         string          `json:"kind"`
-			Version      int             `json:"version"`
-			Active       bool            `json:"active"`
-			PrivacyClass string          `json:"privacyClass"`
-			NoPIIVerified bool           `json:"noPiiVerified"`
-			Surface      string          `json:"surface"`
-			ThumbnailKey *string         `json:"thumbnailKey,omitempty"`
-			CreatedAt    string          `json:"createdAt"`
-			UpdatedAt    string          `json:"updatedAt"`
+			ID            string  `json:"id"`
+			Slug          string  `json:"slug"`
+			Name          string  `json:"name"`
+			Kind          string  `json:"kind"`
+			Version       int     `json:"version"`
+			Active        bool    `json:"active"`
+			PrivacyClass  string  `json:"privacyClass"`
+			NoPIIVerified bool    `json:"noPiiVerified"`
+			Surface       string  `json:"surface"`
+			ThumbnailKey  *string `json:"thumbnailKey,omitempty"`
+			CreatedAt     string  `json:"createdAt"`
+			UpdatedAt     string  `json:"updatedAt"`
 		}
 
 		var items []PostcardSummary

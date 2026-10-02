@@ -168,7 +168,7 @@ func adminAssessmentQuizTemplatesDetailHandler(db *pgxpool.Pool, logger *slog.Lo
 			SamplePreview    json.RawMessage `json:"samplePreview,omitempty"`
 			CreatedAt        string          `json:"createdAt"`
 			UpdatedAt        string          `json:"updatedAt"`
-			Audit            []AuditEntry  `json:"audit"`
+			Audit            []AuditEntry    `json:"audit"`
 		}
 
 		var td TemplateDetail
@@ -659,7 +659,7 @@ func toBlueprint(rulesJSON json.RawMessage) json.RawMessage {
 		totalTimeMin = 1
 	}
 	blueprint := map[string]any{
-		"kind": "quiz_template",
+		"kind":            "quiz_template",
 		"generationRules": json.RawMessage(rulesJSON),
 		"sections": []map[string]any{
 			{

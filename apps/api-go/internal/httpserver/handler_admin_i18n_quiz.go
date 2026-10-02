@@ -110,17 +110,17 @@ func adminQuizRemediationListHandler(db *pgxpool.Pool, logger *slog.Logger) http
 		defer rows.Close()
 
 		type Item struct {
-			ID               string `json:"id"`
-			Prompt           string `json:"prompt"`
-			SkillTag         string `json:"skillTag"`
-			Difficulty       string `json:"difficulty"`
+			ID                string  `json:"id"`
+			Prompt            string  `json:"prompt"`
+			SkillTag          string  `json:"skillTag"`
+			Difficulty        string  `json:"difficulty"`
 			RemediationCardID *string `json:"remediationCardId,omitempty"`
-			ExplanationVi    string `json:"explanationVi"`
-			Status           string `json:"status"`
-			CreatedAt        string `json:"createdAt"`
-			HasRemediation   bool   `json:"hasRemediation"`
-			HasExplanation   bool   `json:"hasExplanation"`
-			OptionCount      int    `json:"optionCount"`
+			ExplanationVi     string  `json:"explanationVi"`
+			Status            string  `json:"status"`
+			CreatedAt         string  `json:"createdAt"`
+			HasRemediation    bool    `json:"hasRemediation"`
+			HasExplanation    bool    `json:"hasExplanation"`
+			OptionCount       int     `json:"optionCount"`
 		}
 		var items []Item
 		for rows.Next() {
@@ -414,17 +414,17 @@ func adminAssessmentQuizSessionDetailHandler(db *pgxpool.Pool, logger *slog.Logg
 			TimeMs        int    `json:"timeMs"`
 		}
 		type Detail struct {
-			ID             string    `json:"id"`
-			UserID         string    `json:"userId"`
-			TestID         string    `json:"testId"`
-			Status         string    `json:"status"`
-			TotalQuestions int       `json:"totalQuestions"`
-			CorrectCount   int       `json:"correctCount"`
-			EstimatedScore float64   `json:"estimatedScore"`
-			EstimatedBand  *string   `json:"estimatedBjtBand,omitempty"`
-			StartedAt      string    `json:"startedAt"`
-			CompletedAt    *string   `json:"completedAt,omitempty"`
-			Answers        []Answer  `json:"answers"`
+			ID             string            `json:"id"`
+			UserID         string            `json:"userId"`
+			TestID         string            `json:"testId"`
+			Status         string            `json:"status"`
+			TotalQuestions int               `json:"totalQuestions"`
+			CorrectCount   int               `json:"correctCount"`
+			EstimatedScore float64           `json:"estimatedScore"`
+			EstimatedBand  *string           `json:"estimatedBjtBand,omitempty"`
+			StartedAt      string            `json:"startedAt"`
+			CompletedAt    *string           `json:"completedAt,omitempty"`
+			Answers        []Answer          `json:"answers"`
 			Audit          []json.RawMessage `json:"audit"`
 		}
 		var d Detail

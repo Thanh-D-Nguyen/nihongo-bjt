@@ -12,22 +12,19 @@ import (
 
 	"gocloud.dev/blob"
 
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/authlink"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authn"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/authz"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/career"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/config"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/credential"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/jobs"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/authlink"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/exercisereview"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/flashcarddeck"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/flashcardreview"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/flashcardstyle"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/quiztemplate"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/studyplan"
-	"github.com/kotobawork/nihongo-bjt/api-go/internal/scenario"
-"github.com/kotobawork/nihongo-bjt/api-go/internal/career"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/gamification"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/httpserver"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/jobs"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/media"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/notification"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/onboarding"
@@ -35,9 +32,12 @@ import (
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/postgres"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/privacy"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/profile"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/quiztemplate"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/redisx"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/scenario"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/search"
 	"github.com/kotobawork/nihongo-bjt/api-go/internal/session"
+	"github.com/kotobawork/nihongo-bjt/api-go/internal/studyplan"
 )
 
 // App holds all application dependencies and manages lifecycle.
@@ -123,33 +123,33 @@ func New(version string) (*App, error) {
 	}
 
 	deps := httpserver.Dependencies{
-		Config:          cfg,
-		Logger:          logger,
-		DB:              dbPool,
-		DBPool:          dbPool,
-		SessionStore:    sessionStore,
-		ProfileStore:    profileStore,
-		RBACStore:       rbacStore,
-		CredentialStore: credentialStore,
-		RateLimiter:     rateLimiter,
-		SearchClient:    searchClient,
-		MediaStore:      mediaStore,
-		MediaBucket:     mediaBucket,
-		OnboardingStore:   onboardingStore,
-		NotificationStore: notificationStore,
-		PrivacyStore:      privacyStore,
-		AuthLinkStore:       authLinkStore,
-		PlacementStore:      placementStore,
-		GamificationStore:     gamificationStore,
-		ExerciseReviewStore:   exerciseReviewStore,
-		FlashcardStyleStore:    flashcardStyleStore,
-		FlashcardReviewStore:   flashcardReviewStore,
-		FlashcardDeckStore:     flashcardDeckStore,
-		QuizTemplateStore:      quizTemplateStore,
-		StudyPlanStore:         studyPlanStore,
-		ScenarioStore:          scenarioStore,
-		CareerStore:            careerStore,
-		Version:                version,
+		Config:               cfg,
+		Logger:               logger,
+		DB:                   dbPool,
+		DBPool:               dbPool,
+		SessionStore:         sessionStore,
+		ProfileStore:         profileStore,
+		RBACStore:            rbacStore,
+		CredentialStore:      credentialStore,
+		RateLimiter:          rateLimiter,
+		SearchClient:         searchClient,
+		MediaStore:           mediaStore,
+		MediaBucket:          mediaBucket,
+		OnboardingStore:      onboardingStore,
+		NotificationStore:    notificationStore,
+		PrivacyStore:         privacyStore,
+		AuthLinkStore:        authLinkStore,
+		PlacementStore:       placementStore,
+		GamificationStore:    gamificationStore,
+		ExerciseReviewStore:  exerciseReviewStore,
+		FlashcardStyleStore:  flashcardStyleStore,
+		FlashcardReviewStore: flashcardReviewStore,
+		FlashcardDeckStore:   flashcardDeckStore,
+		QuizTemplateStore:    quizTemplateStore,
+		StudyPlanStore:       studyPlanStore,
+		ScenarioStore:        scenarioStore,
+		CareerStore:          careerStore,
+		Version:              version,
 	}
 	// Guard against typed-nil interface: only assign Redis if the concrete
 	// client is non-nil. A typed-nil *redis.Client assigned to a

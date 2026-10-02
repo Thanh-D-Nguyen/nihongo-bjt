@@ -412,11 +412,11 @@ func adminLotoResultsInputHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 			return
 		}
 		var req struct {
-			Game        string `json:"game"`
-			DrawNumber  int    `json:"drawNumber"`
-			DrawDate    string `json:"drawDate"`
-			MainNumbers []int  `json:"mainNumbers"`
-			BonusNumbers []int `json:"bonusNumbers"`
+			Game         string `json:"game"`
+			DrawNumber   int    `json:"drawNumber"`
+			DrawDate     string `json:"drawDate"`
+			MainNumbers  []int  `json:"mainNumbers"`
+			BonusNumbers []int  `json:"bonusNumbers"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
@@ -521,8 +521,12 @@ func adminLotoAnalyticsHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handl
 				matchedCount++
 				// Parse predicted sets from content JSON
 				var content struct {
-					Sets          []struct{ MainNumbers []int `json:"mainNumbers"` } `json:"sets"`
-					GeneratedSets []struct{ MainNumbers []int `json:"mainNumbers"` } `json:"generatedSets"`
+					Sets []struct {
+						MainNumbers []int `json:"mainNumbers"`
+					} `json:"sets"`
+					GeneratedSets []struct {
+						MainNumbers []int `json:"mainNumbers"`
+					} `json:"generatedSets"`
 				}
 				json.Unmarshal(a.ContentJSON, &content)
 				predictedSets := content.Sets
@@ -815,10 +819,10 @@ func adminLotoGenerateHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handle
 			return
 		}
 		var req struct {
-			Game          string `json:"game"`
+			Game           string `json:"game"`
 			TargetDrawDate string `json:"targetDrawDate"`
-			SetCount      int    `json:"setCount"`
-			Seed          string `json:"seed"`
+			SetCount       int    `json:"setCount"`
+			Seed           string `json:"seed"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
@@ -856,21 +860,21 @@ func adminLotoGenerateHandler(db *pgxpool.Pool, logger *slog.Logger) http.Handle
 			bonusCount = 2
 		}
 		type SetResult struct {
-			ID            string `json:"id"`
-			Rank          int    `json:"rank"`
-			MainNumbers   []int  `json:"mainNumbers"`
-			BonusNumbers  []int  `json:"bonusNumbers"`
-			Score         int    `json:"score"`
+			ID           string `json:"id"`
+			Rank         int    `json:"rank"`
+			MainNumbers  []int  `json:"mainNumbers"`
+			BonusNumbers []int  `json:"bonusNumbers"`
+			Score        int    `json:"score"`
 		}
 		var sets []SetResult
 		for i := 0; i < req.SetCount; i++ {
 			mainNums := make([]int, mainCount)
 			for j := 0; j < mainCount; j++ {
-				mainNums[j] = (i*7 + j + 1) % 43 + 1
+				mainNums[j] = (i*7+j+1)%43 + 1
 			}
 			bonusNums := make([]int, bonusCount)
 			for j := 0; j < bonusCount; j++ {
-				bonusNums[j] = (i*3 + j + 1) % 16 + 1
+				bonusNums[j] = (i*3+j+1)%16 + 1
 			}
 			mnJSON, _ := json.Marshal(mainNums)
 			bnJSON, _ := json.Marshal(bonusNums)

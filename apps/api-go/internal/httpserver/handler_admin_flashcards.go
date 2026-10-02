@@ -81,14 +81,14 @@ FROM learning.deck d %s ORDER BY d.updated_at DESC LIMIT $%d OFFSET $%d`,
 		defer rows.Close()
 
 		type Deck struct {
-			ID        string `json:"id"`
-			TitleVi   string `json:"titleVi"`
-			TitleJa   string `json:"titleJa"`
-			Status    string `json:"status"`
+			ID         string `json:"id"`
+			TitleVi    string `json:"titleVi"`
+			TitleJa    string `json:"titleJa"`
+			Status     string `json:"status"`
 			Visibility string `json:"visibility"`
-			CardCount int    `json:"cardCount"`
-			CreatedAt string `json:"createdAt"`
-			UpdatedAt string `json:"updatedAt"`
+			CardCount  int    `json:"cardCount"`
+			CreatedAt  string `json:"createdAt"`
+			UpdatedAt  string `json:"updatedAt"`
 		}
 		var items []Deck
 		for rows.Next() {

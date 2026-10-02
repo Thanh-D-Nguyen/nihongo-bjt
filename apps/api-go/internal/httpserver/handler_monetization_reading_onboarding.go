@@ -219,8 +219,8 @@ func getReadingAssistPreferencesHandler(db *pgxpool.Pool, logger *slog.Logger) h
 			userID = identity.UserID
 		}
 		type Preferences struct {
-			FuriganaMode string `json:"furiganaMode"`
-			FontSize     int    `json:"fontSize"`
+			FuriganaMode string  `json:"furiganaMode"`
+			FontSize     int     `json:"fontSize"`
 			LineHeight   float64 `json:"lineHeight"`
 		}
 		const q = `SELECT furigana_mode, font_size, line_height

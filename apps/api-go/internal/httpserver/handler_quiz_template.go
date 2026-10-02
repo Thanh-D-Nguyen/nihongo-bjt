@@ -119,7 +119,7 @@ func getRevengeQueueHandler(store *quiztemplate.Store, logger *slog.Logger) http
 
 // submitRevengeAnswerRequest is the JSON body for POST /api/quiz/revenge/answer.
 type submitRevengeAnswerRequest struct {
-	QuestionID    string `json:"questionId"`
+	QuestionID     string `json:"questionId"`
 	SelectedOption string `json:"selectedOption"`
 }
 

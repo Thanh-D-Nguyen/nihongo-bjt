@@ -846,16 +846,16 @@ func adminLearningReviewSummaryHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 			windowDays = 30
 		}
 		type Summary struct {
-			WindowDays      int              `json:"windowDays"`
-			TotalCards      int              `json:"totalCards"`
-			DueNow          int              `json:"dueNow"`
-			Leeched         int              `json:"leeched"`
-			ReviewsTotal    int              `json:"reviewsTotal"`
-			ReviewsByRating map[string]int   `json:"reviewsByRating"`
-			RetentionPct    *float64         `json:"retentionPct,omitempty"`
-			AvgEaseFactor   *float64         `json:"avgEaseFactor,omitempty"`
-			AvgLapses       *float64         `json:"avgLapses,omitempty"`
-			AvgIntervalDays *float64         `json:"avgIntervalDays,omitempty"`
+			WindowDays      int            `json:"windowDays"`
+			TotalCards      int            `json:"totalCards"`
+			DueNow          int            `json:"dueNow"`
+			Leeched         int            `json:"leeched"`
+			ReviewsTotal    int            `json:"reviewsTotal"`
+			ReviewsByRating map[string]int `json:"reviewsByRating"`
+			RetentionPct    *float64       `json:"retentionPct,omitempty"`
+			AvgEaseFactor   *float64       `json:"avgEaseFactor,omitempty"`
+			AvgLapses       *float64       `json:"avgLapses,omitempty"`
+			AvgIntervalDays *float64       `json:"avgIntervalDays,omitempty"`
 		}
 		var s Summary
 		s.WindowDays = windowDays
@@ -996,18 +996,18 @@ func adminLearningReviewProblemCardsHandler(db *pgxpool.Pool, logger *slog.Logge
 		defer rows.Close()
 
 		type ProblemCard struct {
-			ID                  string   `json:"id"`
-			CardID              string   `json:"cardId"`
-			Lapses              int      `json:"lapses"`
-			Leeched             bool     `json:"leeched"`
-			State               string   `json:"state"`
-			EaseFactor          float64  `json:"easeFactor"`
-			IntervalDays        int      `json:"intervalDays"`
-			FrontText           *string  `json:"frontText,omitempty"`
-			BackText            *string  `json:"backText,omitempty"`
-			Reading             *string  `json:"reading,omitempty"`
-			RecentReviews       int      `json:"recentReviews"`
-			RecentRetentionPct  *float64 `json:"recentRetentionPct,omitempty"`
+			ID                 string   `json:"id"`
+			CardID             string   `json:"cardId"`
+			Lapses             int      `json:"lapses"`
+			Leeched            bool     `json:"leeched"`
+			State              string   `json:"state"`
+			EaseFactor         float64  `json:"easeFactor"`
+			IntervalDays       int      `json:"intervalDays"`
+			FrontText          *string  `json:"frontText,omitempty"`
+			BackText           *string  `json:"backText,omitempty"`
+			Reading            *string  `json:"reading,omitempty"`
+			RecentReviews      int      `json:"recentReviews"`
+			RecentRetentionPct *float64 `json:"recentRetentionPct,omitempty"`
 		}
 		var items []ProblemCard
 		for rows.Next() {

@@ -384,14 +384,14 @@ func adminDailyRadarCardCreateHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 			return
 		}
 		var req struct {
-			Slug        string  `json:"slug"`
-			Title       string  `json:"title"`
-			Summary     *string `json:"summary"`
-			Body        *string `json:"body"`
-			Category    string  `json:"category"`
-			ModuleKey   *string `json:"moduleKey"`
-			ImageURL    *string `json:"imageUrl"`
-			Status      *string `json:"status"`
+			Slug      string  `json:"slug"`
+			Title     string  `json:"title"`
+			Summary   *string `json:"summary"`
+			Body      *string `json:"body"`
+			Category  string  `json:"category"`
+			ModuleKey *string `json:"moduleKey"`
+			ImageURL  *string `json:"imageUrl"`
+			Status    *string `json:"status"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
@@ -1045,12 +1045,12 @@ JOIN exercise.exercise e ON e.id = ea.exercise_id
 		}
 		defer rows.Close()
 		type PerfRow struct {
-			ExerciseType   string   `json:"exerciseType"`
-			Level          string   `json:"level"`
-			TotalAttempts  int      `json:"totalAttempts"`
-			CorrectCount   int      `json:"correctCount"`
-			AvgDurationMs  *float64 `json:"avgDurationMs,omitempty"`
-			AccuracyRate   float64  `json:"accuracyRate"`
+			ExerciseType  string   `json:"exerciseType"`
+			Level         string   `json:"level"`
+			TotalAttempts int      `json:"totalAttempts"`
+			CorrectCount  int      `json:"correctCount"`
+			AvgDurationMs *float64 `json:"avgDurationMs,omitempty"`
+			AccuracyRate  float64  `json:"accuracyRate"`
 		}
 		var items []PerfRow
 		for rows.Next() {

@@ -17,14 +17,14 @@ var ErrSessionNotFound = errors.New("placement: session not found")
 
 // Session represents a placement test session.
 type Session struct {
-	ID               string    `json:"id"`
-	UserID           string    `json:"userId"`
-	FairnessSeed     string    `json:"fairnessSeed"`
-	Status           string    `json:"status"`
-	QuestionIDs      []string  `json:"questionIds"`
-	CorrectCount     *int      `json:"correctCount,omitempty"`
-	EstimatedBjtBand *string   `json:"estimatedBjtBand,omitempty"`
-	CreatedAt        time.Time `json:"createdAt"`
+	ID               string     `json:"id"`
+	UserID           string     `json:"userId"`
+	FairnessSeed     string     `json:"fairnessSeed"`
+	Status           string     `json:"status"`
+	QuestionIDs      []string   `json:"questionIds"`
+	CorrectCount     *int       `json:"correctCount,omitempty"`
+	EstimatedBjtBand *string    `json:"estimatedBjtBand,omitempty"`
+	CreatedAt        time.Time  `json:"createdAt"`
 	CompletedAt      *time.Time `json:"completedAt,omitempty"`
 }
 

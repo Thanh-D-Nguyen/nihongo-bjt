@@ -86,18 +86,18 @@ func adminBattleConfigsListHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 		defer rows.Close()
 
 		type ConfigSummary struct {
-			ID                string          `json:"id"`
-			Name              string          `json:"name"`
-			Level             string          `json:"level"`
-			Status            string          `json:"status"`
-			QuestionCount     int             `json:"questionCount"`
-			TimePerQuestionSec int            `json:"timePerQuestionSec"`
-			MaxParticipants   int             `json:"maxParticipants"`
-			ScoringRules      json.RawMessage `json:"scoringRules,omitempty"`
-			PublishedAt       *string         `json:"publishedAt,omitempty"`
-			ArchivedAt        *string         `json:"archivedAt,omitempty"`
-			CreatedAt         string          `json:"createdAt"`
-			UpdatedAt         string          `json:"updatedAt"`
+			ID                 string          `json:"id"`
+			Name               string          `json:"name"`
+			Level              string          `json:"level"`
+			Status             string          `json:"status"`
+			QuestionCount      int             `json:"questionCount"`
+			TimePerQuestionSec int             `json:"timePerQuestionSec"`
+			MaxParticipants    int             `json:"maxParticipants"`
+			ScoringRules       json.RawMessage `json:"scoringRules,omitempty"`
+			PublishedAt        *string         `json:"publishedAt,omitempty"`
+			ArchivedAt         *string         `json:"archivedAt,omitempty"`
+			CreatedAt          string          `json:"createdAt"`
+			UpdatedAt          string          `json:"updatedAt"`
 		}
 		var items []ConfigSummary
 		for rows.Next() {
@@ -148,15 +148,15 @@ func adminBattleConfigsDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http
 		ctx := r.Context()
 
 		type AuditEntry struct {
-			ID        string          `json:"id"`
-			Action    string          `json:"action"`
-			ActorID   string          `json:"actorId"`
-			ActorName *string         `json:"actorName,omitempty"`
-			ActorEmail *string        `json:"actorEmail,omitempty"`
-			Reason    string          `json:"reason"`
-			After     json.RawMessage `json:"after,omitempty"`
-			Before    json.RawMessage `json:"before,omitempty"`
-			CreatedAt string          `json:"createdAt"`
+			ID         string          `json:"id"`
+			Action     string          `json:"action"`
+			ActorID    string          `json:"actorId"`
+			ActorName  *string         `json:"actorName,omitempty"`
+			ActorEmail *string         `json:"actorEmail,omitempty"`
+			Reason     string          `json:"reason"`
+			After      json.RawMessage `json:"after,omitempty"`
+			Before     json.RawMessage `json:"before,omitempty"`
+			CreatedAt  string          `json:"createdAt"`
 		}
 		type ConfigDetail struct {
 			ID                 string          `json:"id"`

@@ -66,14 +66,14 @@ func adminOpsBJTDashboardHandler(db *pgxpool.Pool, logger *slog.Logger) http.Han
 		}
 
 		writeJSON(w, http.StatusOK, map[string]any{
-			"generatedAt":          time.Now().UTC().Format(time.RFC3339),
+			"generatedAt":            time.Now().UTC().Format(time.RFC3339),
 			"partial_schema_pending": []string{"per_skill_pass_rate", "upcoming_exam_dates"},
-			"bjtTestsTotal":        testsTotal,
-			"bjtTestsActive":       testsActive,
-			"bjtSessionsTotal":     sessionsTotal,
-			"bjtAttempts30d":       attempts30d,
-			"bjtPassRate30d":       passRate,
-			"byLevel":              byLevel,
+			"bjtTestsTotal":          testsTotal,
+			"bjtTestsActive":         testsActive,
+			"bjtSessionsTotal":       sessionsTotal,
+			"bjtAttempts30d":         attempts30d,
+			"bjtPassRate30d":         passRate,
+			"byLevel":                byLevel,
 		})
 	}
 }

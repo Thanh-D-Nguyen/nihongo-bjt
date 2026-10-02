@@ -173,27 +173,27 @@ func adminAchievementsListHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 		}
 		defer rows.Close()
 		type Tier struct {
-			ID            string  `json:"id"`
-			Tier          string  `json:"tier"`
-			Threshold     int     `json:"threshold"`
-			RewardType    *string `json:"rewardType,omitempty"`
-			RewardValue   *string `json:"rewardValue,omitempty"`
-			IconURL       *string `json:"iconUrl,omitempty"`
-			NameKey       *string `json:"nameKey,omitempty"`
+			ID          string  `json:"id"`
+			Tier        string  `json:"tier"`
+			Threshold   int     `json:"threshold"`
+			RewardType  *string `json:"rewardType,omitempty"`
+			RewardValue *string `json:"rewardValue,omitempty"`
+			IconURL     *string `json:"iconUrl,omitempty"`
+			NameKey     *string `json:"nameKey,omitempty"`
 		}
 		type Achievement struct {
-			ID            string  `json:"id"`
-			Slug          string  `json:"slug"`
-			NameKey       string  `json:"nameKey"`
-			DescriptionKey string `json:"descriptionKey"`
-			Category      string  `json:"category"`
-			MetricKey     string  `json:"metricKey"`
-			IconURL       *string `json:"iconUrl,omitempty"`
-			DisplayOrder  int     `json:"displayOrder"`
-			Enabled       bool    `json:"enabled"`
-			CreatedAt     string  `json:"createdAt"`
-			UpdatedAt     string  `json:"updatedAt"`
-			Tiers         []Tier  `json:"tiers"`
+			ID             string  `json:"id"`
+			Slug           string  `json:"slug"`
+			NameKey        string  `json:"nameKey"`
+			DescriptionKey string  `json:"descriptionKey"`
+			Category       string  `json:"category"`
+			MetricKey      string  `json:"metricKey"`
+			IconURL        *string `json:"iconUrl,omitempty"`
+			DisplayOrder   int     `json:"displayOrder"`
+			Enabled        bool    `json:"enabled"`
+			CreatedAt      string  `json:"createdAt"`
+			UpdatedAt      string  `json:"updatedAt"`
+			Tiers          []Tier  `json:"tiers"`
 		}
 		var items []Achievement
 		for rows.Next() {

@@ -187,22 +187,22 @@ func adminBattleAbuseDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 			CreatedAt   string  `json:"createdAt"`
 		}
 		type AbuseDetail struct {
-			ID                  string          `json:"id"`
-			ReporterID          string          `json:"reporterId"`
-			SubjectID           string          `json:"subjectId"`
-			MatchID             *string         `json:"matchId,omitempty"`
-			Severity            string          `json:"severity"`
-			Kind                string          `json:"kind"`
-			Status              string          `json:"status"`
-			ActionTaken         *string         `json:"actionTaken,omitempty"`
-			ResolutionNotes     *string         `json:"resolutionNotes,omitempty"`
-			ResolvedAt          *string         `json:"resolvedAt,omitempty"`
-			ResolvedByID        *string         `json:"resolvedById,omitempty"`
-			EscalatedAt         *string         `json:"escalatedAt,omitempty"`
-			CreatedAt           string          `json:"createdAt"`
-			UpdatedAt           string          `json:"updatedAt"`
-			PriorAgainstSubject []PriorReport   `json:"priorAgainstSubject"`
-			Audit               []AuditEntry    `json:"audit"`
+			ID                  string        `json:"id"`
+			ReporterID          string        `json:"reporterId"`
+			SubjectID           string        `json:"subjectId"`
+			MatchID             *string       `json:"matchId,omitempty"`
+			Severity            string        `json:"severity"`
+			Kind                string        `json:"kind"`
+			Status              string        `json:"status"`
+			ActionTaken         *string       `json:"actionTaken,omitempty"`
+			ResolutionNotes     *string       `json:"resolutionNotes,omitempty"`
+			ResolvedAt          *string       `json:"resolvedAt,omitempty"`
+			ResolvedByID        *string       `json:"resolvedById,omitempty"`
+			EscalatedAt         *string       `json:"escalatedAt,omitempty"`
+			CreatedAt           string        `json:"createdAt"`
+			UpdatedAt           string        `json:"updatedAt"`
+			PriorAgainstSubject []PriorReport `json:"priorAgainstSubject"`
+			Audit               []AuditEntry  `json:"audit"`
 		}
 
 		var ad AbuseDetail

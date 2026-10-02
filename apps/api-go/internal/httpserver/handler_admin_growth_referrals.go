@@ -19,8 +19,8 @@ import (
 // list, detail, revoke.
 
 const (
-	referralAbuseWindowMs     = 60 * 60 * 1000 // 1 hour
-	referralAbuseThreshold    = 10
+	referralAbuseWindowMs  = 60 * 60 * 1000 // 1 hour
+	referralAbuseThreshold = 10
 )
 
 // adminGrowthReferralsListHandler implements GET /api/admin/growth/referrals.

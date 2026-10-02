@@ -92,82 +92,82 @@ type BrowseAchievement struct {
 
 // LeaderboardConfig is a leaderboard definition.
 type LeaderboardConfig struct {
-	ID         string `json:"id"`
-	Name       string `json:"name"`
+	ID         string  `json:"id"`
+	Name       string  `json:"name"`
 	NameKey    *string `json:"nameKey,omitempty"`
-	MetricType string `json:"metricType"`
-	Period     string `json:"period"`
-	MaxEntries int    `json:"maxEntries"`
+	MetricType string  `json:"metricType"`
+	Period     string  `json:"period"`
+	MaxEntries int     `json:"maxEntries"`
 }
 
 // LeaderboardEntry is one ranked entry in a leaderboard.
 type LeaderboardEntry struct {
-	Rank      int    `json:"rank"`
-	UserID    string `json:"userId"`
-	Username  string `json:"username"`
-	Score     int    `json:"score"`
+	Rank     int    `json:"rank"`
+	UserID   string `json:"userId"`
+	Username string `json:"username"`
+	Score    int    `json:"score"`
 }
 
 // UserRank is the current user's rank on a leaderboard.
 type UserRank struct {
-	Rank      *int   `json:"rank,omitempty"`
-	Score     int    `json:"score"`
-	TotalUsers int   `json:"totalUsers"`
+	Rank       *int `json:"rank,omitempty"`
+	Score      int  `json:"score"`
+	TotalUsers int  `json:"totalUsers"`
 }
 
 // ── Focus / Study Timer ────────────────────────────────────────────────────
 
 // FocusSession is the result of starting a focus session.
 type FocusSession struct {
-	SessionID      string    `json:"sessionId"`
-	DurationMinutes int      `json:"durationMinutes"`
-	Mode           string    `json:"mode"`
-	StartedAt      time.Time `json:"startedAt"`
+	SessionID       string    `json:"sessionId"`
+	DurationMinutes int       `json:"durationMinutes"`
+	Mode            string    `json:"mode"`
+	StartedAt       time.Time `json:"startedAt"`
 }
 
 // FocusTodaySummary is the daily focus summary.
 type FocusTodaySummary struct {
-	TotalMinutes   int `json:"totalMinutes"`
-	SessionCount   int `json:"sessionCount"`
-	GoalMinutes    int `json:"goalMinutes"`
+	TotalMinutes int `json:"totalMinutes"`
+	SessionCount int `json:"sessionCount"`
+	GoalMinutes  int `json:"goalMinutes"`
 }
 
 // ── Companion Pet ──────────────────────────────────────────────────────────
 
 // Pet is the user's companion pet state.
 type Pet struct {
-	ID           string  `json:"id"`
-	Name         string  `json:"name"`
-	Species      string  `json:"species"`
-	Level        int     `json:"level"`
-	XP           int     `json:"xp"`
-	Happiness    int     `json:"happiness"`
-	Hunger       int     `json:"hunger"`
-	CostumeSlug  *string `json:"costumeSlug,omitempty"`
-	LastFedAt    *time.Time `json:"lastFedAt,omitempty"`
-	CreatedAt    time.Time `json:"createdAt"`
+	ID          string     `json:"id"`
+	Name        string     `json:"name"`
+	Species     string     `json:"species"`
+	Level       int        `json:"level"`
+	XP          int        `json:"xp"`
+	Happiness   int        `json:"happiness"`
+	Hunger      int        `json:"hunger"`
+	CostumeSlug *string    `json:"costumeSlug,omitempty"`
+	LastFedAt   *time.Time `json:"lastFedAt,omitempty"`
+	CreatedAt   time.Time  `json:"createdAt"`
 }
 
 // PetCostume is one available costume.
 type PetCostume struct {
-	Slug     string  `json:"slug"`
-	NameKey  string  `json:"nameKey"`
-	IconURL  *string `json:"iconUrl,omitempty"`
-	Owned    bool    `json:"owned"`
+	Slug    string  `json:"slug"`
+	NameKey string  `json:"nameKey"`
+	IconURL *string `json:"iconUrl,omitempty"`
+	Owned   bool    `json:"owned"`
 }
 
 // ── Seasonal Events ────────────────────────────────────────────────────────
 
 // SeasonalEvent is an active seasonal event.
 type SeasonalEvent struct {
-	ID          string     `json:"id"`
-	Name        string     `json:"name"`
-	Description *string    `json:"description,omitempty"`
-	BannerURL   *string    `json:"bannerUrl,omitempty"`
-	StartDate   time.Time  `json:"startDate"`
-	EndDate     time.Time  `json:"endDate"`
-	Status      string     `json:"status"`
-	Joined      bool       `json:"joined"`
+	ID          string    `json:"id"`
+	Name        string    `json:"name"`
+	Description *string   `json:"description,omitempty"`
+	BannerURL   *string   `json:"bannerUrl,omitempty"`
+	StartDate   time.Time `json:"startDate"`
+	EndDate     time.Time `json:"endDate"`
+	Status      string    `json:"status"`
+	Joined      bool      `json:"joined"`
 }
 
 // EventDetail includes full event info with rewards.

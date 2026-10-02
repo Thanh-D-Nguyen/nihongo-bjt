@@ -39,10 +39,10 @@ type ReviewInput struct {
 
 // BatchReviewItem is one item in a batch review submission.
 type BatchReviewItem struct {
-	ClientMutationID string `json:"clientMutationId"`
-	UserFlashcardID  string `json:"userFlashcardId"`
-	Rating           string `json:"rating"`
-	ElapsedMs        *int   `json:"elapsedMs,omitempty"`
+	ClientMutationID string     `json:"clientMutationId"`
+	UserFlashcardID  string     `json:"userFlashcardId"`
+	Rating           string     `json:"rating"`
+	ElapsedMs        *int       `json:"elapsedMs,omitempty"`
 	ReviewedAt       *time.Time `json:"reviewedAt,omitempty"`
 }
 

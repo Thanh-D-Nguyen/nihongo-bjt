@@ -29,13 +29,13 @@ func adminMonetizationAdsOverviewHandler(db *pgxpool.Pool, logger *slog.Logger) 
 		}
 
 		type Overview struct {
-			EnabledPlacements int `json:"enabledPlacements"`
-			ActiveCampaigns   int `json:"activeCampaigns"`
-			ProvidersEnabled  int `json:"providersEnabled"`
-			PolicyWarnings    int `json:"policyWarnings"`
-			Impressions       int `json:"impressions7d"`
-			Clicks            int `json:"clicks7d"`
-			Blocked           int `json:"blocked7d"`
+			EnabledPlacements int     `json:"enabledPlacements"`
+			ActiveCampaigns   int     `json:"activeCampaigns"`
+			ProvidersEnabled  int     `json:"providersEnabled"`
+			PolicyWarnings    int     `json:"policyWarnings"`
+			Impressions       int     `json:"impressions7d"`
+			Clicks            int     `json:"clicks7d"`
+			Blocked           int     `json:"blocked7d"`
 			CTR               float64 `json:"ctr"`
 		}
 
@@ -722,12 +722,12 @@ func adminMonetizationAdsAuditHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 		}
 
 		type AuditItem struct {
-			ID        string  `json:"id"`
-			Action    string  `json:"action"`
-			ActorID   *string `json:"actorId,omitempty"`
-			TargetID  *string `json:"targetId,omitempty"`
+			ID         string  `json:"id"`
+			Action     string  `json:"action"`
+			ActorID    *string `json:"actorId,omitempty"`
+			TargetID   *string `json:"targetId,omitempty"`
 			TargetType *string `json:"targetType,omitempty"`
-			At        string  `json:"at"`
+			At         string  `json:"at"`
 		}
 
 		rows, err := db.Query(ctx, `

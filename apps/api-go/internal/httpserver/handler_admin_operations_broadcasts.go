@@ -54,13 +54,13 @@ func adminOpsBroadcastsListHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 		}
 
 		type Broadcast struct {
-			ID        string    `json:"id"`
-			Status    string    `json:"status"`
-			Title     *string   `json:"title,omitempty"`
-			Body      *string   `json:"body,omitempty"`
-			Channel   *string   `json:"channel,omitempty"`
-			CreatedAt string    `json:"createdAt"`
-			UpdatedAt string    `json:"updatedAt"`
+			ID        string  `json:"id"`
+			Status    string  `json:"status"`
+			Title     *string `json:"title,omitempty"`
+			Body      *string `json:"body,omitempty"`
+			Channel   *string `json:"channel,omitempty"`
+			CreatedAt string  `json:"createdAt"`
+			UpdatedAt string  `json:"updatedAt"`
 		}
 
 		var allBroadcasts []Broadcast
@@ -116,15 +116,15 @@ func adminOpsBroadcastsGetHandler(db *pgxpool.Pool, logger *slog.Logger) http.Ha
 		}
 
 		resp := map[string]any{
-			"id":        snap.ID,
-			"status":    snap.Status,
-			"title":     snap.Title,
-			"body":      snap.Body,
-			"channel":   snap.Channel,
-			"audience":  snap.Audience,
+			"id":          snap.ID,
+			"status":      snap.Status,
+			"title":       snap.Title,
+			"body":        snap.Body,
+			"channel":     snap.Channel,
+			"audience":    snap.Audience,
 			"scheduledAt": snap.ScheduledAt,
-			"createdAt": snap.CreatedAt.UTC().Format(time.RFC3339),
-			"updatedAt": snap.UpdatedAt.UTC().Format(time.RFC3339),
+			"createdAt":   snap.CreatedAt.UTC().Format(time.RFC3339),
+			"updatedAt":   snap.UpdatedAt.UTC().Format(time.RFC3339),
 		}
 		writeJSON(w, http.StatusOK, resp)
 	}
@@ -197,12 +197,12 @@ func adminOpsBroadcastsCreateHandler(db *pgxpool.Pool, logger *slog.Logger) http
 		}
 
 		var req struct {
-			Title      string         `json:"title"`
-			Body       string         `json:"body"`
-			Channel    string         `json:"channel"`
-			Audience   map[string]any `json:"audience"`
-			ScheduledAt *string       `json:"scheduledAt,omitempty"`
-			Reason     string         `json:"reason"`
+			Title       string         `json:"title"`
+			Body        string         `json:"body"`
+			Channel     string         `json:"channel"`
+			Audience    map[string]any `json:"audience"`
+			ScheduledAt *string        `json:"scheduledAt,omitempty"`
+			Reason      string         `json:"reason"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)

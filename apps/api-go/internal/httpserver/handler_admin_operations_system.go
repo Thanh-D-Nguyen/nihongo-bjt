@@ -265,14 +265,14 @@ func adminOpsQueueActionsHandler(db *pgxpool.Pool, logger *slog.Logger) http.Han
 		defer rows.Close()
 
 		type Action struct {
-			ID          string `json:"id"`
-			Action      string `json:"action"`
-			ActorID     string `json:"actorId"`
-			ActorName   string `json:"actorName"`
-			ActorEmail  string `json:"actorEmail"`
-			TargetID    string `json:"targetId"`
-			Reason      string `json:"reason"`
-			CreatedAt   string `json:"createdAt"`
+			ID         string `json:"id"`
+			Action     string `json:"action"`
+			ActorID    string `json:"actorId"`
+			ActorName  string `json:"actorName"`
+			ActorEmail string `json:"actorEmail"`
+			TargetID   string `json:"targetId"`
+			Reason     string `json:"reason"`
+			CreatedAt  string `json:"createdAt"`
 		}
 		var actions []Action
 		for rows.Next() {

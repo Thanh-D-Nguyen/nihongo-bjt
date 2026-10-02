@@ -299,16 +299,16 @@ func adminGrowthCampaignsCreateHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 			return
 		}
 		var req struct {
-			Name           string          `json:"name"`
-			Description    *string         `json:"description,omitempty"`
-			Channel        string          `json:"channel"`
-			Audience       json.RawMessage `json:"audience,omitempty"`
-			ContentBody    *string         `json:"contentBody,omitempty"`
-			CTA            json.RawMessage `json:"cta,omitempty"`
-			TrackingUTM    json.RawMessage `json:"trackingUtm,omitempty"`
-			ScheduleStart  *string         `json:"scheduleStart,omitempty"`
-			ScheduleEnd    *string         `json:"scheduleEnd,omitempty"`
-			Reason         string          `json:"reason"`
+			Name          string          `json:"name"`
+			Description   *string         `json:"description,omitempty"`
+			Channel       string          `json:"channel"`
+			Audience      json.RawMessage `json:"audience,omitempty"`
+			ContentBody   *string         `json:"contentBody,omitempty"`
+			CTA           json.RawMessage `json:"cta,omitempty"`
+			TrackingUTM   json.RawMessage `json:"trackingUtm,omitempty"`
+			ScheduleStart *string         `json:"scheduleStart,omitempty"`
+			ScheduleEnd   *string         `json:"scheduleEnd,omitempty"`
+			Reason        string          `json:"reason"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)
@@ -577,13 +577,13 @@ func adminGrowthCampaignsDuplicateHandler(db *pgxpool.Pool, logger *slog.Logger)
 		ctx := r.Context()
 
 		type Source struct {
-			Name          string          `json:"name"`
-			Description   *string         `json:"description,omitempty"`
-			Channel       string          `json:"channel"`
-			Audience      json.RawMessage `json:"audience,omitempty"`
-			ContentBody   *string         `json:"contentBody,omitempty"`
-			CTA           json.RawMessage `json:"cta,omitempty"`
-			TrackingUTM   json.RawMessage `json:"trackingUtm,omitempty"`
+			Name        string          `json:"name"`
+			Description *string         `json:"description,omitempty"`
+			Channel     string          `json:"channel"`
+			Audience    json.RawMessage `json:"audience,omitempty"`
+			ContentBody *string         `json:"contentBody,omitempty"`
+			CTA         json.RawMessage `json:"cta,omitempty"`
+			TrackingUTM json.RawMessage `json:"trackingUtm,omitempty"`
 		}
 		var src Source
 		var audienceBytes, ctaBytes, utmBytes []byte

@@ -20,24 +20,24 @@ var ErrForbidden = errors.New("quiztemplate: forbidden")
 
 // TemplateSummary represents a quiz template list entry.
 type TemplateSummary struct {
-	ID          string    `json:"id"`
-	Title       string    `json:"title"`
-	Type        string    `json:"type"`
-	Status      string    `json:"status"`
-	SectionCount int      `json:"sectionCount"`
-	SessionCount int      `json:"sessionCount"`
-	CreatedAt   time.Time `json:"createdAt"`
+	ID           string    `json:"id"`
+	Title        string    `json:"title"`
+	Type         string    `json:"type"`
+	Status       string    `json:"status"`
+	SectionCount int       `json:"sectionCount"`
+	SessionCount int       `json:"sessionCount"`
+	CreatedAt    time.Time `json:"createdAt"`
 }
 
 // TemplateDetail represents a single quiz template with sections.
 type TemplateDetail struct {
-	ID          string           `json:"id"`
-	Title       string           `json:"title"`
-	Type        string           `json:"type"`
-	Status      string           `json:"status"`
-	Description *string          `json:"description,omitempty"`
+	ID          string            `json:"id"`
+	Title       string            `json:"title"`
+	Type        string            `json:"type"`
+	Status      string            `json:"status"`
+	Description *string           `json:"description,omitempty"`
 	Sections    []TemplateSection `json:"sections"`
-	CreatedAt   time.Time        `json:"createdAt"`
+	CreatedAt   time.Time         `json:"createdAt"`
 }
 
 // TemplateSection represents a section within a quiz template.
@@ -67,18 +67,18 @@ type PrintableSection struct {
 
 // PrintableQuestion is one question in a printable exam.
 type PrintableQuestion struct {
-	ID            string               `json:"id"`
-	Prompt        string               `json:"prompt"`
-	Scenario      *string              `json:"scenario,omitempty"`
-	AudioScript   *string              `json:"audioScript,omitempty"`
-	AudioURL      *string              `json:"audioUrl,omitempty"`
-	ImageURL      *string              `json:"imageUrl,omitempty"`
-	ImageAlt      *string              `json:"imageAlt,omitempty"`
-	SkillTag      string               `json:"skillTag"`
-	Difficulty    string               `json:"difficulty"`
-	ExplanationVi string               `json:"explanationVi"`
-	Options       []PrintableOption    `json:"options"`
-	CorrectAnswer string               `json:"correctAnswer"`
+	ID            string            `json:"id"`
+	Prompt        string            `json:"prompt"`
+	Scenario      *string           `json:"scenario,omitempty"`
+	AudioScript   *string           `json:"audioScript,omitempty"`
+	AudioURL      *string           `json:"audioUrl,omitempty"`
+	ImageURL      *string           `json:"imageUrl,omitempty"`
+	ImageAlt      *string           `json:"imageAlt,omitempty"`
+	SkillTag      string            `json:"skillTag"`
+	Difficulty    string            `json:"difficulty"`
+	ExplanationVi string            `json:"explanationVi"`
+	Options       []PrintableOption `json:"options"`
+	CorrectAnswer string            `json:"correctAnswer"`
 }
 
 // PrintableOption is one answer option.
@@ -89,14 +89,14 @@ type PrintableOption struct {
 
 // RevengeQuestion is one item in the revenge queue.
 type RevengeQuestion struct {
-	QuestionID    string          `json:"questionId"`
-	Prompt        string          `json:"prompt"`
-	Scenario      *string         `json:"scenario,omitempty"`
-	SkillTag      string          `json:"skillTag"`
-	Difficulty    string          `json:"difficulty"`
-	Options       []RevengeOption `json:"options"`
-	WrongAnswerDate time.Time     `json:"wrongAnswerDate"`
-	YourAnswer    string          `json:"yourAnswer"`
+	QuestionID      string          `json:"questionId"`
+	Prompt          string          `json:"prompt"`
+	Scenario        *string         `json:"scenario,omitempty"`
+	SkillTag        string          `json:"skillTag"`
+	Difficulty      string          `json:"difficulty"`
+	Options         []RevengeOption `json:"options"`
+	WrongAnswerDate time.Time       `json:"wrongAnswerDate"`
+	YourAnswer      string          `json:"yourAnswer"`
 }
 
 // RevengeOption is a shuffled answer option for revenge mode.
@@ -114,7 +114,7 @@ type RevengeQueueResponse struct {
 
 // RevengeAnswerResult is the response for POST /api/quiz/revenge/answer.
 type RevengeAnswerResult struct {
-	Correct   bool   `json:"correct"`
+	Correct    bool   `json:"correct"`
 	CorrectKey string `json:"correctKey,omitempty"`
 }
 
@@ -337,13 +337,13 @@ func (s *Store) GetRevengeQueue(ctx context.Context, userID string, limit int) (
 	defer rows.Close()
 
 	type wrongAnswer struct {
-		questionID    string
+		questionID     string
 		selectedOption string
-		answeredAt    time.Time
-		prompt        string
-		scenario      *string
-		skillTag      string
-		difficulty    string
+		answeredAt     time.Time
+		prompt         string
+		scenario       *string
+		skillTag       string
+		difficulty     string
 	}
 	var wrongs []wrongAnswer
 	for rows.Next() {
@@ -427,14 +427,14 @@ func (s *Store) GetRevengeQueue(ctx context.Context, userID string, limit int) (
 			opts = []RevengeOption{}
 		}
 		questions = append(questions, RevengeQuestion{
-			QuestionID:    w.questionID,
-			Prompt:        w.prompt,
-			Scenario:      w.scenario,
-			SkillTag:      w.skillTag,
-			Difficulty:    w.difficulty,
-			Options:       opts,
+			QuestionID:      w.questionID,
+			Prompt:          w.prompt,
+			Scenario:        w.scenario,
+			SkillTag:        w.skillTag,
+			Difficulty:      w.difficulty,
+			Options:         opts,
 			WrongAnswerDate: w.answeredAt,
-			YourAnswer:    w.selectedOption,
+			YourAnswer:      w.selectedOption,
 		})
 	}
 	if questions == nil {

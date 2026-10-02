@@ -120,19 +120,19 @@ func adminLegalPolicyDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 		}
 
 		type PolicyDetail struct {
-			ID            string          `json:"id"`
-			PolicyKey     string          `json:"policyKey"`
-			Version       string          `json:"version"`
-			Title         string          `json:"title"`
-			Status        string          `json:"status"`
-			BodyMarkdown  *string         `json:"bodyMarkdown,omitempty"`
-			BodyHTML      *string         `json:"bodyHtml,omitempty"`
-			Checksum      *string         `json:"checksum,omitempty"`
-			EffectiveAt   *string         `json:"effectiveAt,omitempty"`
-			PublishedAt   *string         `json:"publishedAt,omitempty"`
-			CreatedAt     string          `json:"createdAt"`
-			UpdatedAt     string          `json:"updatedAt"`
-			Audit         []json.RawMessage `json:"audit"`
+			ID           string            `json:"id"`
+			PolicyKey    string            `json:"policyKey"`
+			Version      string            `json:"version"`
+			Title        string            `json:"title"`
+			Status       string            `json:"status"`
+			BodyMarkdown *string           `json:"bodyMarkdown,omitempty"`
+			BodyHTML     *string           `json:"bodyHtml,omitempty"`
+			Checksum     *string           `json:"checksum,omitempty"`
+			EffectiveAt  *string           `json:"effectiveAt,omitempty"`
+			PublishedAt  *string           `json:"publishedAt,omitempty"`
+			CreatedAt    string            `json:"createdAt"`
+			UpdatedAt    string            `json:"updatedAt"`
+			Audit        []json.RawMessage `json:"audit"`
 		}
 		var pd PolicyDetail
 		var ca, ua time.Time
@@ -526,39 +526,39 @@ func adminLegalCookieCategoriesHandler() http.HandlerFunc {
 	categories := []Category{
 		{
 			Key: "essential", Name: "Essential",
-			Description:   "Cookies required for authentication, security, fraud prevention, and core platform functionality.",
-			OptInDefault:  true, CanOptOut: false,
+			Description:  "Cookies required for authentication, security, fraud prevention, and core platform functionality.",
+			OptInDefault: true, CanOptOut: false,
 			DataCollected: []string{"session id", "csrf token", "auth state"},
 			RetentionDays: 30, ThirdParties: []string{},
 		},
 		{
 			Key: "functional", Name: "Functional",
-			Description:   "Cookies that remember learner preferences (locale, theme, onboarding state).",
-			OptInDefault:  true, CanOptOut: true,
+			Description:  "Cookies that remember learner preferences (locale, theme, onboarding state).",
+			OptInDefault: true, CanOptOut: true,
 			DataCollected: []string{"preferred locale", "ui preferences", "onboarding flags"},
 			RetentionDays: 365, ThirdParties: []string{},
 		},
 		{
 			Key: "analytics", Name: "Analytics",
-			Description:   "Aggregated usage telemetry to improve the product. No personal identifiers shared with third parties.",
-			OptInDefault:  false, CanOptOut: true,
+			Description:  "Aggregated usage telemetry to improve the product. No personal identifiers shared with third parties.",
+			OptInDefault: false, CanOptOut: true,
 			DataCollected: []string{"page views", "feature events", "performance metrics"},
 			RetentionDays: 180, ThirdParties: []string{"self-hosted analytics"},
 		},
 		{
 			Key: "marketing", Name: "Marketing",
-			Description:   "Cookies used for measuring campaign effectiveness. Disabled by default in EU/JP.",
-			OptInDefault:  false, CanOptOut: true,
+			Description:  "Cookies used for measuring campaign effectiveness. Disabled by default in EU/JP.",
+			OptInDefault: false, CanOptOut: true,
 			DataCollected: []string{"campaign attribution", "conversion events"},
 			RetentionDays: 90, ThirdParties: []string{"payment provider attribution"},
 		},
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{
-			"items":              categories,
-			"total":              len(categories),
+			"items":                categories,
+			"total":                len(categories),
 			"partialSchemaPending": true,
-			"note":               "Cookie categories are code-owned today; CRUD lands once cookie_category table is added.",
+			"note":                 "Cookie categories are code-owned today; CRUD lands once cookie_category table is added.",
 		})
 	}
 }
@@ -588,10 +588,10 @@ func adminLegalRetentionHandler() http.HandlerFunc {
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{
-			"items":              domains,
-			"total":              len(domains),
+			"items":                domains,
+			"total":                len(domains),
 			"partialSchemaPending": true,
-			"note":               "Mutations require a schema migration (retention_policy table) plus operator scheduling. Edit retention windows via code+migration today.",
+			"note":                 "Mutations require a schema migration (retention_policy table) plus operator scheduling. Edit retention windows via code+migration today.",
 		})
 	}
 }

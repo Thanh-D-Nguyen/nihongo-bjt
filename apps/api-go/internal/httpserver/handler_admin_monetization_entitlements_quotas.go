@@ -384,16 +384,16 @@ func adminMonetizationQuotaOverridesListHandler(db *pgxpool.Pool, logger *slog.L
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		type Override struct {
-			ID             string  `json:"id"`
-			UserID         string  `json:"userId"`
-			UserEmail      *string `json:"userEmail,omitempty"`
-			UserDisplayName *string `json:"userDisplayName,omitempty"`
-			QuotaKey       string  `json:"quotaKey"`
-			LimitValue     int     `json:"limitValue"`
-			Reason         string  `json:"reason"`
-			CreatedByActorID string `json:"createdByActorId"`
-			ExpiresAt      *string `json:"expiresAt,omitempty"`
-			CreatedAt      string  `json:"createdAt"`
+			ID               string  `json:"id"`
+			UserID           string  `json:"userId"`
+			UserEmail        *string `json:"userEmail,omitempty"`
+			UserDisplayName  *string `json:"userDisplayName,omitempty"`
+			QuotaKey         string  `json:"quotaKey"`
+			LimitValue       int     `json:"limitValue"`
+			Reason           string  `json:"reason"`
+			CreatedByActorID string  `json:"createdByActorId"`
+			ExpiresAt        *string `json:"expiresAt,omitempty"`
+			CreatedAt        string  `json:"createdAt"`
 		}
 		rows, err := db.Query(ctx, `
 			SELECT qo.id, qo.user_id, up.email, up.display_name,

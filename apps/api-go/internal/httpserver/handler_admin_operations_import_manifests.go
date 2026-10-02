@@ -384,8 +384,8 @@ VALUES ('ops.import_manifest.run', $1, $2, 'content.import_mapping', $3, $4, NOW
 		}
 
 		writeJSON(w, http.StatusOK, map[string]any{
-			"manifestId":          id,
-			"status":              "run_requested",
+			"manifestId":             id,
+			"status":                 "run_requested",
 			"partial_schema_pending": true,
 		})
 	}

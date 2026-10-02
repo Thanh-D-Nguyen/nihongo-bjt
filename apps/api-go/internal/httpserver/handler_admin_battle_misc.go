@@ -160,14 +160,14 @@ SELECT
 		db.QueryRow(ctx, summaryQuery, countArgs...).Scan(&participants, &completedMatches)
 
 		type Summary struct {
-			Window           string  `json:"window"`
-			Since            *string `json:"since,omitempty"`
+			Window            string  `json:"window"`
+			Since             *string `json:"since,omitempty"`
 			TotalParticipants int     `json:"totalParticipants"`
 			CompletedMatches  int     `json:"completedMatches"`
 		}
 		summary := Summary{
-			Window:           window,
-			Since:            sinceArg,
+			Window:            window,
+			Since:             sinceArg,
 			TotalParticipants: participants,
 			CompletedMatches:  completedMatches,
 		}
@@ -188,11 +188,11 @@ func adminBattleSystemParametersHandler(db *pgxpool.Pool, logger *slog.Logger) h
 		ctx := r.Context()
 		// Aggregate system-level battle parameters from various sources
 		type SystemParams struct {
-			ActiveBots        int `json:"activeBots"`
-			ActiveConfigs     int `json:"activeConfigs"`
+			ActiveBots          int `json:"activeBots"`
+			ActiveConfigs       int `json:"activeConfigs"`
 			PendingAbuseReports int `json:"pendingAbuseReports"`
-			InProgressMatches int `json:"inProgressMatches"`
-			CompletedToday    int `json:"completedToday"`
+			InProgressMatches   int `json:"inProgressMatches"`
+			CompletedToday      int `json:"completedToday"`
 		}
 		var p SystemParams
 		db.QueryRow(ctx, "SELECT COUNT(*) FROM learning.battle_bot WHERE status = 'active'").Scan(&p.ActiveBots)
@@ -331,34 +331,34 @@ func adminBattleMatchesDetailHandler(db *pgxpool.Pool, logger *slog.Logger) http
 		ctx := r.Context()
 
 		type AuditEntry struct {
-			ID        string          `json:"id"`
-			Action    string          `json:"action"`
-			ActorID   string          `json:"actorId"`
-			ActorName *string         `json:"actorName,omitempty"`
-			ActorEmail *string        `json:"actorEmail,omitempty"`
-			Reason    string          `json:"reason"`
-			After     json.RawMessage `json:"after,omitempty"`
-			Before    json.RawMessage `json:"before,omitempty"`
-			CreatedAt string          `json:"createdAt"`
+			ID         string          `json:"id"`
+			Action     string          `json:"action"`
+			ActorID    string          `json:"actorId"`
+			ActorName  *string         `json:"actorName,omitempty"`
+			ActorEmail *string         `json:"actorEmail,omitempty"`
+			Reason     string          `json:"reason"`
+			After      json.RawMessage `json:"after,omitempty"`
+			Before     json.RawMessage `json:"before,omitempty"`
+			CreatedAt  string          `json:"createdAt"`
 		}
 		type MatchDetail struct {
-			ID              string          `json:"id"`
-			UserID          string          `json:"userId"`
-			OpponentUserID  *string         `json:"opponentUserId,omitempty"`
-			BotKey          *string         `json:"botKey,omitempty"`
-			Mode            string          `json:"mode"`
-			Status          string          `json:"status"`
-			RoomCode        string          `json:"roomCode"`
-			MaxRounds       int             `json:"maxRounds"`
-			FairnessSeed    *string         `json:"fairnessSeed,omitempty"`
-			UserScore       *int            `json:"userScore,omitempty"`
-			OpponentScore   *int            `json:"opponentScore,omitempty"`
-			AbandonedReason *string         `json:"abandonedReason,omitempty"`
-			StartedAt       *string         `json:"startedAt,omitempty"`
-			CompletedAt     *string         `json:"completedAt,omitempty"`
-			CreatedAt       string          `json:"createdAt"`
-			UpdatedAt       string          `json:"updatedAt"`
-			Audit           []AuditEntry    `json:"audit"`
+			ID              string       `json:"id"`
+			UserID          string       `json:"userId"`
+			OpponentUserID  *string      `json:"opponentUserId,omitempty"`
+			BotKey          *string      `json:"botKey,omitempty"`
+			Mode            string       `json:"mode"`
+			Status          string       `json:"status"`
+			RoomCode        string       `json:"roomCode"`
+			MaxRounds       int          `json:"maxRounds"`
+			FairnessSeed    *string      `json:"fairnessSeed,omitempty"`
+			UserScore       *int         `json:"userScore,omitempty"`
+			OpponentScore   *int         `json:"opponentScore,omitempty"`
+			AbandonedReason *string      `json:"abandonedReason,omitempty"`
+			StartedAt       *string      `json:"startedAt,omitempty"`
+			CompletedAt     *string      `json:"completedAt,omitempty"`
+			CreatedAt       string       `json:"createdAt"`
+			UpdatedAt       string       `json:"updatedAt"`
+			Audit           []AuditEntry `json:"audit"`
 		}
 		var md MatchDetail
 		var createdAt, updatedAt time.Time
@@ -480,12 +480,12 @@ func adminBattleMatchesRerunHandler(db *pgxpool.Pool, logger *slog.Logger) http.
 		ctx := r.Context()
 
 		type Source struct {
-			UserID         string
-			BotKey         *string
-			Mode           string
-			RoomCode       string
-			MaxRounds      int
-			Status         string
+			UserID    string
+			BotKey    *string
+			Mode      string
+			RoomCode  string
+			MaxRounds int
+			Status    string
 		}
 		var src Source
 		err := db.QueryRow(ctx, `

@@ -52,23 +52,23 @@ func adminMonetizationOverviewHandler(db *pgxpool.Pool, logger *slog.Logger) htt
 		}
 
 		type Charts struct {
-			PlanDistribution  []PlanDist      `json:"planDistribution"`
-			SubscriptionTrend []TrendPoint    `json:"subscriptionTrend"`
-			PaywallFunnel     PaywallFunnel   `json:"paywallFunnel"`
+			PlanDistribution  []PlanDist    `json:"planDistribution"`
+			SubscriptionTrend []TrendPoint  `json:"subscriptionTrend"`
+			PaywallFunnel     PaywallFunnel `json:"paywallFunnel"`
 		}
 
 		type Tasks struct {
-			PlansMissingEntitlementCount int      `json:"plansMissingEntitlementCount"`
-			PlansMissingEntitlementIds   []string `json:"plansMissingEntitlementIds"`
+			PlansMissingEntitlementCount  int      `json:"plansMissingEntitlementCount"`
+			PlansMissingEntitlementIds    []string `json:"plansMissingEntitlementIds"`
 			QuotasNearExhaustionAvailable bool     `json:"quotasNearExhaustionAvailable"`
 			FailedBillingSyncAvailable    bool     `json:"failedBillingSyncAvailable"`
 			DisabledAdPlacements          int      `json:"disabledAdPlacements"`
 		}
 
 		type Overview struct {
-			KPIs      KPIs   `json:"kpis"`
-			Charts    Charts `json:"charts"`
-			Tasks     Tasks  `json:"tasks"`
+			KPIs      KPIs            `json:"kpis"`
+			Charts    Charts          `json:"charts"`
+			Tasks     Tasks           `json:"tasks"`
 			DataNotes map[string]bool `json:"dataNotes"`
 		}
 
@@ -236,16 +236,16 @@ func adminMonetizationAuditHandler(db *pgxpool.Pool, logger *slog.Logger) http.H
 		}
 
 		type AuditItem struct {
-			ID         string           `json:"id"`
-			Source     string           `json:"source"`
-			Action     string           `json:"action"`
-			ActorID    *string          `json:"actorId,omitempty"`
-			UserID     *string          `json:"userId,omitempty"`
-			ActorKind  *string          `json:"actorKind,omitempty"`
-			TargetID   *string          `json:"targetId,omitempty"`
-			TargetType *string          `json:"targetType,omitempty"`
-			Payload    json.RawMessage  `json:"payload,omitempty"`
-			At         string           `json:"at"`
+			ID         string          `json:"id"`
+			Source     string          `json:"source"`
+			Action     string          `json:"action"`
+			ActorID    *string         `json:"actorId,omitempty"`
+			UserID     *string         `json:"userId,omitempty"`
+			ActorKind  *string         `json:"actorKind,omitempty"`
+			TargetID   *string         `json:"targetId,omitempty"`
+			TargetType *string         `json:"targetType,omitempty"`
+			Payload    json.RawMessage `json:"payload,omitempty"`
+			At         string          `json:"at"`
 		}
 
 		whereParts := []string{}
@@ -370,30 +370,30 @@ func adminMonetizationPlansListHandler(db *pgxpool.Pool, logger *slog.Logger) ht
 		ctx := r.Context()
 
 		type PlanEntitlement struct {
-			ID             string  `json:"id"`
-			Key            string  `json:"key"`
-			Category       *string `json:"category,omitempty"`
-			Description    *string `json:"description,omitempty"`
+			ID          string  `json:"id"`
+			Key         string  `json:"key"`
+			Category    *string `json:"category,omitempty"`
+			Description *string `json:"description,omitempty"`
 		}
 
 		type PlanQuota struct {
-			ID           string `json:"id"`
+			ID            string `json:"id"`
 			QuotaPolicyID string `json:"quotaPolicyId"`
-			LimitValue   int    `json:"limitValue"`
+			LimitValue    int    `json:"limitValue"`
 		}
 
 		type Plan struct {
-			ID              string            `json:"id"`
-			Slug            string            `json:"slug"`
-			NameKey         string            `json:"nameKey"`
-			Status          string            `json:"status"`
-			Config          json.RawMessage   `json:"config,omitempty"`
-			SortOrder       int               `json:"sortOrder"`
-			Entitlements    []PlanEntitlement `json:"entitlements"`
-			PlanQuotas      []PlanQuota       `json:"planQuotas"`
-			SubscriptionsCount int              `json:"subscriptionsCount"`
-			CreatedAt       string            `json:"createdAt"`
-			UpdatedAt       string            `json:"updatedAt"`
+			ID                 string            `json:"id"`
+			Slug               string            `json:"slug"`
+			NameKey            string            `json:"nameKey"`
+			Status             string            `json:"status"`
+			Config             json.RawMessage   `json:"config,omitempty"`
+			SortOrder          int               `json:"sortOrder"`
+			Entitlements       []PlanEntitlement `json:"entitlements"`
+			PlanQuotas         []PlanQuota       `json:"planQuotas"`
+			SubscriptionsCount int               `json:"subscriptionsCount"`
+			CreatedAt          string            `json:"createdAt"`
+			UpdatedAt          string            `json:"updatedAt"`
 		}
 
 		rows, err := db.Query(ctx, `
@@ -541,10 +541,10 @@ func adminMonetizationPlansPatchHandler(db *pgxpool.Pool, logger *slog.Logger) h
 		}
 
 		var req struct {
-			NameKey   *string          `json:"nameKey,omitempty"`
-			Status    *string          `json:"status,omitempty"`
-			Config    json.RawMessage  `json:"config,omitempty"`
-			SortOrder *int             `json:"sortOrder,omitempty"`
+			NameKey   *string         `json:"nameKey,omitempty"`
+			Status    *string         `json:"status,omitempty"`
+			Config    json.RawMessage `json:"config,omitempty"`
+			SortOrder *int            `json:"sortOrder,omitempty"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSONError(w, "invalid request body", http.StatusBadRequest)

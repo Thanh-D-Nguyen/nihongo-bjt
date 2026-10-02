@@ -26,7 +26,7 @@ type CareerMe struct {
 	LastClockInAt   *string           `json:"lastClockInAt,omitempty"`
 	StreakDays      int               `json:"streakDays"`
 	Skills          []CareerSkillStat `json:"skills"`
-	RankTitle       *RankTitle         `json:"rankTitle,omitempty"`
+	RankTitle       *RankTitle        `json:"rankTitle,omitempty"`
 }
 
 // RankTitle is the localized title for a rank.
@@ -43,26 +43,26 @@ type CareerSkillStat struct {
 
 // CareerRankSummary is a rank entry for GET /api/career/ranks.
 type CareerRankSummary struct {
-	ID              string          `json:"id"`
-	RankCode        string          `json:"rankCode"`
-	TitleJa         string          `json:"titleJa"`
-	TitleVi         string          `json:"titleVi"`
-	BJTBandTarget   string          `json:"bjtBandTarget"`
-	MinSkillFloor   int             `json:"minSkillFloor"`
-	RequiredArcCount int            `json:"requiredArcCount"`
-	XPToNext        int             `json:"xpToNext"`
-	DisplayOrder    int             `json:"displayOrder"`
+	ID                 string          `json:"id"`
+	RankCode           string          `json:"rankCode"`
+	TitleJa            string          `json:"titleJa"`
+	TitleVi            string          `json:"titleVi"`
+	BJTBandTarget      string          `json:"bjtBandTarget"`
+	MinSkillFloor      int             `json:"minSkillFloor"`
+	RequiredArcCount   int             `json:"requiredArcCount"`
+	XPToNext           int             `json:"xpToNext"`
+	DisplayOrder       int             `json:"displayOrder"`
 	UnlockedSceneTypes json.RawMessage `json:"unlockedSceneTypes"`
-	RewardsPayload  json.RawMessage `json:"rewardsPayload"`
+	RewardsPayload     json.RawMessage `json:"rewardsPayload"`
 }
 
 // ContextMemo is one inbox item for GET /api/career/inbox.
 type ContextMemo struct {
-	ID        string    `json:"id"`
-	MemoType  string    `json:"memoType"`
+	ID        string          `json:"id"`
+	MemoType  string          `json:"memoType"`
 	Payload   json.RawMessage `json:"payload"`
-	CreatedAt time.Time `json:"createdAt"`
-	ReadAt    *time.Time `json:"readAt,omitempty"`
+	CreatedAt time.Time       `json:"createdAt"`
+	ReadAt    *time.Time      `json:"readAt,omitempty"`
 }
 
 // Store provides read/write access to career tables.
