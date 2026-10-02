@@ -39,6 +39,8 @@ func buildLoginRouter(t *testing.T, trustedOrigins []string) http.Handler {
 		Config: &config.Config{
 			Port:        "4001",
 			CORSOrigins: trustedOrigins,
+			// Production default (config.Load: COOKIE_SECURE unset => true).
+			CookieSecure: true,
 		},
 		Logger:          logger,
 		SessionStore:    session.NewStore(pool),
@@ -71,6 +73,8 @@ func buildLoginRouterWithLimiter(t *testing.T, trustedOrigins []string, limit, m
 		Config: &config.Config{
 			Port:        "4001",
 			CORSOrigins: trustedOrigins,
+			// Production default (config.Load: COOKIE_SECURE unset => true).
+			CookieSecure: true,
 		},
 		Logger:          logger,
 		SessionStore:    session.NewStore(pool),
@@ -92,6 +96,8 @@ func buildLoginRouterNoLimiter(t *testing.T, trustedOrigins []string) http.Handl
 		Config: &config.Config{
 			Port:        "4001",
 			CORSOrigins: trustedOrigins,
+			// Production default (config.Load: COOKIE_SECURE unset => true).
+			CookieSecure: true,
 		},
 		Logger:          logger,
 		SessionStore:    session.NewStore(pool),
@@ -148,12 +154,19 @@ func TestLearnerLogin_Success_SetsSecureCookie(t *testing.T) {
 		t.Fatalf("expected 200, got %d; body: %s", w.Code, w.Body.String())
 	}
 
-	var resp map[string]bool
+	// Contract since M13c (mobile Go-native sessions): {"ok":true,"token":"<raw session token>"}.
+	var resp struct {
+		OK    bool   `json:"ok"`
+		Token string `json:"token"`
+	}
 	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
 		t.Fatalf("decode response: %v", err)
 	}
-	if !resp["ok"] {
+	if !resp.OK {
 		t.Error("expected ok:true")
+	}
+	if resp.Token == "" {
+		t.Error("expected non-empty token for non-cookie clients")
 	}
 
 	// Verify cookie attributes.
@@ -162,6 +175,9 @@ func TestLearnerLogin_Success_SetsSecureCookie(t *testing.T) {
 	for _, c := range cookies {
 		if c.Name == learnerCookieName {
 			found = true
+			if c.Value != resp.Token {
+				t.Error("response token must be the same session as the cookie")
+			}
 			if !c.HttpOnly {
 				t.Error("cookie must be HttpOnly")
 			}

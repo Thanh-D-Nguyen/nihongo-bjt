@@ -50,7 +50,7 @@ func seedActiveUser(t *testing.T, db *pgxpool.Pool, userID string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	_, err := db.Exec(ctx,
-		`INSERT INTO profile.user_profile (id, display_name, email, status) VALUES ($1, 'Test User', $2, 'active') ON CONFLICT (id) DO UPDATE SET status = 'active'`,
+		`INSERT INTO profile.user_profile (id, display_name, email, status, updated_at) VALUES ($1, 'Test User', $2, 'active', now()) ON CONFLICT (id) DO UPDATE SET status = 'active'`,
 		userID, fmt.Sprintf("test-%s@example.com", userID[:8]))
 	if err != nil {
 		t.Fatalf("seed active user failed: %v", err)
@@ -63,7 +63,7 @@ func seedDisabledUser(t *testing.T, db *pgxpool.Pool, userID string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	_, err := db.Exec(ctx,
-		`INSERT INTO profile.user_profile (id, display_name, email, status) VALUES ($1, 'Disabled User', $2, 'disabled') ON CONFLICT (id) DO UPDATE SET status = 'disabled'`,
+		`INSERT INTO profile.user_profile (id, display_name, email, status, updated_at) VALUES ($1, 'Disabled User', $2, 'disabled', now()) ON CONFLICT (id) DO UPDATE SET status = 'disabled'`,
 		userID, fmt.Sprintf("disabled-%s@example.com", userID[:8]))
 	if err != nil {
 		t.Fatalf("seed disabled user failed: %v", err)
@@ -76,7 +76,7 @@ func seedActiveAdmin(t *testing.T, db *pgxpool.Pool, actorID string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	_, err := db.Exec(ctx,
-		`INSERT INTO authz.admin_actor (id, display_name, email, status) VALUES ($1, 'Test Admin', $2, 'active') ON CONFLICT (id) DO UPDATE SET status = 'active'`,
+		`INSERT INTO authz.admin_actor (id, display_name, email, status, updated_at) VALUES ($1, 'Test Admin', $2, 'active', now()) ON CONFLICT (id) DO UPDATE SET status = 'active'`,
 		actorID, fmt.Sprintf("admin-%s@example.com", actorID[:8]))
 	if err != nil {
 		t.Fatalf("seed active admin failed: %v", err)
@@ -89,7 +89,7 @@ func seedDisabledAdmin(t *testing.T, db *pgxpool.Pool, actorID string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	_, err := db.Exec(ctx,
-		`INSERT INTO authz.admin_actor (id, display_name, email, status) VALUES ($1, 'Disabled Admin', $2, 'disabled') ON CONFLICT (id) DO UPDATE SET status = 'disabled'`,
+		`INSERT INTO authz.admin_actor (id, display_name, email, status, updated_at) VALUES ($1, 'Disabled Admin', $2, 'disabled', now()) ON CONFLICT (id) DO UPDATE SET status = 'disabled'`,
 		actorID, fmt.Sprintf("disabled-admin-%s@example.com", actorID[:8]))
 	if err != nil {
 		t.Fatalf("seed disabled admin failed: %v", err)

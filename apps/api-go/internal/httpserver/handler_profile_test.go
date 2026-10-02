@@ -28,8 +28,8 @@ func seedFullProfileUser(t *testing.T, db *pgxpool.Pool, userID, email string) {
 	defer cancel()
 	coverAssetID := "00000000-0000-0000-0000-000000000001"
 	_, err := db.Exec(ctx,
-		`INSERT INTO media.asset (id, object_key, mime_type, content_type, size_bytes, storage_path, original_filename)
-		 VALUES ($1::uuid, $1::text, 'image/png', 'image/png', 0, '', 'cover.png')
+		`INSERT INTO media.asset (id, object_key, mime_type, content_type, size_bytes, storage_path, original_filename, updated_at)
+		 VALUES ($1::uuid, $1::text, 'image/png', 'image/png', 0, '', 'cover.png', now())
 		 ON CONFLICT (id) DO NOTHING`, coverAssetID)
 	if err != nil {
 		t.Fatalf("seed media asset failed: %v", err)
@@ -37,9 +37,9 @@ func seedFullProfileUser(t *testing.T, db *pgxpool.Pool, userID, email string) {
 	_, err = db.Exec(ctx,
 		`INSERT INTO profile.user_profile (id, display_name, email, status, theme_mode,
 			font_size_preference, density_preference, flashcard_style_slug,
-			cover_asset_id, ads_personalization_opt_in, share_postcard_opt_in)
+			cover_asset_id, ads_personalization_opt_in, share_postcard_opt_in, updated_at)
 		 VALUES ($1, 'Test Learner', $2, 'active', 'dark', 'medium', 'comfortable', 'minimal',
-			$3, true, false)
+			$3, true, false, now())
 		 ON CONFLICT (id) DO UPDATE SET display_name='Test Learner', email=$2, status='active',
 			theme_mode='dark', font_size_preference='medium', density_preference='comfortable',
 			flashcard_style_slug='minimal', cover_asset_id=$3,

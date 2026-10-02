@@ -565,8 +565,9 @@ func lookupAdminActorIDByEmail(ctx context.Context, db *pgxpool.Pool, email stri
 }
 
 func createAdminActor(ctx context.Context, tx pgx.Tx, email, displayName string) (string, error) {
-	const q = `INSERT INTO authz.admin_actor (email, display_name, status)
-	VALUES ($1, $2, 'active')
+	// updated_at is NOT NULL without a DB default (Prisma @updatedAt).
+	const q = `INSERT INTO authz.admin_actor (email, display_name, status, updated_at)
+	VALUES ($1, $2, 'active', now())
 	RETURNING id`
 	var id string
 	if err := tx.QueryRow(ctx, q, email, displayName).Scan(&id); err != nil {

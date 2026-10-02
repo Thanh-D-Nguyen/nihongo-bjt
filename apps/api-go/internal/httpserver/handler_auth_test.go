@@ -61,8 +61,8 @@ func seedActiveUser(t *testing.T, db *pgxpool.Pool, userID, displayName, email, 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	_, err := db.Exec(ctx,
-		`INSERT INTO profile.user_profile (id, display_name, email, status, keycloak_subject)
-		 VALUES ($1, $2, $3, 'active', $4)
+		`INSERT INTO profile.user_profile (id, display_name, email, status, keycloak_subject, updated_at)
+		 VALUES ($1, $2, $3, 'active', $4, now())
 		 ON CONFLICT (id) DO UPDATE SET display_name=$2, email=$3, status='active', keycloak_subject=$4`,
 		userID, displayName, email, nullStr(keycloakSubject))
 	if err != nil {
@@ -83,8 +83,8 @@ func seedDisabledUser(t *testing.T, db *pgxpool.Pool, userID string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	_, err := db.Exec(ctx,
-		`INSERT INTO profile.user_profile (id, display_name, email, status)
-		 VALUES ($1, 'Disabled User', $2, 'disabled')
+		`INSERT INTO profile.user_profile (id, display_name, email, status, updated_at)
+		 VALUES ($1, 'Disabled User', $2, 'disabled', now())
 		 ON CONFLICT (id) DO UPDATE SET status='disabled'`,
 		userID, email)
 	if err != nil {
@@ -102,8 +102,8 @@ func seedActiveAdmin(t *testing.T, db *pgxpool.Pool, actorID, displayName, email
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	_, err := db.Exec(ctx,
-		`INSERT INTO authz.admin_actor (id, display_name, email, status)
-		 VALUES ($1, $2, $3, 'active')
+		`INSERT INTO authz.admin_actor (id, display_name, email, status, updated_at)
+		 VALUES ($1, $2, $3, 'active', now())
 		 ON CONFLICT (id) DO UPDATE SET display_name=$2, email=$3, status='active'`,
 		actorID, displayName, email)
 	if err != nil {
@@ -122,8 +122,8 @@ func seedDisabledAdmin(t *testing.T, db *pgxpool.Pool, actorID string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	_, err := db.Exec(ctx,
-		`INSERT INTO authz.admin_actor (id, display_name, email, status)
-		 VALUES ($1, 'Disabled Admin', $2, 'disabled')
+		`INSERT INTO authz.admin_actor (id, display_name, email, status, updated_at)
+		 VALUES ($1, 'Disabled Admin', $2, 'disabled', now())
 		 ON CONFLICT (id) DO UPDATE SET status='disabled'`,
 		actorID, email)
 	if err != nil {
@@ -244,11 +244,13 @@ func TestLearnerMe_Success_ExactJSONShape(t *testing.T) {
 		t.Errorf("flashcardStyleSlug = %s, want null", string(resp["flashcardStyleSlug"]))
 	}
 
-	// DB-defaulted NOT NULL columns must serialize with their default values.
+	// DB-defaulted NOT NULL columns must serialize with their default values
+	// (canonical defaults: packages/database/prisma/migrations/
+	// 20260520120000_add_appearance_prefs_to_profile).
 	defaultedFields := map[string]string{
 		"themeMode":          `"system"`,
 		"densityPreference":  `"comfortable"`,
-		"fontSizePreference": `"medium"`,
+		"fontSizePreference": `"default"`,
 	}
 	for f, want := range defaultedFields {
 		raw := resp[f]

@@ -61,8 +61,8 @@ func seedAdminActor(t *testing.T, db *pgxpool.Pool, actorID, email, displayName 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	_, err := db.Exec(ctx,
-		`INSERT INTO authz.admin_actor (id, email, display_name, status)
-		 VALUES ($1, $2, $3, 'active')
+		`INSERT INTO authz.admin_actor (id, email, display_name, status, updated_at)
+		 VALUES ($1, $2, $3, 'active', now())
 		 ON CONFLICT (id) DO UPDATE SET email=$2, display_name=$3, status='active'`,
 		actorID, email, displayName)
 	if err != nil {
