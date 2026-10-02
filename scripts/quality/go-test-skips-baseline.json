@@ -1,6 +1,6 @@
 {
   "note": "Go tests allowed to t.Skip in CI (where TEST_DATABASE_URL is provisioned). Any other skip fails scripts/quality/check-go-test-report.mjs. Remove entries as they are fixed; adding one is a reviewed exception.",
-  "min_passed_tests": 415,
+  "min_passed_tests": 431,
   "allowed_skips": {
     "internal/httpserver::TestReindex_AdminOnly": "TEST_MEILISEARCH_URL not provisioned in CI. Test harness is broken when enabled (httptest.NewRequest sent via http.Client: 'Request.RequestURI can't be set in client requests'); these tests have never executed.",
     "internal/httpserver::TestSearch_NoQuery_Returns400": "TEST_MEILISEARCH_URL not provisioned in CI. Broken harness when enabled (see TestReindex_AdminOnly).",
