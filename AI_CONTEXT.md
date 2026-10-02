@@ -18,14 +18,15 @@ The product must not ship as demo-only UI. A feature is considered done only whe
 6. `DESIGN.md`, `.ai-design/`, and `docs/design/` - active design system and design references.
 7. `docs/cursor-prompts/*.xml` - phase prompts and implementation guidance.
 
-If docs disagree, prefer this order: current code and schema, `docs/spec/index.md`, canonical spec, active Cursor rules, then older supporting docs.
+Engineering workflow and quality gates are defined only in `docs/engineering/ENGINEERING_POLICY.md`; it overrides any workflow/verification guidance in this file or older docs.
+
+If docs disagree on product behavior, prefer this order: current code and schema, `docs/spec/index.md`, canonical spec, active Cursor rules, then older supporting docs.
 
 ## Monorepo Map
 
 - `apps/web` - learner-facing Next.js app.
 - `apps/admin` - admin Next.js app for content, operations, and management workflows.
-- `apps/api-go` - Go backend API (primary runtime, serves all endpoints on :4001).
-- `apps/api` - NestJS backend API (disabled from runtime since M15; preserved on disk for rollback reference only).
+- `apps/api-go` - Go backend API (authoritative runtime, serves all endpoints on :4001). The legacy NestJS `apps/api` has been removed; see `docs/migrations/MIGRATION_CLOSURE.md`.
 - `packages/database` - Prisma schema, generated client, seed/migration support.
 - `packages/shared` - shared TypeScript/Zod contracts and reusable domain types.
 - `packages/ui` - shared UI building blocks.
@@ -35,10 +36,10 @@ If docs disagree, prefer this order: current code and schema, `docs/spec/index.m
 ## Core Architecture
 
 - PostgreSQL is the source of truth.
-- Prisma is the default application database access layer.
+- Prisma owns the schema and migrations; runtime database access goes through the Go API (pgx).
 - Meilisearch is a search projection, not the source of truth.
 - Redis and BullMQ handle background jobs.
-- Socket.IO handles realtime battle flows.
+- Realtime: Go API plain WebSocket (`/ws/battle`, `/ws/presence`). The web client still speaks Socket.IO — known open parity gap.
 - Keycloak is the auth provider in local/dev architecture.
 - Object/media storage uses provider abstractions and must carry provenance/license metadata for external assets.
 
@@ -94,28 +95,27 @@ Useful `rg` patterns:
 
 ```bash
 rg -n "api/path|route-segment|i18n.key|ModelName|error text" apps packages
-rg -n "controller|service|repository|schema|messages" apps/api packages/shared apps/web apps/admin
-rg --files apps/web apps/admin apps/api packages/shared packages/database | rg "feature-name|route-name|model-name"
+rg -n "Handler|Store|schema|messages" apps/api-go/internal packages/shared apps/web apps/admin
+rg --files apps/web apps/admin apps/api-go packages/shared packages/database | rg "feature-name|route-name|model-name"
 ```
 
 Default file budget before editing:
 
 - Bug fix: 3-7 files.
 - Single UI improvement: route/component, messages, optional shared UI, focused test.
-- API feature: shared contract, controller, service, repository, Prisma schema/migration, tests.
-- Admin mutation: admin UI, API controller/service, RBAC permission, audit log path, i18n, tests.
+- API feature: shared contract, Go handler + store (`apps/api-go/internal/...`), Prisma schema/migration, tests.
+- Admin mutation: admin UI, Go admin handler, RBAC permission, audit log path, i18n, tests.
 
 Escalate beyond the budget only with evidence: missing contract, failing typecheck, missing database model, broken auth/RBAC boundary, or product rule conflict.
 
 ## Verification Commands
 
-Use focused commands first, then broader checks when the change has wider blast radius.
+Use focused commands first, then the canonical gates in `scripts/quality/` (see `docs/engineering/ENGINEERING_POLICY.md` §11):
 
-- `pnpm lint`
+- `scripts/quality/with-test-db.sh scripts/quality/verify-all.sh` — full PR gate (same scripts as CI)
+- `node scripts/quality/check-frontend-debt.mjs` — lint + unit tests against the known-debt baseline (`pnpm lint` / `pnpm test` alone exit non-zero because of pre-existing debt)
 - `pnpm typecheck`
-- `pnpm test`
-- `pnpm prisma:validate`
-- `pnpm prisma:generate` after Prisma schema changes
+- `pnpm prisma:validate`; `pnpm prisma:generate` after Prisma schema changes
 - `pnpm build` before declaring broad app changes complete
 
 For frontend work, run the relevant dev server and visually verify changed pages when practical.

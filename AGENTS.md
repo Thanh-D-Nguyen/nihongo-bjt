@@ -1,5 +1,9 @@
 # AGENTS.md — KotobaWorks Cursor Operating Guide
 
+## Engineering policy (mandatory, takes precedence)
+
+All behavior-changing work follows [`docs/engineering/ENGINEERING_POLICY.md`](docs/engineering/ENGINEERING_POLICY.md): change classification, VALID_RED / regression TDD, ADD/MODIFY/DELETE rigor, exception process, and the canonical gates (`scripts/quality/with-test-db.sh scripts/quality/verify-all.sh`). Where any other guide below conflicts with it, the policy wins.
+
 ## AI quickstart
 
 Read `AI_CONTEXT.md` first. It is the compact, current project brief for any AI assistant joining this repository. Then follow this file and all active Cursor rules.
@@ -23,10 +27,10 @@ Read these first:
 
 - PostgreSQL is the source of truth.
 - Do not use MongoDB or Mongoose.
-- Use Prisma for application database access unless a raw SQL migration is explicitly better.
+- Prisma (`packages/database`) owns the schema and migrations; the Go API (`apps/api-go`, pgx) is the authoritative runtime backend. The legacy NestJS `apps/api` is removed.
 - Search is a Meilisearch projection, not the source of truth.
 - Redis/BullMQ handles background jobs.
-- Socket.IO handles realtime battle flows.
+- Realtime is served by the Go API as plain WebSocket at `/ws/battle` and `/ws/presence` (`apps/api-go/internal/realtime`). The web client still uses `socket.io-client` (legacy protocol) — a known open parity gap.
 - User-facing text must go through i18n keys.
 - Admin writes require RBAC and audit logs.
 - Media and external images require provenance/license metadata.

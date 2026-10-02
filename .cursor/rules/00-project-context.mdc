@@ -5,7 +5,9 @@ alwaysApply: true
 
 # Project context
 
-Monorepo: Next.js (learner `apps/web`, admin `apps/admin`), NestJS `apps/api`, PostgreSQL + Prisma, Redis/BullMQ, Meilisearch, Socket.IO, object storage for media.
+Monorepo: Next.js (learner `apps/web`, admin `apps/admin`), Go API `apps/api-go` (authoritative backend; legacy NestJS `apps/api` removed), PostgreSQL + Prisma (schema/migrations), Redis/BullMQ, Meilisearch, Go WebSocket realtime, object storage for media.
+
+Engineering workflow and quality gates: `docs/engineering/ENGINEERING_POLICY.md` (mandatory; overrides workflow guidance in other rules).
 
 ## Before large or cross-cutting changes
 
